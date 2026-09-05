@@ -337,3 +337,68 @@ will be looking at and what it should read afterwards. "Add two lines to
 your existing doPost" is not an instruction — it asks him to read and
 understand a file he wrote once and has not seen since. That is our work,
 not his.
+
+## Four rules from the 2026-09-05 retro
+
+These are not new principles. Each one is a rule that already existed and
+was not followed, written here in the form the failure took, because the
+abstract version did not stop it happening.
+
+### 1. Two failures in one area — stop and ask
+
+The library fill took TEN attempts. Nine of them fixed real bugs and none
+fixed the problem, because the problem was structural: five separate things
+could each decide a bottle needed no work, and they disagreed. BZ gave the
+shape in one sentence — "three lists: done, needs done, waiting to do
+again" — after hours of patching instances of it.
+
+The signal is the repetition, not the bug. **Same corner, second failure:
+stop fixing and go looking for the design fault. Third failure: ask BZ what
+shape he sees**, because the person watching it fail knows something the
+person patching it does not.
+
+Ten rounds of "found it, fixed it" is not persistence, it is refusing to
+re-read the problem.
+
+### 2. Never reason about data you cannot see
+
+His library. His deployed build. His log. Every confident claim made about
+any of those was wrong, including twice asserting he was running an old
+version when he was not.
+
+**Instrument, ship, read what comes back.** A build that says WRITE or
+WAITLIST per bottle settles in one round what six rounds of inference did
+not. When the answer depends on data on his device, the honest move is a
+diagnostic and a request, not a theory.
+
+### 3. Verify before saying it is fixed
+
+"This should work now" was said at least ten times before it did. A
+simulation against data.json is not evidence about his library; a green
+gate is not evidence a feature does its job.
+
+**Say what was actually checked and against what.** "Measured on his
+bottles: 200 to 190" is a claim. "This fixes it" is a hope with a full stop.
+
+### 4. "The same as X" means read X and CALL it
+
+BZ said "the same as the shopping search" FOUR times. Each time something
+adjacent was built — the add form's search, then a shelf-only search, then
+a library search — and each time it was wrong for the same reason.
+
+**When he names an existing behaviour, open that code and call what it
+calls.** Not something with the same shape. The shop searches shelf and
+library and THEN offers a lookup when both miss, and the fourth attempt was
+the first one that read renderShop to find that out.
+
+Rule 2 in his dev rules already says reuse before inventing, read existing
+code first. This is what ignoring it looks like.
+
+### And one that is not a rule but a habit worth keeping
+
+A change to a shared helper affects every caller. nameOverlap was fixed for
+the bar-list case and silently changed the receipt import, the gift list,
+the buddy shelf and the wishlist filter. It was measured afterwards — 27
+strong matches to 25, and all 25 correct — but that measurement was luck,
+not process. **Grep the callers before changing a helper, and measure each
+one after.**
