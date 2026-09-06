@@ -11126,5 +11126,64 @@ sec('§281 a bottle in context');
       'notes'), false);
 }
 
+/* §282  repairing notes the library cannot see -------------------
+ *
+ * BZ: "the flight-related notes were written by you — can we force that
+ * for the library." The library said 99% complete and offered no button at
+ * all, because it CANNOT SEE the problem.
+ *
+ * 185 of his bottles carry a note written onto a flight card. When those
+ * were published the marker saying so was stripped, so the library holds
+ * 185 prompts that look exactly like descriptions. The shelf still knows,
+ * because tnFrom survives here, so the repair has to run from this side.
+ */
+sec('§282 notes written for a room');
+{
+  const cat = {
+    a: { k: 'a', name: 'Aberlour 12', proof: 80, dist: 'Aberlour',
+         tn: { nose: 'Sherry, cinnamon' }, tnFrom: 'THE ABERLOUR HOUSE' },
+    b: { k: 'b', name: 'Ardbeg Ten', proof: 92, dist: 'Ardbeg',
+         tn: { nose: 'Smoke, brine' }, tnSrc: 'lookup' },
+    c: { k: 'c', name: 'Redbreast 12', proof: 92, dist: 'Redbreast' }
+  };
+  const bs = [{ k: 'a', status: 'open' }, { k: 'b', status: 'open' },
+              { k: 'c', status: 'gone' }];
+
+  const q = L.flightNoteQueue(cat, bs);
+  eq('a flight-card note is queued', q.length, 1);
+  eq('and it is the right one', q[0].name, 'Aberlour 12');
+  eq('a sourced note is left alone',
+    q.some(x => x.k === 'b'), false);
+  /* No point paying for a lookup on a bottle that is gone. */
+  eq('and a bottle you no longer own is skipped',
+    q.some(x => x.k === 'c'), false);
+  eq('nothing to repair is an empty queue',
+    L.flightNoteQueue({ b: cat.b }, bs).length, 0);
+
+  /* THE HALF THAT MAKES IT WORTH RUNNING. Fixing the shelf and leaving the
+     library broken would be pointless, and two separate rules blocked the
+     repair getting across: worthContributing answers only "is this
+     stranger worth adding", and correctionFor offered a note only where
+     the library had NONE — "a difference of opinion about a nose is not a
+     correction", which is right, and which blocked the one case that
+     matters. */
+  const theirs = { name: 'Aberlour 12', proof: 80,
+                   tn: { nose: 'Sherry, cinnamon' } };
+  const sourced = { k: 'a', name: 'Aberlour 12', proof: 80,
+                    tn: { nose: 'Apple, honey, oak' }, tnSrc: 'lookup' };
+  eq('a sourced note corrects an unsourced one',
+    !!L.correctionFor(sourced, theirs), true);
+  /* But an opinion still does not, which is the rule that was right. */
+  eq('an unsourced note does not',
+    !!L.correctionFor({ k: 'a', name: 'Aberlour 12', proof: 80,
+      tn: { nose: 'I get more apple' } }, theirs), false);
+  eq('nor does a source replacing a source',
+    !!L.correctionFor(sourced, Object.assign({ tnSrc: 'producer' }, theirs)),
+    false);
+  eq('and identical text is not a change',
+    !!L.correctionFor({ k: 'a', name: 'Aberlour 12', proof: 80,
+      tn: { nose: 'Sherry, cinnamon' }, tnSrc: 'lookup' }, theirs), false);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
