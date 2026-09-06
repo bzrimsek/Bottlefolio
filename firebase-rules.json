@@ -192,6 +192,12 @@
               }
             }
           }
+        },
+        "diagnostics": {
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid",
+            ".read": "auth != null && (auth.uid == $uid || root.child('bz-apps/whisky/shared/admins').child(auth.uid).exists())"
+          }
         }
       }
     }
