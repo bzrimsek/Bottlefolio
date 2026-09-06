@@ -11050,6 +11050,80 @@ sec('§281 a bottle in context');
   eq('and no provenance', /"from"|"who"|"got"/.test(sent), false);
   eq('a bottle with nothing to compare asks nothing',
     L.bottleAsk(cat.d, cat, bs), null);
+
+  /* THE FLIGHT IT MAKES. BZ, reading the story back: "we could then
+     suggest a flight!" — because "the only thing that changes is the wood"
+     IS a flight brief: one variable, everything else held still, which is
+     the definition the designer already works to. */
+  const fc = {
+    a: { k: 'a', name: 'Aberlour A\'Bunadh', dist: 'Aberlour', proof: 122,
+         sub: 'scotch', fin: 'Sherry' },
+    b: { k: 'b', name: 'Aberlour Casg Annamh', dist: 'Aberlour', proof: 96,
+         sub: 'scotch', fin: 'Sherry' },
+    c: { k: 'c', name: 'Aberlour 12 Double Cask', dist: 'Aberlour',
+         proof: 86, sub: 'scotch', fin: 'Sherry', age: 12 },
+    /* SAME DISTILLERY, DIFFERENT WHISKY. Old Overholt and Basil Hayden are
+       both filed under Jim Beam, and the first pass proposed pouring them
+       side by side as the same whisky at two strengths — false, and the
+       kind of false a drinker spots at once. */
+    x: { k: 'x', name: 'Old Overholt Rye', dist: 'Jim Beam', proof: 100,
+         sub: 'rye' },
+    y: { k: 'y', name: 'Basil Hayden Bourbon', dist: 'Jim Beam', proof: 80,
+         sub: 'bourbon' }
+  };
+  const fbs = ['a', 'b', 'c', 'x', 'y'].map(k => ({ k: k, status: 'open' }));
+
+  const ideas = L.flightIdeasFor(fc.a, fc, fbs);
+  eq('a real pair is proposed', ideas.length >= 1, true);
+  eq('on the variable that actually differs', ideas[0].varId, 'proof');
+  eq('naming what it goes against', ideas[0].against, 'Aberlour Casg Annamh');
+  /* And the claim is checkable: not "the same whisky", which overclaims,
+     but the two numbers. */
+  eq('the reason states both strengths',
+    /122 against 96/.test(ideas[0].why), true);
+
+  eq('a different brand from one distillery is not a pair',
+    L.flightIdeasFor(fc.x, fc, fbs).length, 0);
+  eq('and a bottle with no house suggests nothing',
+    L.flightIdeasFor({ k: 'z', name: 'Something' }, fc, fbs).length, 0);
+  /* Sealed bottles cannot be poured, so they cannot make a flight. */
+  eq('only what is open counts',
+    L.flightIdeasFor(fc.a, fc, [{ k: 'a', status: 'open' },
+      { k: 'b', status: 'sealed' }]).length, 0);
+  eq('never more than two ideas',
+    L.flightIdeasFor(fc.a, fc, fbs).length <= 2, true);
+
+  /* A NOTE WRITTEN FOR A ROOM. BZ: the flight-related notes were written
+     by you, can we force that for the library.
+
+     The fill was skipping them, because slotOpen asked only whether a note
+     existed. But "no source recorded" is the wrong test: 185 of the
+     shelf's notes carry no source and are perfectly good descriptions,
+     they simply predate the field — using that test would have re-asked
+     all 185 and spent a third of a day's lookups rewriting notes that
+     were already right. */
+  eq('a card instruction is a prompt',
+    L.looksLikePrompt('SPOTTED, AND POURED FIRST. Three oak types, NO '
+      + 'WINE. This is the house with nothing on top. $74.99'), true);
+  eq('a price alone marks one',
+    L.looksLikePrompt('A good one at $74.99'), true);
+  eq('so does telling somebody the order',
+    L.looksLikePrompt('Poured first so the others have something to '
+      + 'argue with'), true);
+  /* And a real description is not one, however it is filed. */
+  eq('a description is not a prompt',
+    L.looksLikePrompt('Corn sweetness, vanilla, oak'), false);
+  eq('nor is one naming a cask',
+    L.looksLikePrompt('Rich PX sherry and dark fruit'), false);
+  eq('nothing is not a prompt', L.looksLikePrompt(''), false);
+
+  /* Which means the slot stays OPEN on a prompt and closed on a note. */
+  eq('a prompt leaves the notes slot open',
+    L.slotOpen({ tn: { nose: 'POURED FIRST, and the loudest here' } },
+      'notes'), true);
+  eq('but a plain description closes it',
+    L.slotOpen({ tn: { nose: 'Corn sweetness, vanilla, oak' } },
+      'notes'), false);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
