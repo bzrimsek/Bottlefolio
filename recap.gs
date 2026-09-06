@@ -152,3 +152,110 @@ function probeRecap() {
   Logger.log(out ? 'WORKS:\n\n' + out
                  : 'NOTHING CAME BACK — do not deploy. The lines above say why.');
 }
+
+/* ------------------------------------------------------------------ */
+/* A BOTTLE, in the context of the shelf. mode:'bottle'.               */
+/*                                                                     */
+/* The app can already say "one of 12 from Laphroaig". What it cannot  */
+/* say is that this is the fourth Cairdeas, or that it is the one that */
+/* tests whether you like the wood or the spirit, or that it completes */
+/* a run — those need the whole picture held at once, which is the one */
+/* thing counting cannot do.                                           */
+/*                                                                     */
+/* What arrives is the bottle and everything owned from its house. No  */
+/* prices, no notes, no provenance: where a bottle came from is a fact */
+/* about the owner, and this is a question about the whisky.           */
+/* ------------------------------------------------------------------ */
+
+function writeBottle_(r) {
+  var b = r.bottle || {};
+  var system = [
+    'You write ONE or TWO sentences about what a whisky is, to the person',
+    'who owns it, given what else is on their shelf.',
+    '',
+    'RULES:',
+    '1. Say what this bottle IS relative to the others from its house. A',
+    '   series and its position ("your fourth Cairdeas"), a run it',
+    '   extends, a comparison it makes possible, the one variable it',
+    '   changes against a bottle they already have.',
+    '2. The most interesting thing is usually a PAIR: two bottles that',
+    '   differ in one way and are otherwise the same. Name both.',
+    '3. NEVER state a fact not in the data below — no history of the',
+    '   distillery, no release years, no awards, no tasting notes. If you',
+    '   are not certain from what you were given, do not say it.',
+    '4. One or two sentences. No heading, no preamble, no markdown.',
+    '   Address them as "you". Plain language.',
+    '5. If there is nothing interesting to say, say one plain sentence',
+    '   about where it sits and stop. Do not invent significance.',
+    '6. Return the sentences as plain text and nothing else.'
+  ].join('\n');
+
+  var lines = [];
+  lines.push('THE BOTTLE: ' + b.name);
+  lines.push('  distillery: ' + (b.distillery || 'unknown')
+    + ' \u00b7 proof: ' + (b.proof || '?')
+    + ' \u00b7 age: ' + (b.age || 'none stated')
+    + ' \u00b7 finish: ' + (b.finish || 'none')
+    + ' \u00b7 category: ' + (b.category || '?')
+    + (b.region ? ' \u00b7 region: ' + b.region : ''));
+  lines.push('');
+  lines.push('EVERYTHING THEY OWN FROM THAT DISTILLERY:');
+  (r.fromTheSameHouse || []).forEach(function (x) {
+    lines.push('  - ' + x.name + ' \u00b7 ' + (x.proof || '?') + ' proof'
+      + (x.age ? ' \u00b7 ' + x.age + ' years' : '')
+      + (x.fin ? ' \u00b7 ' + x.fin + ' finish' : ''));
+  });
+  lines.push('');
+  if (r.strongestOfItsHouse) lines.push('It is the strongest of them.');
+  if (r.oldestOfItsHouse) lines.push('It is the oldest of them.');
+  if (r.onlyOfItsFinish) {
+    lines.push('Nothing else on the shelf carries that finish.');
+  } else if (r.sameFinishCount) {
+    lines.push(r.sameFinishCount + ' others share that finish.');
+  }
+  lines.push('Their shelf holds ' + (r.shelfSize || '?') + ' whiskies.');
+
+  var res = UrlFetchApp.fetch(API, {
+    method: 'post', contentType: 'application/json',
+    headers: apiHeaders_(), muteHttpExceptions: true,
+    payload: JSON.stringify({
+      model: FLIGHT_MODEL, max_tokens: 300,
+      system: system,
+      messages: [{ role: 'user', content: lines.join('\n') }]
+    })
+  });
+  if (res.getResponseCode() !== 200) {
+    Logger.log('bottle: API %s \u2014 %s', res.getResponseCode(),
+      res.getContentText().slice(0, 200));
+    return '';
+  }
+  return (JSON.parse(res.getContentText()).content || [])
+    .filter(function (x) { return x.type === 'text'; })
+    .map(function (x) { return x.text; })
+    .join(' ').replace(/<\/?cite[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/** Run from the editor before deploying. BZ's real Cairdeas case. */
+function probeBottle() {
+  var sample = {
+    mode: 'bottle',
+    bottle: { name: 'Laphroaig Cairdeas 2026', distillery: 'Laphroaig',
+              proof: 104.6, age: null, finish: 'Madeira',
+              category: 'scotch', region: 'Islay' },
+    fromTheSameHouse: [
+      { name: 'Laphroaig Cairdeas Cask Favourites 10 Year Old', proof: 104.8 },
+      { name: 'Laphroaig Cairdeas Pedro Ximinez Cask 2021', proof: 117.8,
+        fin: 'PX' },
+      { name: 'Laphroaig Cairdeas Warehouse 1', proof: 104.4 },
+      { name: 'Laphroaig Cairdeas White Port & Madeira Cask', proof: 104.6,
+        fin: 'Port' },
+      { name: 'Laphroaig 10 Year Cask Strength', proof: 117.2, age: 10 },
+      { name: 'Laphroaig 10 Year Old', proof: 80, age: 10 }
+    ],
+    sameFinishCount: 3, sameCategoryCount: 81,
+    strongestOfItsHouse: false, oldestOfItsHouse: false,
+    onlyOfItsFinish: false, shelfSize: 325
+  };
+  var out = writeBottle_(sample);
+  Logger.log(out ? 'WORKS:\n\n' + out : 'NOTHING CAME BACK \u2014 do not deploy.');
+}

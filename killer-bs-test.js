@@ -10863,5 +10863,194 @@ sec('§279 the back bar, read properly');
     true);
 }
 
+/* §280  where a bottle came from -----------------------------------
+ *
+ * BZ: "when acquiring a bottle we should include the location if purchased
+ * in person or online, and if a gift, from who."
+ *
+ * Three kinds because they answer different questions: a shop is a place
+ * you can go back to, an online retailer is a name rather than a place,
+ * and a gift is a person.
+ */
+sec('§280 where it came from');
+{
+  const shop = L.bottleFrom('in a shop', 'Total Wine, Cleveland OH');
+  eq('a shop is a place', shop.place, 'Total Wine');
+  eq('with a city', shop.city, 'Cleveland');
+  eq('and a state', shop.state, 'OH');
+  eq('read back whole',
+    L.fromLine(shop), 'Bought at Total Wine, Cleveland, OH');
+
+  const web = L.bottleFrom('online', 'Seelbachs');
+  eq('a retailer is a name, not a place', web.shop, 'Seelbachs');
+  eq('and reads as one', L.fromLine(web), 'Bought from Seelbachs');
+
+  const gift = L.bottleFrom('a gift', 'Marcus');
+  eq('a gift is a person', gift.who, 'Marcus');
+  eq('and reads as one', L.fromLine(gift), 'A gift from Marcus');
+
+  eq('a kind with no detail is nothing',
+    L.bottleFrom('a gift', ''), null);
+  eq('and an invented kind is refused',
+    L.bottleFrom('inherited', 'an uncle'), null);
+  eq('nothing at all is nothing', L.fromLine(null), '');
+
+  /* COUNTED, for the portrait. Gifts are counted but not named: a shop is
+     a fact about the shelf and a person is a fact about a person. */
+  const bs = [
+    { k: 'a', status: 'open', from: shop },
+    { k: 'b', status: 'open', from: shop },
+    { k: 'c', status: 'open', from: web },
+    { k: 'd', status: 'open', from: gift },
+    { k: 'e', status: 'open', from: gift },
+    { k: 'f', status: 'open' },
+    { k: 'g', status: 'gone', from: shop }
+  ];
+  const prov = L.provenance(bs);
+  eq('only bottles still owned are counted', prov.known, 5);
+  eq('the shop is counted', prov.shops[0].n, 2);
+  eq('and named', prov.shops[0].name, 'Total Wine, Cleveland, OH');
+  eq('the retailer separately', prov.online[0].name, 'Seelbachs');
+  eq('gifts are counted', prov.gifts, 2);
+  /* And NOT named in the tally — who gave you a bottle is not a
+     statistic about your shelf. */
+  eq('but the givers are not listed',
+    JSON.stringify(prov).indexOf('Marcus') < 0, true);
+  eq('a shelf with no provenance counts none',
+    L.provenance([{ k: 'a', status: 'open' }]).known, 0);
+
+  /* WHERE YOU FIRST MET IT. BZ: track a bottle's provenance from where I
+     discovered it to where I bought it.
+
+     The discovery was already written down and then thrown away — every
+     wishlist entry carries a why and a date, and adding the bottle never
+     looked for it. The most interesting fact about a purchase, the reason
+     it happened, was deleted at the moment it came true. */
+  const wish = [
+    { name: 'Yamazaki 18 Year Old', at: '2026-09-05',
+      why: 'Poured at The Aviary, and you would again' },
+    { name: 'Springbank 15', at: '2026-08-01',
+      why: 'fills the Campbeltown gap' }
+  ];
+  eq('a bottle you wanted remembers why',
+    L.discoveryFor('Yamazaki 18', wish).why,
+    'Poured at The Aviary, and you would again');
+  eq('and when', L.discoveryFor('Yamazaki 18', wish).at, '2026-09-05');
+  eq('a near name still matches',
+    !!L.discoveryFor('Springbank 15 Year', wish), true);
+  eq('one you never wanted has no story',
+    L.discoveryFor('Ardbeg Ten', wish), null);
+  eq('and neither has nothing', L.discoveryFor('', wish), null);
+
+  /* Told in the order it happened, and either half can be missing. */
+  const full = L.bottleStory({
+    found: { why: 'Poured at The Aviary', at: '2026-09-05' },
+    from: gift, got: '2026-09-20' });
+  eq('the story runs discovery first', full[0], 'Poured at The Aviary \u00b7 2026-09-05');
+  eq('then how it arrived', full[1], 'A gift from Marcus \u00b7 2026-09-20');
+  eq('a bottle with only an origin says only that',
+    L.bottleStory({ from: gift }).length, 1);
+  eq('and one with neither says nothing',
+    L.bottleStory({ k: 'a' }).length, 0);
+
+  /* BZ'S OWN LIST: on sale, allocated release, won lottery, silent
+     auction, trade, from wish list, cannot get near home.
+
+     Three of those are not reasons at all. A lottery, an auction and a
+     trade are CHANNELS — as different from a shop as a shop is from a
+     gift, and a bottle that arrived by trade never saw a retailer. */
+  eq('a trade is a person', L.bottleFrom('a trade', 'Marcus').who, 'Marcus');
+  eq('and reads as one',
+    L.fromLine(L.bottleFrom('a trade', 'Marcus')), 'Traded with Marcus');
+  /* Winning one IS the story, so they stand alone where a shop cannot. */
+  eq('a lottery needs no name',
+    L.fromLine(L.bottleFrom('a lottery', '')), 'Won a lottery');
+  eq('but takes one if given',
+    L.fromLine(L.bottleFrom('a lottery', 'OHLQ')), 'Won a lottery at OHLQ');
+  eq('an auction the same',
+    L.fromLine(L.bottleFrom('an auction', '')), 'Won at auction');
+  eq('and a shop still says nothing on its own',
+    L.bottleFrom('in a shop', ''), null);
+
+  /* The rest are MOTIVES, and more than one can be true — on sale and
+     impossible to get near home is exactly the purchase worth
+     remembering. */
+  eq('several reasons hold at once',
+    L.buyWhys(['on sale', 'cannot get it near home']).length, 2);
+  eq('an invented one is dropped',
+    L.buyWhys(['on sale', 'because it was Tuesday']).length, 1);
+  eq('the same one twice is once',
+    L.buyWhys(['on sale', 'on sale']).length, 1);
+  eq('none is nothing', L.buyWhys([]), null);
+
+  /* And the story carries all of it. */
+  const whole = L.bottleStory({
+    found: { why: 'Poured at The Aviary', at: '2026-09-05' },
+    from: L.bottleFrom('a lottery', 'OHLQ'), got: '2026-09-20',
+    why: ['allocated release'] });
+  eq('the reason rides with the acquisition',
+    whole[1], 'Won a lottery at OHLQ \u00b7 2026-09-20 \u2014 allocated release');
+  eq('and a reason with no channel still shows',
+    L.bottleStory({ why: ['on sale'] })[0], 'On sale');
+}
+
+/* §281  what a bottle is, to this shelf ----------------------------
+ *
+ * BZ: "the story is about provenance and distiller and finish and proof —
+ * the next Cardieras release, you have 4; a unique add to your PX
+ * collection."
+ *
+ * He was right and I was stuck on the field I had just built. Where a
+ * bottle came from is one thread; what it IS relative to everything else
+ * is the bigger one, and every fact it needs was already on the shelf.
+ */
+sec('§281 a bottle in context');
+{
+  const cat = {
+    a: { k: 'a', name: 'Laphroaig 10', dist: 'Laphroaig', proof: 86,
+         sub: 'scotch' },
+    b: { k: 'b', name: 'Laphroaig Cairdeas PX', dist: 'Laphroaig',
+         proof: 117.8, sub: 'scotch', fin: 'PX' },
+    c: { k: 'c', name: 'Laphroaig Cairdeas Warehouse 1', dist: 'Laphroaig',
+         proof: 104.4, sub: 'scotch' },
+    d: { k: 'd', name: 'Redbreast 12', dist: 'Redbreast', proof: 92,
+         sub: 'irish' }
+  };
+  const bs = ['a', 'b', 'c', 'd'].map(k => ({ k: k, status: 'open' }));
+
+  const ctx = L.bottleContext(cat.b, cat, bs);
+  eq('it counts the house', ctx.fromHouse, 2);
+  eq('and knows it is the strongest of them',
+    ctx.proofRank.strongest, true);
+  eq('and the only one in that wood', ctx.onlyOfItsFinish, true);
+  eq('the gentlest is the gentlest',
+    L.bottleContext(cat.a, cat, bs).proofRank.weakest, true);
+  eq('a lone bottle from its house says so',
+    L.bottleContext(cat.d, cat, bs).onlyOfItsHouse, true);
+  eq('and a shelf of one has no context',
+    L.bottleContext(cat.a, cat, [{ k: 'a', status: 'open' }]), null);
+
+  /* A HOUSE NAME IS A PROPER NOUN wherever it lands in the sentence.
+     sentenceCase lowercases the whole string, which turned "1792 Barton"
+     into "1792 barton" and "New Riff Distilling" into "new riff". */
+  eq('the house keeps its capitals',
+    L.contextLine(L.bottleContext(cat.d, cat, bs)),
+    'The only Redbreast on the shelf.');
+  eq('and the line places it among its own',
+    /One of 3 from Laphroaig/.test(L.contextLine(ctx)), true);
+
+  /* WHAT GOES OUT. The bottle and its house, and nothing else: no prices,
+     no notes, no provenance. Where a bottle came from is a fact about the
+     owner, and this is a question about the whisky. */
+  const ask = L.bottleAsk(cat.b, cat, bs);
+  eq('the house goes in full', ask.fromTheSameHouse.length, 3);
+  eq('and it says which is strongest', ask.strongestOfItsHouse, true);
+  const sent = JSON.stringify(ask);
+  eq('no prices leave', /msrp|price|paid/.test(sent), false);
+  eq('and no provenance', /"from"|"who"|"got"/.test(sent), false);
+  eq('a bottle with nothing to compare asks nothing',
+    L.bottleAsk(cat.d, cat, bs), null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
