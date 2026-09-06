@@ -11185,5 +11185,130 @@ sec('§282 notes written for a room');
       tn: { nose: 'Sherry, cinnamon' }, tnSrc: 'lookup' }, theirs), false);
 }
 
+/* §283  which device a log came from -------------------------------
+ *
+ * BZ: "I think we need a way to know which device was the source", and
+ * "I prefer to work with desktop, need you to have both logs there."
+ *
+ * Two logs from one account were otherwise identical in the header — same
+ * name, same user id — and the only difference was a user agent nobody
+ * reads. Worse, both were written to the same slot, so a phone overwrote a
+ * desktop and only the last one sent survived.
+ */
+sec('§283 telling two devices apart');
+{
+  const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) AppleWebKit Safari';
+  const mac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X) Chrome/141 Safari';
+  const android = 'Mozilla/5.0 (Linux; Android 14; Pixel) Chrome/141 Mobile Safari';
+
+  eq('a phone says it is a phone',
+    L.deviceName(iphone, false, true, 395), 'iPhone \u00b7 Safari');
+  eq('a desktop says it is a desktop',
+    L.deviceName(mac, false, false, 1630), 'Desktop \u00b7 Chrome');
+  eq('and an android phone is not a tablet',
+    L.deviceName(android, false, true, 412), 'Android phone \u00b7 Chrome');
+  /* Installed to the home screen is worth saying: it is a different thing
+     from the same phone in a browser tab and they keep separate storage,
+     which has cost a round trip already. */
+  eq('installed is said out loud',
+    L.deviceName(iphone, true, true, 395), 'iPhone \u00b7 Safari \u00b7 installed');
+
+  /* ONE USER, ONE LOG. BZ: "I want a single user log, not a complex
+     merging of two things." The per-device slots that were here are gone —
+     they made him open two lists and reconcile them by hand. The log
+     follows the account and merges, and the device is named once per run
+     rather than on every line. */
+  eq('two devices merge into one story',
+    L.mergeSyncValue('log',
+      ['17:10 [des] a', '16:13 [des] b'],
+      ['16:16 [iph] c', '17:10 [des] a']).length, 3);
+  eq('newest first',
+    L.mergeSyncValue('log', ['16:13 [des] b'], ['17:10 [des] a'])[0],
+    '17:10 [des] a');
+  eq('the same line twice is one line',
+    L.mergeSyncValue('log', ['17:10 [des] a'], ['17:10 [des] a']).length, 1);
+  eq('and it cannot grow without limit',
+    L.mergeSyncValue('log',
+      Array.from({ length: 400 }, (x, i) => '1' + i + ' [des] a'),
+      Array.from({ length: 400 }, (x, i) => '2' + i + ' [iph] b')).length,
+    600);
+}
+
+/* §284  two devices, and neither loses the other's work ------------
+ *
+ * Found in BZ's own logs, both showing "local wins" against an account
+ * that was NEWER: two devices each preferring themselves and neither ever
+ * taking the other's work.
+ *
+ * syncDecision returns "local" whenever this device has saved anything
+ * since its last push, which is right — unsent work must never be
+ * discarded. But bottles, history and customFlights were then REPLACED
+ * wholesale, so a phone adds a bottle and pushes; a desktop with one
+ * unsent change loads, local wins, keeps its own array, and the phone's
+ * bottle is gone from the desktop. The desktop pushes that array over the
+ * account and the bottle is gone everywhere.
+ *
+ * Picking a winner is the wrong question for a list. Two devices adding
+ * different things is not a conflict, it is two additions.
+ */
+sec('§284 merging two shelves');
+{
+  const phone = [{ id: 'B001', k: 'a', status: 'open' },
+                 { id: 'B999', k: 'new', status: 'open' }];
+  const desk = [{ id: 'B001', k: 'a', status: 'gone' }];
+
+  /* THE BUG, from both directions. Whoever wins, the bottle survives. */
+  const deskWins = L.mergeRecords('bottles', desk, phone, true);
+  eq('a bottle added elsewhere is not lost', deskWins.length, 2);
+  eq('and the winner keeps its own version of a shared record',
+    deskWins.filter(b => b.id === 'B001')[0].status, 'gone');
+  const phoneWins = L.mergeRecords('bottles', desk, phone, false);
+  eq('the same the other way round', phoneWins.length, 2);
+  eq('with the other side\u2019s version kept',
+    phoneWins.filter(b => b.id === 'B001')[0].status, 'open');
+
+  /* A RETIREMENT is not a deletion. The app sets status:'gone' rather
+     than removing the record, so it is a field change on a bottle both
+     sides hold and the newer stamp settles it like any other. Without
+     that it would come back from the older copy. */
+  eq('retiring a bottle survives a merge',
+    L.mergeRecords('bottles', desk, phone, true)
+      .filter(b => b.id === 'B001')[0].status, 'gone');
+
+  /* POURS have no id, so what identifies one is what it records. Two
+     copies of the same pour are one pour; two pours of the same whisky on
+     different days are two. */
+  const p1 = [{ kind: 'pour', k: 'a', at: '2026-09-05' }];
+  const p2 = [{ kind: 'pour', k: 'a', at: '2026-09-05' },
+              { kind: 'pour', k: 'a', at: '2026-09-06' }];
+  eq('the same pour twice is one pour',
+    L.mergeRecords('history', p1, p2, true).length, 2);
+  eq('and two days are two pours',
+    L.mergeRecords('history', p1, p2, true)
+      .filter(h => h.at === '2026-09-06').length, 1);
+  /* An away pour is identified by its name, since it has no key. */
+  eq('two away pours of different whiskies both survive',
+    L.mergeRecords('history',
+      [{ kind: 'pour', k: null, away: 'X', at: '2026-09-05' }],
+      [{ kind: 'pour', k: null, away: 'Y', at: '2026-09-05' }], true).length,
+    2);
+
+  /* FLIGHTS are identified by title, which is what the app already uses
+     to tell one from another everywhere else. */
+  eq('a flight designed on one device reaches the other',
+    L.mergeRecords('customFlights',
+      [{ title: 'PEAT NIGHT' }], [{ title: 'WHEAT, TURNED UP' }], true).length,
+    2);
+
+  /* And a record with no identity at all is KEPT rather than dropped:
+     holding it twice is recoverable by hand, losing it is not. */
+  eq('an unidentifiable record is kept',
+    L.mergeRecords('bottles', [{ k: 'a' }], [{ k: 'b' }], true).length, 2);
+  eq('an empty side changes nothing',
+    L.mergeRecords('bottles', desk, [], true).length, 1);
+  eq('and two empties are empty',
+    L.mergeRecords('bottles', [], [], true).length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

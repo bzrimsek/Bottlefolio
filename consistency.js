@@ -98,15 +98,21 @@ check('every axis has a search phrase',
 const defBlock = src.slice(src.indexOf('refGroup:'), src.indexOf('refGroup:') + 2600);
 const stateKeys = (defBlock.match(/^\s{10,14}([a-zA-Z][a-zA-Z0-9_]*):/gm) || [])
   .map(m => m.trim().replace(':', ''));
+/* To the closing bracket, not a fixed 700 characters. Comments inside the
+   list pushed bottleSaid past the window and the check reported a synced
+   key as unsynced — a check that reads a fixed slice of a file it does not
+   control will eventually be wrong about it. */
 const syncBlock = src.slice(src.indexOf('L.SYNC_KEYS'),
-  src.indexOf('L.SYNC_KEYS') + 700);
+  src.indexOf('];', src.indexOf('L.SYNC_KEYS')));
 /* Deliberately per-device: screen state, the sync bookkeeping itself, and
    the spend meter, which is a guard on THIS device rather than a fact
    about the account. */
 const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lastList', 'updated', 'pushedAt', 'lookupTally', 'axisTurn', 'base',
   'lookupUrl', 'libLedgerAt', 'reelState', 'seenTips', 'installDismissed',
-  'offerText', 'barSort', 'log', 'reels', 'held'];
+  /* 'log' was here and is not any more: BZ asked for one user and one
+     log, so it follows the account and merges. */
+  'offerText', 'barSort', 'reels', 'held'];
 check('every stored key is synced or marked local on purpose',
   stateKeys.filter(k => syncBlock.indexOf("'" + k + "'") < 0
     && LOCAL_ON_PURPOSE.indexOf(k) < 0));
