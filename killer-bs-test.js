@@ -10796,5 +10796,72 @@ sec('§278 would I like this');
     L.pickFromList('...', cat2, bs2, [], 4), null);
 }
 
+/* §279  a bar list, typed the way people type ----------------------
+ *
+ * BZ typed "laphroaig carderias 2026, boss hog, jack daniels 7" into Help
+ * me choose and got ONE bottle back, named as the whole line, with the
+ * reason "you own 12 from that house" — a house that did not exist,
+ * because nothing had been split.
+ *
+ * Three faults in one answer.
+ */
+sec('§279 the back bar, read properly');
+{
+  const cat = {
+    a: { k: 'a', name: 'Laphroaig 10', dist: 'Laphroaig', proof: 86,
+         sub: 'scotch' },
+    b: { k: 'b', name: "Jack Daniel's Single Barrel", dist: "Jack Daniel's",
+         proof: 94, sub: 'tennessee' }
+  };
+  const bs = [{ k: 'a', status: 'open' }, { k: 'b', status: 'open' }];
+
+  /* 1. COMMAS. offerNames reads a pasted menu one bottle a line, which is
+        right for something copied off a website and wrong for somebody
+        typing — and the box invites typing. */
+  const r = L.pickFromList('Laphroaig 10, Boss Hog, Yamazaki 18',
+    cat, bs, [], 4);
+  eq('a typed list is three bottles, not one', r.read, 3);
+
+  /* 2. THE HOUSE, matched on letters. "Jack Daniel's" on the shelf and
+        "jack daniels" on a bar list never matched, so the app said he
+        owned nothing from a house he has four bottles from. */
+  eq('an apostrophe does not hide a house',
+    (L.offerFacts('jack daniels 7', cat) || {}).dist, "Jack Daniel's");
+  eq('and the plain case still works',
+    (L.offerFacts('Laphroaig 10', cat) || {}).dist, 'Laphroaig');
+  eq('a house nobody knows stays unknown',
+    (L.offerFacts('Boss Hog', cat) || {}).dist, undefined);
+
+  /* 3. THE REASONING IS THE BAR'S. Owning twelve from a house is a reason
+        to buy a thirteenth bottle and a reason NOT to spend a glass.
+        wouldILike was fixed for this and pickFromList was not, so the same
+        mistake shipped twice in two places. */
+  eq('the unfamiliar one is the pick', r.pick.name, 'Boss Hog');
+  eq('and says why that holds at a bar',
+    /rather than buy a bottle/.test(r.pick.why), true);
+  /* A bottle you OWN is set aside entirely rather than ranked low — you
+     can pour that at home, which is a stronger statement than sinking it.
+     The house-you-know reasoning applies to the ones you do not own. */
+  eq('a bottle on your own shelf is set aside',
+    r.owned.some(x => x.name === 'Laphroaig 10'), true);
+  /* THREE from the house, which is where "you know this one" starts —
+     BZ had twelve, and a fixture with one does not exercise the rule. */
+  const deepCat = Object.assign({}, cat, {
+    c: { k: 'c', name: 'Laphroaig Lore', dist: 'Laphroaig', proof: 96,
+         sub: 'scotch' },
+    d: { k: 'd', name: 'Laphroaig 25', dist: 'Laphroaig', proof: 92,
+         sub: 'scotch' }
+  });
+  const deepBs = bs.concat([{ k: 'c', status: 'open' },
+                            { k: 'd', status: 'open' }]);
+  const deep = L.pickFromList('Laphroaig Quarter Cask, Yamazaki 18',
+    deepCat, deepBs, [], 4);
+  const known = deep.rest.filter(x => x.dist === 'Laphroaig')[0];
+  eq('but another from that house ranks below a stranger',
+    deep.pick.name, 'Yamazaki 18');
+  eq('and it says what to do instead', !!known && /Laphroaig/.test(known.why),
+    true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
