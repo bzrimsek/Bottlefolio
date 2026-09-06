@@ -178,5 +178,24 @@ check('no fixed svg id is emitted by a repeated drawing',
     return fn > 0 && src.slice(fn, i).indexOf('return') >= 0;
   }));
 
+/* 14. Every stored key needs a DEFAULT of the right shape.
+
+       load() compares a stored value against the shape of S[k], so a key
+       in KEYS with no entry in S is discarded as corrupt on every single
+       load. That is not cosmetic: a discarded key forces "remote wins",
+       so the account silently takes the device — and the only sign is a
+       toast saying some local data would not read.
+
+       bottleSaid shipped like that and cost a sync before BZ's log
+       caught it. */
+{
+  const km = src.match(/const KEYS = \[([\s\S]*?)\];/);
+  const sm = src.match(/const S = \{([\s\S]*?)\n\};/);
+  const keys = km ? [...km[1].matchAll(/'([a-zA-Z]+)'/g)].map(m => m[1]) : [];
+  const defaults = sm ? sm[1] : '';
+  check('every stored key has a default in S',
+    keys.filter(k => !new RegExp('\\b' + k + ':').test(defaults)));
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
