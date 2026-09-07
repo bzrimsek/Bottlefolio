@@ -11738,6 +11738,27 @@ sec('\u00a7288 reading the label');
       { ok: true, name: "Old Elk Wheat N Rye" }, onScreen).other,
     'Old Elk Wheat N Rye');
 
+  /* A QR CODE IS NOT A BARCODE.
+
+     BZ's Bardstown back panel carries a QR reading https://qrco.de/bf7b8h
+     beside the description, and the UPC is on a different panel. zxing
+     decodes whatever symbology it is shown, found the QR first and
+     returned it — so the decoder stopped on a URL and never went looking
+     for the real barcode. Checked by shape rather than by asking the
+     decoder for its format, because the two engines report formats
+     differently and a digit string is a digit string in both. */
+  eq('a QR payload is not a product code',
+    L.isProductCode('https://qrco.de/bf7b8h'), false);
+  eq('a UPC-A is', L.isProductCode('850030365156'), true);
+  eq('an EAN-13 is', L.isProductCode('5029704221295'), true);
+  eq('an EAN-8 is', L.isProductCode('12345678'), true);
+  eq('four digits is not a barcode', L.isProductCode('8506'), false);
+  eq('and neither is a code with a letter in it',
+    L.isProductCode('85003036515X'), false);
+  eq('nothing is not a barcode', L.isProductCode(null), false);
+  eq('surrounding space does not make it one thing or the other',
+    L.isProductCode('850030365156 '), true);
+
   /* WHAT GETS WRITTEN, and only what was ticked. */
   eq('an unticked field is not written',
     JSON.stringify(L.labelTake({ fin: 'Oloroso', proof: 100 }, ['proof'])),
