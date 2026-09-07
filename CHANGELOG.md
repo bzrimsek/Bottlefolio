@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v1.8.44  ·  2026-09-07 01:48 AM ET
+
+The Home button was cropped, and it was the filter bar sitting on top of it. BZ reported that button five times and I measured the gaps around it instead of measuring what was over it. The bar had margin-top -20px while the header below it leaves 12, so it covered the Home button by 8 pixels at every scroll position on every screen with a filter bar. No negative top margin now; the sides stay negative so it still bleeds to both edges, and the sticky offset with its padding still covers the scroller's top once it sticks. Measured clear by 12px on shelf and flights. The in-page back is in the HEADER, beside the title, where every other back in this app lives - BZ: why not put it in the header where there is space, like the other pages. It had been a chip in the body, then a button in the body; both were the wrong place. The search hint says Search your flights: it searched titles, premises and pours and said so, but what comes back is flights. And the tonight box is out of the flights screen and inside Suggestions, since the tile beside it said the same thing. 2936 assertions.
+
 ## v1.8.43  ·  2026-09-07 01:32 AM ET
 
 You could pour tonight IS Suggestions. BZ: we don't need it here, that is suggestions, no? Right - the box listed three flights ready to pour and the tile beside it said 34 ready to pour tonight and opened the same thing, so the screen asked one question twice. The box is off the flights screen and INSIDE suggestions rather than deleted, at the top, because flights already designed and ready to pour are the best suggestion there is and they cost nothing to act on. Designing a new one comes after. The flights screen is now four tiles and nothing else until you open one. 2936 assertions.
