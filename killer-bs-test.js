@@ -2126,7 +2126,7 @@ const lib = {};
  ['Buffalo Trace', 'Buffalo Trace', 'bourbon', 'Kentucky', 90]]
   .forEach(([n, d, s, r, pf]) => {
     lib[L.libKey(n)] = { name: n, dist: d, sub: s, region: r, proof: pf,
-                         tn: { nose: 'n' } };
+                         tn: { nose: 'n' }, mash: '75% corn, 21% rye, 4% malted barley' };
   });
 
 eq('a distillery finds its bottles', L.searchLibrary(lib, 'ardbeg').length, 2);
@@ -2145,11 +2145,18 @@ eq('a limit is honoured', L.searchLibrary(lib, '', 2).length, 2);
 sec('what is thin');
 eq('a complete entry has no gaps', L.libraryGaps(lib[L.libKey('Lagavulin 16')]), []);
 eq('a missing proof shows',
-  L.libraryGaps({ name: 'X', dist: 'D', sub: 'rye', tn: { nose: 'n' } }),
+  L.libraryGaps({ name: 'X', dist: 'D', sub: 'rye', tn: { nose: 'n' },
+                  mash: '75% corn, 21% rye, 4% malted barley' }),
   ['proof']);
-eq('several show', L.libraryGaps({ name: 'X' }).length, 4);
+// FIVE gaps now: the mash bill joined them, so an empty entry is short of
+// everything there is to be short of.
+eq('several show', L.libraryGaps({ name: 'X' }).length, 5);
 eq('notes count as a gap',
-  L.libraryGaps({ name: 'X', proof: 90, dist: 'D', sub: 'rye' }), ['notes']);
+  L.libraryGaps({ name: 'X', proof: 90, dist: 'D', sub: 'rye',
+                  mash: '75% corn, 21% rye, 4% malted barley' }), ['notes']);
+eq('and so does the mash bill',
+  L.libraryGaps({ name: 'X', proof: 90, dist: 'D', sub: 'rye',
+                  tn: { nose: 'n' } }), ['mash']);
 }
 
 {
@@ -7755,7 +7762,7 @@ sec('§235 what is worth looking up twice');
     { k: 'p1', name: 'Thin One', proof: null, dist: 'H', sub: 'bourbon' },
     { k: 'p2', name: 'Thin Two', proof: 90, dist: null, sub: 'bourbon' },
     { k: 'p3', name: 'Complete', proof: 90, dist: 'H', sub: 'bourbon',
-      tn: { nose: 'something' } },
+      tn: { nose: 'something' }, mash: '75% corn, 21% rye, 4% malted barley' },
     { k: 'p4', name: 'Known Miss', proof: null, dist: 'H', sub: 'bourbon' }
   ];
   const ledger = { p4: { ok: 0, no: 2, at: today } };
@@ -9534,7 +9541,7 @@ sec('§262 what a lookup answer keeps');
     dist: 'Kavalan', sub: 'world', style: 'single malt', fin: 'Wine',
     msrp: 250, obsc: 'niche', scar: 'limited', alloc: 'rare',
     nose: 'tropical fruit', palate: 'oak and mango',
-    finish: 'long, drying' };
+    finish: 'long, drying', mash: '100% malted barley' };
   const parsed = L.parseLookup(raw, { name: raw.name, needIdentity: false });
 
   /* The fields that were being read and dropped. */
@@ -9795,7 +9802,7 @@ sec('§265 what is left to do, not what is imperfect');
 {
   const today = '2026-09-04';
   const full = { k: 'a', name: 'Complete', proof: 100, dist: 'H',
-                 sub: 'bourbon', tn: { nose: 'x' } };
+                 sub: 'bourbon', tn: { nose: 'x' }, mash: '75% corn, 21% rye, 4% malted barley' };
   const thin1 = { k: 'b', name: 'Thin One', proof: 100 };
   const thin2 = { k: 'c', name: 'Thin Two', proof: 100 };
   const products = [full, thin1, thin2];
@@ -9897,7 +9904,8 @@ sec('§266 found means a gap closed');
 sec('§267 an occupied slot that is still a gap');
 {
   const prompt = { name: 'X', proof: 100, dist: 'H', sub: 'scotch',
-                   tn: { nose: 'a card prompt' }, tnFrom: 'PEAT IS A POSTCODE' };
+                   tn: { nose: 'a card prompt' }, tnFrom: 'PEAT IS A POSTCODE',
+                   mash: '75% corn, 21% rye, 4% malted barley' };
   eq('a flight-card note reads as no note',
     L.libraryGaps(prompt), ['notes']);
 
@@ -9945,7 +9953,8 @@ sec('§267 an occupied slot that is still a gap');
 sec('§268 one rule, three steps');
 {
   const prompt = { name: 'X', proof: 100, dist: 'H', sub: 'scotch',
-                   tn: { nose: 'a card prompt' }, tnFrom: 'A FLIGHT' };
+                   tn: { nose: 'a card prompt' }, tnFrom: 'A FLIGHT',
+                   mash: '75% corn, 21% rye, 4% malted barley' };
 
   /* The rule itself. A flight-card prompt does not fill the notes slot —
      it was written to be read aloud beside five other pours. */
@@ -10017,7 +10026,7 @@ sec('§269 the library in three lists');
 {
   const today = '2026-09-04';
   const done = { k: 'a', name: 'Complete', proof: 100, dist: 'H',
-                 sub: 'bourbon', tn: { nose: 'x' } };
+                 sub: 'bourbon', tn: { nose: 'x' }, mash: '75% corn, 21% rye, 4% malted barley' };
   const fresh = { k: 'b', name: 'Never Asked', proof: 100 };
   const rested = { k: 'c', name: 'Asked Today', proof: 100 };
   const products = [done, fresh, rested];
@@ -10050,8 +10059,14 @@ sec('§269 the library in three lists');
 
   /* The score is the headline: 100 is nothing left to get. */
   eq('a complete entry scores 100', L.entryScore(done), 100);
-  eq('and one short of notes scores less',
-    L.entryScore({ proof: 100, dist: 'H', sub: 'rye' }), 75);
+  /* Computed by hand from L.GAP_WORTH, which is 28/22/17/23/10 since the
+     mash bill became the fifth gap: short of notes AND a mash bill is
+     100 - 23 - 10 = 67. It read 75 when notes were worth 25 of four. */
+  eq('and one short of notes and grain scores less',
+    L.entryScore({ proof: 100, dist: 'H', sub: 'rye' }), 67);
+  eq('short of the mash bill alone costs ten',
+    L.entryScore({ proof: 100, dist: 'H', sub: 'rye',
+                   tn: { nose: 'x' } }), 90);
 
   /* The rest escalates rather than blacklisting. A whisky nobody could
      describe this year may be described next. */
@@ -10085,8 +10100,12 @@ sec('§270 everything asked about leaves the list');
   const mk = n => {
     const out = [];
     for (let i = 0; i < n; i++) {
+      /* A mash bill from the start: the intent here is an entry whose ONLY
+         gap is notes, so that answering with a nose empties it. Without one
+         every entry keeps a second open gap, nothing is ever done, and the
+         invariant this section exists to prove cannot be stated. */
       out.push({ k: 'e' + i, name: 'Entry ' + i, proof: 100, dist: 'H',
-                 sub: 'scotch' });
+                 sub: 'scotch', mash: '75% corn, 21% rye, 4% malted barley' });
     }
     return out;
   };
@@ -10151,7 +10170,8 @@ sec('§271 rows carry the key the map holds them under');
   /* A library shaped like the real one: keyed by name, no k on the rows. */
   const byKey = {
     'ardbeg_ten': { name: 'Ardbeg Ten', proof: 92, dist: 'Ardbeg',
-                    sub: 'scotch', tn: { nose: 'peat' } },
+                    sub: 'scotch', tn: { nose: 'peat' },
+                    mash: '100% malted barley' },
     'blue_spot': { name: 'Blue Spot', proof: 117, dist: 'Spot',
                    sub: 'irish' },
     'longrow_18': { name: 'Longrow 18', proof: 92, dist: 'Springbank',
@@ -11404,6 +11424,180 @@ sec('§285 removals survive a merge');
       L.tombstone({}, 'v:a', now)).b, 1);
   eq('a star added elsewhere still arrives',
     L.mergeMapWithRemovals({ b: 1 }, { a: 1, b: 1 }, {}).a, 1);
+}
+
+sec('\u00a7286 what the add form does with the name it has');
+{
+  /* Expected values computed in a separate Node session against the real
+     catalogue BEFORE these were written (rule 28):
+
+       lookupFromCatalog('La')                    -> A. Overholt Monongahela
+       lookupFromCatalog('Lagavulin 16 Year')     -> Lagavulin 16 Year Old
+       lookupFromCatalog('Zzzqx Nonesuch Whisky') -> null
+       lookupFromCatalog("Jack Daniel's #7")      -> null  (digit guard)
+
+     The first is the point of the whole section. Two characters MATCH a
+     bottle on the shelf — a partial name is a real hit, not a near miss —
+     so the length guard has to run BEFORE the catalogue is asked, or
+     typing the first two letters of anything fills the form from whatever
+     it happened to prefix. */
+  const cat = {
+    lag: { k: 'lag', name: 'Lagavulin 16 Year Old', dist: 'Lagavulin',
+           proof: 86, sub: 'scotch' },
+    ove: { k: 'ove', name: 'A. Overholt Monongahela Rye', dist: 'Overholt',
+           proof: 100, sub: 'rye' }
+  };
+
+  eq('two characters is not a name yet',
+    L.fillPlan('La', cat, true).act, 'short');
+  eq('and it does not matter that the shelf would have matched it',
+    !!L.lookupFromCatalog('La', cat), true);
+
+  eq('a name the shelf knows is filled without asking',
+    L.fillPlan('Lagavulin 16 Year Old', cat, true).act, 'shelf');
+  eq('and it carries the entry it matched',
+    L.fillPlan('Lagavulin 16 Year Old', cat, true).res.name,
+    'Lagavulin 16 Year Old');
+
+  eq('a name nothing knows offers the paid call',
+    L.fillPlan('Zzzqx Nonesuch Whisky', cat, true).act, 'network');
+  eq('and carries the query, trimmed',
+    L.fillPlan('  Zzzqx Nonesuch Whisky  ', cat, true).q,
+    'Zzzqx Nonesuch Whisky');
+
+  eq('with no lookup configured it says so instead',
+    L.fillPlan('Zzzqx Nonesuch Whisky', cat, false).act, 'nourl');
+
+  eq('an empty field asks nothing', L.fillPlan('', cat, true).act, 'short');
+  eq('and neither does a missing one',
+    L.fillPlan(null, cat, true).act, 'short');
+  eq('whitespace is not a name',
+    L.fillPlan('   ', cat, true).act, 'short');
+
+  /* THE DIGIT GUARD SURVIVES THE MOVE. lookupFromCatalog refuses a match
+     whose numbers disagree, which is what stopped Jack Daniel's #7 filling
+     in Bonded's proof. Through fillPlan that has to come out as an OFFER
+     to look it up, never as a fill. */
+  const jd = { b: { k: 'b', name: "Jack Daniel's Bonded", proof: 100 } };
+  eq('a numbered expression is not filled from an unnumbered neighbour',
+    L.fillPlan("Jack Daniel's #7", jd, true).act, 'network');
+}
+
+sec('\u00a7287 the grain a whisky is made from');
+{
+  /* Every expected value below was read off a separate Node run against
+     L.parseMash BEFORE it was written here, and each input is a phrasing
+     that appears on a real back label. */
+
+  const bill = t => JSON.stringify(L.parseMash(t));
+
+  eq('percentages before the grain',
+    bill('75% corn, 21% rye, 4% malted barley'),
+    '[{"g":"corn","p":75},{"g":"rye","p":21},{"g":"malt","p":4}]');
+  eq('and after it, which is printed just as often',
+    bill('Corn 75%, Rye 21%, Malted Barley 4%'),
+    '[{"g":"corn","p":75},{"g":"rye","p":21},{"g":"malt","p":4}]');
+  eq('a label that introduces itself',
+    bill('Mash bill: 78% corn, 10% rye, 12% malted barley'),
+    '[{"g":"corn","p":78},{"g":"rye","p":10},{"g":"malt","p":12}]');
+  eq('the order printed is the order kept',
+    L.parseMash('95% rye, 5% malted barley').map(x => x.g).join(','),
+    'rye,malt');
+
+  /* BZ: most scotch/irish are malted barley and barley, but some use both.
+     This is that case, and it is the reason the vocabulary separates
+     malted from unmalted at all — Irish single pot still is both grains in
+     one mash and a one-word "barley" cannot say so. */
+  eq('malted and unmalted are two different grains',
+    bill('Malted and unmalted barley, pot distilled'),
+    '[{"g":"malt","p":null},{"g":"barley","p":null}]');
+  eq('unmalted on its own is not read as malted',
+    bill('unmalted barley'), '[{"g":"barley","p":null}]');
+  eq('and a scotch is one grain at all of it',
+    bill('100% malted barley'), '[{"g":"malt","p":100}]');
+
+  /* A BARE "barley" on an American bill is malted: it is the malt that
+     converts the starch and nobody lists raw barley in a bourbon. */
+  eq('a bare barley percentage reads as malted',
+    bill('60% corn, 36% rye, 4% barley'),
+    '[{"g":"corn","p":60},{"g":"rye","p":36},{"g":"malt","p":4}]');
+
+  eq('a grain with no proportion still counts',
+    L.parseMash('corn, rye and malted barley').length, 3);
+  eq('and carries no number rather than a guessed one',
+    L.parseMash('corn, rye and malted barley').every(x => x.p === null), true);
+
+  /* PARTIAL DISCLOSURE IS NORMAL and must survive. The first rule here
+     rejected anything not summing to 100 and threw this away, which is a
+     true fact about a real bourbon. */
+  eq('a partly disclosed bill keeps what was disclosed',
+    bill('51% corn, rest undisclosed'), '[{"g":"corn","p":51}]');
+  /* Over 100 is the only reading that cannot be true, so it is the only
+     one rejected. */
+  eq('an impossible bill is refused',
+    L.parseMash('50% corn, 50% rye, 20% wheat'), null);
+  eq('a sentence naming no grain is nothing',
+    L.parseMash('Undisclosed'), null);
+  eq('and neither is an empty field', L.parseMash(''), null);
+  eq('nor a missing one', L.parseMash(null), null);
+
+  /* WHAT IT SAYS ABOUT THE WHISKY, in the phrase a drinker uses. */
+  eq('a fifth of rye is a high-rye bourbon',
+    L.mashShape('75% corn, 21% rye, 4% malted barley'), 'high-rye');
+  eq('wheat as the small grain is a wheater',
+    L.mashShape('70% corn, 20% wheat, 10% malted barley'), 'wheated');
+  eq('mostly rye is rye-forward',
+    L.mashShape('95% rye, 5% malted barley'), 'rye-forward');
+  eq('a little rye is just a bourbon',
+    L.mashShape('80% corn, 12% rye, 8% malted barley'), null);
+  /* AND IT REFUSES TO GUESS. A bill that does not disclose the small grain
+     cannot say what the small grain is, and claiming otherwise is exactly
+     the overclaim a drinker would catch. */
+  eq('a partial bill claims no shape',
+    L.mashShape('51% corn, rest undisclosed'), null);
+  eq('and a single malt is not a bourbon shape',
+    L.mashShape('100% malted barley'), null);
+
+  /* How it reads on the bottle screen. */
+  eq('a tag names the grain in full',
+    L.mashTags('75% corn, 21% rye, 4% malted barley').map(x => x.label).join(' | '),
+    '75% Corn | 21% Rye | 4% Malted barley');
+  eq('a grain with no proportion is named alone',
+    L.mashTags('Malted and unmalted barley').map(x => x.label).join(' | '),
+    'Malted barley | Unmalted barley');
+  eq('nothing parsed draws no tags', L.mashTags('Undisclosed').length, 0);
+  eq('a whole number carries no decimal', L.mashPct(4), '4%');
+  eq('and a real fraction keeps one', L.mashPct(33.5), '33.5%');
+
+  /* THE FIFTH GAP. Weights are 28/22/17/23/10 and must total 100, because
+     entryScore is 100 minus what is missing — a gap with no weight would
+     be free and a sixth added carelessly would let a score go negative. */
+  eq('every gap carries a weight',
+    L.LIBRARY_GAPS.every(g => typeof L.GAP_WORTH[g] === 'number'), true);
+  eq('and they still add up to 100',
+    L.LIBRARY_GAPS.reduce((a, g) => a + L.GAP_WORTH[g], 0), 100);
+  eq('a missing mash bill is an open gap',
+    L.slotOpen({ proof: 90, dist: 'H', sub: 'rye', tn: { nose: 'n' } }, 'mash'),
+    true);
+  eq('and a filled one closes it',
+    L.slotOpen({ mash: '100% malted barley' }, 'mash'), false);
+
+  /* IT HAS TO SURVIVE THE WHOLE ROUND TRIP. Five separate whitelists sat
+     between a lookup answering with a mash bill and that bill reaching the
+     shelf, and each one silently dropped anything it did not name. */
+  const answered = L.parseLookup({ name: 'X', mash: '100% malted barley' },
+    { needIdentity: false });
+  eq('a lookup answering only with grain is an answer', !!answered, true);
+  eq('parseLookup keeps it', answered.mash, '100% malted barley');
+  eq('the form is told it was filled',
+    L.lookupFilled(answered).indexOf('mash') >= 0, true);
+  eq('normalizeProduct keeps a typed one',
+    L.normalizeProduct({ name: 'X', mash: '51% corn' }).mash, '51% corn');
+  eq('and drops an empty one rather than closing the gap',
+    L.normalizeProduct({ name: 'X', mash: '  ' }).mash, undefined);
+  eq('the shared library row carries it',
+    L.libraryEntry({ name: 'X', proof: 90, mash: '100% malted barley' }).mash,
+    '100% malted barley');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

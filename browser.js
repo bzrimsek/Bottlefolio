@@ -453,7 +453,11 @@ function step(n) {
          the back was rebuilt as btn btn-sm ghost — the shape every other
          back in the app uses — so a correct change failed a check that was
          testing the styling rather than the behaviour. Rule 30c. */
-      if (!(await page.locator('#flightList button',
+      /* In the HEADER now, not the body — BZ: put it where the other pages
+         put theirs. Looked up by what it says, across the whole screen, so
+         moving it again does not fail a check that is meant to be about
+         whether it exists. */
+      if (!(await page.locator('#scr-flights button',
             { hasText: '\u2039 Flights' }).count())) {
         failures.push('flights: the list has no way back to the tiles');
       }
@@ -1368,6 +1372,168 @@ function step(n) {
     }
   }
 
+  step('the add form fills itself');
+  /* 17. The thing the suite cannot see.
+
+     productForm is a render function, so the harness cannot call it, and
+     until this step nothing in the gate had ever OPENED the add-a-bottle
+     form. L.fillPlan is tested to death and none of that proves the form
+     is wired to it — which is the whole reason rule 30b exists. */
+  {
+    await page.evaluate(() => { closeModal(); productForm(null); });
+    await page.waitForTimeout(400);
+
+    // The control BZ objected to is gone, and nothing put another in.
+    const buttons = await page.evaluate(() =>
+      [...document.querySelectorAll('.modal .form button')]
+        .map(b => (b.textContent || '').trim()).filter(Boolean));
+    if (buttons.some(b => /fill in the rest/i.test(b))) {
+      failures.push('add form: "Fill in the rest" is still a button');
+    }
+
+    // And the note takes no room before it has anything to say.
+    const openState = await page.evaluate(() => {
+      const n = document.querySelector('.modal .looknote');
+      return { there: !!n, hidden: n ? n.hidden : null,
+               h: n ? n.getBoundingClientRect().height : -1 };
+    });
+    if (!openState.there) failures.push('add form: no note element at all');
+    else if (!openState.hidden) {
+      failures.push('add form: the note is in the layout before anything '
+        + 'has been typed (' + openState.h + 'px, and .form has a 9px gap '
+        + 'around it either way)');
+    }
+    else if (openState.h > 0) {
+      failures.push('add form: the note is hidden and still '
+        + openState.h + 'px tall');
+    }
+
+    /* A NAME THE SHELF KNOWS FILLS ITSELF ON BLUR. Driven through the real
+       DOM against the real catalogue, because "the fields got values" is
+       the claim and L.fillPlan returning 'shelf' is not it. */
+    const known = await page.evaluate(() => {
+      const p2 = Object.values(S.catalog).find(x => x.dist && x.proof);
+      return p2 ? p2.name : null;
+    });
+    if (!known) failures.push('add form: no catalogue entry to try');
+    else {
+      const filled = await page.evaluate(name => {
+        const f = document.querySelector('.modal .form');
+        const n = f.querySelector('[name="name"]');
+        n.value = name;
+        n.dispatchEvent(new Event('blur'));
+        return new Promise(res => setTimeout(() => {
+          const note = f.querySelector('.looknote');
+          res({
+            dist: (f.querySelector('[name="dist"]') || {}).value,
+            proof: (f.querySelector('[name="proof"]') || {}).value,
+            note: note ? (note.textContent || '').trim() : '',
+            hidden: note ? note.hidden : null
+          });
+        }, 250));
+      }, known);
+      if (!filled.dist && !filled.proof) {
+        failures.push('add form: blurring "' + known
+          + '" filled nothing — dist ' + JSON.stringify(filled.dist)
+          + ', proof ' + JSON.stringify(filled.proof));
+      }
+      /* The behaviour, not the wording (rule 30c): it has to SAY something
+         and be visible, and a rewrite of the sentence must not fail this. */
+      if (filled.hidden || !filled.note) {
+        failures.push('add form: it filled the fields and said nothing');
+      }
+    }
+
+    /* A NAME NOTHING KNOWS OFFERS THE CALL RATHER THAN MAKING IT. */
+    await page.evaluate(() => { S.lookupUrl = 'https://example.invalid/x'; });
+    const offered = await page.evaluate(() => {
+      const f = document.querySelector('.modal .form');
+      const n = f.querySelector('[name="name"]');
+      n.value = 'Zzzqx Nonesuch Whisky';
+      n.dispatchEvent(new Event('blur'));
+      return new Promise(res => setTimeout(() => {
+        const note = f.querySelector('.looknote');
+        res({ hidden: note ? note.hidden : null,
+              act: !!(note && note.querySelector('.noteact')) });
+      }, 250));
+    });
+    if (offered.hidden) {
+      failures.push('add form: an unknown name said nothing at all');
+    }
+    if (!offered.act) {
+      failures.push('add form: no way to spend a lookup on an unknown name');
+    }
+    await page.evaluate(() => closeModal());
+    await page.waitForTimeout(200);
+  }
+
+  step('the mash bill reaches the screen');
+  /* 18. A field nobody can see is a field nobody fills.
+
+     The suite proves L.parseMash and L.mashTags to death and none of it
+     proves the bottle screen draws them — showBottle is a render function
+     the harness cannot call. It was also worth writing because my own
+     one-off check looked for the tags inside `.modal` and found none, and
+     the screen is not a modal: the check was wrong, not the app, and a
+     check that lies in that direction wastes a whole round. */
+  {
+    const seen = await page.evaluate(() => {
+      const k = Object.keys(S.catalog)[0];
+      if (!k) return null;
+      S.edits[k] = Object.assign({}, S.edits[k],
+        { mash: '75% corn, 21% rye, 4% malted barley' });
+      rebuildCatalog();
+      showBottle(k);
+      return {
+        tags: [...document.querySelectorAll('.tag.grain')].map(t => t.textContent),
+        src: [...document.querySelectorAll('.src')].map(x => x.textContent)
+          .filter(t => /corn/i.test(t))
+      };
+    });
+    if (!seen) {
+      failures.push('mash: no catalogue to try it on');
+    } else {
+      /* The BEHAVIOUR, not the wording (rule 30c): three grains in, three
+         tags out, each naming its grain. A rewrite of the labels must not
+         fail this and a parse that silently drew nothing must. */
+      if (seen.tags.length !== 3) {
+        failures.push('mash: a three-grain bill drew ' + seen.tags.length
+          + ' tags: ' + JSON.stringify(seen.tags));
+      }
+      if (!seen.tags.some(t => /corn/i.test(t))
+          || !seen.tags.some(t => /malted barley/i.test(t))) {
+        failures.push('mash: the tags do not name the grains: '
+          + JSON.stringify(seen.tags));
+      }
+      /* The printed sentence survives beside our reading of it, so a parse
+         that got it wrong is visible rather than silently replacing it. */
+      if (!seen.src.length) {
+        failures.push('mash: the tags are drawn and the printed bill is not');
+      }
+    }
+
+    /* AND THE FORM CAN TAKE ONE. A gap the fill can close and nobody can
+       type is half a feature. */
+    await page.evaluate(() => { closeModal(); productForm(null); });
+    await page.waitForTimeout(300);
+    const typed = await page.evaluate(() => {
+      const f = document.querySelector('.modal .form');
+      const i = f.querySelector('[name="mash"]');
+      if (!i) return null;
+      i.value = '51% corn, rest undisclosed';
+      const vals = {};
+      f.querySelectorAll('input,select').forEach(x => { vals[x.name] = x.value; });
+      return L.normalizeProduct(vals).mash;
+    });
+    if (typed === null) failures.push('add form: no mash bill field');
+    else if (typed !== '51% corn, rest undisclosed') {
+      failures.push('add form: a typed mash bill did not survive the save: '
+        + JSON.stringify(typed));
+    }
+    await page.evaluate(() => closeModal());
+    await page.waitForTimeout(200);
+  }
+
   await browser.close();
 
   endStep();
@@ -1376,7 +1542,7 @@ function step(n) {
     console.log('  \u2716 ' + failures.length + ' failure(s) in a real browser');
     process.exit(1);
   }
-  console.log('  \u2713 loads, every screen draws, nav holds, shelf lists, shop asks, tiles hold one row, log splits, shop types and buys, card rows hold one line, headers sort, find it searches, backup restores, tiles go somewhere, tiles lead somewhere, bottle controls sit in their sections, suggestions open bottles');
+  console.log('  \u2713 loads, every screen draws, nav holds, shelf lists, shop asks, tiles hold one row, log splits, shop types and buys, card rows hold one line, headers sort, find it searches, backup restores, tiles go somewhere, tiles lead somewhere, bottle controls sit in their sections, suggestions open bottles, the add form fills itself, the mash bill reaches the screen');
 })().catch(e => {
   /* Name the step and keep the stack. This used to print one line and throw
      the rest away, which turned every failure into a thirty-second timeout

@@ -228,5 +228,33 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('screen text uses US spelling', found);
 }
 
+/* 16. The gap list and the weights that score it must agree.
+
+      L.GAP_WORTH sums to 100 and entryScore is 100 minus what is missing,
+      so a gap added to L.LIBRARY_GAPS without a weight is FREE — it costs
+      nothing and the score quietly stops meaning "nothing left to get".
+      Adding `mash` as a fifth gap was one line, and it was one more line
+      before the score was wrong in a way no screen would have shown.
+
+      Same shape as check 5: two lists that have to be edited together, and
+      nothing making anyone do it. */
+{
+  const gapsM = src.match(/L\.LIBRARY_GAPS = \[([^\]]*)\]/);
+  const worthM = src.match(/L\.GAP_WORTH = \{([^}]*)\}/);
+  const gaps = gapsM ? [...gapsM[1].matchAll(/'([a-z]+)'/g)].map(m => m[1]) : [];
+  const worth = {};
+  if (worthM) {
+    [...worthM[1].matchAll(/([a-z]+)\s*:\s*(\d+)/g)]
+      .forEach(m => { worth[m[1]] = +m[2]; });
+  }
+  check('every library gap has a weight',
+    gaps.filter(g => worth[g] === undefined));
+  const sum = Object.keys(worth).reduce((a2, k) => a2 + worth[k], 0);
+  check('the gap weights total 100',
+    sum === 100 ? [] : ['they total ' + sum]);
+  check('no weight is declared for a gap that does not exist',
+    Object.keys(worth).filter(k => gaps.indexOf(k) < 0));
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
