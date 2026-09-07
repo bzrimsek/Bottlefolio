@@ -203,5 +203,30 @@ check('no fixed svg id is emitted by a repeated drawing',
     keys.filter(k => !new RegExp('\\b' + k + ':').test(defaults)));
 }
 
+/* 15. US spelling on screen.
+
+       BZ: it better not use UK english. Screen literals only — the data
+       keys stay as they are, because 'colour' is a field name on 325
+       catalogue entries and renaming it would break every one of them.
+       This checks the strings a person reads, not the strings the code
+       looks things up by. */
+{
+  const BR = /colour|flavour|favourite|neighbour|behaviour|centre|litre|grey/i;
+  const KEYS = new Set(["'colour'", "'flavour'", "'flavoured'", "'grey'",
+                        "'centre'", "'litre'", "'favourite'"]);
+  const lines = src.split('\n');
+  const found = [];
+  lines.forEach((l, i) => {
+    const t = l.trim();
+    if (t.startsWith('*') || t.startsWith('/*') || t.startsWith('//')) return;
+    const quoted = l.match(/'(?:[^'\\\n]|\\.)*'/g) || [];
+    quoted.forEach(q => {
+      if (KEYS.has(q)) return;            // a data key, not prose
+      if (BR.test(q)) found.push((i + 1) + ': ' + q.slice(0, 50));
+    });
+  });
+  check('screen text uses US spelling', found);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));

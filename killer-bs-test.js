@@ -3534,7 +3534,10 @@ const defined = L.REFERENCE.reduce((a, s) => a.concat(s.items.map(i => i.term.to
 const NAMED = { 'bourbon': 'bourbon', 'rye': 'rye whiskey', 'wheat': 'wheat whiskey',
   'tennessee': 'tennessee whiskey', 'american single malt': 'american single malt',
   'scotch': 'scotch whisky', 'irish': 'irish whiskey', 'canadian': 'canadian whisky',
-  'japanese': 'japanese whisky', 'world': 'world whisky', 'flavored': 'flavoured whiskey',
+  'japanese': 'japanese whisky', 'world': 'world whisky', /* US spelling, like the app: BZ asked for it and the reference entry is
+     "Flavored Whiskey" now. The type KEY stays 'flavored', which it always
+     was — only the prose changed. */
+  'flavored': 'flavored whiskey',
   'tequila': 'tequila' };
 eq('every type has a definition',
   L.TYPES.filter(t => defined.indexOf(NAMED[t]) < 0), []);
@@ -3552,7 +3555,9 @@ sec('reference search');
 eq('search finds a term', L.searchReference('lincoln county')
   .some(s => s.items.some(i => /Tennessee/.test(i.term))), true);
 eq('search is case insensitive', L.searchReference('ISLAY').length > 0, true);
-eq('search matches the definition text', L.searchReference('700 litres').length > 0, true);
+// US spelling in the reference now, so the search term follows it.
+eq('search matches the definition text',
+  L.searchReference('700 liters').length > 0, true);
 eq('search matches the source', L.searchReference('27 CFR').length > 0, true);
 eq('no match returns nothing', L.searchReference('zzzzz').length, 0);
 eq('empty sections are dropped',
