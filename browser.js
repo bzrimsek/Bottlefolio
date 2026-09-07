@@ -227,25 +227,25 @@ function step(n) {
      is a walk testing its own memory rather than the app: the thing worth
      checking is that each tile leads somewhere, not that there are three
      of them. */
-  const choices = await page.locator('.modetile').count();
+  const choices = await page.locator('#scr-shop .modetile').count();
   if (choices < 3) {
     failures.push('shop: only ' + choices + ' situations offered');
   } else {
     // Each situation in turn. Reaching the question again means pressing
     // Back, because the answer is remembered — which is the point of it.
     for (let i = 0; i < choices; i++) {
-      if (!(await page.locator('.modetile').count())) {
+      if (!(await page.locator('#scr-shop .modetile').count())) {
         const back = page.locator('#shopBack');
         if (await back.count()) {
           await back.first().click();
           await page.waitForTimeout(250);
         }
       }
-      if (!(await page.locator('.modetile').count())) {
+      if (!(await page.locator('#scr-shop .modetile').count())) {
         failures.push('shop: cannot get back to the question');
         break;
       }
-      await page.locator('.modetile').nth(i).click();
+      await page.locator('#scr-shop .modetile').nth(i).click();
       await page.waitForTimeout(400);
       const body = (await page.locator('#scr-shop').innerText()).trim();
       if (body.length < 40) {
@@ -272,7 +272,7 @@ function step(n) {
        broke the moment a fourth mode was added between them — the walk
        reported "no pills on the planning screen" when the screen was fine
        and the click had gone somewhere else. */
-    const modes = page.locator('.modetile');
+    const modes = page.locator('#scr-shop .modetile');
     if (await modes.count() >= 3) {
       await page.locator('.modetile', { hasText: 'website' }).first().click();
       await page.waitForTimeout(300);
@@ -432,6 +432,27 @@ function step(n) {
 
       await page.locator('nav button[data-scr="flights"]').click();
       await page.waitForTimeout(450);
+      /* The flights screen now leads with three things to do — run one you
+         designed, build one from scratch, see what you have poured — and
+         the list of flights is behind the first of them. BZ asked for that
+         shape; the walk follows it rather than the old one, and still
+         proves the list, the run log and the flight cards are all reachable
+         and correct one tap in. */
+      /* Four TILES now, in the same shape the shop uses — BZ asked for
+         that, plus Suggestions as a fourth. They were rows for one build
+         and this walk was written against those. */
+      const doors = await page.locator('#scr-flights .modetile').count();
+      if (doors !== 4) {
+        failures.push('flights: ' + doors + ' actions offered, want 4');
+      }
+      await page.locator('#scr-flights .modetile',
+        { hasText: 'Run one you designed' }).click().catch(() => {});
+      await page.waitForTimeout(450);
+      // And a way back to them, which every screen you go into needs.
+      if (!(await page.locator('#flightList .chip',
+            { hasText: 'Flights' }).count())) {
+        failures.push('flights: the list has no way back to the tiles');
+      }
       const runRows = await page.locator('#flightList .recent .item').count();
       if (runRows !== 1) {
         failures.push('flights: ' + runRows + ' rows in the run log, want 1');
@@ -538,7 +559,7 @@ function step(n) {
     await page.waitForTimeout(300);
     const chg3 = page.locator('#shopBack').first();
     if (await chg3.isVisible()) { await chg3.click(); await page.waitForTimeout(300); }
-    const modes3 = page.locator('.modetile');
+    const modes3 = page.locator('#scr-shop .modetile');
     if ((await modes3.count()) < 3) {
       failures.push('shop: cannot reach the situation question');
     } else {
@@ -1142,8 +1163,8 @@ function step(n) {
     // Shop: Home and Back on one line, not stacked.
     await page.locator('nav button[data-scr="shop"]').click();
     await page.waitForTimeout(250);
-    if (await page.locator('.modetile').count()) {
-      await page.locator('.modetile').first().click();
+    if (await page.locator('#scr-shop .modetile').count()) {
+      await page.locator('#scr-shop .modetile').first().click();
       await page.waitForTimeout(350);
     }
     /* Away and back, four times. The button was BUILT on every render into
@@ -1177,7 +1198,7 @@ function step(n) {
     if (onQuestion.some(l => /Back/.test(l))) {
       failures.push('shop: Back still shows on the question screen');
     }
-    await page.locator('.modetile').first().click();
+    await page.locator('#scr-shop .modetile').first().click();
     await page.waitForTimeout(300);
 
     const hdr = await page.evaluate(() => {
@@ -1211,7 +1232,7 @@ function step(n) {
        store screen. */
     const back = page.locator('#shopBack').first();
     if (await back.isVisible()) { await back.click(); await page.waitForTimeout(300); }
-    const tiles = page.locator('.modetile');
+    const tiles = page.locator('#scr-shop .modetile');
     if (await tiles.count() >= 3) {
       await page.locator('.modetile', { hasText: 'Deciding what to buy' })
         .first().click();
@@ -1256,7 +1277,7 @@ function step(n) {
     if (await back0.count() && !(await back0.first().isHidden())) {
       await back0.first().click(); await page.waitForTimeout(250);
     }
-    const modes = page.locator('.modetile');
+    const modes = page.locator('#scr-shop .modetile');
     if ((await modes.count()) > 1) {
       await modes.nth(1).click();            // deciding what to buy next
       await page.waitForTimeout(600);
