@@ -11220,13 +11220,46 @@ sec('§283 telling two devices apart');
      rather than on every line. */
   eq('two devices merge into one story',
     L.mergeSyncValue('log',
-      ['17:10 [des] a', '16:13 [des] b'],
-      ['16:16 [iph] c', '17:10 [des] a']).length, 3);
+      ['09-06 17:10:00 [des] a', '09-06 16:13:00 [des] b'],
+      ['09-06 16:16:00 [iph] c', '09-06 17:10:00 [des] a']).length, 3);
+  /* THE DATE IS PART OF THE STAMP. Lines carried a time of day and
+     nothing else, which was fine while a log lived on one device: it was
+     already in order. Merged across two devices and two days it sorted
+     22:00 above 20:25 whatever day each belonged to, and BZ's first merged
+     log opened with today at the top followed by four hours of yesterday.
+     A stamp that cannot be ordered is not a stamp. */
   eq('newest first',
-    L.mergeSyncValue('log', ['16:13 [des] b'], ['17:10 [des] a'])[0],
-    '17:10 [des] a');
+    L.mergeSyncValue('log', ['09-06 16:13:00 [des] b'],
+      ['09-06 17:10:00 [des] a'])[0], '09-06 17:10:00 [des] a');
+  eq('and yesterday sorts below today whatever the clock says',
+    L.mergeSyncValue('log', ['09-05 22:00:00 [des] late yesterday'],
+      ['09-06 08:00:00 [iph] early today'])[0],
+    '09-06 08:00:00 [iph] early today');
   eq('the same line twice is one line',
-    L.mergeSyncValue('log', ['17:10 [des] a'], ['17:10 [des] a']).length, 1);
+    L.mergeSyncValue('log', ['09-06 17:10:00 [des] a'],
+      ['09-06 17:10:00 [des] a']).length, 1);
+  /* THE WRITE MUST NOT CLOBBER. A bare set replaces the account's log
+     with this device's lines, so whichever device wrote last wiped the
+     other's half — which is why BZ's phone barcode lines never reached
+     his desktop however faithfully he opened Diagnostics on both. The
+     write was destroying what it was meant to join.
+
+     Merging before writing is the only shape that gives one log for one
+     person, and it has to hold in BOTH directions. */
+  {
+    const phone = ['09-06 18:00:00 [and] scan: camera on',
+                   '09-06 17:59:00 [and] boot: nav 0-58 in 800'];
+    const desk = ['09-06 19:00:00 [des] fb push ok'];
+    // The phone writes, then the desktop writes over the top of it.
+    const afterPhone = L.mergeSyncValue('log', phone, []);
+    const afterDesk = L.mergeSyncValue('log', desk, afterPhone);
+    eq('the desktop write keeps the phone\u2019s lines', afterDesk.length, 3);
+    eq('and the phone write keeps the desktop\u2019s',
+      L.mergeSyncValue('log', phone, afterDesk).length, 3);
+    eq('the scan line survives both',
+      afterDesk.some(l => /scan: camera on/.test(l)), true);
+  }
+
   eq('and it cannot grow without limit',
     L.mergeSyncValue('log',
       Array.from({ length: 400 }, (x, i) => '1' + i + ' [des] a'),

@@ -496,6 +496,39 @@ function check(name, got, want) {
     check('and the other device\u2019s arrive too', r.hasTheirs, true);
   }
 
+  {
+    /* A WRITE MUST NOT WIPE THE OTHER DEVICE.
+
+       The log had this fault and it took four attempts to see it: a bare
+       write replaces the account's copy, so whichever device wrote last
+       erased the other's work. The shelf writes exactly the same way and
+       has had none of that scrutiny — and it holds 346 bottles rather than
+       diagnostic lines.
+
+       The account gains a bottle while this device is signed in and has
+       one of its own to send. Both must survive. */
+    const r = await run('no clobber', { 'bz-apps': { whisky: { testuid: {
+        updated: 1000,
+        bottles: [{ id: 'B1', k: 'a', status: 'open' }] } } } },
+      async page => {
+        await page.waitForTimeout(1400);
+        return page.evaluate(async () => {
+          // Somebody else's device adds one, straight to the account.
+          firebase.database().ref('bz-apps/whisky/testuid/bottles')
+            .set([{ id: 'B1', k: 'a', status: 'open' },
+                  { id: 'B2', k: 'theirs', status: 'open' }]);
+          // and this one adds a different one and pushes.
+          S.bottles.push({ id: 'B3', k: 'mine', status: 'open' });
+          save_();
+          await new Promise(r2 => setTimeout(r2, 1600));
+          const acct = firebase.__store.data['bz-apps'].whisky.testuid;
+          return { ids: (acct.bottles || []).map(b => b.id).sort() };
+        });
+      });
+    check('a push keeps the bottle the other device added',
+      r.ids, ['B1', 'B2', 'B3']);
+  }
+
   await browser.close();
 
   notes.forEach(n => console.log('  \u00b7 ' + n));
