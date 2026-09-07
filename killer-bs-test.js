@@ -11343,5 +11343,60 @@ sec('§284 merging two shelves');
     L.mergeRecords('bottles', [], [], true).length, 0);
 }
 
+/* §285  a removal has to survive a merge -------------------------
+ *
+ * BZ asked for an audit of every data operation against the sync, and it
+ * found three ways to lose a removal. They share one root: a union cannot
+ * express an absence. Merging two copies of a list can only ever ADD, so
+ * anything taken out on one device is put back by the other.
+ *
+ *   - unstar a favourite: favs merges by union, the star returns
+ *   - delete a custom flight: customFlights merges by title, it returns
+ *   - delete a pour: history merges by kind+bottle+date, it returns
+ *
+ * A tombstone is the only thing a union handles correctly, because a list
+ * of what has been removed only ever grows.
+ */
+sec('§285 removals survive a merge');
+{
+  const now = 1788740000000;
+  eq('a tombstone records when',
+    L.tombstone({}, 'f:PEAT NIGHT', now)['f:PEAT NIGHT'], now);
+  eq('and never forgets an older one',
+    Object.keys(L.tombstone({ 'a': 1 }, 'b', now)).length, 2);
+
+  /* THE FLIGHT. Deleted here, present on the account, and it must not
+     come back. */
+  const flights = [{ title: 'PEAT NIGHT' }, { title: 'WHEAT, TURNED UP' }];
+  const gone = L.tombstone({}, 'f:PEAT NIGHT', now);
+  const afterF = L.mergeRecords('customFlights', [flights[1]], flights,
+    true, gone);
+  eq('a deleted flight stays deleted', afterF.length, 1);
+  eq('and the other one is untouched', afterF[0].title, 'WHEAT, TURNED UP');
+
+  /* THE POUR. Same shape, different identity. */
+  const pours = [{ kind: 'pour', k: 'a', at: '2026-09-05' },
+                 { kind: 'pour', k: 'b', at: '2026-09-05' }];
+  const goneP = L.tombstone({}, L.recordId('history', pours[0]), now);
+  eq('a deleted pour stays deleted',
+    L.mergeRecords('history', [pours[1]], pours, true, goneP).length, 1);
+
+  /* AND A REMOVAL THAT NEVER HAPPENED changes nothing. */
+  eq('no tombstones, nothing dropped',
+    L.mergeRecords('customFlights', [flights[1]], flights, true, {}).length,
+    2);
+
+  /* THE FAVOURITE. A map, so the tombstone drops the key rather than a
+     record — but it is the same list of removals. */
+  eq('an unstarred bottle stays unstarred',
+    L.mergeMapWithRemovals({ b: 1 }, { a: 1, b: 1 },
+      L.tombstone({}, 'v:a', now)).a, undefined);
+  eq('and the other star survives',
+    L.mergeMapWithRemovals({ b: 1 }, { a: 1, b: 1 },
+      L.tombstone({}, 'v:a', now)).b, 1);
+  eq('a star added elsewhere still arrives',
+    L.mergeMapWithRemovals({ b: 1 }, { a: 1, b: 1 }, {}).a, 1);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
