@@ -529,6 +529,38 @@ function check(name, got, want) {
       r.ids, ['B1', 'B2', 'B3']);
   }
 
+  {
+    /* A REMOVAL ELSEWHERE MUST ARRIVE.
+
+       BZ removed a bottle from the wishlist on his phone and it stayed on
+       the desktop. On a local win the load skips every key that is not in
+       the merge list — and the desktop always wins locally, because it
+       always has some unsent change — so the account's wishlist was never
+       taken. The rule protects unsent work, which is right; it protected
+       keys this device had never touched, which is not. */
+    const r = await run('removal', { 'bz-apps': { whisky: { testuid: {
+        updated: 1000,
+        wish: [{ name: 'Still wanted', at: '2026-09-01' }] } } } },
+      async page => {
+        await page.waitForTimeout(1400);
+        return page.evaluate(async () => {
+          // This device has unsent work of its OWN, on a different key.
+          S.displayName = 'Changed here';
+          save_();
+          await new Promise(r2 => setTimeout(r2, 300));
+          // and the account's wishlist loses an entry from elsewhere.
+          firebase.database().ref('bz-apps/whisky/testuid')
+            .update({ wish: [], updated: Date.now() });
+          await new Promise(r2 => setTimeout(r2, 1200));
+          return { wishHere: (S.wish || []).length,
+                   nameKept: S.displayName };
+        });
+      });
+    check('a wishlist removal elsewhere arrives', r.wishHere, 0);
+    check('and this device\u2019s own unsent change survives',
+      r.nameKept, 'Changed here');
+  }
+
   await browser.close();
 
   notes.forEach(n => console.log('  \u00b7 ' + n));
