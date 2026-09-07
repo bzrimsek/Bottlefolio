@@ -11600,5 +11600,166 @@ sec('\u00a7287 the grain a whisky is made from');
     '100% malted barley');
 }
 
+sec('\u00a7288 reading the label');
+{
+  /* Every expected value was computed in a separate Node session against
+     these helpers BEFORE it was written here, and the fixture is the real
+     answer the vision service returned for BZ's three Bardstown panels on
+     2026-09-07 — not one invented to pass. */
+  const bardstown = {
+    name: 'Bardstown Bourbon Company Collaborative Series Silver Oak',
+    dist: 'Bardstown Bourbon Co.', proof: 108, abv: 54, age: null,
+    sub: 'bourbon', style: 'blend', fin: 'Silver Oak Cabernet Barrels',
+    size: 750, msrp: null, mash: null, upc: '857552008936', tn: null
+  };
+
+  const f = L.labelFields(bardstown);
+  eq('the name comes through whole', f.name,
+    'Bardstown Bourbon Company Collaborative Series Silver Oak');
+  eq('and the proof', f.proof, 108);
+  eq('the mash bill was not on this label and is not invented',
+    f.mash, undefined);
+
+  /* PROOF FROM WHICHEVER THE LABEL PRINTED. The service is told to set abv
+     and leave proof null rather than convert, so the arithmetic lives here
+     where it can be checked: 53.3% is 106.6, which is the Bunnahabhain. */
+  eq('abv alone becomes proof', L.labelFields({ abv: 53.3 }).proof, 106.6);
+  eq('and a printed proof wins over the abv beside it',
+    L.labelFields({ proof: 108, abv: 54 }).proof, 108);
+
+  /* THE UPC IS THE BARCODE ALTERNATIVE, so a misread is a lie taught to
+     the library. Twelve or thirteen digits exactly. */
+  eq('spaces come out of the barcode digits',
+    L.labelFields({ upc: '8 57552 00893 6' }).upc, '857552008936');
+  eq('a 13-digit EAN is kept',
+    L.labelFields({ upc: '5029704221295' }).upc, '5029704221295');
+  eq('and eleven digits is a misread, not a barcode',
+    L.labelFields({ upc: '80686008613' }), null);
+
+  eq('a category off the list is dropped',
+    L.labelFields({ sub: 'moonshine' }), null);
+  eq('and one on it is lowercased', L.labelFields({ sub: 'Irish' }).sub, 'irish');
+  eq('an error is not an answer',
+    L.labelFields({ error: 'api 400' }), null);
+  eq('and neither is a read that saw nothing',
+    L.labelFields({ name: null, proof: null }), null);
+
+  /* WHAT IT WOULD CHANGE, in three buckets. Driven against the entry this
+     bottle actually has on the shelf. */
+  const shelf = { name: 'Bardstown Silver Oak', dist: 'Bardstown Bourbon Company',
+                  proof: 108, sub: 'bourbon', style: 'bourbon',
+                  fin: 'Wine+American Oak', size: 750 };
+  const d = L.labelDiff(shelf, f);
+  eq('the barcode is new', d.fill.map(x => x.field), ['upc']);
+  eq('the proof and size agree',
+    d.same.map(x => x.field).filter(k => k === 'proof' || k === 'size').length, 2);
+  eq('and the label contradicts the style and the cask',
+    d.fix.map(x => x.field).sort().join(','), 'fin,name,style');
+
+  /* A COMPANY SUFFIX IS NOT A CORRECTION. 36 of this shelf's 109 houses
+     carry one, and ACCEPTING the change is the harm rather than the
+     nagging: every screen that groups by house would show two Bardstowns
+     with the bottles split between them. */
+  eq('Company and Co. are one house',
+    L.houseSame('Bardstown Bourbon Company', 'Bardstown Bourbon Co.'), true);
+  eq('so are Distilling and nothing',
+    L.houseSame('New Riff Distilling', 'New Riff'), true);
+  eq('and Distillery and nothing',
+    L.houseSame('Heaven Hill Distillery', 'Heaven Hill'), true);
+  eq('two real houses are still two',
+    L.houseSame('Buffalo Trace', 'Barton 1792'), false);
+  eq('and nothing is not a house',
+    L.houseSame('', 'Bardstown'), false);
+  eq('so the distillery is not offered as a fix',
+    L.labelDiff(shelf, f).fix.map(x => x.field).indexOf('dist'), -1);
+
+  /* THE SUM IS A MISREAD DETECTOR, and it caught one.
+
+     BZ photographed Old Elk Wheat N' Rye. The service read 38.0% rye off
+     the side panel and I read 30.0 off the same photograph; BZ checked the
+     bottle and the service was right. 38.0 totals exactly 100 and 30.0
+     totals 92, and the arithmetic was the ONLY thing that could tell the
+     two apart.
+
+     parseMash still accepts a total under 100 — "51% corn, rest
+     undisclosed" is real. What changed is that it no longer passes in
+     silence, because an honest partial and a wrong digit look identical
+     until somebody states the total. */
+  eq('a complete bill totals 100',
+    L.mashSum('57.6% Wheat, 38.0% Rye, 4.4% Barley'), 100);
+  eq('and says nothing, because there is nothing to say',
+    L.mashNote('57.6% Wheat, 38.0% Rye, 4.4% Barley'), null);
+  eq('the misread totals 92',
+    L.mashSum('57.6% Wheat, 30.0% Rye, 4.4% Barley'), 92);
+  eq('and that gets flagged',
+    /92%/.test(L.mashNote('57.6% Wheat, 30.0% Rye, 4.4% Barley')), true);
+  eq('a partial disclosure is flagged the same way, and kept',
+    /51%/.test(L.mashNote('51% corn, rest undisclosed')), true);
+  eq('a bill naming grains with no proportions has no sum',
+    L.mashSum('Malted and unmalted barley'), null);
+  eq('and nothing to comment on either',
+    L.mashNote('Malted and unmalted barley'), null);
+  eq('no bill at all sums to nothing', L.mashSum('Undisclosed'), null);
+  /* Rounding, not exactness: three grains rounded to a tenth can total
+     100.1 and that is still a complete bill. */
+  eq('a tenth of rounding is not a fault',
+    L.mashNote('33.4% corn, 33.4% rye, 33.3% wheat'), null);
+
+  /* THE BARCODE OUT OF THE SAME PHOTOGRAPH, CHECKED BEFORE ANYTHING IS
+     PAID FOR.
+
+     BZ: can we take pics and check to see if we know the barcode in our own
+     data before doing the rest. The saved call is the least of it — nothing
+     else in this flow checks that the bottle in your hand is the entry you
+     are looking at, and a label read writes to that entry. */
+  const onScreen = { name: 'Bardstown Silver Oak' };
+  eq('no barcode in the photo stops nothing',
+    L.labelGuard(null, null, onScreen).act, 'go');
+  eq('an unknown code is a pairing waiting to be taught',
+    L.labelGuard('850030365156', { ok: false }, onScreen).teach, true);
+  eq('and it does not stop the read either',
+    L.labelGuard('850030365156', { ok: false }, onScreen).act, 'go');
+  eq('a code naming this bottle is fine',
+    L.labelGuard('857552008936',
+      { ok: true, name: 'Bardstown Silver Oak' }, onScreen).act, 'go');
+  /* Near enough is the same bottle: the pairing library holds whatever name
+     was typed when it was taught, which is rarely the catalogue's wording. */
+  eq('and so is a code naming it a little differently',
+    L.labelGuard('857552008936',
+      { ok: true, name: 'Bardstown Bourbon Company Silver Oak' }, onScreen).act,
+    'go');
+  /* THE ONE THAT MATTERS. Photograph Old Elk while looking at Bardstown and
+     Old Elk's proof, cask and grain bill would be written onto Bardstown. */
+  eq('a code naming something else stops',
+    L.labelGuard('850030365156',
+      { ok: true, name: "Old Elk Wheat N Rye" }, onScreen).act, 'stop');
+  eq('and says what it actually is',
+    L.labelGuard('850030365156',
+      { ok: true, name: "Old Elk Wheat N Rye" }, onScreen).other,
+    'Old Elk Wheat N Rye');
+
+  /* WHAT GETS WRITTEN, and only what was ticked. */
+  eq('an unticked field is not written',
+    JSON.stringify(L.labelTake({ fin: 'Oloroso', proof: 100 }, ['proof'])),
+    '{"proof":100}');
+  /* The name never travels: renaming an entry is a different bottle, not a
+     correction to this one, and the app keys on the name. The UPC is
+     taught through the pairing library rather than written onto the
+     product, which is where every other barcode in the app lives. */
+  eq('the name is shown and never written',
+    L.labelTake({ name: 'X', proof: 100 }, ['name', 'proof']).name, undefined);
+  eq('nor is the barcode written onto the product',
+    L.labelTake({ upc: '123456789012', proof: 100 }, ['upc', 'proof']).upc,
+    undefined);
+  /* Marked as the bottle's own word, so a later lookup cannot overwrite
+     it — finc already means exactly this and the fill already respects it. */
+  eq('a cask read off the label is stated',
+    L.labelTake({ fin: 'Oloroso' }, ['fin']).finc, 'stated');
+  eq('and a note off the label records where it came from',
+    L.labelTake({ tn: { nose: 'peat' } }, ['tn']).tnSrc, 'label');
+  eq('nothing ticked writes nothing',
+    L.labelTake({ fin: 'Oloroso' }, []), null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
