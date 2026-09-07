@@ -4173,7 +4173,10 @@ sec('§181 the App use tab names controls that exist');
     ['Read it',               'Looking at it on a website'],
     ['I poured this',         'Record a pour'],
     ['Remix',                 'Run a flight again'],
-    ['Build a flight',        'Flights'],
+    // Design, not build: the tile says "Design one from scratch" and the
+    // sheet it opens says "Design a flight", because "run one you
+    // DESIGNED" and "build" were two words for one act.
+    ['Design one from scratch', 'Flights'],
     /* The bottle screen, added 2026-09-03 when nine controls in one row
        were moved into the section each belongs to. The help now describes
        that layout, so the labels it names have to keep existing — this is

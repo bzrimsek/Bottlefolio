@@ -449,8 +449,12 @@ function step(n) {
         { hasText: 'Run one you designed' }).click().catch(() => {});
       await page.waitForTimeout(450);
       // And a way back to them, which every screen you go into needs.
-      if (!(await page.locator('#flightList .chip',
-            { hasText: 'Flights' }).count())) {
+      /* By what it SAYS, not what class it wears. This asserted .chip and
+         the back was rebuilt as btn btn-sm ghost — the shape every other
+         back in the app uses — so a correct change failed a check that was
+         testing the styling rather than the behaviour. Rule 30c. */
+      if (!(await page.locator('#flightList button',
+            { hasText: '\u2039 Flights' }).count())) {
         failures.push('flights: the list has no way back to the tiles');
       }
       const runRows = await page.locator('#flightList .recent .item').count();
