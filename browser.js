@@ -1739,7 +1739,7 @@ function step(n) {
     }
   }
 
-  step('a long read says it is still going, nothing doubles on a second render, no page opens with an empty block');
+  step('a long read says it is still going, nothing doubles on a second render, no page opens with an empty block, every screen you travel to has a way back');
   /* 22. BZ: we need a cue for the user that the photo is being processed —
      tried it on Taste and thought it was broken. The only feedback was a
      toast, which times out in seconds, and a shelf read takes ten to
@@ -1905,6 +1905,43 @@ function step(n) {
       return out;
     });
     empties.forEach(e => failures.push('empty opening block on ' + e));
+  }
+
+  step('every screen you travel to has a way back');
+  /* BZ, more than once and finally without patience: there is still no way
+     back from a shelf detail to the shelf page. He was right every time and
+     I kept testing the ONE path that worked — shelf, tap a bottle, back —
+     while the broken one was a bottle opened from anywhere else.
+
+     labelBacks hid any back button whose destination was home, because the
+     mark does that job on a tab. On a BOTTLE it left nothing: the mark goes
+     home, not to the shelf, so the screen was a dead end. Checked with the
+     trail deliberately emptied, which is the state it fails in. */
+  {
+    const stranded = await page.evaluate(() => {
+      const out = [];
+      const travelled = ['detail', 'library', 'diag', 'shared', 'map',
+        'settings'];
+      travelled.forEach(name => {
+        try {
+          _from.length = 0;
+          if (name === 'detail') showBottle(Object.keys(S.catalog)[0]);
+          else goTo(name);
+          _from.length = 0;          // the state it used to vanish in
+          labelBacks();
+          const bk = document.querySelector('.screen.on .backbtn');
+          if (!bk || bk.hidden) { out.push(name + ': no way back'); return; }
+          const said = bk.textContent.trim();
+          bk.click();
+          const now = (document.querySelector('.screen.on') || {}).id || '';
+          if (now === 'scr-' + name) {
+            out.push(name + ': back said ' + said + ' and went nowhere');
+          }
+        } catch (e) { out.push(name + ' threw: ' + e.message); }
+      });
+      return out;
+    });
+    stranded.forEach(x => failures.push(x));
   }
 
   await browser.close();
