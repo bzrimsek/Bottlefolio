@@ -4,8 +4,12 @@ Open work, in the order BZ set on 2026-09-03: security, then performance,
 then finding the bottle. Exercising sharing with a second person came off
 the top because it is not something he controls — it waits on somebody else
 turning up. Everything under Closed is kept for the reasoning rather than
-the task, and still carries the numbers the code comments refer to. Last
-reconciled 2026-09-03, at v1.26.19.
+the task, and still carries the numbers the code comments refer to.
+
+Last reconciled **2026-09-07, at v1.8.51**. The line above used to say
+v1.26.19, which is a version number from before the scheme was reset and is
+higher than anything that now exists — a header claiming to be current while
+naming a version nobody can find is worse than one with no version at all.
 
 ## 1. Security
 
@@ -61,8 +65,49 @@ products and 344 bottles: tasteProfile 8.20ms to 4.33, shelfAxes 5.13 to
 Roughly ten times that on his phone. 2051 assertions unchanged, which is
 the point: same answers, less work.
 
-Still worth doing when it next matters: `shelfGaps` is 12ms and now the
-slowest thing on the planning screen.
+~~Still worth doing when it next matters: `shelfGaps` is 12ms and now the
+slowest thing on the planning screen.~~
+
+**MEASURED AGAIN 2026-09-07 AND WRONG.** `shelfGaps` is **2.05ms**, not
+12.44. The 12.44 was taken before the `openKeys` fix in the SAME build that
+took it, so the entry outlived its own repair. On BZ's 325 products, 344
+bottles and 36 flights, warmed 200 iterations and timed over 100:
+`shelfGaps` 2.05, `shelfAxes` 1.92, `tasteProfile` 1.10, `ownedCounts` 0.03.
+Nothing on the planning screen is worth touching.
+
+**WHERE THE TIME ACTUALLY GOES** (BZ: don't quit on performance gains — he
+was right to push, the entry above was four helpers on one screen):
+
+| | desktop |
+|---|---|
+| time to a usable shelf | 223ms |
+| parsing the 1.3MB document | 84–177ms |
+| the eight renders `boot()` runs | 111.9ms |
+
+The parse is **40 to 90 times** the figure this section was worrying about,
+and every screen pays it before anything draws. Shrinking the file does NOT
+fix it: comments stripped saves ~10ms and full minification saves nothing
+measurable (−2.4ms, inside the noise), because V8 pre-parses function bodies
+lazily. The 488KB of comments cost 10ms, which is a fair price.
+
+`boot()` renders EIGHT screens and only `scr-home` is visible — 67ms drawing
+screens nobody is looking at, on a 344-bottle shelf. An empty-shelf
+measurement says 8.2ms and is worthless; that gap is the whole finding.
+
+**The fix is not deleting the boot renders.** `TAB_RENDER` already redraws
+each tab on arrival, so they look redundant — but `show()` is called
+directly 11 times bypassing the tab bar, and three of those render nothing
+first and rely on boot having drawn the screen: line 15398 `show('shop')`
+from Add one bottle, 16240 `show('shelf')` from Go to the shelf, 17137
+`show('map')` from the home mini-map. Delete the boot renders and those
+three break silently.
+
+What it SHOULD be: move `TAB_RENDER` into `show()`, so a screen renders when
+it is revealed however it was reached. Boot's eight become unnecessary, the
+three fragile call sites become correct, and the tab bar stops rendering
+twice. Projected boot render 112ms → ~44ms. Not started; `renderShelf` has
+48 callers and `renderShelfFilters` 36, so the blast radius wants reading
+before writing.
 
 **Logic that ships untested** — DONE, and this entry was stale when it was
 read on 2026-09-04. All three named here already delegate: `openSealed` to
@@ -83,18 +128,184 @@ including the three larger designs that were rejected — the secondary
 market, OHLQ alone, and a shop list with search templates and a price
 comparison, which was right in outline and far too much machinery.
 
-## Waiting on somebody else
+## 3b. What the review of 2026-09-07 found
 
-**Sharing has never been exercised end to end with another person.** The
-library, the contribution queue, suspend, the shared shelves — all of it has
-only ever been used by the account that owns it, and the week of 2026-09-03
-shipped six changes into exactly those paths. Two devices on one account was
-already enough to find opposite Accept and Drop buttons. Not actionable
-alone; worth doing the hour somebody else signs in.
+Run at v1.8.56 with BZ away from a machine. Security, performance, rules
+and quality, measured rather than opined.
 
-**The candidate finder has never put a bottle in BZ's hands.** Until a
-suggestion is followed through to a purchase the feature is unproven in the
-only way that counts.
+**Clean, and worth not re-checking for a while.** Zero unauthenticated
+paths in `firebase-rules.json` — every read and write requires
+`auth != null`. No secret in the client: the only key is the Firebase web
+apiKey, which is public by design, and the Anthropic key stays in Script
+Properties. The XSS surface is closed by construction — `el()` writes
+`textContent`, and all 20 non-empty `innerHTML` assignments are static
+literals or SVG built from constant maps, with no user data interpolated.
+No `console.log` in shipping code, no changelog placeholders, and the four
+hedging phrases are all in comments rather than screen text.
+
+**Performance held.** 254ms median to a usable shelf over nine runs, against
+223ms at v1.8.47 — about 31ms for 64KB of new code across ten versions,
+which is consistent with the earlier finding that bytes are cheap to parse.
+A three-run sample said 358ms and was noise; nine runs is the number to
+trust.
+
+**TEST COVERAGE IS 95%, AND THE GAP IS NAMED.** 407 L functions, all used
+by the app, 21 with no assertion over them. A nineteenth consistency check
+now catches this class — check 3 catches a helper defined and never used,
+the unwired check catches one tested and never called, and NEITHER caught
+the third case: wired, doing real work, and asserted by nothing. It found
+three I shipped today (`labelSame`, `labelLabel`, `labelShow`), which is
+rule 27 broken three times in one day with nothing noticing.
+
+Tested since: those three, plus `splitPours`, `isKeeper`, `sealedKeys`,
+`offerTitle`, `fitByGroup`. **Still open, 13 of them**: `searchText`,
+`judgeListing`, `fitUnlocks`, `deviceLabel`, `stripMarkup`, `varInText`,
+`findUrl`, `lessonBlocker`, `blindTheme`, `blindGiven`, `peatLevel`,
+`proofProfile`, `worldReach`, `isHardGap`, `noteText`, `hasFlavour`,
+`flavourOptions`, `flavourFlight`, `flightRunRecord`, `flightPoured`.
+`judgeListing` and `fitUnlocks` are the two worth doing first — both score
+a bottle against the shelf, which is arithmetic somebody acts on.
+
+**TWO FUNCTIONS ANSWER THE SAME QUESTION AND DO NOT KNOW IT.** The one
+finding here that will bite.
+
+`L.mashbill(p)` has existed for a long time and infers a recipe from the
+bottle's NAME — wheated, high-rye, four-grain, malt, corn, rye — because
+three flights turn on recipe and the catalogue stored only a category. It
+feeds `tasteProfile` (line ~11277) and the flight builder (~13093).
+
+`L.mashShape(text)` was added on 2026-09-07 and returns wheated, high-rye or
+rye-forward from the actual grain PERCENTAGES.
+
+Same vocabulary, different evidence, neither aware of the other. They agree
+today only because no entry carries a mash bill. They begin to disagree as
+the fill lands: a bourbon named nothing in particular with 20% rye is null
+to `mashbill` and high-rye to `mashShape`, and the taste profile and the
+bottle screen would then say different things about the same whisky.
+
+Not fixed, because which one wins is a decision rather than a repair. The
+obvious answer — a real grain bill beats a guess from a name — is probably
+right and is not obviously right: `mashbill` returns `malt` and `corn`,
+which `mashShape` has no equivalent for, so one cannot simply replace the
+other. Worth an hour and a conversation, before the fill makes it visible.
+
+## 3c. The mash bill gap — LET THE RUN DECIDE
+
+Adding mash as a fifth gap on 2026-09-07 made 411 library entries "to do"
+overnight. `lookup.gs` now asks for one, which it never did before, so the
+run can at least succeed where a bill is published.
+
+The open question was what to do about entries where none IS published: the
+gap cannot close, so they rest a week, six months, a year, and come back for
+ever. Three options were on the table — leave it, drop mash out of the fill
+queue, or let an empty answer close the gap permanently the way `finc:
+'stated'` closes a finish.
+
+**BZ: when you say MOST I want to let it happen.**
+
+That is the ruling and it is the right one. Every claim behind those options
+rested on the word "most" — most American labels print a mash bill (wrong,
+proved wrong by six photographs the same day), most Scotch does not (also
+unmeasured). "Most" means there is no number, and a rule was written for it:
+26 forbids exactly that word.
+
+So: NOTHING IS BUILT HERE. The fill runs, and what comes back is the
+population. Decide afterwards, from counts:
+
+- If the American entries mostly close, the unanswerable set is Scotch,
+  Irish and Japanese, and option 3 is a small well-defined build.
+- If they mostly do not, the gap itself was a bad idea and the question
+  becomes whether mash should be a scored gap at all rather than how to
+  close it.
+
+What to record when the run finishes: how many of the 182 American entries
+came back with a bill, how many of the 127 Scotch and Irish, and whether any
+bill failed `mashNote`'s total — a wrong digit in a bulk run is exactly the
+thing that slips past unnoticed, and it is the check that caught a misread
+on Old Elk the same day.
+
+## 4. Reading the label
+
+**SHIPPED 2026-09-07, v1.8.48 through v1.8.51.** Kept here rather than in
+Closed because the brief it replaced is still quoted in `HANDOFF.md` and
+because three pieces of it are open.
+
+**The brief was wrong and the bottles said so.** `HANDOFF.md` said
+photograph the back label to get the mash bill, that a mash bill is printed
+on the back of most American whiskey, and that the fill should run first
+with photographs only for the remainder. BZ photographed six bottles on
+2026-09-07 — Bardstown Collaborative Series, Knob Creek 18, Angel's Envy
+Cellar Collection, Bunnahabhain Fèis Ìle 2024, Redbreast Kentucky Oak,
+Heaven Hill Bottled-in-Bond. **None carried a mash bill. Four were
+American.** A seventh, Old Elk Wheat N' Rye, did — printed as a table on a
+side panel, not the back. So a mash bill is uncommon and turns up on
+whichever panel the producer chose, which is an argument for reading the
+whole label rather than for a mash-bill hunt.
+
+**BZ's framing, which is the right one:** reading labels is an alternate to
+bar code scanning — read the whole thing, and if there are mash bills,
+great. The UPC digits are printed under the bars in plain text, so one
+photograph yields the name AND the code together. A scanner reads a code and
+needs somebody to type the name; a photograph brings both halves. That is
+the pairing the library could never get on its own, and it happened for real
+on 2026-09-07: `learned barcode 850030365156 = Old Elk Wheat N Rye`.
+
+**And the correction case, which no gap can find.** Bardstown Silver Oak
+scores 100 on `entryScore` and the bottle says Collaborative Series, a
+blend, finished in Silver Oak Cabernet barrels, with a barcode the app never
+held. `slotOpen` reads every slot as filled. A label read may therefore
+CORRECT a filled field, marked `stated` so no later lookup overwrites it —
+which is why the button does not hide itself the way Look up does.
+
+**Open, from here:**
+
+- **The other capture moments.** ~~The bottle screen is its only caller.~~
+  **AWAY POUR DONE v1.8.52**, and it turned out to be the one that mattered
+  — BZ: away pours let us build the library. It names the pour, teaches the
+  pairing and offers the whisky to the shared library, all from one press on
+  a bottle that goes back behind the bar. Doing it forced `labelCapture` out
+  of `readTheLabel`, because an away pour has no entry to correct.
+  **Still open: the pour screen, the add form (slot 2 is drawn and empty),
+  and the shop.** Each is a few lines pointing at `labelCapture` now.
+- **Good, better, best — how to say it on the page** (BZ, 2026-09-07). He
+  asked whether to hint at a ranking: label pics best, UPC better, type and
+  search good. The counter-argument, not yet decided: the ranking mixes
+  correctness with cost, the barcode is only cheap when the pairing is
+  already known and half the shelf will never appear on a retail listing,
+  and they are not competitors — the label read is what TEACHES the barcode,
+  so ranking them hides the loop. Proposed instead: one line each saying
+  what it is FOR at the point of choice, and the loop explained once in
+  Info › Definitions. Not built. BZ's own steer: in 2027, mobile first.
+- ~~**`sub` came back `world` for an American blend.**~~ **CLOSED
+  2026-09-07, v1.8.55.** BZ ruled: leave it, blend lives in style not type.
+  The shelf already agreed — 31 blend entries sit under seven types and
+  every one is right, because a blended Scotch is still Scotch. `L.TYPES`
+  is untouched at twelve; the LABEL PROMPT was the thing that did not know,
+  so it now says give the base spirit as the type and put blend in style.
+  (Original entry below, kept for the reasoning.)
+- ~~`sub` came back `world` for an American blend of straight whiskeys.~~
+  Not a misread — a hole in `L.TYPES`, which has no entry for a blend, so
+  the model reached for the only catch-all there is. BZ's shelf files Old
+  Elk Wheat N Rye as `rye` and Old Elk Cigar Cut Island Blend as `bourbon`
+  for the same missing reason. A taxonomy change touches every entry that
+  uses the type; it wants its own session.
+
+**Do not rebuild these, they are done:** the multi-shot sheet (a phone
+ignores `multiple` on a file input and gives one photo at a time, which cost
+four paid calls in eighteen seconds before it existed); the 1600px
+client-side resize (a phone photograph is 13.9MB against a 10MB ceiling);
+rejecting a QR payload as a barcode (Bardstown's back panel carries one and
+zxing stopped on it); `houseSame` (Co. versus Company would have been offered
+as a correction on 36 of 109 houses, and ACCEPTING it forks a house in two
+everywhere that groups by one); and `mashNote`, which states the total
+because 57.6 + 38.0 + 4.4 is 100 and 57.6 + 30.0 + 4.4 is 92, and the
+arithmetic was the only thing that could tell a right reading from a wrong
+one.
+
+(The old "Waiting on somebody else" section stood here. Both its entries
+moved into ## Clubs on 2026-09-07, which is what that section is: work
+blocked on a second human being rather than on code. Two copies of an entry
+is how the two come to disagree.)
 
 ## Accrues on its own
 
@@ -115,12 +326,134 @@ dangerous half. What is left is an estimate before a run starts and a total
 after it, which is comfort rather than protection.
 **Pooled flights cannot be fully blind** — noted, not blocking (item 12).
 
-## New, from 2026-09-04
+## Occasions
+
+Named by BZ on 2026-09-07, alongside Clubs. Neither is a feature list.
+These are REASONS the app would get used — a real thing in the calendar
+that puts it to work — and they are kept separately because a reason
+outlives the feature somebody guesses at from it.
+
+An Occasion is time-shaped: it has a start, a length and an end, and one
+person can do it alone. That shape is the requirement. Anything built here
+TAKES A LENGTH rather than assuming one.
+
+**Advent calendars** (BZ, 2026-09-07 — noted, not a plan). He is in one
+every year, and his is the twelve days of Christmas rather than twenty-four,
+which is the whole reason a length is a parameter. What he actually
+described is small: a way to track your own tastes through a calendar. Not
+a mode, not a reveal mechanic, not a group feature. The away pour already
+logs a whisky he does not own; a calendar is a name and a day number on top
+of that. He was explicit that he is unsure how useful it is — do not build
+it on the strength of this note.
+
+**Tasting night** — exists on paper and works. The phone variants are
+deferred (item 10), and BZ was fine with paper as of 2026-09-01.
+
+**A trip** — the road trip planner is deferred on a routing decision
+(item 8). Listed here because a trip is an occasion before it is a feature:
+what it needs is a shape for "a run of pours away from the shelf", which
+the away pour already half is.
+
+## Two from 2026-09-07, both about other people
+
+**What have your buddies been drinking** (BZ, 2026-09-07 — not started).
+
+Attributed, consented, and therefore a Clubs item: it needs a second person
+before it can be built OR tested, which is the constraint that whole section
+exists for. The plumbing is largely there — `shares` and `sharedWith` are in
+the rules, a tasting already travels to the people who were at it, and the
+away pour already logs a whisky nobody owns.
+
+What is NOT there is the question of what a buddy has consented to. Sharing
+a shelf is not sharing a log: what somebody owns is a collection they chose
+to show you, and what they drank on a Tuesday is a diary. Those are
+different permissions and the rules currently have one. **Do not build this
+by widening the existing share.**
+
+**What's popular** (BZ, 2026-09-07 — not started). App-wide and anonymous,
+in his words. The only idea discussed all day that gets BETTER as more
+people use it, and the only one where the unit is not one shelf.
+
+**The privacy design is the whole job and it is not a coding problem.**
+Anonymous is a claim that has to survive somebody trying to break it, and
+with a handful of users a popularity list is a list of what a handful of
+people drank. Two accounts and one obscure bottle identifies a person
+exactly. So:
+
+- **Do not build it on `stats`.** That node exists, and it is per-uid,
+  admin-read, and validated with a name in it. Counting across it produces
+  a per-person record with a total on top, which is the opposite of
+  anonymous however the screen presents it.
+- **The count must not be reconstructible.** A shared counter incremented
+  per pour, with no uid anywhere in the write, is the shape. Firebase rules
+  cannot express "increment by one" — a transaction can, a rule can bound
+  the value, and neither stops somebody writing a hundred. Worth deciding
+  whether that matters before it is built.
+- **A floor before anything is shown.** A whisky poured by fewer than some
+  number of DISTINCT accounts should not appear at all — and distinct
+  accounts is exactly what an anonymous counter cannot know. That tension
+  is the real design question and it has no obvious answer.
+- **It is not useful yet.** One user makes "what's popular" a mirror. It
+  wants to exist BEFORE the circle grows, because anonymity cannot be
+  retrofitted onto data already collected another way.
+
+Worth pairing with the advent calendar under Occasions: both are reasons to
+have the sharing paths working before anybody is invited, and neither is
+worth building for an audience of one.
+
+**A buddy tab, not a card in Settings** (BZ, 2026-09-07 — not started).
+
+His words: I think we will eventually need a buddy tab, not in settings.
+Right, and the evidence arrived the same evening. Everything about another
+person is currently spread across three places — the name and findable
+switch in Settings, the requests and shares in a card below them, and a
+summary tile on Home — and none of them is where somebody goes when they
+think about a buddy. Settings is where you go once; this is a thing you use.
+
+It also hid a real fault for hours. Who can see your shelf was being read
+from the wrong node, and because the answer only appeared in a card at the
+bottom of Settings nobody looked at it long enough to notice it was always
+nought.
+
+Not started, and it wants the sharing paths to be right first — a tab is a
+place to put things that work.
+
+## Clubs
+
+A Club is people-shaped: it does not exist with one person, which makes it
+the test the app has never had. Everything in this section is blocked on a
+second human being rather than on code, and none of it is actionable alone.
+
+**Sharing has never run end to end with another person.** The library, the
+contribution queue, suspend, the shared shelves — all of it has only ever
+been used by the account that owns it, and the week of 2026-09-03 shipped
+six changes into exactly those paths. Two devices on ONE account was already
+enough to find opposite Accept and Drop buttons. This is the same entry that
+sits under "Waiting on somebody else"; it belongs here because a club is
+what would finally exercise it.
+
+**An advent calendar with other people.** The reason the calendar was raised
+at all: a group doing the same thing on the same days is precisely the
+sharing test, and it arrives on a date rather than when somebody gets round
+to it. BZ was explicit that he is not sure how useful a shared setup is, so
+this is a reason to have the sharing paths working by December — not a
+brief to build a group mode.
+
+**Pooled flights cannot be fully blind** — noted, not blocking (item 12).
+Filed here because the constraint only bites with a room in it.
+
+**The candidate finder has never put a bottle in BZ's hands.** Not a club
+item strictly, but the same class of unproven: until a suggestion is
+followed through to a purchase the feature is untested in the only way that
+counts.
 
 ## Closed
 
 Built, measured or abandoned. Kept as a list rather than as pages, because the reasoning lives in CHANGELOG.md against the version that shipped it.
 
+- 5b. Gifts — the wishlist pointed outward (v1.6.67)
+- 15. Where a hard bottle can actually be got — shipped as Find it: L.findUrl, on the bottle screen and on candidate rows. The entry described the decision and outlived the build.
+- Share what a flight tasted, and let it seed a wishlist (v1.6.66)
 - Flights and the shape chart do not know about each other (v1.6.61)
 - The map is disconnected from Origin (v1.6.61)
 - An axis at 100% still has something to buy (v1.6.63)
@@ -198,84 +531,6 @@ Untested with a second account, which is true of every sharing path in the
 app.
 
 Original entry follows.
-
-### Share what a flight tasted, and let it seed a wishlist
-BZ, same conversation: "if we are doing a flight with buddies, can we share
-the tastes with them after we are complete and have it seed their wish
-list, if they so choose and if they don't have the bottle?"
-
-The good idea underneath: a flight run with somebody is the moment their
-taste and yours are most comparable, because you drank the same things on
-the same night. That is the one moment the app currently does nothing with.
-
-What to build:
-- After a run, offer to send the pours to whoever was there. The sharing
-  pairs already exist (`shares` / `sharedWith`), so this is a message
-  between accounts rather than new plumbing.
-- On the receiving side it is an OFFER, never a write: they see what was
-  poured, what each bottle was, and choose which to add to their wishlist.
-- Filter to what they do not own. `L.ownedCounts` on their shelf answers
-  it, and a wishlist entry for a bottle already on the shelf is noise.
-- The wish entry should carry WHERE it came from — "poured at BZ's, 3
-  September" — because a wishlist of bare names is the thing `L.wishEntry`
-  was written to avoid.
-
-**The job it replaces, which is the whole point.** BZ, 2026-09-04: it
-"saves taking a photo of the bottle". That is what happens at a tasting
-now — somebody likes the fourth pour, photographs the label so they can
-find it later, and the photo sits in a camera roll with nothing attached to
-it. Everything needed is already in the app: what it was, its proof, its
-cask, and the note somebody wrote that night. Build for that and the
-feature explains itself.
-
-**Decided 2026-09-04.** The bottle facts travel, the tasting notes travel,
-and the receiver chooses what goes on their wishlist.
-
-What a note must NOT do is arrive as the reader's own. A note is the person
-who wrote it saying what they found, and it keeps their name on it — "BZ,
-3 September" beside the words. The receiver writes their own later, and if
-they buy the bottle they will; a note nobody wrote silently becoming theirs
-is how a shelf fills up with opinions no one holds. `tnSrc` already carries
-that distinction and should be used rather than a new one.
-
-**Also decided 2026-09-04, and this settles the shape of it.**
-
-- **Who was there is chosen when the flight is RUN.** The button that
-  records a run picks from your buddies first. That is the prerequisite
-  both of these items were waiting on, and it belongs there rather than in
-  a share step afterwards: at the end of an evening nobody is going to
-  reopen the app and reconstruct who came.
-- **Being there IS the consent.** No accept step on the receiving side for
-  the tasting itself. You poured it for them; they drank it.
-- **If they own the bottle, the pour is logged on their shelf.** They drank
-  it, so their log should say so — which also means buy-against-drink and
-  the collector line stay true for somebody who tastes mostly at other
-  people's houses.
-- **If they do not own it, it is offered to their wishlist**, their choice.
-- **If you were not there, it never happened for you.** No forwarding, no
-  audience beyond the room.
-
-**The consequence worth designing around before any of it is built.** A
-pour appearing on somebody else's shelf is the first time one account's
-action changes another account's data, and the rules deliberately forbid
-exactly that: `$uid` is writable only by its owner, and an admin may delete
-but never write. That is a good rule and this should not break it.
-
-So the host does not write to the guest. The host records the run under
-their OWN uid, naming who was there, and the guest's device reads it on
-next load and applies it — the same shape `sharedWith` already uses, where
-a share is written by the owner and read by the viewer. Consent is implied
-by attendance and the write still happens on the guest's own device with
-their own credentials. No rules change, no account writing into another,
-and a guest who never opens the app simply has nothing applied.
-
-That also answers the forwarding question for free: the record names who
-was there, so a device that is not on that list has nothing to read.
-
-Both of these want the same thing first: the run has to know who was there,
-which it currently does not.
-
-
 
 ### Is this offer actually a good price — DONE 2026-09-04
 Built as specified: two verdicts, never blended; allocation as urgency
@@ -397,57 +652,18 @@ immediately queue.
 
 
 
-### 5b. Gifts — the wishlist pointed outward
-Requested 2026-08-31. Two features that share one hard requirement.
+### 5b. Gifts — the wishlist pointed outward — DONE 2026-09-04
+Both halves, because they are different occasions. A short list — five,
+flight-finishing bottle first — as a text for somebody who has never heard
+of the app, with no prices on it. And a switch to let buddies see the list
+standing, off by default because sharing a shelf means the shelf and a
+wishlist is a different disclosure; when it is on it appears under What
+they are after with Find it beside each bottle.
 
-**The gift finder.** Point the gap analysis from item 5 at somebody else's
-shelf instead of your own, with a budget as an input: "forty dollars for
-Marcus" returns what his shelf lacks that costs under forty. Most of the
-machinery already exists — thin categories, thin regions, flights he cannot
-run, matched pairs one bottle short. The only new things are the budget
-filter and running it against a shelf that is not yours.
+Anything already owned is dropped, matched by the same overlap the receipt
+import uses, so "Ardbeg Ten" and "Ardbeg 10 Years Old" count as one.
 
-Budget is not optional and should be the first field, not a refinement.
-Without it the answer is always the most expensive gap, which is the same
-buy-Pappy failure as before and worse when someone else is paying. With it
-the question becomes interesting: the best forty-dollar gift is a genuinely
-different bottle from the best four-hundred-dollar one, and usually a more
-thoughtful choice.
-
-His wishlist should sit alongside the computed gaps, since a bottle he has
-actually asked for beats one an algorithm inferred. Both, ranked together,
-with the reason shown: "completes Peat Is a Postcode" or "he has wanted this
-since March".
-
-**Discretion, which is the hard part.** A gift only works if the recipient
-does not know it is coming. So a buddy must be able to mark a bottle as
-claimed — otherwise two of you buy the same thing — and the owner must never
-see that claim.
-
-This is the hold-back rule from item 2b, mirrored. There, you hide a bottle
-you own from your friends; here, your friends hide an intention from you.
-Both fail the same way: **through the aggregates.** If your wishlist reads
-"6 bottles" to you and one of them renders differently, or a count moves, or
-an item quietly sorts to the bottom, the surprise is gone. Your view of your
-own wishlist must be **byte-identical whether or not anything is claimed.**
-Claims live in a space you cannot read at all, not in a field that is
-filtered out of your view — filtering is how one surface gets missed, and
-the one that gets missed is the leak.
-
-Two more that follow from it:
-- **A claim has to expire or be released,** or the list silently rots as
-  bottles stay claimed by gifts that were never bought. Released after the
-  occasion, or on a date the claimer sets.
-- **Two buddies must see each other's claims** while you see none. That is
-  the whole point, and it is a three-way visibility rule rather than a
-  two-way one: not "public or private" but "everyone except the subject".
-
-Worth saying plainly: this is the most privacy-sensitive thing in the
-backlog. It is not that a leak is dangerous, it is that a leak makes the
-feature pointless — a gift finder that spoils gifts is worse than none.
-
-
-
+Original entry follows.
 
 ### Import what you paid — DONE 2026-09-04
 The manual half of receipt ingest, and much the cheaper half. BZ had a
@@ -553,46 +769,6 @@ flight uses, so it is a small change if it is ever wanted.
 **Not building it yet.** BZ was unsure the pooled flight would get used at
 all. If it is not reached for in three months that is an answer, and it cost
 an hour.
-
-
-
-### 15. Where a hard bottle can actually be got
-Raised by BZ 2026-09-03. What he does today: search the bottle in Google,
-find the shops that have it, look at the prices, buy it. He uses Hard To
-Find Whiskey, Frootbat and others.
-
-**It is one button.** A Google search with the bottle name already in it,
-on the bottle view and on any `hunt` or `allocated` tag. That returns the
-shops, the prices and the ones he has not found yet. Nothing stored,
-nothing fetched, nothing to keep fresh, nothing that breaks when a shop
-redesigns its site. The only thing the app adds is that the exact name is
-already typed — which is the whole of the work, since the name is the bit
-that is fiddly to get right and the app is holding it.
-
-**Three worse designs were proposed first, and are recorded so they are not
-proposed again.**
-
-1. *Auctions, lotteries, the secondary market.* A different question — how
-   to acquire a trophy — and not what anybody does about a bottle they
-   cannot find.
-2. *OHLQ only.* Reasoned from Ohio being a control state to the conclusion
-   that nothing can ship in. False: licensed out-of-state retailers ship
-   spirits to Ohio and those are the shops he uses. This came from
-   reasoning about the law instead of asking what he does.
-3. *A shop list in Settings, with search URL templates, and a lookup mode
-   that fetches each shop's search page for a price comparison.* Correct
-   in outline and far too much machinery: a per-shop config to maintain,
-   a fetch per shop per bottle to pay for, and a fresh way to break every
-   time one of them changes its markup. Google already does all of it and
-   maintains itself.
-
-**Worth keeping from the OHLQ dig**, since it answers something Google does
-not: Ohio is a control state, so there is one authoritative answer to which
-store near BZ has a bottle right now — per-store stock as full, limited or
-out, updated at 3:30am and again around 11am and 2pm, with an availability
-map per product. Its pages render in the browser, so a plain fetch returns
-an empty document and it can only ever be a link. If a second button is
-ever wanted, that is the one, and it is still just a link.
 
 
 
