@@ -12585,5 +12585,48 @@ sec('\u00a7301 styleBackfill takes rows OR the keyed map');
   eq('nor on nothing at all', L.styleBackfill(null).rows.length, 0);
 }
 
+sec('\u00a7302 try the resting ones again');
+{
+  /* BZ: can we add an active Reprocess Waitlist feature.
+
+     The case for it is not impatience. The rest periods assume the ANSWER
+     might change, and sometimes what changes is the QUESTION: every entry
+     that waitlisted for "short of mash" before lookup.gs learned to ask for
+     a grain bill was structurally unclosable, and each then rested a week,
+     six months or a year for a miss that could never have gone otherwise. */
+  const today = '2026-09-08';
+  const led = {
+    a: { no: 1, at: '2026-09-06' },   // resting a week
+    b: { no: 3, at: '2026-01-01' },   // resting a year
+    c: { no: 1, at: '2026-09-07' }    // resting, and not chosen
+  };
+  eq('all three are resting first',
+    ['a', 'b', 'c'].filter(k => L.shouldLookUp(led, k, today)).length, 0);
+
+  const after = L.dueAgain(led, ['a', 'b']);
+  eq('the chosen two are due again',
+    ['a', 'b'].every(k => L.shouldLookUp(after, k, today)), true);
+  eq('and one nobody chose still rests',
+    L.shouldLookUp(after, 'c', today), false);
+
+  /* THE MISS COUNT SURVIVES. Clearing it too would forgive the history, so
+     an entry that has failed three times would rest a week after its fourth
+     rather than a year — the escalation is worth keeping and only the
+     waiting is worth skipping. */
+  eq('a three-time miss is still a three-time miss', after.b.no, 3);
+  eq('and a one-time miss still one', after.a.no, 1);
+
+  /* It does not invent entries for keys it has never seen. */
+  eq('an unknown key is not created',
+    L.dueAgain(led, ['nope']).nope, undefined);
+  eq('nothing to do leaves it alone',
+    Object.keys(L.dueAgain(led, [])).length, 3);
+  eq('and no ledger is an empty one',
+    Object.keys(L.dueAgain(null, ['a'])).length, 0);
+  /* The original is not modified: a caller that keeps the old ledger for
+     comparison must still have it. */
+  eq('the ledger it was given is untouched', led.a.at, '2026-09-06');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
