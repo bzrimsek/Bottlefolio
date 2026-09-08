@@ -12513,5 +12513,77 @@ sec('\u00a7299 one house, however it is spelt');
     0);
 }
 
+sec('\u00a7300 an ask you cannot read back');
+{
+  /* BZ: will we know when an ask is pending to a buddy? Will the resulting
+     share be noted as well?
+
+     No to both, and the first is a rules fact rather than an oversight:
+     `requests/$toUid` reads only where $toUid is you, so a request you SENT
+     is not readable by you. The button said "Asked" until the next render
+     and then reset as though you never had. So the sender's device
+     remembers it — a memory of asking, not proof the request survives. */
+  const now = Date.parse('2026-09-07T22:00:00Z');
+  const day = 86400000;
+  const asked = { t: { at: now - 2 * day }, u: { at: now - 30 * day } };
+
+  eq('never asked', L.askState(asked, 'x', {}, now).state, 'none');
+  eq('asked recently', L.askState(asked, 't', {}, now).state, 'waiting');
+  /* IT GOES STALE ON PURPOSE. The memory can be wrong in exactly one
+     direction — they declined, the node was deleted, and nothing told you —
+     so after a week the honest thing is that you asked a while ago, not
+     that somebody is still thinking about it. */
+  eq('asked long ago', L.askState(asked, 'u', {}, now).state, 'stale');
+  eq('a week is the line',
+    L.askState({ z: { at: now - 7 * day } }, 'z', {}, now).state, 'stale');
+  eq('six days is not',
+    L.askState({ z: { at: now - 6 * day } }, 'z', {}, now).state, 'waiting');
+  /* THEIR SHELF ARRIVING OUTRANKS THE MEMORY: the ask is answered and the
+     record stops meaning anything, whatever it still says. */
+  eq('a shelf that arrived ends it',
+    L.askState(asked, 't', { t: {} }, now).state, 'shared');
+  eq('even one asked long ago',
+    L.askState(asked, 'u', { u: {} }, now).state, 'shared');
+  eq('and no record at all is none',
+    L.askState(null, 't', null, now).state, 'none');
+
+  /* The wording sits apart from the logic so it can change without moving
+     the decision out of reach of this test. */
+  eq('nothing to ask of somebody who shared',
+    L.askLabel({ state: 'shared' }), null);
+  eq('waiting says so', L.askLabel({ state: 'waiting' }), 'Asked \u2014 waiting');
+  eq('stale offers another go', L.askLabel({ state: 'stale' }), 'Ask again');
+  eq('and never asked is the plain ask',
+    L.askLabel({ state: 'none' }), 'Ask to share back');
+  eq('nothing at all is still the plain ask', L.askLabel(null),
+    'Ask to share back');
+}
+
+sec('\u00a7301 styleBackfill takes rows OR the keyed map');
+{
+  /* Found by sync.js, which had been failing for five versions while the
+     suite stayed green. styleBackfill was written for rows and called with
+     the library's keyed products map; an object has no forEach, so it
+     threw, took the library screen's draw() down with it after its heading,
+     and the Publish button never rendered. Nothing in the suite could see
+     it because the fault was at a CALL SITE, not in the function. */
+  const rows = [
+    { k: 'a', name: 'Lagavulin 16 Single Malt Scotch Whisky', sub: 'scotch' },
+    { k: 'b', name: 'Buffalo Trace', sub: 'bourbon' }
+  ];
+  const byKey = {
+    a: { name: 'Lagavulin 16 Single Malt Scotch Whisky', sub: 'scotch' },
+    b: { name: 'Buffalo Trace', sub: 'bourbon' }
+  };
+  eq('rows work', L.styleBackfill(rows).rows.length, 1);
+  eq('and the keyed map works too', L.styleBackfill(byKey).rows.length, 1);
+  /* The key has to survive the conversion or the write goes nowhere. */
+  eq('the map keeps its keys', L.styleBackfill(byKey).rows[0].k, 'a');
+  eq('and reports the same closes count',
+    L.styleBackfill(byKey).closes, L.styleBackfill(rows).closes);
+  eq('neither shape throws on empty', L.styleBackfill({}).rows.length, 0);
+  eq('nor on nothing at all', L.styleBackfill(null).rows.length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
