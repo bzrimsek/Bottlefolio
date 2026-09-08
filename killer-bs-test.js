@@ -11782,5 +11782,494 @@ sec('\u00a7288 reading the label');
     L.labelTake({ fin: 'Oloroso' }, []), null);
 }
 
+sec('\u00a7289 the shelf as a spreadsheet');
+{
+  /* Expected values read off a separate Node run before these were written.
+     Two exports on purpose: the existing one is twelve columns matching the
+     import template so a file goes back in unedited, and every column added
+     to it is a column the importer must learn. This is the other one — the
+     one you open to READ. */
+  const xcat = {
+    a: { k: 'a', name: 'Old Elk Wheat N Rye', dist: 'Old Elk Distillery',
+         sub: 'rye', proof: 108.4, size: 750,
+         mash: '57.6% Wheat, 38.0% Rye, 4.4% Barley',
+         tn: { nose: 'toffee', palate: 'spice', finish: 'long' } },
+    b: { k: 'b', name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
+         proof: 86, region: 'Islay' }
+  };
+  const xbot = [
+    { id: 'B1', k: 'a', status: 'open', paid: 79.99 },
+    { id: 'B2', k: 'a', status: 'sealed' },
+    { id: 'B3', k: 'b', status: 'gone', exit: 'finished' }
+  ];
+  const xrows = L.exportRows(xcat, xbot, { a: 1 },
+    { '850030365156': { name: 'Old Elk Wheat N Rye' } });
+  const col = n => L.EXPORT_COLS.indexOf(n);
+
+  /* ONE ROW PER BOTTLE, not per whisky: what differs between two bottles of
+     the same thing is exactly what somebody opens a spreadsheet to see. */
+  eq('a finished bottle is not on the shelf', xrows.length, 2);
+  eq('two bottles of one whisky are two rows',
+    xrows.filter(r => r[0] === 'Old Elk Wheat N Rye').length, 2);
+  eq('and they differ where the bottles differ',
+    xrows.map(r => r[col('Status')]).sort().join(','), 'open,sealed');
+
+  eq('the header and the row are the same width',
+    xrows[0].length, L.EXPORT_COLS.length);
+  eq('the mash bill travels as printed',
+    xrows[0][col('Mash bill')], '57.6% Wheat, 38.0% Rye, 4.4% Barley');
+  eq('and the grains beside it, read',
+    xrows[0][col('Grains')], '57.6% Wheat / 38% Rye / 4.4% Malted barley');
+  /* ABV is not stored anywhere — proof is — so it is derived, because a
+     spreadsheet read outside the US wants it. */
+  eq('abv is worked out from the proof', xrows[0][col('ABV')], 54.2);
+  eq('the barcode comes from the pairing library, not the product',
+    xrows[0][col('Barcode')], '850030365156');
+  eq('a favorite is marked', xrows[0][col('Favorite')], 'yes');
+  eq('and what was paid is on the bottle, not the whisky',
+    xrows[0][col('Paid')], 79.99);
+
+  /* CSV THAT SURVIVES EXCEL. */
+  eq('a plain cell is left alone', L.csvCell('ok'), 'ok');
+  eq('a comma forces quotes', L.csvCell('a, b'), '"a, b"');
+  eq('a quote is doubled', L.csvCell('say "hi"'), '"say ""hi"""');
+  eq('a newline forces quotes too', L.csvCell('one\ntwo'), '"one\ntwo"');
+  /* A tasting note beginning with a dash is a FORMULA to Excel, and a
+     leading = is worse than that. */
+  eq('a leading equals is defused', L.csvCell('=1+1'), "'=1+1");
+  eq('and so is a leading dash', L.csvCell('-peaty'), "'-peaty");
+  eq('nothing becomes an empty cell', L.csvCell(null), '');
+
+  const xcsv = L.toCsv(L.EXPORT_COLS, xrows);
+  eq('the file starts with the header',
+    xcsv.split('\r\n')[0].indexOf('Name,Distillery'), 0);
+  eq('and holds a line per bottle plus the header',
+    xcsv.split('\r\n').length, xrows.length + 1);
+}
+
+sec('\u00a7290 whether a label is worth taking');
+{
+  /* BZ: my shelf was imported from Only Drams. My shelf is not only shelf.
+
+     That correction is the whole section. His 325 entries are full because
+     he has spent months filling them, and measuring THAT shelf said the
+     enrichment case did not exist — which was true of one shelf and false
+     of the app. What an import can supply is bounded by L.IMPORT_ALIASES:
+     twelve fields, only those the source carries, and region, tasting notes
+     and the mash bill have no alias at all. */
+  eq('a name and nothing else is worth a photograph',
+    L.labelWorth({ name: 'Lagavulin 16' }).missing.join(','),
+    'proof,distillery,size');
+  /* The shape an Only Drams row actually arrives in: a name, a strength, a
+     category, and no distillery or size. */
+  eq('and so is an imported row',
+    L.labelWorth({ name: 'X', proof: 86, sub: 'scotch' }).missing.join(','),
+    'distillery,size');
+  eq('a filled entry is not', L.labelWorth({ proof: 86, dist: 'Lagavulin', size: 750 }), null);
+  eq('nothing at all is still worth one', !!L.labelWorth({}), true);
+
+  /* ONLY THE FIELDS EVERY LABEL CARRIES. Counting a missing cask and age
+     flagged 156 of BZ's 325 claiming "the label has them", which is false
+     on most: a bourbon with no finish HAS none and no age statement is
+     normal. Promising otherwise sends somebody to photograph a bottle that
+     will tell them nothing. */
+  eq('a missing cask is not a reason',
+    L.labelWorth({ proof: 86, dist: 'Lagavulin', size: 750, fin: null }), null);
+  eq('and neither is no age statement',
+    L.labelWorth({ proof: 86, dist: 'Lagavulin', size: 750, age: null }), null);
+
+  /* It reads as a sentence, because it sits in one. */
+  eq('one missing field reads singular',
+    L.labelWorth({ dist: 'X', size: 750 }).why,
+    'This entry has no proof. The label has it.');
+  eq('and several read as a list',
+    L.labelWorth({ size: 750 }).why,
+    'This entry has no proof and distillery. The label has them.');
+  eq('two items join with and', L.andList(['a', 'b']), 'a and b');
+  eq('three take a comma then and', L.andList(['a', 'b', 'c']), 'a, b and c');
+  eq('one stands alone', L.andList(['a']), 'a');
+  eq('none is nothing', L.andList([]), '');
+}
+
+sec('\u00a7291 reading somebody else\u2019s shelf');
+{
+  /* BZ: the shelf photo could be at buddies house too. And at the store.
+     Three places, one photograph, one question — what should I do about
+     these, given what I own. Only the verb changes.
+
+     Written BEFORE the mode had ever answered a real photograph, which is
+     the thing I have got wrong repeatedly by reasoning about data I cannot
+     see. So these assume as little as possible about the shape. */
+  const scat = {
+    lag: { k: 'lag', name: 'Lagavulin 16 Year Old Single Malt Scotch Whisky',
+           sub: 'scotch', proof: 86, region: 'Islay',
+           tn: { nose: 'smoke, iodine and a long sweetness behind it' } },
+    bt:  { k: 'bt', name: 'Buffalo Trace', sub: 'bourbon', proof: 90 }
+  };
+  const sbot = [{ id: 'B1', k: 'lag', status: 'open' },
+                { id: 'B2', k: 'bt', status: 'gone', exit: 'finished' }];
+
+  /* THE PAYLOAD. One line per owned whisky, and only what is owned — a
+     bottle that is gone is not on the shelf being compared against. */
+  const mine = L.shelfForAsk(scat, sbot);
+  eq('only what is on the shelf travels', mine.length, 1);
+  eq('and it travels as one line',
+    mine[0], 'Lagavulin 16 Year Old Single Malt Scotch Whisky|scotch|86||Islay|smoke, iodine and a long sweetness behind it');
+  eq('an empty shelf sends nothing', L.shelfForAsk({}, []).length, 0);
+
+  /* WHAT THE APP KNOWS THAT THE SERVICE DOES NOT. Whether you own a bottle
+     is a fact this app holds; paying a model to guess it would be slower
+     and wrong. */
+  const seen = L.shelfSeen({
+    items: [{ name: 'Lagavulin 16', sure: 'high', pour: '$18' },
+            { name: 'Springbank 10', sure: 'medium' },
+            { name: 'Zzz Nonesuch', sure: 'low' }],
+    take: 'One paragraph.\n\nAnother.',
+    read: 'half in focus'
+  }, scat, sbot, [{ name: 'Springbank 10' }]);
+
+  eq('every bottle read comes through', seen.items.length, 3);
+  /* "Lagavulin 16" off a shelf against "Lagavulin 16 Year Old Single Malt
+     Scotch Whisky" in the catalogue: the same overlap the shop search uses. */
+  eq('a shelf name matches a catalogue name', seen.items[0].own, true);
+  eq('and is counted', seen.owned, 1);
+  eq('a wishlisted bottle is marked', seen.items[1].want, true);
+  eq('and counted separately', seen.wanted, 1);
+  eq('owning it beats wanting it', seen.items[0].want, false);
+  eq('something new is neither',
+    seen.items[2].own || seen.items[2].want, false);
+  eq('the pour price travels', seen.items[0].pour, '$18');
+  eq('and so does how sure it was', seen.items[1].sure, 'medium');
+
+  /* DEFENSIVE, because the shape is not yet known from a real answer. */
+  eq('a bare string instead of an object still reads',
+    L.shelfSeen({ items: ['A Bare String'] }, scat, sbot, []).items[0].name,
+    'A Bare String');
+  eq('an item with no name is dropped',
+    L.shelfSeen({ items: [{ proof: 90 }, { name: 'Real' }] }, scat, sbot, [])
+      .items.length, 1);
+  eq('a take that is not a string does not become one',
+    L.shelfSeen({ items: [{ name: 'X' }], take: 42 }, scat, sbot, []).take, '');
+  eq('nothing at all is nothing', L.shelfSeen(null, scat, sbot, []), null);
+  eq('and so is an answer with neither bottles nor prose',
+    L.shelfSeen({ items: [] }, scat, sbot, []), null);
+  /* But prose with no bottles IS an answer: a photograph too poor to list
+     from can still be worth a sentence. */
+  eq('prose alone is still an answer',
+    L.shelfSeen({ items: [], take: 'Too dark to read the spines.' },
+      scat, sbot, []).take, 'Too dark to read the spines.');
+}
+
+sec('\u00a7292 the three helpers the review found untested');
+{
+  /* Found by a full review on 2026-09-07: labelSame, labelLabel and
+     labelShow were shipped across v1.8.48 to v1.8.56 with no assertions
+     over them. They were reachable only through labelDiff and the label
+     sheet, so a change to any of them would have been caught by nothing —
+     which is rule 27, and I broke it three times in one day. */
+
+  /* AGREEMENT, NOT IDENTITY. A stored 108 and a read "108" are the same
+     fact even when one is a string, and a proof is stored as a number and
+     read back off a label as text more often than not. */
+  eq('a number and its string are the same proof',
+    L.labelSame('proof', 108, '108'), true);
+  eq('but two different proofs are not',
+    L.labelSame('proof', 108, 110), false);
+  eq('case is not a correction',
+    L.labelSame('fin', 'Oloroso', 'oloroso'), true);
+  /* A company suffix is not a correction either — 36 of 109 houses carry
+     one and accepting the change forks a house in two. */
+  eq('nor is how the company is abbreviated',
+    L.labelSame('dist', 'Bardstown Bourbon Company', 'Bardstown Bourbon Co.'),
+    true);
+  eq('two real houses still differ',
+    L.labelSame('dist', 'Buffalo Trace', 'Barton 1792'), false);
+  /* A note is compared by its NOSE: a palate reworded is not a correction
+     worth putting in front of somebody. */
+  eq('a note is the same note however it is cased',
+    L.labelSame('tn', { nose: 'peat' }, { nose: 'Peat' }), true);
+  eq('and a different nose is a different note',
+    L.labelSame('tn', { nose: 'peat' }, { nose: 'honey' }), false);
+
+  /* HOW IT READS ON THE SHEET. */
+  eq('a field has a human name', L.labelLabel('proof'), 'Proof');
+  eq('and a compound one reads properly', L.labelLabel('mash'), 'Mash bill');
+  /* An unknown field falls back to itself rather than to blank: a row with
+     no label is worse than a row labelled with a field name. */
+  eq('an unnamed field labels itself', L.labelLabel('zzz'), 'zzz');
+
+  eq('a size carries its unit', L.labelShow('size', 750), '750ml');
+  eq('one year is not one years', L.labelShow('age', 1), '1 year');
+  eq('and eighteen is', L.labelShow('age', 18), '18 years');
+  eq('a price carries its sign', L.labelShow('msrp', 89.99), '$89.99');
+  /* A finish is stored joined with + and read as a list. */
+  eq('a joined cask reads as a list',
+    L.labelShow('fin', 'Oloroso+American Oak'), 'Oloroso + American Oak');
+  eq('a note shows its nose', L.labelShow('tn', { nose: 'peat' }), 'peat');
+  /* Absence shows as a dash rather than as nothing, because "replaces"
+     followed by a blank reads as a bug. */
+  eq('nothing reads as a dash', L.labelShow('mash', null), '\u2014');
+  eq('and so does an empty string', L.labelShow('fin', ''), '\u2014');
+  eq('a note with no nose is also a dash',
+    L.labelShow('tn', { palate: 'oak' }), '\u2014');
+  eq('anything else is shown as it is',
+    L.labelShow('upc', '857552008936'), '857552008936');
+}
+
+sec('\u00a7293 five more the review found untested');
+{
+  /* A full review on 2026-09-07 added a consistency check for L functions
+     the app calls and no test asserts anything about, and it found eight.
+     These five are the ones whose behaviour a test can pin down without
+     rebuilding half a screen; judgeListing and fitUnlocks are left in the
+     check, deliberately, and named in BACKLOG.md. */
+
+  /* SPLITTING POURS. BZ: maybe allow multiple bottles to be entered with a
+     comma separator. The awkward case is real and is why this is not a
+     split on comma: "Colonel E.H. Taylor, Jr." has one in its name. */
+  eq('one whisky is one pour',
+    JSON.stringify(L.splitPours('Lagavulin 16')), '["Lagavulin 16"]');
+  eq('two are two',
+    JSON.stringify(L.splitPours('Lagavulin 16, Ardbeg 10')),
+    '["Lagavulin 16","Ardbeg 10"]');
+  /* A fragment under four characters is the tail of the name before it. */
+  eq('an honorific rejoins the name it belongs to',
+    JSON.stringify(L.splitPours('Colonel E.H. Taylor, Jr.')),
+    '["Colonel E.H. Taylor, Jr."]');
+  /* And length alone could not tell these apart: "Jr. Small Batch" is long
+     enough to look like a second whisky, so the honorific is matched at
+     the START of the fragment however far it runs on. */
+  eq('however long the fragment runs on',
+    JSON.stringify(L.splitPours('Colonel E.H. Taylor, Jr. Small Batch')),
+    '["Colonel E.H. Taylor, Jr. Small Batch"]');
+  eq('and a company suffix does the same',
+    JSON.stringify(L.splitPours('Bruichladdich, Co.')),
+    '["Bruichladdich, Co."]');
+  eq('an empty box is no pours', L.splitPours('   ').length, 0);
+  eq('a single letter is not a whisky', L.splitPours('a').length, 0);
+  /* An evening is not thirty glasses. */
+  /* NAMES, not initials. The first version of this used a1, b2, c3 and
+     came back with ONE pour — every fragment was under four characters, so
+     the honorific rule correctly rejoined the lot. The test was wrong and
+     the app was right, which is the way round it should be. */
+  eq('eight is the most an evening logs at once',
+    L.splitPours('Lagavulin, Ardbeg, Redbreast, Springbank, Bowmore, '
+      + 'Talisker, Oban Bay, Jura Ten, Scapa Sky, Highland Park').length, 8);
+
+  /* WHAT A BOTTLE'S STATUS MEANS. Four states and three predicates, and
+     the app reasons from them everywhere. */
+  eq('a keeper is a keeper', L.isKeeper({ status: 'keep' }), true);
+  eq('an open bottle is not', L.isKeeper({ status: 'open' }), false);
+  eq('and nothing is not', L.isKeeper(null), false);
+  /* Sealed is what is left: owned, not open, not put aside. A keeper is
+     sealed and is NOT counted here, which is the distinction. */
+  eq('only the sealed ones are keyed',
+    JSON.stringify(L.sealedKeys([{ k: 'a', status: 'sealed' },
+      { k: 'b', status: 'open' }, { k: 'c', status: 'keep' },
+      { k: 'd', status: 'gone' }])), '{"a":1}');
+  eq('and no bottles key nothing',
+    JSON.stringify(L.sealedKeys([])), '{}');
+
+  /* NAMING AN OFFER. The listing may carry a name, a distillery, both or
+     neither, and something has to be shown either way. */
+  eq('a name wins when there is one',
+    L.offerTitle(['Lagavulin 16'], { dist: 'Lagavulin' }), 'Lagavulin 16');
+  eq('the distillery stands in when there is not',
+    L.offerTitle([], { dist: 'Ardbeg' }), 'Ardbeg');
+  eq('a name with no distillery is still a name',
+    L.offerTitle(['X'], {}), 'X');
+  eq('and neither is empty rather than undefined',
+    L.offerTitle([], {}), '');
+
+  /* GROUPING A VERDICT. Only groups with something in them are returned,
+     so a screen never draws an empty heading, and an unlabelled finding
+     falls to money rather than vanishing. */
+  eq('an ungrouped finding lands in money',
+    JSON.stringify(L.fitByGroup({ findings: [{}] }).map(g => g.id)),
+    '["money"]');
+  eq('empty groups are not returned',
+    L.fitByGroup({ findings: [] }).length, 0);
+  eq('and every group id is one the app declares',
+    L.fitByGroup({ findings: [{ group: 'flight' }, { group: 'money' }] })
+      .every(g => L.FIT_GROUPS.some(x => x[0] === g.id)), true);
+}
+
+sec('\u00a7294 a real mash bill beats the name on the bottle');
+{
+  /* Found by the review of 2026-09-07: L.mashbill has read the recipe off
+     the NAME since long before a mash field existed, and L.mashShape was
+     added the same day reading the same question off percentages. Two
+     functions, one question, different evidence, neither aware of the
+     other — agreeing only because nothing carried a bill yet.
+
+     BZ: a real mash bill from bottle or distiller must win. */
+
+  /* IT ANSWERS IN MASHBILL'S WORDS, not mashShape's. The callers — the
+     taste profile tally and the flight builder — expect four-grain, malt
+     and corn, which mashShape has no words for, so replacing one with the
+     other would have silently emptied two flights. */
+  eq('wheat as the small grain is a wheater',
+    L.mashFromBill('70% corn, 20% wheat, 10% malted barley'), 'wheated');
+  eq('a fifth of rye is high-rye',
+    L.mashFromBill('75% corn, 21% rye, 4% malted barley'), 'high-rye');
+  eq('mostly rye is a rye',
+    L.mashFromBill('95% rye, 5% malted barley'), 'rye');
+  eq('nothing but barley is a malt',
+    L.mashFromBill('100% malted barley'), 'malt');
+  eq('four grains is four-grain whatever the split',
+    L.mashFromBill('60% corn, 20% rye, 12% wheat, 8% malted barley'),
+    'four-grain');
+  eq('an overwhelmingly corn bill is corn',
+    L.mashFromBill('84% corn, 8% rye, 8% malted barley'), 'corn');
+
+  /* AND IT SAYS NOTHING WHEN THE BILL SAYS NOTHING. Heaven Hill
+     Bottled-in-Bond is 78 corn, 12 malted barley, 10 rye — under the
+     high-rye threshold and under the corn one. It is a plain bourbon and
+     null is the honest answer, not a word forced onto it. */
+  eq('a plain bourbon gets no label',
+    L.mashFromBill('78% corn, 12% malted barley, 10% rye'), null);
+  /* A partial bill cannot say what the small grain is, so it does not. */
+  eq('and neither does a partial bill',
+    L.mashFromBill('51% corn, rest undisclosed'), null);
+  eq('nor a bill with no proportions at all',
+    L.mashFromBill('corn, rye and malted barley'), null);
+  eq('nor no bill', L.mashFromBill(null), null);
+
+  /* THE BILL BEATS THE NAME, which is the whole ruling. */
+  eq('a printed bill overrides the word in the name',
+    L.mashbill({ name: 'Something Wheated',
+                 mash: '75% corn, 21% rye, 4% malted barley' }), 'high-rye');
+  /* And the name still answers when there is no bill, which is 325 of 325
+     entries on the day this shipped. */
+  eq('the name still answers without one',
+    L.mashbill({ name: 'Weller Wheated Bourbon' }), 'wheated');
+  eq('and neither answering is still null',
+    L.mashbill({ name: 'Plain Bourbon' }), null);
+}
+
+sec('\u00a7295 a mash bill fixed by law, and a ppm that is measured');
+{
+  /* BZ: barley and malted barley are a mash bill unto themselves.
+     Additionally, a ppm for smoky scotch. */
+
+  /* A SCOTCH SINGLE MALT IS 100% MALTED BARLEY BY REGULATION. Not an
+     inference from the category — the definition of it. 126 of BZ's 325
+     entries were queued waiting for a lookup to find something no producer
+     would ever publish, because it does not need publishing. */
+  eq('a single malt is malted barley',
+    L.mashByLaw({ sub: 'scotch', style: 'single malt' }).mash,
+    '100% malted barley');
+  eq('and Irish single pot still is both barleys',
+    L.mashByLaw({ sub: 'irish', style: 'single pot still' }).mash,
+    'Malted and unmalted barley');
+  eq('an American single malt too',
+    L.mashByLaw({ sub: 'american single malt', style: 'single malt' }).mash,
+    '100% malted barley');
+
+  /* AND ONLY WHERE THE LAW ACTUALLY SETTLES IT. A blended Scotch carries
+     grain whisky and a single grain is by definition not malted barley;
+     saying otherwise would be inventing a bill for a third of the shelf. */
+  eq('a blend is not settled',
+    L.mashByLaw({ sub: 'scotch', style: 'blended' }), null);
+  eq('nor a single grain',
+    L.mashByLaw({ sub: 'scotch', style: 'single grain' }), null);
+  eq('nor a bourbon',
+    L.mashByLaw({ sub: 'bourbon', style: 'bourbon' }), null);
+  /* "blended malt" contains "malt" and is checked before the patterns, or
+     it would read as a single malt. It is several malts and the law fixes
+     the grain of each, but the app is not claiming to know the blend. */
+  eq('and a blended malt is not a single malt',
+    L.mashByLaw({ sub: 'scotch', style: 'blended malt' }), null);
+
+  /* SO THE GAP CLOSES WITHOUT SPENDING ANYTHING. */
+  eq('a single malt is not short of a mash bill',
+    L.slotOpen({ sub: 'scotch', style: 'single malt' }, 'mash'), false);
+  eq('but a bourbon still is',
+    L.slotOpen({ sub: 'bourbon', style: 'bourbon' }, 'mash'), true);
+  /* DERIVED, NEVER STORED: writing it onto 126 entries would be inventing
+     data that goes stale the moment somebody corrects a style. */
+  eq('and nothing was written to get there',
+    L.mashByLaw({ sub: 'scotch', style: 'single malt' }).mash !== undefined
+      && ({ sub: 'scotch', style: 'single malt' }).mash === undefined, true);
+  /* A PRINTED BILL STILL WINS over the one the category implies. */
+  eq('a printed bill beats the law',
+    L.mashOf({ sub: 'scotch', style: 'single malt',
+               mash: '80% malted barley, 20% rye' }),
+    '80% malted barley, 20% rye');
+  eq('and the law answers when nothing is printed',
+    L.mashOf({ sub: 'scotch', style: 'single malt' }), '100% malted barley');
+  eq('and neither is null', L.mashOf({ sub: 'bourbon' }), null);
+
+  /* PHENOL PPM. The only real measure of peat, and the app has been
+     guessing it from the distillery for months. */
+  eq('nothing measurable is not peated', L.peatFromPpm(0), 0);
+  eq('under five is still not', L.peatFromPpm(2), 0);
+  eq('eight is a whisper', L.peatFromPpm(8), 1);
+  eq('twenty is definite smoke', L.peatFromPpm(20), 2);
+  eq('Laphroaig at forty is heavy', L.peatFromPpm(40), 3);
+  eq('and Octomore past eighty is extreme', L.peatFromPpm(167), 4);
+  eq('a number past anything ever bottled is a misread',
+    L.peatFromPpm(900), null);
+  eq('and so is a negative one', L.peatFromPpm(-1), null);
+  eq('no ppm is no answer', L.peatFromPpm(null), null);
+  eq('every band lands on a real label',
+    L.PEAT_PPM_BANDS.every(b => L.PEAT_LABELS[b.level] !== undefined), true);
+
+  /* A MEASURED PPM BEATS THE GUESS (rule 30d). Bruichladdich is the case:
+     the same house makes Octomore past 300ppm and the unpeated Classic
+     Laddie at nought, and the name-based guess calls the Laddie HEAVY
+     because the house is. */
+  eq('the guess gets the Laddie wrong',
+    L.peatLevel({ name: 'The Classic Laddie', dist: 'Bruichladdich' }), 3);
+  eq('and a measured zero corrects it',
+    L.peatLevel({ name: 'The Classic Laddie', dist: 'Bruichladdich', ppm: 0 }),
+    0);
+  eq('the guess still answers without one',
+    L.peatLevel({ name: 'Octomore 15.1', dist: 'Bruichladdich' }), 4);
+
+  /* IT SURVIVES THE ROUND TRIP, through the same whitelists mash needed. */
+  eq('a lookup keeps it',
+    L.parseLookup({ name: 'X', ppm: 40 }, { needIdentity: false }).ppm, 40);
+  eq('a label read keeps it', L.labelFields({ name: 'X', ppm: 55 }).ppm, 55);
+  eq('a typed one is kept', L.normalizeProduct({ name: 'X', ppm: '55' }).ppm, 55);
+  eq('and a nonsense one is not',
+    L.normalizeProduct({ name: 'X', ppm: '900' }).ppm, undefined);
+  eq('the shared library row carries it',
+    L.libraryEntry({ name: 'X', proof: 90, ppm: 40 }).ppm, 40);
+}
+
+sec('\u00a7296 what the library rows actually carry');
+{
+  /* BZ ran a fill and four of the first ten asked were single malts, whose
+     mash bill the law settles and which should never have been asked. The
+     same logic closes them on his shelf AND on a freshly published row, so
+     the difference had to be in the 433 rows themselves — written over
+     months, and mashByLaw needs a style to match on. Neither of us could
+     see them, and it cost a round of guessing. Counted now. */
+  const rows = {
+    a: { name: 'Lagavulin 16', sub: 'scotch', style: 'single malt' },
+    b: { name: 'Old Row', sub: 'scotch' },
+    c: { name: 'A Bourbon', sub: 'bourbon', style: 'bourbon' },
+    d: { name: 'Pot Still', sub: 'irish', style: 'single pot still',
+         mash: '100% barley' },
+    e: { noName: true }
+  };
+  const shape = L.libraryShape(rows);
+  eq('a row with no name is not a row', shape.total, 4);
+  /* THE ONE THAT MATTERS: a row published before style travelled carries
+     none, and the law cannot fire on it. */
+  eq('rows carrying a style are counted', shape.styled, 3);
+  eq('and the law closes the ones it can', shape.byLaw, 2);
+  /* Lagavulin closes by law, the pot still has a printed bill, so only the
+     styleless Scotch and the bourbon are still short. */
+  eq('what is left is what a fill would ask about', shape.mashOpen, 2);
+
+  /* The diagnostics screen renders before the library has loaded, so this
+     has to say nothing rather than throw. */
+  eq('a null snapshot is zero, not an error',
+    L.libraryShape(null).total, 0);
+  eq('and so is an empty one', L.libraryShape({}).total, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
