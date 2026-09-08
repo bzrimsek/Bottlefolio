@@ -12659,5 +12659,163 @@ sec('\u00a7313 the shelf stops asking about what it cannot find');
     Object.keys(L.noteMiss({ x: { no: 1 } }, null, today)).length, 1);
 }
 
+sec('\u00a7314 arranging the shelf');
+{
+  /* BZ's spec, given long before it was built: capacity PER SHELF, which he
+     enters, because real furniture is not uniform; grouping beats capacity,
+     so a house splits across two shelves rather than being broken up; an
+     ordered list and no physical layout, because left and right are his to
+     decide standing in front of it. */
+  const cat = {};
+  const bots = [];
+  const add = (k, name, sub, extra) => {
+    cat[k] = Object.assign({ k: k, name: name, sub: sub }, extra || {});
+    bots.push({ id: 'b' + k, k: k, status: 'open' });
+  };
+  for (let i = 1; i <= 8; i++) add('i' + i, 'Islay ' + i, 'scotch', { region: 'Islay' });
+  for (let i = 1; i <= 5; i++) add('b' + i, 'Beam ' + i, 'bourbon', { dist: 'Jim Beam' });
+  add('one', 'A Lonely Rye', 'rye', { dist: 'Nobody' });
+  add('two', 'Another Loner', 'canadian');
+
+  const plan = L.shelfPlan(cat, bots, [10, 10]);
+  eq('every bottle is placed', plan.bottles, 15);
+  eq('and none overflows', plan.overflow.length, 0);
+  /* NOTHING GOES OVER, which is the whole point of entering a capacity —
+     the first version put 239 bottles on a 30-bottle shelf. */
+  eq('no shelf exceeds what it holds',
+    plan.shelves.every(sh =>
+      sh.items.reduce((n, x) => n + x.bottles.length, 0) <= sh.cap), true);
+  /* GROUPING BEATS CAPACITY: eight Islays are one block, not scattered. */
+  const islay = plan.shelves[0].items.filter(x => /Islay/.test(x.group))[0];
+  eq('a group stays together', islay.bottles.length, 8);
+  /* SINGLETONS MERGE. Two groups of one would be two shelves labelled with
+     one whisky each, which tells nobody anything — on BZ's real shelf there
+     are thirty of them. */
+  const rest = plan.shelves
+    .reduce((a, sh) => a.concat(sh.items), [])
+    .filter(x => /And the rest/.test(x.group));
+  eq('lone bottles collect together', rest.length >= 1, true);
+  eq('and both of them are in it',
+    rest.reduce((n, x) => n + x.bottles.length, 0), 2);
+
+  /* A group too big for any shelf splits, and the parts say which is which
+     rather than looking like two different groups. */
+  const tight = L.shelfPlan(cat, bots, [5, 5, 5]);
+  const parts = tight.shelves.reduce((a, sh) => a.concat(sh.items), [])
+    .filter(x => /Islay/.test(x.group));
+  eq('a group larger than a shelf is split', parts.length >= 2, true);
+  eq('and each part is numbered', /\(\d\)/.test(parts[0].group), true);
+
+  /* Not enough shelf is reported rather than silently dropped. */
+  const cramped = L.shelfPlan(cat, bots, [4]);
+  eq('what will not fit is named', cramped.overflow.length, 11);
+  eq('no capacity is no plan', L.shelfPlan(cat, bots, []), null);
+  eq('and no bottles is no plan', L.shelfPlan({}, [], [10]), null);
+}
+
+sec('\u00a7315 which shelf a bottle belongs on');
+{
+  /* Scotch reads by REGION and American by HOUSE, because that is how each
+     is actually looked for: nobody hunts a bourbon by region, and nobody
+     hunts an Islay by distillery when what they want is an Islay. */
+  eq('Scotch groups by region',
+    L.shelfGroupOf({ sub: 'scotch', region: 'Islay' }), 'Scotch \u2014 Islay');
+  eq('and says so when the region is unknown',
+    L.shelfGroupOf({ sub: 'scotch' }), 'Scotch \u2014 unspecified');
+  eq('American groups by house',
+    L.shelfGroupOf({ sub: 'bourbon', dist: 'Buffalo Trace' }),
+    'Buffalo Trace');
+  eq('a rye is grouped by house too, not by being rye',
+    L.shelfGroupOf({ sub: 'rye', dist: 'New Riff Distilling' }),
+    'New Riff Distilling');
+  /* Irish splits on style, which is its own real division — single pot
+     still is a different thing from a blend, not a different brand. */
+  eq('Irish splits on style',
+    L.shelfGroupOf({ sub: 'irish', style: 'single pot still' }),
+    'Irish \u2014 single pot still');
+  eq('and a blend is its own shelf',
+    L.shelfGroupOf({ sub: 'irish', style: 'blended' }),
+    'Irish \u2014 blended');
+  /* Everything else falls back to its category rather than vanishing. */
+  eq('a category with no rule is still a group',
+    L.shelfGroupOf({ sub: 'japanese' }), 'Japanese');
+  eq('and nothing at all has somewhere to go',
+    L.shelfGroupOf({}), 'Everything else');
+}
+
+sec('\u00a7316 a dropped upload says so');
+{
+  /* BZ, standing in a store: neither Photo a bottle nor Photo a shelf
+     returns anything. His log said exactly why — "shelf read failed: Failed
+     to fetch", twice, and a label read that failed the same way and then
+     read perfectly two minutes later on the same bottle.
+
+     That is not the service refusing: the service never saw it. The upload
+     died on the way, which is what a phone on cell data does, and a shelf
+     read is the largest thing this app sends. The screen said "That did not
+     go through", which is the app knowing what happened and telling him
+     nothing he can act on. */
+  eq('a dropped fetch is the network',
+    L.isNetworkFail(new Error('Failed to fetch')), true);
+  eq('so is Safari saying it differently',
+    L.isNetworkFail(new Error('Load failed')), true);
+  eq('and Firefox differently again',
+    L.isNetworkFail(new Error('NetworkError when attempting to fetch')), true);
+  /* AN HTTP STATUS IS AN ANSWER. The service was reached and refused, which
+     is a different thing to tell somebody and not worth retrying. */
+  eq('an HTTP status is not the network',
+    L.isNetworkFail(new Error('HTTP 500')), false);
+  eq('nor is a reply that would not parse',
+    L.isNetworkFail(new Error('no JSON in the reply')), false);
+  eq('and nothing at all is not the network', L.isNetworkFail(null), false);
+
+  /* The two are said differently, because the thing to DO about them
+     differs: move and press again, versus the service could not read it. */
+  eq('the network message says to try again',
+    /signal is better/.test(L.readFailSays(new Error('Failed to fetch'))), true);
+  eq('and it says the photograph is not lost',
+    /not lost/.test(L.readFailSays(new Error('Failed to fetch'))), true);
+  eq('a service failure carries its reason',
+    /HTTP 500/.test(L.readFailSays(new Error('HTTP 500'))), true);
+}
+
+sec('\u00a7317 a dot that means something arrived');
+{
+  /* BZ: if I have shelf to-dos, like filling in data, should we provide a
+     notification dot on the gear?
+
+     Yes, but measured first: 200 of his 325 bottles want tasting notes, so
+     a dot meaning "there is work" would never go out — and a light that is
+     always on is furniture, not a signal. It means what has ARRIVED since
+     he last opened the tools. */
+  const today = '2026-09-08';
+  const cat = { a: { k: 'a', name: 'Old One', proof: 90 },
+                b: { k: 'b', name: 'New One', proof: 90 } };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'open', got: '2026-09-08' }];
+
+  /* Never opened: everything counts, because none of it has been seen. */
+  eq('a first look counts everything',
+    L.shelfTodo(cat, bots, {}, null, today), 2);
+  /* Opened yesterday: only the bottle added since. */
+  eq('after that, only what arrived',
+    L.shelfTodo(cat, bots, {}, '2026-09-07', today), 1);
+  /* Opened today: nothing new, so no dot. */
+  eq('and nothing new is no dot',
+    L.shelfTodo(cat, bots, {}, '2026-09-08', today), 0);
+  /* A BOTTLE WITH NO ADDED DATE IS NOT NEWS. BZ's 344 came from an import
+     that carried no dates, so none of them can ever be "new" — which is
+     right, and is why the dot does not simply light up for all of them. */
+  eq('an undated bottle is never news',
+    L.shelfTodo({ a: cat.a }, [{ id: '1', k: 'a', status: 'open' }],
+      {}, '2026-09-07', today), 0);
+  /* A bottle already asked about and rested does not count either: the
+     ledger decides, so the dot and the queue cannot disagree. */
+  eq('a resting bottle is not waiting',
+    L.shelfTodo(cat, bots, { b: { no: 1, at: '2026-09-08' } },
+      '2026-09-07', today), 0);
+  eq('nothing to do is nought', L.shelfTodo({}, [], {}, null, today), 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

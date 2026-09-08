@@ -75,7 +75,21 @@ const plainDead = (src.match(/^function (\w+)\(/gm) || [])
   .filter(fn => src.split(new RegExp('\\b' + fn + '\\b')).length - 1 <= 1)
   .filter(fn => src.indexOf("'" + fn + "'") < 0);   // not called by name
 check('no plain function is defined and never called', plainDead);
-check('no L function is tested but never wired into the app', unwired);
+/* RETAINED ON PURPOSE, with the reason written down.
+
+   L.parseUpcListing read a pasted distributor price list into barcode
+   pairings. Its screen went in v1.8.88 — BZ, of that sheet, "sorry but who
+   would do this?" — and the function is kept rather than deleted because
+   removing its assertions is what broke the harness four times in one
+   afternoon: a section there sits inside a GROUP, so the closing brace
+   belongs to the group and never to the section beside it.
+
+   It comes out with its tests the next time that file is reorganised on
+   purpose. Until then it is a few lines nobody calls, which is cheaper than
+   another afternoon of that. */
+const KEPT_UNWIRED = ['parseUpcListing'];
+check('no L function is tested but never wired into the app',
+  unwired.filter(fn => KEPT_UNWIRED.indexOf(fn) < 0));
 
 /* 4. Every axis has a search phrase. The axis list and AXIS_ASK drifted
       apart when Origin became World and the phrase still said Scotch. */
@@ -112,6 +126,10 @@ const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lookupUrl', 'libLedgerAt', 'reelState', 'seenTips', 'installDismissed',
   /* 'log' was here and is not any more: BZ asked for one user and one
      log, so it follows the account and merges. */
+  /* When THIS device last opened the shelf tools. Per-device on purpose:
+     the dot is about what somebody sitting here has looked at, and a
+     desktop clearing it should not clear the phone's. */
+  'toolsSeen',
   'offerText', 'barSort', 'reels', 'held'];
 check('every stored key is synced or marked local on purpose',
   stateKeys.filter(k => syncBlock.indexOf("'" + k + "'") < 0
@@ -344,6 +362,86 @@ check('no fixed svg id is emitted by a repeated drawing',
     check('every nav tab is described in App use',
       tabs.filter(t => ref.indexOf("term: '" + t + "'") < 0));
   }
+}
+
+/* 23. A card that offers options its own sentence does not mention.
+
+      BZ: text and options do not match. The Out card said "Photograph the
+      shelf, or the list" while offering three chips — the sentence predated
+      A bottle being added and nobody revisited it — and it said LIST where
+      the chip says MENU.
+
+      Same shape as check 21, one screen over: prose describing controls,
+      drifting from the controls. This one reads the option labels out of
+      AWAY_SUBJECTS and asks whether the card's own sentence names each. */
+{
+  const subs = (src.match(/AWAY_SUBJECTS = \[([\s\S]*?)\];/) || [])[1] || '';
+  const labels = (subs.match(/label: '([^']+)'/g) || [])
+    .map(m => m.replace(/label: '|'/g, ''));
+  const card = src.slice(src.indexOf("'What\\u2019s in front of me'"));
+  const intro = card.slice(0, 900);
+  check('the Out card names every option it offers',
+    labels.filter(l => {
+      /* "A bottle" in a list reads as "a bottle", so compare on the noun
+         rather than the chip's exact capitalisation. */
+      const noun = l.replace(/^An? /i, '').toLowerCase();
+      return intro.toLowerCase().indexOf(noun) < 0;
+    }));
+}
+
+/* 24. Two elements with the same id.
+
+      A second <section id="scr-buddies"> survived from before Buddies was a
+      tab, and nothing saw it: the suite cannot, the audit did not, and it
+      took a browser walk complaining about a strict-mode violation. Invalid
+      HTML, and worse than untidy — getElementById and url(#id) both take
+      whichever came first, so half the code was addressing one element and
+      half the other.
+
+      Rule 19b says an id emitted more than once is a fault. This is the
+      static half of it, one line and a second to run. */
+{
+  const ids = (src.match(/\sid="[^"]+"/g) || [])
+    .map(m => m.replace(/\sid="|"/g, ''));
+  const seen = {}, dupes = {};
+  ids.forEach(i => { if (seen[i]) dupes[i] = 1; seen[i] = 1; });
+  check('no id is declared twice in the document', Object.keys(dupes));
+}
+
+/* 25. A COLLECTION THAT SYNCS BY REPLACEMENT LOSES CHANGES.
+
+      BZ found this the hard way twice in one morning. The wishlist refused
+      a removal — it accepted it, and the account's copy replaced the local
+      one wholesale and put it back. The house merge looped — it wrote the
+      library and not the shelf, and the next publish undid it. One shape:
+      a fact kept in two places and updated in one.
+
+      A scalar is fine to replace: last writer wins is what you want for a
+      display name. A COLLECTION is not, because replacing it silently
+      discards whatever the other side did to it.
+
+      So every synced key that holds a collection must either merge by
+      record (LISTS) or merge as a map (SYNC_MERGE). Anything else has to be
+      named here as a scalar on purpose, which is a sentence somebody has to
+      write and therefore a decision somebody has to make. */
+{
+  const SCALARS = ['shelfCaps',
+    'displayName', 'findable', 'fxRate', 'wishShared',
+    'lookupUrl', 'admin', 'barSort', 'updated', 'pushedAt'];
+  /* deleted is a MAP and is deliberately not here: it is a known gap,
+     recorded in BACKLOG rather than waved through. It cannot take a plain
+     union — a deletion undone on one device would be resurrected by the
+     other — so it needs the tombstone treatment `wish` got, and that is a
+     decision rather than a patch. */
+  const KNOWN_GAP = ['deleted'];
+  const keys = (src.match(/L\.SYNC_KEYS = \[([\s\S]*?)\];/) || [])[1] || '';
+  const merge = (src.match(/L\.SYNC_MERGE = \[([\s\S]*?)\];/) || [])[1] || '';
+  const lists = (src.match(/const LISTS = \[([\s\S]*?)\];/) || [])[1] || '';
+  const named = t => (t.match(/'([a-zA-Z]+)'/g) || []).map(x => x.replace(/'/g, ''));
+  const covered = named(merge).concat(named(lists))
+    .concat(SCALARS).concat(KNOWN_GAP);
+  check('every synced collection merges rather than replaces',
+    named(keys).filter(k => covered.indexOf(k) < 0));
 }
 
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
