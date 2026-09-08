@@ -12271,5 +12271,73 @@ sec('\u00a7296 what the library rows actually carry');
   eq('and so is an empty one', L.libraryShape({}).total, 0);
 }
 
+sec('\u00a7297 the style a name already states');
+{
+  /* BZ's diagnostics on 2026-09-07: 433 library rows, 326 with a style, 107
+     without. Those were published before style travelled in libraryEntry,
+     and mashByLaw needs one — so a Scotch single malt among them is asked
+     for a mash bill on every run and the answer can never arrive, because
+     no producer publishes what the law already fixes. For most of them the
+     NAME says the style, and reading it costs nothing. */
+
+  eq('a name that states it, states it',
+    L.styleFromName({ name: 'Lagavulin 16 Year Old Single Malt Scotch Whisky' }),
+    'single malt');
+  eq('and single pot still is read before single malt',
+    L.styleFromName({ name: 'Redbreast 12 Single Pot Still Irish Whiskey' }),
+    'single pot still');
+  /* Longest first, or "blended malt" reads as "single malt"'s neighbour and
+     the wrong one wins. */
+  eq('blended malt is its own thing',
+    L.styleFromName({ name: 'Compass Box Blended Malt Scotch' }), 'blended malt');
+  eq('and single grain is too',
+    L.styleFromName({ name: 'Haig Club Single Grain Scotch Whisky' }),
+    'single grain');
+
+  /* ONLY THE FIVE THAT CHANGE mashByLaw. A name also states single barrel
+     and small batch, and those are production descriptors on a different
+     axis from the category word — reading them into style would put
+     "single barrel" where "bourbon" was, change nothing about a mash bill,
+     and quietly rewrite 30 entries. */
+  eq('single barrel is not a style this reads',
+    L.styleFromName({ name: "Angel's Envy Single Barrel" }), null);
+  eq('nor small batch',
+    L.styleFromName({ name: '1792 Small Batch Kentucky Straight Bourbon' }),
+    null);
+  eq('and a name that states nothing yields nothing',
+    L.styleFromName({ name: 'Ardbeg Uigeadail' }), null);
+
+  /* AND ONLY WHERE NOTHING IS STORED. Measured across BZ's 325: of entries
+     whose name states a mash-relevant style, 67 agreed with what was stored
+     and ONE differed — Macaloney's Searaidh Braiche, stored as `new make`,
+     which is spirit that is not whisky yet. The stored value is right and
+     the name is misleading, and that one case is the whole argument. */
+  eq('a stored style is never overwritten',
+    L.styleFromName({ name: "Macaloney's Searaidh Braiche Single Malt Spirit",
+                      style: 'new make' }), null);
+  eq('even when the name agrees with it',
+    L.styleFromName({ name: 'X Single Malt', style: 'single malt' }), null);
+  eq('and a nameless row yields nothing',
+    L.styleFromName({ style: '' }), null);
+
+  /* THE PASS, AS A PREVIEW. It reports what it would write and how many of
+     those stop being asked for a mash bill, which is the reason to run it. */
+  const rows = [
+    { k: 'a', name: 'Lagavulin 16 Single Malt Scotch Whisky', sub: 'scotch' },
+    { k: 'b', name: 'Redbreast 12 Single Pot Still', sub: 'irish' },
+    { k: 'c', name: 'Ardbeg Uigeadail', sub: 'scotch' },
+    { k: 'd', name: 'Buffalo Trace', sub: 'bourbon' },
+    { k: 'e', name: 'Already Styled Single Malt', sub: 'scotch',
+      style: 'single malt' }
+  ];
+  const back = L.styleBackfill(rows);
+  eq('it writes only what a name states and nothing stores',
+    back.rows.map(r => r.k).join(','), 'a,b');
+  eq('and says which of those stop being asked about', back.closes, 2);
+  eq('a row whose name says nothing is left alone',
+    back.rows.some(r => r.k === 'c'), false);
+  eq('nothing to do is an empty list', L.styleBackfill([]).rows.length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
