@@ -322,12 +322,28 @@ check('no fixed svg id is emitted by a repeated drawing',
 {
   const CONTROLS = ['Read the label', 'Export everything', 'Export for import',
     'Photograph it', 'Fill what is missing', 'Import a collection',
-    'Back up everything', 'Add to the shelf'];
+    'Back up everything', 'Add to the shelf',
+    /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
+       display name, turn on findable" for a whole version after both moved
+       to a tab — a help page naming a place that no longer holds the thing
+       is worse than one saying nothing. */
+    'Let anyone find me by name', 'Invite a drinking buddy'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
     CONTROLS.filter(c => src.indexOf("'" + c + "'") >= 0
       && ref.indexOf(c) < 0));
+
+  /* And every TAB, since a tab is the coarsest control there is and one of
+     them went undocumented for a version. Read off the nav rather than a
+     list, so adding a ninth cannot quietly skip this. */
+  {
+    const nav = src.slice(src.indexOf('<nav>'), src.indexOf('</nav>'));
+    const tabs = (nav.match(/>([A-Za-z]+)<\/button>/g) || [])
+      .map(m => m.replace(/>|<\/button>/g, ''));
+    check('every nav tab is described in App use',
+      tabs.filter(t => ref.indexOf("term: '" + t + "'") < 0));
+  }
 }
 
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
