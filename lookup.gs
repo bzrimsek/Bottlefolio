@@ -50,6 +50,49 @@ var API = 'https://api.anthropic.com/v1/messages';
  * that is not there is dropped and reported, not poured. So the worst a bad
  * answer can do is produce a short flight and a list of rejects.
  */
+/**
+ * IS EVERYTHING HERE? Run this from the editor after any paste.
+ *
+ * Four files have to be in this project and doPost has to reach all of
+ * them. Pasting one file over another has, more than once, quietly dropped
+ * a line from doPost — and a dropped line does not break anything visibly:
+ * the app asks for a mode, gets "unknown mode" back, and reports the
+ * feature as broken rather than as absent.
+ *
+ * This checks the wiring only. It calls nothing and costs nothing.
+ */
+function probeWiring() {
+  var need = [
+    ['flight', 'designFlight', 'Code.gs (this file)'],
+    ['candidates', 'suggestBottles', 'Code.gs (this file)'],
+    ['recap', 'writeRecap_', 'recap.gs'],
+    ['bottle', 'writeBottle_', 'recap.gs'],
+    ['label', 'readLabel_', 'label.gs'],
+    ['shelf', 'readShelf_', 'shelf.gs']
+  ];
+  var missing = [];
+  need.forEach(function (row) {
+    var there = false;
+    try { there = (eval('typeof ' + row[1]) === 'function'); } catch (e) {}
+    Logger.log((there ? 'OK   ' : 'GONE ') + row[0] + '  \u2192  ' + row[1]
+      + '   (' + row[2] + ')');
+    if (!there) missing.push(row[2]);
+  });
+  try {
+    if (typeof labelShrink_ !== 'function') missing.push('label.gs');
+  } catch (e) { missing.push('label.gs'); }
+
+  if (!missing.length) {
+    Logger.log('');
+    Logger.log('ALL SIX MODES WIRED. Deploy: pencil on the existing '
+      + 'deployment, Version = New version, Deploy.');
+    return;
+  }
+  Logger.log('');
+  Logger.log('MISSING: ' + missing.join(', ') + ' \u2014 that file is not in '
+    + 'the project, or the paste dropped part of it. Do not deploy yet.');
+}
+
 function doPost(e) {
   var body;
   try {
@@ -57,9 +100,25 @@ function doPost(e) {
   } catch (err) {
     return json({ error: 'bad request body' });
   }
+  /* EVERY MODE THE APP CALLS, listed here so this file can be pasted whole
+     without anybody having to remember what was added to it since.
+
+     Each of these lives in its own file in the same project — writeRecap_
+     and writeBottle_ in recap.gs, readLabel_ in label.gs, readShelf_ in
+     shelf.gs — and each was added to this block by hand at the time. That
+     is four chances to lose one on the next paste, and losing one is
+     silent: the app gets "unknown mode" and reports the feature as broken
+     rather than as missing.
+
+     A mode whose file is not in the project throws a ReferenceError, which
+     the catch below turns into a readable error rather than a 500. */
   try {
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
+    if (body.mode === 'recap') return json({ recap: writeRecap_(body) });
+    if (body.mode === 'bottle') return json({ recap: writeBottle_(body) });
+    if (body.mode === 'label') return json(readLabel_(body));
+    if (body.mode === 'shelf') return json(readShelf_(body));
   } catch (err) {
     return json({ error: String(err) });
   }
@@ -79,7 +138,8 @@ function doPost(e) {
  */
 function suggestBottles(req) {
   var shape = '{"bottles":[{"name":string,"distillery":string,"proof":number,'
-    + '"price_usd":number,"why":string}],"note":string}';
+    + '"price_usd":number,"why":string,"source":string,"confident":boolean}],'
+    + '"note":string}';
 
   var system = [
     'You name real, currently purchasable whisky bottles that satisfy a',
@@ -93,15 +153,38 @@ function suggestBottles(req) {
     '2b. An empty bottles array is a valid and useful answer. A substitute',
     '    from another distillery is not — it will be rejected before it is',
     '    shown, so it wastes the answer.',
-    '3. Prefer bottles under the stated budget. An expensive famous bottle',
+    '2b. For EVERY suggestion give a "find" value, which is how hard it is',
+    '   to actually buy in the United States right now:',
+    '     shelf     — a liquor store of any size has it most weeks',
+    '     hunt      — real but you would ring round or wait for a drop',
+    '     allocated — a lottery, a list, or secondary at a multiple',
+    '   Judge the BOTTLING, not the brand: Weller Special Reserve is',
+    '   allocated while Weller 12 is a different answer again. A bottle',
+    '   somebody cannot buy is not a recommendation, it is a taunt, so say',
+    '   which it is and let them decide.',
+    '3. Prefer bottles under the stated budget, but NEVER return an empty',
+    '   list because of price. If nothing fits the budget, return the',
+    '   cheapest bottles that fit the GAP and let the app say they are over.',
+    '   An empty answer tells somebody the thing does not exist; a dear one',
+    '   tells them what it would cost, which is the question they asked.',
+    '3b. An expensive famous bottle',
     '   is the useless answer to every question; a good cheap one that',
     '   actually fills the gap is the useful one.',
     '4. why is one line saying what THIS bottle brings to that gap,',
     '   specifically, not a general description of the whisky.',
     '5. price_usd is typical US retail. Use null if you do not know it',
     '   rather than guessing.',
+    '5b. EVERY bottle needs a source: the retailer, review or distillery',
+    '   page where you found it, as a domain. A bottle you cannot source',
+    '   is a bottle you are inventing, and it will be dropped.',
+    '5c. Do not assemble a name from real parts. Old Forester 1920 is real;',
+    '   Old Forester 1920 Smoked Cinnamon Malt is not, and returning it is',
+    '   worse than returning nothing, because somebody will go looking.',
     '6. note is one line if there is something worth saying about the gap',
-    '   itself, otherwise an empty string.'
+    '   itself, otherwise an empty string.',
+    '7. confident is true ONLY if you saw this exact bottle named on a page',
+    '   you retrieved. If you are reasoning that it probably exists, it is',
+    '   false. Half the value here is knowing which is which.'
   ].join('\n');
 
   var owned = (req.owned || []).slice(0, 60).join('; ');
@@ -123,7 +206,11 @@ function suggestBottles(req) {
     'THE GAP: ' + (req.gap || ''),
     req.why ? 'WHY IT MATTERS: ' + req.why : '',
     must.length ? '\nHARD CONSTRAINTS:\n' + must.join('\n') : '',
-    req.budget ? '\nBUDGET: at or under $' + req.budget : '\nBUDGET: under $80',
+    req.axis ? '\nDIMENSION: the person is exploring ' + req.axis
+             + '. Every suggestion must move them along THAT axis.' : '',
+    '\nPRICE: no budget. Return a spread from cheap to dear and give a '
+    + 'price for every one, because the app sorts them cheapest first and '
+    + 'a bottle with no price sinks to the bottom.',
     '',
     'ALREADY OWNED in this corner of the shelf, do not suggest these:',
     owned || '(nothing)'
@@ -146,7 +233,12 @@ function suggestBottles(req) {
   var text = (data.content || [])
     .filter(function (b) { return b.type === 'text'; })
     .map(function (b) { return b.text; })
-    .join('\n').replace(/```json|```/g, '').trim();
+    .join('\n').replace(/```json|```/g, '')
+    // Citation markup leaked into 28 of 128 notes: the model annotates its
+    // sources inside the values, and they render as literal angle brackets
+    // on a tasting card. The source already has its own field.
+    .replace(/<\/?cite[^>]*>/g, '')
+    .trim();
   var a = text.indexOf('{'), b = text.lastIndexOf('}');
   if (a < 0) throw new Error('no JSON in the reply: ' + text.slice(0, 160));
   return JSON.parse(text.slice(a, b + 1));
@@ -210,7 +302,12 @@ function designFlight(req) {
   var text = (data.content || [])
     .filter(function (b) { return b.type === 'text'; })
     .map(function (b) { return b.text; })
-    .join('\n').replace(/```json|```/g, '').trim();
+    .join('\n').replace(/```json|```/g, '')
+    // Citation markup leaked into 28 of 128 notes: the model annotates its
+    // sources inside the values, and they render as literal angle brackets
+    // on a tasting card. The source already has its own field.
+    .replace(/<\/?cite[^>]*>/g, '')
+    .trim();
   var a = text.indexOf('{'), b = text.lastIndexOf('}');
   if (a < 0 || b < 0) throw new Error('no JSON in the reply');
   return JSON.parse(text.slice(a, b + 1));
@@ -263,6 +360,7 @@ function askAbout(name, notesOnly) {
     : '{"name":string,"dist":string|null,"proof":number|null,' +
       '"sub":string|null,"age":number|null,"fin":string|null,' +
       '"msrp":number|null,"scar":string|null,"region":string|null,' +
+      '"mash":string|null,' +
       '"colour":string|null,"nose":string|null,"palate":string|null,' +
       '"finish":string|null,"source":string|null}';
 
@@ -280,7 +378,16 @@ function askAbout(name, notesOnly) {
     'colour, nose, palate and finish must come from the producer or a named',
     'published review, not from your impression of what it probably tastes',
     'like. Keep each under 90 characters.',
-    'source names where the tasting notes came from, or null.'
+    'source names where the tasting notes came from, or null.',
+    'mash is the grain bill EXACTLY as the producer publishes it, e.g.',
+    '"75% corn, 21% rye, 4% malted barley". Most bottlings do not publish',
+    'one and null is then the correct and common answer. Do NOT derive it',
+    'from the category: a single malt does not publish "100% malted barley"',
+    'and you must not write it, and a bourbon is not "51% corn" because the',
+    'law requires at least that much. A partial bill is worth having as',
+    'printed - "51% corn, rest undisclosed" is a real thing producers say.',
+    'This field is written to a shared library as fact, so an invented',
+    'grain bill is worse than a missing one.'
   ].join(' ');
 
   var body = {
@@ -362,14 +469,47 @@ function probeLookup() {
  * run it again and it picks up where it stopped, since already-done names
  * are skipped by re-reading the CSV.
  */
-var MISSING = [
-  // 'Old Forester 1924 10 Year Old Kentucky Straight Bourbon Whiskey',
-  // 'Lagavulin 16 Year Old Single Malt Scotch Whisky',
-];
-var LIMIT = 25;
+// Not a count. A bottle takes five or six seconds because the model
+// searches the web for each one, so any fixed number is a guess that
+// eventually exceeds the six-minute execution limit — and when it does,
+// the whole batch is lost, because the file is only written at the end.
+// Watch the clock instead and stop while there is still time to save.
+var LIMIT = 200;              // an upper bound, not the real control
+var BUDGET_MS = 4 * 60 * 1000;   // stop after four minutes
+var SAVE_EVERY = 10;             // and write the file as we go
 var OUT = 'killer-bs-notes.csv';
 
+/**
+ * Write tasting notes for every bottle that has none.
+ *
+ * Reads the shelf from the deployed data.json rather than a list pasted in
+ * here — the list went stale the moment a bottle was added, and keeping it
+ * in sync was a copy button in Settings that nobody should have to press.
+ *
+ * Notes come back with a source named. They are the model's reading of what
+ * is published rather than somebody's own tasting, so they are written to a
+ * review file first and marked as model-sourced when applied.
+ */
+// Write the file. Called as the run goes rather than only at the end, so
+// an execution that is killed still leaves everything it managed.
+function saveNotes_(rows) {
+  var csv = rows.map(function (r) {
+    return r.map(function (c) {
+      return '"' + String(c).replace(/"/g, '""') + '"';
+    }).join(',');
+  }).join('\n');
+  var old = DriveApp.getFilesByName(OUT);
+  while (old.hasNext()) old.next().setTrashed(true);
+  DriveApp.createFile(OUT, csv, MimeType.CSV);
+}
+
 function fillMissingNotes() {
+  var shelf = fetchJson_(SHELF_URL);
+  var MISSING = Object.keys(shelf.catalog)
+    .filter(function (k) { return !shelf.catalog[k].tn; })
+    .map(function (k) { return shelf.catalog[k].name; });
+  Logger.log(MISSING.length + ' bottles have no notes');
+
   var done = {};
   var files = DriveApp.getFilesByName(OUT);
   var rows = [];
@@ -381,10 +521,21 @@ function fillMissingNotes() {
       rows.push(r);
     });
   }
-  if (!rows.length) rows.push(['name', 'colour', 'nose', 'palate', 'finish', 'source']);
+  // The header was being written only when the file was new, and then read
+  // back as data on the next run — so the finished CSV had no header at all.
+  if (!rows.length || rows[0][0] !== 'name') {
+    rows.unshift(['name', 'colour', 'nose', 'palate', 'finish', 'source']);
+  }
 
+  var started = Date.now();
   var count = 0;
   for (var i = 0; i < MISSING.length && count < LIMIT; i++) {
+    // Leave time to write what has been done. Running out mid-batch used to
+    // throw away every bottle in it.
+    if (Date.now() - started > BUDGET_MS) {
+      Logger.log('time budget reached, saving what is done');
+      break;
+    }
     var name = MISSING[i];
     if (done[name]) continue;
     try {
@@ -398,20 +549,24 @@ function fillMissingNotes() {
       Logger.log('fail ' + name + ' — ' + err);
     }
     count++;
-    Utilities.sleep(1200);          // stay well inside the rate limit
+    // Save periodically as well, so an unexpected kill costs ten bottles
+    // rather than everything since the run began.
+    if (count % SAVE_EVERY === 0) saveNotes_(rows);
+    Utilities.sleep(600);
   }
 
-  var csv = rows.map(function (r) {
-    return r.map(function (c) {
-      return '"' + String(c).replace(/"/g, '""') + '"';
-    }).join(',');
-  }).join('\n');
+  saveNotes_(rows);
 
-  var old = DriveApp.getFilesByName(OUT);
-  while (old.hasNext()) old.next().setTrashed(true);
-  DriveApp.createFile(OUT, csv, MimeType.CSV);
-  Logger.log('wrote ' + (rows.length - 1) + ' rows to ' + OUT +
-             ' (' + count + ' this run)');
+  // How many are still untouched, so a scheduled run knows when to stop.
+  var left = 0;
+  for (var k = 0; k < MISSING.length; k++) {
+    if (!done[MISSING[k]]) left++;
+  }
+  left -= count;
+  if (left < 0) left = 0;
+  Logger.log('wrote ' + (rows.length - 1) + ' rows to ' + OUT
+             + ' (' + count + ' this run, ' + left + ' still to do)');
+  return left;
 }
 
 
@@ -1294,6 +1449,40 @@ function enrichRetryMisses() {
     + kept.length + ' findings kept.');
   Logger.log('Now run enrichOvernight, or enrichFull a few times.');
 }
+
+/**
+ * Fill every missing note unattended, the same way the enrichment does.
+ * Runs a batch a minute, and removes its own trigger when nothing is left.
+ */
+function notesOvernight() {
+  stopNotes_();
+  ScriptApp.newTrigger('notesTick_').timeBased().everyMinutes(1).create();
+  Logger.log('Scheduled. Close the tab; it runs on Google.');
+  notesTick_();
+}
+
+function notesTick_() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(1000)) return;      // a tick arriving mid-batch is a no-op
+  try {
+    var left = fillMissingNotes();
+    if (left === 0) {
+      stopNotes_();
+      Logger.log('All notes written — schedule removed.');
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function stopNotes_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'notesTick_') ScriptApp.deleteTrigger(t);
+  });
+}
+
+/** Stop a notes run early. Safe at any time. */
+function stopNotes() { stopNotes_(); Logger.log('Stopped. Progress is kept.'); }
 
 /** Start the full run over from the beginning. */
 function enrichReset() {

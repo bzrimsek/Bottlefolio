@@ -12339,5 +12339,179 @@ sec('\u00a7297 the style a name already states');
   eq('nothing to do is an empty list', L.styleBackfill([]).rows.length, 0);
 }
 
+sec('\u00a7298 a name that names no bottle, and a bottler that is not a house');
+{
+  /* Both found by BZ scanning one Angel's Envy Cellar Collection. */
+
+  /* A CATEGORY IS NOT A NAME. The reader returned "Kentucky Straight
+     Bourbon Whiskey Finished in Oloroso Sherry Casks" — the printed strip —
+     while ANGELS ENVY sat legible on two other panels. A generic name is
+     worse than none: it looks like it worked and matches nothing. */
+  eq('a category line is not a name',
+    L.namesABottle('Kentucky Straight Bourbon Whiskey Finished in Oloroso Sherry Casks'),
+    false);
+  eq('nor is a style', L.namesABottle('Single Malt Scotch Whisky'), false);
+  eq('nor a release descriptor',
+    L.namesABottle('Small Batch Limited Edition'), false);
+  eq('nor an age on its own', L.namesABottle('12 Year Old'), false);
+  eq('nor nothing', L.namesABottle(''), false);
+  /* And it must not eat real names. Only fires when NOTHING survives, so a
+     name buried in category words still passes on its brand. */
+  eq('a brand survives its category words',
+    L.namesABottle('Redbreast 12 Single Pot Still Irish Whiskey'), true);
+  eq('and a long one does too',
+    L.namesABottle('Bardstown Bourbon Company Collaborative Series Silver Oak'),
+    true);
+  eq("Angel's Envy Cellar Collection is a name",
+    L.namesABottle("Angel's Envy Cellar Collection"), true);
+  /* So the read keeps everything true and drops only the fake name. */
+  const ae = L.labelFields({
+    name: 'Kentucky Straight Bourbon Whiskey Finished in Oloroso Sherry Casks',
+    abv: 50, size: 375, sub: 'bourbon', fin: 'Oloroso' });
+  eq('the fake name is dropped', ae.name, undefined);
+  eq('and everything real is kept', ae.proof + '|' + ae.size + '|' + ae.fin,
+    '100|375|Oloroso');
+
+  /* A BOTTLER IS NOT A HOUSE. The same bottle returned a distillery of
+     "Louisville Spirits Group, Louisville KY" — the legal entity off the
+     back, true and printed and wrong for this field. Ten Angel's Envy
+     bottles sit under the brand, so taking it would have made an eleventh
+     house holding one, and the portrait, gapsFromHouses and the same-house
+     flight suggestion would each have shown two. */
+  const shelf = {
+    a: { name: 'A', dist: "Angel's Envy" }, b: { name: 'B', dist: "Angel's Envy" },
+    c: { name: 'C', dist: "Angel's Envy" }, d: { name: 'D', dist: 'Lagavulin' }
+  };
+  const split = L.houseSplit("Angel's Envy", 'Louisville Spirits Group', shelf);
+  eq('replacing a house the shelf uses is flagged', !!split, true);
+  eq('and it counts what would be left behind', split.held, 3);
+  /* One bottle under a name is a correction, not a house. */
+  eq('a one-off correction is not a split',
+    L.houseSplit('Lagavulin', 'Lagavulin Distillery', shelf), null);
+  /* houseSame already settles an abbreviation, so this stays quiet. */
+  eq('an abbreviation is not a split',
+    L.houseSplit("Angel's Envy", "Angel's Envy Co.", shelf), null);
+  eq('and nothing to compare is nothing',
+    L.houseSplit('', 'Anything', shelf), null);
+}
+
+sec('\u00a7299 one house spelt two ways');
+{
+  /* BZ: because you edited out the ' in Angel's Envy, you wrote Angels Envy
+     which did not match others and made the bottle summary say a few very
+     wrong things.
+
+     Not edited out — the bottle is etched ANGELS ENVY with no apostrophe
+     and the reader returned the brand's own styling. The fault is on this
+     side and it is worse than a wrong value because it LOOKS right:
+     houseSame compares through shopNorm, which drops punctuation, so the
+     two read as one house and the sheet offered no change and raised no
+     warning. It went in as agreement — while the shelf GROUPS on the raw
+     string, so ten under one spelling and one under another is two houses
+     to the portrait, gapsFromHouses and the same-house suggestion. */
+  const shelf = {
+    a: { name: 'A', dist: "Angel's Envy" }, b: { name: 'B', dist: "Angel's Envy" },
+    c: { name: 'C', dist: "Angel's Envy" }, d: { name: 'D', dist: 'Lagavulin' }
+  };
+  eq('a missing apostrophe snaps to the spelling in use',
+    L.snapHouse('Angels Envy', shelf), "Angel's Envy");
+  eq('and so does a curly one',
+    L.snapHouse('Angel\u2019s Envy', shelf), "Angel's Envy");
+  eq('and case', L.snapHouse("ANGEL'S ENVY", shelf), "Angel's Envy");
+  /* A house nobody has yet is written as it came — snapping is for
+     matching an existing one, not for inventing a preference. */
+  eq('a house nobody has is left alone',
+    L.snapHouse('Brand New Distillery', shelf), 'Brand New Distillery');
+  eq('and nothing stays nothing', L.snapHouse('', shelf), '');
+  /* THE SPELLING MOST OF THE SHELF USES WINS, so one stray entry cannot
+     pull ten across to its own version. */
+  const strays = { a: { dist: "Angel's Envy" }, b: { dist: "Angel's Envy" },
+                   c: { dist: 'Angels Envy' } };
+  eq('the majority spelling wins',
+    L.snapHouse('ANGELS ENVY', strays), "Angel's Envy");
+
+  /* IT SNAPS AT THE WRITE, because that is where the raw string lands. */
+  eq('a label read snaps on the way in',
+    L.labelTake({ dist: 'Angels Envy' }, ['dist'], shelf).dist, "Angel's Envy");
+  eq('and so does a typed one',
+    L.normalizeProduct({ name: 'X', dist: 'Angels Envy', _catalog: shelf }).dist,
+    "Angel's Envy");
+  /* Without a shelf to snap against it must not guess. */
+  eq('and with no shelf it writes what it was given',
+    L.labelTake({ dist: 'Angels Envy' }, ['dist']).dist, 'Angels Envy');
+
+  /* AND THE ONE ALREADY THERE IS REPORTED, not merged: merging two houses
+     is a decision about somebody's data and a wrong merge is worse than
+     the split. */
+  eq('a clean shelf has none', L.houseVariants(shelf).length, 0);
+  const broken = Object.assign({ e: { dist: 'Angels Envy' } }, shelf);
+  const v = L.houseVariants(broken);
+  eq('a split house is found', v.length, 1);
+  eq('and the majority spelling is named first',
+    v[0].spellings[0].name + ' x' + v[0].spellings[0].n, "Angel's Envy x3");
+  eq('with the stray beside it',
+    v[0].spellings[1].name + ' x' + v[0].spellings[1].n, 'Angels Envy x1');
+}
+
+sec('\u00a7299 one house, however it is spelt');
+{
+  /* BZ's bottle screen contradicted itself in one card: "This is your only
+     bottle from Angel's Envy" three lines above "Pour it against Angel's
+     Envy Bourbon Madeira Cask Finish. Same house, same strength."
+
+     A label read had stored the brand as the bottle etches it — ANGELS
+     ENVY, no apostrophe — beside ten spelt Angel's Envy. bottleContext
+     compared with === and found none; the flight suggestion compares
+     through shopNorm and found the sibling. Two paths, one fact. */
+  const cat = {
+    a: { k: 'a', name: "Angel's Envy Port Finish", dist: "Angel's Envy",
+         sub: 'bourbon', proof: 100, fin: 'Port' },
+    b: { k: 'b', name: "Angel's Envy Madeira", dist: "Angel's Envy",
+         sub: 'bourbon', proof: 100, fin: 'Madeira' },
+    c: { k: 'c', name: 'Angels Envy Cellar Collection', dist: 'Angels Envy',
+         sub: 'bourbon', proof: 100, fin: 'Oloroso' },
+    d: { k: 'd', name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch' }
+  };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'open' },
+                { id: '3', k: 'c', status: 'open' },
+                { id: '4', k: 'd', status: 'open' }];
+  const ctx = L.bottleContext(cat.c, cat, bots);
+  /* `house` is the NAME and `fromHouse` is the COUNT. My first version of
+     this asserted on house.length and got 11 — the characters in "Angels
+     Envy" — and 9 for "Lagavulin". The test was wrong and the code was
+     right, which is the way round it should be, and the numbers looked
+     plausible enough to chase for a round. */
+  eq('a house spelt two ways is one house', ctx.fromHouse, 2);
+  eq('and it is named as the bottle spells it', ctx.house, 'Angels Envy');
+  eq('and a different house is still different',
+    L.bottleContext(cat.d, cat, bots).fromHouse, 0);
+
+  /* SNAPPED ON THE WAY IN, so the next one does not need forgiving. */
+  eq('a write takes the spelling the shelf uses',
+    L.snapHouse('Angels Envy', cat), "Angel's Envy");
+  eq('a curly apostrophe is the same house too',
+    L.snapHouse('Angel\u2019s Envy', cat), "Angel's Envy");
+  /* The spelling MOST of the shelf uses wins, not the first one found —
+     one stray must not pull the majority across. */
+  eq('the majority spelling wins',
+    L.snapHouse('ANGELS ENVY', cat), "Angel's Envy");
+  eq('a house nobody has is written as it came',
+    L.snapHouse('Brand New Distillery', cat), 'Brand New Distillery');
+  eq('and nothing stays nothing', L.snapHouse('', cat), '');
+  eq('the write path snaps it',
+    L.labelTake({ dist: 'Angels Envy' }, ['dist'], cat).dist, "Angel's Envy");
+
+  /* AND THE ONE ALREADY STORED IS REPORTED, not merged: merging somebody's
+     houses on a guess is worse than the split. */
+  const v = L.houseVariants(cat);
+  eq('the split that exists is found', v.length, 1);
+  eq('with the majority spelling first', v[0].spellings[0].name, "Angel's Envy");
+  eq('and the count that makes it the majority', v[0].spellings[0].n, 2);
+  eq('a tidy shelf reports nothing',
+    L.houseVariants({ x: { dist: 'Lagavulin' }, y: { dist: 'Lagavulin' } }).length,
+    0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
