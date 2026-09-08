@@ -21,7 +21,11 @@ const file = path.resolve(process.argv[2] || 'index.html');
 const dir = path.dirname(file);
 
 // Every screen in the tab bar, plus the ones reached from inside.
-const TABS = ['home', 'shelf', 'shop', 'pour', 'flights', 'map', 'ref'];
+/* Map came off the nav in v1.8.79 — the mini-map on Home already opened
+   it, so the tab was a second door to the same room. Buddies went on.
+   The Map SCREEN is still there and still drawn; it is reached from Home,
+   which is checked separately below. */
+const TABS = ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref'];
 
 /* Reporter state lives here, not inside the walk: the catch that reports a
    crash sits outside the async function and has to be able to name the
@@ -169,7 +173,20 @@ function step(n) {
   for (const name of ['settings', 'diag', 'library', 'buddies', 'shared']) {
     const drew = await page.evaluate(n => {
       /* global show */
-      try { show(n); } catch (e) { return 'threw: ' + e.message; }
+      /* RENDER IT, don't just show it. This called show() alone and
+         counted the screen's text — which included the header, so "‹ Home"
+         and a title were enough to clear the 12-character bar and the check
+         never looked at the content at all. Hiding a redundant back button
+         dropped three screens under the bar and exposed it. */
+      try {
+        const draw = { settings: () => renderSettings(),
+                       library: () => renderLibraryScreen(),
+                       shared: () => renderShared(),
+                       diag: () => renderDiag(),
+                       buddies: () => renderBuddiesTab() }[n];
+        if (draw) draw();
+        show(n);
+      } catch (e) { return 'threw: ' + e.message; }
       const scr = document.getElementById('scr-' + n);
       if (!scr) return 'no screen';
       if (!scr.classList.contains('on')) return 'did not open';
@@ -274,7 +291,12 @@ function step(n) {
        and the click had gone somewhere else. */
     const modes = page.locator('#scr-shop .modetile');
     if (await modes.count() >= 3) {
-      await page.locator('.modetile', { hasText: 'website' }).first().click();
+      /* BY WHAT IT DOES, NOT WHAT IT SAYS. This matched on the word
+         "website" and broke the moment the tile was reworded to "Looking at
+         a bottle online" — a walk step failing on a rewording is testing
+         the copy, which is exactly what rule 30c says not to do. The mode
+         id is the durable thing: it is what the code branches on. */
+      await page.locator('.modetile[data-mode="online"]').first().click();
       await page.waitForTimeout(300);
       const ta = page.locator('#scr-shop textarea').first();
       if (!(await ta.count())) {
@@ -572,7 +594,7 @@ function step(n) {
       failures.push('shop: cannot reach the situation question');
     } else {
       // By label, so adding a situation cannot silently retarget this.
-      await page.locator('.modetile', { hasText: 'In a store' }).first()
+      await page.locator('.modetile[data-mode="store"]').first()
         .click();
       await page.waitForTimeout(350);
 
@@ -1214,8 +1236,13 @@ function step(n) {
         .filter(b => !b.hidden);
       if (bs.length < 2) return { n: bs.length };
       const a = bs[0].getBoundingClientRect(), b = bs[1].getBoundingClientRect();
-      return { n: bs.length, sameLine: Math.abs(a.top - b.top) < 2,
-               labels: bs.map(x => x.textContent.trim()) };
+      /* CENTRES, NOT TOP EDGES. Two controls of different heights on one
+         line have different tops by definition, and the header now holds a
+         34px mark beside 36px buttons — so this failed on a header that was
+         perfectly fine. Same line means the middles agree. */
+      const mid = r => r.top + r.height / 2;
+      return { n: bs.length, sameLine: Math.abs(mid(a) - mid(b)) < 4,
+               labels: bs.map(x => x.textContent.trim() || '(mark)') };
     });
     if (hdr.n >= 2 && !hdr.sameLine) {
       failures.push('shop: ' + hdr.labels.join(' and ') + ' are on two lines');
@@ -1242,7 +1269,7 @@ function step(n) {
     if (await back.isVisible()) { await back.click(); await page.waitForTimeout(300); }
     const tiles = page.locator('#scr-shop .modetile');
     if (await tiles.count() >= 3) {
-      await page.locator('.modetile', { hasText: 'Deciding what to buy' })
+      await page.locator('.modetile[data-mode="plan"]')
         .first().click();
       await page.waitForTimeout(450);
     } else {
@@ -1467,7 +1494,7 @@ function step(n) {
     await page.waitForTimeout(200);
   }
 
-  step('the mash bill reaches the screen');
+  step('the mash bill reaches the screen, the label sheet says what it would change, the name field reserves only the slots it has, sharing reads as on or off, a long read says it is still going, changing tabs closes an open sheet');
   /* 18. A field nobody can see is a field nobody fills.
 
      The suite proves L.parseMash and L.mashTags to death and none of it
@@ -1532,6 +1559,297 @@ function step(n) {
     }
     await page.evaluate(() => closeModal());
     await page.waitForTimeout(200);
+  }
+
+  step('the label sheet says what it would change');
+  /* 19. labelSheet is a render function the harness cannot call, and every
+     decision behind it is tested in L — which proves nothing about whether
+     the sheet is wired to those decisions. Driven with the answer the real
+     vision service returned for BZ's three Bardstown panels. */
+  {
+    await page.evaluate(() => { closeModal(); S.lookupUrl = 'https://example.invalid/x'; });
+    const k = await page.evaluate(() =>
+      Object.keys(S.catalog).find(x => /Bardstown Silver Oak/i.test(x)) || null);
+    if (!k) {
+      failures.push('label: the Bardstown entry this drives is not in the catalogue');
+    } else {
+      const onScreen = await page.evaluate(kk => {
+        showBottle(kk);
+        return [...document.querySelectorAll('.sectionacts button')]
+          .map(x => x.textContent.trim());
+      }, k);
+      /* The behaviour, not the wording: there has to be a way in from the
+         bottle screen, and it must be there on an entry with nothing
+         missing — a lookup hides when there are no gaps and a label read
+         must not, because correction is not a gap. */
+      if (!onScreen.some(t => /label/i.test(t))) {
+        failures.push('label: no way to read the label from the bottle screen: '
+          + JSON.stringify(onScreen));
+      }
+
+      const sheet = await page.evaluate(kk => {
+        const raw = { name: 'Bardstown Bourbon Company Collaborative Series Silver Oak',
+          dist: 'Bardstown Bourbon Co.', proof: 108, abv: 54, sub: 'bourbon',
+          style: 'blend', fin: 'Silver Oak Cabernet Barrels', size: 750,
+          upc: '857552008936', mash: null, tn: null, read: 'legible' };
+        const f = L.labelFields(raw);
+        labelSheet(S.catalog[kk], f, raw, () => {});
+        const rows = [...document.querySelectorAll('.modal .item')];
+        return {
+          fields: rows.map(r => (r.querySelector('.chip') || {}).textContent),
+          replaces: rows.map(r => (r.querySelector('.src') || {}).textContent || ''),
+          allOn: rows.every(r => (r.querySelector('.chip') || {}).dataset.on === 'true')
+        };
+      }, k);
+
+      /* The cask and the style are what this bottle's entry actually gets
+         wrong, and the barcode is what it has never had. */
+      ['Cask', 'Style', 'Barcode'].forEach(want => {
+        if (sheet.fields.indexOf(want) < 0) {
+          failures.push('label: the sheet did not offer ' + want + ': '
+            + JSON.stringify(sheet.fields));
+        }
+      });
+      /* AND THE DISTILLERY MUST NOT BE THERE. "Bardstown Bourbon Company"
+         against "Bardstown Bourbon Co." is one house, and accepting it
+         would split the house in two everywhere that groups by it. */
+      const dist = sheet.fields.indexOf('Distillery');
+      if (dist >= 0 && /replaces/.test(sheet.replaces[dist] || '')) {
+        failures.push('label: a company suffix is being offered as a correction');
+      }
+      /* The label is the primary document, so everything arrives ticked. */
+      if (!sheet.allOn) {
+        failures.push('label: the sheet opened with something already off');
+      }
+    }
+    await page.evaluate(() => closeModal());
+    await page.waitForTimeout(200);
+  }
+
+  step('the name field reserves only the slots it has');
+  /* 20. The two in-field controls, and the padding that follows them.
+
+     ASSERTS THE RELATIONSHIP, NOT A COUNT. The first version of this
+     expected a scanner and a camera and failed — the walk runs over
+     file://, which is not a secure context, so navigator.mediaDevices is
+     undefined and canScan() is false. A standalone check over
+     http://localhost showed two controls and passed, which is how a test
+     that depends on its environment looks right up until it does not.
+
+     What has to be true either way: the field reserves 44px per control
+     that is actually SHOWN, and nothing for one that is not. It used to add
+     the class unconditionally while a button was hidden, so a browser with
+     no camera reserved space for a control that was not there. */
+  {
+    const look = async (url) => {
+      await page.evaluate(() => { closeModal(); });
+      await page.waitForTimeout(250);
+      return page.evaluate(u => {
+        S.lookupUrl = u;
+        productForm(null);
+        const f = document.querySelector('.modal .form');
+        const lab = f.querySelector('label');
+        return {
+          shown: [...f.querySelectorAll('.instbtn')].filter(x => !x.hidden)
+            .map(x => x.getAttribute('aria-label')),
+          pad: getComputedStyle(f.querySelector('[name="name"]')).paddingRight,
+          withslots: lab.classList.contains('withslots'),
+          slots2: lab.classList.contains('slots2')
+        };
+      }, url);
+    };
+
+    const on = await look('https://example.invalid/x');
+    const want = { 0: null, 1: '44px', 2: '88px' }[on.shown.length];
+    if (want && on.pad !== want) {
+      failures.push('add form: ' + on.shown.length + ' control(s) '
+        + JSON.stringify(on.shown) + ' but the field reserves ' + on.pad
+        + ', expected ' + want);
+    }
+    if (on.shown.length === 2 && !on.slots2) {
+      failures.push('add form: two controls and no slots2 class');
+    }
+    if (on.shown.length && !on.withslots) {
+      failures.push('add form: a control in the field and no withslots class');
+    }
+    /* The camera has nothing to call without a lookup, so it goes — and the
+       field must give its 44px back. */
+    const off = await look('');
+    if (off.shown.length >= on.shown.length) {
+      failures.push('add form: turning lookup off did not remove the camera ('
+        + JSON.stringify(off.shown) + ')');
+    }
+    if (!off.shown.length && off.withslots) {
+      failures.push('add form: no controls and the field still reserves '
+        + off.pad);
+    }
+    await page.evaluate(() => {
+      closeModal(); S.lookupUrl = 'https://example.invalid/x';
+    });
+    await page.waitForTimeout(150);
+  }
+
+  step('sharing reads as on or off');
+  /* 21. The first second-user session, 2026-09-07, found this in minutes:
+     a chip reading "Not findable" is a LABEL, not a control. Nothing said
+     it could be tapped, that it was off, or what tapping would do — so an
+     invite went out and sharing was assumed to be on.
+
+     Asserts the BEHAVIOUR (30c): that it announces itself as a switch and
+     that its state tracks the setting. A rewording must not fail this. */
+  {
+    const both = await page.evaluate(() => {
+      const out = {};
+      const was = S.findable, wasName = S.displayName;
+      S.displayName = 'Tester';
+      [false, true].forEach(on => {
+        S.findable = on;
+        const c = nameCard();
+        const sw = c.querySelector('[role="switch"]');
+        out[on ? 'on' : 'off'] = sw ? {
+          checked: sw.getAttribute('aria-checked'),
+          hasSub: !!(sw.querySelector('.src')
+            && sw.querySelector('.src').textContent.trim()),
+          tall: sw.getBoundingClientRect
+        } : null;
+      });
+      S.findable = was; S.displayName = wasName;
+      return out;
+    });
+    if (!both.off || !both.on) {
+      failures.push('sharing: no switch on the settings card at all');
+    } else {
+      if (both.off.checked !== 'false' || both.on.checked !== 'true') {
+        failures.push('sharing: the switch does not track the setting ('
+          + both.off.checked + ' / ' + both.on.checked + ')');
+      }
+      /* The state of a privacy setting is half the information. The other
+         half is what it means when it is off, and an off state with no
+         explanation reads as "you are unreachable", which is false. */
+      if (!both.off.hasSub) {
+        failures.push('sharing: switched off and says nothing about what '
+          + 'still works');
+      }
+    }
+  }
+
+  step('a long read says it is still going, nothing doubles on a second render');
+  /* 22. BZ: we need a cue for the user that the photo is being processed —
+     tried it on Taste and thought it was broken. The only feedback was a
+     toast, which times out in seconds, and a shelf read takes ten to
+     sixty. Silence reads as broken.
+
+     Asserts the BEHAVIOUR: it appears, it survives a nested call, and it
+     goes when the last one closes. A rewording must not fail this. */
+  {
+    const r = await page.evaluate(() => {
+      const w = document.getElementById('working');
+      if (!w) return null;
+      const out = { atRest: w.hidden };
+      working('one');
+      out.shown = !w.hidden;
+      /* THE NESTING IS THE POINT. A label read shrinks the photographs and
+         THEN asks the service; without counting, the shrink finishing
+         would clear the banner while the call was still running — the same
+         bug this exists to fix, one layer down. */
+      working('two');
+      working();
+      out.survivesInner = !w.hidden;
+      working();
+      out.goneAtEnd = w.hidden;
+      return out;
+    });
+    if (!r) failures.push('working: no banner in the document at all');
+    else {
+      if (!r.atRest) failures.push('working: showing when nothing is running');
+      if (!r.shown) failures.push('working: did not appear when asked');
+      if (!r.survivesInner) {
+        failures.push('working: an inner call finishing cleared it while an '
+          + 'outer one was still running');
+      }
+      if (!r.goneAtEnd) failures.push('working: stayed up after the last close');
+    }
+  }
+
+  step('changing tabs closes an open sheet');
+  /* 23. BZ: that modal stays up if you change tabs. Rule 19 puts nav ABOVE
+     the overlay so it is always tappable, and nothing was closing the
+     sheet — so a photo modal sat on top of whichever tab you moved to,
+     over a screen it had nothing to do with. */
+  {
+    const r = await page.evaluate(() => {
+      try { closeModal(); } catch (e) { /* nothing open */ }
+      labelPick(() => {}, { face: true, title: 'Test sheet' });
+      const before = document.getElementById('overlay')
+        .classList.contains('on');
+      document.querySelector('nav button[data-scr="shelf"]').click();
+      const after = document.getElementById('overlay')
+        .classList.contains('on');
+      return { before: before, after: after,
+        screen: (document.querySelector('.screen.on') || {}).id };
+    });
+    if (!r.before) failures.push('tabs: could not open a sheet to test with');
+    if (r.after) failures.push('tabs: the sheet survived a tab change');
+    if (r.screen !== 'scr-shelf') {
+      failures.push('tabs: the tab did not change (' + r.screen + ')');
+    }
+  }
+
+  step('nothing doubles on a second render');
+  /* BZ found six identical camera blocks stacked down the shop screen, and
+     had already found the same shape on the buddies card. Both were mine
+     and both were invisible to everything: the suite tests functions, the
+     consistency checks read the file, and this walk renders each screen
+     ONCE — so anything appending to a container it does not own looks
+     perfect the first time and wrong for ever after.
+
+     Render everything twice and require the same element count. Cheapest
+     test in the file, and it catches a class I have now shipped twice. */
+  {
+    const doubled = await page.evaluate(() => {
+      const out = [];
+      /* A HEADLESS BROWSER HAS NO CAMERA, so canScan() is false and every
+         camera control is skipped — which is why the first version of this
+         step passed with the stacking bug deliberately put back. Stubbed
+         true, and a lookup url set, so the branches that actually stack are
+         the ones being rendered. */
+      const realScan = window.canScan;
+      window.canScan = () => true;
+      const realUrl = S.lookupUrl;
+      S.lookupUrl = 'https://example.invalid/x';
+      const renders = [
+        ['home', () => renderHome()],
+        ['shelf', () => { renderShelfFilters(); renderShelf(); }],
+        /* IN A MODE, not on the question screen. The first version of this
+           called renderShop() with no mode set, which returns before the
+           camera block is ever built — so it passed with the stacking bug
+           deliberately reintroduced, which makes it not a check at all.
+           Every screen with branches needs the branch that has the
+           content in it. */
+        ['shop question', () => { S.shopMode = null; renderShop(); }],
+        ['shop store', () => { S.shopMode = 'store'; renderShop(); }],
+        ['shop plan', () => { S.shopMode = 'plan'; renderShop(); }],
+        ['pour', () => { renderPourWhere(); renderReels(); renderAway(); }],
+        ['flights', () => renderFlights()],
+        ['ref', () => renderReference()]
+      ];
+      renders.forEach(pair => {
+        const name = pair[0], fn = pair[1];
+        try {
+          fn();
+          const before = document.querySelectorAll('button, .sheet, .item').length;
+          fn();
+          const after = document.querySelectorAll('button, .sheet, .item').length;
+          if (after !== before) {
+            out.push(name + ': ' + before + ' elements became ' + after);
+          }
+        } catch (e) { out.push(name + ' threw: ' + e.message); }
+      });
+      window.canScan = realScan;
+      S.lookupUrl = realUrl;
+      return out;
+    });
+    doubled.forEach(d => failures.push('second render ' + d));
   }
 
   await browser.close();
