@@ -256,5 +256,79 @@ check('no fixed svg id is emitted by a repeated drawing',
     Object.keys(worth).filter(k => gaps.indexOf(k) < 0));
 }
 
+/* 19. An L function nobody asserts anything about.
+
+      Check 3 catches a helper DEFINED and never used, and the unwired
+      check catches one tested and never called. Neither catches the third
+      case: wired into the app, doing real work, and no test over it. A
+      full review on 2026-09-07 found three — labelSame, labelLabel and
+      labelShow — shipped across nine versions with nothing asserting
+      anything about them, so a change to any would have been caught by
+      nothing at all. That is rule 27, broken three times in one day
+      without a single check noticing.
+
+      Not every L member deserves a test: a constant is a constant. So this
+      looks only at FUNCTIONS, and only at ones the app actually calls. */
+{
+  const fns = (src.match(/^L\.([a-zA-Z_][a-zA-Z0-9_]*) = function/gm) || [])
+    .map(m => m.match(/^L\.([a-zA-Z0-9_]+)/)[1]);
+  const untested = fns.filter(fn => {
+    const usedInApp = src.split('L.' + fn).length - 1 > 1;
+    if (!usedInApp) return false;               // check 3 owns that case
+    return tests.indexOf('L.' + fn) < 0;
+  });
+
+  /* A RATCHET, not a wall.
+
+     This check found 21 on the day it was written, of which 8 were fixed
+     immediately and 13 were older than any of today's work. Failing the
+     gate on all 13 would block every delivery until somebody paid a debt
+     they did not incur, and a check that stands between you and shipping
+     gets switched off rather than satisfied.
+
+     So the known 13 are allowed BY NAME and anything else fails. The list
+     only ever shrinks: delete a name when you write its tests, and never
+     add one. A new helper with no assertions over it stops the build, which
+     is the rule (27) working from today forward rather than retroactively.
+
+     Coverage was 95% of 407 when this was drawn. judgeListing and
+     fitUnlocks are the two worth doing first: both score a bottle against
+     the shelf, which is arithmetic somebody acts on. */
+  const KNOWN_UNTESTED = ['searchText', 'judgeListing', 'fitUnlocks',
+    'deviceLabel', 'stripMarkup', 'varInText', 'findUrl', 'lessonBlocker',
+    'blindTheme', 'blindGiven', 'proofProfile', 'worldReach',
+    'isHardGap', 'noteText', 'hasFlavour', 'flavourOptions', 'flavourFlight',
+    'flightRunRecord', 'flightPoured'];
+  check('no NEW L function is used by the app and asserted by nothing',
+    untested.filter(fn => KNOWN_UNTESTED.indexOf(fn) < 0));
+  /* And the list may not rot: a name here that HAS tests now is a name to
+     delete, or the ratchet loosens without anybody noticing. */
+  check('the allowed-untested list has no stale entries',
+    KNOWN_UNTESTED.filter(fn => tests.indexOf('L.' + fn) >= 0));
+}
+
+/* 21. A control the help does not know about.
+
+      App use is 69 entries describing what each screen does, and it drifted
+      twice in one day: it still told people to press "Fill in the rest"
+      after that button was removed, and it called the Out screen "Poured
+      somewhere else" after it was renamed. Both were caught by reading,
+      not by any check.
+
+      This is the reverse of the label check (30c): not whether a control
+      matches its documented name, but whether a control somebody added has
+      any documentation at all. Named buttons only, because a chip or an
+      icon is not something anybody looks up. */
+{
+  const CONTROLS = ['Read the label', 'Export everything', 'Export for import',
+    'Photograph it', 'Fill what is missing', 'Import a collection',
+    'Back up everything', 'Add to the shelf'];
+  const ref = src.slice(src.indexOf('L.FEATURES = ['),
+    src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
+  check('every named control is described in App use',
+    CONTROLS.filter(c => src.indexOf("'" + c + "'") >= 0
+      && ref.indexOf(c) < 0));
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
