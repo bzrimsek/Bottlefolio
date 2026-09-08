@@ -1136,8 +1136,14 @@ function step(n) {
     await page.locator('#shelfList .item').first().click();
     await page.waitForTimeout(350);
 
+    /* The bottle screen got a real .hdr in v1.9.0, so its one control moved
+       out of .detail-acts and into the header with the mark and the title —
+       the same shape every other screen has. What this step is guarding is
+       unchanged: the top of a bottle holds the way back and nothing else,
+       because it once held nine controls and wrapped to three lines on a
+       phone. Looked for where it now lives. */
     const top = await page.evaluate(() =>
-      [...document.querySelectorAll('#scr-detail .detail-acts button')]
+      [...document.querySelectorAll('#scr-detail .hdr .backbtn')]
         .filter(b => !b.hidden).map(b => b.textContent.trim()));
     // The row that held nine controls and wrapped to three lines on a phone.
     if (top.length !== 1) {
@@ -1733,7 +1739,7 @@ function step(n) {
     }
   }
 
-  step('a long read says it is still going, nothing doubles on a second render');
+  step('a long read says it is still going, nothing doubles on a second render, no page opens with an empty block');
   /* 22. BZ: we need a cue for the user that the photo is being processed —
      tried it on Taste and thought it was broken. The only feedback was a
      toast, which times out in seconds, and a shelf read takes ten to
@@ -1850,6 +1856,55 @@ function step(n) {
       return out;
     });
     doubled.forEach(d => failures.push('second render ' + d));
+  }
+
+  step('no page opens with an empty block');
+  /* UNPROVEN, AND SAID SO (rule 28a). Two attempts to run this against the
+     bug with the fix removed both hit the wrong server and tested nothing,
+     so this has never been seen to go red. The FIX is measured — both the
+     grouped and the list view fill the summary — but this check is not
+     known to catch it. Do not trust it until somebody has watched it
+     fail. */
+  /* BZ, of a framed masthead with nothing in it: so fix it - I don't know
+     why you would even ask. Right on both counts. A bounded block that says
+     nothing is worse than the loose line it replaced, and this one shipped
+     because the shelf writes its summary in two places and the grouped view
+     returns before the one I fixed.
+
+     Every page now opens with a block saying where you stand, so every one
+     of them can fail this way. Checked on all of them rather than the one
+     that broke. */
+  {
+    const empties = await page.evaluate(() => {
+      const out = [];
+      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+        .forEach(t => {
+          const nb = document.querySelector('nav button[data-scr="' + t + '"]');
+          if (nb) nb.click();
+          /* THE VIEW THE FAULT LIVES IN. Earlier steps leave the shelf in
+             its LIST view, where a second writer fills the summary — so the
+             first version of this passed with the grouped-view bug
+             deliberately put back. The grouped view is the one that
+             returns early, so that is the one to look at. */
+          if (t === 'shelf') { S.shelfSub = null; renderShelf(); }
+          /* THE VIEW THE FAULT LIVES IN. Earlier steps leave the shelf
+             listing, and the empty masthead only happens on the GROUPED
+             view — so the first version of this check passed with the bug
+             deliberately put back. A check not run against its own fault
+             is a check nobody has tested. */
+          if (t === 'shelf') { S.shelfSub = null; renderShelf(); }
+          const scr = document.getElementById('scr-' + t);
+          if (!scr) return;
+          scr.querySelectorAll('.brand, .flightmast').forEach(m => {
+            const txt = (m.textContent || '').replace(/\s+/g, ' ').trim();
+            /* A heading with nothing after it: the name of the block and no
+               statement, which is the shape of the fault. */
+            if (txt.length < 14) out.push(t + ': "' + txt + '"');
+          });
+        });
+      return out;
+    });
+    empties.forEach(e => failures.push('empty opening block on ' + e));
   }
 
   await browser.close();
