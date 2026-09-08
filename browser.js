@@ -1739,7 +1739,7 @@ function step(n) {
     }
   }
 
-  step('a long read says it is still going, nothing doubles on a second render, no page opens with an empty block, every screen you travel to has a way back');
+  step('a long read says it is still going, nothing doubles on a second render, no page opens with an empty block, every screen you travel to has a way back, headers do not collide on a phone');
   /* 22. BZ: we need a cue for the user that the photo is being processed —
      tried it on Taste and thought it was broken. The only feedback was a
      toast, which times out in seconds, and a shelf read takes ten to
@@ -1907,7 +1907,7 @@ function step(n) {
     empties.forEach(e => failures.push('empty opening block on ' + e));
   }
 
-  step('every screen you travel to has a way back');
+  step('every screen you travel to has a way back, the header holds together on a phone');
   /* BZ, more than once and finally without patience: there is still no way
      back from a shelf detail to the shelf page. He was right every time and
      I kept testing the ONE path that worked — shelf, tap a bottle, back —
@@ -1942,6 +1942,114 @@ function step(n) {
       return out;
     });
     stranded.forEach(x => failures.push(x));
+  }
+
+  step('headers do not collide on a phone');
+  /* BZ, sending a photograph of the gear sitting on top of THE SHELF: how
+     are these checks not part of the norm?
+
+     Fair. Every design measurement I took today was at 1000px, and this
+     walk checked that things EXIST and never that they do not overlap. So
+     a title pinned to the centre of the page ran under the controls on a
+     390px screen and nothing caught it — measured afterwards at 60px of
+     overlap on the shelf.
+
+     Geometry, at the width he actually uses. */
+  {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(250);
+    const clash = await page.evaluate(() => {
+      const out = [];
+      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+        .forEach(t => {
+          const nb = document.querySelector('nav button[data-scr="' + t + '"]');
+          if (nb) nb.click();
+          try { fitHeaderSides(); } catch (e) { /* older build */ }
+          const h = document.querySelector('#scr-' + t + ' .hdr');
+          if (!h) return;
+          const ti = h.querySelector('.hdrtitle');
+          const rt = h.querySelector('.hdr-right');
+          const mk = h.querySelector('.homemark');
+          if (!ti || !rt) return;
+          const a = ti.getBoundingClientRect();
+          const c = rt.getBoundingClientRect();
+          const m = mk ? mk.getBoundingClientRect() : null;
+          if (a.right > c.left + 1) {
+            out.push(t + ': title runs under the controls by '
+              + Math.round(a.right - c.left) + 'px');
+          }
+          if (m && a.left < m.right - 1) {
+            out.push(t + ': title runs under the mark');
+          }
+          /* AND IT MUST STILL BE THERE. The first fix for the overlap
+             reserved both sides and squeezed the shelf title to 0px, which
+             is worse than the fault it cured. */
+          if (a.width < 40) {
+            out.push(t + ': title squeezed to ' + Math.round(a.width) + 'px');
+          }
+          /* One row, always. */
+          if (m && Math.abs((a.top + a.height / 2) - (m.top + m.height / 2)) > 12) {
+            out.push(t + ': header wrapped to two rows');
+          }
+        });
+      return out;
+    });
+    clash.forEach(x => failures.push('phone header ' + x));
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await page.waitForTimeout(200);
+  }
+
+  step('the header holds together on a phone');
+  /* BZ, with two screenshots of his phone: mobile header issues, check
+     everything. And then: how are these checks not part of the norm?
+
+     Fair. This walk runs at desktop width, and every fault in those
+     screenshots was a 390px fault — the gear sitting ON the word SHELF
+     because "+ Add bottle" and a centred title do not both fit, and every
+     page's opening statement invisible because a max-width:560px rule
+     hides the element it reuses. Nothing measured a phone, so nothing
+     caught either.
+
+     Checked at 390 rather than trusted: does the title clear the controls,
+     and is the statement actually displayed. */
+  {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const bad = await page.evaluate(() => {
+      const out = [];
+      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+        .forEach(t => {
+          const nb = document.querySelector('nav button[data-scr="' + t + '"]');
+          if (nb) nb.click();
+          if (t === 'shelf') { S.shelfSub = null; renderShelf(); }
+          if (t === 'shop') { S.shopMode = null; renderShop(); }
+          const scr = document.getElementById('scr-' + t);
+          if (!scr) return;
+          const h = scr.querySelector('.hdr');
+          if (h) {
+            const ti = h.querySelector('.hdrtitle');
+            const rg = h.querySelector('.hdr-right');
+            const mk = h.querySelector('.homemark');
+            if (ti && rg) {
+              const a = ti.getBoundingClientRect(), b = rg.getBoundingClientRect();
+              if (a.right > b.left) out.push(t + ': title runs under the controls');
+            }
+            if (ti && mk) {
+              const a = ti.getBoundingClientRect(), m = mk.getBoundingClientRect();
+              if (a.left < m.right) out.push(t + ': title runs under the mark');
+            }
+          }
+          /* The opening block must be VISIBLE, not merely present — the
+             fault was CSS hiding text that was in the DOM all along. */
+          const st = scr.querySelector('.flightmast .wm span, .brand .wm span');
+          if (st && !st.classList.contains('tagline')
+              && getComputedStyle(st).display === 'none') {
+            out.push(t + ': opening statement is hidden on a phone');
+          }
+        });
+      return out;
+    });
+    bad.forEach(x => failures.push(x));
+    await page.setViewportSize({ width: 1000, height: 900 });
   }
 
   await browser.close();

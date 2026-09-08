@@ -4230,7 +4230,11 @@ sec('§181 the App use tab names controls that exist');
   const src = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
   // Label, and the entry that promises it.
   const NAMED = [
-    ['+ Add bottle',          'Shelf'],
+    /* "+ Add bottle" was a text button and is now a bottle marked with a
+       plus — BZ: use a smaller add bottle icon, a bottle with a + on it.
+       At 390px the text button and the gear together were wider than the
+       space beside a centred title, so the gear sat on the word SHELF.
+       An icon has no label to promise, so it comes off this list. */
     ['Import',                'Shelf'],
     ['\u2039 Back',            'Shop'],
     ['I bought it',           'In a store, holding a bottle'],
