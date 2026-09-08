@@ -11811,11 +11811,30 @@ sec('\u00a7295 a mash bill fixed by law, and a ppm that is measured');
     L.mashByLaw({ sub: 'scotch', style: 'single grain' }), null);
   eq('nor a bourbon',
     L.mashByLaw({ sub: 'bourbon', style: 'bourbon' }), null);
-  /* "blended malt" contains "malt" and is checked before the patterns, or
-     it would read as a single malt. It is several malts and the law fixes
-     the grain of each, but the app is not claiming to know the blend. */
-  eq('and a blended malt is not a single malt',
-    L.mashByLaw({ sub: 'scotch', style: 'blended malt' }), null);
+  /* A BLENDED MALT IS STILL ALL MALT — corrected here, and the earlier
+     reasoning was the fault.
+
+     BZ's fill waitlisted Kaiyo 5 Wood as short of mash. This assertion is
+     why: it said a blended malt gets no law, on the grounds that "the app
+     is not claiming to know the blend". That conflates two different
+     unknowns. Which DISTILLERIES are in it is unknown and unknowable from
+     the category. Which GRAIN is in it is not: a blended malt is malt
+     whisky from several distilleries and carries no grain whisky at all,
+     so every drop of it is malted barley. The bill is settled even though
+     the blend is not.
+
+     A blend proper is different and still excluded below, because it DOES
+     carry grain whisky and the proportion is a real secret. */
+  eq('a blended malt is malted barley throughout',
+    (L.mashByLaw({ sub: 'scotch', style: 'blended malt' }) || {}).mash,
+    '100% malted barley');
+  eq('and so is a pure malt, which is the old name for one',
+    (L.mashByLaw({ sub: 'japanese', style: 'pure malt' }) || {}).mash,
+    '100% malted barley');
+  /* The distinction that matters: a BLEND carries grain whisky, and no
+     amount of category knowledge fixes how much. */
+  eq('but a blend proper is still not settled',
+    L.mashByLaw({ sub: 'scotch', style: 'blended' }), null);
 
   /* SO THE GAP CLOSES WITHOUT SPENDING ANYTHING. */
   eq('a single malt is not short of a mash bill',

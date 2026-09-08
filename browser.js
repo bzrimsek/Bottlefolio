@@ -483,16 +483,18 @@ function step(n) {
             { hasText: '\u2039 Flights' }).count())) {
         failures.push('flights: the list has no way back to the tiles');
       }
-      const runRows = await page.locator('#flightList .recent .item').count();
-      if (runRows !== 1) {
-        failures.push('flights: ' + runRows + ' rows in the run log, want 1');
-      }
-      if (!/Flights you have run/.test(await page.locator('#flightList').innerText())) {
-        failures.push('flights: the run log has no heading');
+      /* THE RUN LOG WENT in v1.9.4. BZ reported the duplication twice —
+         why show the same list 2x, and then: don't need both — and every
+         card already carries the date it was run. What this step was
+         guarding is that a run is VISIBLE somewhere on the page, so it
+         looks where it now shows. */
+      const ranShown = await page.locator('#flightList .fcard.done').count();
+      if (!ranShown) {
+        failures.push('flights: nothing shows that a flight has been run');
       }
 
       // The X, and the navigation it must NOT do.
-      if (runRows) {
+      if (await page.locator('#flightList .dismiss').count()) {
         await page.locator('#flightList .dismiss').first().click();
         await page.waitForTimeout(400);
         if (await page.locator('#scr-detail').isVisible()) {
