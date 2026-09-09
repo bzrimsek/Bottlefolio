@@ -13651,17 +13651,24 @@ sec('\u00a7327 clearing filters and counting them agree');
   const probe = {};
   L.FACET_KEYS.forEach(k => { probe[k] = ['x']; });
   probe.cask = 'x'; probe.age = 'x';
-  eq('the clearer reaches everything the counter counts',
-    L.activeFacets(L.clearFacets(probe)), 0);
+  /* Counted BEFORE clearing, because clearFacets works in place now. */
   eq('and the counter sees everything the clearer clears',
     L.activeFacets(probe), L.FACET_KEYS.length + 2);
+  eq('the clearer reaches everything the counter counts',
+    L.activeFacets(L.clearFacets(probe)), 0);
 
   /* It does not touch what is not a facet: status and the search are
      different controls and Back has its own handling for the search. */
   eq('status is left alone', L.clearFacets(full).status, 'open');
-  /* And it returns a new object rather than mutating, so a caller that
-     keeps the old one is not surprised. */
-  eq('the original is untouched', full.types, ['tequila']);
+  /* IN PLACE, and it returns the object it was given. It used to return a
+     copy, and the callers assigned it over S.filters — which orphaned every
+     reference still pointing at the old one, so activeFacets(S.filters)
+     read zero and the shelf lost its back button entirely. A shared helper
+     has a blast radius (rule 7a). */
+  const same = { types: ['tequila'], obsc: [], regions: [], bands: [],
+                 proofs: [], scars: [], cask: '', age: '' };
+  eq('it returns the object it was handed', L.clearFacets(same), same);
+  eq('and the caller\u2019s own reference is now empty', same.types, []);
 }
 
 sec('\u00a7328 the import check survives a house spelt two ways');
