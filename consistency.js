@@ -102,6 +102,96 @@ const axisIds = (axBlock.match(/\{ id: '([a-z]+)'/g) || [])
   .map(m => m.split("'")[1]);
 const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   src.indexOf('L.AXIS_ASK') + 1400);
+/* EVERY NAMED SET OPENS WITH ITS OWN ARGUMENT.
+
+   STORY_OPENERS was keyed by chip only, so a shelf called Islay Lifer -
+   earned by smoke, a house and a region together - opened with "This is a
+   smoke drinker's shelf", naming neither Islay nor the house. The headline
+   argued one case and the paragraph started somewhere else, and nothing
+   could see it because both halves were correct on their own. A set added
+   without an opener now fails here rather than quietly borrowing its
+   loudest chip's line. */
+{
+  const setsBlock = (src.match(/L\.PORTRAIT_SETS = \[([\s\S]*?)\n\];/) || [])[1] || '';
+  const openBlock = (src.match(/L\.STORY_OPENERS = \{([\s\S]*?)\n\};/) || [])[1] || '';
+  const titles = (setsBlock.match(/title: '((?:[^'\\]|\\.)*)'/g) || [])
+    .map(x => x.replace(/title: '|'$/g, ''));
+  const missing = titles.filter(t =>
+    openBlock.indexOf("'" + t + "'") < 0);
+  check('every portrait set opens with its own line',
+    titles.length ? missing : ['no set titles found to check']);
+}
+
+/* A LABEL READ SPEAKS BEFORE IT CONTRIBUTES.
+
+   BZ photographed a bottle, saw it filling, then nothing for forty-five
+   seconds - and nothing was broken. The name was in hand the moment the
+   read returned, and the screen was queued behind fbPublishToLibrary: a
+   read of the shared library and a write to it, on a phone, before a word
+   was said. Two of the four capture paths did it, and both had no catch,
+   so a library that never answered meant no sign the read had worked at
+   all.
+
+   The rule is the shape rather than the instance: any path that publishes
+   to the shared library must say something to the person FIRST, and must
+   catch. Checked by position - the first toast has to come before the
+   publish - because that is the thing that was wrong, and it is invisible
+   to every other harness here. */
+{
+  const problems = [];
+  ['awayReadBottle', 'shopReadBottle', 'readTheLabel', 'productForm']
+    .forEach(fn => {
+      const i = src.indexOf('function ' + fn + '(');
+      if (i < 0) { problems.push(fn + ' is gone'); return; }
+      /* BRACE-MATCHED, not "up to the next function". The first version
+         sliced to the next `\nfunction `, which for a function near the end
+         of the file swept in hundreds of lines of somebody else's code -
+         and the check then failed on the FIXED version, reporting a
+         renderShop() that belonged to another function entirely. A reader
+         that does not know where its subject ends is measuring the wrong
+         thing in both directions. */
+      let d = 0, end = i, started = false;
+      for (let j = i; j < src.length; j++) {
+        if (src[j] === '{') { d++; started = true; }
+        else if (src[j] === '}') { d--; if (started && d === 0) { end = j; break; } }
+      }
+      /* COMMENTS STRIPPED FIRST. These functions explain themselves at
+         length and the explanation NAMES fbPublishToLibrary - so the check
+         found the word in the prose above the code and concluded that
+         everything below it, including the code that runs first, came
+         after the write. It failed on the fixed version for the second
+         time in five minutes. A source-reading check has to read code. */
+      const body = src.slice(i, end)
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '');
+      const pub = body.indexOf('fbPublishToLibrary');
+      if (pub < 0) return;                    // nothing to wait on
+      /* NOT "is there a toast before it" - the first version asked that,
+         and passed when the success toast was deleted, because these
+         functions all open with an error toast for an unreadable label.
+         A guard that cannot fail is not a guard, and this one was proved
+         by breaking it.
+
+         So it asks the thing that was actually wrong: none of the work
+         that ANSWERS the person may sit after the publish call. If the
+         box, the redraw or the scroll is downstream of a shared-library
+         write, the person waits on the network to find out their
+         photograph worked. */
+      const after = body.slice(pub);
+      ['renderShop()', 'scrollIntoView', "$('#shopQ').value"]
+        .forEach(work => {
+          if (after.indexOf(work) >= 0) {
+            problems.push(fn + ' does ' + work
+              + ' only after the library write');
+          }
+        });
+      if (!/fbPublishToLibrary\([\s\S]{0,400}?\.catch\(/.test(body)) {
+        problems.push(fn + ' publishes with no catch');
+      }
+    });
+  check('a label read speaks before it contributes', problems);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 
@@ -123,6 +213,11 @@ const syncBlock = src.slice(src.indexOf('L.SYNC_KEYS'),
    about the account. */
 const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lastList', 'updated', 'pushedAt', 'lookupTally', 'axisTurn', 'base',
+  /* An inventory check in progress is this device's business - it is a
+     walk round one house, and merging two of them would invent a check
+     nobody did. The furniture itself is NOT here: it syncs, beside
+     shelfCaps, because it describes one room read from two devices. */
+  'shelfTicks',
   'lookupUrl', 'lookupMine', 'libLedgerAt', 'reelState', 'seenTips',
   'installDismissed',
   /* 'log' was here and is not any more: BZ asked for one user and one
@@ -320,11 +415,21 @@ check('no fixed svg id is emitted by a repeated drawing',
      Coverage was 95% of 407 when this was drawn. judgeListing and
      fitUnlocks are the two worth doing first: both score a bottle against
      the shelf, which is arithmetic somebody acts on. */
-  const KNOWN_UNTESTED = ['searchText', 'judgeListing', 'fitUnlocks',
-    'deviceLabel', 'stripMarkup', 'varInText', 'findUrl', 'lessonBlocker',
-    'blindTheme', 'blindGiven', 'worldReach',
-    'isHardGap', 'noteText', 'hasFlavour', 'flavourOptions', 'flavourFlight',
-    'flightRunRecord', 'flightPoured'];
+  /* EMPTY, AND IT STAYS EMPTY. Every L function the app uses is asserted
+     by something as of v1.9.36 - the last thirteen went in together, the
+     heaviest of them by building the small world each needed rather than
+     by waving them through. The check below fails on a stale name, so an
+     allowance cannot outlive its need; this one fails on a NEW untested
+     function, so the coverage cannot slip back. A function added without a
+     test now stops the gate, which is the ratchet finally closed rather
+     than merely tightened. */
+  const KNOWN_UNTESTED = [];
+  /* THE RATCHET TIGHTENED at v1.9.35: worldReach, isHardGap, noteText,
+     hasFlavour, stripMarkup, varInText and byAvailability came off, and
+     they cannot go back on - the check below fails on a name that no
+     longer needs its allowance, so this list can only shrink. What is left
+     is the set that needs a whole flight or a whole lookup around it to
+     mean anything, which is a session of its own rather than a line. */
   check('no NEW L function is used by the app and asserted by nothing',
     untested.filter(fn => KNOWN_UNTESTED.indexOf(fn) < 0));
   /* And the list may not rot: a name here that HAS tests now is a name to
@@ -356,7 +461,13 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Let anyone find me by name', 'Invite a drinking buddy',
     /* Added with bulk marking, v1.9.21. A control named in the app and not
        in here is one the check cannot see. */
-    'Mark bottles open or sealed'];
+    'Mark bottles open or sealed',
+    /* Added with the storage model, v1.9.29. */
+    'Arranging the shelf', 'Inventory to check off',
+    /* v1.9.32 */
+    'Not me', 'Removing a library entry',
+    /* v1.9.40 */
+    'Text the list, or text a link'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -437,14 +548,25 @@ check('no fixed svg id is emitted by a repeated drawing',
       write and therefore a decision somebody has to make. */
 {
   const SCALARS = ['shelfCaps',
+    /* `storage` is a LIST by shape and a SETTING by meaning: one
+       description of one room. A union merge would be actively wrong -
+       describe two bookcases on the desktop and three on the phone and a
+       union gives you five pieces of furniture that do not exist, then
+       plans bottles onto them. So the newer description wins whole, the
+       same rule shelfCaps has always had, and this sentence is the
+       decision the check asks for rather than a way around it. */
+    'storage',
     'displayName', 'findable', 'fxRate', 'wishShared',
     'lookupUrl', 'lookupMine', 'admin', 'barSort', 'updated', 'pushedAt'];
-  /* deleted is a MAP and is deliberately not here: it is a known gap,
-     recorded in BACKLOG rather than waved through. It cannot take a plain
-     union — a deletion undone on one device would be resurrected by the
-     other — so it needs the tombstone treatment `wish` got, and that is a
-     decision rather than a patch. */
-  const KNOWN_GAP = ['deleted'];
+  /* `deleted` used to sit here as a known gap: it cannot take a plain
+     union, because a deletion undone on one device would be resurrected by
+     the other. It got the tombstone treatment `wish` already had at
+     v1.9.30 - union both sides, then lift the deletions somebody actually
+     took back, recorded under 'd:' - so it is declared in SYNC_MERGE now
+     and this list is empty. Empty is the point: a gap named here is a
+     sentence somebody wrote, and nobody should have to write another one
+     without meaning it. */
+  const KNOWN_GAP = [];
   const keys = (src.match(/L\.SYNC_KEYS = \[([\s\S]*?)\];/) || [])[1] || '';
   const merge = (src.match(/L\.SYNC_MERGE = \[([\s\S]*?)\];/) || [])[1] || '';
   const lists = (src.match(/const LISTS = \[([\s\S]*?)\];/) || [])[1] || '';
@@ -473,7 +595,17 @@ check('no fixed svg id is emitted by a repeated drawing',
       So these three take ownedCatalog(). Named rather than pattern-matched,
       because the fix is a call site and a call site cannot be spotted by
       shape — but a name in this list that stops being used gets caught by
-      the check below it. */
+      the check below it.
+
+      THIS IS NO LONGER THE MAIN GUARD, and on its own it never was one. It
+      was written around the three offenders that one scan happened to
+      find, which makes it a whitelist rather than a rule, and the
+      twenty-five catalogue-walking functions written since were checked by
+      nothing at all. §341 in killer-bs-test.js is the rule now: every
+      function a call site hands S.catalog is RUN twice, once against the
+      whole library and once against a three-bottle shelf, and the answers
+      must match. This stays because it is free and catches a regression at
+      these three call sites by text before the suite runs. */
 {
   const OWNED_ONLY = ['pendingForLibrary', 'importAudit', 'shelfGaps'];
   const wrong = OWNED_ONLY.filter(fn => {
