@@ -405,6 +405,39 @@ function step(n) {
     await page.waitForTimeout(150);
   }
 
+  /* SPIN IS CENTRED AND THE PICKER DOES NOT WRAP. BZ: not liking how spin
+     is not centered, and I'm worried those pills will spill over and wrap.
+     Driven with three buddies, which is where the old row of chips broke. */
+  step('spin is centred and its picker holds one line');
+  await page.locator('nav button[data-scr="pour"]').click();
+  await page.waitForTimeout(250);
+  {
+    await page.evaluate(() => {
+      SHARED.shelves = { u1: { name: 'Not Smoky Bill', bottles: [] },
+                         u2: { name: 'Tyson', bottles: [] },
+                         u3: { name: 'SmokyBill', bottles: [] } };
+      SHARED.names = { u1: 'Not Smoky Bill', u2: 'Tyson', u3: 'SmokyBill' };
+      renderReels(); renderMatchRow();
+    });
+    await page.waitForTimeout(250);
+    const spin = await page.locator('#spinBtn').boundingBox();
+    const scr = await page.locator('#scr-pour').boundingBox();
+    if (spin && scr) {
+      const off = Math.abs((spin.x + spin.width / 2) - (scr.x + scr.width / 2));
+      if (off > 2) {
+        failures.push('pour: Spin is ' + Math.round(off) + 'px off centre');
+      }
+    }
+    const row = await page.locator('#matchRow').boundingBox();
+    if (row && row.height > 56) {
+      failures.push('pour: the shelf picker wrapped to '
+        + Math.round(row.height) + 'px with three buddies');
+    }
+    await page.evaluate(() => {
+      SHARED.shelves = {}; SHARED.names = {}; renderMatchRow();
+    });
+  }
+
   step('shop asks its question');
   // 4. Shopping asks its question, and answering it draws something.
   await page.locator('nav button[data-scr="shop"]').click();

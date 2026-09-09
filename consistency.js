@@ -507,8 +507,13 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Arranging the shelf', 'Inventory to check off',
     /* v1.9.32 */
     'Not me', 'Removing a library entry',
+    /* v2.0.9 */
+    'Scan the library for inconsistencies',
     /* v1.9.40 */
-    'Text the list, or text a link'];
+    'Text the list, or text a link',
+    /* v2.0.9 */
+    'Scan the library for inconsistencies', 'Whose shelf counts',
+    'Their shelf'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',

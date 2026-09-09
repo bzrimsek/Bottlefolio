@@ -15253,5 +15253,96 @@ sec('\u00a7354 one question per piece of furniture');
     Array.isArray(plan.overflow), true);
 }
 
+sec('\u00a7355 what the library contradicts');
+{
+  /* BZ: can we add a scan library for inconsistencies feature. The library
+     is written by several people and by a lookup service and nothing had
+     ever looked at it whole - only at one entry as it arrived.
+
+     FIVE CHECKS ALREADY EXISTED in L.importAudit, which takes a keyed map
+     and never touches its bottles argument, so it runs on library rows
+     unchanged. Asserted here rather than assumed, because "it reuses that"
+     is exactly the claim that turns out to be false later. */
+  const inherited = {
+    a: { name: 'Ardbeg 10 Years Old', proof: 92, sub: 'scotch', dist: 'Ardbeg' },
+    b: { name: 'Ardbeg 10 Years old', proof: 92, sub: 'scotch', dist: 'Ardbeg' },
+    c: { name: 'Old Elk 100 Proof Bourbon', proof: 100, sub: 'bourbon',
+         dist: 'Old Elk' },
+    d: { name: 'Buffalo Trace Kosher', proof: 94, sub: 'bourbon',
+         dist: 'Buffalo Trace' },
+    e: { name: 'Buffalo Trace Single Barrel', proof: 90, sub: 'bourbon',
+         dist: 'Buffalo  Trace' }
+  };
+  const ids = L.libraryAudit(inherited).map(f => f.id);
+  eq('the same whisky under two names is found',
+    ids.indexOf('dups') >= 0, true);
+  eq('a proof stranded in a name is found',
+    ids.indexOf('proofname') >= 0, true);
+  eq('and one house spelt two ways', ids.indexOf('houses') >= 0, true);
+
+  /* AND THE FOUR ONLY A LIBRARY CAN BE WRONG ABOUT. */
+  const own = {
+    a: { name: 'Bad Bill', proof: 100, sub: 'bourbon',
+         mash: '70% corn, 10% rye' },
+    b: { name: 'Fake Bourbon', proof: 95, sub: 'bourbon', region: 'Speyside' },
+    c: { name: 'Something Single Malt', proof: 100, sub: 'scotch',
+         style: 'blended' },
+    d: { name: 'Broken Proof', proof: 400, sub: 'bourbon' },
+    e: { name: 'Under Proof', proof: 12, sub: 'bourbon' }
+  };
+  const found = L.libraryAudit(own);
+  const by = {};
+  found.forEach(f => { by[f.id] = f; });
+  eq('a grain bill that does not add up', by.mashsum.n, 1);
+  eq('and it says how it is wrong in the same words the app uses',
+    /add up to 80/.test(by.mashsum.items[0]), true);
+  eq('a Scotch region on something that is not Scotch', by.region.n, 1);
+  eq('a name that contradicts its own style', by.style.n, 1);
+  eq('and it names both sides of the contradiction',
+    /name says single malt, row says blended/.test(by.style.items[0]), true);
+  eq('a proof too high and one too low', by.proof.n, 2);
+
+  /* A CLEAN LIBRARY REPORTS NOTHING, which is the answer that has to be
+     trustworthy for the rest to mean anything. */
+  eq('nothing wrong is no findings',
+    L.libraryAudit({ a: { name: 'Fine Bourbon', proof: 100, sub: 'bourbon',
+      dist: 'Somewhere', style: 'straight' } }).length, 0);
+  eq('an empty library is not a crash', L.libraryAudit({}).length, 0);
+  eq('and neither is nothing at all', L.libraryAudit(null).length, 0);
+
+  /* A row with no name is not a row. */
+  eq('a nameless entry is skipped rather than reported as broken',
+    L.libraryAudit({ x: { proof: 90 } }).length, 0);
+
+  /* ON THE REAL SHIPPED CATALOGUE, which is the closest thing here to a
+     library: it must not cry wolf on 325 entries somebody curated. */
+  const real = L.libraryAudit(data.catalog);
+  const cnt = id => (real.filter(f => f.id === id)[0] || { n: 0 }).n;
+  /* A RATCHET, not a zero. The scan found four real things on BZ's own 325
+     entries the first time it ran, so asserting nothing was wrong would
+     have been asserting my assumption. These are the KNOWN ones, named, so
+     anything new fails the build:
+
+       proof   Southern Comfort at 70 - correct, and it is a liqueur rather
+               than whisky, which is the check doing its job on a row that
+               does not belong to the category
+       style   Macaloney's Searaidh Braiche, name says single malt and the
+               row says new make. Deliberate: the stored value is right and
+               the NAME misleads, which is recorded beside L.STYLE_FROM_NAME
+       dups    one Barrell release under two names
+       name    six bottles carrying their proof in the name
+
+     Every one is a decision for BZ rather than something to fix here. */
+  eq('one known bad proof, and it is the liqueur', cnt('proof'), 1);
+  eq('no region on a non-Scotch', cnt('region'), 0);
+  eq('one known style clash, the deliberate one', cnt('style'), 1);
+  eq('and it is the entry the comment names',
+    /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0]), true);
+  eq('one pair under two names', cnt('dups'), 1);
+  eq('six proofs stranded in names', cnt('proofname'), 6);
+  eq('and no grain bill on the shipped catalogue fails to add up',
+    cnt('mashsum'), 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
