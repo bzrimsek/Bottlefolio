@@ -13844,5 +13844,73 @@ sec('\u00a7330 a house says where it is from');
       .length, 2);
 }
 
+sec('\u00a7331 smoke concentrated in one house');
+{
+  /* BZ, three times, about a 210-bottle import: that is a smoky scotch
+     shelf, 38 heavy peated, 24 Laphroaig, you are not seeing it.
+
+     Two faults. There was no set for smoke concentrated in ONE HOUSE — the
+     table went from peat+region straight to peat+proof — and Ex-Bourbon
+     Only fired on 186 of 210 carrying no second cask, clearing its floor
+     four times over for describing nothing at all. Most whisky has no
+     finish; on an American shelf it is simply what bourbon is. A chip has
+     to name a CHOICE. It titled that shelf Neat, No Water. */
+  const chip = (id, n) => {
+    const d = L.PORTRAIT_TITLES.filter(x => x.id === id)[0];
+    return { id: id, title: d.title, why: d.title + ' ' + n, n: n,
+             floor: d.floor };
+  };
+  eq('the negative chip is gone',
+    L.PORTRAIT_TITLES.filter(d => d.id === 'unfin').length, 0);
+  eq('and no set still asks for it',
+    L.PORTRAIT_SETS.filter(g => g.ids.indexOf('unfin') >= 0).length, 0);
+
+  /* 38 peated, 24 from one house, 39 Islay — the shelf BZ was describing. */
+  const smoky = [chip('peat', 38), chip('house', 24), chip('region', 39)];
+  eq('smoke in one house on Islay is Islay Lifer',
+    L.portraitPick(smoky, null).title, 'Islay Lifer');
+
+  /* AND IT MUST BEAT THE ALTERNATIVES ON THE SAME SHELF, or the set exists
+     and never shows. Add the chips that were winning instead. */
+  const withRest = smoky.concat([chip('proof', 54), chip('rare', 66),
+                                 chip('obscure', 30), chip('breadth', 9)]);
+  eq('and it still wins with everything else earned too',
+    L.portraitPick(withRest, null).title, 'Islay Lifer');
+
+  /* A shelf whose region never resolved — an import with no region column —
+     still says the important half. */
+  eq('without a region it is the pair',
+    L.portraitPick([chip('peat', 38), chip('house', 24)], null).title,
+    'One Distillery, All Smoke');
+  eq('and that beats smoke plus Islay, which is nearly one fact twice',
+    L.portraitPick([chip('peat', 38), chip('house', 24), chip('region', 39)]
+      .filter(c => c.id !== 'region'), null).title,
+    'One Distillery, All Smoke');
+}
+
+sec('\u00a7332 the story argues the same case as the title');
+{
+  /* BZ's card: "This is a broad shelf rather than a pointed one" under a
+     title called Neat, No Water — and then "it would answer to Ex-Bourbon
+     Only, Peat Head and Unicorn Chaser as well", two of which WERE that
+     title. The story layer still thought the headline was the loudest
+     single chip. */
+  const r = L.shelfPortrait(data.catalog, data.bottles, {});
+  eq('a shelf with a title is not called broad',
+    /broad shelf rather than a pointed one/.test(r.story), false);
+  /* The runners-up are what the title did NOT use. */
+  const usedTitles = r.also.filter(c => r.from.indexOf(c.id) >= 0)
+    .map(c => c.title);
+  eq('the title uses three chips', r.from.length >= 2, true);
+  eq('and every one of them is shown beside it',
+    usedTitles.length, r.from.length);
+  usedTitles.forEach(tt => {
+    eq('a chip that earned the title is not also offered as an alternative ('
+      + tt + ')',
+      new RegExp('answer to[^.]*' + tt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .test(r.story), false);
+  });
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
