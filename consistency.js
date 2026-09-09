@@ -314,7 +314,7 @@ check('no fixed svg id is emitted by a repeated drawing',
      the shelf, which is arithmetic somebody acts on. */
   const KNOWN_UNTESTED = ['searchText', 'judgeListing', 'fitUnlocks',
     'deviceLabel', 'stripMarkup', 'varInText', 'findUrl', 'lessonBlocker',
-    'blindTheme', 'blindGiven', 'proofProfile', 'worldReach',
+    'blindTheme', 'blindGiven', 'worldReach',
     'isHardGap', 'noteText', 'hasFlavour', 'flavourOptions', 'flavourFlight',
     'flightRunRecord', 'flightPoured'];
   check('no NEW L function is used by the app and asserted by nothing',

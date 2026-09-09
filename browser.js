@@ -2121,7 +2121,14 @@ function step(n) {
       }
       SHARED.shelves = { u1: mk(['A', 'B']), u2: mk(['A', 'C']), u3: mk(['A', 'D']) };
       SHARED.names = { u1: 'Tyson', u2: 'Dave', u3: 'Eli' };
-      SHARED.openOnly = false;
+      /* BOTH DIRECTIONS. u2 is mutual, u1 and u3 share with me only, and
+         u4 can see mine and has never shared back — the person who used to
+         appear on a card above the folder as a different subject, which is
+         the inconsistency this step now guards. outSig is set to match so
+         the fetch landing does not redraw underneath the assertions. */
+      SHARED.outList = [{ uid: 'u2', name: 'Dave' }, { uid: 'u4', name: 'Nina' }];
+      SHARED.out = 2;
+      SHARED.outSig = SHARED.outList.map(x => x.uid + ':' + x.name).sort().join('|');
       try { renderBuddiesTab(); } catch (e) { out.push('buddies: threw ' + e.message); return out; }
 
       const strip = document.getElementById('buddyStrip');
@@ -2135,14 +2142,64 @@ function step(n) {
         if (chips.indexOf(n) < 0) out.push('buddies: no chip for ' + n);
       });
 
+      /* THE GRID CARRIES EVERYBODY, BOTH WAYS. Four people: three whose
+         shelves I can see and one who can only see mine. A tab needs a
+         shelf to draw, so u4 is a row and not a tab — and it must be a row
+         somewhere, or she is invisible again. */
+      const grid = document.querySelector('.budgrid');
+      if (!grid) { out.push('buddies: no grid of people'); return out; }
+      const lines = [...grid.querySelectorAll('.budline')];
+      if (lines.length !== 4) {
+        out.push('buddies: ' + lines.length + ' grid rows, expected 4');
+      }
+      ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
+        if (!new RegExp(n).test(grid.textContent)) {
+          out.push('buddies: ' + n + ' is on neither side of the grid');
+        }
+      });
+      /* Nobody is listed twice, which is the fault itself. */
+      ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
+        const hits = lines.filter(l => new RegExp(n).test(l.textContent));
+        if (hits.length !== 1) {
+          out.push('buddies: ' + n + ' appears on ' + hits.length + ' rows');
+        }
+      });
+      /* The lights say which direction is missing. u2 is mutual so its
+         switch is on and its lamp green; u1 shares with me and cannot see
+         mine, so its switch is off. */
+      const rowOf = n => lines.filter(l => new RegExp(n).test(l.textContent))[0];
+      const rDave = rowOf('Dave'), rTyson = rowOf('Tyson'), rNina = rowOf('Nina');
+      if (rDave && rDave.querySelector('.swtog').getAttribute('aria-checked') !== 'true') {
+        out.push('buddies: the mutual buddy is not shown as sharing');
+      }
+      if (rDave && !rDave.querySelector('.budlamp.on')) {
+        out.push('buddies: the mutual buddy has no green light');
+      }
+      if (rTyson && rTyson.querySelector('.swtog').getAttribute('aria-checked') !== 'false') {
+        out.push('buddies: somebody who cannot see my shelf shows as sharing');
+      }
+      if (rNina && !rNina.querySelector('.budlamp.off')) {
+        out.push('buddies: somebody who has not shared back has no red light');
+      }
+      /* And the open/all toggle is gone: it read a field the other person
+         does not keep, so a whole shelf came back as nothing open. */
+      if (/Open bottles|Every whisky/.test(document.getElementById('buddiesBody').textContent)) {
+        out.push('buddies: the open/all toggle is still drawn');
+      }
+
       const body = document.getElementById('buddiesBody');
       /* THE THIRD BUDDY IS THE POINT. Our shelves did uids.slice(0, 2) and
          dropped Eli without saying so. Bottle A sits on all three buddy
          shelves and not on the real one this page loaded, so the room panel
          must name a group of exactly those three — which it can only do if
          all three reached it. */
-      if (!/Tyson, Dave and 1 other/.test(body.textContent)) {
-        out.push('buddies: the room panel does not name all three buddies');
+      /* Two named and one counted — the point is that all THREE reached
+         the panel, not the order they are listed in. The order is now the
+         grid's (mutual first), and an assertion on the exact wording was
+         testing copy rather than behaviour (rule 30c). */
+      if (!/(Tyson|Dave|Eli), (Tyson|Dave|Eli) and 1 other/.test(body.textContent)) {
+        out.push('buddies: the room panel does not name all three buddies ('
+          + body.textContent.slice(0, 120) + ')');
       }
       // A Venn belongs on a BUDDY panel, never on the room panel.
       if (body.querySelector('svg.venn')) {
@@ -2156,8 +2213,33 @@ function step(n) {
       if (!b2.querySelector('svg.venn')) {
         out.push('buddies: no Venn on a single buddy panel');
       }
-      if (!/You and Dave/.test(b2.textContent)) {
+      /* THE SEGMENTS ARE THE CONTROL. The three grey rows under the
+         diagram are gone, so the regions themselves must be pressable and
+         each must carry its word. */
+      if (!/Dave/.test(b2.textContent)) {
         out.push('buddies: the buddy panel does not name the buddy');
+      }
+      const hits = b2.querySelectorAll('svg.venn .vhit');
+      if (hits.length < 2) {
+        out.push('buddies: the Venn segments are not pressable ('
+          + hits.length + ' hit shapes)');
+      }
+      if (!/Yours only/.test(b2.textContent) || !/Both/.test(b2.textContent)) {
+        out.push('buddies: the Venn regions are not labelled');
+      }
+      if (/Theirs alone|Yours alone|You could pour any of these/
+          .test(b2.textContent)) {
+        out.push('buddies: the old region rows are still drawn');
+      }
+      /* Pressing one opens the list, which is the whole point of them. */
+      hits[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      if (!document.getElementById('overlay').classList.contains('on')) {
+        out.push('buddies: pressing a Venn segment opens nothing');
+      }
+      closeModal();
+      /* Where you stand with THIS person is on their own panel too. */
+      if (!b2.querySelector('.budline')) {
+        out.push('buddies: the buddy panel does not say where you stand');
       }
       // And the strip survives its own click, or there is no way back.
       if (!document.getElementById('buddyStrip')) {

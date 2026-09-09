@@ -13919,5 +13919,164 @@ sec('\u00a7332 the story argues the same case as the title');
   });
 }
 
+sec('\u00a7333 one row per buddy, both directions at once');
+{
+  /* BZ, four times with photographs: the buddies tab is inconsistent. A
+     tab meant somebody who shares with YOU; the card above listed people
+     who can see YOURS. Two sets, one subject. This is the union. */
+  const rows = L.buddyRows(
+    { u1: { name: 'Tyson' }, u2: { name: 'Dave' } },       // share with me
+    [{ uid: 'u2', name: 'Dave' }, { uid: 'u3', name: 'Eli' }], // see mine
+    { u1: 'Tyson' });                                       // directory
+  eq('three people, not two sets of two', rows.length, 3);
+  eq('the mutual one sorts first', rows[0].uid, 'u2');
+  eq('and is marked both ways', rows[0].both, true);
+  const byId = {};
+  rows.forEach(r => { byId[r.uid] = r; });
+  eq('somebody who shares with me but cannot see mine',
+    byId.u1.theyShare + '/' + byId.u1.iShare, 'true/false');
+  eq('somebody who can see mine and has not shared back',
+    byId.u3.theyShare + '/' + byId.u3.iShare, 'false/true');
+  eq('nobody appears twice',
+    rows.map(r => r.uid).sort().join(','), 'u1,u2,u3');
+
+  /* A NAME FROM WHEREVER IT IS KNOWN. The directory first; then the shelf
+     they shared, which carries the name they set; and a uid stub must
+     never beat a real name. */
+  const named = L.buddyRows({ u9: { name: 'From their shelf' } },
+    [{ uid: 'u9', name: 'Somebody \u00b7 u9abcd' }], {});
+  eq('a real name from a shelf beats the uid stub',
+    named[0].name, 'From their shelf');
+  const dir = L.buddyRows({ u9: { name: 'From their shelf' } },
+    [{ uid: 'u9', name: 'Somebody \u00b7 u9abcd' }], { u9: 'Directory Name' });
+  eq('and the directory beats both', dir[0].name, 'Directory Name');
+  const stub = L.buddyRows({}, [{ uid: 'u9', name: 'Somebody \u00b7 u9abcd' }], {});
+  eq('with nothing else known the stub survives',
+    stub[0].name, 'Somebody \u00b7 u9abcd');
+  eq('nobody at all is no rows', L.buddyRows({}, [], {}).length, 0);
+  eq('and it survives being handed nothing',
+    L.buddyRows(null, null, null).length, 0);
+}
+
+sec('\u00a7334 marking a lot of bottles at once');
+{
+  /* BZ: a bulk command on shelf settings, select all or multiselect, and
+     open/closed is the only one of consequence. Expected values worked out
+     by hand below, not read back off the function (rule 28). */
+
+  /* OPENING OPENS ONE. He buys a backup of anything he wants to keep
+     having, so opening a whisky he holds three of must not uncork three. */
+  const three = [{ k: 'A', status: 'sealed' }, { k: 'A', status: 'sealed' },
+                 { k: 'A', status: 'sealed' }];
+  const r1 = L.bulkStatus(three, ['A'], 'open');
+  eq('one bottle opened, not three', r1.changed, 1);
+  eq('one whisky touched', r1.whiskies, 1);
+  eq('and the spares stay sealed',
+    three.filter(b => b.status === 'sealed').length, 2);
+
+  /* Already open is already right, and reports nothing. */
+  const already = [{ k: 'A', status: 'open' }, { k: 'A', status: 'sealed' }];
+  const r2 = L.bulkStatus(already, ['A'], 'open');
+  eq('a whisky already open is left alone', r2.changed, 0);
+  eq('and nothing is claimed for it', r2.whiskies, 0);
+
+  /* SEALING SEALS EVERY OPEN ONE, which is the other direction and is not
+     symmetrical with opening. */
+  const two = [{ k: 'B', status: 'open' }, { k: 'B', status: 'open' }];
+  eq('sealing takes both', L.bulkStatus(two, ['B'], 'sealed').changed, 2);
+  eq('and they are sealed',
+    two.filter(b => b.status === 'sealed').length, 2);
+
+  /* A KEEPER IS NEVER TOUCHED, in either direction, and is reported rather
+     than skipped silently. */
+  const keep = [{ k: 'C', status: 'keep' }];
+  const r3 = L.bulkStatus(keep, ['C'], 'open');
+  eq('a do-not-open bottle is not opened', keep[0].status, 'keep');
+  eq('nothing changed', r3.changed, 0);
+  eq('and it is counted so it can be said', r3.kept, 1);
+  const keepMix = [{ k: 'D', status: 'keep' }, { k: 'D', status: 'sealed' }];
+  eq('a keeper beside a sealed spare opens the spare',
+    L.bulkStatus(keepMix, ['D'], 'open').changed, 1);
+  eq('and the keeper is still a keeper', keepMix[0].status, 'keep');
+
+  /* A bottle that has left the shelf is not a bottle. */
+  const gone = [{ k: 'E', status: 'gone' }];
+  eq('a finished bottle is never reopened',
+    L.bulkStatus(gone, ['E'], 'open').changed, 0);
+  eq('and it stays gone', gone[0].status, 'gone');
+
+  /* A key nobody owns is silence, not a crash. */
+  eq('an unknown key changes nothing',
+    L.bulkStatus([{ k: 'A', status: 'sealed' }], ['ZZ'], 'open').changed, 0);
+  eq('and no keys at all is a no-op',
+    L.bulkStatus([{ k: 'A', status: 'sealed' }], [], 'open').changed, 0);
+
+  /* ON THE REAL SHELF: sealing everything, then opening it again, must
+     land on the same number of pourable whiskies it started with. */
+  const shelf = JSON.parse(JSON.stringify(data.bottles));
+  const keys = Object.keys(L.ownedCounts(shelf));
+  const before = keys.filter(k => L.pourable(k, shelf)).length;
+  L.bulkStatus(shelf, keys, 'sealed');
+  eq('BZ\u2019s shelf, ' + keys.length + ' whiskies: nothing pourable after sealing',
+    keys.filter(k => L.pourable(k, shelf)).length, 0);
+  L.bulkStatus(shelf, keys, 'open');
+  eq('and every whisky has one open again after opening',
+    keys.filter(k => L.pourable(k, shelf)).length, keys.length);
+  eq('which is where it started', keys.length, before);
+}
+
+sec('\u00a7335 cask strength is a choice, low proof mostly is not');
+{
+  /* BZ, on a shelf reading 54 at cask strength under "Strength is not what
+     you are buying": not sure I agree with this conclusion. The old test
+     was strong > gentle - a deliberate bucket against one padded with
+     bottles nobody chose the strength of, since 80 to 92 proof is simply
+     what most Scotch and Irish ships at. */
+  const mk = (n, proof) => {
+    const cat = {}; const bs = [];
+    for (let i = 0; i < n; i++) {
+      const k = 'p' + i;
+      cat[k] = { k: k, name: 'W' + i, proof: proof(i), sub: 'scotch' };
+      bs.push({ id: 'b' + i, k: k, status: 'open' });
+    }
+    return { catalog: cat, bottles: bs };
+  };
+  /* 100 bottles: 25 at cask strength, 75 at a standard 86. Under the old
+     rule 25 < 75 and the shelf was told strength was not what it bought. */
+  const shelf = mk(100, i => (i < 25 ? 118 : 86));
+  const pr = L.proofProfile(Object.values(shelf.catalog));
+  eq('25 of 100 at cask strength', pr.strong, 25);
+  eq('and 75 at or under 90, which is the default bottling', pr.gentle, 75);
+  eq('the deliberate share clears the floor',
+    pr.strong / pr.n >= L.CASK_DELIBERATE_SHARE, true);
+  const port = L.shelfPortrait(shelf.catalog, shelf.bottles, {});
+  const line = (port.lines || []).filter(l => l.k === 'proof')[0];
+  eq('so the shelf is told it buys strength on purpose',
+    /Strength is the point|buy strength on purpose/.test(line.text), true);
+  eq('and never the old conclusion',
+    /not what you are buying|not the point/.test(line.text), false);
+
+  /* A shelf with a couple of strong bottles is still told the truth. */
+  const few = mk(100, i => (i < 5 ? 118 : 86));
+  const fp = L.proofProfile(Object.values(few.catalog));
+  eq('5 of 100 does not clear it',
+    fp.strong / fp.n >= L.CASK_DELIBERATE_SHARE, false);
+  const fline = (L.shelfPortrait(few.catalog, few.bottles, {}).lines || [])
+    .filter(l => l.k === 'proof')[0];
+  eq('and that shelf is told strength is not the point',
+    /not what you are buying|not the point/.test(fline.text), true);
+
+  /* THE CHIP AND THE VERDICT READ ONE NUMBER (rule 30d). */
+  eq('the Full Proof chip uses the same share as the verdict',
+    L.CASK_DELIBERATE_SHARE, 0.2);
+
+  /* And BZ's own shelf, named with its population (rule 13d): 344 bottles
+     on a filled-in shelf, not the one somebody imports tomorrow. */
+  const bz = L.proofProfile(Object.keys(L.ownedCounts(data.bottles))
+    .map(k => data.catalog[k]).filter(Boolean));
+  eq('BZ\u2019s shelf clears the floor at ' + bz.strong + ' of ' + bz.n,
+    bz.strong / bz.n >= L.CASK_DELIBERATE_SHARE, true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
