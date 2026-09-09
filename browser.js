@@ -108,6 +108,19 @@ function step(n) {
                            dist: 'Glenfarclas', type: 'scotch' })
   }));
 
+  /* THE WALK RUNS WITHOUT A SERVICE.
+
+     v1.9.8 ships a DEFAULT lookup URL so a new account can photograph a
+     label on its first bottle — and the walk immediately started reporting
+     six console errors, because a headless browser calling Google from
+     localhost is blocked as cross-origin. That is the browser doing its
+     job, not the app failing.
+
+     Blocked at the network layer instead, so the walk exercises the app
+     rather than somebody's internet: any call to the lookup service is
+     refused here, which is the same thing the app already handles as a
+     network failure. */
+  await page.route('**script.google.com**', r => r.abort());
   await page.goto('http://app.local/' + path.basename(file));
   await page.waitForTimeout(1200);
 
@@ -1283,7 +1296,11 @@ function step(n) {
     } else {
       failures.push('dimensions: could not reach the planning screen');
     }
-    const pills = page.locator('.dimrow .chip');
+    /* The DIMENSIONS, not every chip on the screen. With a lookup service
+       configured the store card adds its own subject chips — A bottle, A
+       shelf — into the same row shape, and this step tried to press them
+       as if they were axes. Scoped to the dimension row itself. */
+    const pills = page.locator('#scr-shop .dimrow .chip');
     const n = await pills.count();
     if (!n) {
       failures.push('dimensions: no pills on the planning screen');
@@ -1294,7 +1311,18 @@ function step(n) {
       // top; there is no separate errors array, and referring to one threw
       // inside the check itself.
       const before = failures.length;
-      await pills.nth(i).click();
+      /* SAY WHICH ONE, and do not hang the whole walk on it. This timed
+         out after v1.9.8 with no clue which pill or why: a 30-second hang
+         and a line number. A named failure is a diagnosis; a timeout is a
+         second job. */
+      try {
+        await pills.nth(i).click({ timeout: 4000 });
+      } catch (e) {
+        const seen = await pills.nth(i).isVisible().catch(() => false);
+        failures.push('dimensions: could not press "' + label + '" ('
+          + (seen ? 'visible but not clickable' : 'not visible') + ')');
+        continue;
+      }
       await page.waitForTimeout(350);
       const drew = await page.evaluate(() =>
         document.querySelectorAll('#shopScroll .sheet').length);

@@ -158,7 +158,15 @@ function check(name, got, want) {
                   'deleted', 'favs', 'upcs'];
     check('no bulk key is rewritten when nothing in it changed',
       r.keys.filter(k => bulk.indexOf(k.split('/')[0]) >= 0), []);
-    if (r.bytes > 200) {
+    /* 400, not 200. The precise half of this check — no BULK key rewritten
+       when nothing in it changed — is what actually guards the 220KB fault
+       it was written for, and that still passes. The byte ceiling is the
+       crude half, and it was set when a load wrote a stamp and a name.
+       Since then noteLedger, shelfCaps and asked have joined the synced
+       keys: all small, all scalar or a short map, and a load carrying them
+       measured 222. Raised to cover them and no further, so a shelf going
+       up still trips it by an order of magnitude. */
+    if (r.bytes > 400) {
       failures.push('an in-step load wrote ' + r.bytes
         + ' bytes; it should be a stamp and a name, not a shelf');
     }

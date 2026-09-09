@@ -3250,7 +3250,12 @@ const sameSpot = {
   B: { k: 'B', sub: 'bourbon', dist: 'Bravo Co' }
 };
 const sameCoords = { 'Alpha Co': [-85.47, 37.82], 'Bravo Co': [-85.47, 37.82] };
-const fanned = L.mapPins(sameSpot, sameCoords, [], ['bourbon']);
+/* The bottles list is no longer decoration: a pin is a claim about your
+   shelf, so a whisky you do not own is not plotted. This section is about
+   two pins sharing one coordinate, so it has to own both. */
+const sameBots = [{ id: 'x', k: 'A', status: 'open' },
+                  { id: 'y', k: 'B', status: 'open' }];
+const fanned = L.mapPins(sameSpot, sameCoords, sameBots, ['bourbon']);
 eq('both pins survive', fanned.length, 2);
 eq('both are marked as moved', fanned.every(p => p.fanned), true);
 eq('they no longer share a point',
@@ -3260,11 +3265,12 @@ const fanMiles = Math.max.apply(null, fanned.map(p =>
   Math.hypot((p.lat - 37.82) * 69, (p.lon + 85.47) * 54)));
 eq('nothing moves more than a mile', fanMiles < 1, true);
 // A lone pin is left exactly where it belongs.
-const solo = L.mapPins({ A: sameSpot.A }, sameCoords, [], ['bourbon']);
+const solo = L.mapPins({ A: sameSpot.A }, sameCoords,
+  [{ id: 'x', k: 'A', status: 'open' }], ['bourbon']);
 eq('a single pin is not moved', solo[0].fanned, undefined);
 eq('a single pin keeps its latitude', solo[0].lat, 37.82);
 // Fanning is deterministic: a pin must not wander between renders.
-const again = L.mapPins(sameSpot, sameCoords, [], ['bourbon']);
+const again = L.mapPins(sameSpot, sameCoords, sameBots, ['bourbon']);
 eq('fanning is stable across calls', again[0].lat, fanned[0].lat);
 
 sec('zoom and clamping');
@@ -3345,7 +3351,13 @@ const layerCat = {
 };
 const subC = { bourbon: 'United States', scotch: 'Scotland', irish: 'Ireland' };
 const wD = { 'Pokeno Whiskey': 'New Zealand', 'Rampur Distillery': 'India' };
-const cc = L.countryCounts(layerCat, subC, wD, []);
+/* Owning every fixture entry, because a map layer now plots what you HAVE
+   rather than what the catalogue knows — a shelf of nothing draws nothing,
+   which is the whole point of the change. This section is about the
+   LAYERS, so the shelf holds all of them. */
+const layerBots = Object.keys(layerCat)
+  .map((k, i) => ({ id: 'lb' + i, k: k, status: 'open' }));
+const cc = L.countryCounts(layerCat, subC, wD, layerBots);
 eq('five countries', cc.length, 5);
 // The two 'world' bottles are from different countries and must not merge.
 eq('world bottles placed individually',
@@ -3361,7 +3373,10 @@ const stCat = {
   d: { k: 'd', sub: 'rye', dist: 'Unconfirmed Co' }
 };
 const stMap = { 'Jim Beam': 'Kentucky' };
-const sc = L.stateCounts(stCat, stMap, []);
+/* Owned, as with the other layers. */
+const stBots = Object.keys(stCat)
+  .map((k, i) => ({ id: 'sb' + i, k: k, status: 'open' }));
+const sc = L.stateCounts(stCat, stMap, stBots);
 eq('one entry per state', Object.keys(sc), ['Kentucky']);
 eq('bottles counted', sc.Kentucky.total, 2);
 eq('scotch is not placed in a state', sc.Kentucky.keys.indexOf('c'), -1);
@@ -13241,6 +13256,64 @@ sec('\u00a7321 a shelf that has just started is not judged');
   /* AND THE BAR IS A DOZEN, above which the reading resumes exactly as
      before — this changes what a new shelf sees, not what BZ's does. */
   eq('a dozen is enough to be read', mk(12).title, 'The Generalist');
+}
+
+sec('\u00a7320 the map shows your shelf, not the catalogue');
+{
+  /* BZ's test account held ONE bottle of Jack Daniel's and the map drew
+     filled dots on eight countries — the shipped catalogue's spread, the
+     same on every account, which is why he said it looked familiar. The
+     line above it read "1 of 15 countries" and was right; the map beside
+     it was answering a different question.
+
+     All three layers had it: countries, distillery pins and US states each
+     counted every catalogue entry and used `bottles` only to work out how
+     many were OPEN. A bottle you do not have is not open or shut. */
+  const catalog = {
+    a: { k: 'a', name: 'Jack Daniel\u2019s', sub: 'tennessee', dist: 'Jack Daniel\u2019s' },
+    b: { k: 'b', name: 'Lagavulin 16', sub: 'scotch', dist: 'Lagavulin' },
+    c: { k: 'c', name: 'Redbreast 12', sub: 'irish', dist: 'Midleton' },
+    d: { k: 'd', name: 'Yamazaki 12', sub: 'japanese', dist: 'Yamazaki' }
+  };
+  const subCountry = { tennessee: 'United States', scotch: 'Scotland',
+    irish: 'Ireland', japanese: 'Japan' };
+  const one = [{ id: 'x', k: 'a', status: 'open' }];
+
+  eq('one bottle is one country',
+    L.countryCounts(catalog, subCountry, {}, one).length, 1);
+  eq('and it is the country of the bottle you have',
+    L.countryCounts(catalog, subCountry, {}, one)[0].name, 'United States');
+  /* AN EMPTY SHELF IS AN EMPTY MAP, which is the case that made this
+     visible: a brand new account should see rings, not a world tour. */
+  eq('an empty shelf plots nothing',
+    L.countryCounts(catalog, subCountry, {}, []).length, 0);
+
+  const coords = { Lagavulin: [-6.1, 55.6] };
+  eq('a scotch you do not own is not pinned',
+    L.mapPins(catalog, coords, one).length, 0);
+  eq('and one you do own is',
+    L.mapPins(catalog, coords, [{ id: 'y', k: 'b', status: 'open' }]).length, 1);
+
+  const stateOf = { 'Jack Daniel\u2019s': 'Tennessee' };
+  eq('a state is only lit by a bottle you have',
+    Object.keys(L.stateCounts(catalog, stateOf, one)).length, 1);
+  eq('and an empty shelf lights none',
+    Object.keys(L.stateCounts(catalog, stateOf, [])).length, 0);
+
+  /* THE THREE LAYERS AGREE WITH EACH OTHER, which is the property that
+     broke: the sentence above the map counted owned bottles and the map
+     counted the catalogue, so they disagreed and only one was right.
+     Compared directly rather than through shelfAxes, which needs the whole
+     MAPDATA shape and would be testing the fixture rather than this. */
+  const owned2 = [{ id: 'x', k: 'a', status: 'open' },
+                  { id: 'y', k: 'b', status: 'open' }];
+  eq('two bottles from two countries are two countries',
+    L.countryCounts(catalog, subCountry, {}, owned2).length, 2);
+  eq('and adding a bottle you do not own changes nothing',
+    L.countryCounts(catalog, subCountry, {}, owned2).length,
+    L.countryCounts(Object.assign({ z: { k: 'z', name: 'Ghost',
+      sub: 'irish', dist: 'Nowhere' } }, catalog),
+      subCountry, {}, owned2).length);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
