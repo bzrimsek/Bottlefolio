@@ -294,6 +294,55 @@ function step(n) {
       failures.push('shelf: neither the starred nor the Wanted pill was '
         + 'available to drive');
     }
+
+    /* THE TWO ROUTES BZ ACTUALLY USES, which the pills above did not
+       cover: "See the whole shelf as a list", and a type tile. Both set
+       the sub-state and redraw the list without going through show(), so
+       both had no back button while the pills had one - and every fix so
+       far was to whichever route had been driven. */
+    for (const route of ['whole shelf', 'a type tile']) {
+      await page.evaluate(() => {
+        S.shelfSub = null; L.clearFacets(S.filters);
+        renderShelfFilters(); renderShelf();
+      });
+      await page.waitForTimeout(200);
+      if (route === 'whole shelf') {
+        const btn = page.locator('#shelfList button', { hasText: 'See the whole shelf' });
+        if (!(await btn.count())) { failures.push('shelf: no "see the whole shelf" button'); continue; }
+        await btn.first().click();
+      } else {
+        const tile = page.locator('#shelfList .tile');
+        if (!(await tile.count())) { failures.push('shelf: no type tiles'); continue; }
+        await tile.first().click();
+      }
+      await page.waitForTimeout(250);
+      const back = page.locator('#scr-shelf .backbtn');
+      if (!(await back.count()) || !(await back.isVisible())) {
+        failures.push('shelf: ' + route + ' offers no way back');
+        continue;
+      }
+      await back.click();
+      await page.waitForTimeout(250);
+      const narrowed = await page.evaluate(
+        () => (S.shelfSub === 'all' || L.activeFacets(S.filters)) ? 1 : 0);
+      if (narrowed) {
+        failures.push('shelf: back from ' + route + ' left it narrowed');
+      }
+    }
+    /* AND THE WISHLIST IS ON THE SHELF ITSELF, not only behind a filter
+       pill that hides when the list is empty. BZ asked for it at the
+       bottom of the shelf page twice. */
+    await page.evaluate(() => {
+      S.shelfSub = null; L.clearFacets(S.filters);
+      renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(250);
+    const wantCard = await page.locator('#shelfList', { hasText: 'What you are after' }).count();
+    if (!wantCard) {
+      failures.push('shelf: a wishlist with bottles on it does not appear '
+        + 'on the shelf page');
+    }
+
     /* Put the shelf back as it was found. */
     await page.evaluate(() => {
       S.wish = []; S.favs = {};

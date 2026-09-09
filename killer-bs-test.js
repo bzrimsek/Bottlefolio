@@ -14441,7 +14441,7 @@ sec('\u00a7343 the furniture somebody actually owns');
       shelves: [{ cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }] },
     { id: 'u3', name: 'Mantel', kind: 'display', shelves: [{ cap: 12 }] },
     { id: 'u4', name: 'Side table', kind: 'display', shelves: [{ cap: 12 }] },
-    { id: 'u5', name: 'Bar', kind: 'other', shelves: [{ cap: 20 }, { cap: 20 }] },
+    { id: 'u5', name: 'Bar', kind: 'well', shelves: [{ cap: 20 }, { cap: 20 }] },
     { id: 'u6', name: 'Backup cabinet', kind: 'backup', shelves: [{ cap: 40 }] }
   ];
   const cap = L.storageCapacity(units);
@@ -14450,22 +14450,26 @@ sec('\u00a7343 the furniture somebody actually owns');
   eq('room for 404 bottles', cap.spaces, 404);
   eq('324 of it on show', cap.display, 324);
   eq('40 in backup', cap.backup, 40);
-  eq('40 that is not whisky', cap.other, 40);
+  eq('and the well piece counts as capacity like any other',
+    cap.well, 40);
 
   /* THE LEGACY FORM IS NOT LOST. Somebody who typed "30, 30, 24" keeps
      their furniture as one unit rather than starting again. */
   const legacy = L.storageNormalize([], '30, 30, 24');
   eq('a legacy capacity string becomes one place', legacy.length, 1);
   eq('with a shelf per number', legacy[0].shelves.length, 3);
-  eq('holding whisky by default', legacy[0].kind, 'display');
+  eq('by category by default', legacy[0].kind, 'types');
   eq('described units win over the legacy string',
     L.storageNormalize(units, '30, 30, 24').length, 6);
   eq('nothing described is nothing', L.storageNormalize([], '').length, 0);
   eq('a place with no shelves is not a place',
     L.storageNormalize([{ name: 'Empty', shelves: [] }], '').length, 0);
-  eq('an unknown kind falls back to holding whisky',
+  eq('an unknown answer falls back to by category',
     L.storageNormalize([{ name: 'X', kind: 'nonsense',
-      shelves: [{ cap: 5 }] }], '')[0].kind, 'display');
+      shelves: [{ cap: 5 }] }], '')[0].kind, 'types');
+  eq('and the old display kind still means by category',
+    L.storageNormalize([{ name: 'X', kind: 'display',
+      shelves: [{ cap: 5 }] }], '')[0].kind, 'types');
 
   /* A BACKUP CABINET IS A STATUS, NOT A PLACE. */
   const bottles = [
@@ -14493,9 +14497,17 @@ sec('\u00a7343 the furniture somebody actually owns');
      somebody imports tomorrow. */
   const plan = L.storagePlan(data.catalog, data.bottles, units);
   eq('a plan comes back', !!plan, true);
-  eq('the bar is never planned into', plan.other.length, 1);
-  eq('and it is named so it can still be walked past',
-    plan.other[0].unit, 'Bar');
+  /* THE BAR IS A WELL PIECE NOW and does get bottles - the everyday ones.
+     v2.0.7 collapsed three kinds and two shelf roles into one question per
+     piece of furniture, so "holds no whisky" stopped being an answer: a
+     bar holds the pours you do not think about, which is what well means.
+     Nothing is silently unplanned any more. */
+  eq('the well piece is filled rather than skipped',
+    plan.display.filter(sh => sh.unit === 'Bar' && sh.items.length).length > 0,
+    true);
+  eq('and what it gets is named as everyday',
+    plan.display.filter(sh => sh.unit === 'Bar' && sh.items.length)[0]
+      .items[0].group, 'Everyday pours');
   eq('every display shelf belongs to a named place',
     plan.display.every(sh => !!sh.unit), true);
   eq('and none of them is a bare number',
@@ -15165,111 +15177,80 @@ sec('\u00a7353 the same list, as a link');
     L.giftFromLink(L.giftLink(many, 'https://x/')).names.length, 20);
 }
 
-sec('\u00a7354 a place holds a type, a shelf has a job');
+sec('\u00a7354 one question per piece of furniture');
 {
-  /* BZ: a cabinet tends to be type specific - one bookshelf is Scotch,
-     Irish and international while the other is Bourbon, Rye and American
-     single malt. And within one: a TOP shelf for special bottles and a
-     WELL shelf for common pours. Neither was in the model, so a plan could
-     put Laphroaig on the bourbon bookcase and be arithmetically perfect
-     and useless. */
+  /* BZ: the fill logic is poor - what if we simplify, that's a rule right
+     - just ask what they want on each shelf, we have all of the data. By
+     shelf he means the piece of furniture, and by what he means Scotch,
+     Bourbon. The previous version asked two questions at two levels: a
+     kind on the piece and a role on each shelf inside it. One question
+     now, five answers. */
+  eq('five answers, no more', L.STORAGE_KINDS.length, 5);
+  eq('and they are the ones BZ named',
+    L.STORAGE_KINDS.join(','), 'types,top,favorites,well,backup');
 
-  /* HOW SPECIAL, and how ordinary, which is not its reverse. */
-  eq('scarcity leads over price',
-    L.bottleSpecial({ scar: 'exclusive', msrp: 60 })
-      > L.bottleSpecial({ scar: 'standard', msrp: 900 }), true);
-  eq('and price breaks the tie within a scarcity',
-    L.bottleSpecial({ scar: 'limited', msrp: 200 })
-      > L.bottleSpecial({ scar: 'limited', msrp: 80 }), true);
-  eq('an unknown scarcity is not treated as rare',
-    L.bottleSpecial({ scar: 'who knows', msrp: 50 }), 50);
-  eq('anything scarce is disqualified from the well outright',
-    L.bottleCommon({ scar: 'limited', msrp: 20 }), null);
-  eq('the cheapest ordinary bottle leads the well',
-    L.bottleCommon({ scar: 'standard', msrp: 25 })
-      < L.bottleCommon({ scar: 'standard', msrp: 60 }), true);
-  eq('and no price is not assumed to be cheap',
-    L.bottleCommon({ scar: 'standard' }) > 900, true);
-
-  /* NORMALISED: what the app does not know it does not keep. */
-  const u = L.storageNormalize([{ name: 'A',
-    types: ['scotch', 'irish', 'not a category'],
-    shelves: [{ cap: 30, role: 'top' }, { cap: 30, role: 'bogus' }] }], '')[0];
-  eq('a category the app knows is kept', u.types.join(','), 'scotch,irish');
-  eq('a role it knows is kept', u.shelves[0].role, 'top');
-  eq('one it does not is no role rather than a guess',
-    u.shelves[1].role, '');
-
-  /* ON BZ'S OWN SHELF AND HIS OWN FURNITURE: two typed bookcases, each
-     with a top and a well. Population named: the shipped 344-bottle shelf,
-     which is a filled-in shelf rather than one somebody imports tomorrow. */
   const units = [
-    { id: 'u1', name: 'Scotch bookcase', kind: 'display',
-      types: ['scotch', 'irish', 'japanese', 'world', 'canadian'],
-      shelves: [{ cap: 12, role: 'top' }, { cap: 30 }, { cap: 30 },
-                { cap: 30 }, { cap: 20, role: 'well' }] },
-    { id: 'u2', name: 'American bookcase', kind: 'display',
-      types: ['bourbon', 'rye', 'tennessee', 'wheat',
-              'american single malt'],
-      shelves: [{ cap: 12, role: 'top' }, { cap: 30 }, { cap: 30 },
-                { cap: 30 }, { cap: 20, role: 'well' }] }
+    { id: 'a', name: 'Favorites', kind: 'favorites', shelves: [{ cap: 6 }] },
+    { id: 'b', name: 'Top', kind: 'top', shelves: [{ cap: 6 }] },
+    { id: 'c', name: 'Bar', kind: 'well', shelves: [{ cap: 8 }] },
+    { id: 'd', name: 'Scotch case', kind: 'types',
+      types: ['scotch', 'irish'], shelves: [{ cap: 60 }, { cap: 60 }] },
+    { id: 'e', name: 'American case', kind: 'types', types: [],
+      shelves: [{ cap: 200 }, { cap: 200 }] },
+    { id: 'f', name: 'Cabinet', kind: 'backup', shelves: [{ cap: 40 }] }
   ];
-  const plan = L.storagePlan(data.catalog, data.bottles, units);
-  const on = name => plan.display.filter(sh => sh.unit === name)
+  const favs = {};
+  Object.keys(data.catalog).slice(0, 4).forEach(k => { favs[k] = 1; });
+  const plan = L.storagePlan(data.catalog, data.bottles, units, { favs: favs });
+  const on = name => plan.display.concat(plan.backup)
+    .filter(sh => sh.unit === name)
     .reduce((a, sh) => a.concat(sh.items.reduce(
       (b, it) => b.concat(it.bottles), [])), []);
 
-  /* THE ROUTING, which is the whole point. */
-  eq('no Scotch or Irish lands on the American bookcase',
-    on('American bookcase')
-      .filter(p => ['scotch', 'irish'].indexOf(p.sub) >= 0).length, 0);
-  eq('and no bourbon or rye on the Scotch one',
-    on('Scotch bookcase')
-      .filter(p => ['bourbon', 'rye'].indexOf(p.sub) >= 0).length, 0);
+  /* A STAR IS THE ONLY ONE OF THESE SOMEBODY SAID OUT LOUD, so it is
+     claimed first and an inference never outbids it. */
+  eq('the favourites piece takes the starred ones', on('Favorites').length, 4);
+  eq('and every one of them is actually starred',
+    on('Favorites').filter(p => !favs[p.k]).length, 0);
+  eq('so no starred bottle lands on the top shelf instead',
+    on('Top').filter(p => favs[p.k]).length, 0);
 
-  /* THE ROLES, filled first and from the whole of what the unit holds. */
-  const top = plan.display.filter(sh => sh.role === 'top');
-  const well = plan.display.filter(sh => sh.role === 'well');
-  eq('both top shelves are used', top.filter(sh => sh.items.length).length, 2);
-  eq('and both wells', well.filter(sh => sh.items.length).length, 2);
-  eq('a top shelf is named for what it is',
-    top[0].items[0].group, 'The good ones');
-  eq('and a well shelf too', well[0].items[0].group, 'Everyday pours');
-  /* Nothing scarce is poured from the well. */
-  const wellBottles = well.reduce((a, sh) => a.concat(
+  eq('the top piece is filled', on('Top').length, 6);
+  const topWorst = Math.min.apply(null, on('Top').map(L.bottleSpecial));
+  const elsewhere = on('Scotch case').concat(on('American case'))
+    .map(L.bottleSpecial);
+  eq('and nothing left on an ordinary piece outranks it',
+    topWorst >= Math.max.apply(null, elsewhere.concat([-1])), true);
+
+  eq('the well piece is filled', on('Bar').length, 8);
+  eq('and nothing scarce is poured from it',
+    on('Bar').filter(p => L.bottleCommon(p) === null).length, 0);
+
+  eq('no bourbon on the Scotch case',
+    on('Scotch case').filter(p => p.sub === 'bourbon').length, 0);
+  eq('and no Scotch on the piece that named nothing',
+    on('American case').filter(p => p.sub === 'scotch').length, 0);
+
+  eq('the cabinet is used', on('Cabinet').length > 0, true);
+  /* NOTHING IS ON TWO PIECES ON SHOW. Across show AND backup it can be,
+     and must: a whisky owned twice is one open on a shelf and one sealed
+     in the cabinet, which is two bottles to find and was asserted as such
+     at v1.9.29. The first version of this check forbade that and failed on
+     14 real bottles - the test was wrong, not the plan. */
+  const shown = plan.display.reduce((a, sh) => a.concat(
     sh.items.reduce((b, it) => b.concat(it.bottles), [])), []);
-  eq('nothing limited or better sits in the well',
-    wellBottles.filter(p => L.bottleCommon(p) === null).length, 0);
-  /* And the top shelf really is the top of what that unit holds. */
-  const scotchTop = top.filter(sh => sh.unit === 'Scotch bookcase')[0];
-  const topWorst = Math.min.apply(null, scotchTop.items[0].bottles
-    .map(p => L.bottleSpecial(p)));
-  const restBest = Math.max.apply(null, plan.display
-    .filter(sh => sh.unit === 'Scotch bookcase' && sh.role !== 'top')
-    .reduce((a, sh) => a.concat(sh.items.reduce(
-      (b, it) => b.concat(it.bottles), [])), [])
-    .map(p => L.bottleSpecial(p)).concat([-1]));
-  eq('nothing left on an ordinary shelf outranks the top shelf',
-    topWorst >= restBest, true);
+  eq('nothing appears twice among the pieces on show',
+    shown.map(p => p.k).filter((k, i, arr) => arr.indexOf(k) !== i).length, 0);
+  eq('and nothing twice in the cabinet either',
+    plan.backup.reduce((a, sh) => a.concat(
+      sh.items.reduce((b, it) => b.concat(it.bottles), [])), [])
+      .map(p => p.k).filter((k, i, arr) => arr.indexOf(k) !== i).length, 0);
 
-  /* NO SHELF IS OVERFILLED, roles included. */
   eq('every shelf stays within its capacity',
-    plan.display.filter(sh =>
+    plan.display.concat(plan.backup).filter(sh =>
       sh.items.reduce((n, it) => n + it.bottles.length, 0) > sh.cap).length, 0);
-
-  /* A UNIT NAMING NOTHING TAKES WHAT THE NAMED ONES DID NOT. */
-  const mixed = L.storagePlan(data.catalog, data.bottles, [
-    { id: 'a', name: 'Scotch only', kind: 'display', types: ['scotch'],
-      shelves: [{ cap: 40 }] },
-    { id: 'b', name: 'Everything else', kind: 'display', types: [],
-      shelves: [{ cap: 400 }] }
-  ]);
-  const spare = mixed.display.filter(sh => sh.unit === 'Everything else')
-    .reduce((a, sh) => a.concat(sh.items.reduce(
-      (b, it) => b.concat(it.bottles), [])), []);
-  eq('the untyped unit gets no Scotch while a Scotch unit has room',
-    spare.filter(p => p.sub === 'scotch').length, 0);
-  eq('and it does get the rest', spare.length > 0, true);
+  eq('the overflow is a list rather than a silence',
+    Array.isArray(plan.overflow), true);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
