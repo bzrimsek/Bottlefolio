@@ -329,6 +329,59 @@ function step(n) {
         failures.push('shelf: back from ' + route + ' left it narrowed');
       }
     }
+    /* A CHART BAR LANDS IN THE TABLE, not in a pop-up. BZ: why do the
+       charts render pop-ups and the books render tables, tables are
+       better. Driven as a route he named: press a bar, expect the shelf
+       narrowed and a way back, and no modal over the top of it. */
+    await page.evaluate(() => {
+      S.shelfSub = null; L.clearFacets(S.filters);
+      renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(200);
+    {
+      const bar = page.locator('#shelfList .bar.tappable');
+      if (!(await bar.count())) {
+        failures.push('shelf: no chart bar to press');
+      } else {
+        await bar.first().click();
+        await page.waitForTimeout(300);
+        const overlayOn = await page.evaluate(() => {
+          const o = document.getElementById('overlay');
+          return o && o.classList.contains('on') ? 1 : 0;
+        });
+        if (overlayOn) failures.push('shelf: a chart bar still opens a pop-up');
+        const narrowed = await page.evaluate(() => L.activeFacets(S.filters));
+        if (!narrowed) failures.push('shelf: a chart bar did not narrow the shelf');
+        const rows = await page.locator('#shelfList .item').count();
+        if (!rows) failures.push('shelf: a chart bar narrowed to an empty table');
+        const back = page.locator('#scr-shelf .backbtn');
+        if (!(await back.count()) || !(await back.isVisible())) {
+          failures.push('shelf: no way back from a chart bar');
+        }
+      }
+    }
+
+    /* THE WANTED VIEW IS A ROUTE TOO, and it returns early out of
+       renderShelf - which is how the fix that covered the other routes
+       missed this one. BZ opened his wishlist and had no way back. */
+    await page.evaluate(() => {
+      S.shelfSub = null; L.clearFacets(S.filters);
+      S.filters.wishOnly = true;
+      renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(250);
+    {
+      const back = page.locator('#scr-shelf .backbtn');
+      if (!(await back.count()) || !(await back.isVisible())) {
+        failures.push('shelf: the Wanted view offers no way back');
+      } else {
+        await back.click();
+        await page.waitForTimeout(250);
+        const still = await page.evaluate(() => L.activeFacets(S.filters));
+        if (still) failures.push('shelf: back from Wanted left it filtered');
+      }
+    }
+
     /* AND THE WISHLIST IS ON THE SHELF ITSELF, not only behind a filter
        pill that hides when the list is empty. BZ asked for it at the
        bottom of the shelf page twice. */
@@ -2364,11 +2417,23 @@ function step(n) {
         out.push('buddies: the old region rows are still drawn');
       }
       /* Pressing one opens the list, which is the whole point of them. */
+      /* IT LANDS ON THEIR SHELF, NOT IN A POP-UP. BZ: why do the charts
+         render pop-ups and the books render tables, tables are better -
+         and the buddy drill-throughs were the same shape. A place, with a
+         header, a search box and a way back. */
       hits[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      if (!document.getElementById('overlay').classList.contains('on')) {
-        out.push('buddies: pressing a Venn segment opens nothing');
+      const theirs = document.getElementById('scr-theirs');
+      if (!theirs || !theirs.classList.contains('on')) {
+        out.push('buddies: pressing a Venn segment does not open their shelf');
+      } else {
+        if (!theirs.querySelectorAll('#theirsBody .item').length) {
+          out.push('buddies: their shelf opened with no bottles on it');
+        }
+        if (!theirs.querySelector('.backbtn')) {
+          out.push('buddies: their shelf has no way back');
+        }
       }
-      closeModal();
+      show('buddies');
       /* Where you stand with THIS person is on their own panel too. */
       if (!b2.querySelector('.budline')) {
         out.push('buddies: the buddy panel does not say where you stand');
