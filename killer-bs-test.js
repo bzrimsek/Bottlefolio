@@ -13619,5 +13619,93 @@ sec('\u00a7326 the room, counted rather than intersected');
     L.roomBuckets([mk('me', 'You', [])], 'me').length, 0);
 }
 
+sec('\u00a7327 clearing filters and counting them agree');
+{
+  /* BZ, on a shelf showing a Tequila chip and "Filters . 1": the back
+     button here is not working. It was not. goBack's guard asked
+     activeFacets, which counts eight things, and then emptied ONE of them —
+     so with any non-type facet on it cleared something already empty, the
+     guard stayed true, and the button did nothing however many times it
+     was pressed. Clear all emptied all eight. Two clearers, one question.
+
+     Expected values worked out by hand: six list facets plus cask and age
+     is eight things activeFacets can count. */
+  const full = { types: ['tequila'], obsc: ['rare'], regions: ['islay'],
+                 bands: ['90s'], proofs: ['100s'], scars: ['standard'],
+                 cask: 'oloroso', age: '12', status: 'open' };
+  eq('all eight are counted', L.activeFacets(full), 8);
+  const cleared = L.clearFacets(full);
+  eq('and all eight are cleared', L.activeFacets(cleared), 0);
+
+  /* THE EXACT SHAPE OF THE BUG: a type chip and one other facet. Clearing
+     only types leaves the guard true, which is the no-op. */
+  const two = { types: ['tequila'], obsc: [], regions: [], bands: [],
+                proofs: [], scars: ['standard'], cask: '', age: '' };
+  eq('a type plus one facet counts two', L.activeFacets(two), 2);
+  eq('clearing only types would leave it stuck',
+    L.activeFacets(Object.assign({}, two, { types: [] })), 1);
+  eq('clearing properly does not', L.activeFacets(L.clearFacets(two)), 0);
+
+  /* Everything the counter looks at, the clearer must reach. This is the
+     check that keeps them together as either list grows. */
+  const probe = {};
+  L.FACET_KEYS.forEach(k => { probe[k] = ['x']; });
+  probe.cask = 'x'; probe.age = 'x';
+  eq('the clearer reaches everything the counter counts',
+    L.activeFacets(L.clearFacets(probe)), 0);
+  eq('and the counter sees everything the clearer clears',
+    L.activeFacets(probe), L.FACET_KEYS.length + 2);
+
+  /* It does not touch what is not a facet: status and the search are
+     different controls and Back has its own handling for the search. */
+  eq('status is left alone', L.clearFacets(full).status, 'open');
+  /* And it returns a new object rather than mutating, so a caller that
+     keeps the old one is not surprised. */
+  eq('the original is untouched', full.types, ['tequila']);
+}
+
+sec('\u00a7328 the import check survives a house spelt two ways');
+{
+  /* SHIPPED BROKEN IN v1.9.11. BZ pressed Check the import on a freshly
+     imported shelf and got "threw on shelf: g.map is not a function", which
+     took the whole shelf screen down.
+
+     L.houseVariants returns [{ spellings: [{name, n}] }] and importAudit
+     read it as an array of entries. It only fires on a shelf that HAS two
+     spellings of one house — BZ's own 325 have none, so every fixture and
+     the whole gate passed while the one shelf that had three crashed on
+     first press. A helper's shape is part of its contract. */
+  const cat = {
+    a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92, sub: 'scotch' },
+    b: { k: 'b', name: 'Ardbeg Uigeadail', dist: 'Ardbeg Distillery',
+         proof: 108, sub: 'scotch' }
+  };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'open' }];
+  const found = L.importAudit(cat, bots).filter(x => x.id === 'houses')[0];
+  eq('the finding is made at all', !!found, true);
+  eq('and it counts one house, not two spellings', found.n, 1);
+  /* The names must actually appear, or the finding tells you a house is
+     wrong without telling you which. That is what the crash hid. */
+  eq('both spellings are named',
+    /Ardbeg/.test(found.items[0]) && /Ardbeg Distillery/.test(found.items[0]),
+    true);
+  eq('separated so neither is merged blind', /==/.test(found.items[0]), true);
+
+  /* And the shape it reads is the shape houseVariants returns. Asserted
+     against the helper itself rather than a copy of its output, so the two
+     cannot drift apart again. */
+  const groups = L.houseVariants(cat);
+  eq('houseVariants returns groups carrying spellings',
+    Array.isArray(groups[0].spellings), true);
+  eq('each spelling carries a name', typeof groups[0].spellings[0].name, 'string');
+
+  /* A shelf with one spelling per house makes no finding, which is why
+     this went unnoticed. */
+  const clean = { a: cat.a };
+  eq('one spelling makes no finding',
+    L.importAudit(clean, [bots[0]]).filter(x => x.id === 'houses').length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
