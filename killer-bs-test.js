@@ -14220,5 +14220,75 @@ sec('\u00a7338 a share is four records and they can disagree');
   eq('written into their viewer node', oops[0].viewer, 'x');
 }
 
+sec('\u00a7339 a grant with no shelf behind it is still a grant');
+{
+  /* BZ: inconsistent with that diagnostic. The Sharing check listed three
+     people and the Buddies tab drew one row. Both were honest - the check
+     read the GRANT and the tab read the loaded SHELF, and loadSharedShelves
+     dropped anybody whose snapshot had not been written yet, so a person
+     who had shared with him had no row at all. */
+  const rows = L.buddyRows({}, [], { p3: 'Not Smoky Bill' }, { p3: true });
+  eq('somebody who granted you their shelf has a row', rows.length, 1);
+  eq('and reads as sharing with you', rows[0].theyShare, true);
+  eq('while the shelf itself has not arrived', rows[0].hasShelf, false);
+
+  /* Once the snapshot lands, both are true and a panel is possible. */
+  const loaded = L.buddyRows({ p3: { catalog: {}, bottles: [] } }, [],
+    { p3: 'Not Smoky Bill' }, { p3: true });
+  eq('a loaded shelf is still a grant', loaded[0].theyShare, true);
+  eq('and now has a shelf to draw', loaded[0].hasShelf, true);
+
+  /* A shelf loaded without the grant map having been filled - an older
+     session, a partial load - must not lose its panel. */
+  const shelfOnly = L.buddyRows({ p3: { catalog: {}, bottles: [] } }, [],
+    {}, {});
+  eq('a loaded shelf alone still counts as sharing',
+    shelfOnly[0].theyShare, true);
+  eq('and still has a panel', shelfOnly[0].hasShelf, true);
+
+  /* THE THREE SOURCES TOGETHER, which is the state BZ actually had: one
+     person granting with no snapshot, one person he shares with, and one
+     mutual with a shelf. */
+  const all = L.buddyRows(
+    { m1: { catalog: {}, bottles: [] } },
+    [{ uid: 'm1', name: 'Mutual' }, { uid: 'o1', name: 'OutOnly' }],
+    { g1: 'GrantedOnly' },
+    { g1: true, m1: true });
+  eq('three people, one from each direction', all.length, 3);
+  const by = {};
+  all.forEach(r => { by[r.uid] = r; });
+  eq('the mutual one sorts first', all[0].uid, 'm1');
+  eq('the granted-but-unloaded one is present', !!by.g1, true);
+  eq('with no panel of its own', by.g1.hasShelf, false);
+  eq('and the outbound-only one is present too', by.o1.iShare, true);
+  eq('with nothing coming back', by.o1.theyShare, false);
+  /* A row with no shelf must never be offered as a tab. */
+  eq('only shelves make tabs',
+    all.filter(r => r.hasShelf).map(r => r.uid).join(','), 'm1');
+}
+
+sec('\u00a7340 an empty shelf is not a missing one');
+{
+  /* BZ: while I have 1 green there is no Venn, maybe their shelf is empty
+     and we should say so. Three states, not two. */
+  const missing = L.buddyRows({}, [], { a: 'A' }, { a: true })[0];
+  eq('a grant with no snapshot has no shelf', missing.hasShelf, false);
+  eq('and no count to speak of', missing.bottles, undefined);
+
+  const empty = L.buddyRows({ a: { catalog: {}, bottles: [] } }, [],
+    { a: 'A' }, { a: true })[0];
+  eq('a snapshot holding nothing IS a shelf', empty.hasShelf, true);
+  eq('with nothing on it', empty.bottles, 0);
+  eq('and it still counts as sharing', empty.theyShare, true);
+
+  const full = L.buddyRows(
+    { a: { catalog: {}, bottles: [{ k: 'x', status: 'open' },
+                                  { k: 'y', status: 'sealed' },
+                                  { k: 'z', status: 'gone' }] } },
+    [], { a: 'A' }, { a: true })[0];
+  eq('a shelf counts what is owned', full.bottles, 2);
+  eq('and a finished bottle is not owned', full.bottles !== 3, true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
