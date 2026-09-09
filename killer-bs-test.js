@@ -15295,11 +15295,11 @@ sec('\u00a7355 what the library contradicts');
   found.forEach(f => { by[f.id] = f; });
   eq('a grain bill that does not add up', by.mashsum.n, 1);
   eq('and it says how it is wrong in the same words the app uses',
-    /add up to 80/.test(by.mashsum.items[0]), true);
+    /add up to 80/.test(by.mashsum.items[0].text), true);
   eq('a Scotch region on something that is not Scotch', by.region.n, 1);
   eq('a name that contradicts its own style', by.style.n, 1);
   eq('and it names both sides of the contradiction',
-    /name says single malt, row says blended/.test(by.style.items[0]), true);
+    /name says single malt, row says blended/.test(by.style.items[0].text), true);
   eq('a proof too high and one too low', by.proof.n, 2);
 
   /* A CLEAN LIBRARY REPORTS NOTHING, which is the answer that has to be
@@ -15337,11 +15337,84 @@ sec('\u00a7355 what the library contradicts');
   eq('no region on a non-Scotch', cnt('region'), 0);
   eq('one known style clash, the deliberate one', cnt('style'), 1);
   eq('and it is the entry the comment names',
-    /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0]), true);
+    /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0].text), true);
   eq('one pair under two names', cnt('dups'), 1);
   eq('six proofs stranded in names', cnt('proofname'), 6);
   eq('and no grain bill on the shipped catalogue fails to add up',
     cnt('mashsum'), 0);
+}
+
+sec('\u00a7356 a finding you can go to, and a removal that travels');
+{
+  /* BZ: what happened after we scan the library? Nothing did - it listed
+     names and you closed it. Every finding carries the ENTRY it is about
+     now, so a row can open it, and a judged one can be put to rest. */
+  const lib = {
+    a: { name: 'Fake Bourbon', proof: 95, sub: 'bourbon', region: 'Speyside' },
+    b: { name: 'Broken Proof', proof: 400, sub: 'bourbon' }
+  };
+  const found = L.libraryAudit(lib, {});
+  eq('a finding names the entry it is about',
+    found.every(f => f.items.every(i => !!i.key)), true);
+  eq('and still says it in words', found.every(f =>
+    f.items.every(i => typeof i.text === 'string' && i.text.length)), true);
+
+  /* REVIEWED, LEAVE IT. Southern Comfort really is 70 proof; without this
+     every future scan reports it for ever and somebody learns to skim. */
+  const one = found.filter(f => f.id === 'proof')[0];
+  const after = L.libraryAudit(lib, { ['proof:' + one.items[0].key]: 1 });
+  eq('a reviewed finding stops coming back',
+    after.filter(f => f.id === 'proof').length, 0);
+  eq('and the others are untouched',
+    after.filter(f => f.id === 'region').length, 1);
+  /* Keyed finding:entry, so putting one to rest does not silence the same
+     fault on a different bottle. */
+  const two = Object.assign({ c: { name: 'Also Broken', proof: 999,
+    sub: 'bourbon' } }, lib);
+  eq('another bottle with the same fault still reports',
+    L.libraryAudit(two, { ['proof:' + one.items[0].key]: 1 })
+      .filter(f => f.id === 'proof')[0].n, 1);
+
+  /* AND WHAT A REMOVAL OR A RENAME DOES TO A DEVICE. BZ: will everyone's
+     shelf update? A correction did; these two did not, silently. */
+  const base = { old: { k: 'old', name: 'Old Name' },
+                 nw: { k: 'nw', name: 'New Name' },
+                 bad: { k: 'bad', name: 'Junk' } };
+  const bots = [{ id: 'B1', k: 'old', status: 'open' },
+                { id: 'B2', k: 'bad', status: 'open' }];
+  const r = L.applyLibraryMoves(base, bots, { bad: { at: 1 } },
+    { old: { to: 'nw' } });
+  eq('a bottle follows its whisky through a rename', r.bottles[0].k, 'nw');
+  eq('one bottle moved', r.moved, 1);
+  eq('the renamed-from and the withdrawn entry both go', r.dropped, 2);
+  eq('and only the new entry is left',
+    Object.keys(r.base).join(','), 'nw');
+  /* A WITHDRAWN ENTRY DOES NOT TAKE SOMEBODY'S BOTTLE WITH IT. */
+  eq('the bottle of a withdrawn whisky is kept',
+    r.bottles.filter(b => b.k === 'bad').length, 1);
+  eq('and it is counted so it can be said', r.orphaned, 1);
+
+  /* A RENAME THE DEVICE CANNOT FOLLOW YET WAITS, rather than stranding a
+     bottle on a key nothing knows. */
+  const early = L.applyLibraryMoves({ old: { k: 'old' } },
+    [{ id: 'B1', k: 'old' }], {}, { old: { to: 'notyet' } });
+  eq('a bottle is not moved to an entry that has not arrived',
+    early.bottles[0].k, 'old');
+  eq('and the old entry stays until it can be',
+    Object.keys(early.base).join(','), 'old');
+
+  /* THE REVIEWED ID SURVIVES THE ROUND TRIP. A library key can carry a
+     dot, which Firebase will not take in a key, so it is escaped going out
+     and must be unescaped coming back - otherwise the entry keeps
+     reporting and Leave it looks broken rather than saying so. */
+  const dotted = 'proof:some.entry.with.dots';
+  eq('an id with dots survives being written and read',
+    L.unFbKey(L.fbKey(dotted)), dotted);
+
+  eq('nothing to do changes nothing',
+    L.applyLibraryMoves(base, bots, {}, {}).dropped, 0);
+  eq('and no maps at all is not a crash',
+    L.applyLibraryMoves(null, null, null, null).bottles.length, 0);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
