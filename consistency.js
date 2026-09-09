@@ -444,5 +444,38 @@ check('no fixed svg id is emitted by a repeated drawing',
     named(keys).filter(k => covered.indexOf(k) < 0));
 }
 
+/* 26. A CLAIM ABOUT YOUR SHELF IS COUNTED FROM YOUR SHELF.
+
+      BZ, after the map drew eight countries for a one-bottle shelf: can
+      you scan the whole of things for this owned versus catalogue issue.
+      The scan ran every catalogue-walking function twice — once against
+      the full catalogue holding one bottle, once against a catalogue of
+      just that bottle — and seven answered differently. Three were
+      user-facing claims reading everything the app knows: the gap advice,
+      the import check, and what you have to publish.
+
+      S.catalog is the MERGED catalogue: the shipped seed, the shared
+      library everybody adds to, and your own bottles. Handing it to
+      something that speaks about "your shelf" asks has anybody heard of
+      this whisky when the question is do you have one.
+
+      So these three take ownedCatalog(). Named rather than pattern-matched,
+      because the fix is a call site and a call site cannot be spotted by
+      shape — but a name in this list that stops being used gets caught by
+      the check below it. */
+{
+  const OWNED_ONLY = ['pendingForLibrary', 'importAudit', 'shelfGaps'];
+  const wrong = OWNED_ONLY.filter(fn => {
+    const re = new RegExp('L\\.' + fn + '\\(\\s*S\\.catalog');
+    return re.test(src);
+  });
+  check('no claim about your shelf is counted from the whole catalogue',
+    wrong.map(f => f + ' is handed S.catalog'));
+  /* And the filter itself has to still exist, or the line above passes by
+     accident the day somebody renames it. */
+  check('the owned-only filter exists',
+    /function ownedCatalog\(\)/.test(src) ? [] : ['ownedCatalog is gone']);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));

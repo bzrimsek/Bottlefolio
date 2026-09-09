@@ -183,7 +183,7 @@ function step(n) {
   //     thirteen, and exactly the five that need an admin or a second
   //     person, so they are also the five with the least evidence behind
   //     them. renderLibrary alone is 185 lines that nothing ever drew.
-  for (const name of ['settings', 'diag', 'library', 'buddies', 'shared']) {
+  for (const name of ['settings', 'diag', 'library', 'buddies']) {
     const drew = await page.evaluate(n => {
       /* global show */
       /* RENDER IT, don't just show it. This called show() alone and
@@ -194,7 +194,6 @@ function step(n) {
       try {
         const draw = { settings: () => renderSettings(),
                        library: () => renderLibraryScreen(),
-                       shared: () => renderShared(),
                        diag: () => renderDiag(),
                        buddies: () => renderBuddiesTab() }[n];
         if (draw) draw();
@@ -1950,8 +1949,9 @@ function step(n) {
   {
     const stranded = await page.evaluate(() => {
       const out = [];
-      const travelled = ['detail', 'library', 'diag', 'shared', 'map',
-        'settings'];
+      // 'shared' went with Our shelves — it is the Buddies TAB now, and a
+      // tab is reached by the nav rather than travelled to.
+      const travelled = ['detail', 'library', 'diag', 'map', 'settings'];
       travelled.forEach(name => {
         try {
           _from.length = 0;
@@ -2080,6 +2080,99 @@ function step(n) {
     });
     bad.forEach(x => failures.push(x));
     await page.setViewportSize({ width: 1000, height: 900 });
+  }
+
+  /* THE BUDDIES PANELS, DRIVEN. Our shelves folded into this tab and the
+     room is counted rather than intersected, so there is a chip strip, a
+     room panel and one panel per buddy — none of which the unit suite can
+     see, because all of it is wiring (rule 30b). Three buddies on purpose:
+     the old screen did uids.slice(0, 2) and silently dropped the third. */
+  {
+    process.stdout.write('  \u00b7 the buddies tab panels one buddy each \u2026\n');
+    const bad = await page.evaluate(() => {
+      const out = [];
+      const mk = keys => {
+        const catalog = {}; const bottles = [];
+        keys.forEach((k, i) => {
+          catalog[k] = { k: k, name: k, proof: 92, sub: 'scotch' };
+          bottles.push({ id: 'x' + i, k: k, status: 'open' });
+        });
+        return { catalog: catalog, bottles: bottles };
+      };
+      /* Signed in, because the tab's whole point is what other people are
+         sharing and the signed-out branch returns before any of it. Set
+         here rather than globally so nothing earlier in the walk is
+         affected — this is the last step before the browser closes. */
+      if (!FB.user) FB.user = { uid: 'walk-test', displayName: 'Walker' };
+      /* Signed in, or the tab returns at its signed-out branch and this
+         step passes by never reaching the thing it is checking. */
+      if (!FB.user) FB.user = { uid: 'walkuid' };
+      /* A no-op Firebase, so the tab runs its REAL path. Calling the panel
+         functions directly instead would skip renderBuddiesTab, which is
+         where the strip and the panel choice live — the exact wiring this
+         step exists to check. */
+      if (typeof firebase === 'undefined') {
+        const noop = { then: f => { try { f({ val: () => null }); } catch (e) {} return noop; },
+                       catch: () => noop };
+        const ref = { child: () => ref, once: () => noop, on: () => {},
+                      update: () => noop, remove: () => noop, set: () => noop,
+                      orderByChild: () => ref, equalTo: () => ref };
+        window.firebase = { database: () => ({ ref: () => ref }) };
+      }
+      SHARED.shelves = { u1: mk(['A', 'B']), u2: mk(['A', 'C']), u3: mk(['A', 'D']) };
+      SHARED.names = { u1: 'Tyson', u2: 'Dave', u3: 'Eli' };
+      SHARED.openOnly = false;
+      try { renderBuddiesTab(); } catch (e) { out.push('buddies: threw ' + e.message); return out; }
+
+      const strip = document.getElementById('buddyStrip');
+      if (!strip) { out.push('buddies: no panel strip'); return out; }
+      const chips = [...strip.querySelectorAll('button')].map(b => b.textContent.trim());
+      // Everyone plus one per buddy. THREE buddies, not two.
+      if (chips.length !== 4) {
+        out.push('buddies: ' + chips.length + ' chips, expected 4 (' + chips.join(',') + ')');
+      }
+      ['Everyone', 'Tyson', 'Dave', 'Eli'].forEach(n => {
+        if (chips.indexOf(n) < 0) out.push('buddies: no chip for ' + n);
+      });
+
+      const body = document.getElementById('buddiesBody');
+      /* THE THIRD BUDDY IS THE POINT. Our shelves did uids.slice(0, 2) and
+         dropped Eli without saying so. Bottle A sits on all three buddy
+         shelves and not on the real one this page loaded, so the room panel
+         must name a group of exactly those three — which it can only do if
+         all three reached it. */
+      if (!/Tyson, Dave and 1 other/.test(body.textContent)) {
+        out.push('buddies: the room panel does not name all three buddies');
+      }
+      // A Venn belongs on a BUDDY panel, never on the room panel.
+      if (body.querySelector('svg.venn')) {
+        out.push('buddies: a Venn is drawn for a room of four');
+      }
+
+      const dave = [...strip.querySelectorAll('button')]
+        .filter(b => b.textContent.trim() === 'Dave')[0];
+      dave.click();
+      const b2 = document.getElementById('buddiesBody');
+      if (!b2.querySelector('svg.venn')) {
+        out.push('buddies: no Venn on a single buddy panel');
+      }
+      if (!/You and Dave/.test(b2.textContent)) {
+        out.push('buddies: the buddy panel does not name the buddy');
+      }
+      // And the strip survives its own click, or there is no way back.
+      if (!document.getElementById('buddyStrip')) {
+        out.push('buddies: the strip disappears once a panel is chosen');
+      }
+      // A buddy who stops sharing must not strand you on a dead panel.
+      SHARED.shelves = { u1: SHARED.shelves.u1 };
+      try { renderBuddiesTab(); } catch (e) { out.push('buddies: threw on redraw ' + e.message); }
+      if (!/All 2 of you|Tyson/.test(document.getElementById('buddiesBody').textContent)) {
+        out.push('buddies: a dropped buddy leaves a dead panel');
+      }
+      return out;
+    });
+    bad.forEach(x => failures.push(x));
+    if (!bad.length) process.stdout.write('  \u2713 the buddies tab panels one buddy each\n');
   }
 
   await browser.close();

@@ -93,6 +93,14 @@ function eq(label, got, want) {
   if (g === w) { pass++; }
   else { fail++; console.log('  FAIL ' + label + '\n    got  ' + g + '\n    want ' + w); }
 }
+/* A ROW THAT MATCHED THE SHELF, whichever flavour of match it was.
+   A match is 'same' when the file brings nothing new and 'update' when it
+   brings a better value; neither adds a bottle, and these checks are about
+   RECOGNITION — did the app see this as a bottle you already have — not
+   about which of the two it landed on. Asserting the label instead would
+   break every time a fixture gained a field (rule 30c). */
+const matched = t => (t.same || 0) + (t.update || 0);
+
 function sec(n) { console.log('\n' + n); }
 
 /* ---------------- fixtures ---------------- */
@@ -1326,14 +1334,10 @@ eq('two are yours alone', byKey['me'], 2);
 eq('every bottle lands in exactly one region',
   regions.reduce((n, r) => n + r.count, 0), 6);
 
-sec('the regions that matter');
-const hi = L.vennHighlights(regions, 'me');
-eq('what everyone could pour', hi.common.bottles.map(p => p.name), ['Buffalo Trace']);
-eq('what only you have',
-  hi.onlyMine.bottles.map(p => p.name).sort(), ['Redbreast 12', 'Weller 12']);
-// The shopping list: two people you trust both bought it and you did not.
-eq('what they both have and you do not',
-  hi.theyBothHave.bottles.map(p => p.name), ['Eagle Rare']);
+/* "the regions that matter" tested L.vennHighlights, which drew the room
+   picture for Our shelves. The room is counted by L.roomBuckets now and
+   reports the same three facts per bucket — all, mine, withoutMe — and
+   §326 below asserts them against the same shelves. */
 
 sec('region labels');
 const names = { me: 'You', a: 'Marcus', b: 'Ellen' };
@@ -3554,22 +3558,39 @@ const impCsv = 'Name,ABV,Type\n'
   + ',,\n';
 const prep = L.prepareImport(L.parseCSV(impCsv), impCat);
 eq('blank lines produce no rows', prep.rows.length, 5);
-eq('owned reads as exists', prep.rows[0].action, 'exists');
-// A repeat inside the file must stay a duplicate: reading it as "exists"
-// would add a second sealed spare for the same line.
+/* A MATCH NO LONGER ADDS A BOTTLE. It used to read 'exists' and push a
+   sealed spare, which turned a re-upload of a 344-row export into 344
+   phantom bottles. A row that matches and carries nothing new is 'same'. */
+eq('an owned bottle is never added again',
+  prep.rows[0].action === 'add', false);
+/* This fixture's product carries only a name and a proof, so the file
+   genuinely brings something new — a category — and the row updates rather
+   than doing nothing. Both are matches; neither adds a bottle. */
+eq('and a file carrying more updates it', prep.rows[0].action, 'update');
+eq('naming exactly what it would change', prep.rows[0].changes, ['sub']);
+// A repeat inside the file must stay a duplicate: reading it as a match
+// would let the same line be counted twice.
 eq('a repeat inside the file is a duplicate', prep.rows[1].action, 'duplicate');
 eq('new is added', prep.rows[2].action, 'add');
-eq('no proof is skipped', prep.rows[3].action, 'skip');
-eq('summary counts', L.importSummary(prep), { add: 2, exists: 1, duplicate: 1, skip: 1 });
+/* A MISSING PROOF NO LONGER REFUSES THE ROW. BZ: drop proof on import.
+   The bottle lands and the fill queue closes the proof afterwards, which
+   is what LIBRARY_GAPS lists it for. */
+eq('no proof still adds the bottle', prep.rows[3].action, 'add');
+eq('summary counts', L.importSummary(prep),
+  { add: 3, same: 0, update: 1, duplicate: 1, skip: 0, lookup: 0 });
 eq('line numbers point at the file', prep.rows[3].line, 5);
 eq('a missing proof is flagged', prep.rows[3].issues, ['no proof']);
-// A category the app does not know falls back to bourbon and says so, rather
-// than silently filing a rum as a bourbon.
-eq('an unrecognised category is flagged',
-  prep.rows[4].issues, ['category guessed']);
-eq('the guess is a real category', prep.rows[4].sub, 'bourbon');
+/* A CATEGORY THE APP CANNOT READ IS LEFT UNKNOWN, not made bourbon.
+   The old fallback wrote 'bourbon' for anything unreadable. Measured on a
+   real 228-row Only Drams export that filed 220 whiskies as bourbon —
+   every Ardbeg, all 31 Irish, all 16 ryes — because the file's category
+   column said only "whiskey". Nothing about "Odd Category / Sasparilla"
+   says what it is, so the row says so and stays fixable. */
+eq('an unreadable category is flagged',
+  prep.rows[4].issues, ['category unknown']);
+eq('and nothing is invented for it', prep.rows[4].sub, null);
 eq('a recognised category is not flagged',
-  prep.rows[0].issues.indexOf('category guessed'), -1);
+  prep.rows[0].issues.indexOf('category unknown'), -1);
 eq('no header is fatal', !!L.prepareImport([['a', 'b']], {}).fatal, true);
 eq('no name column is fatal', !!L.prepareImport([['zzz'], ['1']], {}).fatal, true);
 eq('an empty file is fatal', !!L.prepareImport([], {}).fatal, true);
@@ -3579,7 +3600,7 @@ sec('the template');
 const tmpl = L.prepareImport(L.parseCSV(L.templateCSV()), {});
 eq('template parses', tmpl.fatal, null);
 eq('every template row imports', L.importSummary(tmpl),
-  { add: 3, exists: 0, duplicate: 0, skip: 0 });
+  { add: 3, same: 0, update: 0, duplicate: 0, skip: 0, lookup: 0 });
 eq('no template row has an issue', tmpl.rows.every(r => r.issues.length === 0), true);
 eq('the template ABV example doubles', tmpl.rows[2].proof, 92);
 eq('sealed status is read', tmpl.rows[1].status, 'sealed');
@@ -12980,21 +13001,21 @@ sec('\u00a7319 the same file twice adds nothing');
   });
   const again = tally(L.prepareImport(rows, cat, false));
   eq('the same file again adds nothing', again.add, undefined);
-  eq('and says they are already on the shelf', again.exists, 2);
+  eq('and says they are already on the shelf', matched(again), 2);
 
   /* THE ONE THAT GOT THROUGH was a bottle SIZE. BZ, of that case: this
      would be the same bottle with cleaner data — so it has to land as an
      update rather than a second row. */
   const one = n => tally(L.prepareImport(
     [['Name', 'Distillery', 'Proof'], [n, 'X', '90']], cat, false));
-  eq('a size in the name is the same bottle', one('Ardbeg Ten 750ml').exists, 1);
-  eq('however it is spaced', one('Ardbeg Ten 700 ml').exists, 1);
-  eq('and a magnum is still that whisky', one('Ardbeg Ten 1.75L').exists, 1);
+  eq('a size in the name is the same bottle', matched(one('Ardbeg Ten 750ml')), 1);
+  eq('however it is spaced', matched(one('Ardbeg Ten 700 ml')), 1);
+  eq('and a magnum is still that whisky', matched(one('Ardbeg Ten 1.75L')), 1);
   /* Case, spacing, an extra word and a shortened age were already caught,
      and are asserted here so a change to the matching cannot lose them. */
-  eq('case alone is not a new bottle', one('ardbeg ten').exists, 1);
-  eq('nor a doubled space', one('Ardbeg  Ten').exists, 1);
-  eq('nor a trailing word', one('Ardbeg Ten Whisky').exists, 1);
+  eq('case alone is not a new bottle', matched(one('ardbeg ten')), 1);
+  eq('nor a doubled space', matched(one('Ardbeg  Ten')), 1);
+  eq('nor a trailing word', matched(one('Ardbeg Ten Whisky')), 1);
   /* AND A REAL BOTTLE STILL ARRIVES, which is the half that matters most:
      a dedupe that swallows new whisky is worse than one that misses. */
   eq('a different bottle from the same house is added',
@@ -13039,7 +13060,7 @@ sec('\u00a7320 an import is judged against what you own');
   /* THE BUG, kept as an assertion so the difference is visible: judged
      against everything the app knows, both are wrongly already yours. */
   eq('judged against the catalogue they would be refused',
-    tally(L.prepareImport(rows, known, false)).exists, 2);
+    matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* AND OWNING ONE STILL WORKS, which is the half that must not break: a
      bottle you really do have is not imported twice. */
@@ -13048,7 +13069,7 @@ sec('\u00a7320 an import is judged against what you own');
   const mine2 = {};
   Object.keys(known).forEach(k => { if (k2[k]) mine2[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, mine2, false));
-  eq('the one you own is recognised', t2.exists, 1);
+  eq('the one you own is recognised', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
@@ -13083,7 +13104,7 @@ sec('\u00a7320 an import is judged against what you own');
   /* THE FAULT, kept as an assertion so the shape cannot come back: judged
      against everything known, a new shelf is told it already has them. */
   eq('against the whole catalogue they look owned',
-    tally(L.prepareImport(rows, known, false)).exists, 2);
+    matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* THE FIX: only entries somebody actually owns are handed over. */
   const owned = L.ownedCounts([]);
@@ -13098,7 +13119,7 @@ sec('\u00a7320 an import is judged against what you own');
   const half = {};
   Object.keys(known).forEach(k => { if (oneOwned[k]) half[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognised', t2.exists, 1);
+  eq('the one you own is recognised', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
@@ -13138,7 +13159,7 @@ sec('\u00a7320 an import is judged against your shelf, not the catalogue');
   /* And the bug it replaces, asserted so it cannot come back: judged
      against the CATALOGUE, the same rows read as already owned. */
   eq('judged against the catalogue they would read as owned',
-    tally(L.prepareImport(rows, known, false)).exists, 2);
+    matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* A shelf that really owns one gets the honest answer for that one. */
   const oneOwned = [{ id: 'b1', k: L.libKey('Ardbeg Ten'), status: 'open' }];
@@ -13146,7 +13167,7 @@ sec('\u00a7320 an import is judged against your shelf, not the catalogue');
   const half = {};
   Object.keys(known).forEach(k => { if (ok2[k]) half[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognised', t2.exists, 1);
+  eq('the one you own is recognised', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
@@ -13184,14 +13205,14 @@ sec('\u00a7320 an import compares against what you own');
   /* THE BUG, kept as an assertion so it cannot come back: handed the whole
      catalogue, the same import claims both are already his. */
   eq('against the catalogue they would look owned',
-    tally(L.prepareImport(rows, known, false)).exists, 2);
+    matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* And once one IS owned, it is correctly recognised. */
   const oneOwned = L.ownedCounts([{ id: 'x', k: 'a', status: 'open' }]);
   const mine2 = {};
   Object.keys(known).forEach(k => { if (oneOwned[k]) mine2[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, mine2, false));
-  eq('a bottle you own is already on the shelf', t2.exists, 1);
+  eq('a bottle you own is already on the shelf', matched(t2), 1);
   eq('and the other still arrives', t2.add, 1);
 }
 
@@ -13218,14 +13239,14 @@ sec('\u00a7320 a new account has an empty shelf');
   const owned = {};   // what an empty shelf actually holds
   eq('an empty shelf takes both bottles', tally(L.prepareImport(rows, owned, false)).add, 2);
   eq('and claims nothing is already there',
-    tally(L.prepareImport(rows, owned, false)).exists, undefined);
+    matched(tally(L.prepareImport(rows, owned, false))), 0);
   /* THE BUG, kept as an assertion so the difference is visible: handing it
      the catalogue instead says both are already yours. */
   eq('handing it the catalogue would claim both',
-    tally(L.prepareImport(rows, known, false)).exists, 2);
+    matched(tally(L.prepareImport(rows, known, false))), 2);
   /* And once you DO own one, it is correctly recognised. */
   eq('a bottle you own is recognised',
-    tally(L.prepareImport(rows, { a: known.a }, false)).exists, 1);
+    matched(tally(L.prepareImport(rows, { a: known.a }, false))), 1);
   eq('and the one you do not still arrives',
     tally(L.prepareImport(rows, { a: known.a }, false)).add, 1);
 }
@@ -13314,6 +13335,288 @@ sec('\u00a7320 the map shows your shelf, not the catalogue');
     L.countryCounts(Object.assign({ z: { k: 'z', name: 'Ghost',
       sub: 'irish', dist: 'Nowhere' } }, catalog),
       subCountry, {}, owned2).length);
+}
+
+sec('\u00a7322 the column a field actually reads');
+{
+  /* BZ's buddy's Only Drams export carries BOTH `Category` and
+     `Subcategory`, and IMPORT_ALIASES.sub claims both. Position decided it,
+     Category came first, and Category holds the word "whiskey" on 220 of
+     228 rows. So `sub` read a column that resolves to nothing, the old
+     fallback wrote 'bourbon', and 220 whiskies landed as bourbon: every
+     Ardbeg, all 31 Irish, all 16 ryes.
+
+     Expected values worked out by hand from the fixture below, not read
+     back off the function (rule 28). */
+  const header = ['Name', 'Category', 'Subcategory'];
+  const body = [
+    ['Ardbeg Ten', 'whiskey', 'single malt'],
+    ['Redbreast 12', 'whiskey', 'irish'],
+    ['Sazerac Rye', 'whiskey', 'rye'],
+    ['Knob Creek', 'whiskey', 'bourbon']
+  ];
+  /* Category resolves 0 of 4 — readSub('whiskey') is null. Subcategory
+     resolves 3 of 4: irish, rye and bourbon are categories; "single malt"
+     names no country and is not one. 3 beats 0. */
+  eq('the readable column wins over the earlier one',
+    L.matchColumns(header, body).sub, 2);
+  /* Without a body there is nothing to score on, so it is the function it
+     always was and the first match wins. Six existing checks rely on this. */
+  eq('a header on its own still takes the first match',
+    L.matchColumns(header).sub, 1);
+  /* A tie must not reshuffle a file that was already being read correctly. */
+  eq('a tie leaves the earlier column alone',
+    L.matchColumns(['Name', 'Category', 'Subcategory'],
+      [['X', 'bourbon', 'bourbon']]).sub, 1);
+  /* One candidate is not a contest. */
+  eq('a single candidate needs no scoring',
+    L.matchColumns(['Name', 'Subcategory'], body).sub, 1);
+  /* And the same mechanism on proof, which has the same shape of problem:
+     a file with both an ABV column and an empty Proof column. */
+  eq('proof picks the column with numbers in it',
+    L.matchColumns(['Name', 'Proof', 'ABV'],
+      [['X', '', '46'], ['Y', '', '50']]).proof, 2);
+}
+
+sec('\u00a7323 what country a house works in');
+{
+  /* Read off the catalogue rather than declared, so it grows with the
+     library. A house that has only ever made one country's whisky places a
+     bottle whose name says nothing. */
+  const cat = {
+    a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', sub: 'scotch' },
+    b: { k: 'b', name: 'Ardbeg Uigeadail', dist: 'Ardbeg', sub: 'scotch' },
+    c: { k: 'c', name: 'Redbreast 12', dist: 'Redbreast', sub: 'irish' },
+    /* A BOTTLER, not a distillery: American whiskey and a sourced Canadian
+       under one name. On BZ's own 325 this is exactly Barrell and Buffalo
+       Trace, and neither is evidence about an unclassified bottle. */
+    d: { k: 'd', name: 'Barrell Bourbon', dist: 'Barrell', sub: 'bourbon' },
+    e: { k: 'e', name: 'Barrell Seagrass', dist: 'Barrell', sub: 'canadian' }
+  };
+  const houses = L.houseCountry(cat);
+  eq('a single-country house is settled', houses[L.shopNorm('Ardbeg')], 'Scotland');
+  eq('and another', houses[L.shopNorm('Redbreast')], 'Ireland');
+  eq('a house spanning two countries is not settled',
+    houses[L.shopNorm('Barrell')], undefined);
+  eq('three houses in, two are settled', Object.keys(houses).length, 2);
+
+  /* The category a house settles, given a style the app cannot read. */
+  eq('single malt from a Scottish house is Scotch',
+    L.subFromHouse('single malt', 'Ardbeg', houses), 'scotch');
+  eq('and from an Irish one is Irish',
+    L.subFromHouse('single malt', 'Redbreast', houses), 'irish');
+  eq('an unsettled house says nothing',
+    L.subFromHouse('single malt', 'Barrell', houses), null);
+  eq('and a house nobody has heard of says nothing',
+    L.subFromHouse('single malt', 'Nowhere Distillery', houses), null);
+  /* IT REFUSES TO GUESS THE AMERICAN GRAIN. Buffalo Trace makes 19 bourbons
+     and 4 ryes on BZ's shelf, so a house cannot say which a bottle is. Only
+     "single malt" is decidable there. */
+  const us = L.houseCountry({
+    x: { k: 'x', name: 'Weller 12', dist: 'Buffalo Trace', sub: 'bourbon' }
+  });
+  eq('an American house cannot pick the grain',
+    L.subFromHouse('blended', 'Buffalo Trace', us), null);
+  eq('but single malt it can',
+    L.subFromHouse('single malt', 'Buffalo Trace', us), 'american single malt');
+
+  /* ONE FUNCTION ANSWERS THIS QUESTION (rule 30d). guessSub reads the words
+     first and only then consults the houses; subFromHouse is its last
+     source, not a second opinion standing beside it. */
+  eq('the words still win when they say something',
+    L.guessSub('Ardbeg Ten Bourbon Cask', 'Ardbeg', houses), 'bourbon');
+  /* Ardbeg is already in SCOTCH_HOUSES, so the WORDS answer it and the
+     houses are never reached. Daftmill is in neither word list, which is
+     the case this source exists for. */
+  const dm = L.houseCountry({
+    z: { k: 'z', name: 'Daftmill Summer', dist: 'Daftmill', sub: 'scotch' }
+  });
+  eq('the houses answer when the words cannot',
+    L.guessSub('Summer Release', 'Daftmill', dm), 'scotch');
+  eq('with no houses it is the function it always was',
+    L.guessSub('Summer Release', 'Daftmill'), null);
+}
+
+sec('\u00a7324 an import is a start-up, not a shopping trip');
+{
+  /* BZ: on import, assume start-up so ignore complete matches. The old
+     behaviour added a sealed spare per matching row, so re-uploading a
+     344-row export produced 344 phantom bottles. */
+  const csv = 'name,proof,category\n'
+    + '"Ardbeg Ten",92,scotch\n'
+    + '"Redbreast 12",92,irish\n';
+  const rows = L.parseCSV(csv);
+
+  const empty = L.prepareImport(rows, {}, false);
+  eq('a first import adds both', L.importSummary(empty).add, 2);
+
+  /* The shelf those two rows would produce, with the same values. */
+  const shelf = {
+    'Ardbeg Ten': { k: 'Ardbeg Ten', name: 'Ardbeg Ten', proof: 92, sub: 'scotch' },
+    'Redbreast 12': { k: 'Redbreast 12', name: 'Redbreast 12', proof: 92, sub: 'irish' }
+  };
+  const again = L.prepareImport(rows, shelf, false);
+  eq('the same file again adds nothing', L.importSummary(again).add, 0);
+  eq('and changes nothing', L.importSummary(again).update, 0);
+  eq('every row reads as already there', L.importSummary(again).same, 2);
+
+  /* A ROW CARRYING BETTER DATA UPDATES, and names what it would change. */
+  const thin = {
+    'Ardbeg Ten': { k: 'Ardbeg Ten', name: 'Ardbeg Ten', proof: 92 }
+  };
+  const up = L.prepareImport(L.parseCSV('name,proof,category\n"Ardbeg Ten",92,scotch\n'),
+    thin, false);
+  /* L.importChanges named directly, not only through prepareImport: it is
+     what decides update-versus-same, and a helper the gate can only reach
+     second-hand is a helper nothing is really asserting. */
+  eq('a field the shelf lacks is a change',
+    L.importChanges({ sub: 'scotch' }, { name: 'X', proof: 92 }), ['sub']);
+  eq('a field that agrees is not',
+    L.importChanges({ proof: 92 }, { name: 'X', proof: 92 }), []);
+  eq('a field the file omits is silence, not a blank',
+    L.importChanges({ proof: null, sub: '' },
+      { name: 'X', proof: 92, sub: 'scotch' }), []);
+  eq('a number is compared as a number',
+    L.importChanges({ proof: 92 }, { name: 'X', proof: '92' }), []);
+  eq('and case is not a difference',
+    L.importChanges({ dist: 'ardbeg' }, { name: 'X', dist: 'Ardbeg' }), []);
+  eq('a genuinely different value is a change',
+    L.importChanges({ proof: 96 }, { name: 'X', proof: 92 }), ['proof']);
+  eq('every comparable field is covered',
+    L.IMPORT_FIELDS.length, 6);
+
+  eq('a match that brings a category updates', up.rows[0].action, 'update');
+  eq('and says which field', up.rows[0].changes, ['sub']);
+  eq('an update adds no bottle either', L.importSummary(up).add, 0);
+
+  /* ONLY FIELDS THE FILE CARRIES. A column the file omits is silence, not
+     an assertion of blank, so it must never wipe what the shelf holds. */
+  const rich = {
+    'Ardbeg Ten': { k: 'Ardbeg Ten', name: 'Ardbeg Ten', proof: 92,
+                    sub: 'scotch', dist: 'Ardbeg', fin: 'Oloroso' }
+  };
+  const quiet = L.prepareImport(L.parseCSV('name,proof\n"Ardbeg Ten",92\n'),
+    rich, false);
+  eq('a file that says nothing changes nothing', quiet.rows[0].action, 'same');
+  eq('and proposes no changes', quiet.rows[0].changes, []);
+
+  /* Two spellings of one category are not a difference. */
+  const spelt = L.prepareImport(
+    L.parseCSV('name,proof,category\n"Ardbeg Ten",92,Scotch Whisky\n'), rich, false);
+  eq('a category spelt differently is still the same category',
+    spelt.rows[0].changes.indexOf('sub'), -1);
+  /* And an ABV is compared as the proof it means, not as the number written. */
+  const abv = L.prepareImport(
+    L.parseCSV('name,proof\n"Ardbeg Ten",46\n'), rich, false);
+  eq('an ABV is compared as proof', abv.rows[0].changes, []);
+}
+
+sec('\u00a7325 a missing proof never refuses a bottle');
+{
+  /* BZ: drop proof on import. Owning a bottle is a fact; its proof is an
+     attribute, and proof is the FIRST entry in LIBRARY_GAPS — the fill
+     queue and the label camera exist to close exactly this. Refusing the
+     row lost the bottle to save a field. */
+  const rows = L.parseCSV('name,proof,category\n"Ardbeg Ten",,scotch\n');
+  const noSvc = L.prepareImport(rows, {}, false);
+  eq('with no lookup service the bottle still lands', noSvc.rows[0].action, 'add');
+  eq('nothing is skipped', L.importSummary(noSvc).skip, 0);
+  eq('and the missing proof is flagged, not fatal',
+    noSvc.rows[0].issues.indexOf('no proof') >= 0, true);
+  eq('the proof is left unset rather than invented', noSvc.rows[0].proof, null);
+
+  const svc = L.prepareImport(rows, {}, true);
+  eq('with a lookup service it is queued for one', svc.rows[0].action, 'lookup');
+  eq('and it is still not a skip', L.importSummary(svc).skip, 0);
+  /* Proof is what the fill queue goes and gets, which is why losing the row
+     to keep the field was the wrong trade. */
+  eq('proof is what the fill queue exists to close',
+    L.LIBRARY_GAPS.indexOf('proof') >= 0, true);
+}
+
+sec('\u00a7326 the room, counted rather than intersected');
+{
+  /* BZ: there will be more than 2 buddies, so we need to solve for more
+     volume than originally anticipated.
+
+     vennRegions enumerates every combination — 2^N, including the empty
+     ones — and vennSvg cannot draw past three circles: its positions and
+     all seven label coordinates are placed by hand for n=2 and n=3. So the
+     room is grouped by the holder sets that ACTUALLY OCCUR.
+
+     Fixture, worked out by hand:
+       You    A B C
+       Tyson  A B
+       Dave   A   D
+       Eli    A   D
+     A is held by all four. B by you and Tyson. C by you alone. D by Dave
+     and Eli. Four bottles, four distinct holder sets, four groups. */
+  const mk = (id, name, keys) => {
+    const map = {};
+    keys.forEach(k => { map[k] = { name: k }; });
+    return { id: id, name: name, map: map };
+  };
+  const sets = [mk('me', 'You', ['A', 'B', 'C']), mk('t', 'Tyson', ['A', 'B']),
+                mk('d', 'Dave', ['A', 'D']), mk('e', 'Eli', ['A', 'D'])];
+  const names = { me: 'You', t: 'Tyson', d: 'Dave', e: 'Eli' };
+  const b = L.roomBuckets(sets, 'me');
+
+  eq('one group per holder set that occurs', b.length, 4);
+  eq('the biggest group comes first', b[0].n, 4);
+
+  const all = b.filter(x => x.all)[0];
+  eq('what the whole room could pour', all.bottles.map(p => p.name), ['A']);
+  eq('and it is the whole room', all.who.length, 4);
+
+  const mine = b.filter(x => x.mine)[0];
+  eq('what you bring that nobody else can',
+    mine.bottles.map(p => p.name), ['C']);
+
+  const without = b.filter(x => x.withoutMe);
+  eq('one group excludes you', without.length, 1);
+  eq('and it is the shopping list',
+    without[0].bottles.map(p => p.name), ['D']);
+
+  /* THE BUG THIS SHAPE EXISTS TO PREVENT, kept as an assertion. Grouped by
+     HOW MANY hold a bottle rather than by WHICH, B (you and Tyson) and D
+     (Dave and Eli) both have two holders and would share one row — and any
+     label naming that row would claim all four people held both. They are
+     separate groups, and their names say so. */
+  const twos = b.filter(x => x.n === 2);
+  eq('two pairs are two groups, not one', twos.length, 2);
+  eq('and each names only its own pair',
+    twos.map(x => L.roomLabel(x, names, 'me')).sort(),
+    ['Dave and Eli', 'You and Tyson']);
+
+  eq('the whole room is said as a count',
+    L.roomLabel(all, names, 'me'), 'All 4 of you');
+  eq('one person reads as only', L.roomLabel(mine, names, 'me'), 'You only');
+
+  /* Past two names it stops listing and counts, because nine names is not
+     a label. */
+  eq('three names become two and a count',
+    L.roomLabel({ who: ['me', 't', 'd'], all: false }, names, 'me'),
+    'You, Tyson and 1 other');
+  eq('and four become two and two',
+    L.roomLabel({ who: ['me', 't', 'd', 'e'], all: false }, names, 'me'),
+    'You, Tyson and 2 others');
+  eq('a buddy with no name is still a person',
+    L.roomLabel({ who: ['zz'], all: false }, names, 'me'), 'A buddy only');
+
+  /* AND IT DOES NOT EXPLODE. Nine people is 511 combinations to vennRegions
+     and, here, only as many groups as there are distinct holder sets. */
+  const big = [mk('me', 'You', [])];
+  for (let i = 0; i < 8; i++) big.push(mk('b' + i, 'B' + i, []));
+  for (let w = 0; w < 400; w++) {
+    big.forEach((s, j) => { if ((w + j) % 3 === 0) s.map['w' + w] = { name: 'w' + w }; });
+  }
+  eq('nine shelves do not make 511 regions',
+    L.roomBuckets(big, 'me').length < 20, true);
+
+  /* An empty room is not an error. */
+  eq('nobody sharing is no groups', L.roomBuckets([], 'me').length, 0);
+  eq('and a shelf with nothing on it contributes nothing',
+    L.roomBuckets([mk('me', 'You', [])], 'me').length, 0);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
