@@ -14078,5 +14078,66 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
     bz.strong / bz.n >= L.CASK_DELIBERATE_SHARE, true);
 }
 
+sec('\u00a7336 a new lookup address reaches a device that has the old one');
+{
+  /* BZ: I want simple, there are a few users now. Hard-coded, but the old
+     fill-in only filled a BLANK, so first sign-in copied the shipped
+     address into saved state and no later build could replace it.
+
+     A list of every address ever shipped was tried first and was WRONG:
+     the check written to guard it stayed green when DEFAULT_LOOKUP_URL was
+     deliberately broken, because the list held the identifier rather than
+     the value. The fact is recorded now instead of inferred.
+     Expected values worked out by hand. */
+  const OLD = 'https://script.google.com/macros/s/OLD/exec';
+  const NEW = 'https://script.google.com/macros/s/NEW/exec';
+  const MINE = 'https://script.google.com/macros/s/MINE/exec';
+
+  eq('a device with nothing gets the address this build ships',
+    L.lookupUrlFor('', NEW, false), NEW);
+  eq('a device still holding an older shipped address is moved on',
+    L.lookupUrlFor(OLD, NEW, false), NEW);
+  eq('a device already on the current one stays there',
+    L.lookupUrlFor(NEW, NEW, false), NEW);
+  eq('somebody running their own script keeps it',
+    L.lookupUrlFor(MINE, NEW, true), MINE);
+  eq('and keeps it through any number of later builds',
+    L.lookupUrlFor(MINE, 'https://script.google.com/macros/s/NEWER/exec', true),
+    MINE);
+  eq('a build shipping no address never blanks one that works',
+    L.lookupUrlFor(MINE, '', true), MINE);
+  eq('nor blanks a followed one it has no replacement for',
+    L.lookupUrlFor(OLD, '', false), OLD);
+  eq('an empty device with nothing shipped stays empty',
+    L.lookupUrlFor('', '', false), '');
+  /* The flag without an address is not a claim about anything. */
+  eq('a stale flag over an empty address still takes the shipped one',
+    L.lookupUrlFor('', NEW, true), NEW);
+
+  /* THE ONE-TIME MIGRATION. Every device that existed before the flag did
+     carries an address and no flag, and afterwards a missing key and a
+     stored false are the same value - so it is settled once, from whether
+     the key was ever written at all. The failure being prevented is
+     stomping the address of somebody running their own script. */
+  eq('a device predating the flag, running its own script, keeps it',
+    L.lookupWasChosen(MINE, NEW, false, false), true);
+  eq('a device predating the flag on the shipped address is followable',
+    L.lookupWasChosen(NEW, NEW, false, false), false);
+  eq('an empty device predating the flag is followable',
+    L.lookupWasChosen('', NEW, false, false), false);
+  eq('once recorded, the record is what counts',
+    L.lookupWasChosen(MINE, NEW, true, false), false);
+  eq('and a recorded choice is honoured even on the shipped address',
+    L.lookupWasChosen(NEW, NEW, true, true), true);
+  /* And end to end: the old device with its own script survives a build
+     that ships a different address. */
+  const chosen = L.lookupWasChosen(MINE, NEW, false, false);
+  eq('so the migration and the picker together leave it alone',
+    L.lookupUrlFor(MINE, NEW, chosen), MINE);
+  const followed = L.lookupWasChosen(OLD, OLD, false, false);
+  eq('while a device on the address its build shipped moves to the new one',
+    L.lookupUrlFor(OLD, NEW, followed), NEW);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

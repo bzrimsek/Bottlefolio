@@ -123,7 +123,8 @@ const syncBlock = src.slice(src.indexOf('L.SYNC_KEYS'),
    about the account. */
 const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lastList', 'updated', 'pushedAt', 'lookupTally', 'axisTurn', 'base',
-  'lookupUrl', 'libLedgerAt', 'reelState', 'seenTips', 'installDismissed',
+  'lookupUrl', 'lookupMine', 'libLedgerAt', 'reelState', 'seenTips',
+  'installDismissed',
   /* 'log' was here and is not any more: BZ asked for one user and one
      log, so it follows the account and merges. */
   /* When THIS device last opened the shelf tools. Per-device on purpose:
@@ -149,8 +150,15 @@ check('every mergeable key is actually synced',
       the defaults and not in KEYS does not survive a reload — which is
       how six keys added in one day were living in memory only, including
       the record of which tastings had already been applied. */
+/* To the CLOSING BRACKET, not a fixed number of characters. This read the
+   first 900 characters of the declaration, so the list silently lost its
+   last entries the moment a comment inside it grew - which is exactly what
+   happened when lookupMine was added, and it reported the two keys that
+   fell off the end as unsaved rather than reporting itself. A truncating
+   reader fails by under-reporting, which is the worst way for a check to
+   fail: green while blind. */
 const keysBlock = src.slice(src.indexOf('const KEYS = ['),
-  src.indexOf('const KEYS = [') + 900);
+  src.indexOf('];', src.indexOf('const KEYS = [')));
 check('every stored key survives a reload',
   stateKeys.filter(k => keysBlock.indexOf("'" + k + "'") < 0
     && ['filters', 'fflt', 'shop', 'shopMode', 'shopDim', 'lastList',
@@ -345,7 +353,10 @@ check('no fixed svg id is emitted by a repeated drawing',
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
        is worse than one saying nothing. */
-    'Let anyone find me by name', 'Invite a drinking buddy'];
+    'Let anyone find me by name', 'Invite a drinking buddy',
+    /* Added with bulk marking, v1.9.21. A control named in the app and not
+       in here is one the check cannot see. */
+    'Mark bottles open or sealed'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -427,7 +438,7 @@ check('no fixed svg id is emitted by a repeated drawing',
 {
   const SCALARS = ['shelfCaps',
     'displayName', 'findable', 'fxRate', 'wishShared',
-    'lookupUrl', 'admin', 'barSort', 'updated', 'pushedAt'];
+    'lookupUrl', 'lookupMine', 'admin', 'barSort', 'updated', 'pushedAt'];
   /* deleted is a MAP and is deliberately not here: it is a known gap,
      recorded in BACKLOG rather than waved through. It cannot take a plain
      union — a deletion undone on one device would be resurrected by the

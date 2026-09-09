@@ -2245,8 +2245,36 @@ function step(n) {
       if (!document.getElementById('buddyStrip')) {
         out.push('buddies: the strip disappears once a panel is chosen');
       }
+      /* ONE-WAY, THE OTHER WAY. BZ, with two accounts open: my view and
+         NSB's view, not matching. On the account where somebody could see
+         HIS shelf and nobody shared back, the tab drew the old empty state
+         while the masthead above it said one person can see your shelf.
+         Nothing shares with you here, so there are no tabs — and the grid
+         must still list the person who can see yours, or they are
+         invisible exactly as they were before this was built. */
+      SHARED.shelves = {};
+      SHARED.outList = [{ uid: 'u9', name: 'Nina' }];
+      SHARED.out = 1;
+      try { renderBuddiesTab(); } catch (e) {
+        out.push('buddies: threw with no shelves shared with me ' + e.message);
+      }
+      {
+        const b3 = document.getElementById('buddiesBody');
+        if (!b3.querySelector('.budgrid')) {
+          out.push('buddies: somebody who can see your shelf draws no grid');
+        }
+        if (!/Nina/.test(b3.textContent)) {
+          out.push('buddies: the one-way person is not named anywhere');
+        }
+        if (/Once somebody shares back/.test(b3.textContent)) {
+          out.push('buddies: the nobody-here state shows while somebody is here');
+        }
+      }
+
       // A buddy who stops sharing must not strand you on a dead panel.
-      SHARED.shelves = { u1: SHARED.shelves.u1 };
+      SHARED.outList = [];
+      SHARED.out = 0;
+      SHARED.shelves = { u1: mk(['A', 'B']) };
       try { renderBuddiesTab(); } catch (e) { out.push('buddies: threw on redraw ' + e.message); }
       if (!/All 2 of you|Tyson/.test(document.getElementById('buddiesBody').textContent)) {
         out.push('buddies: a dropped buddy leaves a dead panel');
