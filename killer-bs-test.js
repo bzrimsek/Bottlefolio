@@ -12840,5 +12840,146 @@ sec('\u00a7317 a dot that means something arrived');
   eq('nothing to do is nought', L.shelfTodo({}, [], {}, null, today), 0);
 }
 
+sec('\u00a7318 what an import left behind');
+{
+  /* BZ: do we have a way to clean up an import, run a check — Only Drams
+     can have some data issues and things need fixed.
+
+     Measured on his own 325 before writing it, which changed what it looks
+     for. The obvious guesses found nothing at all: no ALL-CAPS names, no
+     trailing separators, no double spaces, no impossible proofs. What was
+     really there was one bottle on the shelf twice under two names, and
+     six names carrying a proof that belongs in the proof field. */
+  const mk = (name, extra) => Object.assign({ k: name, name: name }, extra || {});
+
+  /* THE SAME BOTTLE TWICE, which is the costliest: two rows means two
+     half-filled entries, two lookups, and a count that overstates. */
+  const twice = {
+    a: mk('Barrell Craft Spirits Private Release', { dist: 'Barrell', proof: 110, sub: 'bourbon' }),
+    b: mk('Barrell Craft Spirits Private Release Whiskey', { dist: 'Barrell', proof: 110, sub: 'bourbon' })
+  };
+  const d = L.importAudit(twice, []).filter(x => x.id === 'dups')[0];
+  eq('the same bottle under two names is found', !!d, true);
+  eq('and it is one finding, not two', d.n, 1);
+  eq('naming both so nothing is merged blind',
+    /==/.test(d.items[0]), true);
+
+  /* A PROOF IN THE NAME belongs in the proof field. */
+  const pf = L.importAudit({
+    a: mk('Belle Meade Reserve Bourbon Whiskey 108.3 Proof',
+      { dist: 'Belle Meade', proof: 108.3, sub: 'bourbon' })
+  }, []).filter(x => x.id === 'proofname')[0];
+  eq('a proof in the name is found', !!pf, true);
+
+  /* A SIZE IN THE NAME, same reasoning. */
+  const sz = L.importAudit({
+    a: mk('Lagavulin 16 750ml', { dist: 'Lagavulin', proof: 86, sub: 'scotch' })
+  }, []).filter(x => x.id === 'sizename')[0];
+  eq('a bottle size in the name is found', !!sz, true);
+
+  /* AN ENTRY THAT IS ONLY A NAME. An import of one column leaves these. */
+  const bare = L.importAudit({ a: mk('Something Or Other') }, [])
+    .filter(x => x.id === 'bare')[0];
+  eq('an entry with nothing to go on is found', !!bare, true);
+
+  /* AND A CLEAN SHELF REPORTS NOTHING, which is the answer that has to be
+     possible or the check is just a list of anxieties. */
+  const clean = {
+    a: mk('Lagavulin 16', { dist: 'Lagavulin', proof: 86, sub: 'scotch' }),
+    b: mk('Ardbeg Ten', { dist: 'Ardbeg', proof: 92, sub: 'scotch' })
+  };
+  eq('a clean shelf has nothing to report', L.importAudit(clean, []).length, 0);
+  eq('and an empty shelf does not invent anything',
+    L.importAudit({}, []).length, 0);
+}
+
+sec('\u00a7319 a miss that survives the night');
+{
+  /* BZ, on the same two bottles coming back a third time: still wasting my
+     time on this one.
+
+     The ledger has recorded a miss since v1.8.87 and never once survived a
+     reload, because nothing wrote it to disk. So every session began by
+     asking about the same whiskies again and paying for the same silence —
+     the feature was right and the persistence was missing, which looks
+     identical from the outside. */
+  const today = '2026-09-08';
+  const cat = { a: { k: 'a', name: 'A', proof: 90 },
+                b: { k: 'b', name: 'B', proof: 90 } };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'open' }];
+
+  /* noteLedger must be one of the keys a reload restores, or the rest is
+     forgotten between sessions — which is rule 22a, and is exactly what
+     went wrong. */
+  eq('the ledger is a stored key', L.SYNC_KEYS.indexOf('noteLedger') >= 0, true);
+  eq('and it merges rather than replacing',
+    L.SYNC_MERGE.indexOf('noteLedger') >= 0, true);
+
+  /* ONE MISS PER FAILURE. It was being recorded twice at the same point
+     from a botched edit, which would have rested a bottle six months on
+     its first refusal instead of a week. */
+  const once = L.noteMiss({}, 'a', today);
+  eq('a failure counts once', once.a.no, 1);
+  eq('and the rest that earns is a week', L.restDays(once.a.no), 7);
+  const twice = L.noteMiss(once, 'a', today);
+  eq('a second failure counts twice', twice.a.no, 2);
+  eq('and rests far longer', L.restDays(twice.a.no) > 30, true);
+
+  /* The whole point: with the ledger restored, the bottle is not asked
+     about again. */
+  eq('a rested bottle stays out of the queue',
+    L.enhanceQueue(cat, bots, { ledger: once, today }).map(x => x.k).join(','),
+    'b');
+}
+
+sec('\u00a7319 the same file twice adds nothing');
+{
+  /* BZ: if someone uploads their data 2x, will it only take changes and
+     adds — it needs to avoid duplication. Measured rather than assumed,
+     and most of it was already right. */
+  const rows = [['Name', 'Distillery', 'Proof'],
+                ['Ardbeg Ten', 'Ardbeg', '92'],
+                ['Lagavulin 16', 'Lagavulin', '86'],
+                ['Ardbeg Ten', 'Ardbeg', '92']];
+  const tally = plan => {
+    const t = {};
+    plan.rows.forEach(r => { t[r.action] = (t[r.action] || 0) + 1; });
+    return t;
+  };
+  const first = tally(L.prepareImport(rows, {}, false));
+  eq('a first import adds the two real bottles', first.add, 2);
+  eq('and catches the line repeated inside the file', first.duplicate, 1);
+
+  const cat = {};
+  ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
+    const k = L.libKey(n);
+    cat[k] = { k: k, name: n, dist: 'X', proof: 90 };
+  });
+  const again = tally(L.prepareImport(rows, cat, false));
+  eq('the same file again adds nothing', again.add, undefined);
+  eq('and says they are already on the shelf', again.exists, 2);
+
+  /* THE ONE THAT GOT THROUGH was a bottle SIZE. BZ, of that case: this
+     would be the same bottle with cleaner data — so it has to land as an
+     update rather than a second row. */
+  const one = n => tally(L.prepareImport(
+    [['Name', 'Distillery', 'Proof'], [n, 'X', '90']], cat, false));
+  eq('a size in the name is the same bottle', one('Ardbeg Ten 750ml').exists, 1);
+  eq('however it is spaced', one('Ardbeg Ten 700 ml').exists, 1);
+  eq('and a magnum is still that whisky', one('Ardbeg Ten 1.75L').exists, 1);
+  /* Case, spacing, an extra word and a shortened age were already caught,
+     and are asserted here so a change to the matching cannot lose them. */
+  eq('case alone is not a new bottle', one('ardbeg ten').exists, 1);
+  eq('nor a doubled space', one('Ardbeg  Ten').exists, 1);
+  eq('nor a trailing word', one('Ardbeg Ten Whisky').exists, 1);
+  /* AND A REAL BOTTLE STILL ARRIVES, which is the half that matters most:
+     a dedupe that swallows new whisky is worse than one that misses. */
+  eq('a different bottle from the same house is added',
+    one('Ardbeg Uigeadail').add, 1);
+  eq('the name it stores keeps its size', L.importKey('Ardbeg Ten 750ml'),
+    L.importKey('Ardbeg Ten'));
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
