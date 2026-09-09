@@ -192,6 +192,47 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   check('a label read speaks before it contributes', problems);
 }
 
+/* EVERY FILTER IS DECLARED, OR THE BACK BUTTON GOES AGAIN.
+
+   Three times the shelf lost its way back from a filtered list, and BZ
+   said so three times - the last of them "we had that exact conversation
+   yesterday". Every fix was to a line. The fault was that the filter
+   STATE, the test for whether anything is on, and the function that clears
+   them were three hand-kept lists, so a filter added to the state and
+   forgotten in the other two put somebody in a list with no way out.
+
+   They are one declaration now, L.FILTERS. This is what stops it drifting
+   back: a key in the filter state that is neither declared as a filter nor
+   named in L.NOT_FILTERS fails the build. Adding a filter is a line in
+   L.FILTERS; adding something that is not one is a line in L.NOT_FILTERS;
+   forgetting is not an option that ships. */
+{
+  const st = (src.match(/filters: \{([\s\S]*?)\},\n/) || [])[1] || '';
+  const stateKeys = [...new Set((st.match(/([a-zA-Z]+):/g) || [])
+    .map(x => x.replace(':', '')))];
+  const dec = (src.match(/L\.FILTERS = \[([\s\S]*?)\n\];/) || [])[1] || '';
+  const declared = (dec.match(/k: '([a-zA-Z]+)'/g) || [])
+    .map(x => x.replace(/k: '|'/g, ''));
+  const notFilters = ((src.match(/L\.NOT_FILTERS = \[([^\]]*)\]/) || [])[1] || '')
+    .split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean);
+  const problems = [];
+  if (!stateKeys.length) problems.push('the filter state could not be read');
+  if (!declared.length) problems.push('L.FILTERS could not be read');
+  stateKeys.forEach(k => {
+    if (declared.indexOf(k) < 0 && notFilters.indexOf(k) < 0) {
+      problems.push(k + ' is in the filter state and in neither L.FILTERS '
+        + 'nor L.NOT_FILTERS');
+    }
+  });
+  declared.forEach(k => {
+    if (stateKeys.indexOf(k) < 0) {
+      problems.push(k + ' is declared a filter and is not in the state');
+    }
+  });
+  check('every filter is declared, so the back button cannot go again',
+    problems);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 

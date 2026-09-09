@@ -237,6 +237,72 @@ function step(n) {
     }
   }
 
+  /* A FILTERED SHELF HAS A WAY BACK, AND IT WORKS. Three times the back
+     button went missing from a filtered list and three times it was fixed
+     as a line. This drives the thing itself: turn a filter on through the
+     UI, and the button must appear, and pressing it must actually return
+     an unfiltered shelf. The arithmetic is asserted in the suite; only
+     this can see whether the button is on the screen and does anything. */
+  step('a filtered shelf can get back');
+  await page.locator('nav button[data-scr="shelf"]').click();
+  await page.waitForTimeout(250);
+  {
+    /* Every pill that narrows the list, including the two-state ones that
+       were the fault: whichever of them this shelf actually offers. */
+    /* The pills hide when there is nothing to filter TO, so the walk's
+       shelf offered neither and the step could not drive the fault it
+       exists for. One wish and one star, put in and taken out again. */
+    await page.evaluate(() => {
+      /* global S, save_, renderShelf, renderShelfFilters, L */
+      S.wish = [{ name: 'A bottle somebody wants', added: '2026-01-01' }];
+      const first = (S.bottles || [])[0];
+      if (first) S.favs = Object.assign({}, S.favs, { [first.k]: 1 });
+      save_(); renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(250);
+    const pills = ['#favFilter', '#wishFilter'];
+    let drove = 0;
+    for (const sel of pills) {
+      const pill = page.locator(sel);
+      if (!(await pill.count()) || !(await pill.isVisible())) continue;
+      drove++;
+      await pill.click();
+      await page.waitForTimeout(250);
+      const back = page.locator('#scr-shelf .backbtn');
+      const shown = (await back.count()) && await back.isVisible();
+      if (!shown) {
+        failures.push('shelf: ' + sel + ' filters the list and offers no '
+          + 'way back');
+      } else {
+        await back.click();
+        await page.waitForTimeout(250);
+        const still = await page.evaluate(
+          () => L.activeFacets(S.filters));
+        if (still) {
+          failures.push('shelf: back from ' + sel + ' left ' + still
+            + ' filter(s) on, so it is still filtered');
+        }
+      }
+      /* Leave it as it was found, whatever happened. */
+      await page.evaluate(() => {
+        L.clearFacets(S.filters);
+        renderShelfFilters(); renderShelf();
+      });
+      await page.waitForTimeout(150);
+    }
+    if (!drove) {
+      failures.push('shelf: neither the starred nor the Wanted pill was '
+        + 'available to drive');
+    }
+    /* Put the shelf back as it was found. */
+    await page.evaluate(() => {
+      S.wish = []; S.favs = {};
+      L.clearFacets(S.filters);
+      save_(); renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(150);
+  }
+
   step('shop asks its question');
   // 4. Shopping asks its question, and answering it draws something.
   await page.locator('nav button[data-scr="shop"]').click();
