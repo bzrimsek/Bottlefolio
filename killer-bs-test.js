@@ -14290,5 +14290,987 @@ sec('\u00a7340 an empty shelf is not a missing one');
   eq('and a finished bottle is not owned', full.bottles !== 3, true);
 }
 
+sec('\u00a7341 a claim about your shelf is counted from your shelf');
+{
+  /* BZ: my shelf should have driven my profile and my charts. Instead you
+     used catalog/library. Big error.
+
+     S.catalog is the MERGED library - the shipped seed, everything anybody
+     has contributed, and your own customs - and S.bottles is the shelf.
+     Handing the library to something that speaks about "your shelf" asks
+     has anybody heard of this whisky when the question is do you have one.
+     That is how the map once drew eight countries for a one-bottle shelf.
+
+     A guard for this already existed in consistency.js and it named THREE
+     functions. It was written around the three offenders that scan found,
+     so it is a whitelist rather than a rule, and the twenty-five
+     catalogue-walking functions written since have never been checked by
+     anything. This is the rule: EVERY function a call site hands
+     S.catalog, run twice - once with the whole library, once with only
+     the products the shelf actually holds - and the answers must match.
+
+     A ratchet, per rule 28a: known offenders are allowed BY NAME and
+     anything new fails, and the second check below stops the allowed list
+     rotting. A check that stands between BZ and shipping gets switched off
+     rather than satisfied, so it must never fail for old debt. */
+  const srcAll = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const handed = [...new Set((srcAll.match(/L\.[a-zA-Z]+\(\s*S\.catalog/g) || [])
+    .map(x => x.replace(/L\.|\(\s*S\.catalog/g, '')))];
+  eq('call sites handing S.catalog to L are found at all',
+    handed.length > 20, true);
+
+  /* A shelf the size a new person actually arrives with. */
+  const shelfKeys = Object.keys(data.catalog).slice(0, 3);
+  const shelfBottles = shelfKeys.map((k, i) =>
+    ({ id: 'sb' + i, k: k, status: 'open' }));
+  const ownedCat = {};
+  shelfKeys.forEach(k => { ownedCat[k] = data.catalog[k]; });
+
+  /* Arguments by PARAMETER NAME, read off each declaration, so every
+     function is called the way its call site calls it rather than the way
+     this test guesses. A function needing something no shelf can supply is
+     reported, never silently skipped. */
+  const stateOf = {};
+  const argFor = (name, cat) => {
+    if (/catalog|products/i.test(name)) return cat;
+    if (/^bottles$/i.test(name)) return shelfBottles;
+    if (/favs|favou?rites/i.test(name)) return {};
+    if (/^lib$/i.test(name)) return {};
+    if (/reels/i.test(name)) return [];
+    if (/history/i.test(name)) return [];
+    if (/opts|options/i.test(name)) return {};
+    if (/stateOf/i.test(name)) return stateOf;
+    if (/^p$/.test(name)) return data.catalog[shelfKeys[0]];
+    return undefined;
+  };
+  const norm = v => { try { return JSON.stringify(v); } catch (e) { return String(v); } };
+
+  /* Known, deliberate and explained. Nothing may be added here without a
+     reason written beside it. */
+  const ALLOWED = {};
+
+  const differ = [], unjudged = [];
+  handed.forEach(name => {
+    const fn = L[name];
+    if (typeof fn !== 'function') { unjudged.push(name + ': not on L'); return; }
+    const decl = srcAll.match(new RegExp('L\\.' + name + ' = function \\(([^)]*)\\)'));
+    if (!decl) { unjudged.push(name + ': no declaration found'); return; }
+    const params = decl[1].split(',').map(x => x.trim()).filter(Boolean);
+    let wide, narrow;
+    try {
+      wide = norm(fn.apply(null, params.map(x => argFor(x, data.catalog))));
+      narrow = norm(fn.apply(null, params.map(x => argFor(x, ownedCat))));
+    } catch (e) {
+      unjudged.push(name + ': ' + String(e.message).slice(0, 50));
+      return;
+    }
+    if (wide !== narrow && !ALLOWED[name]) differ.push(name);
+  });
+
+  eq('every function handed the library answers the same as one handed '
+    + 'only the shelf \u2014 offenders: ' + (differ.join(', ') || 'none'),
+    differ.length, 0);
+
+  /* THE LIST CANNOT ROT. An allowed name that no longer offends must come
+     off, or the ratchet quietly widens into a hole. */
+  Object.keys(ALLOWED).forEach(name => {
+    eq('the allowance for ' + name + ' is still needed',
+      handed.indexOf(name) >= 0, true);
+  });
+
+  /* AND NOTHING MAY BE UNJUDGED IN SILENCE. A function this cannot call is
+     a function nothing is checking, which is exactly the gap the old
+     three-name guard left. */
+  eq('every catalogue-walking function could actually be judged \u2014 '
+    + 'unjudged: ' + (unjudged.join(' | ') || 'none'),
+    unjudged.length, 0);
+}
+
+sec('\u00a7342 the by-name sweep is bounded by your buddies, not by the app');
+{
+  /* The workaround shipped last night read the directory AND the whole
+     stats collection by name, on every render of the Buddies tab. Five
+     accounts is ten extra reads; a hundred is two hundred. It scaled with
+     the user base, which is the wrong thing for it to scale with.
+
+     Two tiers: traces are people this account already has a relationship
+     record with, and there are as many of those as you have buddies, so
+     they are never dropped. The directory grows with the app and is swept
+     only while it is small. */
+  const dir = [];
+  for (let i = 0; i < 100; i++) dir.push('d' + i);
+
+  const big = L.probeCandidates(['nsb', 'tyson'], dir, 40);
+  eq('the sweep stops at the cap', big.uids.length, 40);
+  eq('and says it was capped', big.capped, true);
+  eq('reporting how many it did not reach', big.dropped, 62);
+  eq('traces come first and are never dropped',
+    big.uids.slice(0, 2).join(','), 'nsb,tyson');
+
+  /* A small app pays nothing for the cap. */
+  const small = L.probeCandidates(['nsb'], ['a', 'b'], 40);
+  eq('a short directory is swept whole', small.uids.length, 3);
+  eq('and nothing is reported as lost', small.capped, false);
+
+  /* MORE BUDDIES THAN THE CAP: the cap is on the directory sweep, not on
+     the people you actually know, so every trace is still read. */
+  const traces = [];
+  for (let i = 0; i < 50; i++) traces.push('t' + i);
+  const many = L.probeCandidates(traces, dir, 40);
+  eq('fifty buddies are all read despite a cap of forty',
+    many.uids.length, 50);
+  eq('and the directory sweep is what gets dropped', many.capped, true);
+
+  /* Nobody is read twice, which would double the cost it exists to bound. */
+  const dupes = L.probeCandidates(['a', 'a', 'b'], ['b', 'c'], 40);
+  eq('duplicates collapse', dupes.uids.join(','), 'a,b,c');
+  eq('and it survives being handed nothing',
+    L.probeCandidates(null, null, 40).uids.length, 0);
+}
+
+sec('\u00a7343 the furniture somebody actually owns');
+{
+  /* BZ, asked what his set-up is: two 5-shelf bookcases, two one-shelf
+     areas, two shelves at the bar for well brands and flavored plus vodka,
+     tequila and gin, and one cabinet for backups. The old model was a
+     textarea of numbers and a plan that said "Shelf 7". */
+  const units = [
+    { id: 'u1', name: 'Bookcase A', kind: 'display',
+      shelves: [{ cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }] },
+    { id: 'u2', name: 'Bookcase B', kind: 'display',
+      shelves: [{ cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }, { cap: 30 }] },
+    { id: 'u3', name: 'Mantel', kind: 'display', shelves: [{ cap: 12 }] },
+    { id: 'u4', name: 'Side table', kind: 'display', shelves: [{ cap: 12 }] },
+    { id: 'u5', name: 'Bar', kind: 'other', shelves: [{ cap: 20 }, { cap: 20 }] },
+    { id: 'u6', name: 'Backup cabinet', kind: 'backup', shelves: [{ cap: 40 }] }
+  ];
+  const cap = L.storageCapacity(units);
+  eq('six places', cap.units, 6);
+  eq('fifteen shelves', cap.shelves, 15);
+  eq('room for 404 bottles', cap.spaces, 404);
+  eq('324 of it on show', cap.display, 324);
+  eq('40 in backup', cap.backup, 40);
+  eq('40 that is not whisky', cap.other, 40);
+
+  /* THE LEGACY FORM IS NOT LOST. Somebody who typed "30, 30, 24" keeps
+     their furniture as one unit rather than starting again. */
+  const legacy = L.storageNormalize([], '30, 30, 24');
+  eq('a legacy capacity string becomes one place', legacy.length, 1);
+  eq('with a shelf per number', legacy[0].shelves.length, 3);
+  eq('holding whisky by default', legacy[0].kind, 'display');
+  eq('described units win over the legacy string',
+    L.storageNormalize(units, '30, 30, 24').length, 6);
+  eq('nothing described is nothing', L.storageNormalize([], '').length, 0);
+  eq('a place with no shelves is not a place',
+    L.storageNormalize([{ name: 'Empty', shelves: [] }], '').length, 0);
+  eq('an unknown kind falls back to holding whisky',
+    L.storageNormalize([{ name: 'X', kind: 'nonsense',
+      shelves: [{ cap: 5 }] }], '')[0].kind, 'display');
+
+  /* A BACKUP CABINET IS A STATUS, NOT A PLACE. */
+  const bottles = [
+    { id: 'b1', k: 'A', status: 'open' },
+    { id: 'b2', k: 'A', status: 'sealed' },
+    { id: 'b3', k: 'B', status: 'open' },
+    { id: 'b4', k: 'C', status: 'keep' },
+    { id: 'b5', k: 'D', status: 'gone' }
+  ];
+  const pools = L.storagePools(bottles, units);
+  eq('the sealed spare goes to backup', pools.backup.length, 1);
+  eq('and it is the spare, not the open one', pools.backup[0].id, 'b2');
+  eq('open and do-not-open bottles stay on show', pools.display.length, 3);
+  eq('a finished bottle is in neither',
+    pools.display.concat(pools.backup).filter(b => b.k === 'D').length, 0);
+
+  /* WITH NO CABINET DESCRIBED the spares stay on the shelves rather than
+     being dropped for want of somewhere to put them. */
+  const noCab = L.storagePools(bottles, units.filter(u => u.kind !== 'backup'));
+  eq('no backup place means nothing is set aside', noCab.backup.length, 0);
+  eq('and every owned bottle is still placed', noCab.display.length, 4);
+
+  /* ON BZ'S REAL SHELF, with his real furniture. Population named: the
+     shipped 344-bottle shelf, which is a filled-in shelf and not one
+     somebody imports tomorrow. */
+  const plan = L.storagePlan(data.catalog, data.bottles, units);
+  eq('a plan comes back', !!plan, true);
+  eq('the bar is never planned into', plan.other.length, 1);
+  eq('and it is named so it can still be walked past',
+    plan.other[0].unit, 'Bar');
+  eq('every display shelf belongs to a named place',
+    plan.display.every(sh => !!sh.unit), true);
+  eq('and none of them is a bare number',
+    plan.display.filter(sh => sh.unit === undefined).length, 0);
+  eq('no shelf is given more than it holds',
+    plan.display.concat(plan.backup)
+      .filter(sh => sh.items.reduce((n, x) => n + x.bottles.length, 0) > sh.cap)
+      .length, 0);
+
+  /* THE INVENTORY, one line per bottle to find. */
+  const rows = L.storageInventory(plan);
+  eq('every row says where to look',
+    rows.filter(r => !r.unit).length, 0);
+  eq('and what to look for', rows.filter(r => !r.name).length, 0);
+  eq('a whisky owned twice is two rows when one is sealed',
+    rows.filter(r => r.kind === 'backup').length > 0, true);
+  eq('anything that will not fit is still listed to find',
+    rows.filter(r => r.kind === 'overflow').length, plan.overflow.length);
+
+  /* THE CHECK REMEMBERS, and cannot be knocked off by a bottle that has
+     left the shelf since. */
+  const first = rows[0].kind + ':' + rows[0].k;
+  const ticked = {}; ticked[first] = 1;
+  const st = L.storageAuditState(rows, ticked);
+  eq('one found', st.done, 1);
+  eq('the rest still to look for', st.left, st.total - 1);
+  const stale = Object.assign({ 'display:NOT ON THE SHELF': 1 }, ticked);
+  eq('a tick for something no longer listed does not count',
+    L.storageAuditState(rows, stale).done, 1);
+  eq('nothing ticked is nothing done',
+    L.storageAuditState(rows, {}).done, 0);
+  eq('and the total is the rows on the report',
+    L.storageAuditState(rows, {}).total > 300, true);
+}
+
+sec('\u00a7344 a deletion survives the other device');
+{
+  /* `deleted` was in SYNC_KEYS and in nothing that merges, so whichever
+     side won REPLACED it: a catalogue entry removed on the phone came back
+     the moment the desktop pushed. A plain union could not be the fix,
+     because then un-deleting on one device would be undone by the other
+     still holding the deletion. It needed the tombstone treatment the
+     wishlist already had. Expected values worked out by hand. */
+  const mine = { A: true };
+  const theirs = { B: true };
+  const both = L.mergeMapWithRemovals(mine, theirs, {}, 'd:');
+  eq('two devices deleting different things keep both deletions',
+    Object.keys(both).sort().join(','), 'A,B');
+
+  /* A LIFT TRAVELS. Un-deleting A on this device must not be undone by the
+     other device still holding the deletion. */
+  const lifted = L.mergeMapWithRemovals({}, { A: true, B: true },
+    L.tombstone({}, 'd:A'), 'd:');
+  eq('a deletion taken back stays taken back',
+    Object.keys(lifted).join(','), 'B');
+
+  /* THE PREFIX KEEPS THE TWO MAPS APART. Removing a FAVOURITE of a whisky
+     must not lift the DELETION of the same whisky. */
+  const favTomb = L.tombstone({}, 'v:A');
+  eq('a favourite removal does not lift a deletion',
+    Object.keys(L.mergeMapWithRemovals({}, { A: true }, favTomb, 'd:')).join(','),
+    'A');
+  eq('and a deletion lift does not un-favourite',
+    Object.keys(L.mergeMapWithRemovals({}, { A: true },
+      L.tombstone({}, 'd:A'), 'v:')).join(','), 'A');
+
+  /* THE DEFAULT IS UNCHANGED, because every existing caller means 'v:' and
+     a shared helper must not move under them (rule 7a). */
+  eq('with no prefix given it still honours favourite removals',
+    Object.keys(L.mergeMapWithRemovals({}, { A: true },
+      L.tombstone({}, 'v:A'))).length, 0);
+
+  /* REMOVALS ONLY GROW, so both devices reach the same answer without
+     either being newer. */
+  const t1 = L.tombstone({}, 'd:A');
+  const t2 = L.tombstone(t1, 'd:B');
+  eq('a tombstone map only grows', Object.keys(t2).sort().join(','),
+    'd:A,d:B');
+  eq('and merging them in either order agrees',
+    JSON.stringify(L.mergeMapWithRemovals({ C: true }, { A: true, B: true }, t2, 'd:')),
+    JSON.stringify(L.mergeMapWithRemovals({ A: true, B: true }, { C: true }, t2, 'd:')));
+}
+
+sec('\u00a7345 an admin\u2019s deletion is a judgement, not an absence');
+{
+  /* BZ: a library delete doesn't stick - remove a bad entry, somebody
+     searches, and it comes straight back. Two automatic paths wrote any
+     entry the library did not have, and a deletion is exactly what leaves
+     an entry the library does not have. */
+  const removed = { bad_one: { at: 1 } };
+  eq('a fresh entry is written',
+    L.libraryAccepts('good_one', false, removed).ok, true);
+  eq('one already there is left alone',
+    L.libraryAccepts('good_one', true, removed).ok, false);
+  eq('and says why', L.libraryAccepts('good_one', true, removed).why,
+    'already in the library');
+  eq('a REMOVED entry is not written back',
+    L.libraryAccepts('bad_one', false, removed).ok, false);
+  eq('and says which of the three it was',
+    L.libraryAccepts('bad_one', false, removed).why, 'it was removed');
+  eq('no key is refused rather than guessed at',
+    L.libraryAccepts('', false, removed).ok, false);
+  eq('nothing removed refuses nothing',
+    L.libraryAccepts('good_one', false, {}).ok, true);
+  eq('and a missing map is not a crash',
+    L.libraryAccepts('good_one', false, null).ok, true);
+  /* An entry both present AND removed reads as present: the row is there
+     to be seen, and the deletion is the admin's next decision rather than
+     this function's. */
+  eq('present wins over removed, so nothing is deleted by a side effect',
+    L.libraryAccepts('bad_one', true, removed).why, 'already in the library');
+}
+
+sec('\u00a7346 not me');
+{
+  /* BZ asked for a VETO rather than a picker: he does not want to choose
+     his own title, he wants to reject one that is wrong. The engine has
+     taken a dismissed map since the day it was written and nothing ever
+     set it. Measured on BZ's shipped 344-bottle shelf. */
+  const first = L.shelfPortrait(data.catalog, data.bottles, {});
+  eq('a shelf earns a title', !!first.title, true);
+  eq('and names what earned it', first.from.length > 0, true);
+
+  const no1 = {}; no1[first.title] = 1;
+  const second = L.shelfPortrait(data.catalog, data.bottles,
+    { __notMe: no1 });
+  eq('a rejected title is not offered again',
+    second.title === first.title, false);
+  eq('and the shelf still gets a title', !!second.title, true);
+
+  const no2 = Object.assign({}, no1); no2[second.title] = 1;
+  const third = L.shelfPortrait(data.catalog, data.bottles,
+    { __notMe: no2 });
+  eq('two rejections still leave one',
+    [first.title, second.title].indexOf(third.title) < 0, true);
+
+  /* A veto is not a deletion of the evidence: the chips that earned the
+     rejected title are still there to argue the next one. */
+  eq('the evidence survives the rejection',
+    second.lines.length > 0, true);
+
+  /* REJECTING EVERYTHING lands on the fallback rather than on nothing. */
+  const all = {};
+  L.PORTRAIT_SETS.forEach(g => { all[g.title] = 1; });
+  const none = L.shelfPortrait(data.catalog, data.bottles, { __notMe: all });
+  eq('rejecting every set still returns a portrait', !!none.title, true);
+  eq('and it is never blank', String(none.title).length > 0, true);
+}
+
+sec('\u00a7347 one number for one question, and a claim the count supports');
+{
+  /* BZ, on the third cask-strength literal: make same. It asked the same
+     question as the Full Proof chip and the proof verdict - is cask
+     strength a habit here - and answered with its own 0.25 while they used
+     0.2. They agreed only by luck (rule 30d). */
+  const src2 = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  eq('nothing asks about cask strength with its own number',
+    /proof\.n \* 0\.2[05]/.test(src2), false);
+  eq('and the one constant is still 0.2', L.CASK_DELIBERATE_SHARE, 0.2);
+  const uses = (src2.match(/L\.CASK_DELIBERATE_SHARE/g) || []).length;
+  eq('read by all three callers, not two', uses >= 4, true);
+
+  /* THE HOUSE CHIP CLAIMS A COUNT, NOT A MOTIVE. It ranked houses by raw
+     count and was called The Loyalist, so it fired on a big common house
+     over a small rare one. There is no rarity signal in this app's data to
+     fix the ranking with - the catalogue IS the shelf - so the claim comes
+     down to what the number supports. */
+  /* Matched against the TITLE list rather than the whole file: the comment
+     explaining the change names the old title on purpose, and a check that
+     forbids mentioning history would force the reasoning out of the file. */
+  eq('the title no longer claims a motive',
+    L.PORTRAIT_TITLES.filter(c => c.title === 'The Loyalist').length, 0);
+  eq('and the house chip is named for what it counts',
+    L.PORTRAIT_TITLES.filter(c => c.id === 'house')[0].title,
+    'Deep on One House');
+  const t = L.tasteProfile(data.catalog, data.bottles, {});
+  const set = L.PORTRAIT_TITLES.filter(c => c.id === 'house')[0];
+  const got = set.test(t, {});
+  eq('BZ\u2019s biggest house still earns it', got.n, 26);
+  eq('and the reason carries the share of the shelf',
+    /% of the shelf/.test(got.why), true);
+  eq('naming the house', /Buffalo Trace/.test(got.why), true);
+  /* Below the floor it says nothing rather than something weak. */
+  eq('a shelf with no depth on any house earns nothing here',
+    set.test({ houses: [{ value: 'X', n: 3 }], owned: 40 }, {}), null);
+}
+
+sec('\u00a7348 a named set opens with its own argument');
+{
+  /* STORY_OPENERS was keyed by CHIP, so a shelf called Islay Lifer -
+     earned by smoke, a house and a region together - opened with "This is
+     a smoke drinker's shelf", naming neither Islay nor the house. The
+     headline argued one case and the paragraph started somewhere else. */
+  L.PORTRAIT_SETS.forEach(g => {
+    eq('"' + g.title + '" has an opener of its own',
+      typeof L.STORY_OPENERS[g.title], 'string');
+  });
+  eq('and every one of them says something',
+    L.PORTRAIT_SETS.filter(g =>
+      String(L.STORY_OPENERS[g.title] || '').length < 20).length, 0);
+
+  /* THROUGH THE REAL ENGINE, on BZ's shipped 344-bottle shelf: the story
+     under the title must open with THAT title's line, not a chip's. */
+  const port = L.shelfPortrait(data.catalog, data.bottles, {});
+  const own = L.STORY_OPENERS[port.title];
+  if (own) {
+    eq('the story opens with the title\u2019s own line',
+      String(port.story || '').indexOf(own), 0);
+  } else {
+    eq('a shelf with no named set still gets a story',
+      String(port.story || '').length > 0, true);
+  }
+
+  /* And the chip openers are untouched, because a shelf that earns no set
+     still needs one. */
+  eq('the chip openers survive', typeof L.STORY_OPENERS.peat, 'string');
+  eq('and the generic line still belongs to nobody but the fallback',
+    /broad/.test(L.STORY_OPENERS.peat || ''), false);
+}
+
+sec('\u00a7349 the helpers nothing was asserting');
+{
+  /* Twenty of 456 L functions were used by the app and asserted by
+     nothing, on a shrinking ratchet. These are the ones that can be
+     pinned down without inventing a whole world to run them in; the rest
+     stay named on the list rather than waved through. Expected values
+     worked out by hand. */
+
+  /* stripMarkup: a lookup answer arrives with citation tags in it. */
+  eq('citation tags come out',
+    L.stripMarkup('Rich <cite index="1">sherry</cite> notes'),
+    'Rich sherry notes');
+  eq('any tag comes out', L.stripMarkup('a <b>bold</b> claim'),
+    'a bold claim');
+  eq('and the gaps left behind close up',
+    L.stripMarkup('two    spaces'), 'two spaces');
+  eq('a non-string is handed back untouched', L.stripMarkup(7), 7);
+  eq('and null survives', L.stripMarkup(null), null);
+
+  /* noteText / hasFlavour: the tasting note, flattened for searching. */
+  const p = { tn: { nose: 'Vanilla', palate: 'CARAMEL and oak',
+                    finish: 'long', overall: '' } };
+  eq('every part of the note is searched',
+    L.noteText(p), 'vanilla caramel and oak long ');
+  eq('a flavour is found whatever the case', L.hasFlavour(p, 'caramel'), true);
+  eq('and searched for in any case', L.hasFlavour(p, 'VANILLA'), true);
+  eq('a flavour that is not there is not there',
+    L.hasFlavour(p, 'peat'), false);
+  eq('no word is not a match', L.hasFlavour(p, ''), false);
+  eq('and no product is not a crash', L.hasFlavour(null, 'oak'), false);
+  eq('a product with no notes reads empty', L.noteText({}), '   ');
+
+  /* varInText: which variable a question is really about. */
+  eq('proof', L.varInText('Which is higher proof?'), 'proof');
+  eq('finish', L.varInText('Was it a sherry cask?'), 'finish');
+  eq('region', L.varInText('Which island is it from?'), 'region');
+  eq('age', L.varInText('How many years old?'), 'age');
+  eq('grain', L.varInText('What is the mash bill?'), 'grain');
+  eq('price', L.varInText('What did it cost?'), 'price');
+  eq('house', L.varInText('Which distillery?'), 'house');
+  eq('and a question about none of them says so',
+    L.varInText('Do you like it?'), null);
+  eq('nothing at all is not a crash', L.varInText(null), null);
+  /* Order matters where a question mentions two: proof is tested first,
+     which is a real behaviour and not an accident to be discovered later. */
+  eq('proof wins over finish when both are named',
+    L.varInText('a high proof sherry cask'), 'proof');
+
+  /* isHardGap: a gap the shelf genuinely cannot fill. */
+  const axis = Object.keys(L.HARD_GAPS)[0];
+  const named = (L.HARD_GAPS[axis] || [])[0];
+  eq('a listed gap is hard', L.isHardGap(axis, named), true);
+  eq('an unlisted one is not',
+    L.isHardGap(axis, 'definitely not in that list'), false);
+  eq('and an axis nobody listed is not',
+    L.isHardGap('no such axis', named), false);
+
+  /* worldReach: how much of the whisky world a shelf covers. */
+  eq('nothing owned reaches nothing', L.worldReach({}), 0);
+  eq('and no map at all is still zero', L.worldReach(null), 0);
+  const full = {};
+  L.WHISKY_COUNTRIES.forEach(c => { full[c] = (L.COUNTRY_DEPTH[c] || 1) + 5; });
+  eq('every country, deeper than needed, is the whole of it',
+    L.worldReach(full), 1);
+  const half = {};
+  L.WHISKY_COUNTRIES.forEach((c, i) => {
+    if (i % 2 === 0) half[c] = L.COUNTRY_DEPTH[c] || 1;
+  });
+  const r = L.worldReach(half);
+  eq('some of them is between the two', r > 0 && r < 1, true);
+  /* Depth is capped per country: forty bourbons are not the world. */
+  const one = {}; one[L.WHISKY_COUNTRIES[0]] = 999;
+  eq('one country cannot buy the whole world',
+    L.worldReach(one) < 1, true);
+
+  /* byAvailability: the sort a shopping list is read in. The rank table is
+     shelf, hunt, allocated, unknown - read off L.FIND_RANK rather than
+     assumed, because the first version of this test assumed 'easy' and
+     'hard' and was asserting a shopping list that does not exist. */
+  eq('the rank table is the order of difficulty',
+    [L.FIND_RANK.shelf, L.FIND_RANK.hunt, L.FIND_RANK.allocated,
+     L.FIND_RANK.unknown].join(','), '0,1,2,3');
+  const rows = [{ find: 'allocated' }, { find: 'shelf' }, { find: 'hunt' }];
+  const sorted = rows.slice().sort(L.byAvailability);
+  eq('what you can walk in and buy comes first', sorted[0].find, 'shelf');
+  eq('then what you have to hunt for', sorted[1].find, 'hunt');
+  eq('then what is allocated', sorted[2].find, 'allocated');
+  /* Anything unrecognised sorts LAST rather than first, so a row with no
+     availability cannot push a bottle you can actually buy down the page. */
+  eq('an unknown availability sorts behind a known one',
+    [{ find: 'nonsense' }, { find: 'shelf' }].sort(L.byAvailability)[0].find,
+    'shelf');
+  eq('a row with no availability at all does not throw',
+    typeof L.byAvailability({}, { find: 'shelf' }), 'number');
+}
+
+sec('\u00a7350 the last thirteen');
+{
+  /* The rest of the ratchet. Every expected value below was derived in a
+     separate Node session against the real functions BEFORE it was written
+     here (rule 28) - including the mash bill strings, which had to be run
+     through L.parseMash first to find out what it actually accepts. */
+
+  /* --- searchText: everything a shelf search should match on ---------- */
+  const hay = L.searchText({ name: 'E.H. Taylor Small-Batch',
+    dist: 'Buffalo Trace', bonded: true, tn: { nose: 'Vanilla' } });
+  eq('punctuation becomes a space, so E.H. answers to eh',
+    hay, 'e h taylor small batch buffalo trace bottled in bond bonded vanilla');
+  eq('bottled in bond is searchable although only the proof is in the data',
+    hay.indexOf('bottled in bond') >= 0, true);
+  eq('the tasting note is searched too', hay.indexOf('vanilla') >= 0, true);
+  eq('a built haystack is reused rather than rebuilt',
+    L.searchText({ _hay: 'already done', name: 'ignored' }), 'already done');
+  eq('and nothing is an empty string, not a crash', L.searchText(null), '');
+
+  /* --- deviceLabel ---------------------------------------------------- */
+  eq('a known tag reads as a device', L.deviceLabel('des'), 'Desktop');
+  eq('and so does a phone', L.deviceLabel('iph'), 'iPhone');
+  eq('an unknown tag is shown as it came rather than blanked',
+    L.deviceLabel('zzz'), 'zzz');
+
+  /* --- findUrl: the distillery only when the name lacks it ------------ */
+  eq('a name already carrying the house does not repeat it',
+    L.findUrl('Ardbeg 10', 'Ardbeg'),
+    'https://www.google.com/search?q=Ardbeg%2010%20buy');
+  eq('a name that does not carry it gets it',
+    L.findUrl('Uigeadail', 'Ardbeg'),
+    'https://www.google.com/search?q=Uigeadail%20Ardbeg%20buy');
+  eq('nothing to search for is no link', L.findUrl('', ''), null);
+
+  /* --- the recipe, from percentages, through the ONE reader -----------
+     L.mashShape stood here and was deleted at v1.9.38: it read the same
+     evidence as L.mashFromBill in a smaller vocabulary, and the two would
+     have begun disagreeing the day a bill landed. Same cases, asserted
+     against the reader that survived - note 95% rye is `rye` and not
+     `rye-forward`, which is the vocabulary difference that mattered. */
+  eq('corn led with a fifth rye is high-rye',
+    L.mashFromBill('75% corn, 20% rye, 5% malted barley'), 'high-rye');
+  eq('wheat above rye is wheated',
+    L.mashFromBill('70% corn, 16% wheat, 14% malted barley'), 'wheated');
+  eq('rye over half is rye, in the words every caller already uses',
+    L.mashFromBill('95% rye, 5% malted barley'), 'rye');
+  eq('an ordinary bourbon bill is no particular shape',
+    L.mashFromBill('75% corn, 13% rye, 12% malted barley'), null);
+  /* THE MERGE MOVED ONE BOUNDARY, and toward the law. 80% corn is the
+     legal floor for corn whiskey, so the survivor calls it corn where the
+     deleted reader said nothing. Asserted rather than discovered later. */
+  eq('80% corn is corn whiskey, which is where the legal line is',
+    L.mashFromBill('80% corn, 10% rye, 10% malted barley'), 'corn');
+  eq('and 79% is not',
+    L.mashFromBill('79% corn, 11% rye, 10% malted barley'), null);
+  eq('a bill with no numbers says nothing rather than guessing',
+    L.mashFromBill('mostly corn'), null);
+  /* And the fuller vocabulary the survivor has and the deleted one did
+     not, which is the reason this direction was the right one. */
+  eq('four grains is a four-grain bill',
+    L.mashFromBill('60% corn, 20% rye, 10% wheat, 10% malted barley'),
+    'four-grain');
+  eq('all barley is a malt whisky',
+    L.mashFromBill('100% malted barley'), 'malt');
+  eq('and an overwhelmingly corn bill is corn whiskey',
+    L.mashFromBill('85% corn, 8% rye, 7% malted barley'), 'corn');
+  /* THE ONE QUESTION HAS ONE ANSWER NOW. */
+  eq('nothing else reads a grain bill',
+    typeof L.mashShape, 'undefined');
+
+  /* --- blindGiven: what the room is told before it pours -------------- */
+  eq('counts and instructions are given, the region is the answer',
+    L.blindGiven({ tag: '4 core bottles \u00b7 Islay \u00b7 poured blind' }),
+    '4 core bottles \u00b7 poured blind');
+  eq('a tag naming only the answer gives nothing away',
+    L.blindGiven({ tag: 'Islay \u00b7 Speyside' }), '');
+  eq('and no tag is nothing', L.blindGiven({}), '');
+
+  /* --- flightPoured: everything that reached a glass ------------------ */
+  eq('core, extensions and riffs together',
+    L.flightPoured({ pours: ['A'], ext: ['B', null], riffs: ['C'] }).join(','),
+    'A,B,C');
+  eq('an empty run poured nothing', L.flightPoured({}).length, 0);
+  eq('and no entry at all is not a crash', L.flightPoured(null).length, 0);
+
+  /* --- flightRunRecord: designed is not the same as poured ------------ */
+  const f = { title: 'Islay Four', core: [{ k: 'A' }, { k: 'B' }],
+              ext: [{ k: 'C' }, { k: 'D' }] };
+  const rec = L.flightRunRecord(f, { C: true }, ['R'], ['Tyson']);
+  eq('the core is always poured', rec.pours.join(','), 'A,B');
+  eq('only the extension actually ticked is recorded',
+    (rec.ext || []).join(','), 'C');
+  eq('riffs are kept', (rec.riffs || []).join(','), 'R');
+  eq('and who it was poured with', (rec.with || []).join(','), 'Tyson');
+  const bare = L.flightRunRecord(f, {}, [], []);
+  eq('nothing ticked records no extensions', bare.ext, undefined);
+  eq('and no company is not an empty list to read past', bare.with, undefined);
+  eq('the flight is named', bare.flight, 'Islay Four');
+
+  /* --- blindTheme: what a blind flight asks --------------------------- */
+  const cat = { A: { k: 'A', sub: 'scotch' }, B: { k: 'B', sub: 'scotch' } };
+  const theme = L.blindTheme({ core: [{ k: 'A' }, { k: 'B' }], tag: '' }, cat);
+  eq('the pour count leads', theme.indexOf('2 pours') === 0, true);
+  eq('one category is named rather than called mixed',
+    /all Scotch/i.test(theme), true);
+  const mixed = L.blindTheme({ core: [{ k: 'A' }, { k: 'C' }], tag: '' },
+    Object.assign({ C: { k: 'C', sub: 'bourbon' } }, cat));
+  eq('two categories are mixed', /mixed/.test(mixed), true);
+  eq('and it always asks something', /\./.test(theme), true);
+
+  /* --- fitUnlocks: which flight a bottle would complete --------------- */
+  const flights = [
+    { title: 'Short one', core: [{ k: 'HAVE' }, { name: 'Wanted One' }] },
+    { title: 'Short three', core: [{ name: 'a' }, { name: 'b' },
+                                   { name: 'c' }] },
+    { title: 'Complete', core: [{ k: 'HAVE' }] }
+  ];
+  const cat2 = { HAVE: { k: 'HAVE', name: 'Have This' } };
+  const bots = [{ id: 'b1', k: 'HAVE', status: 'open' }];
+  const un = L.fitUnlocks({ name: 'Wanted One' }, cat2, bots, flights);
+  eq('the flight it would complete is named', un.length, 1);
+  eq('and named by title', un[0].title, 'Short one');
+  eq('with how short it still is', un[0].short, 1);
+  eq('a flight short of three is not offered as nearly there',
+    L.fitUnlocks({ name: 'a' }, cat2, bots, flights).length, 0);
+  eq('a bottle in no flight unlocks nothing',
+    L.fitUnlocks({ name: 'Nobody wants this' }, cat2, bots, flights).length, 0);
+  eq('and an unnamed candidate unlocks nothing',
+    L.fitUnlocks({}, cat2, bots, flights).length, 0);
+
+  /* --- lessonBlocker: why a lesson cannot be poured -------------------- */
+  const few = { A: { k: 'A', sub: 'scotch' } };
+  eq('too few open bottles is said plainly',
+    L.lessonBlocker({ id: 'proof', hold: ['sub'] }, few,
+      [{ k: 'A', status: 'open' }]),
+    'Fewer than four bottles open.');
+  const four = {};
+  ['A', 'B', 'C', 'D'].forEach((k, i) => {
+    four[k] = { k: k, sub: i < 2 ? 'scotch' : 'bourbon' };
+  });
+  const open4 = ['A', 'B', 'C', 'D'].map(k => ({ k: k, status: 'open' }));
+  const msg = L.lessonBlocker({ id: 'proof', hold: ['sub'] }, four, open4);
+  eq('four open but split two and two names the largest group',
+    /largest group you have is 2/.test(msg), true);
+  eq('and says what they would need to share',
+    /category/.test(msg), true);
+
+  /* --- flavourOptions / flavourFlight: a flavour worth pouring -------- */
+  const word = L.FLAVOUR_WORDS[0];
+  const fcat = {}, fbot = [];
+  ['H1', 'H2', 'H3', 'H4'].forEach((d, i) => {
+    const k = 'F' + i;
+    fcat[k] = { k: k, name: 'Flav ' + i, dist: d,
+      sub: i % 2 ? 'scotch' : 'bourbon',
+      tn: { nose: 'lots of ' + word + ' here' } };
+    fbot.push({ id: 'fb' + i, k: k, status: 'open' });
+  });
+  const opts = L.flavourOptions(fcat, fbot, 4);
+  eq('a flavour across four houses is worth a flight',
+    opts.filter(o => o.word === word).length, 1);
+  eq('and it counts the houses it spans',
+    opts.filter(o => o.word === word)[0].houses, 4);
+  eq('a flavour on one house only is not offered',
+    L.flavourOptions({ X: { k: 'X', dist: 'One', sub: 'scotch',
+      tn: { nose: word } } }, [{ k: 'X', status: 'open' }], 1).length, 0);
+  const flight = L.flavourFlight(word, fcat, fbot, {});
+  eq('the flight is built', !!flight, true);
+  eq('one bottle per house, so nothing repeats a distillery',
+    new Set((flight.core || []).map(p => (fcat[p.k] || {}).dist)).size,
+    (flight.core || []).length);
+  eq('too few to compare is no flight',
+    L.flavourFlight(word, { X: { k: 'X', dist: 'One', sub: 'scotch',
+      tn: { nose: word } } }, [{ k: 'X', status: 'open' }], {}), null);
+
+  /* --- judgeListing: is this bottle worth it, for THIS shelf ---------- */
+  const jcat = {}, jbot = [];
+  for (let i = 0; i < 6; i++) {
+    jcat['J' + i] = { k: 'J' + i, name: 'J' + i, dist: 'Known House',
+      sub: 'bourbon', proof: 100 };
+    jbot.push({ id: 'jb' + i, k: 'J' + i, status: 'open' });
+  }
+  const known = L.judgeListing({ dist: 'Known House' }, 'J', jcat, jbot, []);
+  const stranger = L.judgeListing({ dist: 'Nobody' }, 'J', jcat, jbot, []);
+  /* `why` comes back as a SENTENCE, not the array the reasons were
+     collected in - checked against the real return rather than assumed,
+     after the first version of this test assumed an array and threw. */
+  eq('a house you already own scores higher than one you do not',
+    known.score > stranger.score, true);
+  eq('and the score is the house bonus', known.score, 70);
+  eq('it says how many you own of it',
+    /You own 6 from Known House/.test(known.why), true);
+  eq('a stranger is not credited with a house',
+    /You own/.test(stranger.why), false);
+  eq('and a bottle with nothing going for it still gets a verdict',
+    typeof stranger.verdict, 'string');
+}
+
+sec('\u00a7351 the library, as a spreadsheet');
+{
+  /* BZ asked for this in thread 5 - export ones library in a csv or excel
+     file - and it was never built. The SHELF had an export; the shared
+     list, which is the thing an admin has to read through and correct, had
+     no way out of the app at all. */
+  const lib = {
+    b: { name: 'Bravo', dist: 'B House', proof: 100, region: 'Islay',
+         sub: 'scotch', fin: 'sherry', tn: { nose: 'oak', palate: 'fruit' },
+         by: 'Tyson', at: Date.UTC(2026, 0, 15) },
+    a: { name: 'Alpha', dist: 'A House', proof: 90 }
+  };
+  const rows = L.libraryExportRows(lib);
+  eq('every entry becomes a row', rows.length, 2);
+  eq('and every row fits the header', rows[0].length, L.LIBRARY_COLS.length);
+  eq('sorted by name, because somebody is looking a bottle up',
+    rows.map(r => r[0]).join(','), 'Alpha,Bravo');
+  eq('ABV is derived rather than left blank', rows[1][7], 50);
+  eq('and an entry with no proof leaves it empty rather than guessing',
+    L.libraryExportRows({ x: { name: 'X' } })[0][7], '');
+  eq('who contributed it travels', rows[1][17], 'Tyson');
+  eq('and when, as a date rather than a number', rows[1][18], '2026-01-15');
+  eq('an entry nobody claimed has an empty contributor', rows[0][17], '');
+  eq('an empty library exports nothing rather than throwing',
+    L.libraryExportRows({}).length, 0);
+  eq('and no library at all is not a crash',
+    L.libraryExportRows(null).length, 0);
+
+  /* The two exports must not drift into different ideas of a column: where
+     they share a heading it has to mean the same thing. */
+  ['Name', 'Distillery', 'Region', 'Type', 'Style', 'Age', 'Proof', 'ABV']
+    .forEach((c, i) => {
+      eq('"' + c + '" is column ' + i + ' in both exports',
+        L.LIBRARY_COLS[i] === c && L.EXPORT_COLS[i] === c, true);
+    });
+  /* And what only a shelf has is absent from the library rather than
+     present and empty. */
+  eq('the library does not pretend to know what you paid',
+    L.LIBRARY_COLS.indexOf('Paid'), -1);
+  eq('nor whether a bottle is open',
+    L.LIBRARY_COLS.indexOf('Status'), -1);
+  eq('while it does say who contributed it',
+    L.LIBRARY_COLS.indexOf('Contributed by') >= 0, true);
+}
+
+sec('\u00a7352 a calendar is pours, not bottles');
+{
+  /* BZ, on the advent calendar sitting in the backlog as a feature to
+     build: calendars are POURS, not bottles. A calendar is twenty-four
+     samples you drink and never own, so nothing about it belongs on a
+     shelf. The machinery was already right - an away pour takes a typed
+     name, creates no bottle and logs the glass - and what was missing was
+     the word for it. */
+  eq('a calendar is a source you can pick',
+    L.PLACE_KINDS.indexOf('an advent calendar') >= 0, true);
+  eq('and so is a sample', L.PLACE_KINDS.indexOf('a sample') >= 0, true);
+  eq('the kind is accepted as typed',
+    L.placeKind('an advent calendar', ''), 'an advent calendar');
+
+  const cal = L.awayPour('Wee Beastie', '', {}, null, 'an advent calendar');
+  eq('it logs a pour', cal.kind, 'pour');
+  eq('and creates NO bottle, which is the whole point', cal.k, null);
+  eq('the whisky is named', cal.away, 'Wee Beastie');
+  eq('and the calendar is remembered without a name being typed',
+    cal.at2.kind, 'an advent calendar');
+  eq('which reads back as something rather than nothing',
+    L.placeLine(cal.at2), 'An Advent Calendar');
+
+  /* A NAMELESS BAR IS STILL NOTHING. "Somewhere" is not a place, and this
+     must not turn every unnamed away pour into a chip. */
+  const bar = L.awayPour('Wee Beastie', '', {}, null, 'bar');
+  eq('an unnamed bar keeps nothing', bar.at2, undefined);
+  eq('and only the two standalone kinds are exempt',
+    L.KIND_ALONE.slice().sort().join(','), 'a sample,an advent calendar');
+
+  /* A named calendar keeps its name, because next December it is a
+     different one. */
+  const named = L.awayPour('Wee Beastie', 'Whisky Advent 2026', {}, null,
+    'an advent calendar');
+  eq('a named calendar keeps the name', named.at2.place, 'Whisky Advent 2026');
+  eq('and reads back as that rather than the kind',
+    L.placeLine(named.at2), 'Whisky Advent 2026');
+
+  /* And a calendar pour of something you DO own is an ordinary pour of
+     your own bottle, with where it came from kept. */
+  const mine = L.awayPour('Mine', '', { K: { k: 'K', name: 'Mine' } }, null,
+    'an advent calendar');
+  eq('a whisky you own is poured from your shelf', mine.k, 'K');
+  eq('and it is not logged as something you do not have',
+    mine.away, undefined);
+}
+
+sec('\u00a7353 the same list, as a link');
+{
+  /* BZ: send wish list via text, but link or content. Both, because they
+     are different messages rather than two ways of sending one. */
+  const rows = [{ name: 'Ardbeg Uigeadail', unlocks: true },
+                { name: 'F\u00e8is \u00ccle 2024' },
+                { name: 'Redbreast 12', why: 'pot still' }];
+  const url = L.giftLink(rows, 'https://example.com/app/', '2026-09-09');
+  eq('a link is made', url.indexOf('https://example.com/app/#gift=') === 0,
+    true);
+  eq('and it is short enough to text', url.length < 400, true);
+
+  const back = L.giftFromLink(url);
+  eq('every bottle survives the trip', back.names.length, 3);
+  eq('in order', back.names[0], 'Ardbeg Uigeadail');
+  /* btoa throws on anything outside Latin-1, which is exactly the bottles
+     worth asking for, so the payload is percent-encoded first. */
+  eq('an accented name survives', back.names[1], 'F\u00e8is \u00ccle 2024');
+  eq('and the date it was taken travels', back.at, '2026-09-09');
+
+  /* NAMES ONLY. The short list deliberately carries no prices, and the
+     reasons are for the person who wrote them. */
+  eq('no reason is carried', /pot still/.test(url), false);
+  eq('and nothing says a bottle finishes a flight',
+    /finishes/.test(url), false);
+
+  /* A fragment, so it never reaches a server. */
+  eq('the payload rides in the fragment', url.indexOf('#gift=') > 0, true);
+  eq('and nothing is in the query string',
+    url.indexOf('?') < 0, true);
+  /* Any query or fragment already on the address is dropped rather than
+     doubled. */
+  eq('an existing fragment is replaced, not appended',
+    (L.giftLink(rows, 'https://example.com/app/#shelf', '2026-09-09')
+      .match(/#/g) || []).length, 1);
+
+  eq('an empty list makes no link', L.giftLink([], 'https://x/'), '');
+  eq('and neither does nothing at all', L.giftLink(null, 'https://x/'), '');
+  eq('a nameless row is not a bottle',
+    L.giftLink([{ why: 'x' }], 'https://x/'), '');
+
+  /* THE READING END REFUSES RUBBISH rather than throwing: this runs on a
+     stranger's phone, from a URL anybody can edit. */
+  eq('no hash is nothing', L.giftFromLink(''), null);
+  eq('a hash with no gift in it is nothing',
+    L.giftFromLink('#shelf'), null);
+  eq('and something that is not base64 is nothing',
+    L.giftFromLink('#gift=not!base64'), null);
+  eq('valid base64 that is not a gift is nothing',
+    L.giftFromLink('#gift=' + Buffer.from('{"v":1}').toString('base64')),
+    null);
+  eq('an empty name list is nothing',
+    L.giftFromLink('#gift='
+      + Buffer.from('{"v":1,"n":[]}').toString('base64')), null);
+  /* A link found among other fragment parameters still reads. */
+  eq('it is found beside other fragment parts',
+    L.giftFromLink('#tab=shelf&gift='
+      + Buffer.from('{"v":1,"n":["A"]}').toString('base64')).names[0], 'A');
+  /* And a very long list is capped rather than trusted. */
+  const many = Array.from({ length: 40 }, (_, i) => ({ name: 'B' + i }));
+  eq('a link cannot open forty bottles on somebody',
+    L.giftFromLink(L.giftLink(many, 'https://x/')).names.length, 20);
+}
+
+sec('\u00a7354 a place holds a type, a shelf has a job');
+{
+  /* BZ: a cabinet tends to be type specific - one bookshelf is Scotch,
+     Irish and international while the other is Bourbon, Rye and American
+     single malt. And within one: a TOP shelf for special bottles and a
+     WELL shelf for common pours. Neither was in the model, so a plan could
+     put Laphroaig on the bourbon bookcase and be arithmetically perfect
+     and useless. */
+
+  /* HOW SPECIAL, and how ordinary, which is not its reverse. */
+  eq('scarcity leads over price',
+    L.bottleSpecial({ scar: 'exclusive', msrp: 60 })
+      > L.bottleSpecial({ scar: 'standard', msrp: 900 }), true);
+  eq('and price breaks the tie within a scarcity',
+    L.bottleSpecial({ scar: 'limited', msrp: 200 })
+      > L.bottleSpecial({ scar: 'limited', msrp: 80 }), true);
+  eq('an unknown scarcity is not treated as rare',
+    L.bottleSpecial({ scar: 'who knows', msrp: 50 }), 50);
+  eq('anything scarce is disqualified from the well outright',
+    L.bottleCommon({ scar: 'limited', msrp: 20 }), null);
+  eq('the cheapest ordinary bottle leads the well',
+    L.bottleCommon({ scar: 'standard', msrp: 25 })
+      < L.bottleCommon({ scar: 'standard', msrp: 60 }), true);
+  eq('and no price is not assumed to be cheap',
+    L.bottleCommon({ scar: 'standard' }) > 900, true);
+
+  /* NORMALISED: what the app does not know it does not keep. */
+  const u = L.storageNormalize([{ name: 'A',
+    types: ['scotch', 'irish', 'not a category'],
+    shelves: [{ cap: 30, role: 'top' }, { cap: 30, role: 'bogus' }] }], '')[0];
+  eq('a category the app knows is kept', u.types.join(','), 'scotch,irish');
+  eq('a role it knows is kept', u.shelves[0].role, 'top');
+  eq('one it does not is no role rather than a guess',
+    u.shelves[1].role, '');
+
+  /* ON BZ'S OWN SHELF AND HIS OWN FURNITURE: two typed bookcases, each
+     with a top and a well. Population named: the shipped 344-bottle shelf,
+     which is a filled-in shelf rather than one somebody imports tomorrow. */
+  const units = [
+    { id: 'u1', name: 'Scotch bookcase', kind: 'display',
+      types: ['scotch', 'irish', 'japanese', 'world', 'canadian'],
+      shelves: [{ cap: 12, role: 'top' }, { cap: 30 }, { cap: 30 },
+                { cap: 30 }, { cap: 20, role: 'well' }] },
+    { id: 'u2', name: 'American bookcase', kind: 'display',
+      types: ['bourbon', 'rye', 'tennessee', 'wheat',
+              'american single malt'],
+      shelves: [{ cap: 12, role: 'top' }, { cap: 30 }, { cap: 30 },
+                { cap: 30 }, { cap: 20, role: 'well' }] }
+  ];
+  const plan = L.storagePlan(data.catalog, data.bottles, units);
+  const on = name => plan.display.filter(sh => sh.unit === name)
+    .reduce((a, sh) => a.concat(sh.items.reduce(
+      (b, it) => b.concat(it.bottles), [])), []);
+
+  /* THE ROUTING, which is the whole point. */
+  eq('no Scotch or Irish lands on the American bookcase',
+    on('American bookcase')
+      .filter(p => ['scotch', 'irish'].indexOf(p.sub) >= 0).length, 0);
+  eq('and no bourbon or rye on the Scotch one',
+    on('Scotch bookcase')
+      .filter(p => ['bourbon', 'rye'].indexOf(p.sub) >= 0).length, 0);
+
+  /* THE ROLES, filled first and from the whole of what the unit holds. */
+  const top = plan.display.filter(sh => sh.role === 'top');
+  const well = plan.display.filter(sh => sh.role === 'well');
+  eq('both top shelves are used', top.filter(sh => sh.items.length).length, 2);
+  eq('and both wells', well.filter(sh => sh.items.length).length, 2);
+  eq('a top shelf is named for what it is',
+    top[0].items[0].group, 'The good ones');
+  eq('and a well shelf too', well[0].items[0].group, 'Everyday pours');
+  /* Nothing scarce is poured from the well. */
+  const wellBottles = well.reduce((a, sh) => a.concat(
+    sh.items.reduce((b, it) => b.concat(it.bottles), [])), []);
+  eq('nothing limited or better sits in the well',
+    wellBottles.filter(p => L.bottleCommon(p) === null).length, 0);
+  /* And the top shelf really is the top of what that unit holds. */
+  const scotchTop = top.filter(sh => sh.unit === 'Scotch bookcase')[0];
+  const topWorst = Math.min.apply(null, scotchTop.items[0].bottles
+    .map(p => L.bottleSpecial(p)));
+  const restBest = Math.max.apply(null, plan.display
+    .filter(sh => sh.unit === 'Scotch bookcase' && sh.role !== 'top')
+    .reduce((a, sh) => a.concat(sh.items.reduce(
+      (b, it) => b.concat(it.bottles), [])), [])
+    .map(p => L.bottleSpecial(p)).concat([-1]));
+  eq('nothing left on an ordinary shelf outranks the top shelf',
+    topWorst >= restBest, true);
+
+  /* NO SHELF IS OVERFILLED, roles included. */
+  eq('every shelf stays within its capacity',
+    plan.display.filter(sh =>
+      sh.items.reduce((n, it) => n + it.bottles.length, 0) > sh.cap).length, 0);
+
+  /* A UNIT NAMING NOTHING TAKES WHAT THE NAMED ONES DID NOT. */
+  const mixed = L.storagePlan(data.catalog, data.bottles, [
+    { id: 'a', name: 'Scotch only', kind: 'display', types: ['scotch'],
+      shelves: [{ cap: 40 }] },
+    { id: 'b', name: 'Everything else', kind: 'display', types: [],
+      shelves: [{ cap: 400 }] }
+  ]);
+  const spare = mixed.display.filter(sh => sh.unit === 'Everything else')
+    .reduce((a, sh) => a.concat(sh.items.reduce(
+      (b, it) => b.concat(it.bottles), [])), []);
+  eq('the untyped unit gets no Scotch while a Scotch unit has room',
+    spare.filter(p => p.sub === 'scotch').length, 0);
+  eq('and it does get the rest', spare.length > 0, true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
