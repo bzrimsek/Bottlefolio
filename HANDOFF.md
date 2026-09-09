@@ -1,404 +1,258 @@
-# Killer B's Bottle Tracker — handoff
+# Bottlefolio — handoff at v1.9.18
 
-Written 2026-09-03, end of a long session. Working copy is at **v1.6.12**
-and does **not** pass the gate: one bug, mine, described in full below.
-The last build BZ can safely deploy is **v1.6.11**.
-
-Read this, then `BACKLOG.md`, then the dev rules in BZ's preferences. The
-rules are instructions, not guidance — he has said so explicitly.
+Written 2026-09-08, late, replacing the v1.9.10 version.
 
 ---
 
-## 1. Do this first
+## 0. START HERE — ONE ZIP, NO ASKING
 
-**Fix the open bug.** `index.html`, in `fbFirstLoad`, around line 16247:
+**Begin every session with a single zip of the whole working directory.**
+The v1.9.10 session cost four separate uploads and a rebuilt harness because
+this file listed only part of what was needed. It lists all of it now.
 
-```js
-FB.pushed = L.pushedFromRemote(SYNC_KEYS, S, remote);
-if (remote.lookupUrl && remote.lookupUrl === S.lookupUrl) {   // <-- throws
-  FB.pushed.lookupUrl = S.lookupUrl;
-}
-```
+Zip **everything** in the folder. The exact list, none of it optional:
 
-`remote` is null when the account has nothing in it. That line sits
-OUTSIDE the `if (hasRemote)` block above it, so on an empty account it
-throws, `fbFirstLoad` dies immediately after `FB.loaded = true`, and
-nothing is ever pushed. The fix is a guard:
-
-```js
-if (remote && remote.lookupUrl && remote.lookupUrl === S.lookupUrl) {
-```
-
-Confirm with `node sync.js` — scenario 4 ("a name with a full stop")
-currently fails with `Cannot read properties of undefined (reading
-'whisky')`, which is the test reading an account nothing wrote to.
-
-Then run the gate (§3) and deliver as v1.6.13.
-
-**Why it exists:** it was added minutes earlier to fix a real thing — the
-first push of every session wrote 154 bytes with an empty key list,
-because `lookupUrl` is pushed but is not a SYNC_KEY, so it was never
-seeded as already-sent. The fix is right; it is in the wrong scope.
-
----
-
-## 2. What this app is
-
-A single-file PWA for BZ's whisky collection: 344 bottles, 325 products,
-36 designed tasting flights. GitHub Pages, `bzrimsek/Bottle-Tracker`,
-no build step. Firebase for sync and a shared library everyone reads.
-
-`index.html` is ~17,000 lines: an `L` object of ~240 pure functions
-(the logic half) and ~190 render functions below it. The split matters —
-`killer-bs-test.js` can only reach `L`.
-
-### The files
-
-| file | what it is |
+| File | Why |
 |---|---|
-| `index.html` | the whole app |
-| `sw.js` | service worker; `CACHE_NAME` written by bump.py |
-| `bump.py` | the ONLY way to change a version (rule 9) |
-| `ship.py` | the delivery gate; runs everything below |
-| `audit.py` | static checks: syntax, versions, lock files, help text |
-| `smoke.js` | does the script run, does every screen draw |
-| `killer-bs-test.js` | 1794 assertions over `L` |
-| `browser.js` | real Chromium walk of every screen |
-| `sync.js` + `fake-firebase.js` | the push/load CYCLE against an in-memory Firebase |
-| `render.js` | screens compared to the engine and to each other |
-| `twotab.js` | two tabs of the app at once |
-| `papers.js` | prints the host card and participant sheet, counts pages |
-| `firebase-rules.json` | pasted into the console BY HAND; does not deploy |
-| `data.json`, `map.json`, `bz-bottles.json`, `bz-flights.json` | shipped data and BZ's real shelf |
+| `index.html`, `sw.js` | the app |
+| `bottlefolio-v<latest>.html` + `-sw.js` | the audit compares against these |
+| `killer-bs-test.js` | the unit suite |
+| `consistency.js` | wiring checks |
+| `browser.js` | the walk |
+| `sync.js` | the sync cycle |
+| `fake-firebase.js` | **sync.js will not run without it** |
+| `audit.py` | the delivery gate |
+| `bump.py` | the only way versions change |
+| `ship.py` | runs the gate end to end |
+| `CHANGELOG.md` | the audit fails without an entry for the current version |
+| `BACKLOG.md`, `DEV-RULES.md`, `HANDOFF.md` | rules and what is open |
+| `data.json` | shipped catalogue — suite and audit both read it |
+| `map.json` | the map — the suite reads it |
+| `bz-bottles.json`, `bz-flights.json` | **BZ's real shelf; the suite will not start without them** |
+| `shared-catalog.json` | shared library snapshot |
+| `manifest.json`, `mark.png`, `icon-192.png`, `icon-512.png`, `zxing.min.js` | the audit checks all are precached |
+| `firebase-rules.json` | pasted by hand; never deploys |
+| `lookup.gs`, `label.gs`, `shelf.gs`, `recap.gs`, `recap-handler.gs` | the Apps Script side |
+
+Most of it is also in the repo and can be fetched directly:
+
+    curl -sL -o repo.tar.gz \
+      https://codeload.github.com/bzrimsek/Bottlefolio/tar.gz/refs/heads/main
+
+**The repo is not authoritative for the harnesses.** On 2026-09-08 its
+`consistency.js` was two checks behind, `CHANGELOG.md` stopped at v1.8.45,
+`map.json` could not place France, and `fake-firebase.js`, `bz-bottles.json`
+and `bz-flights.json` were not in it at all. Take `index.html` and `sw.js`
+from the repo to reconcile; take the rest from the zip and push the
+difference back.
+
+**Never ask BZ for a file without checking the repo first.**
 
 ---
 
-## 3. Delivering
+## 1. RECONCILE FIRST (rule 32)
 
-```
-python3 bump.py "what changed, in full sentences"   # never edit a version by hand
-python3 ship.py                                     # all eight checks
-```
+    curl -s -o live.html https://raw.githubusercontent.com/bzrimsek/Bottlefolio/main/index.html
+    grep -m1 "const APP_VERSION" live.html
+    grep -m1 "const APP_VERSION" index.html
 
-Every delivery is four files: `index.html`, `sw.js`, and the two named
-lock files. Plus any harness that changed (rule 29).
-
-**The gate takes ~3 minutes.** BZ cannot see progress inside a single
-command and reads silence as a hang — he said so repeatedly and it cost a
-lot of goodwill. Run the steps separately and report each:
-
-```
-python3 audit.py          # seconds
-node smoke.js             # seconds
-node twotab.js            # ~10s
-node papers.js            # ~2s   (--all prints all 72, ~90s)
-node killer-bs-test.js    # ~10s
-node sync.js              # ~30s
-node render.js            # ~30s
-node browser.js           # ~60s
-```
-
-`audit.py` fails if `index.html` differs from the lock file by a byte —
-that is deliberate, it caught an unversioned edit.
+They must match, or `bump.py` collides with a number that already shipped.
 
 ---
 
-## 4. What this session shipped (1.5.0 → 1.6.12)
+## 2. THE GATE
 
-Renumbered from 1.26.x to 1.5.0 at BZ's request, then forward.
+In order, reporting each as it lands (rule 25c), never silently:
 
-**Sync, which was the week's real story.** Six faults in sequence, each
-invisible to 1,700 passing unit tests because every one tested a function
-alone and the fault was in the ORDER:
+    node killer-bs-test.js     # 3459 assertions at v1.9.18
+    node consistency.js        # 27 checks
+    node sync.js               # nine scenarios — SEE SECTION 5
+    node browser.js            # the walk
+    python3 audit.py           # 26 checks; refuses if the locks differ
 
-- a push that stamped its own clock, so the account was always "newer"
-- a load that called `save_()` before `FB.loaded`, so it scheduled no push
-- a merged map that never compared equal to itself (key order)
-- keys containing `.` refused outright by Firebase — 18 of 325 product
-  names — which is why a bought bottle and a flight pour vanished
-- `undefined` in a pours array refusing the whole write
-- update payloads keyed by PATH run through `fbEncode`, which escaped the
-  slashes, so publishing wrote `catalog~fproducts~fweller_12` and
-  reported success
+Playwright is present, the browser binary is not: `npx playwright install
+chromium` once per container.
 
-`sync.js` exists because of this. It drives push and load together.
-
-**A two-tab loop I introduced and then fixed.** The storage listener
-adopted another tab's change and called `appLog`, which writes to
-localStorage, which the other tab adopted... forever. It made BZ's PC
-unclickable and his phone's nav vanish. `twotab.js` exists because of it.
-
-**Bottle screen** rebuilt: nine controls in one row became a star beside
-the name, Look up / Edit / Delete under the details, Pour it / Find it /
-Another bottle under Your bottle. The internal id (`B199`) is gone —
-"Open · added 2026-09-03", or "Bottle 2 of 2".
-
-**Shop**: three drawn tiles instead of three sentences; Back beside Home;
-the wishlist on the search screen; a category suggestion opens real
-bottles instead of typing its own heading into the search box.
-
-**Papers**: the participant sheet was refusing to print ("the sheet names
-glass") because the leak guard read the prompts, which are a fixed
-vocabulary; the host card printed `[object Object]` for extensions.
-
-**Two things the app knew and never said:** what you pour against what you
-own, and the 14 whiskies you have bought more than once.
-
-**Ask ranking**: every lookup records whether real bottles came back, and
-suggestions are ordered by that.
+Delivery is `index.html` + `sw.js` + both lock files. Hand over only what
+changed.
 
 ---
 
-## 5. The pattern behind almost every bug
+## 3. WHERE THE BUILD IS
 
-Two things holding one rule, only one of them taught. It is named in
-`BACKLOG.md` and it caught us again and again this session:
-
-- `variableOfId` against the flight tags it reads
-- `fbEncode` against the path keys of a map delta
-- `syncSig` against the three places that compare it
-- the sort menu against the column headers
-- `audit.py`'s header counter against the header it counts
-- SHEET_SAFE against the prompt vocabulary it shadowed
-- **a second `L.FIND_RANK` added 49 lines above the one that already
-  existed, silently overriding it** — I did this while fixing something
-  else
-
-The test that catches this class asserts the PAIR, not each side. See
-§198, §204, §206, §212, §215, §222.
-
-**Before adding any function: grep for it.** Twice this session I wrote
-something that already existed.
+- **v1.9.18** — 3459 assertions, 27 consistency checks, 26 audit checks,
+  walk green.
+- `sync.js` has **not run since v1.9.10**. See section 5.
+- Nothing is half-shipped.
 
 ---
 
-## 5b. Where this session ended — 2026-09-04
+## 4. WHAT IS OPEN, IN BZ'S ORDER
 
-Shipped v1.6.21, gate green, 2051 assertions. What went in: the affinity
-recommender and the wood taxonomy, the shelf portrait and the six-axis
-shape with its roadmap, books on the shelf, the sealed fix, and the
-renderAxis restoration.
+### 4a. Cross-buddy — do this first
 
-**Two faults reported on BZ's device that were never reproduced here.** Say
-so plainly rather than assuming they went away:
+Asked four times, deferred four times.
 
-1. **The nav tabs vanish on his Pixel 10 Pro, Chrome, installed PWA.** Not
-   reproducible at 390x700, 412x915, with emulated safe-area insets, on any
-   of the seven screens, or scrolled to the bottom of Home — nav computes
-   to the viewport floor every time. The layout is right in a desktop
-   engine, so it is something the device does. The discriminating question,
-   still unanswered: do the tabs come back on a tab-switch or a rotate, or
-   are they gone for the session?
-2. **The Library admin gear.** There is no gear on that screen and never
-   was — the admin controls are inline buttons gated on there being work to
-   do. His uid IS an admin. Filed as its own backlog item.
+Today the Buddies tab shows a folder tab per person **who shares with you**,
+and a separate "Tasting buddies" card above listing people **you share
+with**. Different sets — so one person can appear twice, or once as an
+unnamed row and once as a named tab. That is the disconnect BZ keeps
+photographing.
 
-**Process, for whoever reads this next.** Several turns this session
-returned empty and at least three of them ran commands that were never
-reported. That is where the phantom v1.6.15 entry and a stray v1.6.20 lock
-pair came from. Nothing shipped from those turns and the delivered lock
-matches index.html byte for byte, but if something in the file looks
-unaccounted for, that is the likeliest explanation. Check CHANGELOG.md
-against the header block before trusting either.
+**One tab per person, union of both directions**, each showing where you
+stand both ways: they can see yours (with the toggle), you can see theirs,
+ask them to share back. The Tasting buddies card dissolves into the tabs.
+Everyone keeps the room, the invite and the directory.
 
-## 6. Open, in priority order
+- `fbSharesMine()` is async, returns `[{uid, name}]`. Cache onto
+  `SHARED.outList` (today only the count survives, as `SHARED.out`) so tabs
+  render before the fetch lands and re-render when it does.
+- Tab ids = union of `Object.keys(SHARED.shelves)` and that list.
+- `buddiesOnePanel` gains the status block. Someone who shares with you but
+  cannot see yours gets the comparison plus an Ask; the reverse gets the
+  toggle plus a line saying they have not shared back.
+- `renderBuddies` keeps only what belongs on Everyone.
+- `browser.js` already drives the panels at three buddies — extend that
+  step, do not write a second one.
 
-**Needs BZ, not code**
+### 4b. The profile
 
-1. ~~`firebase-rules.json` has not been pasted into the console.~~
-   **Closed 2026-09-03: BZ confirmed he pasted the rules when asked.** Do
-   not re-raise this. Any FUTURE change to `firebase-rules.json` still has
-   to be pasted by hand — it does not deploy with the app — so a delivery
-   that edits that file must say so explicitly.
-2. ~~Recover the lost bottle.~~ **Closed 2026-09-04: BZ recovered the
-   Heaven Hill grain-to-glass wheated bourbon and restored it as pour 5 of
-   WHEAT, TURNED UP himself. Do not re-raise.**
-3. ~~Verify on his devices: shelf type tiles and the library button.~~
-   **Closed 2026-09-04: BZ confirmed both work. Do not re-raise.**
+- **Style scarcity constants.** Approved, not built. `The Loyalist` fires on
+  Buffalo Trace's 26 over Laphroaig's 24 because a raw count treats a
+  bourbon-soaked market as neutral. Weight the chip's own evidence by
+  category scarcity — bourbon 1.0, rye 1.3, Scotch 1.6, Irish 2.0, Japanese
+  2.6, world 3.0. **These numbers are invented, not measured** (rule 26b):
+  a claim about the US market, and the constant must say so, because the
+  library can measure real base rates once enough shelves exist. Apply only
+  to chips naming a category — `house`, `region`. Never `peat`, `repeat`,
+  `sealed`, `rare`: smoke is smoke whatever the market does.
+- **`STORY_OPENERS` has no set-title entries**, so a set falls back to its
+  leading chip's opener. `L.TITLE_LINES` covers the subtitle; the opener
+  still does not.
+- **The veto has no control.** `L.portraitPick(earned, dismissed)` takes a
+  map of dismissed titles and nothing sets it. BZ asked for "not me": a
+  veto, never a picker — a title must be earned, so choosing your own is
+  flattery. `deadGaps` is the pattern and it already syncs.
 
-**Code**
+### 4c. The library — held at BZ's word, confirm before starting
 
-4. `renderShop` is 330 lines and `renderShelf` 266; both still compute
-   inline (rule 30). `S` is a 30-key global every render function reads
-   directly — that is WHY logic keeps landing in render. Big change,
-   nothing has needed it yet.
-5. Sharing has never run end to end with a second person. A great deal
-   shipped into those paths and only `fake-firebase.js` has exercised
-   them.
-6. The candidate finder has never actually put a bottle in his hands.
+- **A delete does not stick.** `offerLookupToLibrary` fires on every lookup
+  by anyone and, for an admin, writes **straight in with no review** — so an
+  admin can delete an entry and resurrect it in one search. `fbContribute`
+  re-offers it too. Neither checks whether a human removed it. Needs
+  `shared/catalog/removed/<key>` as a tombstone, skipped by both automatic
+  paths, cleared only by a deliberate Add. **Rules change — rule 33.**
+- **Lookup-to-fill-blanks in the library editor.** Started, unfinished.
+  `editLibraryEntry` wants a button that looks the entry up and fills only
+  EMPTY inputs, so an admin reviews before it reaches everybody.
+  `askLookup(name, ms, need)` then `L.parseLookup` is the primitive. Do NOT
+  fire `libraryFillStart` from inside the editor — it writes to the library
+  behind the open form.
 
-**Deferred by decision**: barcode pairings through `contrib` (waits until
-the circle grows past people he knows), gifts, receipt ingest by email,
-road trip planner, tasting night on phones.
+### 4d. The lookup URL must be an admin setting
+
+BZ: "this must be an app wide setting set by admin." Today
+`DEFAULT_LOOKUP_URL` is a constant in the file, so rotating the Apps Script
+URL means shipping a new version to everyone.
+
+`bz-apps/whisky/shared/config` holding `lookupUrl`, admin-writable and
+world-readable, read once beside the catalogue stamp. Precedence: the user's
+own setting, then the shared config, then the shipped constant as a floor
+for a first paint or an offline start. **Rules change — rule 33** — so
+`firebase-rules.json` ships as its own file with its own walkthrough and BZ
+pastes it BEFORE the build lands.
+
+### 4e. Carried, untouched
+
+- `deleted` syncs by replacement — same class as the wishlist bug fixed in
+  v1.8.81, but it can *shrink*, so a plain union would resurrect a deletion
+  somebody undid. Tombstones; a decision, not a patch.
+- The empty-opening-block walk step is **not verified against its bug**.
+- `parseUpcListing` retained unwired; `pickFromList` rebuilt in the harness.
+- 13 untested helpers on a ratchet that can only shrink.
+- Performance: `boot()` draws 8 screens when 1 is visible (67ms wasted);
+  84–177ms document parse. Diagnosed, never touched.
+- Camera in the other moments; library export to CSV/Excel under shelf
+  settings; good/better/best hints; `sub: world` has no blend in `L.TYPES`.
+- The orphan shelf: `LFp1OyZG3EfmhiIfUSXTfwzetJ22` carries 347 bottles and
+  has no Auth account — uids are per-project and did not travel from
+  `bottle-tracker-7d3a1`. BZ's business, not the app's.
 
 ---
 
-## 7. Working with BZ
+## 5. sync.js — WHY IT HAS NOT RUN IN EIGHT BUILDS
 
-- **Status, constantly.** He cannot see inside a running command. Silence
-  reads as broken, and he will ask — repeatedly, and with justification.
-  Report after every step.
-- **Action first.** The actions taken and the questions needing answers.
-  No preamble, no recap.
-- **He is right more often than not** about his own app. "The bottle ID is
-  not something known to the user", "that happens when the bottle text is
-  two lines", "if we don't know, it's not likely on shelves" — each was
-  correct and each pointed straight at the fault.
-- **Deploys cost him.** Do not use one as a diagnostic step. Fold
-  everything into one build.
-- **Rules 13 and 28 are the ones to actually keep.** Stop after two failed
-  fixes and write out what you read, what you observe, your diagnosis.
-  Compute expected values by hand BEFORE writing the assertion. I broke
-  both repeatedly this session and it showed: the Taste box took four
-  passes, the Shop back button broke twice in consecutive versions.
+`fake-firebase.js` was lost with the v1.9.10 container. It is **rebuilt and
+in the repo**, but **not proven, and the harness still does not run.**
+
+The failure: the app never reaches auth against it. `index.html` asks
+gstatic for **three** compat scripts — app, auth, database, around line
+32295 — and `sync.js` answers only the first with the fake; the other two
+get empty bodies. Something in that sequence stops firebase installing.
+Debug by loading the page against the fake and reading `FB.user` and
+`firebase.__store.log`; on 2026-09-08 both were empty, so the fake installed
+and nothing ever called it.
+
+**When it runs, do not trust it green.** Break each of the nine fixes in
+turn and confirm the matching scenario goes red. Two earlier attempts were
+unknowingly hitting the real server and proved nothing; a green from an
+unproven stub is worth less than an honest red.
+
+Interface: `window.makeFakeFirebase(seed, opts)` returning a compat-shaped
+object with `__store.data` (the tree) and `__store.log` (every operation,
+carrying `op`, `path`, `bytes`, `keys`). Seeds are **nested objects**, not
+slash paths.
 
 ---
 
-## 8. Two numbers worth keeping
+## 6. A PASTE IS NOT A DEPLOY
 
-An in-step load writes **59 bytes** (was 220,096). One corrected bottle
-writes **56** (was 61,290). If either grows by orders of magnitude, the
-delta logic has regressed — `sync.js` prints both on every run.
+Any delivery with a `.gs` file is half done when BZ pastes it. Apps Script
+serves the **deployed** version, not the saved one.
 
-## Running the gate — SOP, set 2026-09-04
+**Deploy → Manage deployments → pencil on the EXISTING deployment → New
+version → Deploy.** Not "New deployment", which mints a URL the app is not
+pointing at.
 
-BZ: "almost every time I ask, you give me the same answer." He was right.
-The gate takes several minutes and the habit was to run it silently and
-report at the end, so every check-in got "running the gate now" — a status
-line rather than an answer, and the reason he was asking at all.
+Call it **Code.gs** in the handover; it ships as `lookup.gs` and lives in
+his project as Code.gs. `label.gs`, `shelf.gs`, `recap.gs` match both sides.
 
-**Status has to stay visible or it is not status.** BZ, watching the gate
-run: the fault was never the number of lines, it was the gaps between
-them. A check that takes a minute with nothing said is the same as a
-hung app, and asking "ok?" is what somebody does when a screen has
-stopped talking.
+`probeWiring` cannot catch a stale deployment — it runs in the editor
+against saved code and reports every mode present while the live web app
+runs months-old code.
 
-So: say what is STARTING as well as what finished, and name the slow ones
-before they run rather than after. "Starting the browser walk, about a
-minute" costs one line and removes the reason to ask.
+---
 
-**Run the checks ONE AT A TIME and report each as it lands.** One line per
-check, as it finishes:
+## 7. WHAT WENT WRONG ON 2026-09-08
 
-    1/8 smoke ✓
-    2/8 tests ✓ 2577
-    3/8 twotab ✓
+- **A helper's shape is part of its contract.** `importAudit` read
+  `houseVariants`' groups as arrays when they are `{spellings:[...]}`. It
+  fires only on a shelf that HAS two spellings of one house — BZ's has none
+  — so the whole gate passed while the first shelf that had them crashed on
+  the first press.
+- **A shared helper's blast radius includes the references it leaves
+  behind.** `L.clearFacets` returned a new object; assigning it over
+  `S.filters` orphaned every held reference and the shelf lost its back
+  button. Both callers were measured. The references were not.
+- **Two functions must not answer one question.** `guessSub` reads a
+  category from words; a house-based reader was nearly built beside it. They
+  were measured against each other first — 61 rows where both fired, zero
+  disagreements — and folded into one.
+- **A default that only reaches an empty device is not a default.**
+  `DEFAULT_LOOKUP_URL` lived in the initial state object, so 91KB of older
+  localStorage beat it on every account that ever signed in there.
+- **The obvious guesses find nothing on a curated shelf.** BZ's 325 carry no
+  ABVs in the proof field, no impossible ages, no two-country houses. The
+  population with bad data is the one that arrives.
+- **A column can be read from the wrong place and look fine.**
+  `matchColumns` took the first header matching a field's aliases; an Only
+  Drams export carries both `Category` and `Subcategory` and 220 of 228
+  whiskies landed as bourbon.
 
-Never run the whole loop in one command and report at the end. Never say
-"running the gate now" without a result attached — if there is nothing to
-report yet, say what is running and what came back last.
+---
 
-The order, and what each one is for:
+## 8. WORKING FILES
 
-1. `smoke.js` — the script parses and every screen draws
-2. `killer-bs-test.js` — the assertions
-3. `twotab.js` — two tabs do not fight
-4. `papers.js` — the printable output
-5. `render.js` — render functions do templating only
-6. `sync.js` — push, load, reload, refuse, and the byte counts
-7. `browser.js` — the walk through the real screens
-8. `audit.py` — the pre-delivery audit
-
-Read the WHOLE output of each, not the last line. `sync.js` timed out for
-several builds and reported nothing, because the last line was blank and
-the failure was thirty lines up: it had been clicking a Library pill that
-moved into Settings. A gate reported green while one of its checks had not
-run at all.
-
-## Hand over BZ's work the moment it exists — SOP, set 2026-09-05
-
-BZ: "separating that stuff saved me time — need more of that type of
-behavior."
-
-The recap needed an Apps Script change he makes in a different tool. It was
-handed over as soon as it was written rather than bundled into the drop at
-the end of a nine-check gate, so he was pasting and testing it while the
-walk was still running. Two things happened at once instead of one after
-the other.
-
-**If a piece of work is BZ's and does not depend on the build, ship it the
-moment it is written.** Not with the drop. That covers:
-
-- Apps Script changes (recap.gs, lookup handlers)
-- Firebase rules
-- Anything he pastes into a spreadsheet, a console, or GitHub
-- Instructions for a thing he does by hand
-
-Each of those goes out as its own file with its own short walkthrough, and
-he starts on it while the gate runs.
-
-**The reverse matters as much.** When his piece DOES depend on an app
-version, say so plainly, because a script deployed against a build he has
-not installed will look broken and cost a round trip to explain.
-
-**Write the walkthrough for somebody who has not opened that tool in a
-month.** Real menu names, real button names, the actual block of code he
-will be looking at and what it should read afterwards. "Add two lines to
-your existing doPost" is not an instruction — it asks him to read and
-understand a file he wrote once and has not seen since. That is our work,
-not his.
-
-## Four rules from the 2026-09-05 retro
-
-These are not new principles. Each one is a rule that already existed and
-was not followed, written here in the form the failure took, because the
-abstract version did not stop it happening.
-
-### 1. Two failures in one area — stop and ask
-
-The library fill took TEN attempts. Nine of them fixed real bugs and none
-fixed the problem, because the problem was structural: five separate things
-could each decide a bottle needed no work, and they disagreed. BZ gave the
-shape in one sentence — "three lists: done, needs done, waiting to do
-again" — after hours of patching instances of it.
-
-The signal is the repetition, not the bug. **Same corner, second failure:
-stop fixing and go looking for the design fault. Third failure: ask BZ what
-shape he sees**, because the person watching it fail knows something the
-person patching it does not.
-
-Ten rounds of "found it, fixed it" is not persistence, it is refusing to
-re-read the problem.
-
-### 2. Never reason about data you cannot see
-
-His library. His deployed build. His log. Every confident claim made about
-any of those was wrong, including twice asserting he was running an old
-version when he was not.
-
-**Instrument, ship, read what comes back.** A build that says WRITE or
-WAITLIST per bottle settles in one round what six rounds of inference did
-not. When the answer depends on data on his device, the honest move is a
-diagnostic and a request, not a theory.
-
-### 3. Verify before saying it is fixed
-
-"This should work now" was said at least ten times before it did. A
-simulation against data.json is not evidence about his library; a green
-gate is not evidence a feature does its job.
-
-**Say what was actually checked and against what.** "Measured on his
-bottles: 200 to 190" is a claim. "This fixes it" is a hope with a full stop.
-
-### 4. "The same as X" means read X and CALL it
-
-BZ said "the same as the shopping search" FOUR times. Each time something
-adjacent was built — the add form's search, then a shelf-only search, then
-a library search — and each time it was wrong for the same reason.
-
-**When he names an existing behaviour, open that code and call what it
-calls.** Not something with the same shape. The shop searches shelf and
-library and THEN offers a lookup when both miss, and the fourth attempt was
-the first one that read renderShop to find that out.
-
-Rule 2 in his dev rules already says reuse before inventing, read existing
-code first. This is what ignoring it looks like.
-
-### And one that is not a rule but a habit worth keeping
-
-A change to a shared helper affects every caller. nameOverlap was fixed for
-the bar-list case and silently changed the receipt import, the gift list,
-the buddy shelf and the wishlist filter. It was measured afterwards — 27
-strong matches to 25, and all 25 correct — but that measurement was luck,
-not process. **Grep the callers before changing a helper, and measure each
-one after.**
+`/home/claude/bottlefolio/`. It was `/home/claude/kb/` in sessions 3–4 and
+`/home/claude/dram/` in 1–2; `complexity.js` still hardcodes
+`/home/claude/kb/`. Outputs stage to `/mnt/user-data/outputs/`.
