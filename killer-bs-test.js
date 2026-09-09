@@ -13790,5 +13790,59 @@ sec('\u00a7329 a shelf is a combination, not its loudest chip');
       {})).length);
 }
 
+sec('\u00a7330 a house says where it is from');
+{
+  /* BZ, on a 210-bottle import the app would not call a Scotch shelf: that
+     is a smoky scotch shelf, 38 heavy peated, 24 Laphroaig.
+
+     Islay Regular reads t.regions[0], and an Only Drams export carries no
+     region column at all — so on the shelf where Islay mattered most, the
+     chip that would have said so was blank, and no smoke-and-Islay set
+     could win. Laphroaig is Islay whether the file says so or not.
+
+     Read off the catalogue, unanimous only, the same move that fixed the
+     import this morning (L.houseCountry). */
+  const cat = {
+    a: { k: 'a', name: 'Laphroaig 10', dist: 'Laphroaig', region: 'Islay' },
+    b: { k: 'b', name: 'Laphroaig Lore', dist: 'Laphroaig Distillery',
+         region: 'Islay' },
+    /* A house filed under two regions is not evidence about anything. */
+    c: { k: 'c', name: 'Mystery A', dist: 'Nowhere', region: 'Islay' },
+    d: { k: 'd', name: 'Mystery B', dist: 'Nowhere', region: 'Speyside' }
+  };
+  const houses = L.houseRegion(cat);
+  eq('a single-region house is settled',
+    houses[L.shopNorm('Laphroaig')], 'Islay');
+  eq('and the suffix does not fork it',
+    houses[L.shopNorm('Laphroaig Distillery'.replace(L.HOUSE_SUFFIX, ' '))],
+    'Islay');
+  eq('a house filed under two regions is not settled',
+    houses[L.shopNorm('Nowhere')], undefined);
+  eq('one house settled, not two', Object.keys(houses).length, 1);
+
+  /* THE ROW'S OWN REGION ALWAYS WINS. This fills a blank; it never
+     overrules what the shelf actually says. */
+  eq('a stated region is kept',
+    L.regionOf({ dist: 'Laphroaig', region: 'Campbeltown' }, houses),
+    'Campbeltown');
+  eq('a blank one is filled from the house',
+    L.regionOf({ dist: 'Laphroaig' }, houses), 'Islay');
+  eq('an unknown house stays blank',
+    L.regionOf({ dist: 'Nowhere' }, houses), null);
+  eq('and no house at all is not an error',
+    L.regionOf({ name: 'X' }, houses), null);
+  eq('with no map it is still safe', L.regionOf({ dist: 'Laphroaig' }, null), null);
+
+  /* THE POINT OF IT: an import with no region column still counts Islay. */
+  const imported = {
+    x: { k: 'x', name: 'Laphroaig Cairdeas', dist: 'Laphroaig' },
+    y: { k: 'y', name: 'Laphroaig Quarter Cask', dist: 'Laphroaig' }
+  };
+  const hr = L.houseRegion(cat);
+  eq('a region-less import still reads as Islay',
+    Object.keys(imported).filter(k => L.regionOf(imported[k], hr) === 'Islay')
+      .length, 2);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
