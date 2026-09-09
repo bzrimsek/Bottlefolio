@@ -13707,5 +13707,88 @@ sec('\u00a7328 the import check survives a house spelt two ways');
     L.importAudit(clean, [bots[0]]).filter(x => x.id === 'houses').length, 0);
 }
 
+sec('\u00a7329 a shelf is a combination, not its loudest chip');
+{
+  /* BZ: you need to think about combinations of a few of these to really
+     drive a profile. That was the actual fault. PX Lover was not
+     mis-ranked because six bottles is few — it was mis-ranked because on
+     its own it is half a sentence. A shelf holding smoke AND sherry
+     sweetness says something neither chip says alone.
+
+     Expected values worked out by hand from the floors on the descriptors,
+     not read back off the function (rule 28). */
+  /* Built from the real descriptor, so a fixture cannot claim a floor or a
+     title the app does not actually carry. */
+  const chip = (id, n) => {
+    const d = L.PORTRAIT_TITLES.filter(x => x.id === id)[0];
+    return { id: id, title: d.title, why: d.title + ' ' + n, n: n,
+             floor: d.floor };
+  };
+
+  /* peat floor 10, px floor 5, region floor 20. */
+  const smokeSherry = [chip('peat', 28), chip('px', 19), chip('region', 39)];
+  const pick = L.portraitPick(smokeSherry, null);
+  eq('three chips make a triple', pick.title, 'Smoke and Sherry');
+  eq('and it names the chips that earned it',
+    pick.from.slice().sort(), ['peat', 'px', 'region']);
+  eq('the reason carries all three', pick.why.split('\u00b7').length, 3);
+
+  /* A TRIPLE BEATS A PAIR ALWAYS, even a pair sitting further past its
+     floors: clearing three axes is a claim no two can make. */
+  eq('two of the same chips make a pair',
+    L.portraitPick([chip('peat', 28), chip('px', 19)], null).title,
+    'Sweet Smoke');
+  eq('and adding the third promotes it',
+    L.portraitPick([chip('peat', 11), chip('px', 5), chip('region', 20)],
+      null).title, 'Smoke and Sherry');
+
+  /* ONE CHIP IS A CHIP. */
+  eq('a single earns its own title',
+    L.portraitPick([chip('px', 19)], null).title, 'PX Lover');
+  eq('and nothing earns nothing', L.portraitPick([], null), null);
+
+  /* THE CAP, which is why BZ's shelf is not called Off the Map.
+     rare has a floor of 8 and he owns 66 — a lift of 8.25 that alone
+     outweighed three chips sitting 2 to 4 times past theirs. */
+  eq('lift is how far past its own floor a chip sits',
+    L.portraitLift({ n: 20, floor: 10 }), 2);
+  eq('and it is capped', L.portraitLift({ n: 66, floor: 8 }), L.LIFT_CAP);
+  eq('a chip with no floor is not divided by zero',
+    L.portraitLift({ n: 5 }), 4);
+
+  /* A REINFORCING PAIR IS WORTH LESS THAN A CONTRASTING ONE. Islay whisky
+     is peated, so holding both is close to one fact counted twice — and it
+     must not outrank smoke plus sherry on the same evidence. */
+  const both = [chip('peat', 40), chip('region', 40), chip('px', 20)];
+  eq('smoke and sherry beats smoke and Islay',
+    L.portraitPick(both, null).title, 'Smoke and Sherry');
+
+  /* THE VETO. BZ: should we let users say "not me". A veto rather than a
+     picker — a title must be EARNED, so choosing your own is flattery, but
+     saying the description is wrong is something only the owner knows. */
+  eq('a dismissed title steps aside',
+    L.portraitPick(smokeSherry, { 'Smoke and Sherry': 1 }).title,
+    'Sweet Smoke');
+  eq('and dismissing that one too falls to a chip',
+    L.portraitPick(smokeSherry,
+      { 'Smoke and Sherry': 1, 'Sweet Smoke': 1, 'Islay First': 1 }).title,
+    'PX Lover');
+  eq('dismissing everything leaves nothing rather than something invented',
+    L.portraitPick([chip('px', 19)], { 'PX Lover': 1 }), null);
+
+  /* EVERY SET MUST BE REACHABLE, or a name is written and never shown. */
+  const ids = {};
+  L.PORTRAIT_TITLES.forEach(d => { ids[d.id] = 1; });
+  eq('every set is built from chips that exist',
+    L.PORTRAIT_SETS.filter(g => !g.ids.every(id => ids[id])).map(g => g.title),
+    []);
+  eq('every chip carries a floor',
+    L.PORTRAIT_TITLES.filter(d => !(d.floor > 0)).map(d => d.id), []);
+  eq('no two sets share a name',
+    L.PORTRAIT_SETS.length,
+    Object.keys(L.PORTRAIT_SETS.reduce((a, g) => { a[g.title] = 1; return a; },
+      {})).length);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
