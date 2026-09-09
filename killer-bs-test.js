@@ -14139,5 +14139,86 @@ sec('\u00a7336 a new lookup address reaches a device that has the old one');
     L.lookupUrlFor(OLD, NEW, followed), NEW);
 }
 
+sec('\u00a7337 an account with no display name is still somebody');
+{
+  /* BZ, looking at a row reading "(no name)" in the admin list: can we put
+     name or email on this. Four of five rows already carry a name, because
+     stats records the account's own display name; the fifth never set one.
+     Only ever what the account recorded - never guessed from a uid. */
+  const stats = {
+    a1: { name: 'Tyson', email: 'tyson@example.com', at: 3, version: '1.9.3' },
+    a2: { name: '', email: 'kev@example.com', at: 2, version: '1.9.5' },
+    a3: { name: '', at: 1, version: '1.9.5' }
+  };
+  const people = L.adminPeople(stats, [], 4);
+  const by = {};
+  people.forEach(p => { by[p.uid] = p; });
+  eq('an address is carried through when the account recorded one',
+    by.a2.email, 'kev@example.com');
+  eq('and is empty, not undefined, when it did not', by.a3.email, '');
+  eq('a display name is untouched by any of it', by.a1.name, 'Tyson');
+  /* The directory still wins for somebody who is findable, since that is
+     the name they chose to show other people. */
+  const withDir = L.adminPeople(stats, [{ uid: 'a1', name: 'Directory' }], 4);
+  eq('the directory name still wins where there is one',
+    withDir.filter(p => p.uid === 'a1')[0].name, 'Directory');
+  eq('and the address rides along beside it',
+    withDir.filter(p => p.uid === 'a1')[0].email, 'tyson@example.com');
+}
+
+sec('\u00a7338 a share is four records and they can disagree');
+{
+  /* BZ, with two accounts open: green green on his side and green red on
+     mine. Both apps were right - a grant and its index are written one
+     after the other, so a half-landed accept leaves each side reading a
+     different half. Expected values worked out by hand. */
+  const whole = { uid: 'nsb', outGrant: true, outIndex: true,
+                  inGrant: true, inIndex: true };
+  eq('four records present is a whole share',
+    L.shareHealth(whole).whole, true);
+  eq('and needs no repair', L.shareRepairOps(whole).length, 0);
+
+  /* EXACTLY BZ'S CASE: they granted him, his app cannot find it. */
+  const bz = { uid: 'nsb', outGrant: true, outIndex: true,
+               inGrant: true, inIndex: false };
+  const h = L.shareHealth(bz);
+  eq('they can still see his shelf', h.theyCanSeeMine, true);
+  eq('he cannot see theirs', h.iCanSeeTheirs, false);
+  eq('one fault, named', h.faults.length, 1);
+  eq('and it names the missing side',
+    /cannot find it/.test(h.faults[0].what), true);
+  const ops = L.shareRepairOps(bz);
+  eq('one record to write', ops.length, 1);
+  eq('it writes the index rather than the grant', ops[0].set, 'sharedWith');
+  eq('into his own viewer node', ops[0].viewer, 'me');
+  eq('owned by them, so only an admin can write it', ops[0].mine, false);
+
+  /* THE GRANT IS THE TRUTH. An index with no grant behind it is removed,
+     never turned into access nobody granted - a repair button must not be
+     able to hand out a shelf. */
+  const ghost = { uid: 'x', outGrant: false, outIndex: true,
+                  inGrant: false, inIndex: false };
+  const gops = L.shareRepairOps(ghost);
+  eq('an index with no grant is removed', gops[0].remove, 'sharedWith');
+  eq('and nothing is granted to repair it',
+    gops.filter(o => o.set).length, 0);
+  eq('the record is his own, so he can fix it himself', gops[0].mine, true);
+
+  /* Nothing either way is not a fault. */
+  const none = { uid: 'x', outGrant: false, outIndex: false,
+                 inGrant: false, inIndex: false };
+  eq('no relationship is not a broken one', L.shareHealth(none).whole, true);
+  eq('and nothing to repair', L.shareRepairOps(none).length, 0);
+
+  /* His own half half-landed: he granted them and their app cannot find
+     it. That one he can fix without being an admin at all. */
+  const outHalf = { uid: 'x', outGrant: true, outIndex: false,
+                    inGrant: false, inIndex: false };
+  const oops = L.shareRepairOps(outHalf);
+  eq('his own half-landed grant is one write', oops.length, 1);
+  eq('and it is his record to write', oops[0].mine, true);
+  eq('written into their viewer node', oops[0].viewer, 'x');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
