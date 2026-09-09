@@ -2126,6 +2126,9 @@ function step(n) {
          appear on a card above the folder as a different subject, which is
          the inconsistency this step now guards. outSig is set to match so
          the fetch landing does not redraw underneath the assertions. */
+      /* u5 has granted a shelf whose snapshot has not been written yet:
+         a row, no tab, and it must not read as "not sharing". */
+      SHARED.granted = { u1: true, u2: true, u3: true, u5: true };
       SHARED.outList = [{ uid: 'u2', name: 'Dave' }, { uid: 'u4', name: 'Nina' }];
       SHARED.out = 2;
       SHARED.outSig = SHARED.outList.map(x => x.uid + ':' + x.name).sort().join('|');
@@ -2149,8 +2152,22 @@ function step(n) {
       const grid = document.querySelector('.budgrid');
       if (!grid) { out.push('buddies: no grid of people'); return out; }
       const lines = [...grid.querySelectorAll('.budline')];
-      if (lines.length !== 4) {
-        out.push('buddies: ' + lines.length + ' grid rows, expected 4');
+      if (lines.length !== 5) {
+        out.push('buddies: ' + lines.length + ' grid rows, expected 5');
+      }
+      /* THE GRANT WITHOUT A SHELF. It had no row at all before, because it
+         was in neither the loaded shelves nor the outbound list. */
+      const noShelf = lines.filter(l =>
+        /their shelf has not arrived yet/.test(l.textContent));
+      if (noShelf.length !== 1) {
+        out.push('buddies: a grant with no shelf yet draws '
+          + noShelf.length + ' rows, expected 1');
+      }
+      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.on')) {
+        out.push('buddies: a grant with no shelf reads as not sharing');
+      }
+      if (noShelf[0] && noShelf[0].querySelector('button.budwho')) {
+        out.push('buddies: a buddy with no shelf offers a panel to open');
       }
       ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         if (!new RegExp(n).test(grid.textContent)) {
@@ -2253,6 +2270,7 @@ function step(n) {
          must still list the person who can see yours, or they are
          invisible exactly as they were before this was built. */
       SHARED.shelves = {};
+      SHARED.granted = {};
       SHARED.outList = [{ uid: 'u9', name: 'Nina' }];
       SHARED.out = 1;
       try { renderBuddiesTab(); } catch (e) {
@@ -2274,6 +2292,7 @@ function step(n) {
       // A buddy who stops sharing must not strand you on a dead panel.
       SHARED.outList = [];
       SHARED.out = 0;
+      SHARED.granted = { u1: true };
       SHARED.shelves = { u1: mk(['A', 'B']) };
       try { renderBuddiesTab(); } catch (e) { out.push('buddies: threw on redraw ' + e.message); }
       if (!/All 2 of you|Tyson/.test(document.getElementById('buddiesBody').textContent)) {
