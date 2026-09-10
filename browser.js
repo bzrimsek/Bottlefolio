@@ -408,6 +408,39 @@ function step(n) {
   /* SPIN IS CENTRED AND THE PICKER DOES NOT WRAP. BZ: not liking how spin
      is not centered, and I'm worried those pills will spill over and wrap.
      Driven with three buddies, which is where the old row of chips broke. */
+  /* THE KEYBOARD IS NOT A SMALLER SCREEN. Kevrin's iPhone, photographed:
+     tapping the search box on Shop put the nav bar in the MIDDLE of the
+     page above a blank half-screen. visualViewport.height halves when the
+     keyboard opens, the column was sized to it, and the bar sat at the
+     bottom of that. Driven here by forcing the same numbers. */
+  step('the keyboard does not move the nav bar');
+  {
+    const r = await page.evaluate(() => {
+      const read = () => getComputedStyle(document.documentElement)
+        .getPropertyValue('--app-h').trim();
+      const before = read();
+      const real = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(window.visualViewport), 'height');
+      Object.defineProperty(window.visualViewport, 'height',
+        { configurable: true, get: () => Math.round(window.innerHeight * 0.57) });
+      setAppHeight();
+      const withKb = read();
+      navSelfHeal();
+      const healed = read();
+      Object.defineProperty(window.visualViewport, 'height', real);
+      setAppHeight();
+      return { before: before, withKb: withKb, healed: healed,
+               inner: window.innerHeight + 'px' };
+    });
+    if (r.withKb !== r.inner) {
+      failures.push('keyboard: the page shrank to ' + r.withKb
+        + ' instead of staying ' + r.inner);
+    }
+    if (r.healed !== r.inner) {
+      failures.push('keyboard: the self-heal put it back to ' + r.healed);
+    }
+  }
+
   step('spin is centred and its picker holds one line');
   await page.locator('nav button[data-scr="pour"]').click();
   await page.waitForTimeout(250);
