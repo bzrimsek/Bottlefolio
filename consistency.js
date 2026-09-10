@@ -233,6 +233,31 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
     problems);
 }
 
+/* NO HELP ENTRY IS WRITTEN TWICE.
+
+   Rule 9z says App use is updated with every build, and two builds running
+   added an entry that was already there - `Scan the library for
+   inconsistencies` and `Sharing check` were each in twice, same term and
+   same source. It cost more than tidiness: an anchor that matches twice
+   makes every later edit to that file fail its own uniqueness check, which
+   is how the copy-diagnostics entry silently never landed at all in
+   v2.0.16 while the button shipped.
+
+   Term AND source together, because a word can honestly appear in two
+   glossaries - Proof and Finish are both a reel face and a label - and
+   only the same word in the same place is a duplicate. */
+{
+  const seen = {}, dup = [];
+  const re = /\{ term: '((?:[^'\\]|\\.)*)', src: '([^']*)'/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const k = m[1] + ' \u2014 ' + (m[2] || 'no source');
+    if (seen[k]) dup.push(k);
+    seen[k] = 1;
+  }
+  check('no App use entry is written twice', dup);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 

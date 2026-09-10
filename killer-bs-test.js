@@ -15142,5 +15142,42 @@ sec('\u00a7356 a finding you can go to, and a removal that travels');
     L.applyLibraryMoves(null, null, null, null).bottles.length, 0);
 }
 
+sec('\u00a7357 what became of the one that is not there');
+{
+  /* BZ: I'm gifting a bottle I have and we don't have a feature for that.
+     Half of it existed - `gifted` has been in L.EXITS all along - and two
+     halves did not. A SEALED bottle had no way out at all, so gifting one
+     meant opening it first, which is a lie about the bottle and cannot be
+     taken back. And nothing ever read an exit BACK: the reason and the
+     date were stored from the day Retire was built and never shown. */
+  eq('gifted is an exit the app already knew about',
+    L.EXITS.indexOf('gifted') >= 0, true);
+  eq('so are traded and sold',
+    L.EXITS.indexOf('traded') >= 0 && L.EXITS.indexOf('sold') >= 0, true);
+
+  eq('a gift says who and when',
+    L.exitLine({ status: 'gone', exit: 'gifted', exitTo: 'Kevrin',
+      exitDate: '2026-09-10' }), 'Gifted to Kevrin, Sep 10, 2026');
+  eq('a sale with nobody named still says what happened',
+    L.exitLine({ status: 'gone', exit: 'sold', exitDate: '2026-09-10' }),
+    'Sold, Sep 10, 2026');
+  eq('a date nobody recorded is left out rather than guessed',
+    L.exitLine({ status: 'gone', exit: 'gifted', exitTo: 'Tyson' }),
+    'Gifted to Tyson');
+  eq('a drain pour reads as one', 
+    L.exitLine({ status: 'gone', exit: 'drain pour', exitDate: '2026-01-02' }),
+    'Drain poured, Jan 2, 2026');
+  /* The date is the app's own format, not a second one invented here. */
+  eq('and the date is the format the rest of the app uses',
+    L.exitLine({ status: 'gone', exit: 'sold', exitDate: '2026-09-10' })
+      .indexOf(L.showDate('2026-09-10')) > 0, true);
+
+  eq('a bottle you still own has no exit line',
+    L.exitLine({ status: 'open' }), '');
+  eq('nor one that is gone with no reason recorded',
+    L.exitLine({ status: 'gone' }), '');
+  eq('and nothing at all is not a crash', L.exitLine(null), '');
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
