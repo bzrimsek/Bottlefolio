@@ -2365,7 +2365,7 @@ function step(n) {
       if (!strip) { out.push('buddies: no panel strip'); return out; }
       const chips = [...strip.querySelectorAll('button')].map(b => b.textContent.trim());
       // Everyone plus one per buddy. THREE buddies, not two.
-      if (chips.length !== 4) {
+      if (chips.length !== 5) {
         out.push('buddies: ' + chips.length + ' chips, expected 4 (' + chips.join(',') + ')');
       }
       ['Everyone', 'Tyson', 'Dave', 'Eli'].forEach(n => {
@@ -2384,24 +2384,39 @@ function step(n) {
       }
       /* THE GRANT WITHOUT A SHELF. It had no row at all before, because it
          was in neither the loaded shelves nor the outbound list. */
-      const noShelf = lines.filter(l =>
-        /their shelf has not arrived yet/.test(l.textContent));
+      /* u5 granted and has no snapshot: it is a row like any other now. */
+      /* u5 granted and has no snapshot. It is a row like any other now -
+         green, and it opens - which is BZ's rule: if visible = yes, then
+         share. Matched by its name so the filter cannot drift on to
+         somebody else's row. */
+      const noShelf = lines.filter(l => /u5/.test(l.textContent));
       if (noShelf.length !== 1) {
         out.push('buddies: a grant with no shelf yet draws '
           + noShelf.length + ' rows, expected 1');
       }
-      /* AMBER, not green and not red: granted, nothing to read yet. The
-         green said YOU SEE THEIRS one line above text saying you cannot. */
-      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.waiting')) {
-        out.push('buddies: a grant with no shelf yet is not shown as '
-          + 'waiting');
+      /* GREEN, AND IT OPENS. BZ: if visible = yes, then share. A grant is
+         a grant, so the row does not carry a third state - the panel says
+         it, which is where somebody went expecting bottles. */
+      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.on')) {
+        out.push('buddies: a grant does not read as sharing');
       }
-      if (noShelf[0] && noShelf[0].querySelector('.budlamp.on')) {
-        out.push('buddies: a shelf that has not arrived shows as arrived');
+      if (noShelf[0] && !noShelf[0].querySelector('button.budwho')) {
+        out.push('buddies: a green row does not open anything');
       }
-      if (noShelf[0] && noShelf[0].querySelector('button.budwho')) {
-        out.push('buddies: a buddy with no shelf offers a panel to open');
+      /* AND WHAT IS BEHIND IT SAYS SO. The panel is where somebody went
+         expecting bottles, so the wait is explained there rather than as a
+         third colour on the row. */
+      if (noShelf[0]) {
+        noShelf[0].querySelector('button.budwho').click();
+        const b3 = document.getElementById('buddiesBody');
+        if (!/has not reached you yet/.test(b3.textContent)) {
+          out.push('buddies: a shelf that has not arrived is not explained '
+            + 'on its own panel');
+        }
+        BUD.panel = 'all';
+        renderBuddiesTab();
       }
+      /* It DOES offer a panel now, and must: a grant is a grant. */
       ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         if (!new RegExp(n).test(grid.textContent)) {
           out.push('buddies: ' + n + ' is on neither side of the grid');
