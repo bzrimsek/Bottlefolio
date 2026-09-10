@@ -519,14 +519,21 @@ function step(n) {
     for (const label of chips) {
       await page.locator('#pourWhere button', { hasText: label }).first().click();
       await page.waitForTimeout(200);
-      const open = await page.evaluate(() => ['pourHome', 'awayBody', 'histBody']
+      /* recapBody counts: it shows WITH history and must not be on screen
+         beside the machine, which is the whole point of moving it. */
+      const open = await page.evaluate(() => ['pourHome', 'awayBody',
+        'histBody', 'recapBody']
         .filter(id => {
           const e = document.getElementById(id);
           return e && !e.hidden;
         }));
-      if (open.length !== 1) {
-        failures.push('taste: "' + label + '" leaves ' + open.length
-          + ' panel(s) open (' + open.join(',') + ')');
+      const want = label === 'History' ? 2 : 1;   // history shows the recap too
+      if (open.length !== want) {
+        failures.push('taste: "' + label + '" shows ' + open.length
+          + ' panel(s), expected ' + want + ' (' + open.join(',') + ')');
+      }
+      if (label !== 'History' && open.indexOf('recapBody') >= 0) {
+        failures.push('taste: the recap is on screen under "' + label + '"');
       }
     }
     await page.locator('#pourWhere button', { hasText: 'At home' }).first().click();
