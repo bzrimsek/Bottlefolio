@@ -2074,20 +2074,6 @@ eq('what was actually seen ranks first', withSrc.bottles[0].name, 'Seen One');
 }
 
 {
-sec('how long ago');
-const t0 = 1700000000000;
-eq('nothing is never', L.ago(0, t0), 'never');
-eq('a moment is just now', L.ago(t0 - 30000, t0), 'just now');
-eq('minutes', L.ago(t0 - 20 * 60000, t0), '20 minutes ago');
-// One of a thing is not "1 hours ago".
-eq('one hour is singular', L.ago(t0 - 3600000, t0), '1 hour ago');
-eq('several are plural', L.ago(t0 - 3 * 3600000, t0), '3 hours ago');
-eq('one day is singular', L.ago(t0 - 86400000, t0), '1 day ago');
-eq('days', L.ago(t0 - 5 * 86400000, t0), '5 days ago');
-eq('and then months', L.ago(t0 - 70 * 86400000, t0), '2 months ago');
-}
-
-{
 sec('the master library');
 const lib = {
   a: { k: 'a', name: 'Lagavulin 16', proof: 86, dist: 'Lagavulin', sub: 'scotch' }
@@ -8197,14 +8183,26 @@ sec('§239 a fill writes named fields, name and at');
  */
 sec('§240 what deleting an account clears');
 {
-  const paths = L.accountPaths('me', ['friend1', 'friend2'], ['alice']);
+  const paths = L.accountPaths('me', ['friend1', 'friend2'], ['alice'],
+    ['bob', 'carol']);
 
   eq('the shelf itself goes', paths.indexOf('me') >= 0, true);
   eq('and the directory entry', paths.indexOf('directory/me') >= 0, true);
   eq('and anything offered but unreviewed',
     paths.indexOf('contrib/me') >= 0, true);
-  eq('and requests waiting on this account',
-    paths.indexOf('requests/me') >= 0, true);
+  /* ONE CHILD AT A TIME, not the parent. `requests/me` has no write rule
+     of its own - the rule is on requests/$toUid/$fromUid - so nulling the
+     parent is judged where nothing may write, and Firebase refuses the
+     WHOLE multi-path update over it. That one path took the other eight
+     with it, and BZ got a refusal the app then blamed on stale console
+     rules he had already published. */
+  eq('the parent of the asks is never written',
+    paths.indexOf('requests/me') >= 0, false);
+  eq('each ask waiting on this account goes by name',
+    paths.indexOf('requests/me/bob') >= 0
+    && paths.indexOf('requests/me/carol') >= 0, true);
+  eq('and an ask this account SENT still goes, under its recipient',
+    paths.indexOf('requests/alice/me') >= 0, true);
   eq('and the view record', paths.indexOf('view/me') >= 0, true);
   eq('and the stats', paths.indexOf('stats/me') >= 0, true);
 
@@ -8244,8 +8242,13 @@ sec('§240 what deleting an account clears');
   eq('no uid is nothing to clear', L.accountPaths('', ['a'], ['b']).length, 0);
   eq('and nothing to wipe',
     Object.keys(L.accountWipe(null, null, null)).length, 0);
+  /* Five: the shelf, the directory entry, the view, the stats and the
+     contributions. The asks are per-child now, so an account nobody has
+     asked adds none. */
   eq('an account that shared with nobody still clears itself',
-    L.accountPaths('me', [], []).length, 6);
+    L.accountPaths('me', [], []).length, 5);
+  eq('and one that has been asked adds a path per ask',
+    L.accountPaths('me', [], [], ['bob', 'carol']).length, 7);
 }
 
 /* §241  a removed account cannot rebuild itself ----------------------
@@ -15177,6 +15180,100 @@ sec('\u00a7357 what became of the one that is not there');
   eq('nor one that is gone with no reason recorded',
     L.exitLine({ status: 'gone' }), '');
   eq('and nothing at all is not a crash', L.exitLine(null), '');
+}
+
+sec('\u00a7358 pouring for a guest, by distance');
+{
+  /* BZ, on the hardest thing about a wide shelf: when I have a visitor it
+     is hard deciding what to pour them. The guest names something they
+     like and the app travels a known distance from it - his four rungs,
+     his definitions, figurative not literal. */
+  eq('four rungs', L.POUR_RUNGS.length, 4);
+  eq('and they are his', L.POUR_RUNGS.map(r => r.id).join(','),
+    'house,next,road,pond');
+
+  const sc = { scotch: 'Scotland', bourbon: 'United States',
+               rye: 'United States', irish: 'Ireland' };
+  const seed = { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
+                 region: 'Islay', proof: 92 };
+
+  eq('same maker is keeping it in the house',
+    L.rungOf(seed, { name: 'Ardbeg Uigeadail', dist: 'Ardbeg',
+      sub: 'scotch', region: 'Islay' }, sc), 'house');
+  eq('same region, another maker is next door',
+    L.rungOf(seed, { name: 'Lagavulin 16', dist: 'Lagavulin',
+      sub: 'scotch', region: 'Islay' }, sc), 'next');
+  /* SIX REGIONS, and they were already here: L.SCOTCH_REGIONS has listed
+     Islands separately since long before this feature. BZ said five, I
+     started folding Islands into Highland on the strength of the
+     regulations, and he corrected it - then I should have said 6. He was
+     right twice over, because the app had never agreed with me. */
+  eq('six Scotch regions, Islands among them',
+    L.SCOTCH_REGIONS.length, 6);
+  eq('and Islands is one of them',
+    L.SCOTCH_REGIONS.indexOf('Islands') >= 0, true);
+  /* The road out of each category is a small table, which is BZ's rules
+     written down: Scotch travels by region, Ireland across the sea,
+     Canada and the world to their nearest big neighbour. */
+  eq('Scotch travels by region', L.ROAD_TO.scotch, 'region');
+  eq('Ireland goes across the sea to Scotland', L.ROAD_TO.irish, 'scotch');
+  eq('Canada goes to bourbon', L.ROAD_TO.canadian, 'bourbon');
+  eq('and the world goes to Scotland', L.ROAD_TO.world, 'scotch');
+  eq('another Scotch region is down the road',
+    L.rungOf(seed, { name: 'Arran 10', dist: 'Arran', sub: 'scotch',
+      region: 'Islands' }, sc), 'road');
+  eq('and leaving the country is across the pond',
+    L.rungOf(seed, { name: 'Buffalo Trace', dist: 'Buffalo Trace',
+      sub: 'bourbon' }, sc), 'pond');
+
+  /* AWAY FROM SCOTCH the middle rung is a category inside one country:
+     bourbon to rye is down the road, both being American. */
+  const bt = { name: 'Buffalo Trace', dist: 'Buffalo Trace',
+               sub: 'bourbon', proof: 90 };
+  eq('another bourbon house is next door',
+    L.rungOf(bt, { name: 'Eagle Rare', dist: 'Buffalo Trace',
+      sub: 'bourbon' }, sc), 'house');
+  eq('a rye is down the road, still American',
+    L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac',
+      sub: 'rye' }, sc), 'road');
+  eq('and a Scotch is across the pond',
+    L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
+      sc), 'pond');
+  /* Two unknown countries are two unknowns, not a match. */
+  eq('an unplaceable pair does not count as the same country',
+    L.rungOf({ name: 'A', dist: 'A', sub: 'mystery' },
+      { name: 'B', dist: 'B', sub: 'enigma' }, sc), 'pond');
+
+  /* THE SEED IS NEVER ITS OWN ANSWER. */
+  const shelf = [seed,
+    { name: 'Ardbeg Uigeadail', dist: 'Ardbeg', sub: 'scotch',
+      region: 'Islay', proof: 108 },
+    { name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
+      region: 'Islay', proof: 86 },
+    { name: 'Arran 10', dist: 'Arran', sub: 'scotch',
+      region: 'Islands', proof: 92 },
+    { name: 'Buffalo Trace', dist: 'Buffalo Trace', sub: 'bourbon',
+      proof: 90 }];
+  eq('the bottle they named is not offered back',
+    L.pourAtRung(seed, 'house', shelf, sc)
+      .filter(p => p.name === 'Ardbeg 10').length, 0);
+  eq('the house rung finds the other Ardbeg',
+    L.pourAtRung(seed, 'house', shelf, sc)[0].name, 'Ardbeg Uigeadail');
+
+  /* IT FAILS OUTWARD AND SAYS SO. BZ: if I have just one bottle that is
+     also their favourite, we can't stay home, we have to go next door. */
+  const thin = [seed, { name: 'Lagavulin 16', dist: 'Lagavulin',
+    sub: 'scotch', region: 'Islay', proof: 86 }];
+  const out = L.pourFor(seed, 'house', thin, sc);
+  eq('an empty rung walks out to the next one', out.rung, 'next');
+  eq('and admits it moved', out.moved, true);
+  eq('with something pourable at the end of it', out.list[0].name,
+    'Lagavulin 16');
+  const stay = L.pourFor(seed, 'house', shelf, sc);
+  eq('a rung that has something stays put', stay.rung, 'house');
+  eq('and says it did not move', stay.moved, false);
+  eq('a shelf of only the seed has no answer anywhere',
+    L.pourFor(seed, 'house', [seed], sc).list.length, 0);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -512,8 +512,8 @@ function step(n) {
   await page.waitForTimeout(300);
   {
     const chips = await page.locator('#pourWhere button').allTextContents();
-    if (chips.length !== 3) {
-      failures.push('taste: ' + chips.length + ' chips, expected 3 ('
+    if (chips.length !== 4) {
+      failures.push('taste: ' + chips.length + ' chips, expected 4 ('
         + chips.join(',') + ')');
     }
     for (const label of chips) {
@@ -522,12 +522,13 @@ function step(n) {
       /* recapBody counts: it shows WITH history and must not be on screen
          beside the machine, which is the whole point of moving it. */
       const open = await page.evaluate(() => ['pourHome', 'awayBody',
-        'histBody', 'recapBody']
+        'histBody', 'recapBody', 'guestBody']
         .filter(id => {
           const e = document.getElementById(id);
           return e && !e.hidden;
         }));
       const want = label === 'History' ? 2 : 1;   // history shows the recap too
+      // guestBody is a panel like the others and must obey the same rule.
       if (open.length !== want) {
         failures.push('taste: "' + label + '" shows ' + open.length
           + ' panel(s), expected ' + want + ' (' + open.join(',') + ')');
@@ -573,6 +574,42 @@ function step(n) {
     });
     await page.waitForTimeout(500);
     bad.forEach(x => failures.push('running this: ' + x));
+  }
+
+  /* THE GUEST LADDER, DRIVEN. BZ: when I have a visitor it is hard
+     deciding what to pour them. Name a bottle, walk the four rungs, and
+     every one must offer something pourable off HIS shelf. */
+  step('with a guest walks all four rungs');
+  {
+    /* Arrive at the tab first: the step before this one navigates away,
+       and a chip on a hidden screen is a click that waits thirty seconds
+       and then fails for the wrong reason. */
+    await page.locator('nav button[data-scr="pour"]').click();
+    await page.waitForTimeout(250);
+    await page.locator('#pourWhere button', { hasText: 'With a guest' }).click();
+    await page.waitForTimeout(250);
+    await page.locator('#guestBody input').fill('Lagavulin');
+    await page.waitForTimeout(400);
+    const hits = await page.locator('#guestBody .recent .item').count();
+    if (!hits) {
+      failures.push('guest: naming a bottle offers no matches');
+    } else {
+      await page.locator('#guestBody .recent .item').first().click();
+      await page.waitForTimeout(300);
+      for (const rung of ['Keep it in the house', 'Next door',
+                          'Down the road', 'Across the pond']) {
+        await page.locator('#guestBody .chip', { hasText: rung }).click();
+        await page.waitForTimeout(200);
+        const n = await page.evaluate(() => {
+          const cards = [...document.querySelectorAll('#guestBody .sheet')];
+          const last = cards[cards.length - 1];
+          return last ? last.querySelectorAll('.item').length : 0;
+        });
+        if (!n) failures.push('guest: "' + rung + '" suggests nothing');
+      }
+    }
+    await page.locator('#pourWhere button', { hasText: 'At home' }).click();
+    await page.waitForTimeout(200);
   }
 
   step('the keyboard does not move the nav bar');

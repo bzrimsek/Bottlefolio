@@ -607,6 +607,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Scan the library for inconsistencies',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
+    'With a guest', 'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
     'Their shelf'];
