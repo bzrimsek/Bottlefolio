@@ -258,6 +258,36 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   check('no App use entry is written twice', dup);
 }
 
+/* NO CSS RULE FOR A CLASS NOTHING EMITS.
+
+   Rule 6 says tidy dead code after every change, and twelve dead classes
+   had accumulated by 2026-09-10 - two of them mine from the Buddies
+   rebuild that week, the rest older. A removal takes the code that emits a
+   class and leaves the rule styling it, and nothing notices, because a
+   stylesheet with an extra rule works perfectly.
+
+   `buddyrow` is allowed by name: the only mention left is a comment
+   explaining why it went, which is the kind of note worth keeping. */
+{
+  const styleEnd = src.indexOf('</style>');
+  const css = src.slice(0, styleEnd);
+  const body = src.slice(styleEnd);
+  const ALLOWED_DEAD = ['buddyrow'];
+  /* URLs and @imports stripped first: a font link contains
+     `.googleapis`, which is not a class and was reported as a dead one the
+     first time this ran. A checker that cries wolf gets ignored. */
+  const clean = css
+    .replace(/url\([^)]*\)/g, '')
+    .replace(/@import[^;]*;/g, '')
+    .replace(/https?:\/\/[^\s"')]+/g, '');
+  const classes = [...new Set((clean.match(/\.[a-z][a-z0-9-]{2,}/gi) || [])
+    .map(c => c.slice(1)))];
+  const dead = classes.filter(c =>
+    ALLOWED_DEAD.indexOf(c) < 0
+    && !new RegExp('\\b' + c + '\\b').test(body));
+  check('no CSS rule styles a class nothing emits', dead);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 
