@@ -533,6 +533,41 @@ function step(n) {
     await page.waitForTimeout(200);
   }
 
+  /* THE ADMIN SCREEN DRAWS EVERY CARD, and the Everybody card was left as
+     a bare heading for a whole build because the directory arrives as an
+     object and L.adminPeople takes rows. It threw inside a .then, so the
+     screen looked fine and one card was silently empty. */
+  step('running this fills every card it draws');
+  {
+    const bad = await page.evaluate(() => {
+      S.log = Array.from({ length: 60 }, (_, i) => ({ at: Date.now(), t: 'l' + i }));
+      S.admin = true; renderDiag(); show('diag');
+      const kids = [...document.getElementById('diagBody').children];
+      const rowAt = kids.findIndex(k => k.className === 'lookrow');
+      const logAt = kids.findIndex(k => k.querySelector('summary'));
+      const out = [];
+      /* The log's own buttons belong above the log, not under 600 lines
+         of it - the Copy button exists to save reading them. */
+      if (rowAt < 0) out.push('no log button row');
+      else if (logAt >= 0 && rowAt > logAt) out.push('log buttons are below the log');
+      if (rowAt >= 0
+          && kids[rowAt].querySelectorAll('.chip').length !== 4) {
+        out.push('log buttons scattered: '
+          + kids[rowAt].querySelectorAll('.chip').length + ' in the row');
+      }
+      /* A card with a heading and nothing else is the shape the crash
+         left behind. */
+      kids.filter(k => k.classList.contains('sheet')).forEach(k => {
+        if (k.children.length === 1 && k.querySelector('h3')) {
+          out.push('empty card: ' + k.querySelector('h3').textContent);
+        }
+      });
+      return out;
+    });
+    await page.waitForTimeout(500);
+    bad.forEach(x => failures.push('running this: ' + x));
+  }
+
   step('the keyboard does not move the nav bar');
   {
     const r = await page.evaluate(() => {
