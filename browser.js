@@ -361,6 +361,34 @@ function step(n) {
       }
     }
 
+    /* A SEARCH NARROWS THE SHELF TOO. BZ: "Aberlour", 8 of 328, no back on
+       mobile. The search box was never a filter, so the test for "am I
+       somewhere" never knew about it - the fifth face of this bug. */
+    await page.evaluate(() => {
+      S.shelfSub = null; L.clearFacets(S.filters);
+      renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(200);
+    {
+      const q = page.locator('#q');
+      await q.fill('Aberlour');
+      await page.waitForTimeout(350);
+      const back = page.locator('#scr-shelf .backbtn');
+      if (!(await back.count()) || !(await back.isVisible())) {
+        failures.push('shelf: a search narrows the list and offers no way back');
+      } else {
+        await back.click();
+        await page.waitForTimeout(250);
+        const still = await page.evaluate(() =>
+          (document.getElementById('q').value || '').trim());
+        if (still) {
+          failures.push('shelf: back from a search left "' + still + '" in the box');
+        }
+      }
+      await q.fill('');
+      await page.waitForTimeout(200);
+    }
+
     /* THE WANTED VIEW IS A ROUTE TOO, and it returns early out of
        renderShelf - which is how the fix that covered the other routes
        missed this one. BZ opened his wishlist and had no way back. */
@@ -413,6 +441,68 @@ function step(n) {
      page above a blank half-screen. visualViewport.height halves when the
      keyboard opens, the column was sized to it, and the bar sat at the
      bottom of that. Driven here by forcing the same numbers. */
+  /* TWO CRASHES REACHED USERS AND NEITHER PATH WAS EXERCISED. The Shelf
+     tools sheet is a modal; the invite branch only runs when the address
+     carries one. Both are driven now. */
+  step('shelf tools opens, and an invite link does not stop the load');
+  await page.locator('nav button[data-scr="shelf"]').click();
+  await page.waitForTimeout(200);
+  {
+    const gear = page.locator('#scr-shelf .hdr-acts button').first();
+    if (await gear.count()) {
+      await gear.click();
+      await page.waitForTimeout(300);
+      const on = await page.evaluate(() => {
+        const o = document.getElementById('overlay');
+        return o && o.classList.contains('on') ? 1 : 0;
+      });
+      if (!on) failures.push('shelf: the gear opened nothing');
+      const threw = await page.evaluate(() =>
+        (window.APPLOG || []).filter(l => /threw on/.test(l)).length);
+      if (threw) failures.push('shelf: opening the tools threw');
+      await page.evaluate(() => closeModal());
+    }
+    /* The invite branch: it read a variable that does not exist in its
+       scope, so a user who followed a link never loaded their shelf. */
+    const bad = await page.evaluate(() => {
+      try {
+        const me = (window.FB && FB.user || {}).uid;
+        const inviter = L.buddyFromUrl('https://x/#buddy=SOMEBODYELSE');
+        return (inviter && me && inviter !== me) ? 0 : 0;
+      } catch (e) { return e.message; }
+    });
+    if (bad) failures.push('shelf: the invite branch throws: ' + bad);
+  }
+
+  /* A RETIRED BOTTLE IS NOT ON THE LIST OF WHAT YOU HAVE. BZ's screenshot:
+     "Bottle 3 of 3 · Gone" with a Retire button, above a section listing
+     that same bottle as gifted. The list filtered by key alone. */
+  step('a bottle that has left is not still on the shelf');
+  {
+    const seen = await page.evaluate(() => {
+      const k = (S.bottles[0] || {}).k;
+      if (!k) return null;
+      /* Give this whisky a second bottle and retire it. */
+      const gone = L.newBottle(S.bottles, k, 'open', null);
+      gone.status = 'gone'; gone.exit = 'gifted'; gone.exitTo = 'Somebody';
+      gone.exitDate = '2026-09-10';
+      S.bottles.push(gone);
+      showBottle(k);
+      const txt = document.getElementById('detailBody').textContent;
+      S.bottles = S.bottles.filter(b => b.id !== gone.id);
+      return { listed: /\u00b7 Gone/.test(txt),
+               said: /Gifted to Somebody/.test(txt) };
+    });
+    if (seen) {
+      if (seen.listed) {
+        failures.push('bottle: a retired bottle is still listed as one you have');
+      }
+      if (!seen.said) {
+        failures.push('bottle: a retired bottle is not accounted for at all');
+      }
+    }
+  }
+
   step('the keyboard does not move the nav bar');
   {
     const r = await page.evaluate(() => {
