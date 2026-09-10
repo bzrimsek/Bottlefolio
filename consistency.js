@@ -254,11 +254,6 @@ const syncBlock = src.slice(src.indexOf('L.SYNC_KEYS'),
    about the account. */
 const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lastList', 'updated', 'pushedAt', 'lookupTally', 'axisTurn', 'base',
-  /* An inventory check in progress is this device's business - it is a
-     walk round one house, and merging two of them would invent a check
-     nobody did. The furniture itself is NOT here: it syncs, beside
-     shelfCaps, because it describes one room read from two devices. */
-  'shelfTicks',
   'lookupUrl', 'lookupMine', 'libLedgerAt', 'reelState', 'seenTips',
   'installDismissed',
   /* 'log' was here and is not any more: BZ asked for one user and one
@@ -503,9 +498,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* Added with bulk marking, v1.9.21. A control named in the app and not
        in here is one the check cannot see. */
     'Mark bottles open or sealed',
-    /* Added with the storage model, v1.9.29. */
-    'Arranging the shelf', 'Inventory to check off',
-    /* v1.9.32 */
+        /* v1.9.32 */
     'Not me', 'Removing a library entry',
     /* v2.0.9 */
     'Scan the library for inconsistencies',
@@ -593,17 +586,13 @@ check('no fixed svg id is emitted by a repeated drawing',
       named here as a scalar on purpose, which is a sentence somebody has to
       write and therefore a decision somebody has to make. */
 {
-  const SCALARS = ['shelfCaps',
-    /* `storage` is a LIST by shape and a SETTING by meaning: one
-       description of one room. A union merge would be actively wrong -
-       describe two bookcases on the desktop and three on the phone and a
-       union gives you five pieces of furniture that do not exist, then
-       plans bottles onto them. So the newer description wins whole, the
-       same rule shelfCaps has always had, and this sentence is the
-       decision the check asks for rather than a way around it. */
-    'storage',
-    'displayName', 'findable', 'fxRate', 'wishShared',
-    'lookupUrl', 'lookupMine', 'admin', 'barSort', 'updated', 'pushedAt'];
+  /* `shelfCaps` and `storage` stood here. The shelf arrangement feature
+     they belonged to was removed whole at v2.0.14 - BZ: too many
+     variables - so there is nothing left for either to describe. */
+  /* SETTINGS, not collections: one value that the newer side simply wins.
+     `shelfCaps` and `storage` stood here too and went with the shelf
+     arrangement feature at v2.0.14 - BZ: too many variables. */
+  const SCALARS = ['displayName', 'findable', 'wishShared', 'fxRate'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at

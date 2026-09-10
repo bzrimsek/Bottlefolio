@@ -6,10 +6,128 @@ the top because it is not something he controls — it waits on somebody else
 turning up. Everything under Closed is kept for the reasoning rather than
 the task, and still carries the numbers the code comments refer to.
 
-Last reconciled **2026-09-07, at v1.8.51**. The line above used to say
-v1.26.19, which is a version number from before the scheme was reset and is
-higher than anything that now exists — a header claiming to be current while
-naming a version nobody can find is worse than one with no version at all.
+Last reconciled **2026-09-09, at v1.9.41**, entry by entry against the
+source. The line before that said 2026-09-07 at v1.8.51, and before that it
+said v1.26.19 — a version from before the scheme was reset and higher than
+anything that exists, because a header claiming to be current while naming a
+version nobody can find is worse than one with no version at all.
+
+**WHY THIS PASS HAPPENED, and how to repeat it.** On 2026-09-09 BZ asked
+what was left. SEVEN entries turned out to describe work already shipped:
+camera propagation into the other capture moments, `sub: world`, the Google
+button, gifts, receipt reading, the lookup budget, and the advent calendar —
+which was not a feature at all. Each one cost him a round of being told
+about work that was already done, and by then this file was less reliable
+than the code it describes.
+
+The cause is the same every time: a status read off an entry's HEADLINE
+instead of the source. So the rule for this file is the rule the app's own
+tests follow — before an entry is called open, open the code. Every item
+below has been checked that way, and each one that changed says what was
+checked and on what date. Where an entry names a function, the check is
+whether it is defined and whether anything calls it; where it names a
+behaviour, the check is the call site. Anything that could not be checked
+from the source says so rather than being left to look decided.
+
+Three kinds of entry live here now, and they are not the same kind of open:
+work waiting on CODE, work waiting on a DECISION from BZ, and work waiting
+on somebody or something outside the app — a second person in a room, a
+fill that has not run, an inbox that does not exist. Only the first is ever
+something to pick up and start.
+
+## WHAT IS ACTUALLY OPEN, 2026-09-09 — the short list
+
+Everything else below is either shipped, ruled on, or waiting on the world.
+Three kinds, because they are not the same kind of open.
+
+**Waiting on code — nothing.** There is no item on this list that somebody
+could pick up and start today without an answer from BZ or an event outside
+the app. That is worth stating plainly rather than leaving somebody to
+discover it by reading four hundred lines.
+
+**Waiting on a decision from BZ**
+- ~~The **road trip planner**~~ **DROPPED, BZ 2026-09-09**: not useful
+  without detailed route capability, and he is not there yet. It never had
+  a line of code, so dropping it is this sentence.
+- ~~The **shelf organizer**~~ **REMOVED WHOLE, BZ 2026-09-09**: just drop
+  the shelf arrangement features, it's really a first world problem and
+  there are too many variables. Rebuilt twice in one day - once to his
+  furniture brief, once simplified to one question per piece - and the
+  variables were the tell: a piece of furniture had a name, a purpose, a
+  category list and a shelf count, each shelf had a capacity, and the
+  answer still turned on how somebody actually reaches for a bottle, which
+  no amount of description was going to capture. Gone at v2.0.14: the three
+  screens, L.storagePlan and its helpers, L.shelfPlan and its grouping,
+  L.shelfGroupOf, L.bottleSpecial, L.bottleCommon, the shelfCaps, storage
+  and shelfTicks state, four test sections and the CSS. L.shelfBuild is NOT
+  part of it and stays - it reads bottles off a photograph of a shelf. The
+  reasoning is kept in CHANGELOG at v1.9.29 and v2.0.4 if it is ever
+  wanted again.
+
+**Waiting on the world**
+- The **mash bill gap** waits on the fill having run: zero of 325 shipped
+  entries carry a bill, so the counts the ruling asked for do not exist yet.
+  The library export added at v1.9.37 is how they become countable.
+- The **candidate finder** has still never put a bottle in BZ's hands.
+- **Pooled blind flights** and **advent with others** need other people.
+- **Receipt ingest by email** needs an inbox to exist. The reading half is
+  built.
+- **Tasting night on phones** — paper works, and BZ deferred the rest.
+
+**Small and real, if a session ever wants one**
+- An **estimate before a lookup run** and a total after it. The cap and the
+  circuit breaker both exist; this is the comfort half.
+- **13 of 456** L functions were untested on the morning of 2026-09-09;
+  that is now **zero**, and the check fails on a new one, so this line is
+  here to be deleted rather than acted on.
+
+## The shelf organizer needs work — LOW PRIORITY, BZ 2026-09-09
+
+BZ: backlog that we need to work on the shelf organizer, low priority for
+now. Raised while looking at the Buddies rebuild, so it is his judgement of
+the feature rather than a fault report — no specific complaint is recorded
+and nobody should invent one. Ask what is wrong with it before touching it
+(rule 13b); it is `showShelfPlan`, reached from Shelf tools, Storing, "How
+to arrange it", and it lays bottles out against the shelf capacities in
+S.shelfCaps.
+
+## CORRECTION: sync.js was never asserting one thing (v1.9.30)
+
+The v1.9.28 entry here said sync.js "asserts ONE composite thing". That was
+wrong, and it was wrong in the way this project keeps catching: judged from
+the OUTPUT rather than the file. `check()` prints nothing when it passes,
+so three quiet lines meant every check had passed, not that there was one.
+Instrumented and counted: **24 assertions across twelve scenarios** — newer
+device against older account and the reverse, key escaping, the offline
+queue, publishing to the library, a bottle arriving live, two devices each
+adding one, wishlist removal against an unsent local change. Real coverage.
+
+What it still does NOT cover is the storage keys added at v1.9.29 and the
+tombstone merge added at v1.9.30 — both are asserted in the unit suite
+against a real store, neither is driven through two browsers. Worth adding
+a scenario each; not worth pretending they are untested.
+
+## Decided by BZ on 2026-09-09, kept for the reasoning
+
+**The house chip claims a count.** No rarity signal exists in this app's
+data - the catalogue IS the shelf - so the ranking stands and the claim came
+down to what the number supports. "The Loyalist" became "Deep on One House"
+and the reason carries the share of the shelf. BZ: fine.
+
+**A buddy tab needs their shelf, not mutual sharing.** BZ had described
+both-green turning into a Venn; gating on it would have removed a
+comparison that worked. Left as built. BZ: fine.
+
+**One cask-strength number.** The portrait's one-line summary had its own
+0.25 while the chip and the verdict used 0.2. BZ: make same. It reads
+L.CASK_DELIBERATE_SHARE now, which loosens that line slightly - a shelf
+between 20 and 25 per cent says it too, which is what the other two already
+said about the same shelf.
+
+**Admin write on the sharing records stays.** Widened at v1.9.22 for the
+Sharing check; it means an admin can grant themselves sight of any shelf.
+BZ: keep, and it may expand. Recorded as a decision rather than left as a
+debugging leftover.
 
 ## 1. Security
 
@@ -49,6 +167,30 @@ directory, requests, shares, sharedWith, shared, view, admins, stats and
 contrib all bound both who may write and what shape it must be.
 
 ## 2. Performance
+
+**THE DOCUMENT PARSE IS MEASURED AND RULED ON — BZ, 2026-09-09: don't.**
+Measured at v1.9.37, nine runs and a median, headless Chromium on an empty
+shelf: responseEnd to domInteractive **147.4ms** (min 116.2, max 305.8).
+The file is 1.64MB, 92.5% of it the script block, and **677KB of that —
+40% of the whole file — is comments**. A copy with the comments stripped
+measures **76.0ms** (min 60.8, max 105.7), so the reasoning in this file
+costs about **71ms once per cold load**.
+
+BZ ruled: don't. The trade is 71ms against a delivery model where the file
+you upload is the file that runs, and the comments are the project's
+memory — every session so far has been faster because the reasoning was in
+the file rather than in somebody's head. Shipping a stripped build would
+also mean rule 23 and audit.py both having to know which of two files they
+mean.
+
+Also worth keeping: the stripping used to get that 76.0ms was a regex that
+does not understand string literals, so it is fit for MEASURING and unfit
+for shipping. Anything that revisits this needs a real parser, which is a
+moving part on its own.
+
+Not open. If it is ever raised again, raise it with a number: the untouched
+halves are 104KB of CSS and 21KB of markup, and data.json already loads
+separately.
 
 **The shelf redraws whole, and counts by scanning.** — DONE 2026-09-04.
 `L.ownedCounts` builds the key-to-count map in one pass and the search box
@@ -122,6 +264,12 @@ computed inside one ships untested however much of it is arithmetic.
 
 ## 3. Finding the bottle
 
+**The Google button — ALREADY BUILT, verified 2026-09-09.** `L.findUrl`
+has five callers: `findTag` (which IS the hunt and allocated tag),
+`showBottle`, `wishCard`, `shopAnswer` and `buddiesWants`. Listed as open
+from this entry's headline without checking the code, which is the third
+stale item found in one scan. Kept for the reasoning below.
+
 **The Google button.** One link, the bottle name already in it, on the
 bottle view and on any hunt or allocated tag. Reasoning under item 15 below,
 including the three larger designs that were rejected — the secondary
@@ -174,8 +322,16 @@ bottle's NAME — wheated, high-rye, four-grain, malt, corn, rye — because
 three flights turn on recipe and the catalogue stored only a category. It
 feeds `tasteProfile` (line ~11277) and the flight builder (~13093).
 
-`L.mashShape(text)` was added on 2026-09-07 and returns wheated, high-rye or
-rye-forward from the actual grain PERCENTAGES.
+`L.mashShape(text)` was added on 2026-09-07 and returned wheated, high-rye
+or rye-forward from the actual grain PERCENTAGES. **RESOLVED v1.9.38, BZ:
+agree — the real bill wins and one source answers.** By then the
+duplication had moved and got worse: `L.mashbill` already consulted the
+printed bill, so the pair was `L.mashFromBill` and `L.mashShape`, two
+readers of the SAME evidence in different vocabularies. `mashShape` is
+deleted; the bottle screen calls `mashFromBill`, which has the fuller
+vocabulary and is what `mashbill` already used. The merge moved one
+boundary toward the law — 80% corn is corn whiskey — and that boundary is
+now asserted with 79% beside it. The reasoning below is kept.
 
 Same vocabulary, different evidence, neither aware of the other. They agree
 today only because no entry carries a mash bill. They begin to disagree as
@@ -265,8 +421,24 @@ which is why the button does not hide itself the way Look up does.
   pairing and offers the whisky to the shared library, all from one press on
   a bottle that goes back behind the bar. Doing it forced `labelCapture` out
   of `readTheLabel`, because an away pour has no entry to correct.
-  **Still open: the pour screen, the add form (slot 2 is drawn and empty),
-  and the shop.** Each is a few lines pointing at `labelCapture` now.
+  ~~**Still open: the pour screen, the add form (slot 2 is drawn and
+  empty), and the shop.**~~ **ALL DONE — verified 2026-09-09 by reading the
+  callers rather than the button label.** `labelCapture` has four:
+  `readTheLabel` (bottle), `productForm` (add), `shopReadBottle` (shop) and
+  `awayReadBottle` (away, which IS the pour screen — `awayLookingCard`
+  dispatches a bottle subject to it). The home half of the pour screen
+  deliberately has none: you are choosing from a shelf the app already
+  knows, and correcting an entry you own is the bottle screen's job. This
+  line was written before away-pour existed and outlived it.
+- ~~**Good, better, best — how to say it on the page**~~ **DONE v1.9.38,
+  BZ: do subtly.** Built as the entry proposed rather than as a ranking:
+  each way in already said what it is FOR at the point of choice (the shop
+  says it under its two cameras; the bottle screen says it through
+  `L.labelWorth` when an entry is short), and the missing half was the LOOP,
+  which is now said once in App use as "Which way to add a bottle" — a
+  label read is what teaches the barcode, so a photograph is the one that
+  leaves the app better than it found it. No league table on any screen.
+  (Original entry below, kept for the reasoning.)
 - **Good, better, best — how to say it on the page** (BZ, 2026-09-07). He
   asked whether to hint at a ranking: label pics best, UPC better, type and
   search good. The counter-argument, not yet decided: the ranking mixes
@@ -315,15 +487,31 @@ listing; single barrels and festival bottlings never will. Nothing to build.
 
 ## Deferred features
 
-**Gifts** — the wishlist pointed outward (item 5b).
-**Receipt ingest by email** (item 7).
+~~**Gifts** — the wishlist pointed outward (item 5b).~~ **BUILT — verified
+2026-09-09.** `L.giftList` and `L.giftText` exist and are wired at the
+wishlist: five picks, a flight-finishing bottle first, no prices. Extended
+at v1.9.40 with BZ's ask — the list can go as the message itself or as a
+link carrying the names in the URL fragment.
+
+~~**Receipt ingest by email** (item 7).~~ **PARTLY BUILT — verified
+2026-09-09.** `receiptsDialog` is reachable from Settings and reads a
+receipt you hand it, via `L.receiptColumns` and `L.receiptUpdates`. What
+does NOT exist is the "by email" half, and that is not a build: it needs an
+inbox somewhere for receipts to arrive at, which is infrastructure rather
+than code. The entry named the delivery and hid the fact that the reading
+was done.
 **Road trip planner** — blocked on a routing decision (item 8).
 **Tasting night on phones** — paper works; the phone variants are deferred
 (item 10).
-**A budget on a lookup run** (item 11). The circuit breaker added on
-2026-09-03 stops a run after five consecutive errors, which was the
-dangerous half. What is left is an estimate before a run starts and a total
-after it, which is comfort rather than protection.
+**A budget on a lookup run** (item 11) — **HALF BUILT, verified
+2026-09-09, and the open half is smaller than this entry implies.** The
+circuit breaker stops a run after five consecutive errors, which was the
+dangerous half. `L.LOOKUP_CAP` is 600 a day, enforced by `L.canLookUp`,
+with the number left today shown on screen and a message when it is
+reached — so a CAP exists as well as a breaker. What is genuinely missing
+is only the ESTIMATE before a run starts and the total after it, which is
+comfort rather than protection. Checked: there is no estimate anywhere in
+the source.
 **Pooled flights cannot be fully blind** — noted, not blocking (item 12).
 
 ## Occasions
@@ -336,6 +524,16 @@ outlives the feature somebody guesses at from it.
 An Occasion is time-shaped: it has a start, a length and an end, and one
 person can do it alone. That shape is the requirement. Anything built here
 TAKES A LENGTH rather than assuming one.
+
+~~**Advent calendars**~~ **DONE v1.9.39 — and it was never a feature.**
+BZ, when it came up again on 2026-09-09: calendars are POURS, not bottles.
+A calendar is twenty-four samples you drink and never own, so nothing about
+it belongs on a shelf. The away-pour machinery was already exactly right -
+a typed name, no bottle created, the glass logged - and the only thing
+missing was the word for it, plus letting the SOURCE stand without a name
+the way L.bottleFrom already lets a lottery. Two lines in a list and a rule
+about standing alone. It sat in the backlog as a feature for two days
+because nobody asked what it was.
 
 **Advent calendars** (BZ, 2026-09-07 — noted, not a plan). He is in one
 every year, and his is the twelve days of Christmas rather than twenty-four,
