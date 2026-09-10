@@ -298,6 +298,44 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   check('no CSS rule styles a class nothing emits', dead);
 }
 
+/* NOBODY COUNTS A SHELF BY HAND.
+
+   BZ, comparing Home with the admin list: 346 on my devices, 348 here - I
+   call BS. He was right. fbPushStats sent (S.bottles||[]).length, the raw
+   array including every bottle ever retired, while Home asks L.shelfStats,
+   which filters to what you actually own. The two disagreed by exactly the
+   number he had given away or finished - and this is the worst place for
+   that pair to exist, because it is the number an admin reads about
+   SOMEBODY ELSE'S shelf and has no way to check.
+
+   So: anything that reports a shelf size asks L.shelfStats. Counting the
+   array is how the second answer gets born. */
+{
+  const bad = [];
+  /* NEGATED USES ARE A DIFFERENT QUESTION and are allowed: `!(S.bottles ||
+     []).length` asks whether anything has ever been added, which is what
+     decides the empty-shelf welcome, and a shelf whose bottles have all
+     been retired should still see it. Two live uses read that way and
+     flagging them would have made this a check somebody switches off
+     rather than satisfies. What is banned is REPORTING that number. */
+  /* REPORTED, not tested. The count appears half a dozen times as a
+     question - is there anything on this shelf at all - which decides the
+     empty-shelf welcome and the nothing-open card, and a shelf whose
+     bottles have all been retired should still see both. Those are fine.
+     What is banned is putting that number in a PAYLOAD as the size of
+     somebody's shelf, which is what fbPushStats did and what BZ read in
+     the admin list. Two attempts at a broader rule flagged four correct
+     lines, and a check that flags correct code is one somebody switches
+     off rather than satisfies. */
+  const re = /\b[a-zA-Z]+:\s*\(S\.bottles \|\| \[\]\)\.length/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const line = src.slice(0, m.index).split('\n').length;
+    bad.push('index.html:' + line + ' reports a shelf size from the raw array');
+  }
+  check('nothing reports a shelf size by counting the array', bad);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 
