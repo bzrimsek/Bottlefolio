@@ -528,7 +528,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.0.9 */
     'Scan the library for inconsistencies',
     /* v1.9.40 */
-    'Text the list, or text a link',
+    'Text the list, or text a link', 'Diagnostics by user',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
     'Their shelf'];
