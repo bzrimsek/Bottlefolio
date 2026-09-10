@@ -438,6 +438,32 @@ function step(n) {
     });
   }
 
+  /* THE BAR DOES NOT SIT OVER THE END OF A SCREEN. BZ: multiple reports of
+     the bottom tab bar blocking content on iPhone. The audit had a check
+     CALLED "nav cannot overlay content" that matched CSS text - a claim
+     about a result it could not see - so it passed throughout. This
+     measures: scroll each screen to its end on a phone viewport and
+     require the last thing on it to clear the top of the bar. */
+  step('the tab bar never covers the end of a screen');
+  for (const scr of ['home', 'shelf', 'pour', 'flights']) {
+    await page.locator('nav button[data-scr="' + scr + '"]').click();
+    await page.waitForTimeout(300);
+    const gap = await page.evaluate(() => {
+      const s = document.querySelector('.screen.on');
+      const n = document.querySelector('nav');
+      if (!s || !n) return null;
+      s.scrollTop = s.scrollHeight;
+      const kids = [...s.children].filter(k => k.getBoundingClientRect().height);
+      if (!kids.length) return null;
+      const last = kids[kids.length - 1].getBoundingClientRect();
+      return Math.round(n.getBoundingClientRect().top - last.bottom);
+    });
+    if (gap !== null && gap < 0) {
+      failures.push('layout: on ' + scr + ' the tab bar covers the last '
+        + Math.abs(gap) + 'px of the screen');
+    }
+  }
+
   step('shop asks its question');
   // 4. Shopping asks its question, and answering it draws something.
   await page.locator('nav button[data-scr="shop"]').click();
@@ -2364,8 +2390,14 @@ function step(n) {
         out.push('buddies: a grant with no shelf yet draws '
           + noShelf.length + ' rows, expected 1');
       }
-      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.on')) {
-        out.push('buddies: a grant with no shelf reads as not sharing');
+      /* AMBER, not green and not red: granted, nothing to read yet. The
+         green said YOU SEE THEIRS one line above text saying you cannot. */
+      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.waiting')) {
+        out.push('buddies: a grant with no shelf yet is not shown as '
+          + 'waiting');
+      }
+      if (noShelf[0] && noShelf[0].querySelector('.budlamp.on')) {
+        out.push('buddies: a shelf that has not arrived shows as arrived');
       }
       if (noShelf[0] && noShelf[0].querySelector('button.budwho')) {
         out.push('buddies: a buddy with no shelf offers a panel to open');
