@@ -503,6 +503,36 @@ function step(n) {
     }
   }
 
+  /* TASTE HAS THREE STATES AND SHOWS ONE. BZ: mimic shop and flights and
+     put the rest behind one of the three except recap. A chip that leaves
+     two panels open is the fault this replaced - recent pours was visible
+     whatever you picked, and pushed the machine off a phone. */
+  step('taste shows one thing at a time');
+  await page.locator('nav button[data-scr="pour"]').click();
+  await page.waitForTimeout(300);
+  {
+    const chips = await page.locator('#pourWhere button').allTextContents();
+    if (chips.length !== 3) {
+      failures.push('taste: ' + chips.length + ' chips, expected 3 ('
+        + chips.join(',') + ')');
+    }
+    for (const label of chips) {
+      await page.locator('#pourWhere button', { hasText: label }).first().click();
+      await page.waitForTimeout(200);
+      const open = await page.evaluate(() => ['pourHome', 'awayBody', 'histBody']
+        .filter(id => {
+          const e = document.getElementById(id);
+          return e && !e.hidden;
+        }));
+      if (open.length !== 1) {
+        failures.push('taste: "' + label + '" leaves ' + open.length
+          + ' panel(s) open (' + open.join(',') + ')');
+      }
+    }
+    await page.locator('#pourWhere button', { hasText: 'At home' }).first().click();
+    await page.waitForTimeout(200);
+  }
+
   step('the keyboard does not move the nav bar');
   {
     const r = await page.evaluate(() => {
