@@ -70,10 +70,20 @@ check('no L function is defined and never used', dead);
 /* 3b. And plain top-level functions, which the check above did not see.
        reviewLibraryFill was replaced by writeLibraryFill and sat there
        whole, 2,600 characters of it, because it is not an L function. */
-const plainDead = (src.match(/^function (\w+)\(/gm) || [])
+/* COMMENTS STRIPPED FIRST, because they count as uses otherwise and this
+   check has been blind to exactly that. fbContribute lost its caller,
+   offered nothing to the library for however long, and this passed the
+   whole time - the name appears in the changelog header inside index.html
+   and in its own explanatory comment, so it looked called. Second time
+   today a source-reading check has read prose as code; a checker that
+   reads comments is checking the wrong file. */
+const code = src
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '');
+const plainDead = (code.match(/^function (\w+)\(/gm) || [])
   .map(m => m.match(/^function (\w+)/)[1])
-  .filter(fn => src.split(new RegExp('\\b' + fn + '\\b')).length - 1 <= 1)
-  .filter(fn => src.indexOf("'" + fn + "'") < 0);   // not called by name
+  .filter(fn => code.split(new RegExp('\\b' + fn + '\\b')).length - 1 <= 1)
+  .filter(fn => code.indexOf("'" + fn + "'") < 0);   // not called by name
 check('no plain function is defined and never called', plainDead);
 /* RETAINED ON PURPOSE, with the reason written down.
 
