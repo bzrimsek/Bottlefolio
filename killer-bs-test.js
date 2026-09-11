@@ -12841,15 +12841,41 @@ sec('\u00a7318 what an import left behind');
   const d = L.importAudit(twice, []).filter(x => x.id === 'dups')[0];
   eq('the same bottle under two names is found', !!d, true);
   eq('and it is one finding, not two', d.n, 1);
+  /* A ROW, not a string: the duplicate finding carries the KEYS of both
+     entries now. Reconstructing them from the printed names asked BZ to
+     choose between two identical sentences and then told him they were
+     already one entry - two entries that differ by a stray space read the
+     same once printed. */
   eq('naming both so nothing is merged blind',
-    /==/.test(d.items[0]), true);
+    /==/.test(d.items[0].text), true);
+  eq('and carrying both keys, so the merge knows which two',
+    d.items[0].keys.length, 2);
+  eq('two different keys, not the same one twice',
+    d.items[0].keys[0] !== d.items[0].keys[1], true);
 
-  /* A PROOF IN THE NAME belongs in the proof field. */
-  const pf = L.importAudit({
+  /* A PROOF IN THE NAME IS NOT A FAULT WHEN THE FIELD HAS IT.
+
+     BZ: no, the name is on the bottle - so that is the name. And then:
+     every one I looked at had the proof in the field correctly. Both
+     true, and this check was reporting six of his bottles as faults for
+     being correctly named. It fires when the number is in the name and
+     NOWHERE ELSE, or when the two disagree. */
+  const named = L.importAudit({
     a: mk('Belle Meade Reserve Bourbon Whiskey 108.3 Proof',
       { dist: 'Belle Meade', proof: 108.3, sub: 'bourbon' })
   }, []).filter(x => x.id === 'proofname')[0];
-  eq('a proof in the name is found', !!pf, true);
+  eq('a correctly named bottle with the field filled is not a fault',
+    !!named, false);
+  const pf = L.importAudit({
+    a: mk('Belle Meade Reserve Bourbon Whiskey 108.3 Proof',
+      { dist: 'Belle Meade', sub: 'bourbon' })
+  }, []).filter(x => x.id === 'proofname')[0];
+  eq('a proof with nowhere else to live is found', !!pf, true);
+  const dis = L.importAudit({
+    a: mk('Old Forester 100 Proof Bourbon',
+      { dist: 'Old Forester', proof: 90, sub: 'bourbon' })
+  }, []).filter(x => x.id === 'proofname')[0];
+  eq('and a name and field that disagree', !!dis, true);
 
   /* A SIZE IN THE NAME, same reasoning. */
   const sz = L.importAudit({
@@ -15030,8 +15056,9 @@ sec('\u00a7355 what the library contradicts');
   const ids = L.libraryAudit(inherited).map(f => f.id);
   eq('the same whisky under two names is found',
     ids.indexOf('dups') >= 0, true);
-  eq('a proof stranded in a name is found',
-    ids.indexOf('proofname') >= 0, true);
+  /* Stranded means nowhere else, which the fixture no longer is. */
+  eq('a proof that is also in the field is not reported',
+    ids.indexOf('proofname') >= 0, false);
   eq('and one house spelled two ways', ids.indexOf('houses') >= 0, true);
 
   /* AND THE FOUR ONLY A LIBRARY CAN BE WRONG ABOUT. */
@@ -15092,8 +15119,15 @@ sec('\u00a7355 what the library contradicts');
   eq('one known style clash, the deliberate one', cnt('style'), 1);
   eq('and it is the entry the comment names',
     /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0].text), true);
-  eq('one pair under two names', cnt('dups'), 1);
-  eq('six proofs stranded in names', cnt('proofname'), 6);
+  /* TWO PAIRS NOW, not one. The matcher stopped counting a proof as part
+     of a name - BZ: removing it from the name allows another entry to
+     enter it again with proof in the name - so "Old Forester 100 Proof
+     Bourbon" and "Old Forester Bourbon" finally meet. They were the same
+     whisky all along and the normaliser could not see it, which is how
+     these get made, one import at a time. */
+  eq('two pairs under two names', cnt('dups'), 2);
+  /* And none of the six: every one of them has the proof in its field. */
+  eq('no proof is stranded on the shipped shelf', cnt('proofname'), 0);
   eq('and no grain bill on the shipped catalog fails to add up',
     cnt('mashsum'), 0);
 }
@@ -15229,6 +15263,27 @@ sec('\u00a7358 pouring for a guest, by distance');
                canadian: 'Canada', japanese: 'Japan' };
   const seed = { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
                  region: 'Islay', proof: 92 };
+
+  /* THE SAME HOUSE, WHATEVER THE APOSTROPHE. BZ, shown "nothing at keep
+     it in the house" with two Maker's Mark on his shelf: is this a '
+     problem? It was - `same` lowercased and trimmed and nothing else, so
+     a curly apostrophe made two distilleries of one and demoted the house
+     rung to next door. L.shopNorm had stripped both kinds from the start;
+     this was asking the wrong function. */
+  {
+    const mm = { name: "Maker's Mark", dist: "Maker's Mark",
+                 sub: 'bourbon', proof: 90 };
+    const sc2 = { bourbon: 'United States' };
+    eq('a curly apostrophe is the same house',
+      L.rungOf(mm, { name: 'Maker\u2019s Mark 46', dist: 'Maker\u2019s Mark',
+        sub: 'bourbon', proof: 94 }, sc2), 'house');
+    eq('and no apostrophe at all is too',
+      L.rungOf(mm, { name: 'Makers Mark 46', dist: 'Makers Mark',
+        sub: 'bourbon', proof: 94 }, sc2), 'house');
+    eq('but another maker is still next door',
+      L.rungOf(mm, { name: 'Wild Turkey 101', dist: 'Wild Turkey',
+        sub: 'bourbon', proof: 101 }, sc2), 'next');
+  }
 
   eq('same maker is keeping it in the house',
     L.rungOf(seed, { name: 'Ardbeg Uigeadail', dist: 'Ardbeg',
@@ -15718,6 +15773,31 @@ sec('\u00a7365 a vodka in the shared library');
       L.libraryGaps({ name: 'A Thing', dist: 'X', sub: sub, proof: 80 })
         .length, 0));
   /* The three must agree: publishable, not looked up, and finished. */
+  /* WILL RUM, TEQUILA ET AL BEHAVE THE SAME? BZ asked, and six of the
+     seven did. The seventh was the proof-range check: Baileys at 34 proof
+     was reported as outside what whisky is bottled at - true, and beside
+     the point, because a liqueur is not bottled at whisky strength BY
+     DEFINITION. A fault that can never be fixed and never goes away. */
+  eq('a cream liqueur at 34 proof is not a fault',
+    L.libraryAudit({ x: { k: 'x', name: 'Baileys Irish Cream', dist: 'D',
+      sub: 'liqueur', proof: 34 } }, {}).length, 0);
+  eq('an overproof rum at 126 is not one either',
+    L.libraryAudit({ x: { k: 'x', name: 'Wray and Nephew', dist: 'D',
+      sub: 'rum', proof: 126 } }, {}).length, 0);
+  /* And a real whisky fault is still caught, both ends. */
+  eq('a whisky at 20 proof still is',
+    L.libraryAudit({ x: { k: 'x', name: 'Bad Number', dist: 'D',
+      sub: 'bourbon', proof: 20 } }, {}).map(f => f.id).join(','), 'proof');
+  eq('and one at 400',
+    L.libraryAudit({ x: { k: 'x', name: 'Typo Proof', dist: 'D',
+      sub: 'scotch', proof: 400 } }, {}).map(f => f.id).join(','), 'proof');
+  /* A Scotch region on a rum IS still a fault - Islay has no business in
+     a rum's region field, whoever put it there. */
+  eq('a Scotch region on a rum is still reported',
+    L.libraryAudit({ x: { k: 'x', name: 'Islay Rum', dist: 'D', sub: 'rum',
+      proof: 92, region: 'Islay' } }, {}).map(f => f.id).join(','),
+    'region');
+
   eq('the bar shelf is welcome in the library',
     L.worthContributing(v, {}), true);
   eq('it is never queued for a lookup', L.needsEnhancing(v), false);
@@ -15769,6 +15849,86 @@ sec('\u00a7366 the check names the fix');
   /* And never leaves a bottle with nothing to be called. */
   eq('"100 Proof" alone is left alone', L.proofOutOfName('100 Proof'), null);
   eq('a year is not a proof', L.proofOutOfName("Booker's 2023-03"), null);
+}
+
+sec('\u00a7367 a fixed list is not a text box');
+{
+  /* BZ: the screen you give me to fix things should not allow free text
+     entry on fixed list fields - need drop downs - really poor design.
+     Worse than poor: a text box on a fixed field is how the
+     contradictions this very scan reports get made. Three of the nine
+     fields are closed sets and the lists must exist for the editor to
+     offer them. */
+  eq('the categories are a list', L.TYPES.length > 0, true);
+  eq('the styles are a list', L.STYLES.length, 13);
+  eq('and the regions are', L.SCOTCH_REGIONS.length, 6);
+  /* Every style the shipped catalogue uses has to be offered, or opening
+     an entry to fix something else would silently change its style. */
+  ['bourbon', 'single malt', 'rye', 'single pot still', 'blended',
+   'tennessee', 'blended malt', 'new make', 'flavored', 'single grain',
+   'anejo', 'canadian', 'wheat'].forEach(st =>
+    eq('"' + st + '" is offered', L.STYLES.indexOf(st) >= 0, true));
+  /* The category list is the same one the app files bottles under, so a
+     bottle cannot be given a category the shelf will not show. */
+  eq('every style that is also a category is in both',
+    L.STYLES.filter(x => ['bourbon', 'rye', 'tennessee', 'wheat',
+      'flavored'].indexOf(x) >= 0)
+      .every(x => L.TYPES.indexOf(x) >= 0), true);
+}
+
+sec('\u00a7368 a mash bill is a list, not a proximity puzzle');
+{
+  /* BZ, spot-checking thirteen bills the scan called wrong: some actually
+     do add up to 100%. They did. The parser looked for a number within
+     fourteen characters of a grain word, which is how a bill is usually
+     written and not how they are actually written. Every failure was the
+     same mistake - guessing which number belongs to which grain by how
+     CLOSE they sit - so it reads segments now. Each of these is one BZ
+     handed me. */
+  const sums = t => L.mashSum(t);
+
+  /* The number 24 characters from its grain. */
+  eq('96% soft red winter wheat',
+    sums('96% soft red winter wheat, 4% malted barley'), 100);
+  eq('51% yellow dent corn',
+    sums('51% yellow dent corn, 39% rye, 10% malted barley'), 100);
+
+  /* The same grain twice, raw and malted, which the old dedupe threw
+     away: "a grain named twice is one grain" was wrong. */
+  eq('wheat and malted wheat are both counted',
+    sums('27% wheat, 62% malted wheat, 11% malted barley'), 100);
+
+  /* MALTING IS SOMETHING YOU DO TO A GRAIN, not a different grain. The
+     bare word "malted" matched inside "malted rye", took the percentage
+     as MALT and left a naked rye with nothing against it. */
+  eq('malted rye is rye', sums('70% corn, 25% malted rye, 5% malted barley'),
+    100);
+  eq('and it lands as rye, not malt',
+    L.parseMash('70% corn, 25% malted rye, 5% malted barley')[1].g, 'rye');
+  eq('malted wheat is wheat',
+    L.parseMash('65% corn, 20% malted wheat, 15% malted barley')[1].g,
+    'wheat');
+  eq('but malted barley is still malt',
+    L.parseMash('95% rye, 5% malted barley')[1].g, 'malt');
+
+  /* The separators people actually use. */
+  eq('commas', sums('75% corn, 13% rye, 12% malted barley'), 100);
+  eq('slashes', sums('60% corn / 36% rye / 4% malt'), 100);
+  eq('the word and', sums('95% rye and 5% malted barley'), 100);
+  eq('and the number after the grain',
+    sums('Corn 75%, Rye 13%, Malted Barley 12%'), 100);
+
+  /* A REAL GAP STILL SHOWS. Angel's Envy publishes 95% rye and a search
+     turns up the missing 5% malted barley - which is exactly the finding
+     worth keeping, and the one the Look it up button is for. */
+  eq('an incomplete bill is still reported', sums('95% rye'), 95);
+  eq('and it says so', !!L.mashNote('95% rye'), true);
+  eq('while a complete one says nothing',
+    L.mashNote('95% rye, 5% malted barley'), null);
+
+  /* Nothing that is not a bill at all. */
+  eq('prose is not a bill', L.parseMash('undisclosed'), null);
+  eq('and neither is nothing', L.parseMash(''), null);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
