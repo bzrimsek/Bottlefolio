@@ -17,10 +17,70 @@ const fs = require('fs');
 
 const file = path.resolve(process.argv[2] || 'index.html');
 const dir = path.dirname(file);
-const failures = [];
+/* A SKIPPED SCENARIO CANNOT RECORD A FAILURE.
+
+   Guarding check() was not enough: a few assertions are raw ifs that read
+   the result directly and push, and a ghost result makes one of those
+   conditions true by accident - "Diagnostics drew nothing (0 chars)" on a
+   scenario that never ran. The guard belongs where the failure is
+   recorded, which is the one place all of them pass through. */
+const _realFailures = [];
+const failures = {
+  push: v => { if (!_skipping) _realFailures.push(v); },
+  get length() { return _realFailures.length; },
+  forEach: f => _realFailures.forEach(f)
+};
 const notes = [];
 
+/* RUN A SLICE OF IT, so ninety seconds of silence becomes four reports.
+
+   BZ, after a night of asking for progress: is there a way to chunk up the
+   big ones? For this one yes - the seventeen scenarios are independent by
+   construction, each with its own page and its own seeded database, which
+   is the whole design. (The walk is the opposite and must not be cut: its
+   forty-three steps are a SEQUENCE, and step thirty depends on what step
+   twelve did to the page. That is rule 30e and it is why the walk catches
+   what the unit suite cannot.)
+
+   SYNC_FROM and SYNC_TO pick a range, one-based and inclusive. A scenario
+   outside it never opens a page, and the assertions that follow it stand
+   down rather than comparing against a result nobody produced. Absent,
+   everything runs exactly as before. */
+const SLICE_FROM = Number(process.env.SYNC_FROM || 0) || 0;
+const SLICE_TO = Number(process.env.SYNC_TO || 0) || 0;
+let _scenario = 0, _skipping = false;
+
+/* Absorbs everything: a.b.c, a.map(...), [...a]. It exists so a slice can
+   skip a scenario without every assertion after it having to know. */
+const _ghost = new Proxy(function () {}, {
+  get: (t, k) => {
+    /* Iterable, so [...r] and r.map() are safe. */
+    if (k === Symbol.iterator) return function* () { /* empty */ };
+    /* NOT thenable, or awaiting it would hang for ever. */
+    if (k === 'then') return undefined;
+    /* And it has a primitive value, because not every assertion goes
+       through check(): a few are raw ifs that compare or concatenate the
+       result directly, and 0 makes those comparisons false rather than
+       throwing "cannot convert object to primitive value". */
+    if (k === Symbol.toPrimitive) return () => 0;
+    if (k === 'toString') return () => '';
+    if (k === 'valueOf') return () => 0;
+    if (k === 'length') return 0;
+    return _ghost;
+  },
+  apply: () => _ghost,
+  has: () => true
+});
+
+function inSlice() {
+  if (!SLICE_FROM && !SLICE_TO) return true;
+  const n = _scenario;
+  return n >= (SLICE_FROM || 1) && n <= (SLICE_TO || 1e9);
+}
+
 function check(name, got, want) {
+  /* A check after a scenario that did not run has nothing to say. */
+  if (_skipping) return;
   const g = JSON.stringify(got), w = JSON.stringify(want);
   if (g !== w) failures.push(name + '\n      got  ' + g + '\n      want ' + w);
 }
@@ -32,6 +92,19 @@ function check(name, got, want) {
 
   // One scenario per page, so nothing leaks between them.
   const run = async (label, seed, body, opts) => {
+    /* Counted whether or not it runs, so the numbering is the same in
+       every slice and a range means the same thing every time. */
+    _scenario++;
+    if (!inSlice()) {
+      _skipping = true;
+      /* A SKIPPED RESULT HAS TO ABSORB ANYTHING. Returning {} was not
+         enough: a check's ARGUMENTS are evaluated before check can stand
+         down, and `after.account.bottles` threw before anybody could say
+         it did not matter. So this soaks up property reads, calls and
+         iteration alike, and every check that reads it is ignored. */
+      return _ghost;
+    }
+    _skipping = false;
     const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
     page.on('pageerror', e => failures.push(label + ': threw ' + e.message));
 
@@ -609,6 +682,10 @@ function check(name, got, want) {
 
   await browser.close();
 
+  if (SLICE_FROM || SLICE_TO) {
+    console.log('  \u00b7 scenarios ' + (SLICE_FROM || 1) + '-'
+      + (SLICE_TO || _scenario) + ' of ' + _scenario);
+  }
   notes.forEach(n => console.log('  \u00b7 ' + n));
   if (failures.length) {
     failures.forEach(f => console.log('  \u2717 ' + f));

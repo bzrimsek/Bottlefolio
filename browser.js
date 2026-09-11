@@ -699,34 +699,55 @@ function step(n) {
      sheet headed "Photograph the label". Nothing could see it: the unit
      suite cannot call a render function and the walk was not opening this
      sheet at all. */
-  step('a shelf photo asks for a shelf, not a label');
+  /* THE SHEET ITSELF, not the words on it.
+
+     BZ reported this three times and I answered a different question
+     twice: "the shelf photo needs to be the same as the bar wall photo
+     feature, not a bottle specific photo". His screenshot showed the sheet
+     correctly headed PHOTOGRAPH YOUR SHELF with four BOTTLE panels
+     underneath - Front, Back, Another side, One more, captioned about the
+     barcode and the grain bill. Right title, wrong body, and the check
+     here only ever read the title.
+
+     So it opens the real sheet and looks at what is in it. A shelf picker
+     has one way to add a photograph and no named faces; the bottle picker
+     has four. */
+  step('a shelf photo asks for a shelf, not four bottle faces');
   {
-    const said = await page.evaluate(() => {
-      const out = {};
-      const seen = [];
-      const realPick = window.labelPick;
-      window.labelPick = (fn, opts) => { seen.push(opts || {}); };
-      try { photographMyShelf(); } catch (e) { out.threw = e.message; }
-      window.labelPick = realPick;
-      out.opts = seen[0] || null;
-      return out;
+    const sheet = await page.evaluate(() => {
+      try { photographMyShelf(); } catch (e) { return { threw: e.message }; }
+      const m = document.querySelector('#modal, .modal, #confirmModal');
+      const txt = (m && m.innerText) || '';
+      return {
+        title: (m && (m.querySelector('h3, h2') || {}).textContent) || '',
+        faces: ['Front', 'Back', 'Another side', 'One more']
+          .filter(w => new RegExp('\\b' + w + '\\b').test(txt)).length,
+        text: txt.slice(0, 200)
+      };
     });
-    if (said.threw) {
-      failures.push('shelf photo: threw — ' + said.threw);
-    } else if (!said.opts) {
-      failures.push('shelf photo: never opened a camera sheet');
+    if (sheet.threw) {
+      failures.push('shelf photo: threw — ' + sheet.threw);
     } else {
-      const title = String(said.opts.title || '');
-      const go = String(said.opts.go || '');
-      if (/label/i.test(title) || /label/i.test(go)) {
-        failures.push('shelf photo: the sheet says "' + title + '" / "'
-          + go + '" — that is the bottle page');
+      if (/label/i.test(sheet.title)) {
+        failures.push('shelf photo: headed "' + sheet.title
+          + '" — that is the bottle page');
       }
-      if (!/shelf/i.test(title + ' ' + go)) {
+      if (!/shelf|menu/i.test(sheet.title)) {
         failures.push('shelf photo: the sheet never says shelf — "'
-          + title + '" / "' + go + '"');
+          + sheet.title + '"');
+      }
+      /* THE FAULT HE REPORTED: bottle faces under a shelf heading. */
+      if (sheet.faces >= 2) {
+        failures.push('shelf photo: ' + sheet.faces + ' bottle faces on a '
+          + 'shelf sheet — ' + sheet.text.replace(/\s+/g, ' ').slice(0, 90));
+      }
+      /* And a shelf read must accept more than one photograph. */
+      if (!/several photographs|one row each/i.test(sheet.text)) {
+        failures.push('shelf photo: nothing says several photos are fine');
       }
     }
+    await page.evaluate(() => { try { closeModal(); } catch (e) {} });
+    await page.waitForTimeout(120);
   }
 
   step('the service reader says what actually came back');
