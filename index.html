@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.1.0  Build 2026-09-11 04:36 PM ET
+     Version : v2.1.0  Build 2026-09-11 04:59 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.1.0  2026-09-11  A shelf of vodka is still a shelf, and there is somewhere to put a vermouth.
+// v2.1.0  2026-09-11  A shelf of vodka is still a shelf.
 // v2.1.0  2026-09-11  2.1.0 — a version number as a statement about where this has got to.
 // v2.0.75  2026-09-11  The lines walk now, they do not go round.
 // v2.0.74  2026-09-11  The filling bottle, on the flight design.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.0.71  2026-09-11  Wine against sherry is a question about wood, not about Midleton.
 // v2.0.70  2026-09-11  Leaving the app no longer throws away the read.
 // v2.0.69  2026-09-11  The whole gate in one command, and a line that lied about what it was doing.
-// v2.0.68  2026-09-11  A shelf is one dimensional, and I broke the one feature BZ had told me worked.
-// v2.0.67  2026-09-11  Sync runs in slices, so ninety seconds of silence becomes four reports.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2548,7 +2548,7 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    ships, for ever, with nothing to maintain. */
 
 const APP_VERSION = '2.1.0';
-const BUILD_TIME  = '2026-09-11 04:36 PM ET';
+const BUILD_TIME  = '2026-09-11 04:59 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3833,7 +3833,7 @@ L.REELS = [
 L.TYPES = ['bourbon', 'tennessee', 'rye', 'wheat', 'american single malt',
            'scotch', 'irish', 'canadian', 'japanese', 'world',
            'flavored', 'tequila', 'rum', 'vodka', 'gin', 'mezcal',
-           'liqueur', 'brandy'];
+           'liqueur', 'brandy', 'other'];
 
 /* WHAT IS ON THE SHELF BUT NOT PART OF THE COLLECTION.
 
@@ -3853,8 +3853,20 @@ L.TYPES = ['bourbon', 'tennessee', 'rye', 'wheat', 'american single malt',
    So: inventory counts them, analysis does not. One predicate, read
    wherever an analysis builds its population, so there is one answer to
    what counts as whisky rather than a filter copied into nine places. */
+/* AND A CATCH-ALL, because a shelf holds things nobody listed.
+
+   BZ: if I scan a brandy or a vermouth, maybe we need an Other category.
+   Brandy was already here; vermouth is not, and nor are amaro, sake, soju,
+   absinthe or whatever is on the shelf next year. Without somewhere to put
+   them the category comes back NULL and the bottle quietly loses what it
+   is - which is the same fault that made a vodka a bourbon.
+
+   `other` is SELECTABLE, never guessed: a whisky with a name the app does
+   not recognise must stay null so the lookup can fill it in, and filing it
+   as Other would end that. It is not whisky, so everything that asks a
+   whisky question leaves it alone. */
 L.NOT_WHISKY = ['rum', 'vodka', 'gin', 'mezcal', 'tequila', 'liqueur',
-                'brandy'];
+                'brandy', 'other'];
 
 L.isWhisky = function (p) {
   return L.NOT_WHISKY.indexOf(String((p || {}).sub || '').toLowerCase()) < 0;
@@ -6801,6 +6813,13 @@ L.REFERENCE = [
     def: 'Distilled and matured on the island of Ireland, at least three years in wooden casks, bottled at 40% ABV or more.' },
   { term: 'Canadian whisky', src: 'Canadian Food and Drug Regulations',
     def: 'Mashed, distilled and aged in Canada, at least three years in small wood, bottled at 40% ABV or more. The rules are looser on grain than the American ones, which is why a Canadian whisky can be almost any mashbill.' },
+  { term: 'Other', src: 'everything else on the shelf',
+    def: 'Vermouth, amaro, sake, soju, absinthe \u2014 anything that is a '
+      + 'bottle on your shelf and is not one of the named categories. Pick '
+      + 'it yourself; the app never guesses it, because a whisky whose '
+      + 'name it does not recognize should stay blank so a lookup can fill '
+      + 'it in. Counted as a bottle, left out of everything that asks a '
+      + 'whisky question.' },
   { term: 'Rum', src: 'wherever cane grows',
     def: 'Sugarcane juice or molasses, distilled. Rules vary by island and '
       + 'by country rather than by one standard, which is why an age '
@@ -23682,7 +23701,11 @@ function photographMyShelf() {
        belongs to the bar read, where the question really is which of these
        you own. Here the job is the opposite: which of them are already on
        the shelf and which are new. */
-    workingSay('Matching them to what you already have\u2026');
+    /* NOT "matching them to what you already have". BZ, scanning a shelf
+       of vodka and gin: the toast should not say matching to what you
+       have - processing or cataloguing is better. Right: matching is one
+       thing this does, and on a bar shelf it is the least of them. */
+    workingSay('Cataloging what is on the shelf\u2026');
     try {
       /* THE SAME READ THE BAR USES. This was a second copy that had
          already drifted: no daily-cap check, so photographing your own
