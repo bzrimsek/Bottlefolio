@@ -16324,5 +16324,172 @@ sec('\u00a7375 what you have drunk');
   eq('and is not counted as owned', !!L.ownedCounts(bots).a, false);
 }
 
+sec('\u00a7376 one house, one spelling, one sentence');
+{
+  /* BZ's bottle screen: "This is your only bottle from Angel's Envy,
+     sitting alone among 328 whiskies" - above "Pour it against Angel's
+     Envy Bourbon Madeira Cask Finish. Same house, same strength." He owns
+     many. A label read had stored ANGELS ENVY beside Angel's Envy.
+
+     BZ: feels like a library inconsistency. It is, and that is the root:
+     ELEVEN functions were deciding whether two whiskies share a house and
+     ten of them compared raw strings. All eleven go through L.houseSame
+     now, and a text check stands where the next one would go. */
+  const cat = {};
+  [["Angel's Envy Port", "Angel's Envy"],
+   ["Angel's Envy Rye", "Angel's Envy"],
+   ["Angel's Envy Madeira", 'ANGELS ENVY'],
+   ['Buffalo Trace', 'Buffalo Trace']].forEach((row, i) => {
+    const k = 'k' + i;
+    cat[k] = { k: k, _key: k, name: row[0], dist: row[1],
+               sub: 'bourbon', proof: 100 };
+  });
+  const found = L.libraryAudit(cat, {}).filter(f => f.id === 'house')[0];
+  eq('the scan finds a house spelled two ways', !!found, true);
+  eq('and names the one entry that is odd',
+    found ? found.items.length : 0, 1);
+  eq('the majority spelling is the one it keeps',
+    found ? /say Angel's Envy/.test(found.items[0].text) : false, true);
+  /* A HOUSE SPELLED ONE WAY IS NOT A FINDING. */
+  eq('and a house nobody misspelled is left alone',
+    found ? /Buffalo/.test(found.items[0].text) : false, false);
+  /* EXACT ON PURPOSE, in exactly one place. Everywhere else in the file
+     `===` on a distillery is the bug this finding reports; in the
+     grouping that FINDS them, exact is the only comparison that can say
+     which entries carry the wrong spelling - houseSame would match the
+     whole group and report the correct ones as faults. It has a name so
+     a reader, and the check that hunts the accidental kind, can tell the
+     two apart. */
+  eq('exact is exact', L.exactHouse("Angel's Envy", "Angel's Envy"), true);
+  eq('and does not forgive an apostrophe',
+    L.exactHouse("Angel's Envy", 'ANGELS ENVY'), false);
+  eq('where houseSame does',
+    L.houseSame("Angel's Envy", 'ANGELS ENVY'), true);
+
+  /* THE SAME RULE THE WRITE PATH USES, so a fix here and a write there
+     cannot disagree - one stray must not pull the majority across. */
+  eq('snapHouse agrees with the scan',
+    L.snapHouse('ANGELS ENVY', cat), "Angel's Envy");
+  eq('and leaves a house it does not know', L.snapHouse('Springbank', cat),
+    'Springbank');
+
+  /* A SENTENCE ABOUT A SHELF IS TRUE ON THE DAY IT IS WRITTEN. The
+     answer is stored, and the shelf changes underneath it: buy the second
+     Angel's Envy and "your only bottle from Angel's Envy" stays on the
+     screen for ever, wrong for a reason nothing in the app can see. */
+  /* A FIXTURE THAT ACTUALLY PRODUCES PROSE. bottleAsk returns null when
+     there is nothing to place the bottle against - fewer than two from
+     its house AND no finish to talk about - so a bottle with a cask is
+     what this needs. */
+  cat.k0.fin = 'Port';
+  cat.k2.fin = 'Madeira';
+  /* Two to start with: bottleContext returns null when you own nothing
+     else, so a one-bottle shelf produces no prose at all - correctly, and
+     it is not what this is testing. The third bottle is the change. */
+  const bots1 = [{ id: 'B1', k: 'k0', status: 'open' },
+                 { id: 'B2', k: 'k3', status: 'open' }];
+  const bots2 = bots1.concat([{ id: 'B3', k: 'k2', status: 'open' }]);
+  const f1 = L.bottleFacts(cat.k0, cat, bots1);
+  const f2 = L.bottleFacts(cat.k0, cat, bots2);
+  eq('the facts a sentence was written from are recorded',
+    typeof f1 === 'string' && f1.length > 0, true);
+  eq('and they change when the shelf does', f1 === f2, false);
+}
+
+sec('\u00a7377 a photograph can see how full a bottle is');
+{
+  /* BZ: could a photo of a bottle see the fill level? Yes, and the SHELF
+     photo is the better one for it - a label shot is cropped to the
+     label, while a shelf shot already holds whole bottles standing in a
+     row, which is the image a level lives in. One photograph, twenty
+     bottles, from a call already being paid for.
+
+     PROPOSED, NEVER WRITTEN. Dark glass makes a model guess and sound
+     certain doing it, so a Lagavulin comes back null and these arrive as
+     a list to accept rather than a change already made. */
+  const cat = { a: { k: 'a', name: 'Buffalo Trace' },
+                b: { k: 'b', name: 'Weller 12' },
+                c: { k: 'c', name: 'Lagavulin 16' } };
+  const bots = [
+    { id: 'B1', k: 'a', status: 'open', fill: 100 },
+    { id: 'B2', k: 'b', status: 'sealed' },
+    { id: 'B3', k: 'c', status: 'open', fill: 50 }
+  ];
+  const seen = L.shelfSeen({ items: [
+    { name: 'Buffalo Trace', fill: 63 },
+    { name: 'Weller 12', fill: 75 },
+    { name: 'Lagavulin 16', fill: 50 },
+    { name: 'Ardbeg 10', fill: 25 }
+  ], read: '' }, cat, bots, []);
+
+  /* SNAPPED ON THE WAY IN, so a 63 never reaches the app as a 63. */
+  eq('a service number lands on a notch',
+    seen.items[0].fill, 75);
+  eq('and dark glass reporting nothing stays nothing',
+    L.shelfSeen({ items: [{ name: 'X' }] }, {}, [], []).items[0].fill,
+    null);
+
+  const lv = L.shelfLevels(seen, cat, bots);
+  eq('one level is worth proposing', lv.length, 1);
+  eq('and it is the one that changed', lv[0].name, 'Buffalo Trace');
+  eq('it remembers what it was', lv[0].was, 100);
+  /* THREE REASONS NOT TO PROPOSE, all of them right. */
+  eq('nothing for a sealed bottle, which has no level to set',
+    lv.some(r => r.name === 'Weller 12'), false);
+  eq('nothing when the bottle already says that',
+    lv.some(r => r.name === 'Lagavulin 16'), false);
+  eq('and nothing for a bottle nobody owns',
+    lv.some(r => /Ardbeg/.test(r.name)), false);
+}
+
+sec('\u00a7378 a field name is not a word, and a queue must be able to empty');
+{
+  /* BZ, looking at Filling in your shelf: as a nit, can we spell out tn
+     and any other abbreviations? "Bacardi Gold / tn" tells somebody
+     nothing - tn is what the CODE calls tasting notes, and it reached the
+     screen because the row printed Object.keys() straight out. */
+  eq('tn is tasting notes', L.fieldWords('tn'), 'tasting notes');
+  eq('mash is a grain bill', L.fieldWords('mash'), 'grain bill');
+  eq('msrp is a price', L.fieldWords('msrp'), 'price');
+  eq('a list reads the way somebody says it',
+    L.fieldList(['proof', 'sub', 'msrp']), 'proof, category and price');
+  eq('one field needs no and', L.fieldList(['tn']), 'tasting notes');
+  eq('and none is nothing', L.fieldList([]), '');
+  /* A FIELD NOBODY LISTED FALLS BACK TO ITSELF, which is how a new one
+     gets noticed rather than silently printed raw. */
+  eq('an unknown field is left alone', L.fieldWords('somethingNew'),
+    'somethingNew');
+
+  /* BZ: the replace 2 flight card notes never resolves, even after
+     running it, because the info is not available.
+
+     A bottle is in that queue because tnFrom marks its notes as written
+     for a flight card, and the marker only clears when the service comes
+     back with better ones. For an obscure single barrel it usually
+     cannot - so the bottle was offered again, and again, for ever. A
+     queue that cannot reach zero is an accusation rather than a task.
+
+     The other note queue solved this months ago and this one never asked
+     the same question. */
+  const cat = { a: { k: 'a', name: 'Obscure Single Barrel',
+                     tnFrom: 'flight' },
+                b: { k: 'b', name: 'Another One', tnFrom: 'flight' } };
+  const bots = [{ id: 'B1', k: 'a', status: 'open' },
+                { id: 'B2', k: 'b', status: 'open' }];
+  const today = L.todayISO();
+  eq('both are offered to begin with',
+    L.flightNoteQueue(cat, bots, { ledger: {}, today: today }).length, 2);
+  const led = L.noteMiss({}, 'a', today);
+  eq('one the service could not answer rests',
+    L.flightNoteQueue(cat, bots, { ledger: led, today: today }).length, 1);
+  /* AND TRY AGAIN STILL REACHES IT, because resting is not refusing. */
+  eq('but Try again still reaches it',
+    L.flightNoteQueue(cat, bots,
+      { ledger: led, today: today, all: true }).length, 2);
+  /* A bottle you do not own is never worth paying a lookup for. */
+  eq('and a bottle nobody owns is never queued',
+    L.flightNoteQueue(cat, [], { ledger: {}, today: today }).length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -90,7 +90,8 @@ function readShelf_(req) {
 
   var shape = '{"items":[{"name":string,"dist":string|null,'
     + '"proof":number|null,"age":number|null,"sub":string|null,'
-    + '"pour":string|null,"sure":"high"|"medium"|"low"}],'
+    + '"pour":string|null,"sure":"high"|"medium"|"low",'
+    + '"fill":number|null}],'
     + '"take":string,"read":string}';
 
   var system = [
@@ -134,6 +135,17 @@ function readShelf_(req) {
     '  otherwise. Do NOT fill these from what you know about the bottle —',
     '  the app looks bottles up itself and would rather have a null than a',
     '  plausible number it cannot tell apart from a read one.',
+    '- HOW FULL IS IT, when the glass lets you see. fill is one of 0, 10,',
+    '  25, 50, 75, 90 or 100 and NOTHING ELSE - those are the only values',
+    '  the app can store, and a 63 is thrown away. It is where the liquid',
+    '  sits against the whole bottle, not against the label.',
+    '- NULL IS THE RIGHT ANSWER FOR DARK GLASS. A Lagavulin or an Ardbeg',
+    '  in near-black glass cannot be read and must come back null. So must',
+    '  anything behind another bottle, in shadow, or lit from the front',
+    '  hard enough to hide the line. A guessed level is worse than no',
+    '  level, because the person would have to check every one to find the',
+    '  few that are wrong - and then the feature has cost them more than',
+    '  it saved. Null generously.',
     '- READ EVERY BOTTLE, whisky or not. Rum, vodka, gin, tequila,',
     '  mezcal, liqueur and brandy all belong on a shelf and the app now',
     '  keeps them as inventory, so returning an empty list because none',
