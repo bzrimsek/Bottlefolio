@@ -499,6 +499,38 @@ const TWO_DOORS_OK = [
   check('the two-doors allowance has no stale entries', stale);
 }
 
+/* NO BUTTON IS DISABLED BY DATA THE SCREEN HAS NOT FETCHED.
+
+   BZ: the inconsistency scan button does not seem to do anything. Then, an
+   hour later: why can't I export the library? Same fault, twice, and I
+   fixed the first and walked past its neighbour sitting four lines away.
+
+   Both read `!libCount` at RENDER time, and libCount comes from
+   LIB.products, which is empty until somebody has opened the library. So
+   on a fresh open both buttons were dead - and looked live, because this
+   stylesheet had one :disabled rule in it and that was for .glass.
+
+   A button that can fetch its own data has no business refusing to. */
+{
+  const dead = [];
+  /* COMMENTS STRIPPED FIRST. The first version of this check fired on the
+     clean file, because the comments ABOVE both fixes quote the line they
+     replaced - so it reported the explanation as the offence. Third time
+     tonight a source check has read prose as code, and the same one-line
+     lesson every time. */
+  const codeOnly = src.replace(/\/\*[\s\S]*?\*\//g, m2 =>
+    m2.replace(/[^\n]/g, ' ')).replace(/^\s*\/\/.*$/gm, ' ');
+  const re = /(\w+)\.disabled\s*=\s*!(\w*[Ll]ib\w*)/g;
+  let dm;
+  while ((dm = re.exec(codeOnly))) {
+    const line = codeOnly.slice(0, dm.index).split('\n').length;
+    dead.push('index.html:' + line + '  ' + dm[1]
+      + ' is disabled by ' + dm[2] + ', which is empty until the library '
+      + 'has been read');
+  }
+  check('no button is disabled by data the screen has not fetched', dead);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 

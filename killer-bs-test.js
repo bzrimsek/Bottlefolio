@@ -16055,6 +16055,29 @@ sec('\u00a7371 the key the library actually filed it under');
     L.resolveLibKey(lib, 'nope', 'Nothing Like It'), null);
   eq('and an empty library resolves to nothing',
     L.resolveLibKey({}, 'anything', 'Anything'), null);
+
+  /* EVERY ENTRY UNDER ONE NAME. BZ, looking at two rows printed
+     identically: no clear way to understand what looks like a match. Two
+     identical rows resolve to the SAME entry when looked up by name, so
+     the Merge button went on refusing - it will not merge a key with
+     itself, and rightly. The pair is real; the lookup could only ever find
+     one of them. */
+  const twins = {
+    a: { name: 'Glendronach 21 Year Old Parliament' },
+    b: { name: 'Glendronach 21 Year Old Parliament' },
+    c: { name: 'Something Else' }
+  };
+  eq('a name lookup can only find one of a pair',
+    L.resolveLibKey(twins, null, 'Glendronach 21 Year Old Parliament'), 'a');
+  eq('asking for all of them finds both',
+    L.libKeysNamed(twins, 'Glendronach 21 Year Old Parliament').length, 2);
+  eq('a lone entry is one', L.libKeysNamed(twins, 'Something Else').length, 1);
+  eq('and a name nothing carries is none',
+    L.libKeysNamed(twins, 'Never Heard Of It').length, 0);
+  /* Matched the way the app matches names everywhere else, so a stray
+     capital does not hide half a pair. */
+  eq('case and spacing do not split a pair',
+    L.libKeysNamed(twins, '  glendronach 21 YEAR old parliament ').length, 2);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -5,6 +5,12 @@ Written 2026-09-08, late, replacing the v1.9.10 version. Brought current
 
 ## WHAT CHANGED ON 2026-09-10
 
+**RUN THE GATE THE WAY RULE 35 SAYS.** `python3 gatetime.py` times every step,
+keeps the last thirty runs and expects the median of nine. Announce the step
+with its expected time, run it, report actual against expected. Seven fast
+steps in one call (24s), the walk on its own (43s), sync on its own (77s).
+Never announce a step you are not running in that same turn.
+
 A long session with BZ testing on real bottles in real places. In order of
 how much it matters to somebody picking this up:
 

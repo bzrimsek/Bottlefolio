@@ -3,8 +3,8 @@ App Development Rules — Last updated: 2026-09-05
 PHILOSOPHY
 1  Good structure + comments. Quality over speed.
 2  Reuse before inventing — read existing code first. Leverage working solutions in the same codebase before writing new ones.
-2a WHEN I NAME AN EXISTING BEHAVIOUR, OPEN THAT CODE AND CALL WHAT IT CALLS. "The same as the shopping search" means read renderShop, find the function, call it. Not something with the same shape, not the nearest similar thing elsewhere in the file. Building adjacent to a named behaviour and calling it done is the most expensive failure available: it looks finished, it passes tests, and it is wrong in a way only I can see.
-2b A PLACE, A ROUTE OR A SCOPE I NAME IS THE ACCEPTANCE TEST. 2a covers a named BEHAVIOUR; this covers the other three ways I say what I want, and all three were ignored on 2026-09-09 while I was agreeing with you. "The bottom of the shelf page, under You Keep Buying" is a PLACE — it went into the Wanted view, behind a filter pill that hides itself when the list is empty, so the thing I asked to see on the shelf was in the one place it could not be seen. "See the whole shelf, click a book" are ROUTES — the fix was driven through the filter pills instead, so it held on the route you checked and failed on both routes I use, twice, over two days. "Is that camera fix for all instances" is a SCOPE — one of four callers had been fixed. So: before building, restate the place, the route or the scope in your own words, and say plainly if you think it is wrong — I do not mind debate on the idea, I mind being ignored, and a disagreement I can see costs one message while a substitution I cannot costs a round. After building, the check drives THAT: the named screen, the named route, every named caller, in the harness that fails the build. A feature verified by any route other than the one I named is unverified. And prove the check by breaking the thing on purpose and watching it go red — a guard that cannot fail is not a guard.
+2a WHEN I NAME AN EXISTING BEHAVIOR, OPEN THAT CODE AND CALL WHAT IT CALLS. "The same as the shopping search" means read renderShop, find the function, call it. Not something with the same shape, not the nearest similar thing elsewhere in the file. Building adjacent to a named behavior and calling it done is the most expensive failure available: it looks finished, it passes tests, and it is wrong in a way only I can see.
+2b A PLACE, A ROUTE OR A SCOPE I NAME IS THE ACCEPTANCE TEST. 2a covers a named BEHAVIOR; this covers the other three ways I say what I want, and all three were ignored on 2026-09-09 while I was agreeing with you. "The bottom of the shelf page, under You Keep Buying" is a PLACE — it went into the Wanted view, behind a filter pill that hides itself when the list is empty, so the thing I asked to see on the shelf was in the one place it could not be seen. "See the whole shelf, click a book" are ROUTES — the fix was driven through the filter pills instead, so it held on the route you checked and failed on both routes I use, twice, over two days. "Is that camera fix for all instances" is a SCOPE — one of four callers had been fixed. So: before building, restate the place, the route or the scope in your own words, and say plainly if you think it is wrong — I do not mind debate on the idea, I mind being ignored, and a disagreement I can see costs one message while a substitution I cannot costs a round. After building, the check drives THAT: the named screen, the named route, every named caller, in the harness that fails the build. A feature verified by any route other than the one I named is unverified. And prove the check by breaking the thing on purpose and watching it go red — a guard that cannot fail is not a guard.
 3  Occam's razor — simplest solution that works. If two approaches solve the problem, take the simpler one.
 3a A fix that adds a moving part to something that already has several is usually the wrong fix. If each change makes the thing harder to describe, stop changing it and describe what it SHOULD be.
 4  Security and performance by default. No shortcuts that create vulnerabilities or degrade UX.
@@ -37,7 +37,7 @@ DIAGNOSIS BEFORE FIXING
 13b AND ASK ME. After the second failure in the same area, say what you think is happening and ask what I am seeing. I am watching it fail on real data you cannot reach, and I have usually spotted the pattern before you have. Ten rounds of "found it, fixed it" is not persistence.
 13c NEVER REASON ABOUT DATA YOU CANNOT SEE. My library, my deployed build, my log, my device. Every confident claim about any of those has been wrong. Instrument, ship, and read what comes back — a build that logs its decision per item settles in one round what inference does not settle in six.
 
-13d A MEASUREMENT WITHOUT ITS POPULATION IS AN ANECDOTE. 13c says do not reason about data you cannot see. This is the other half: state which data you DID see, in the sentence, every time. Not "325 entries have a proof" but "325 entries on BZ's filled-in shelf, which is the end state of a shelf and not the one somebody imports tomorrow". Written that way the overreach is visible while you are writing it. Every time this was skipped the conclusion was wrong — an empty shelf said renders cost 8ms when they cost 112, a filled shelf said an enrichment feature had no users, and a stale catalogue said three bottles were missing that were not.
+13d A MEASUREMENT WITHOUT ITS POPULATION IS AN ANECDOTE. 13c says do not reason about data you cannot see. This is the other half: state which data you DID see, in the sentence, every time. Not "325 entries have a proof" but "325 entries on BZ's filled-in shelf, which is the end state of a shelf and not the one somebody imports tomorrow". Written that way the overreach is visible while you are writing it. Every time this was skipped the conclusion was wrong — an empty shelf said renders cost 8ms when they cost 112, a filled shelf said an enrichment feature had no users, and a stale catalog said three bottles were missing that were not.
 
 13e ANYTHING THAT VARIES GETS NINE RUNS AND A MEDIAN. Three runs said boot was 358ms; nine said 254. Timings, and anything else with spread, are not facts until they are a median of nine. A number taken any other way does not go in a doc, a changelog or a sentence to me.
 14 Layout bugs: after two failed CSS attempts, read the working equivalent element's CSS — the fix is almost always already there. Never guess a third time without reading the working equivalent first.
@@ -60,20 +60,22 @@ FIREBASE
 STATE
 22a Three lists must agree: the state defaults, what is written to this device, and what follows the account. A key in one and not the others silently does not survive a reload or does not follow the account. Anything declared mergeable must actually be synced.
 
+22b THE GATE IS NINE STEPS AND A LINTER IS ONE OF THEM. Added 2026-09-10, after two ReferenceErrors reached real users in a build the eight-step gate had passed — `arr` orphaned by a removal, and a bare `user` that stopped a shelf loading for anybody who arrived by an invite link. Neither was visible to a text check, to node --check (both files parse), or to any harness that never executes that line. Run `node lint.js` — it is in ship.py. Its allowed list is EMPTY and nothing joins it silently. And the lesson underneath it: the FIRST version of that linter passed with both faults deliberately put back, because its own regex had declared every function-local variable a global. Break the thing on purpose before believing the guard.
+
 DELIVERY
 22 Run the pre-delivery audit script before every delivery. All checks must pass. No exceptions, no skipping.
 23 Named output files always built from the working index.html — never from uploads or prior named files.
 24 Compress chat before context bloat. Prepare handoff comments before they're needed.
 25 Every delivery = index.html + sw.js + named lock file (e.g. friday-game-v13.34.html). All three. No exceptions.
 25a MY WORK SHIPS THE MOMENT IT IS WRITTEN, not with the drop. Apps Script, Firebase rules, anything I paste into another tool — hand it over as its own file with its own walkthrough so I can do it while the gate runs. And say plainly when a piece of it depends on an app version I have not installed yet.
-25b Write the walkthrough for somebody who has not opened that tool in a month. Real menu names, real button names, the actual block of code I will be looking at and what it should read afterwards. "Add two lines to your existing doPost" is not an instruction.
+25b Write the walkthrough for somebody who has not opened that tool in a month. Real menu names, real button names, the actual block of code I will be looking at and what it should read afterward. "Add two lines to your existing doPost" is not an instruction.
 25c Report the gate one check at a time, as each lands. Never run the loop silently and report at the end, and never say "running the gate" with no result attached. Read the whole output of each check, not the last line — a check once sat broken for several builds because the failure was thirty lines above a blank final line.
 
 25f CALL THE APPS SCRIPT FILE Code.gs. It is delivered from the container as lookup.gs and it lives in my project as Code.gs, and two names for one file is how a paste lands in the wrong place. Say Code.gs when handing it over. label.gs and shelf.gs match on both sides and keep their names.
 
 25e A PASTE IS NOT A DEPLOY, AND SAYING SO IS MY JOB EVERY TIME. Apps Script serves the DEPLOYED version, not the saved one, so a pasted file changes nothing until Deploy → Manage deployments → pencil on the existing deployment → New version. This has already cost a whole debugging round: BZ had pasted Code.gs, I confirmed the file contained the mash rule, and we both concluded the service was fine while the live web app ran months-old code. probeWiring cannot catch it either — it runs in the editor against saved code and will happily report every mode present while the deployment is stale. So whenever a delivery includes a .gs file, the handover says PASTE AND DEPLOY, names the menu path, and repeats it at the top of the next session until BZ confirms it. Do not assume a paste mentioned yesterday was deployed.
 
-25d NEVER HAND ME A FILE THAT NEEDS EDITING AFTER I PASTE IT. Anything I have to hand-edit after a paste will eventually be edited wrong, and a dropped line usually fails SILENTLY — doPost lost a mode twice, and the app reports a missing mode as a broken feature rather than an absent one. Ship the whole file with every line already in it, and ship a probe I can run that says whether the wiring is right before I deploy. If a file genuinely cannot be shipped whole, say which line I must add and what the block must read afterwards (25b), and give me the probe anyway.
+25d NEVER HAND ME A FILE THAT NEEDS EDITING AFTER I PASTE IT. Anything I have to hand-edit after a paste will eventually be edited wrong, and a dropped line usually fails SILENTLY — doPost lost a mode twice, and the app reports a missing mode as a broken feature rather than an absent one. Ship the whole file with every line already in it, and ship a probe I can run that says whether the wiring is right before I deploy. If a file genuinely cannot be shipped whole, say which line I must add and what the block must read afterward (25b), and give me the probe anyway.
 
 LANGUAGE
 26 Never use hedging language — "should", "likely", "probably", "might", "may". If unsure, say so directly or test it first. Be definitive. If it works, say it works. If it won't, say it won't.
@@ -89,8 +91,8 @@ TESTING
 29 Test harness is delivered alongside index.html and sw.js on any session that adds or modifies tests. Three files becomes four.
 30 Render/screen functions do templating only — no scoring, calculation, or business logic inline. Logic a screen needs goes in a named helper it calls (e.g. leagueSessionCtx, tripItineraryBody, tripBuildPublishMsg). The harness cannot call render functions, so logic buried in them ships untested. If you are computing inside an fsRender template, stop and extract.
 30a Cross-consistency — when one fact (a match status, a leaderboard row, a settlement) is rendered by more than one path (first paint, in-place updater, stored summary, live viewer), test that the paths agree from a shared game state, not each path's formatting in isolation. Two separately-green formatting tests can still disagree — that is exactly how the Nassau hole-completion popup drifted from the banner. Drive the real render through the recording-DOM harness and compare its output to the shared engine. (See madgolf-test.js §148 Nassau / §174 DOC / §175 walk-off.)
-30b The suite tests behaviour through the engine and cannot see the WIRING. An element id nobody declares, a literal escape in a string, a state key that does not persist, a helper defined and never called, two functions sharing a name — all invisible to it and all shipped. A text-level check of the source catches them in a second; keep adding to it whenever a bug turns out to have been visible in the file all along.
-30c A check that asserts a label is testing the copy. Assert the behaviour — that the control leads somewhere, that the number matches the engine — so a rewording does not break the gate and a real fault does.
+30b The suite tests behavior through the engine and cannot see the WIRING. An element id nobody declares, a literal escape in a string, a state key that does not persist, a helper defined and never called, two functions sharing a name — all invisible to it and all shipped. A text-level check of the source catches them in a second; keep adding to it whenever a bug turns out to have been visible in the file all along.
+30c A check that asserts a label is testing the copy. Assert the behavior — that the control leads somewhere, that the number matches the engine — so a rewording does not break the gate and a real fault does.
 
 30e THE GATE TESTS UNITS, FILES AND ONE PASS. IT DOES NOT TEST SEQUENCES OR SECOND RENDERS. BZ, after finding five bugs in a morning: we have a whole series of gates and tests, I periodically ask for code reviews, and yet. Right, and every one of those bugs was an interaction between two things that were each individually correct. The wishlist removal worked and the sync replaced it. The house merge was right and the publish undid it. The camera block drew perfectly the first time. The modal was correct and so was the nav. A unit test cannot see any of that, a text check reads one file, the walk takes ONE path through each screen, and a code review reads code rather than orderings. So: when a fix touches how two features meet, the test is a SEQUENCE — do it, sync it, reload it, do the other thing, look again — and any screen that appends anything gets rendered TWICE with the elements counted. And a check written for a bug must be run against that bug with the fix removed: my first two attempts at the second-render step passed with the stacking deliberately put back, once because it rendered the wrong branch and once because a headless browser has no camera so the branch never ran.
 
@@ -100,3 +102,35 @@ COMPLETION
 31 No loose ends. Any item deferred during a task ("next bump", "follow-up", "queued") is tracked and closed before the feature that spawned it is called done. A feature with pending pieces is not finished. Never let deferred work carry silently across turns — surface it and finish it.
 32 Sync the working copy from the delivered outputs at the start of every task, before editing. A stale APP_VERSION in the working file makes bump.py collide with an already-shipped version number.
 33 A feature is not built until the thing it depends on exists. Shipping a call to a service mode nobody has implemented is half a feature, and making the error message honest is not the same as making it work.
+
+## 35. THE GATE IS ANNOUNCED, TIMED, AND REPORTED STEP BY STEP
+
+BZ, after a build that ran the slowest harness in silence: you did that build
+with no process status? That needs to be part of the new process - predictable,
+faster and more communicative.
+
+The gate is nine harnesses and two of them take over a minute. Run as one
+command it prints nothing anybody can look at until it finishes, and a wait
+with no evidence in it is indistinguishable from a broken session. That
+happened repeatedly on 2026-09-10, and my answers made it worse: I said the
+walk takes 40 seconds when it takes 43, having run it dozens of times and
+never once measured it.
+
+So, every time:
+
+1. **Say what is about to run and how long it takes**, from `gatetime.py`,
+   which keeps the last thirty runs and expects the MEDIAN OF NINE (rule 13e).
+   Under nine runs it says so - it never invents a number.
+2. **Run it in groups that match the timing.** The seven fast steps together
+   are 24 seconds and belong in one call. The walk (43s) and sync (77s) get a
+   call each, because each is long enough that somebody would otherwise be
+   sitting in silence wondering.
+3. **Report the result the moment it lands**, with actual against expected.
+4. **Never announce a step without running it in the same turn.** Writing
+   "running the walk now" and not running it is worse than silence: it reads
+   as progress and there is none.
+
+Measured 2026-09-10: the whole gate is 143 seconds. sync 77, walk 43, and the
+other seven 24 between them. The 4025-assertion suite is half a second - the
+thing that sounds heavy is the cheapest thing in the gate, which is exactly
+why guessing at these numbers was worthless.
