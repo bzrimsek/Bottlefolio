@@ -15926,9 +15926,56 @@ sec('\u00a7368 a mash bill is a list, not a proximity puzzle');
   eq('while a complete one says nothing',
     L.mashNote('95% rye, 5% malted barley'), null);
 
+  /* A PERCENTAGE COUNTS WHETHER OR NOT THE APP KNOWS THE WORD.
+
+     BZ's Northcross Triple Wood: "90% grain whiskey, 10% malted barley",
+     reported as adding up to 10%. No grain word matched "grain whiskey",
+     so the whole 90% segment was DROPPED - and adding that one word would
+     have fixed that bottle and left the next unknown one broken the same
+     way. The fault was that an unrecognised name made the percentage
+     vanish rather than count. */
+  eq('an unknown grain name still counts',
+    sums('90% grain whiskey, 10% malted barley'), 100);
+  eq('and it lands as other, not as nothing',
+    L.parseMash('90% grain whiskey, 10% malted barley')[0].g, 'other');
+  eq('a name nobody has ever seen counts too',
+    sums('80% column-distilled spirit, 20% pot still'), 100);
+
   /* Nothing that is not a bill at all. */
   eq('prose is not a bill', L.parseMash('undisclosed'), null);
   eq('and neither is nothing', L.parseMash(''), null);
+}
+
+sec('\u00a7369 a duplicate owns its bottle');
+{
+  /* BZ: if a dupe set has a record with no issues and a record with
+     issues, what should we do? Merge them first - everything else is
+     fixing a row that is about to stop existing.
+
+     His Yellowstone was listed under duplicates AND under region, so the
+     scan sent him to correct the region on a record whose twin already
+     owned its name, and the save was refused: "the library already holds
+     Yellowstone Special Finishes Collection Rum Cask". A dead end built
+     out of two findings that were each individually right. */
+  const cat = {
+    a: { k: 'a', _key: 'a', name: 'Yellowstone Rum Cask',
+         dist: 'Yellowstone', sub: 'bourbon', proof: 100,
+         region: 'Speyside' },
+    b: { k: 'b', _key: 'b', name: 'Yellowstone Rum Cask Whiskey',
+         dist: 'Yellowstone', sub: 'bourbon', proof: 100 },
+    c: { k: 'c', _key: 'c', name: 'Lonely Bourbon', dist: 'X',
+         sub: 'bourbon', proof: 90, region: 'Islay' }
+  };
+  const found = L.libraryAudit(cat, {});
+  const ids = found.map(f => f.id);
+  eq('the duplicate is reported', ids.indexOf('dups') >= 0, true);
+  /* AND LEADS, because it is the only finding that makes others vanish. */
+  eq('and it leads the list', ids[0], 'dups');
+  const region = found.filter(f => f.id === 'region')[0];
+  eq('a bottle in a duplicate pair is not reported twice',
+    (region.items || []).some(it => /Yellowstone/.test(it.text)), false);
+  eq('but a bottle with the same fault and no twin still is',
+    (region.items || []).some(it => /Lonely/.test(it.text)), true);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
