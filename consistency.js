@@ -836,7 +836,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Scan the library for inconsistencies',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
-    'With a guest', 'Whisky only', 'The library', 'Add to the wishlist', 'With a guest',
+    'With a guest', 'Whisky only', 'The library', 'Add to the wishlist',
+  'How much is left', 'Another one?', 'Gone', 'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
     'Their shelf'];
@@ -925,7 +926,11 @@ check('no fixed svg id is emitted by a repeated drawing',
   /* SETTINGS, not collections: one value that the newer side simply wins.
      `shelfCaps` and `storage` stood here too and went with the shelf
      arrangement feature at v2.0.14 - BZ: too many variables. */
-  const SCALARS = ['displayName', 'findable', 'wishShared', 'fxRate'];
+  const SCALARS = ['displayName', 'findable', 'wishShared', 'fxRate',
+    /* showFill is a switch, not a collection: whether the fill gauge is
+       drawn. The newer side wins, which is right - somebody turning it on
+       at the shelf on their phone means it on, everywhere. */
+    'showFill'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at

@@ -3638,7 +3638,9 @@ const NAMED = { 'bourbon': 'bourbon', 'rye': 'rye whiskey', 'wheat': 'wheat whis
      what a mezcal is, and each entry says plainly that it is inventory
      here rather than part of the collection's shape. */
   'rum': 'rum', 'vodka': 'vodka', 'gin': 'gin', 'mezcal': 'mezcal',
-  'liqueur': 'liqueur', 'brandy': 'brandy' };
+  'liqueur': 'liqueur', 'brandy': 'brandy',
+  /* The catch-all: vermouth, amaro, sake, anything nobody listed. */
+  'other': 'other' };
 eq('every type has a definition',
   L.TYPES.filter(t => defined.indexOf(NAMED[t]) < 0), []);
 // Every Scotch region is defined too.
@@ -3879,7 +3881,37 @@ eq('it is run two', recast.run, 2);
 eq('it stays all scotch', recast.held, 'scotch');
 eq('and every pour really is scotch',
   recast.pours.every(p => data.catalog[p.k].sub === 'scotch'), true);
-eq('nothing from the first run is reused', recast.fresh, recast.pours.length);
+/* AS FRESH AS THE SHELF ALLOWS, which is the rule; six of six was the
+   number that rule happened to produce while a cask flight held the
+   DISTILLERY still. Now that it holds the category and the house varies,
+   the pool for a second scotch cask flight is different and may not
+   contain six unused pours at all.
+
+   So this asserts the rule rather than the number: no candidate the
+   recast could have chosen reuses less than the one it chose. A test
+   pinned to 6 would have to be re-pinned every time the shelf moves, and
+   would say nothing about whether the CHOICE was right. */
+{
+  const usedFirst = {};
+  sherry.core.forEach(p => { usedFirst[p.k] = 1; });
+  let pool = [];
+  const realCands = L.flightCandidates;
+  L.flightCandidates = function (v, c, b, o) {
+    const out = realCands.call(L, v, c, b, o);
+    if (out.length) pool = out;
+    return out;
+  };
+  const again = L.recastFlight(sherry, data.catalog, data.bottles,
+    sherryHist);
+  L.flightCandidates = realCands;
+  const best = pool.length
+    ? Math.min.apply(null, pool.map(c =>
+        c.pours.filter(p => usedFirst[p.k]).length))
+    : 0;
+  const chose = again.pours.filter(p => usedFirst[p.k]).length;
+  eq('the recast reuses as little as the shelf allows', chose, best);
+  eq('and it is a full flight', again.pours.length > 0, true);
+}
 
 
 // Tasting notes across the real shelf, and where each set came from.
@@ -5902,8 +5934,13 @@ sec('§210 one pass for what you own');
   const ix = L.shelfIndex(bottles);
   /* Three maps now: sealed is held separately rather than derived by
      negating open, which is what hid every sealed spare (§230). */
-  eq('the index carries all three',
-    Object.keys(ix).sort(), ['counts', 'open', 'sealed']);
+  /* FOUR NOW: `gone` joined counts, open and sealed when the shelf learned
+   to show what has left it. This asserted exactly three and fired the
+   moment a fourth arrived, which is the check doing its job - the index
+   is read in several places and a key appearing in it silently is how one
+   of them ends up reading a map that is not there. */
+eq('the index carries all four',
+    Object.keys(ix).sort(), ['counts', 'gone', 'open', 'sealed']);
   eq('and they are the same two maps',
     [ix.counts['Ardbeg 10'], ix.open['Ardbeg 10']], [2, 1]);
 
@@ -15749,9 +15786,28 @@ sec('\u00a7364 adding more types needs a bit more care');
      filter - and not by the one thing that spends money. */
   eq('the queue asks about a bourbon with no note',
     L.needsEnhancing({ sub: 'bourbon', tn: {} }), true);
-  ['vodka', 'gin', 'rum', 'tequila', 'mezcal', 'liqueur', 'brandy']
+  ['vodka', 'gin', 'rum', 'tequila', 'mezcal', 'liqueur', 'brandy', 'other']
     .forEach(sub => eq('and never about a ' + sub,
       L.needsEnhancing({ sub: sub, tn: {} }), false));
+
+  /* A CATCH-ALL, SELECTABLE AND NEVER GUESSED. BZ: if I scan a brandy or
+     a vermouth, maybe we need an Other category. Brandy was already there;
+     vermouth is not, and nor is amaro or sake or whatever turns up next
+     year. Without somewhere to put them the category comes back NULL and
+     the bottle loses what it is - the same fault that made a vodka a
+     bourbon. */
+  eq('other is a declared type', L.TYPES.indexOf('other') >= 0, true);
+  eq('and it is not whisky', L.isWhisky({ sub: 'other' }), false);
+  eq('it is missing nothing',
+    L.libraryGaps({ name: 'A Vermouth', dist: 'D', sub: 'other',
+      proof: 32 }).length, 0);
+  /* NEVER GUESSED. A whisky whose name the app does not recognise must
+     stay null so a lookup can fill it in; filing it as Other would end
+     that quietly. */
+  eq('a name it does not know is still blank, not Other',
+    L.guessSub('Some Unlabelled Bottling', '', {}), null);
+  eq('and a vermouth is blank too until somebody says otherwise',
+    L.guessSub('Carpano Antica Formula', '', {}), null);
 }
 
 sec('\u00a7365 a vodka in the shared library');
@@ -16078,6 +16134,194 @@ sec('\u00a7371 the key the library actually filed it under');
      capital does not hide half a pair. */
   eq('case and spacing do not split a pair',
     L.libKeysNamed(twins, '  glendronach 21 YEAR old parliament ').length, 2);
+}
+
+sec('\u00a7372 a recast takes the freshest flight there is');
+{
+  /* The rule has always been that re-running a flight serves different
+     whisky. It was priced at 25 points against the score, which held until
+     the cask flight was allowed to vary the house and the spread bonus
+     could outbid it - and then a recast quietly served one of the same
+     pours again.
+
+     Fewest repeats wins outright now. This fixture exists because the real
+     one cannot test it: every candidate it offers repeats equally, so the
+     assertion passes whichever way the comparison is written, which I
+     proved by inverting the rule and watching it stay green. A test that
+     cannot fail is worse than no test, because it reads like cover. */
+  const cat = {};
+  const bots = [];
+  const mk = (k, dist, fin, proof) => {
+    cat[k] = { k: k, name: dist + ' ' + fin, dist: dist, sub: 'scotch',
+               fin: fin, proof: proof, obsc: 'known' };
+    bots.push({ id: 'B' + k, k: k, status: 'open' });
+  };
+  /* Three used by the first run, and three fresh ones that make an
+     equally good flight - so a chooser that ignores repeats can pick
+     either, and only one answer is right. */
+  /* Six used and six fresh, because a flight is six pours - so there is
+     a completely fresh alternative and a chooser that ignores repeats can
+     land on either. */
+  const woods = ['Sherry', 'Port', 'Wine', 'Madeira', 'Rum', 'Oloroso'];
+  const usedHouses = ['Aberlour', 'Glenmorangie', 'Balvenie', 'Macallan',
+                      'Dalmore', 'Tomatin'];
+  const freshHouses = ['Glendronach', 'Arran', 'Edradour', 'Tamdhu',
+                       'Benriach', 'Craigellachie'];
+  woods.forEach((w, i) => {
+    mk('u' + i, usedHouses[i], w, 92);
+    mk('f' + i, freshHouses[i], w, 92);
+  });
+  const first = woods.map((w, i) => 'u' + i);
+
+  const flight = { title: 'CASK', tag: 'ONE VARIABLE: FINISH',
+                   core: first.map(k => ({ k: k })) };
+  const hist = [{ kind: 'flight', flight: 'CASK', at: '2026-01-10',
+                  pours: first }];
+  const r = L.recastFlight(flight, cat, bots, hist);
+  eq('the recast found a flight', r.ok, true);
+  if (r.ok) {
+    const reused = r.pours.filter(p => first.indexOf(p.k) >= 0).length;
+    eq('a recast serves none of the first run when it can', reused, 0);
+    eq('and still fills the flight', r.pours.length > 0, true);
+  }
+}
+
+sec('\u00a7373 a photographed bottle is where you can see it');
+{
+  /* BZ, after adding nine bottles from a photograph: bottles seem to get
+     into the counts but not able to find on the shelf and not at the top
+     of the list.
+
+     Both true, both the same cause. A photographed bottle is added SEALED
+     - correctly, nobody opens nine bottles by photographing them - and the
+     shelf's default filter is OPEN. Nine went in, the counts moved, and
+     the shelf showed him nothing. They were one filter away the whole
+     time and nothing said so. */
+  const cat = {};
+  const bots = [];
+  ['Aaa Old', 'Bbb Old', 'Zzz Just Photographed'].forEach((n, i) => {
+    const k = 'k' + i;
+    cat[k] = { k: k, name: n, dist: 'D', sub: 'bourbon', proof: 90 };
+    bots.push({ id: 'B' + i, k: k, status: i === 2 ? 'sealed' : 'open',
+                got: i === 2 ? '2026-09-11' : '2024-01-01' });
+  });
+  const base = { favsOnly: false, wishOnly: false, whiskyOnly: false,
+                 types: [], obsc: [], regions: [], bands: [], proofs: [],
+                 scars: [], cask: '', age: '', q: '' };
+  const shown = (status, sort) => L.shelfSort(
+    L.shelfFilter(Object.values(cat), bots,
+      Object.assign({}, base, { status: status, sort: sort })),
+    sort, bots).map(p => p.name);
+
+  eq('a sealed bottle is invisible under the default filter',
+    shown('open', 'name').indexOf('Zzz Just Photographed'), -1);
+  eq('and visible once the filter is everything',
+    shown('all', 'name').indexOf('Zzz Just Photographed') >= 0, true);
+
+  /* AND AT THE TOP, which is the other half. 'added' sounds like the right
+     sort and is the wrong one - it means the order the catalog holds them,
+     which for a bottle added a second ago is the BOTTOM. It put the new
+     one third of three, so choosing it would have made the complaint worse
+     rather than better. 'got' is newest owned first and already existed. */
+  eq('order added puts the newest last',
+    shown('all', 'added').indexOf('Zzz Just Photographed'), 2);
+  eq('newest owned puts it first',
+    shown('all', 'got').indexOf('Zzz Just Photographed'), 0);
+}
+
+sec('\u00a7374 how much is left, in seven notches');
+{
+  /* BZ turned fill tracking down twice and was right both times: a number
+     you maintain by hand is a chore, and one derived from pour sizes is
+     wrong - not all pours are equal. What changed it was the SHAPE: a
+     vertical slider down the side of the bottle page that you hold
+     against the actual bottle and match by eye.
+
+     BZ: 10 and 25% increments, no 13% or 73% bs, this is close enough is
+     good enough. Seven notches, and the two near the ends earn their
+     place - 90 is barely touched and 10 is nearly gone, and plain
+     quarters can say neither. */
+  eq('a dragged finger cannot land on 73', L.fillSnap(73), 75);
+  eq('nor on 13', L.fillSnap(13), 10);
+  eq('nor on 38', L.fillSnap(38), 50);
+  eq('empty is a real answer', L.fillSnap(0), 0);
+  eq('and so is full', L.fillSnap(100), 100);
+  eq('out of range is pulled back', L.fillSnap(140), 100);
+  eq('and nothing at all is nothing', L.fillSnap(null), null);
+  eq('the ends have their own words', L.fillWords(90), 'Barely touched');
+  eq('and so does the bottom', L.fillWords(10), 'Nearly gone');
+
+  /* WHAT IS RUNNING OUT. BZ: this feature, if enabled, can lead to a
+     Remember to Stock up suggestion on shop, maybe in the form of the
+     wish list. That is what makes the gauge worth setting. */
+  const cat = { a: { k: 'a', name: 'Lagavulin 16' },
+                b: { k: 'b', name: 'Elmer T. Lee' },
+                c: { k: 'c', name: 'Buffalo Trace' },
+                d: { k: 'd', name: 'Redbreast 12' } };
+  const bots = [
+    { id: 'B1', k: 'a', status: 'open', fill: 10 },
+    { id: 'B2', k: 'b', status: 'open', fill: 25 },
+    { id: 'B3', k: 'c', status: 'open', fill: 25 },
+    { id: 'B4', k: 'c', status: 'sealed' },
+    { id: 'B5', k: 'd', status: 'open', fill: 75 },
+    { id: 'B6', k: 'a', status: 'open' }
+  ];
+  const low = L.runningLow(bots, cat).map(r => r.name);
+  eq('a quarter or less is running low', low.length, 2);
+  eq('emptiest first', low[0], 'Lagavulin 16');
+  /* A SPARE ON THE SHELF IS THE ANSWER TO RUNNING LOW, so telling
+     somebody to buy what they already own is how a list gets ignored. */
+  eq('not when a sealed one is already there',
+    low.indexOf('Buffalo Trace'), -1);
+  eq('not when there is plenty left', low.indexOf('Redbreast 12'), -1);
+  /* A BOTTLE WITH NO FILL SET IS NOT EMPTY, it is unmeasured - the
+     default has to be absent rather than zero or every bottle on the
+     shelf would read as drained the moment the gauge was switched on. */
+  eq('and never for a bottle nobody has measured',
+    L.runningLow([{ id: 'X', k: 'a', status: 'open' }], cat).length, 0);
+  eq('a gone bottle is not running low',
+    L.runningLow([{ id: 'X', k: 'a', status: 'gone', fill: 0 }],
+      cat).length, 0);
+}
+
+sec('\u00a7375 what you have drunk');
+{
+  /* Every other app calls this a Consumed list. Here a retired bottle
+     simply vanished from the shelf - the record was kept, with its reason
+     and its date and who got it, and there was nowhere to read it except
+     by opening the one bottle you already knew about.
+
+     The shelf already filters by status, so this is a fourth status
+     rather than a new screen. The only thing in its way was one line:
+     shelfFilter drops anything you do not currently own BEFORE it looks
+     at status, and ownedCounts deliberately excludes the gone. */
+  const cat = { a: { k: 'a', name: 'Finished Bourbon' },
+                b: { k: 'b', name: 'Still Here' },
+                c: { k: 'c', name: 'Sealed Spare' } };
+  const bots = [
+    { id: 'B1', k: 'a', status: 'gone', exit: 'finished',
+      exitDate: '2026-03-01' },
+    { id: 'B2', k: 'b', status: 'open' },
+    { id: 'B3', k: 'c', status: 'sealed' }
+  ];
+  const base = { favsOnly: false, wishOnly: false, whiskyOnly: false,
+                 types: [], obsc: [], regions: [], bands: [], proofs: [],
+                 scars: [], cask: '', age: '', q: '', sort: 'name' };
+  const show = st => L.shelfFilter(Object.values(cat), bots,
+    Object.assign({}, base, { status: st })).map(p => p.name);
+
+  eq('gone lists what has left the shelf', show('gone'),
+    ['Finished Bourbon']);
+  /* AND NOTHING ELSE MOVED, which is the part worth guarding: a fourth
+     status that changed the other three would be a regression dressed as
+     a feature. */
+  eq('open is unchanged', show('open'), ['Still Here']);
+  eq('sealed is unchanged', show('sealed'), ['Sealed Spare']);
+  eq('and all still means what you hold', show('all').indexOf(
+    'Finished Bourbon'), -1);
+  eq('a gone bottle is counted as gone',
+    Object.keys(L.goneKeys(bots)).length, 1);
+  eq('and is not counted as owned', !!L.ownedCounts(bots).a, false);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
