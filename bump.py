@@ -119,6 +119,19 @@ def main():
 
     cur = tuple(read_version(html))
     if forced:
+        if forced == cur and renumber:
+            # THE CACHE NAME CARRIES THE VERSION, so re-cutting the same
+            # number gives the service worker an identical CACHE_NAME and
+            # no reason to believe anything changed. BZ, after 2.1.0 was
+            # re-cut four times in an afternoon: I don't think mobile is
+            # picking up the change if the version is the same. It was not,
+            # and it could not have. Corrections to an unreleased number
+            # are fine; once it has been uploaded, the number has to move.
+            print('  ! RE-CUTTING THE SAME VERSION. sw.js CACHE_NAME will '
+                  'be identical, so any')
+            print('    device that already has ' + '%d.%d.%d' % cur
+                  + ' will not see this as an update.')
+            print('    Only do this if that build never left this folder.')
         if forced <= cur and not renumber:
             sys.exit('Refusing to bump: %d.%d.%d is not ahead of %d.%d.%d.\n'
                      'If you mean it, say so: bump.py --renumber x.y.z "entry"'
