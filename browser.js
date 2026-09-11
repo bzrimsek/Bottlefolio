@@ -141,7 +141,7 @@ function step(n) {
       renderShelf(); renderShelfFilters(); renderHome();
     }, [JSON.parse(fs.readFileSync(bots, 'utf8')),
         fs.existsSync(flts) ? JSON.parse(fs.readFileSync(flts, 'utf8')) : null]);
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(240);
   }
 
   step('did it start');
@@ -159,7 +159,7 @@ function step(n) {
     const btn = page.locator('nav button[data-scr="' + tab + '"]');
     if (!(await btn.count())) { failures.push('no nav button for ' + tab); continue; }
     await btn.click();
-    await page.waitForTimeout(220);
+    await page.waitForTimeout(88);
 
     const screen = page.locator('#scr-' + tab);
     if (!(await screen.isVisible())) failures.push(tab + ': screen not visible');
@@ -204,7 +204,7 @@ function step(n) {
       if (!scr.classList.contains('on')) return 'did not open';
       return (scr.innerText || '').trim().length;
     }, name);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
     if (typeof drew === 'string') {
       failures.push(name + ': ' + drew);
     } else if (drew < 12) {
@@ -216,17 +216,17 @@ function step(n) {
     }
   }
   await page.locator('nav button[data-scr="home"]').click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(80);
 
   step('shelf lists bottles, header lines up');
   // 3. The shelf actually lists bottles, and its header lines up with them.
   await page.locator('nav button[data-scr="shelf"]').click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(100);
   const tiles = await page.locator('#shelfList .tile').count();
   if (!tiles) failures.push('shelf: no type tiles');
   else {
     await page.locator('#shelfList .tile').first().click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const rows = await page.locator('#shelfList .item').count();
     if (rows < 2) failures.push('shelf: a type shows no rows');
     const head = await page.locator('.listhead').boundingBox();
@@ -245,7 +245,7 @@ function step(n) {
      this can see whether the button is on the screen and does anything. */
   step('a filtered shelf can get back');
   await page.locator('nav button[data-scr="shelf"]').click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(100);
   {
     /* Every pill that narrows the list, including the two-state ones that
        were the fault: whichever of them this shelf actually offers. */
@@ -259,7 +259,7 @@ function step(n) {
       if (first) S.favs = Object.assign({}, S.favs, { [first.k]: 1 });
       save_(); renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const pills = ['#favFilter', '#wishFilter'];
     let drove = 0;
     for (const sel of pills) {
@@ -267,7 +267,7 @@ function step(n) {
       if (!(await pill.count()) || !(await pill.isVisible())) continue;
       drove++;
       await pill.click();
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       const back = page.locator('#scr-shelf .backbtn');
       const shown = (await back.count()) && await back.isVisible();
       if (!shown) {
@@ -275,7 +275,7 @@ function step(n) {
           + 'way back');
       } else {
         await back.click();
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(100);
         const still = await page.evaluate(
           () => L.activeFacets(S.filters));
         if (still) {
@@ -288,7 +288,7 @@ function step(n) {
         L.clearFacets(S.filters);
         renderShelfFilters(); renderShelf();
       });
-      await page.waitForTimeout(150);
+      await page.waitForTimeout(60);
     }
     if (!drove) {
       failures.push('shelf: neither the starred nor the Wanted pill was '
@@ -305,7 +305,7 @@ function step(n) {
         S.shelfSub = null; L.clearFacets(S.filters);
         renderShelfFilters(); renderShelf();
       });
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
       if (route === 'whole shelf') {
         const btn = page.locator('#shelfList button', { hasText: 'See the whole shelf' });
         if (!(await btn.count())) { failures.push('shelf: no "see the whole shelf" button'); continue; }
@@ -315,14 +315,14 @@ function step(n) {
         if (!(await tile.count())) { failures.push('shelf: no type tiles'); continue; }
         await tile.first().click();
       }
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       const back = page.locator('#scr-shelf .backbtn');
       if (!(await back.count()) || !(await back.isVisible())) {
         failures.push('shelf: ' + route + ' offers no way back');
         continue;
       }
       await back.click();
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       const narrowed = await page.evaluate(
         () => (S.shelfSub === 'all' || L.activeFacets(S.filters)) ? 1 : 0);
       if (narrowed) {
@@ -337,14 +337,14 @@ function step(n) {
       S.shelfSub = null; L.clearFacets(S.filters);
       renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
     {
       const bar = page.locator('#shelfList .bar.tappable');
       if (!(await bar.count())) {
         failures.push('shelf: no chart bar to press');
       } else {
         await bar.first().click();
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(120);
         const overlayOn = await page.evaluate(() => {
           const o = document.getElementById('overlay');
           return o && o.classList.contains('on') ? 1 : 0;
@@ -368,17 +368,23 @@ function step(n) {
       S.shelfSub = null; L.clearFacets(S.filters);
       renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
     {
       const q = page.locator('#q');
       await q.fill('Aberlour');
-      await page.waitForTimeout(350);
+      /* WAIT FOR THE THING, not for a guess at how long it takes. The
+         search box is debounced, so a fixed pause is a bet on a number
+         nobody measured - it was 350ms, survived being cut to 140, and
+         failed. Waiting for the back button to appear is faster when the
+         app is quick and correct when it is not, which a sleep is
+         never both. */
       const back = page.locator('#scr-shelf .backbtn');
+      await back.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {});
       if (!(await back.count()) || !(await back.isVisible())) {
         failures.push('shelf: a search narrows the list and offers no way back');
       } else {
         await back.click();
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(100);
         const still = await page.evaluate(() =>
           (document.getElementById('q').value || '').trim());
         if (still) {
@@ -386,7 +392,7 @@ function step(n) {
         }
       }
       await q.fill('');
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
 
     /* THE WANTED VIEW IS A ROUTE TOO, and it returns early out of
@@ -397,14 +403,14 @@ function step(n) {
       S.filters.wishOnly = true;
       renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     {
       const back = page.locator('#scr-shelf .backbtn');
       if (!(await back.count()) || !(await back.isVisible())) {
         failures.push('shelf: the Wanted view offers no way back');
       } else {
         await back.click();
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(100);
         const still = await page.evaluate(() => L.activeFacets(S.filters));
         if (still) failures.push('shelf: back from Wanted left it filtered');
       }
@@ -417,7 +423,7 @@ function step(n) {
       S.shelfSub = null; L.clearFacets(S.filters);
       renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const wantCard = await page.locator('#shelfList', { hasText: 'What you are after' }).count();
     if (!wantCard) {
       failures.push('shelf: a wishlist with bottles on it does not appear '
@@ -430,7 +436,7 @@ function step(n) {
       L.clearFacets(S.filters);
       save_(); renderShelfFilters(); renderShelf();
     });
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(60);
   }
 
   /* SPIN IS CENTERED AND THE PICKER DOES NOT WRAP. BZ: not liking how spin
@@ -446,12 +452,12 @@ function step(n) {
      carries one. Both are driven now. */
   step('shelf tools opens, and an invite link does not stop the load');
   await page.locator('nav button[data-scr="shelf"]').click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(80);
   {
     const gear = page.locator('#scr-shelf .hdr-acts button').first();
     if (await gear.count()) {
       await gear.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       const on = await page.evaluate(() => {
         const o = document.getElementById('overlay');
         return o && o.classList.contains('on') ? 1 : 0;
@@ -509,7 +515,7 @@ function step(n) {
      whatever you picked, and pushed the machine off a phone. */
   step('taste shows one thing at a time');
   await page.locator('nav button[data-scr="pour"]').click();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(120);
   {
     const chips = await page.locator('#pourWhere button').allTextContents();
     if (chips.length !== 4) {
@@ -518,7 +524,7 @@ function step(n) {
     }
     for (const label of chips) {
       await page.locator('#pourWhere button', { hasText: label }).first().click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
       /* recapBody counts: it shows WITH history and must not be on screen
          beside the machine, which is the whole point of moving it. */
       const open = await page.evaluate(() => ['pourHome', 'awayBody',
@@ -538,7 +544,7 @@ function step(n) {
       }
     }
     await page.locator('#pourWhere button', { hasText: 'At home' }).first().click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   /* THE ADMIN SCREEN DRAWS EVERY CARD, and the Everybody card was left as
@@ -572,7 +578,7 @@ function step(n) {
       });
       return out;
     });
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
     bad.forEach(x => failures.push('running this: ' + x));
   }
 
@@ -585,21 +591,21 @@ function step(n) {
        and a chip on a hidden screen is a click that waits thirty seconds
        and then fails for the wrong reason. */
     await page.locator('nav button[data-scr="pour"]').click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     await page.locator('#pourWhere button', { hasText: 'With a guest' }).click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     await page.locator('#guestBody input').fill('Lagavulin');
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(160);
     const hits = await page.locator('#guestBody .recent .item').count();
     if (!hits) {
       failures.push('guest: naming a bottle offers no matches');
     } else {
       await page.locator('#guestBody .recent .item').first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       for (const rung of ['Keep it in the house', 'Next door',
                           'Down the road', 'Across the pond']) {
         await page.locator('#guestBody .chip', { hasText: rung }).click();
-        await page.waitForTimeout(200);
+        await page.waitForTimeout(80);
         const n = await page.evaluate(() => {
           const cards = [...document.querySelectorAll('#guestBody .sheet')];
           const last = cards[cards.length - 1];
@@ -641,7 +647,7 @@ function step(n) {
        the box takes it as a phrase and brings the gentle end of the shelf
        instead of pretending it is a whisky. */
     await page.locator('#guestBody input').fill('dark beer');
-    await page.waitForTimeout(450);
+    await page.waitForTimeout(180);
     const offered = await page.locator('#guestBody .recent .btn')
       .allTextContents();
     if (!offered.some(t => /find something/i.test(t))) {
@@ -650,7 +656,7 @@ function step(n) {
     } else {
       await page.locator('#guestBody .btn', { hasText: 'Find something' })
         .click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(160);
       const soft = await page.evaluate(() => {
         const cards = [...document.querySelectorAll('#guestBody .sheet')];
         const last = cards[cards.length - 1];
@@ -668,7 +674,7 @@ function step(n) {
        way in - BZ: I need to be able to enter a bottle that I don't have
        and that the library does not have. */
     await page.locator('#guestBody input').fill('Yamazaki 55');
-    await page.waitForTimeout(450);
+    await page.waitForTimeout(180);
     const look = await page.locator('#guestBody .recent .btn')
       .allTextContents();
     if (!look.some(t => /look up/i.test(t))) {
@@ -677,7 +683,7 @@ function step(n) {
     }
 
     await page.locator('#pourWhere button', { hasText: 'At home' }).click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   /* THE SERVICE DOORS, DRIVEN. Ten call sites were rerouted through
@@ -790,7 +796,7 @@ function step(n) {
 
   step('spin is centered and its picker holds one line');
   await page.locator('nav button[data-scr="pour"]').click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(100);
   {
     await page.evaluate(() => {
       SHARED.shelves = { u1: { name: 'Not Smoky Bill', bottles: [] },
@@ -799,7 +805,7 @@ function step(n) {
       SHARED.names = { u1: 'Not Smoky Bill', u2: 'Tyson', u3: 'SmokyBill' };
       renderReels(); renderMatchRow();
     });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const spin = await page.locator('#spinBtn').boundingBox();
     const scr = await page.locator('#scr-pour').boundingBox();
     if (spin && scr) {
@@ -827,7 +833,7 @@ function step(n) {
   step('the tab bar never covers the end of a screen');
   for (const scr of ['home', 'shelf', 'pour', 'flights']) {
     await page.locator('nav button[data-scr="' + scr + '"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const gap = await page.evaluate(() => {
       const s = document.querySelector('.screen.on');
       const n = document.querySelector('nav');
@@ -847,7 +853,7 @@ function step(n) {
   step('shop asks its question');
   // 4. Shopping asks its question, and answering it draws something.
   await page.locator('nav button[data-scr="shop"]').click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(100);
   // Back to the question first: an earlier pass through the tabs may have
   // answered it, and the answer is remembered on purpose.
   //
@@ -856,7 +862,7 @@ function step(n) {
   // where it cannot be clicked; a count guard sent Playwright to wait
   // thirty seconds for an element the app was deliberately hiding.
   const chg = page.locator('#shopBack').first();
-  if (await chg.isVisible()) { await chg.click(); await page.waitForTimeout(300); }
+  if (await chg.isVisible()) { await chg.click(); await page.waitForTimeout(120); }
 
   /* However many situations there are, every one of them has to draw.
      This asserted exactly three and broke when a fourth was added, which
@@ -874,7 +880,7 @@ function step(n) {
         const back = page.locator('#shopBack');
         if (await back.count()) {
           await back.first().click();
-          await page.waitForTimeout(250);
+          await page.waitForTimeout(100);
         }
       }
       if (!(await page.locator('#scr-shop .modetile').count())) {
@@ -882,7 +888,7 @@ function step(n) {
         break;
       }
       await page.locator('#scr-shop .modetile').nth(i).click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(160);
       const body = (await page.locator('#scr-shop').innerText()).trim();
       if (body.length < 40) {
         failures.push('shop: situation ' + (i + 1) + ' draws nothing');
@@ -902,8 +908,8 @@ function step(n) {
   {
     const chg2 = page.locator('#shopBack').first();
     await page.locator('nav button[data-scr="shop"]').click();
-    await page.waitForTimeout(250);
-    if (await chg2.isVisible()) { await chg2.click(); await page.waitForTimeout(300); }
+    await page.waitForTimeout(100);
+    if (await chg2.isVisible()) { await chg2.click(); await page.waitForTimeout(120); }
     /* By LABEL, not by position. Both of these picked a tile by index and
        broke the moment a fourth mode was added between them — the walk
        reported "no pills on the planning screen" when the screen was fine
@@ -916,7 +922,7 @@ function step(n) {
          the copy, which is exactly what rule 30c says not to do. The mode
          id is the durable thing: it is what the code branches on. */
       await page.locator('.modetile[data-mode="online"]').first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       const ta = page.locator('#scr-shop textarea').first();
       if (!(await ta.count())) {
         failures.push('paste: no textarea on the website situation');
@@ -927,7 +933,7 @@ function step(n) {
           '750ml bottle', '$79.99', 'Add to cart'].join('\n'));
         await page.locator('#scr-shop button', { hasText: 'Read it' })
           .first().click();
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(240);
 
         const q = await page.locator('#shopQ').inputValue();
         if (/star|reviews|Choose a bottle/i.test(q)) {
@@ -955,14 +961,14 @@ function step(n) {
   // 5. A bottle opens from the shelf, which is the commonest thing anybody
   //    does and the one that leaves the tab bar behind.
   await page.locator('nav button[data-scr="shelf"]').click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(100);
   if (await page.locator('#shelfList .tile').count()) {
     await page.locator('#shelfList .tile').first().click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
   if (await page.locator('#shelfList .item').count()) {
     await page.locator('#shelfList .item').first().click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     if (!(await page.locator('#scr-detail').isVisible())) {
       failures.push('a bottle does not open from the shelf');
     }
@@ -983,10 +989,10 @@ function step(n) {
   //    the value overflows its tile, the page overflows the window, or the
   //    row breaks in two.
   await page.locator('nav button[data-scr="home"]').click();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(120);
   for (const w of [360, 390, 430, 500, 600, 699, 700, 820, 1200]) {
     await page.setViewportSize({ width: w, height: 780 });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
     const t = await page.evaluate(() => {
       const wrap = document.querySelector('#homeBody > .tiles');
       if (!wrap) return null;
@@ -1057,7 +1063,7 @@ function step(n) {
       failures.push('log: could not seed a pour and a run');
     } else {
       await page.locator('nav button[data-scr="pour"]').click();
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
 
       if (await page.locator('#histBody .bars').count()) {
         failures.push('log: the month bars are still on the pour log');
@@ -1072,7 +1078,7 @@ function step(n) {
       }
 
       await page.locator('nav button[data-scr="flights"]').click();
-      await page.waitForTimeout(450);
+      await page.waitForTimeout(180);
       /* The flights screen now leads with three things to do — run one you
          designed, build one from scratch, see what you have poured — and
          the list of flights is behind the first of them. BZ asked for that
@@ -1088,7 +1094,7 @@ function step(n) {
       }
       await page.locator('#scr-flights .modetile',
         { hasText: 'Run one you designed' }).click().catch(() => {});
-      await page.waitForTimeout(450);
+      await page.waitForTimeout(180);
       // And a way back to them, which every screen you go into needs.
       /* By what it SAYS, not what class it wears. This asserted .chip and
          the back was rebuilt as btn btn-sm ghost — the shape every other
@@ -1115,7 +1121,7 @@ function step(n) {
       // The X, and the navigation it must NOT do.
       if (await page.locator('#flightList .dismiss').count()) {
         await page.locator('#flightList .dismiss').first().click();
-        await page.waitForTimeout(400);
+        await page.waitForTimeout(160);
         if (await page.locator('#scr-detail').isVisible()) {
           failures.push('flights: the X opened the flight as well as '
             + 'removing it');
@@ -1130,7 +1136,7 @@ function step(n) {
           failures.push('flights: removing a run offers no Undo');
         } else {
           await undo.first().click();
-          await page.waitForTimeout(400);
+          await page.waitForTimeout(160);
           if (await page.locator('#flightList .recent .item').count() !== 1) {
             failures.push('flights: Undo did not put the run back');
           }
@@ -1139,7 +1145,7 @@ function step(n) {
 
       // The pours are untouched by any of that.
       await page.locator('nav button[data-scr="pour"]').click();
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
       if (await page.locator('#histBody .recent .item').count() !== 2) {
         failures.push('log: removing a run changed the pour log');
       }
@@ -1156,19 +1162,19 @@ function step(n) {
   //    reaches the pour, and that pressing Save does not throw it away.
   {
     await page.locator('nav button[data-scr="flights"]').click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(160);
     const card = page.locator('#scr-flights .fcard').first();
     if (!(await card.count())) {
       failures.push('flights: no flight cards to open');
     } else {
       await card.click();
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
       const edit = page.locator('#scr-detail button', { hasText: /^Edit$/ }).first();
       if (!(await edit.count())) {
         failures.push('flight editor: no Edit button on a flight');
       } else {
         await edit.click();
-        await page.waitForTimeout(350);
+        await page.waitForTimeout(140);
         const notes = page.locator('.pourrow .pnote');
         const n = await notes.count();
         if (!n) {
@@ -1178,18 +1184,18 @@ function step(n) {
           await notes.first().fill(typed);
           await page.locator('.modal button', { hasText: 'Save flight' })
             .first().click();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(200);
 
           await page.locator('#scr-detail button', { hasText: /^Edit$/ })
             .first().click();
-          await page.waitForTimeout(400);
+          await page.waitForTimeout(160);
           const back = await page.locator('.pourrow .pnote').first().inputValue();
           if (back !== typed) {
             failures.push('flight editor: the host line did not survive a save, '
               + 'came back as ' + JSON.stringify(back.slice(0, 40)));
           }
           const cancel = page.locator('.modal button', { hasText: 'Cancel' }).first();
-          if (await cancel.count()) { await cancel.click(); await page.waitForTimeout(200); }
+          if (await cancel.count()) { await cancel.click(); await page.waitForTimeout(80); }
         }
       }
     }
@@ -1207,9 +1213,9 @@ function step(n) {
   //    anybody looks for the buy button.
   {
     await page.locator('nav button[data-scr="shop"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const chg3 = page.locator('#shopBack').first();
-    if (await chg3.isVisible()) { await chg3.click(); await page.waitForTimeout(300); }
+    if (await chg3.isVisible()) { await chg3.click(); await page.waitForTimeout(120); }
     const modes3 = page.locator('#scr-shop .modetile');
     if ((await modes3.count()) < 3) {
       failures.push('shop: cannot reach the situation question');
@@ -1217,7 +1223,7 @@ function step(n) {
       // By label, so adding a situation cannot silently retarget this.
       await page.locator('.modetile[data-mode="store"]').first()
         .click();
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
 
       // Typed one key at a time, the way a phone types. Anything that
       // blurs the box loses the rest of the word.
@@ -1276,7 +1282,7 @@ function step(n) {
       const before = await page.evaluate(() => S.bottles.length);
       await page.locator('#scr-shop button', { hasText: 'I bought it' })
         .first().click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(160);
       const refused = await page.evaluate(() => {
         const n = document.querySelector('#shopFixed .looknote');
         const bad = document.querySelector('#shopFixed .field.needed');
@@ -1298,7 +1304,7 @@ function step(n) {
       // Now fill the proof in and buy it properly.
       await page.locator('#shopFixed [name="proof"]').fill('105');
       await page.locator('#shopFixed [name="proof"]').dispatchEvent('change');
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(160);
       await page.locator('#scr-shop button', { hasText: 'I bought it' })
         .first().click();
       await page.waitForTimeout(700);
@@ -1338,10 +1344,10 @@ function step(n) {
     // is zero and getComputedStyle hands back the specified value instead
     // of the used one — the check passes without measuring anything.
     await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     for (const w of [360, 390, 820]) {
     await page.setViewportSize({ width: w, height: 780 });
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(60);
     const wrapped = await page.evaluate(() => {
       const card = document.createElement('div');
       card.className = 'sheet';
@@ -1418,7 +1424,7 @@ function step(n) {
   {
     await page.setViewportSize({ width: 900, height: 800 });
     await page.locator('nav button[data-scr="shelf"]').click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(160);
 
     // The way in is the type tiles. Nothing to sort yet.
     if (await page.locator('#shelfList .tile').count()) {
@@ -1429,7 +1435,7 @@ function step(n) {
         failures.push('shelf: the column labels show over the type tiles');
       }
       await page.locator('#shelfList .tile').first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
     }
 
     if (!(await page.locator('#scr-shelf .sortpick').isVisible())) {
@@ -1449,13 +1455,13 @@ function step(n) {
         .filter(n => !isNaN(n)));
     const head = page.locator('#scr-shelf .sorthead[data-col="proof"]');
     await head.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const up = await proofs();
     if (up.length > 2 && !up.every((v, i) => i === 0 || up[i - 1] <= v)) {
       failures.push('shelf: Proof did not sort ascending');
     }
     await head.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const down = await proofs();
     if (down.length > 2 && !down.every((v, i) => i === 0 || down[i - 1] >= v)) {
       failures.push('shelf: a second click did not reverse Proof');
@@ -1473,14 +1479,14 @@ function step(n) {
   // 11. The Find it button, and the tag that is also one.
   {
     await page.locator('nav button[data-scr="shelf"]').click();
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(140);
     if (await page.locator('#shelfList .tile').count()) {
       await page.locator('#shelfList .tile').first().click();
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
     }
     if (await page.locator('#shelfList .item').count()) {
       await page.locator('#shelfList .item').first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       const find = page.locator('#scr-detail button', { hasText: 'Find it' });
       if (!(await find.count())) {
         failures.push('bottle: no Find it button');
@@ -1514,7 +1520,7 @@ function step(n) {
   //     up, wreck the shelf, restore, and check the bottles came back.
   {
     await page.evaluate(() => { show('settings'); });
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const made = await page.evaluate(() => {
       /* global S, KEYS, L */
       const b = L.makeBackup(S, KEYS, Date.now());
@@ -1539,7 +1545,7 @@ function step(n) {
         + restored.before);
     }
     await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   step('every type tile lists bottles');
@@ -1553,7 +1559,7 @@ function step(n) {
     for (const w of [390, 900]) {
       await page.setViewportSize({ width: w, height: 800 });
       await page.locator('nav button[data-scr="shelf"]').click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       /* Cleared FIRST. The tiles are the untouched state, and an earlier
          step in this walk clicks one and never puts it back — so counting
          before resetting counted the list that tile produced, found no
@@ -1567,7 +1573,7 @@ function step(n) {
         document.getElementById('q').value = '';
         renderShelf(); renderShelfFilters();
       });
-      await page.waitForTimeout(150);
+      await page.waitForTimeout(60);
       const n = await page.locator('#shelfList .tile').count();
       if (!n) { failures.push('shelf at ' + w + 'px: no type tiles'); continue; }
       for (let i = 0; i < n; i++) {
@@ -1576,12 +1582,12 @@ function step(n) {
           document.getElementById('q').value = '';
           renderShelf(); renderShelfFilters();
         });
-        await page.waitForTimeout(90);
+        await page.waitForTimeout(60);
         const tiles = page.locator('#shelfList .tile');
         if ((await tiles.count()) <= i) break;
         const label = (await tiles.nth(i).innerText()).split('\n')[0];
         await tiles.nth(i).click();
-        await page.waitForTimeout(180);
+        await page.waitForTimeout(72);
         if (!(await page.locator('#shelfList .item').count())) {
           failures.push('shelf at ' + w + 'px: the ' + label
             + ' tile listed nothing');
@@ -1596,14 +1602,14 @@ function step(n) {
   //     to the map. A number you can read and not follow is a dead end.
   {
     await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const want = [['bottles on the shelf', 'shelf'],
                   ['open and pourable', 'pour'],
                   ['different whiskies', 'shelf'],
                   ['ready to pour', 'flights']];
     for (const [label, screen] of want) {
       await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
       const tile = page.locator('#homeBody > .tiles > button.tile')
         .filter({ hasText: label });
       if (!(await tile.count())) {
@@ -1611,14 +1617,14 @@ function step(n) {
         continue;
       }
       await tile.first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       const on = await page.evaluate(n =>
         document.getElementById('scr-' + n).classList.contains('on'), screen);
       if (!on) failures.push('home: "' + label + '" did not open ' + screen);
     }
     // The shelf value names no screen and must stay a label.
     await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
     const val = page.locator('#homeBody > .tiles > button.tile')
       .filter({ hasText: 'shelf value at MSRP' });
     if (await val.count()) {
@@ -1634,7 +1640,7 @@ function step(n) {
         failures.push('home: the Open the map chip is still there');
       }
       await mapBtn.first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       if (!(await page.evaluate(() =>
           document.getElementById('scr-map').classList.contains('on')))) {
         failures.push('home: pressing the map did not open the map');
@@ -1648,7 +1654,7 @@ function step(n) {
   //     resizes under your thumb reads as the app stumbling.
   {
     await page.locator('nav button[data-scr="pour"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const heights = [];
     for (let i = 0; i < 6; i++) {
       heights.push(await page.evaluate(() => Math.round(
@@ -1667,7 +1673,7 @@ function step(n) {
   // 14. The home tiles go where their number lives.
   {
     await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     /* Named by what they lead to, not by their exact wording. This listed
        'flights run', which was renamed to 'ready to pour tonight' — a walk
        that breaks when a label is reworded is testing the copy rather than
@@ -1684,7 +1690,7 @@ function step(n) {
         continue;
       }
       await tile.first().click();
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       const on = await page.evaluate(() => {
         const s = document.querySelector('.screen.on');
         return s ? s.id.replace('scr-', '') : null;
@@ -1694,7 +1700,7 @@ function step(n) {
           + ', want ' + want[label]);
       }
       await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
     // The shelf value is not a place, so it stays a label.
     const notATile = await page.locator('#homeBody > .tiles > button.tile')
@@ -1730,12 +1736,12 @@ function step(n) {
       failures.push('home: the map is not tappable');
     } else {
       await map.first().click();
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       const on = await page.evaluate(() =>
         (document.querySelector('.screen.on') || {}).id);
       if (on !== 'scr-map') failures.push('home: the map opened ' + on);
       await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
     if (await page.locator('#homeBody button', { hasText: 'Open the map' }).count()) {
       failures.push('home: the Open the map chip is still there');
@@ -1749,13 +1755,13 @@ function step(n) {
     await page.setViewportSize({ width: 390, height: 780 });
     await page.evaluate(() => { S.lookupUrl = 'http://app.local/lookup'; });
     await page.locator('nav button[data-scr="shelf"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     if (await page.locator('#shelfList .tile').count()) {
       await page.locator('#shelfList .tile').first().click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
     await page.locator('#shelfList .item').first().click();
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(140);
 
     /* The bottle screen got a real .hdr in v1.9.0, so its one control moved
        out of .detail-acts and into the header with the mark and the title —
@@ -1819,10 +1825,10 @@ function step(n) {
 
     // Shop: Home and Back on one line, not stacked.
     await page.locator('nav button[data-scr="shop"]').click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     if (await page.locator('#scr-shop .modetile').count()) {
       await page.locator('#scr-shop .modetile').first().click();
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
     }
     /* Away and back, four times. The button was BUILT on every render into
        a header this screen never clears, so they piled up — three, four,
@@ -1831,9 +1837,9 @@ function step(n) {
        trail". One of it, saying Back, however often you leave and return. */
     for (let i = 0; i < 4; i++) {
       await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(120);
+      await page.waitForTimeout(60);
       await page.locator('nav button[data-scr="shop"]').click();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
     const stacked = await page.evaluate(() => ({
       backs: document.querySelectorAll('#shopBack').length,
@@ -1848,7 +1854,7 @@ function step(n) {
     }
     // And it is gone once there is no situation to go back from.
     await page.locator('#shopBack').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const onQuestion = await page.evaluate(() =>
       [...document.querySelectorAll('#scr-shop .hdr button')]
         .filter(b => !b.hidden).map(b => b.textContent.trim()));
@@ -1856,7 +1862,7 @@ function step(n) {
       failures.push('shop: Back still shows on the question screen');
     }
     await page.locator('#scr-shop .modetile').first().click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
 
     const hdr = await page.evaluate(() => {
       const bs = [...document.querySelectorAll('#scr-shop .hdr button')]
@@ -1886,19 +1892,19 @@ function step(n) {
   step('every dimension pill draws');
   {
     await page.locator('nav button[data-scr="shop"]').click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     /* Back to the question FIRST. Shop remembers the last answer, so this
        step arrived in store mode, where the same pills exist and pressing
        one legitimately leaves the scroll pane empty — nothing is typed yet.
        Eight false failures came from checking planning-mode output on the
        store screen. */
     const back = page.locator('#shopBack').first();
-    if (await back.isVisible()) { await back.click(); await page.waitForTimeout(300); }
+    if (await back.isVisible()) { await back.click(); await page.waitForTimeout(120); }
     const tiles = page.locator('#scr-shop .modetile');
     if (await tiles.count() >= 3) {
       await page.locator('.modetile[data-mode="plan"]')
         .first().click();
-      await page.waitForTimeout(450);
+      await page.waitForTimeout(180);
     } else {
       failures.push('dimensions: could not reach the planning screen');
     }
@@ -1929,7 +1935,7 @@ function step(n) {
           + (seen ? 'visible but not clickable' : 'not visible') + ')');
         continue;
       }
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(140);
       const drew = await page.evaluate(() =>
         document.querySelectorAll('#shopScroll .sheet').length);
       if (failures.length > before) {
@@ -1949,15 +1955,15 @@ function step(n) {
       save_();
     });
     await page.locator('nav button[data-scr="shop"]').click();
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const back0 = page.locator('#shopBack');
     if (await back0.count() && !(await back0.first().isHidden())) {
-      await back0.first().click(); await page.waitForTimeout(250);
+      await back0.first().click(); await page.waitForTimeout(100);
     }
     const modes = page.locator('#scr-shop .modetile');
     if ((await modes.count()) > 1) {
       await modes.nth(1).click();            // deciding what to buy next
-      await page.waitForTimeout(600);
+      await page.waitForTimeout(240);
     }
     /* An ask is a CATEGORY — "A World worth owning" — and it used to be
        typed into the search box and looked up as though it were a bottle
@@ -1970,7 +1976,7 @@ function step(n) {
     if (await asks.count()) {
       const label = (await asks.first().innerText()).trim();
       await asks.first().click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(200);
       const after = await page.evaluate(() => ({
         modal: document.getElementById('overlay').classList.contains('on'),
         box: document.getElementById('shopQ').value
@@ -1983,7 +1989,7 @@ function step(n) {
           + ' in the search box as if it were a bottle');
       }
       await page.evaluate(() => closeModal());
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
 
     /* The wishlist is ON the search screen, not only behind a chip: this
@@ -1994,7 +2000,7 @@ function step(n) {
       document.getElementById('shopQ').value = '';
       renderShop();
     });
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const onSearch = await page.evaluate(() =>
       [...document.querySelectorAll('#scr-shop .sheet h3')]
         .map(h => h.textContent));
@@ -2006,7 +2012,7 @@ function step(n) {
     const row = page.locator('#scr-shop .item').first();
     if (await row.count()) {
       await row.click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(160);
       const landed = await page.evaluate(() => ({
         box: document.getElementById('shopQ').value,
         mode: S.shopMode
@@ -2019,7 +2025,7 @@ function step(n) {
       await page.evaluate(() => {
         document.getElementById('shopQ').value = ''; renderShop();
       });
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
 
     // The wishlist, from a shop rather than only from the planning screen.
@@ -2032,12 +2038,12 @@ function step(n) {
         failures.push('shop: the wishlist chip reads ' + JSON.stringify(label));
       }
       await chip.first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(120);
       const rows = await page.evaluate(() =>
         [...document.querySelectorAll('.modal .item .nm')].map(x => x.textContent));
       if (!rows.length) failures.push('shop: the wishlist opened empty');
       await page.evaluate(() => closeModal());
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(80);
     }
   }
 
@@ -2050,7 +2056,7 @@ function step(n) {
      is wired to it — which is the whole reason rule 30b exists. */
   {
     await page.evaluate(() => { closeModal(); productForm(null); });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(160);
 
     // The control BZ objected to is gone, and nothing put another in.
     const buttons = await page.evaluate(() =>
@@ -2133,7 +2139,7 @@ function step(n) {
       failures.push('add form: no way to spend a lookup on an unknown name');
     }
     await page.evaluate(() => closeModal());
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   step('the mash bill reaches the screen, the label sheet says what it would change, the name field reserves only the slots it has, sharing reads as on or off, a long read says it is still going, changing tabs closes an open sheet');
@@ -2184,7 +2190,7 @@ function step(n) {
     /* AND THE FORM CAN TAKE ONE. A gap the fill can close and nobody can
        type is half a feature. */
     await page.evaluate(() => { closeModal(); productForm(null); });
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(120);
     const typed = await page.evaluate(() => {
       const f = document.querySelector('.modal .form');
       const i = f.querySelector('[name="mash"]');
@@ -2200,7 +2206,7 @@ function step(n) {
         + JSON.stringify(typed));
     }
     await page.evaluate(() => closeModal());
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   step('the label sheet says what it would change');
@@ -2265,7 +2271,7 @@ function step(n) {
       }
     }
     await page.evaluate(() => closeModal());
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   step('the name field reserves only the slots it has');
@@ -2285,7 +2291,7 @@ function step(n) {
   {
     const look = async (url) => {
       await page.evaluate(() => { closeModal(); });
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(100);
       return page.evaluate(u => {
         S.lookupUrl = u;
         productForm(null);
@@ -2328,7 +2334,7 @@ function step(n) {
     await page.evaluate(() => {
       closeModal(); S.lookupUrl = 'https://example.invalid/x';
     });
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(60);
   }
 
   step('sharing reads as on or off');
@@ -2594,7 +2600,7 @@ function step(n) {
      Geometry, at the width he actually uses. */
   {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(100);
     const clash = await page.evaluate(() => {
       const out = [];
       ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
@@ -2633,7 +2639,7 @@ function step(n) {
     });
     clash.forEach(x => failures.push('phone header ' + x));
     await page.setViewportSize({ width: 1000, height: 900 });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(80);
   }
 
   step('the header holds together on a phone');

@@ -15978,5 +15978,49 @@ sec('\u00a7369 a duplicate owns its bottle');
     (region.items || []).some(it => /Lonely/.test(it.text)), true);
 }
 
+sec('\u00a7370 duplicates that need no decision');
+{
+  /* BZ: my point is that they match (as far as I can tell) so you can auto
+     merge. Right - when both rows carry the same name, the same house and
+     the same proof there is nothing to choose between them: one survives
+     and it does not matter which. These are also exactly the rows whose
+     per-row Merge button disappeared, because identical names derive
+     identical keys and the guard refuses to merge a key with itself. */
+  const cat = {
+    a: { k: 'a', _key: 'a', name: 'Glendronach 21 Year Old Parliament',
+         dist: 'The Glendronach', sub: 'scotch', proof: 96 },
+    b: { k: 'b', _key: 'b', name: 'Glendronach 21 Year Old Parliament',
+         dist: 'The Glendronach', sub: 'scotch', proof: 96 },
+    c: { k: 'c', _key: 'c', name: 'Penelope Wheated', dist: 'Penelope',
+         sub: 'bourbon', proof: 100 },
+    d: { k: 'd', _key: 'd',
+         name: 'Penelope Wheated Straight Bourbon Whiskey',
+         dist: 'Penelope', sub: 'bourbon', proof: 100 },
+    e: { k: 'e', _key: 'e', name: 'Longrow 18', dist: 'Springbank',
+         sub: 'scotch', proof: 92 },
+    f: { k: 'f', _key: 'f', name: 'Longrow  18', dist: 'Springbank',
+         sub: 'scotch', proof: 92 }
+  };
+  const found = L.libraryAudit(cat, {});
+  const auto = L.exactDupes(found);
+  eq('all three pairs are found', found.filter(f => f.id === 'dups')[0]
+    .items.length, 3);
+  eq('two of them need no decision', auto.length, 2);
+  eq('and the one that needs a choice is left alone',
+    auto.some(x => /Penelope/.test(x.text)), false);
+  /* IDENTICAL MEANS IDENTICAL. The first version compared with L.shopNorm
+     and auto-merged Penelope Wheated with Penelope Wheated Straight
+     Bourbon Whiskey - of course it did: shopNorm is the thing that FOUND
+     them as duplicates, so both sides match under it by definition. Using
+     the detector as the confirmation is no confirmation at all. */
+  eq('a stray double space is still identical',
+    auto.some(x => /Longrow/.test(x.text)), true);
+  eq('each merge names one to keep and one to drop',
+    auto.every(x => x.keep && x.drop && x.keep !== x.drop), true);
+  /* And nothing is auto-merged out of a finding that is not duplicates. */
+  eq('only duplicates are ever auto-merged',
+    L.exactDupes(found.filter(f => f.id !== 'dups')).length, 0);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
