@@ -750,6 +750,139 @@ function step(n) {
     await page.waitForTimeout(120);
   }
 
+  /* LEAVING THE APP MUST NOT THROW THE READ AWAY. BZ: if I leave the app
+     while the photo is processing, not close, just leave, the toast says
+     the network was lost and nothing happens. A phone suspends a
+     background tab's fetch; this was read as a dropped connection, the
+     retry went straight into the same suspended state, and a shelf read he
+     had waited fifty seconds for was lost because he glanced at something
+     else. */
+  step('a read survives the app being left');
+  {
+    const out = await page.evaluate(async () => {
+      /* First attempt fails the way a suspended tab fails; the second
+         succeeds, which is what coming back should allow. */
+      /* A SUSPENDED TAB FAILS WHILE IT IS HIDDEN, which is the whole
+         point: the first version of this test succeeded on the second
+         call whatever the tab was doing, so it passed with the fix
+         switched off - a guard that cannot fail. */
+      let calls = 0, hidden = true;
+      const realFetch = window.fetch;
+      window.fetch = () => {
+        calls++;
+        if (hidden) return Promise.reject(new TypeError('Failed to fetch'));
+        return Promise.resolve(new Response('{"ok":true}', { status: 200 }));
+      };
+      Object.defineProperty(document, 'hidden',
+        { configurable: true, get: () => hidden });
+      /* Away for longer than the old blind retry waited, so code that
+         simply tries again after a moment fails and code that waits for
+         the tab does not. */
+      setTimeout(() => {
+        hidden = false;
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, 2000);
+      let said = '';
+      try {
+        const r = await postWithRetry('https://example.test/exec', '{}');
+        said = 'ok:' + r.status;
+      } catch (e) { said = 'threw:' + ((e && e.message) || e); }
+      window.fetch = realFetch;
+      delete document.hidden;
+      return { said: said, calls: calls };
+    });
+    if (!/^ok:200/.test(out.said)) {
+      failures.push('backgrounded read: ' + out.said
+        + ' — it should wait and retry, not give up');
+    }
+    if (out.calls < 2) {
+      failures.push('backgrounded read: only tried ' + out.calls
+        + ' time(s) — it never came back for it');
+    }
+  }
+
+  /* A DOOR THAT IS NOT THERE IS ASKED ONCE. BZ, on designing a flight:
+     it was also kinda slow. The local designer takes six milliseconds; the
+     wait was five seconds of round trip to an Apps Script that answers 404
+     because the mode was never deployed - and the same five seconds again
+     on the next press. */
+  step('a missing service mode is only asked for once');
+  {
+    const r = await page.evaluate(async () => {
+      let calls = 0;
+      const realFetch = window.fetch;
+      window.fetch = () => {
+        calls++;
+        return Promise.resolve(new Response('not found', { status: 404 }));
+      };
+      const ask = async () => {
+        try {
+          const res = await postWithRetry('https://example.test/exec',
+            JSON.stringify({ mode: 'flight' }));
+          await readService(res, 'flight');
+          return 'ok';
+        } catch (e) { return (e && e.message) || String(e); }
+      };
+      const first = await ask();
+      const second = await ask();
+      const third = await ask();
+      window.fetch = realFetch;
+      return { calls: calls, first: first, second: second, third: third };
+    });
+    /* TWICE BEFORE IT GIVES UP. BZ's log: shelf build failed HTTP 404 at
+       16:54, again at 17:15, then answered in 18.8s at 17:18 - the same
+       mode and the same deployment, sometimes a 404. Remembering the FIRST
+       one would turn a transient failure into a dead feature for the rest
+       of the session without ever reaching his service again. */
+    if (r.calls !== 2) {
+      failures.push('missing mode: asked the service ' + r.calls
+        + ' times, want 2 — one 404 is a blip, two is a missing door');
+    }
+    if (!/404/.test(r.third)) {
+      failures.push('missing mode: the third press said "' + r.third
+        + '" rather than naming the 404');
+    }
+  }
+
+  /* AND ANY SUCCESS FORGETS THE MISSES. A mode that has just worked is
+     not missing, whatever it did a minute ago. */
+  step('a mode that works again is not remembered as dead');
+  {
+    const r2 = await page.evaluate(async () => {
+      let calls = 0, fail = true;
+      const realFetch = window.fetch;
+      window.fetch = () => {
+        calls++;
+        return Promise.resolve(fail
+          ? new Response('not found', { status: 404 })
+          : new Response('{"ok":true}', { status: 200 }));
+      };
+      const ask = async () => {
+        try {
+          const res = await postWithRetry('https://example.test/exec',
+            JSON.stringify({ mode: 'shelf' }));
+          await readService(res, 'shelf');
+          return 'ok';
+        } catch (e) { return (e && e.message) || String(e); }
+      };
+      await ask();                 // one miss
+      fail = false;
+      const good = await ask();    // it works
+      const after = calls;
+      const again = await ask();   // and must be asked again
+      window.fetch = realFetch;
+      return { good: good, asked: calls - after, again: again };
+    });
+    if (r2.good !== 'ok') {
+      failures.push('recovering mode: the second press said "' + r2.good
+        + '" rather than working');
+    }
+    if (r2.asked !== 1) {
+      failures.push('recovering mode: after a success the next press '
+        + 'reached the service ' + r2.asked + ' times, want 1');
+    }
+  }
+
   step('the service reader says what actually came back');
   {
     const said = await page.evaluate(async () => {
