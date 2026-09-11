@@ -449,7 +449,14 @@ const TWO_DOORS_OK = [
   'sortByProof>relabel', 'mashOf>mashByLaw', 'readFailSays>isNetworkFail',
   'shelfTodo>enhanceQueue', 'flightNoteQueue>pourable',
   'enhanceQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
-  'lookupAllowed>lookupTally'
+  'lookupAllowed>lookupTally',
+  /* resolveLibKey ASKS libKey and then checks the answer against the
+     library, which is the point of it: a key worked out from a name can
+     point at a node that is not there, and a delete against a node that is
+     not there succeeds silently. The check is right that one calls the
+     other; they do not answer the same question. Caught by the check added
+     the same night, on its author, which is the best sort of proof. */
+  'resolveLibKey>libKey'
 ];
 {
   const cut = src.indexOf('STATE + RENDER');

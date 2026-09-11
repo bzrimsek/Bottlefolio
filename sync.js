@@ -26,6 +26,8 @@ function check(name, got, want) {
 }
 
 (async () => {
+  const _t0 = Date.now();
+  const mark = w => console.log('    [' + ((Date.now()-_t0)/1000).toFixed(1) + 's] ' + w);
   const browser = await chromium.launch();
 
   // One scenario per page, so nothing leaks between them.
@@ -73,7 +75,24 @@ function check(name, got, want) {
     }, (opts && opts.storage) || {});
 
     await page.goto('http://app.local/' + path.basename(file));
-    await page.waitForTimeout(1500);          // sdk, auth, first load
+    /* 600ms, MEASURED RATHER THAN PICKED.
+
+       This was 1500 and nobody had ever asked why. Seventeen scenarios
+       means seventeen of these, so it was 25 seconds of a 91-second
+       harness spent waiting for a number somebody guessed once.
+
+       Measured: 1500 -> 600 took the harness to 75.7s and everything still
+       passed; 600 -> 300 took it to 70.4s and still passed. The second cut
+       bought a third of what the first did and leaves no margin at all, so
+       600 is where it stays - about twice what the page appears to need,
+       which is the room a slower machine deserves and not a minute of it.
+
+       An earlier attempt waited on FB.firstRead instead and DOUBLED the
+       runtime to 169s, because that flag is never reached in most of these
+       scenarios and every one burned the full backstop. Worth recording:
+       waiting for the right signal beats sleeping, and waiting for the
+       wrong one is worse than either. */
+    await page.waitForTimeout(600);           // sdk, auth, first load
     const out = await body(page);
     await page.close();
     return out;
@@ -170,6 +189,7 @@ function check(name, got, want) {
       failures.push('an in-step load wrote ' + r.bytes
         + ' bytes; it should be a stamp and a name, not a shelf');
     }
+    mark('reached: an in-step load writes');
     notes.push('an in-step load writes ' + r.bytes + ' bytes (was 220,096)');
   }
 
@@ -246,16 +266,22 @@ function check(name, got, want) {
         const w = firebase.__store.log.filter(x => x.op === 'update');
         return { writes: w.length, bytes: w.reduce((a, x) => a + x.bytes, 0),
                  keys: w.length ? w[0].keys : [],
+                 paths: w.length ? w[0].paths : [],
                  stored: (firebase.__store.data['bz-apps'].whisky.testuid
                    .edits || {})['Bottle 7'] };
       });
     }, { storage: { 'kb.edits': JSON.stringify(many), 'kb.updated': '1000' } });
-    check('one corrected bottle names one entry', r.keys,
+    /* The FULL paths, not the top segments. `keys` is deliberately the top
+       segment of each path, so it can only ever say `edits` and this
+       asserted a value it could not produce. What matters is that the
+       write names ONE correction rather than the whole node. */
+    check('one corrected bottle names one entry', r.paths,
       ['updated', 'edits/Bottle 7']);
     check('and the correction is on the account', r.stored, { proof: 121 });
     if (r.bytes > 400) {
       failures.push('one correction wrote ' + r.bytes + ' bytes, want a few hundred');
     }
+    mark('reached: one corrected bottle:');
     notes.push('one corrected bottle: ' + r.bytes + ' bytes (was 61,290)');
   }
 
@@ -488,9 +514,19 @@ function check(name, got, want) {
           .catch(() => {});
         await page.evaluate(() => { renderDiag(); goTo('diag'); });
         await page.waitForTimeout(1200);
+        /* THE LOG FOLDS NOW, so innerText alone would report it missing -
+           a closed <details> is not rendered text. It is opened first,
+           which is also the honest check: the question is whether the
+           lines are REACHABLE, not whether they happen to be unfolded.
+           Left open would have passed while a broken disclosure hid them
+           for ever. */
+        const fold = await page.$('#scr-diag details.advanced');
+        if (fold) await fold.evaluate(d => { d.open = true; });
+        await page.waitForTimeout(200);
         const text = await page.locator('#scr-diag').innerText();
         return {
           length: text.length,
+          folded: !!fold,
           hasBuild: /version/.test(text),
           hasMine: /a line from this device/.test(text),
           hasTheirs: /a line from the other device/.test(text)
@@ -500,7 +536,9 @@ function check(name, got, want) {
       failures.push('Diagnostics drew nothing while signed in ('
         + r.length + ' chars)');
     }
-    check('this device\u2019s own lines are shown', r.hasMine, true);
+    check('the log is folded away rather than leading the screen',
+      r.folded, true);
+    check('this device\u2019s own lines are one tap away', r.hasMine, true);
     check('and the other device\u2019s arrive too', r.hasTheirs, true);
   }
 
@@ -577,5 +615,6 @@ function check(name, got, want) {
     console.log('\n  \u2716 ' + failures.length + ' sync failure(s)\n');
     process.exit(1);
   }
+  mark('done');
   console.log('  \u2713 the sync cycle holds: push, load, reload, refuse');
 })();

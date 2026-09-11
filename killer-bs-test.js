@@ -16022,5 +16022,40 @@ sec('\u00a7370 duplicates that need no decision');
     L.exactDupes(found.filter(f => f.id !== 'dups')).length, 0);
 }
 
+sec('\u00a7371 the key the library actually filed it under');
+{
+  /* BZ's log, three times in ninety seconds: "merged heaven hill grain to
+     glass wheated bourbon into heaven_hill_grain_to_glass_straight_wheated
+     _bourbon", then "library scan: 3 kind(s) in 434". Merged, said so, and
+     the count never moved - 434 before and 434 after, three times.
+
+     The merges that worked used underscore keys on both sides; the two
+     that did nothing used the printed NAME, spaces and capitals and all. A
+     library entry is not always filed under libKey of its own name, so a
+     key worked out from the screen points at a node that is not there -
+     and a delete against a node that is not there SUCCEEDS. */
+  const lib = {
+    heaven_hill_grain_to_glass_wheated_bourbon: {
+      name: 'heaven hill grain to glass wheated bourbon' },
+    odd_one: { name: 'Something Filed Oddly' }
+  };
+  eq('a key that is really there is used as given',
+    L.resolveLibKey(lib, 'odd_one', 'Something Filed Oddly'), 'odd_one');
+  eq('the spaced key from the screen finds the real one',
+    L.resolveLibKey(lib, 'heaven hill grain to glass wheated bourbon',
+      'heaven hill grain to glass wheated bourbon'),
+    'heaven_hill_grain_to_glass_wheated_bourbon');
+  eq('and no key at all still finds it by name',
+    L.resolveLibKey(lib, null,
+      'Heaven Hill Grain To Glass Wheated Bourbon'),
+    'heaven_hill_grain_to_glass_wheated_bourbon');
+  /* A GENUINE MISS RETURNS NULL rather than a plausible key, so the caller
+     says so instead of writing into the dark. */
+  eq('a bottle that is not there resolves to nothing',
+    L.resolveLibKey(lib, 'nope', 'Nothing Like It'), null);
+  eq('and an empty library resolves to nothing',
+    L.resolveLibKey({}, 'anything', 'Anything'), null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
