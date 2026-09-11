@@ -1,6 +1,6 @@
 // Killer B's Bottle Tracker service worker.
 // CACHE_NAME is written by bump.py — never by hand.
-const CACHE_NAME = 'bottlefolio-v2.0.68';
+const CACHE_NAME = 'bottlefolio-v2.0.73';
 
 // The shell: everything needed to open the app with no network.
 /* zxing.min.js is the barcode decoder for browsers with no BarcodeDetector,

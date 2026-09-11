@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.0.68  Build 2026-09-11 07:39 AM ET
+     Version : v2.0.73  Build 2026-09-11 02:49 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,16 +11,16 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.0.73  2026-09-11  The Apps Script side has never had a gate.
+// v2.0.72  2026-09-11  A door that is not there is asked once.
+// v2.0.71  2026-09-11  Wine against sherry is a question about wood, not about Midleton.
+// v2.0.70  2026-09-11  Leaving the app no longer throws away the read.
+// v2.0.69  2026-09-11  The whole gate in one command, and a line that lied about what it was doing.
 // v2.0.68  2026-09-11  A shelf is one dimensional, and I broke the one feature BZ had told me worked.
 // v2.0.67  2026-09-11  Sync runs in slices, so ninety seconds of silence becomes four reports.
 // v2.0.66  2026-09-11  Why can't I export the library?
 // v2.0.65  2026-09-11  You can see what differs, and the identical pairs finally merge.
 // v2.0.64  2026-09-11  Rule 35: the gate is announced, timed and reported step by step.
-// v2.0.63  2026-09-10  A merge that reported success and deleted nothing.
-// v2.0.62  2026-09-10  Saving a duplicate no longer collides with its twin, and a merge says what it targeted.
-// v2.0.61  2026-09-10  The gate is 143 seconds, down from 193, and the reason is written down.
-// v2.0.60  2026-09-10  Identical duplicates merge in one press, and the gate got measured.
-// v2.0.59  2026-09-10  Duplicates lead, and they own their bottles.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2547,8 +2547,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    address is ever touched; everybody else follows whatever the build
    ships, for ever, with nothing to maintain. */
 
-const APP_VERSION = '2.0.68';
-const BUILD_TIME  = '2026-09-11 07:39 AM ET';
+const APP_VERSION = '2.0.73';
+const BUILD_TIME  = '2026-09-11 02:49 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9230,10 +9230,30 @@ L.axisOf = function (varId, p) {
 
 // What has to stay STILL for that variable to be readable. Change two things
 // and the flight answers neither.
+/* WHAT STAYS STILL WHILE THE VARIABLE MOVES.
+
+   BZ asked for wine against sherry and got six Spots - Valpolicella,
+   Leoville Barton, Montelena, Quail's Gate, Red Spot, Yellow Spot. All
+   Midleton, all Irish, all 92 proof, and the app announced "15 matched
+   pairs at proof" as though that were the achievement. By the rule as
+   written it was correct: finish held the DISTILLERY still, so a cask
+   flight could only ever be one house showing its own range.
+
+   BZ: it's the second one - vary house, keep category. Right, and it is
+   the more interesting question. What a sherry cask does is a fact about
+   sherry casks, not about Midleton: a sherried Glendronach against a
+   wine-finished Glenmorangie against a Spot compares the WOOD, which is
+   what somebody asking for wine against sherry wants to taste. Holding the
+   house still turns that into a tour of one distillery's warehouse.
+
+   So finish holds the category instead. Everything else is unchanged:
+   proof, age and grain still hold the house, because those really are
+   questions about one maker's range - the same whisky at two strengths, or
+   at two ages, is the comparison. */
 L.holdsFor = function (varId) {
   return {
     proof:  ['dist'],
-    finish: ['dist'],
+    finish: ['sub'],
     region: ['sub'],
     house:  ['dist'],
     age:    ['dist'],
@@ -9312,7 +9332,7 @@ L.flightCandidates = function (varId, catalog, bottles, opts) {
     // all read the same are not a flight.
     const axes = new Set(members.map(p => String(L.axisOf(varId, p))));
     if (axes.size < 3) return;
-    const picked = L.pickSpread(varId, members, size);
+    const picked = L.pickSpread(varId, members, size, o.used);
     if (picked.length < 4) return;
     out.push({
       key: key, holds: holds, pours: picked,
@@ -9326,7 +9346,20 @@ L.flightCandidates = function (varId, catalog, bottles, opts) {
 
 // Choose a spread along the axis rather than the first N. For a numeric
 // variable that means even steps; for a categorical one, one of each.
-L.pickSpread = function (varId, members, size) {
+/* `used` is the set of keys the last run poured, and it decides ties.
+
+   A recast could only ever choose between GROUPINGS, and the day the cask
+   flight started holding the category there was exactly one grouping - so
+   the repeat rule had nothing to choose between and the recast served the
+   same six whiskies again. Caught by a fixture built for it: six used and
+   six fresh, and it took all six used.
+
+   Nothing here reorders the flight or weakens the spread: the axis is
+   still covered first and the most interesting bottle of each wood still
+   leads. This only decides which of two equally good bottles goes in, and
+   "the one you did not drink last time" is the better answer. */
+L.pickSpread = function (varId, members, size, used) {
+  const fresh = p => ((used || {})[p.k] ? 1 : 0);
   const numeric = varId === 'proof' || varId === 'age';
   if (numeric) {
     const sorted = members.slice().sort((a, b) =>
@@ -9346,7 +9379,8 @@ L.pickSpread = function (varId, members, size) {
   });
   const rank = p => (p.obsc === 'obscure' ? 2 : p.obsc === 'niche' ? 1 : 0);
   const vals = Object.keys(byVal);
-  vals.forEach(v => byVal[v].sort((a, b) => rank(b) - rank(a) || a.proof - b.proof));
+  vals.forEach(v => byVal[v].sort((a, b) =>
+    fresh(a) - fresh(b) || rank(b) - rank(a) || a.proof - b.proof));
 
   // One of each value first, so the axis is covered before anything is
   // doubled up. Then keep going round, taking a second of each, until the
@@ -9385,6 +9419,34 @@ L.flightScore = function (varId, pours) {
           && axes[i] !== axes[j]) { s += 20; }
     }
   }
+  /* SIX BOTTLES FROM ONE HOUSE IS NOT A FLIGHT.
+
+     BZ asked for wine against sherry and got six Spots: Green Spot
+     Valpolicella, Leoville Barton, Montelena, Quail's Gate, Red Spot,
+     Yellow Spot. Every one Irish, every one from Midleton, every one at 92
+     proof - and the app announced "15 matched pairs at proof" as though
+     that were an achievement. It was the fault: a matched pair is worth 20
+     and six bottles at one strength make fifteen of them, three hundred
+     points that swamped everything else in this function.
+
+     Nothing here had ever said a flight should come from more than one
+     distillery, because until now nothing had produced one that did not.
+     A tasting is a comparison, and six expressions of one house compares
+     the cask and nothing else.
+
+     Counted rather than forbidden: two from a house is a deliberate pair,
+     three is a theme, and more than that is a rut. */
+  const houses = {};
+  pours.forEach(p => {
+    const h = L.shopNorm(p.dist || '');
+    if (h) houses[h] = (houses[h] || 0) + 1;
+  });
+  const spread = Object.keys(houses).length;
+  s += spread * 10;                                    // more makers, better
+  Object.keys(houses).forEach(h => {
+    if (houses[h] > 2) s -= (houses[h] - 2) * 25;      // and a rut costs
+  });
+
   if (pours.some(p => p.obsc === 'obscure')) s += 18;   // the build rule
   else if (pours.some(p => p.obsc === 'niche')) s += 6;
   if (pours.length === L.CORE_TARGET) s += 10;
@@ -9887,17 +9949,43 @@ L.recastFlight = function (f, catalog, bottles, history, opts) {
   const opts2 = Object.assign({}, o);
   if (!opts2.sub) opts2.sub = uniform('sub');
 
-  const cands = L.flightCandidates(varId, catalog, bottles, opts2);
+  /* What the last run poured, so a tie inside a group goes to a bottle
+     nobody has had yet. */
+  opts2.used = used;
+  let cands = L.flightCandidates(varId, catalog, bottles, opts2);
+  /* WIDEN RATHER THAN FAIL. A recast inherits the original flight's
+     category, and when the cask flight was allowed to vary the house that
+     constraint started coming back empty - every open Scotch falls into
+     one group now, and one group cannot fill six pours on its own. A
+     recast that finds nothing inside the category should look outside it
+     rather than hand back a worse flight or nothing at all. */
+  if (!cands.length && opts2.sub) {
+    const wider = Object.assign({}, opts2);
+    delete wider.sub;
+    cands = L.flightCandidates(varId, catalog, bottles, wider);
+    if (cands.length) opts2.sub = null;
+  }
   if (!cands.length) {
     return { ok: false, why: 'Nothing open holds still enough for '
       + varId + ' right now.' };
   }
 
-  // Prefer the grouping that reuses least.
+  /* NEVER REUSE IF THERE IS A FRESH FLIGHT TO BE HAD.
+
+     This priced a repeat at 25 points, which held while nothing else in
+     the scoring moved much. Then the cask flight was allowed to vary the
+     house and the spread bonus - ten a house - could outbid a repeat, so a
+     recast started serving one of the same pours again. The suite caught
+     it: five fresh of six, where the rule has always been six of six.
+
+     A number that holds only until the next number changes is not a rule.
+     Fewest repeats wins outright, and the score decides between flights
+     that repeat equally - which is what "prefer the grouping that reuses
+     least" meant all along. */
   const scored = cands.map(c => {
     const repeats = c.pours.filter(p => used[p.k]).length;
-    return { c: c, repeats: repeats, score: c.score - repeats * 25 };
-  }).sort((a, b) => b.score - a.score);
+    return { c: c, repeats: repeats, score: c.score };
+  }).sort((a, b) => a.repeats - b.repeats || b.score - a.score);
 
   const best = scored[0].c;
   const pours = L.sortByProof(best.pours.map(p => ({ k: p.k })), catalog);
@@ -23588,7 +23676,13 @@ function revealRows(box) {
 
 function photographMyShelf() {
   pickShelfPhotos('your shelf', async images => {
-    workingSay('Working out which are yours\u2026');
+    /* NOT "which are yours". BZ: when we are photoing our own shelf the
+       toast should not say working out what is yours. Quite - you are
+       standing in front of your own shelf and all of them are. That line
+       belongs to the bar read, where the question really is which of these
+       you own. Here the job is the opposite: which of them are already on
+       the shelf and which are new. */
+    workingSay('Matching them to what you already have\u2026');
     try {
       /* THE SAME READ THE BAR USES. This was a second copy that had
          already drifted: no daily-cap check, so photographing your own
@@ -34628,7 +34722,27 @@ let _workingDepth = 0;
    Checking res.ok would not have caught any of it: Apps Script answers
    200 with an error page in its body. The only way to know is to read the
    body and look. */
+/* A MODE THAT 404s IS REMEMBERED FOR THE SESSION.
+
+   BZ, on designing a flight: it was also kinda slow. Measured, the local
+   designer takes between 0.4 and 6.1 milliseconds on his 325 bottles - it
+   is not slow at all. The wait is the round trip to his Apps Script before
+   it answers 404, which his own log times at 5.0 and 6.3 seconds. Five
+   seconds of waiting to be told the door does not exist, and then the same
+   five seconds the next time he presses it.
+
+   So a 404 or a 501 for a given mode is remembered until the page is
+   reloaded. Not an error cached - a DOOR known to be missing. A reload
+   clears it, which is what somebody does after deploying, so a fixed
+   deployment is never more than a refresh away. */
+const DEAD_MODES = {};
+
 async function readService(res, mode) {
+  if (res && (res.status === 404 || res.status === 501) && mode) {
+    DEAD_MODES[mode] = res.status;
+    appLog('service has no ' + mode + ' mode (HTTP ' + res.status
+      + ') \u2014 not asking again until reload');
+  }
   const text = await res.text();
   const head = String(text || '').trim().slice(0, 400);
   if (/^\s*[[{]/.test(head)) {
@@ -34689,8 +34803,28 @@ async function askService(q, ms, need) {
 }
 
 async function postWithRetry(url, body, ms) {
+  /* Straight past a door already known to be missing, so the second
+     press of Design it is instant rather than another five seconds. */
+  try {
+    const asked = JSON.parse(body || '{}');
+    if (asked && asked.mode && DEAD_MODES[asked.mode]) {
+      throw new Error('HTTP ' + DEAD_MODES[asked.mode]);
+    }
+  } catch (e) {
+    if (/^HTTP /.test(e.message || '')) throw e;   // ours, not a parse slip
+  }
   const _t0 = Date.now();
+  /* Whether the app was ever put in the background during this call. The
+     failure arrives after the fact, by which time the tab may be visible
+     again and document.hidden would say nothing happened. */
+  let _wasHidden = document.hidden;
+  const _watch = () => { if (document.hidden) _wasHidden = true; };
+  document.addEventListener('visibilitychange', _watch);
   const _kb = Math.round(String(body || '').length / 1024);
+  /* Taken off however this ends, or every service call leaves one behind
+     and a long session accumulates hundreds. */
+  const _done = () => document.removeEventListener('visibilitychange',
+    _watch);
   const _say = (how, tries) => {
     try {
       appLog('service ' + how + ' in ' + ((Date.now() - _t0) / 1000).toFixed(1)
@@ -34710,22 +34844,60 @@ async function postWithRetry(url, body, ms) {
   try {
     const r = await once();
     _say('answered', 1);
+    _done();
     return r;
   } catch (e) {
     /* An abort is the timeout doing its job, not a blip. */
-    if (e && e.name === 'AbortError') { _say('timed out', 1); throw e; }
-    appLog('upload failed, trying once more: ' + ((e && e.message) || e));
-    workingSay('The network dropped \u2014 trying again\u2026');
-    await new Promise(r => setTimeout(r, 1200));
+    if (e && e.name === 'AbortError') {
+      _say('timed out', 1); _done(); throw e;
+    }
+
+    /* LEAVING THE APP IS NOT THE NETWORK DROPPING.
+
+       BZ: if I leave the app while the photo is processing, not close,
+       just leave, the toast says the network was lost and nothing happens.
+       Of course it does - a phone suspends a background tab's fetch, this
+       read it as a dropped connection, retried straight into the same
+       suspended state, and gave up. The message was wrong and the
+       behaviour was worse: a shelf read he had waited fifty seconds for,
+       thrown away because he glanced at something else.
+
+       So when the page was hidden while it failed, it WAITS for him to
+       come back rather than burning the retry. A shelf read costs a real
+       amount of time and money and is worth holding on to. */
+    if (_wasHidden || document.hidden) {
+      appLog('the app was in the background when the upload failed \u2014 '
+        + 'waiting to come back');
+      workingSay('Paused while you were away \u2014 picking it back up'
+        + '\u2026');
+      if (document.hidden) {
+        await new Promise(done => {
+          const back = () => {
+            if (document.hidden) return;
+            document.removeEventListener('visibilitychange', back);
+            done();
+          };
+          document.addEventListener('visibilitychange', back);
+        });
+      }
+      /* A moment for the network to come back with the tab. */
+      await new Promise(r => setTimeout(r, 800));
+    } else {
+      appLog('upload failed, trying once more: ' + ((e && e.message) || e));
+      workingSay('The network dropped \u2014 trying again\u2026');
+      await new Promise(r => setTimeout(r, 1200));
+    }
     try {
       const r2 = await once();
       _say('answered', 2);
+      _done();
       return r2;
     } catch (e2) {
       /* Said whichever way it ends. A read that fails after eighty seconds
          and one that fails instantly are different faults and looked
          identical in the log. */
       _say(e2 && e2.name === 'AbortError' ? 'timed out' : 'failed', 2);
+      _done();
       throw e2;
     }
   }
@@ -40011,7 +40183,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.0.68</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.0.73</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
