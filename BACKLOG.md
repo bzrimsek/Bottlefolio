@@ -6,8 +6,16 @@ the top because it is not something he controls — it waits on somebody else
 turning up. Everything under Closed is kept for the reasoning rather than
 the task, and still carries the numbers the code comments refer to.
 
-Last reconciled **2026-09-09, at v1.9.41**, entry by entry against the
-source. The line before that said 2026-09-07 at v1.8.51, and before that it
+Last reconciled **2026-09-10, at v2.0.48**, entry by entry against the
+source. The 2026-09-10 pass is at the end of this header and changed the
+Performance entry, closed With a guest, and added the bar-shelf ruling.
+
+A NOTE ON READING THIS FILE, written after nearly repeating its own
+documented fault. On 2026-09-10 I scanned the HEADINGS, saw "The shelf
+organizer needs work" and reported it as open work. It is not: the entry
+under that heading says REMOVED WHOLE, at v2.0.14, with the list of what
+went. The heading is the question the entry answered, not its status. Read
+the entry. The line before that said 2026-09-07 at v1.8.51, and before that it
 said v1.26.19 — a version from before the scheme was reset and higher than
 anything that exists, because a header claiming to be current while naming a
 version nobody can find is worse than one with no version at all.
@@ -26,7 +34,7 @@ tests follow — before an entry is called open, open the code. Every item
 below has been checked that way, and each one that changed says what was
 checked and on what date. Where an entry names a function, the check is
 whether it is defined and whether anything calls it; where it names a
-behaviour, the check is the call site. Anything that could not be checked
+behavior, the check is the call site. Anything that could not be checked
 from the source says so rather than being left to look decided.
 
 Three kinds of entry live here now, and they are not the same kind of open:
@@ -64,6 +72,33 @@ discover it by reading four hundred lines.
   reasoning is kept in CHANGELOG at v1.9.29 and v2.0.4 if it is ever
   wanted again.
 
+**WHAT 2026-09-10 CHANGED**
+
+- **With a guest** — BUILT AND SHIPPED, v2.0.40 to v2.0.47. Name something
+  a visitor likes, pick how far to travel: keep it in the house, next door,
+  down the road, across the pond. Corrected five times by BZ in one
+  sitting, each correction narrowing it: down the road stays in the
+  COUNTRY, American single malt is American, Canada is a drive rather than
+  a flight, kinship is by spirit rather than passport, and proof is
+  one-way. What the guest likes - the cask, the smoke, the strength -
+  travels with them as an ORDER inside the rung rather than a gate, because
+  a gate would empty a rung and send the ladder somewhere it should not go.
+- **The bar shelf is inventory** — RULED AND BUILT, v2.0.47. BZ: why not
+  include inventory without all the bells and whistles. Rum, vodka, gin,
+  mezcal, tequila, liqueur and brandy count as bottles, are searchable and
+  pourable, and keep their category; they are left out of the profile, the
+  radar, the gaps, the slot machine and the guest ladder. A Whisky only
+  chip on the shelf hides them, and it only appears if you own any.
+- **Ten service call sites became two doors** — v2.0.45. Seven had no
+  retry, no timing and a bare .json(), so a stale deployment gave them a
+  parser error rather than a sentence. Both doors are now driven by the
+  walk, proved by breaking them.
+- **US spelling everywhere**, 656 words across twelve files, data keys
+  excluded by name.
+- **Five dead constants removed** and a check added for declared-and-never-
+  read. It took four attempts, because a constant can be read four ways a
+  name search misses.
+
 **Waiting on the world**
 - The **mash bill gap** waits on the fill having run: zero of 325 shipped
   entries carry a bill, so the counts the ruling asked for do not exist yet.
@@ -84,7 +119,7 @@ discover it by reading four hundred lines.
 ## The shelf organizer needs work — LOW PRIORITY, BZ 2026-09-09
 
 BZ: backlog that we need to work on the shelf organizer, low priority for
-now. Raised while looking at the Buddies rebuild, so it is his judgement of
+now. Raised while looking at the Buddies rebuild, so it is his judgment of
 the feature rather than a fault report — no specific complaint is recorded
 and nobody should invent one. Ask what is wrong with it before touching it
 (rule 13b); it is `showShelfPlan`, reached from Shelf tools, Storing, "How
@@ -110,7 +145,7 @@ a scenario each; not worth pretending they are untested.
 ## Decided by BZ on 2026-09-09, kept for the reasoning
 
 **The house chip claims a count.** No rarity signal exists in this app's
-data - the catalogue IS the shelf - so the ranking stands and the claim came
+data - the catalog IS the shelf - so the ranking stands and the claim came
 down to what the number supports. "The Loyalist" became "Deep on One House"
 and the reason carries the share of the shelf. BZ: fine.
 
@@ -188,6 +223,20 @@ does not understand string literals, so it is fit for MEASURING and unfit
 for shipping. Anything that revisits this needs a real parser, which is a
 moving part on its own.
 
+RE-MEASURED 2026-09-10 at v2.0.47, nine runs and a median, on BZ's actual
+344-bottle shelf rather than an empty one - which is the population that
+was missing last time. First contentful paint **148ms**, DOM interactive
+**190ms**. The engine is nowhere near being the problem: the shelf filter
+over all 325 entries is **0.24ms**, filter plus text search **1.25ms**, the
+library scan **1.49ms**, the guest ladder across all four rungs **2.08ms**,
+shelf stats **0.07ms**. The file is now 1.77MB with 646KB of comments, and
+the ruling stands unchanged.
+
+The one thing worth doing if it is ever raised: data.json and map.json are
+338KB fetched on every boot and almost never change. They are already
+separate files, so caching them harder in sw.js is a real saving with no
+cost to the source. Not done, because nothing is slow.
+
 Not open. If it is ever raised again, raise it with a number: the untouched
 halves are 104KB of CSS and 21KB of markup, and data.json already loads
 separately.
@@ -198,7 +247,7 @@ is debounced at 150ms, with the filter chips still redrawing immediately.
 
 What was still open on 2026-09-04 was the same fault in newer code: the
 recommender, the portrait and the shape chart each filtered the whole
-catalogue with a per-product `ownedCount`, which is the 111,800-comparison
+catalog with a per-product `ownedCount`, which is the 111,800-comparison
 shape again. `shelfAxes` was worse — it re-split every finish string once
 per wood family and re-ran the peat match once per level, six and four full
 passes for facts that do not change between them. Measured on BZ's 325
@@ -319,7 +368,7 @@ finding here that will bite.
 
 `L.mashbill(p)` has existed for a long time and infers a recipe from the
 bottle's NAME — wheated, high-rye, four-grain, malt, corn, rye — because
-three flights turn on recipe and the catalogue stored only a category. It
+three flights turn on recipe and the catalog stored only a category. It
 feeds `tasteProfile` (line ~11277) and the flight builder (~13093).
 
 `L.mashShape(text)` was added on 2026-09-07 and returned wheated, high-rye
@@ -366,7 +415,7 @@ unmeasured). "Most" means there is no number, and a rule was written for it:
 26 forbids exactly that word.
 
 So: NOTHING IS BUILT HERE. The fill runs, and what comes back is the
-population. Decide afterwards, from counts:
+population. Decide afterward, from counts:
 
 - If the American entries mostly close, the unanswerable set is Scotch,
   Irish and Japanese, and option 3 is a small well-defined build.
@@ -660,7 +709,7 @@ Built, measured or abandoned. Kept as a list rather than as pages, because the r
 - Record what was actually poured, not what was designed
 - Scan a barcode from the add-a-bottle form
 - Does the recommender actually work
-- Flights built around a flavour — "can you find the caramel?"
+- Flights built around a flavor — "can you find the caramel?"
 - 6. Barcode scanning
 - 13a. Dimensions
 - 1. Multi-user, sharing and tasting night
@@ -683,7 +732,7 @@ Built, measured or abandoned. Kept as a list rather than as pages, because the r
 Built. Every node opens the list, whatever the score, and the toast is
 gone. A node searches the AXIS rather than one gap: the three nearest
 things it wants, asked together and pooled into one deduped list, each
-bottle labelled with the gap it answers. A full axis asks for more of its
+bottle labeled with the gap it answers. A full axis asks for more of its
 thinnest rung, because every rung held means nothing MISSING rather than
 nothing to buy.
 
@@ -737,7 +786,7 @@ kept when parsing rather than discarded, a struck-through sale price reads
 as the lower figure, and a shipping threshold is not mistaken for a bottle.
 
 Three references in order — what YOU paid, then list price, then a price
-the listing stated, which is labelled a guess and never outranks the other
+the listing stated, which is labeled a guess and never outranks the other
 two.
 
 Two things found while building it. `L.paidFor` returns `{ avg, n }` and
@@ -750,17 +799,17 @@ Original entry follows.
 
 ### Nothing reads the tasting notes
 The largest unused asset in the app. 930 note fields on BZ's shelf, and the
-flavour vocabulary is sitting in them: spice 145, sweet 140, fruit 134,
+flavor vocabulary is sitting in them: spice 145, sweet 140, fruit 134,
 vanilla 118, caramel 111, honey 63, chocolate 50, smoke 50.
 
 Every recommendation reasons from STRUCTURE — house, wood, proof, region,
-age, mashbill. None reasons from FLAVOUR, which is the thing a person
+age, mashbill. None reasons from FLAVOR, which is the thing a person
 actually tastes and the axis they think in. "You have written caramel on
 111 bottles and this one is described the same way" is a different argument
 from "same distillery", and probably a better one.
 
 What it needs:
-- A flavour profile beside `L.tasteProfile`: which words recur, how often,
+- A flavor profile beside `L.tasteProfile`: which words recur, how often,
   and on what. Stop words and structure words ("palate", "long", "medium")
   are noise and have to come out; the list above is what survives that.
 - Care about where a note CAME FROM. `tnSrc` and `tnFrom` already
@@ -896,7 +945,7 @@ distilleries, 23 Scottish and 18 Irish carry real coordinates.
 The open question is routing. Straight-line ordering with distances costs
 nothing and works offline but is not roads; real driving directions need an
 API, a key and a proxy, and no free router handles the Islay ferry well.
-Nearest-neighbour ordering is fine for six stops.
+Nearest-neighbor ordering is fine for six stops.
 
 
 
@@ -913,12 +962,12 @@ country. Paper needs none of it.
 
 - Host-only with paper. **The one worth building.** The app prints or shows
   the flight, the pours in order, and what to write down; the answers live
-  on the card and go in afterwards if they go in at all.
+  on the card and go in afterward if they go in at all.
 - Guests scoring blind on their phones. Deferred.
 - A live reveal. Deferred, and pointless without the one above.
 
 The post-night summary still stands on its own: whatever gets typed in
-afterwards is enough to say what the room got right.
+afterward is enough to say what the room got right.
 
 **The blind column locks on submit.** An answer cannot be changed once
 anyone has seen the reveal. This is the rule the whole thing turns on —

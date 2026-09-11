@@ -433,7 +433,7 @@ function step(n) {
     await page.waitForTimeout(150);
   }
 
-  /* SPIN IS CENTRED AND THE PICKER DOES NOT WRAP. BZ: not liking how spin
+  /* SPIN IS CENTERED AND THE PICKER DOES NOT WRAP. BZ: not liking how spin
      is not centered, and I'm worried those pills will spill over and wrap.
      Driven with three buddies, which is where the old row of chips broke. */
   /* THE KEYBOARD IS NOT A SMALLER SCREEN. Kevrin's iPhone, photographed:
@@ -608,8 +608,79 @@ function step(n) {
         if (!n) failures.push('guest: "' + rung + '" suggests nothing');
       }
     }
+    /* IT FAILS OUTWARD AND SAYS SO. BZ: if I have just one bottle that is
+       also their favorite, we can't stay home, we have to go next door.
+       That sentence is the feature - silently substituting is how an app
+       loses somebody's trust - and nothing was driving it. A shelf holding
+       exactly one bottle from the named maker has no house rung at all. */
+    const moved = await page.evaluate(() => {
+      const seed = Object.values(S.catalog).filter(p =>
+        p && p.dist && L.isWhisky(p))[0];
+      const only = Object.values(S.catalog).filter(p =>
+        p.dist === seed.dist).length;
+      const others = Object.values(S.catalog)
+        .filter(p => p.sub === seed.sub && p.dist !== seed.dist).slice(0, 3);
+      const thin = [seed].concat(others);
+      const r = L.pourFor(seed, 'house', thin,
+        (window.MAPDATA && MAPDATA.subCountry) || L.SUB_COUNTRY, {});
+      return { housed: only, rung: r.rung, moved: r.moved,
+               got: r.list.length };
+    });
+    if (moved.rung === 'house') {
+      failures.push('guest: an empty house rung did not step out');
+    }
+    if (!moved.moved) {
+      failures.push('guest: it stepped out without admitting it');
+    }
+    if (!moved.got) {
+      failures.push('guest: it stepped out and still found nothing');
+    }
+
     await page.locator('#pourWhere button', { hasText: 'At home' }).click();
     await page.waitForTimeout(200);
+  }
+
+  /* THE SERVICE DOORS, DRIVEN. Ten call sites were rerouted through
+     postWithRetry and askService on 2026-09-10 on the strength of the
+     linter and this walk - neither door had a single assertion behind it.
+     readService is what turns a stale Apps Script deployment into a
+     sentence instead of a parser complaining about a bracket, which is the
+     exact failure that cost BZ a rules paste he did not need. */
+  step('the service reader says what actually came back');
+  {
+    const said = await page.evaluate(async () => {
+      const out = {};
+      const run = async (label, body) => {
+        try {
+          const r = new Response(body, { status: 200 });
+          const v = await readService(r, 'test');
+          out[label] = 'parsed:' + JSON.stringify(v).slice(0, 30);
+        } catch (e) { out[label] = (e && e.message) || String(e); }
+      };
+      await run('json', '{"items":[{"name":"A"}]}');
+      await run('html', '<!DOCTYPE html><html><body>Sorry, unable to '
+        + 'open the file</body></html>');
+      await run('text', 'Exception: mode not handled');
+      await run('broken', '{"items": [');
+      return out;
+    });
+    if (!/^parsed:/.test(said.json || '')) {
+      failures.push('service reader: good JSON did not parse — ' + said.json);
+    }
+    /* A DOCTYPE must name the deployment, because that is the fix. */
+    if (!/deployment|web page/i.test(said.html || '')) {
+      failures.push('service reader: a web page was not reported as one — '
+        + said.html);
+    }
+    /* And a plain-text error must be QUOTED: "Exception: mode not handled"
+       is worth more than any sentence written in advance. */
+    if (!/mode not handled/.test(said.text || '')) {
+      failures.push('service reader: the service\u2019s own words were '
+        + 'dropped — ' + said.text);
+    }
+    if (/^parsed:/.test(said.broken || '')) {
+      failures.push('service reader: truncated JSON was accepted');
+    }
   }
 
   step('the keyboard does not move the nav bar');
@@ -640,7 +711,7 @@ function step(n) {
     }
   }
 
-  step('spin is centred and its picker holds one line');
+  step('spin is centered and its picker holds one line');
   await page.locator('nav button[data-scr="pour"]').click();
   await page.waitForTimeout(250);
   {
@@ -657,7 +728,7 @@ function step(n) {
     if (spin && scr) {
       const off = Math.abs((spin.x + spin.width / 2) - (scr.x + scr.width / 2));
       if (off > 2) {
-        failures.push('pour: Spin is ' + Math.round(off) + 'px off centre');
+        failures.push('pour: Spin is ' + Math.round(off) + 'px off center');
       }
     }
     const row = await page.locator('#matchRow').boundingBox();
@@ -945,7 +1016,7 @@ function step(n) {
       /* By what it SAYS, not what class it wears. This asserted .chip and
          the back was rebuilt as btn btn-sm ghost — the shape every other
          back in the app uses — so a correct change failed a check that was
-         testing the styling rather than the behaviour. Rule 30c. */
+         testing the styling rather than the behavior. Rule 30c. */
       /* In the HEADER now, not the body — BZ: put it where the other pages
          put theirs. Looked up by what it says, across the whole screen, so
          moving it again does not fail a check that is meant to be about
@@ -1003,7 +1074,7 @@ function step(n) {
   //
   //    The line per pour is the only place a flight says anything about a
   //    particular bottle, and nothing could write one: Save flight rebuilt
-  //    the cards from the catalogue every time. The logic is tested in
+  //    the cards from the catalog every time. The logic is tested in
   //    §198; this is the wiring — that the field exists, that what is typed
   //    reaches the pour, and that pressing Save does not throw it away.
   {
@@ -1055,7 +1126,7 @@ function step(n) {
   //    input blurs it, so every keystroke ended the typing and a name came
   //    out as one letter. It also ran a full render per character, and the
   //    render walks the shelf. And Want it / I bought it lived inside a
-  //    collapsed fold labelled "Correct these details", which is not where
+  //    collapsed fold labeled "Correct these details", which is not where
   //    anybody looks for the buy button.
   {
     await page.locator('nav button[data-scr="shop"]').click();
@@ -1180,7 +1251,7 @@ function step(n) {
   // 9. A row placed straight into a card lays its controls out on ONE line.
   //
   //    .item is the shelf's seven-column grid, and six screens reuse the
-  //    class for its background and its coloured edge with only two
+  //    class for its background and its colored edge with only two
   //    children — so the buttons landed in the 96px "type" column and
   //    wrapped inside it. Checked by geometry rather than by CSS: build the
   //    same shape the library offers build, and compare the tops of the two
@@ -1523,7 +1594,7 @@ function step(n) {
     /* Named by what they lead to, not by their exact wording. This listed
        'flights run', which was renamed to 'ready to pour tonight' — a walk
        that breaks when a label is reworded is testing the copy rather than
-       the behaviour, and the behaviour is that every tile with a number on
+       the behavior, and the behavior is that every tile with a number on
        it goes where that number lives. */
     const want = { 'bottles on the shelf': 'shelf', 'open and pourable': 'pour',
                    'different whiskies': 'shelf',
@@ -1715,7 +1786,7 @@ function step(n) {
         .filter(b => !b.hidden);
       if (bs.length < 2) return { n: bs.length };
       const a = bs[0].getBoundingClientRect(), b = bs[1].getBoundingClientRect();
-      /* CENTRES, NOT TOP EDGES. Two controls of different heights on one
+      /* CENTERS, NOT TOP EDGES. Two controls of different heights on one
          line have different tops by definition, and the header now holds a
          34px mark beside 36px buttons — so this failed on a header that was
          perfectly fine. Same line means the middles agree. */
@@ -1930,13 +2001,13 @@ function step(n) {
     }
 
     /* A NAME THE SHELF KNOWS FILLS ITSELF ON BLUR. Driven through the real
-       DOM against the real catalogue, because "the fields got values" is
+       DOM against the real catalog, because "the fields got values" is
        the claim and L.fillPlan returning 'shelf' is not it. */
     const known = await page.evaluate(() => {
       const p2 = Object.values(S.catalog).find(x => x.dist && x.proof);
       return p2 ? p2.name : null;
     });
-    if (!known) failures.push('add form: no catalogue entry to try');
+    if (!known) failures.push('add form: no catalog entry to try');
     else {
       const filled = await page.evaluate(name => {
         const f = document.querySelector('.modal .form');
@@ -1958,7 +2029,7 @@ function step(n) {
           + '" filled nothing — dist ' + JSON.stringify(filled.dist)
           + ', proof ' + JSON.stringify(filled.proof));
       }
-      /* The behaviour, not the wording (rule 30c): it has to SAY something
+      /* The behavior, not the wording (rule 30c): it has to SAY something
          and be visible, and a rewrite of the sentence must not fail this. */
       if (filled.hidden || !filled.note) {
         failures.push('add form: it filled the fields and said nothing');
@@ -2012,9 +2083,9 @@ function step(n) {
       };
     });
     if (!seen) {
-      failures.push('mash: no catalogue to try it on');
+      failures.push('mash: no catalog to try it on');
     } else {
-      /* The BEHAVIOUR, not the wording (rule 30c): three grains in, three
+      /* The BEHAVIOR, not the wording (rule 30c): three grains in, three
          tags out, each naming its grain. A rewrite of the labels must not
          fail this and a parse that silently drew nothing must. */
       if (seen.tags.length !== 3) {
@@ -2065,14 +2136,14 @@ function step(n) {
     const k = await page.evaluate(() =>
       Object.keys(S.catalog).find(x => /Bardstown Silver Oak/i.test(x)) || null);
     if (!k) {
-      failures.push('label: the Bardstown entry this drives is not in the catalogue');
+      failures.push('label: the Bardstown entry this drives is not in the catalog');
     } else {
       const onScreen = await page.evaluate(kk => {
         showBottle(kk);
         return [...document.querySelectorAll('.sectionacts button')]
           .map(x => x.textContent.trim());
       }, k);
-      /* The behaviour, not the wording: there has to be a way in from the
+      /* The behavior, not the wording: there has to be a way in from the
          bottle screen, and it must be there on an entry with nothing
          missing — a lookup hides when there are no gaps and a label read
          must not, because correction is not a gap. */
@@ -2189,7 +2260,7 @@ function step(n) {
      it could be tapped, that it was off, or what tapping would do — so an
      invite went out and sharing was assumed to be on.
 
-     Asserts the BEHAVIOUR (30c): that it announces itself as a switch and
+     Asserts the BEHAVIOR (30c): that it announces itself as a switch and
      that its state tracks the setting. A rewording must not fail this. */
   {
     const both = await page.evaluate(() => {
@@ -2233,7 +2304,7 @@ function step(n) {
      toast, which times out in seconds, and a shelf read takes ten to
      sixty. Silence reads as broken.
 
-     Asserts the BEHAVIOUR: it appears, it survives a nested call, and it
+     Asserts the BEHAVIOR: it appears, it survives a nested call, and it
      goes when the last one closes. A rewording must not fail this. */
   {
     const r = await page.evaluate(() => {
@@ -2409,9 +2480,9 @@ function step(n) {
     const stranded = await page.evaluate(() => {
       const out = [];
       // 'shared' went with Our shelves — it is the Buddies TAB now, and a
-      // tab is reached by the nav rather than travelled to.
-      const travelled = ['detail', 'library', 'diag', 'map', 'settings'];
-      travelled.forEach(name => {
+      // tab is reached by the nav rather than traveled to.
+      const traveled = ['detail', 'library', 'diag', 'map', 'settings'];
+      traveled.forEach(name => {
         try {
           _from.length = 0;
           if (name === 'detail') showBottle(Object.keys(S.catalog)[0]);
@@ -2439,8 +2510,8 @@ function step(n) {
 
      Fair. Every design measurement I took today was at 1000px, and this
      walk checked that things EXIST and never that they do not overlap. So
-     a title pinned to the centre of the page ran under the controls on a
-     390px screen and nothing caught it — measured afterwards at 60px of
+     a title pinned to the center of the page ran under the controls on a
+     390px screen and nothing caught it — measured afterward at 60px of
      overlap on the shelf.
 
      Geometry, at the width he actually uses. */
@@ -2494,7 +2565,7 @@ function step(n) {
 
      Fair. This walk runs at desktop width, and every fault in those
      screenshots was a 390px fault — the gear sitting ON the word SHELF
-     because "+ Add bottle" and a centred title do not both fit, and every
+     because "+ Add bottle" and a centered title do not both fit, and every
      page's opening statement invisible because a max-width:560px rule
      hides the element it reuses. Nothing measured a phone, so nothing
      caught either.
@@ -2637,7 +2708,7 @@ function step(n) {
       }
       /* AND WHAT IS BEHIND IT SAYS SO. The panel is where somebody went
          expecting bottles, so the wait is explained there rather than as a
-         third colour on the row. */
+         third color on the row. */
       if (noShelf[0]) {
         noShelf[0].querySelector('button.budwho').click();
         const b3 = document.getElementById('buddiesBody');
@@ -2693,7 +2764,7 @@ function step(n) {
       /* Two named and one counted — the point is that all THREE reached
          the panel, not the order they are listed in. The order is now the
          grid's (mutual first), and an assertion on the exact wording was
-         testing copy rather than behaviour (rule 30c). */
+         testing copy rather than behavior (rule 30c). */
       if (!/(Tyson|Dave|Eli), (Tyson|Dave|Eli) and 1 other/.test(body.textContent)) {
         out.push('buddies: the room panel does not name all three buddies ('
           + body.textContent.slice(0, 120) + ')');
@@ -2710,7 +2781,7 @@ function step(n) {
       if (!b2.querySelector('svg.venn')) {
         out.push('buddies: no Venn on a single buddy panel');
       }
-      /* THE SEGMENTS ARE THE CONTROL. The three grey rows under the
+      /* THE SEGMENTS ARE THE CONTROL. The three gray rows under the
          diagram are gone, so the regions themselves must be pressable and
          each must carry its word. */
       if (!/Dave/.test(b2.textContent)) {
@@ -2722,7 +2793,7 @@ function step(n) {
           + hits.length + ' hit shapes)');
       }
       if (!/Yours only/.test(b2.textContent) || !/Both/.test(b2.textContent)) {
-        out.push('buddies: the Venn regions are not labelled');
+        out.push('buddies: the Venn regions are not labeled');
       }
       if (/Theirs alone|Yours alone|You could pour any of these/
           .test(b2.textContent)) {

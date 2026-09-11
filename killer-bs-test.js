@@ -62,10 +62,10 @@ if (!L.pickFromList) {
                   order it beats worth a look beats unknown. */
                score: /order it/i.test(j.verdict || '') ? 2
                       : /worth/i.test(j.verdict || '') ? 1 : 0,
-               /* The house is read off the NAME when the catalogue does
+               /* The house is read off the NAME when the catalog does
                   not carry the bottling: "Laphroaig Quarter Cask" is a
                   Laphroaig whether or not anybody owns that expression,
-                  and the whole point is to recognise the house. */
+                  and the whole point is to recognize the house. */
                dist: j.dist || (L.lookupFromCatalog(n, catalog) || {}).dist
                      || (Object.keys(houses).filter(hk =>
                           L.shopNorm(n).indexOf(hk) >= 0)
@@ -93,7 +93,7 @@ function eq(label, got, want) {
   if (g === w) { pass++; }
   else { fail++; console.log('  FAIL ' + label + '\n    got  ' + g + '\n    want ' + w); }
 }
-/* A ROW THAT MATCHED THE SHELF, whichever flavour of match it was.
+/* A ROW THAT MATCHED THE SHELF, whichever flavor of match it was.
    A match is 'same' when the file brings nothing new and 'update' when it
    brings a better value; neither adds a bottle, and these checks are about
    RECOGNITION — did the app see this as a bottle you already have — not
@@ -357,7 +357,7 @@ eq('matched pair detected', v.some(m => m.level === 'ok' && /1 matched pair/.tes
 sec('distiller notes');
 const tnP = { k: 'x', tn: { nose: 'Iodine, tar', colour: 'Pale gold',
                             finish: 'Very long', palate: 'Medicinal' } };
-// Always colour, nose, palate, finish -- the order of the sheet columns,
+// Always color, nose, palate, finish -- the order of the sheet columns,
 // not the order the object happens to hold them in.
 eq('notes come back in sheet order', L.tastingNotes(tnP).map(n => n.label),
   ['Colour', 'Nose', 'Palate', 'Finish']);
@@ -662,7 +662,7 @@ sec('flying to a place');
 const worldFull = { x: -100, y: -70, w: 200, h: 140 };
 const isl = L.MAP_PLACES.find(p => p.id === 'islay');
 const islayView = L.viewFor(isl, worldFull);
-eq('the view is centred on the place',
+eq('the view is centered on the place',
   Math.round((islayView.x + islayView.w / 2) * 100) / 100,
   Math.round(L.project(isl.lon, isl.lat)[0] * 100) / 100);
 eq('a tighter span means a smaller window',
@@ -867,8 +867,8 @@ eq('pourProof reads a shelf bottle', L.pourProof(shelfPour, wCat), 90);
 eq('pourProof reads a blend', L.pourProof(blendPour, wCat), 98.5);
 eq('pourProof reads a stated wish proof', L.pourProof(wishPour, wCat), 107);
 
-eq('a shelf pour is labelled from the catalog', L.pourLabel(shelfPour, wCat), 'Weller 12');
-eq('a blend is labelled by its own name', L.pourLabel(blendPour, wCat), "Poor Man's Pappy");
+eq('a shelf pour is labeled from the catalog', L.pourLabel(shelfPour, wCat), 'Weller 12');
+eq('a blend is labeled by its own name', L.pourLabel(blendPour, wCat), "Poor Man's Pappy");
 
 sec('flight shape');
 const mixed = { title: 'MIXED', core: [shelfPour, wishPour, blendPour, { k: 'd' }] };
@@ -892,7 +892,7 @@ eq('the same bottle does not duplicate', wl.length, 1);
 // Re-adding keeps what you knew before rather than blanking it.
 eq('the original date is kept', wl[0].added, '2026-01-01');
 eq('the earlier reason survives a bare re-add', wl[0].reason, 'completes a flight');
-eq('recognised however it is typed', L.onWishlist(wl, 'PAPPY 15'), true);
+eq('recognized however it is typed', L.onWishlist(wl, 'PAPPY 15'), true);
 eq('not on the list', L.onWishlist(wl, 'Something Else'), false);
 wl = L.wishRemove(wl, 'Pappy 15');
 eq('removing works', wl.length, 0);
@@ -1453,7 +1453,7 @@ const overOnly = L.parseCandidates({ bottles: [
     price_usd: 250, proof: 100 }
 ] }, {}, 80, gapBT);
 // An empty panel is not an answer. The cheapest that FITS is, as long as it
-// is labelled honestly rather than quietly widening the budget.
+// is labeled honestly rather than quietly widening the budget.
 eq('the cheapest over budget is offered', overOnly.bottles.length, 1);
 eq('and it is the cheapest one', overOnly.bottles[0].price, 250);
 eq('flagged as over budget', overOnly.overBudget, true);
@@ -1549,7 +1549,7 @@ const found = L.lookupFromCatalog('Lagavulin 16', luCat);
 eq('a known bottle resolves locally', found.source, 'shelf');
 eq('and carries its proof', found.proof, 86);
 eq('an unknown one does not', L.lookupFromCatalog('Nothing Like This', luCat), null);
-// A weak name match must not resolve, or the form fills with a neighbour.
+// A weak name match must not resolve, or the form fills with a neighbor.
 eq('a bare number does not resolve', L.lookupFromCatalog('16', luCat), null);
 
 // Anything from outside is untrusted: a wrong proof is worse than a blank.
@@ -1683,8 +1683,8 @@ eq('an anonymous sender still reads', /^I would like to share/.test(L.inviteText
 }
 
 
-sec('a shared catalogue never touches your own work');
-// The whole risk in a shared catalogue is that an update arrives and takes
+sec('a shared catalog never touches your own work');
+// The whole risk in a shared catalog is that an update arrives and takes
 // somebody's own notes with it. The layering that prevents it already
 // existed; this pins it.
 const baseCat = {
@@ -1707,7 +1707,7 @@ const newerBase = {
 };
 const after = L.mergeCatalog(newerBase, myEdits, myCustom, {});
 // This is the case that matters: my own note must not be overwritten by a
-// catalogue update, however much better the new one looks.
+// catalog update, however much better the new one looks.
 eq('an update does not overwrite my note', after.a.tn.nose, 'MY note');
 eq('nor my corrected proof', after.a.proof, 91);
 eq('but it does bring new notes where I had none', after.b.tn.nose, 'new for bravo');
@@ -1726,7 +1726,7 @@ const enCat = {
   bare:  { k: 'bare',  name: 'Bare One',  proof: 90 },
   noted: { k: 'noted', name: 'Noted One', proof: 92,
            tn: { nose: 'n', palate: 'p', finish: 'f', colour: 'c' } },
-  noCol: { k: 'noCol', name: 'No Colour', proof: 94,
+  noCol: { k: 'noCol', name: 'No Color', proof: 94,
            tn: { nose: 'n', palate: 'p', finish: 'f' } }
 };
 const enBot = [{ id: 'e1', k: 'bare', status: 'open' },
@@ -1753,7 +1753,7 @@ eq('and the price', takeBare.msrp, 60);
 /* The lookup schema asks for `fin` (the cask) and `finish` (the finish of
    the taste) as two separate fields in one object, so reading one as the
    other is never right. This used to assert that NO cask was taken when a
-   note set arrived — which was the old guard's behaviour and was wrong in
+   note set arrived — which was the old guard's behavior and was wrong in
    the other direction: a genuine Oloroso was thrown away for the crime of
    having a nose beside it, which is nearly every answer. The cask comes
    from `fin`, always; `finish` never becomes one. */
@@ -1773,7 +1773,7 @@ eq('a bottle with everything gives nothing back',
   L.enhanceDiff({ k: 'full', name: 'Full', proof: 90, age: 10, msrp: 50,
     fin: 'Sherry', tn: { nose: 'n', palate: 'p', finish: 'f', colour: 'c' } },
     found), null);
-// Except a note set missing only its colour, which is worth completing.
+// Except a note set missing only its color, which is worth completing.
 const takeCol = L.enhanceDiff(enCat.noCol, found);
 eq('a missing colour is filled', takeCol.tn.colour, 'amber');
 eq('and the rest of the note is left alone', takeCol.tn.nose, 'n');
@@ -1998,7 +1998,7 @@ const prop = L.makeProposal(
   [{ k: 'a' }, { k: 'b' }, { k: 'c' }], rmPool, 'You', 'uid-me');
 
 eq('it is lettered', prop.pours.map(p => p.letter), ['A', 'B', 'C']);
-// Names, not keys: a key only means something against the catalogue the
+// Names, not keys: a key only means something against the catalog the
 // sender happened to have.
 eq('pours travel as names',
   prop.pours.map(p => p.name), ['Mine A', 'Theirs B', 'Theirs C']);
@@ -2134,9 +2134,9 @@ eq('nothing illegal survives',
 eq('no leading or trailing underscore', L.libKey('  A Whisky  '), 'a_whisky');
 eq('nothing is nothing', L.libKey(''), '');
 
-// Built from the RAW name, not the normalised one. shopNorm drops words
+// Built from the RAW name, not the normalized one. shopNorm drops words
 // like "whiskey" for matching, which is right for matching and fatal for a
-// key: these two are different bottles that normalise to one string.
+// key: these two are different bottles that normalize to one string.
 eq('two bottles do not collide',
   L.libKey('Barrell Craft Spirits Private Release')
     === L.libKey('Barrell Craft Spirits Private Release Whiskey'), false);
@@ -2194,7 +2194,7 @@ eq('nothing matches nothing', L.searchLibrary(lib, 'zzz').length, 0);
 eq('an empty search lists everything', L.searchLibrary(lib, '').length, 4);
 eq('sorted by name', L.searchLibrary(lib, '')[0].name, 'Ardbeg 10 Years Old');
 eq('the key travels with it', !!L.searchLibrary(lib, 'lagavulin')[0]._key, true);
-eq('a limit is honoured', L.searchLibrary(lib, '', 2).length, 2);
+eq('a limit is honored', L.searchLibrary(lib, '', 2).length, 2);
 
 sec('what is thin');
 eq('a complete entry has no gaps',
@@ -2210,9 +2210,9 @@ eq('notes count as a gap',
 }
 
 {
-sec('favourites');
-// A favourite is a property of the WHISKY, not of a bottle: three bottles
-// of the same thing are one favourite, and it survives finishing one and
+sec('favorites');
+// A favorite is a property of the WHISKY, not of a bottle: three bottles
+// of the same thing are one favorite, and it survives finishing one and
 // opening the next.
 const favState = { favs: {} };
 const mark = k => { if (favState.favs[k]) delete favState.favs[k];
@@ -2227,14 +2227,14 @@ eq('marking again clears it', !!favState.favs.a, false);
 const rows = [{ k: 'a', name: 'A' }, { k: 'b', name: 'B' }, { k: 'c', name: 'C' }];
 const favs = { a: 1, c: 1 };
 const only = rows.filter(p => favs[p.k]);
-eq('only favourites survive', only.map(p => p.k), ['a', 'c']);
+eq('only favorites survive', only.map(p => p.k), ['a', 'c']);
 eq('and their order is untouched', only[0].k, 'a');
-eq('no favourites means nothing, not everything',
+eq('no favorites means nothing, not everything',
   rows.filter(p => ({})[p.k]).length, 0);
-// A favourite for a bottle no longer on the shelf must not be counted, or
+// A favorite for a bottle no longer on the shelf must not be counted, or
 // the badge promises rows the list cannot show.
 const catalog = { a: { k: 'a' }, b: { k: 'b' } };
-eq('a favourite off the shelf does not count',
+eq('a favorite off the shelf does not count',
   Object.keys({ a: 1, gone: 1 }).filter(k => catalog[k]).length, 1);
 }
 
@@ -2614,7 +2614,7 @@ eq('and a bottle with no numbers either side still matches',
 {
 sec('barcodes');
 // A printed code carries hyphens, and a scanner may or may not give the
-// leading zero, so both are normalised away before anything is compared.
+// leading zero, so both are normalized away before anything is compared.
 eq('hyphens go', L.upcKey('0-80432-40063-0'), '080432400630');
 eq('a bare 12 stays', L.upcKey('080432400630'), '080432400630');
 eq('an 11-digit code is padded', L.upcKey('80432400630'), '080432400630');
@@ -2885,7 +2885,13 @@ eq('japanese has its own face', L.faceMatch('type', 'japanese', { sub: 'japanese
 eq('canadian has its own face', L.faceMatch('type', 'canadian', { sub: 'canadian' }), true);
 eq('no other face exists', L.REELS.find(r => r.id === 'type')
   .faces.some(f => f.v === 'other' || f.v === 'malt'), false);
-eq('every declared type has a face', L.TYPES.every(s =>
+/* EVERY WHISKY TYPE HAS A FACE. The bar shelf - rum, vodka, gin, mezcal,
+   liqueur, brandy - is declared so a bottle keeps its category, because a
+   sub the app does not know is stored as null and the bottle loses what it
+   is. It gets no reel face: the machine picks a whisky to drink, and a
+   face nobody wants to land on is a dead control. */
+eq('every whisky type has a face', L.TYPES.filter(L.isWhisky
+  ? t => L.isWhisky({ sub: t }) : () => true).every(s =>
   L.REELS.find(r => r.id === 'type').faces.some(f => f.v === s)), true);
 
 eq('recognition matches', L.faceMatch('obsc', 'obscure', { obsc: 'obscure' }), true);
@@ -2996,7 +3002,7 @@ eq('two words', L.titleCase('drain pour'), 'Drain Pour');
 eq('acronym stays whole', L.titleCase('msrp'), 'MSRP');
 eq('long name is shortened for a chip', L.titleCase('american single malt'), 'American Malt');
 /* US spelling. The app is American, the shelf is mostly American whiskey,
-   and BZ writes US spelling everywhere else; Flavoured was the one British
+   and BZ writes US spelling everywhere else; Flavored was the one British
    word in the interface and it sat on a chip beside Bourbon and Rye. */
 eq('US spelling, like the rest of the app',
   L.titleCase('flavored'), 'Flavored');
@@ -3044,9 +3050,9 @@ eq('user note is last', ns[5].text, 'Poured this blind in August.');
 // Only the flights this bottle is actually in contribute a line.
 eq('unrelated flight excluded', ns.some(n => n.src === 'peat is a postcode'), false);
 // A wood-only finish says so, and an unknown one says neither.
-eq('wood-only is labelled', L.notesFor({ k: 'A', fin: 'Toasted Oak', wine: false }, [], null)[0].text,
+eq('wood-only is labeled', L.notesFor({ k: 'A', fin: 'Toasted Oak', wine: false }, [], null)[0].text,
   'Toasted Oak \u2014 wood only, no wine');
-eq('unknown cask is not labelled', L.notesFor({ k: 'A', fin: 'Multi-cask', wine: null }, [], null)[0].text,
+eq('unknown cask is not labeled', L.notesFor({ k: 'A', fin: 'Multi-cask', wine: null }, [], null)[0].text,
   'Multi-cask');
 eq('a bare bottle has no notes', L.notesFor({ k: 'A' }, [], null).length, 0);
 eq('a user note alone still shows', L.notesFor({ k: 'A' }, [], 'mine').length, 1);
@@ -3154,7 +3160,7 @@ eq('extent x', Math.round(ext.x * 1000) / 1000, Math.round((-6 * k - 0.5) * 1000
 eq('extent width', Math.round(ext.w * 1000) / 1000,
    Math.round((4 * k + 1) * 1000) / 1000);
 eq('extent height', ext.h, 4);           // 3 degrees of latitude plus 2 x 0.5
-eq('zero pad is honoured', L.mapExtent([[[-6, 55], [-2, 58]]], 0).h, 3);
+eq('zero pad is honored', L.mapExtent([[[-6, 55], [-2, 58]]], 0).h, 3);
 
 sec('pins');
 const mapCat = {
@@ -3342,7 +3348,7 @@ const layerCat = {
 const subC = { bourbon: 'United States', scotch: 'Scotland', irish: 'Ireland' };
 const wD = { 'Pokeno Whiskey': 'New Zealand', 'Rampur Distillery': 'India' };
 /* Owning every fixture entry, because a map layer now plots what you HAVE
-   rather than what the catalogue knows — a shelf of nothing draws nothing,
+   rather than what the catalog knows — a shelf of nothing draws nothing,
    which is the whole point of the change. This section is about the
    LAYERS, so the shelf holds all of them. */
 const layerBots = Object.keys(layerCat)
@@ -3410,13 +3416,13 @@ eq('search finds by name', L.shopSearch('ardbeg', shopCat).length, 2);
 eq('search finds by distillery', L.shopSearch('Lagavulin', shopCat)[0].p.k, 'Lagavulin 16');
 eq('a one-character query returns nothing', L.shopSearch('a', shopCat).length, 0);
 eq('no match returns nothing', L.shopSearch('zzzzz', shopCat).length, 0);
-eq('limit honoured', L.shopSearch('ardbeg', shopCat, 1).length, 1);
+eq('limit honored', L.shopSearch('ardbeg', shopCat, 1).length, 1);
 
 sec('shelf fit');
 // Already owned, single open bottle: a backup fits the stocking rule.
 let fit = L.shelfFit({ name: 'Ardbeg 10 Year Old', dist: 'Ardbeg', sub: 'scotch',
   proof: 92 }, shopCat, shopBottles);
-eq('recognised as owned', fit.own.key, 'Ardbeg 10');
+eq('recognized as owned', fit.own.key, 'Ardbeg 10');
 eq('one open bottle reads as a backup opportunity',
   fit.findings.some(f => f.level === 'ok' && /stocking rule/.test(f.msg)), true);
 
@@ -3468,7 +3474,7 @@ fit = L.shelfFit({ name: 'Another Bourbon', dist: 'New Co', sub: 'bourbon', proo
   crowded, []);
 eq('crowded corner warns',
   fit.findings.some(f => f.level === 'warn' && /within five proof points/.test(f.msg)), true);
-eq('neighbours counted', fit.neighbours.length, 6);
+eq('neighbors counted', fit.neighbors.length, 6);
 
 // An empty corner is worth saying too.
 fit = L.shelfFit({ name: 'Odd One', dist: 'New Co', sub: 'bourbon', proof: 140 },
@@ -3559,7 +3565,7 @@ eq('naming exactly what it would change', prep.rows[0].changes, ['sub']);
 eq('a repeat inside the file is a duplicate', prep.rows[1].action, 'duplicate');
 eq('new is added', prep.rows[2].action, 'add');
 /* A MISSING PROOF NO LONGER REFUSES THE ROW. BZ: drop proof on import.
-   The bottle lands and the fill queue closes the proof afterwards, which
+   The bottle lands and the fill queue closes the proof afterward, which
    is what LIBRARY_GAPS lists it for. */
 eq('no proof still adds the bottle', prep.rows[3].action, 'add');
 eq('summary counts', L.importSummary(prep),
@@ -3575,7 +3581,7 @@ eq('a missing proof is flagged', prep.rows[3].issues, ['no proof']);
 eq('an unreadable category is flagged',
   prep.rows[4].issues, ['category unknown']);
 eq('and nothing is invented for it', prep.rows[4].sub, null);
-eq('a recognised category is not flagged',
+eq('a recognized category is not flagged',
   prep.rows[0].issues.indexOf('category unknown'), -1);
 eq('no header is fatal', !!L.prepareImport([['a', 'b']], {}).fatal, true);
 eq('no name column is fatal', !!L.prepareImport([['zzz'], ['1']], {}).fatal, true);
@@ -3590,7 +3596,7 @@ eq('every template row imports', L.importSummary(tmpl),
 eq('no template row has an issue', tmpl.rows.every(r => r.issues.length === 0), true);
 eq('the template ABV example doubles', tmpl.rows[2].proof, 92);
 eq('sealed status is read', tmpl.rows[1].status, 'sealed');
-eq('every documented column is recognised',
+eq('every documented column is recognized',
   L.TEMPLATE_COLS.filter(c => Object.keys(L.matchColumns([c])).length === 0), []);
 
 /* ---------------- reference ---------------- */
@@ -3627,7 +3633,12 @@ const NAMED = { 'bourbon': 'bourbon', 'rye': 'rye whiskey', 'wheat': 'wheat whis
      "Flavored Whiskey" now. The type KEY stays 'flavored', which it always
      was — only the prose changed. */
   'flavored': 'flavored whiskey',
-  'tequila': 'tequila' };
+  'tequila': 'tequila',
+  /* The bar shelf is defined too - somebody reading Learn should find out
+     what a mezcal is, and each entry says plainly that it is inventory
+     here rather than part of the collection's shape. */
+  'rum': 'rum', 'vodka': 'vodka', 'gin': 'gin', 'mezcal': 'mezcal',
+  'liqueur': 'liqueur', 'brandy': 'brandy' };
 eq('every type has a definition',
   L.TYPES.filter(t => defined.indexOf(NAMED[t]) < 0), []);
 // Every Scotch region is defined too.
@@ -3662,7 +3673,7 @@ eq('empty query respects the group', L.searchReference('', 'whiskey').length, L.
 const KNOWN = L.REF_GROUPS.find(g => g.id === 'whiskey').label;
 eq('search crosses groups', L.searchReference('char')
   .some(s => s.group === KNOWN), true);
-eq('search results are labelled with their group',
+eq('search results are labeled with their group',
   L.searchReference('alligator').every(s => !!s.group), true);
 // Terms that must exist because BZ's own flights turn on them.
 ['angel', 'chill filtration', 'bottled in bond', 'solera', 'peat',
@@ -3724,14 +3735,20 @@ eq('blended is gone from the reel', L.TYPES.indexOf('blended'), -1);
 // No reel face may exist that nothing on the shelf can satisfy: a face that
 // never pays out is a dud spin.
 const subsInData = new Set(Object.values(data.catalog).map(p => p.sub));
+/* THE REEL FACES, not every declared type. The two were the same list
+   until the bar shelf was declared - rum, vodka and the rest keep a
+   category so a bottle does not lose what it is, and have no face because
+   the machine picks a whisky. This check has always been about a face that
+   never pays out; now it reads the faces. */
+const typeFaces = (L.REELS.filter(r => r.id === 'type')[0] || {}).faces || [];
 eq('every type face has at least one bottle',
-  L.TYPES.filter(s => !subsInData.has(s)), []);
+  typeFaces.map(f => f.v).filter(v => v !== 'any' && !subsInData.has(v)), []);
 // Region is Scotch-only, and only where a distillery can carry one.
 const scotch = Object.values(data.catalog).filter(p => p.sub === 'scotch');
 eq('scotch regions assigned', scotch.filter(p => p.region).length, 76);
 eq('islay is the largest region',
   scotch.filter(p => p.region === 'Islay').length, 39);
-eq('regions are all recognised', scotch.filter(p => p.region)
+eq('regions are all recognized', scotch.filter(p => p.region)
   .every(p => L.SCOTCH_REGIONS.indexOf(p.region) >= 0), true);
 eq('no non-scotch carries a region', Object.values(data.catalog)
   .filter(p => p.sub !== 'scotch' && p.region).length, 0);
@@ -3774,7 +3791,7 @@ eq('every product has a price band',
   Object.values(data.catalog).filter(p => !L.priceBand(p.msrp)).map(p => p.name), []);
 
 // No reel face may be lower-case: the faces sit side by side as labels, and
-// one lower-case face among Title Case neighbours is the inconsistency this
+// one lower-case face among Title Case neighbors is the inconsistency this
 // pass removed.
 const badFace = [];
 L.REELS.forEach(r => r.faces.forEach(f => {
@@ -3813,7 +3830,7 @@ eq('and it names the flight', runGaps[0].flight, 'PEAT IS A POSTCODE');
 // This shelf raises NO house extension, and that is correct: v1.8.0 made
 // the ask category-wide — a finished Bourbon — while leaving the test
 // house-scoped, so it asked BZ for a finished bourbon while he owned 36.
-// A gap in one house is not a gap on the shelf. The behaviour is pinned on
+// A gap in one house is not a gap on the shelf. The behavior is pinned on
 // a fixture instead, where the shelf genuinely lacks the thing.
 const oneHouse = {};
 [90, 92, 94, 96].forEach((pf, i) => {
@@ -4056,7 +4073,7 @@ eq('no flight title starts lower-case',
 
 /* bottleGaps was a wrapper over noteGaps and factGaps and was superseded
    when the two buttons split — one under the notes card, one under the
-   details. The wrapper is gone; the behaviour it asserted is still worth
+   details. The wrapper is gone; the behavior it asserted is still worth
    asserting, so it is spelled out here against the two live functions. */
 const gapsOfBottle = p => p
   ? L.noteGaps(p).concat(L.factGaps(p)) : [];
@@ -4146,7 +4163,7 @@ eq('an axis the bottle cannot be measured on returns nothing',
   L.nearestBy('age', { name: 'Z', proof: 100 }, nprods), null);
 eq('no axis chosen means no opinion', L.nearestBy(null, ncand, nprods), null);
 // A is itself, so it drops out; B is 8 proof away and C is 20.
-eq('the bottle itself is never its own neighbour',
+eq('the bottle itself is never its own neighbor',
   L.nearestBy('strength', { name: 'A', proof: 100 }, nprods).list
     .map(p => p.name), ['B', 'C']);
 
@@ -4195,7 +4212,7 @@ eq('sourced first, then findable, then cheapest',
    'Allocated cheap']);
 // Six come back and only five are kept. The one dropped must be the one
 // hardest to buy, not the cheapest — which is what the old dearest-first
-// slice was doing backwards.
+// slice was doing backward.
 const sixCands = { bottles: [
   { name: 'Shelf 90',  price_usd: 90, find: 'shelf' },
   { name: 'Shelf 80',  price_usd: 80, find: 'shelf' },
@@ -4255,7 +4272,7 @@ sec('§181 the App use tab names controls that exist');
     /* "+ Add bottle" was a text button and is now a bottle marked with a
        plus — BZ: use a smaller add bottle icon, a bottle with a + on it.
        At 390px the text button and the gear together were wider than the
-       space beside a centred title, so the gear sat on the word SHELF.
+       space beside a centered title, so the gear sat on the word SHELF.
        An icon has no label to promise, so it comes off this list. */
     ['Import',                'Shelf'],
     ['\u2039 Back',            'Shop'],
@@ -4264,7 +4281,8 @@ sec('§181 the App use tab names controls that exist');
     ['Correct the details',  'Add a bottle you just bought'],
     ['Something else',        'Deciding what to buy next'],
     ['Read it',               'Looking at it on a website'],
-    ['I poured this',         'Record a pour'],
+    /* Renamed in the tense pass: three screens said this three ways. */
+    ['I drank this',          'Record a pour'],
     ['Remix',                 'Run a flight again'],
     // Design, not build: the tile says "Design one from scratch" and the
     // sheet it opens says "Design a flight", because "run one you
@@ -4281,10 +4299,10 @@ sec('§181 the App use tab names controls that exist');
   ];
   // A label is either a quoted string the script sets, or text between
   // tags in the markup. Both are the words printed on the control.
-  const labelled = label =>
+  const labeled = label =>
     src.indexOf("'" + label + "'") >= 0 || src.indexOf('>' + label + '<') >= 0;
   eq('every control the tab names by its label exists in the file',
-    NAMED.filter(([label]) => !labelled(label))
+    NAMED.filter(([label]) => !labeled(label))
       .map(([label, where]) => where + ' promises ' + label), []);
 
   // And every entry that names one is still in FEATURES under that term.
@@ -4570,7 +4588,7 @@ sec('§187 the parse carries the notes the run reads');
 sec('§188 part of a note is not silence');
 
 /* Revised after reading the log. Three bottles came back TWICE with a
-   colour, a nose and a palate and no finish — Ardbeg Heavy Vapours, the
+   color, a nose and a palate and no finish — Ardbeg Heavy Vapours, the
    Barrell 20 Year Toasted, the Barrell Gray Label — so requiring a finish
    condemned them to keep an invented flight note and be paid for again on
    every run for ever. A nose and a palate is most of a tasting note, and
@@ -4631,7 +4649,7 @@ eq('the tn_ prefix counts the same',
  *
  * The same offered bottle read Accept on a laptop and Drop on a phone.
  * mergeContribution was being handed S.base — this device's merged
- * catalogue — instead of the shared library, so a device that had pulled
+ * catalog — instead of the shared library, so a device that had pulled
  * the library saw a clash and one that had not saw none. Whether a bottle
  * is already in the library is a fact about the library, and it has to
  * come out the same everywhere.
@@ -4675,7 +4693,7 @@ sec('§190 a correction reads as a change');
     said[0].text, 'proof: nothing → 100');
   eq('a changed value reads as one thing becoming another',
     said[1].text, 'fin: Oloroso → Pedro Ximenez');
-  eq('a note is summarised by its nose rather than dumped',
+  eq('a note is summarized by its nose rather than dumped',
     /^tn: nothing → tar and seaweed/.test(said[2].text), true);
   eq('no diff describes nothing', L.describeCorrection(null), []);
   eq('an empty diff describes nothing', L.describeCorrection({}), []);
@@ -4686,7 +4704,7 @@ sec('§190 a correction reads as a change');
  * A publish batch of 30 was 30 rows reading "nothing to something": an age
  * the library did not have, a cask it did not have, a note it did not
  * have, all of it from the lookup the app itself just ran. There is no
- * judgement to make about those, and thirty of them trains you to press
+ * judgment to make about those, and thirty of them trains you to press
  * the button without reading — which is the one thing the review screen
  * exists to prevent. An overwrite is the opposite: something is there,
  * somebody may have meant it, and it is about to be replaced.
@@ -4762,7 +4780,7 @@ sec('§192 a cleared marker has to survive the round trip');
     L.needsEnhancing(L.mergeCatalog({ b: prompt },
       { b: throughFirebase(take) }).b), false);
 
-  // The second defence, which repairs the bottles already filled without
+  // The second defense, which repairs the bottles already filled without
   // asking the service about any of them again.
   eq('a real note with a stale marker is not queued',
     L.needsEnhancing({ k: 'a', name: 'A', tnFrom: 'WHEAT, TURNED UP',
@@ -4915,7 +4933,7 @@ sec('§195 accepting publishes what is known');
   /* The point of the whole thing: after accepting, the bottle must not
      still be pending. correctionFor is what queues it, so that is what
      has to come back empty. */
-  eq('and nothing is left pending afterwards',
+  eq('and nothing is left pending afterward',
     L.correctionFor(mine, full), null);
   eq('where the thin version would have queued it straight back',
     L.correctionFor(mine, offer) === null, false);
@@ -5015,7 +5033,7 @@ sec('§197 nothing is queued that the publisher will not send');
  * f.cards[i].wood is the host's line for pour i, and it is positional. The
  * editor reorders f.core and did not touch f.cards, which never showed
  * because Save flight threw the cards away and rebuilt them from the
- * catalogue -- destroying anything written by hand, which is why there was
+ * catalog -- destroying anything written by hand, which is why there was
  * no way to edit one in the first place.
  *
  * Same shape as every fault this week: two structures holding one fact,
@@ -5088,7 +5106,7 @@ sec('§198 a host line stays with its pour');
     L.cardsFrom(L.addPour(folded, 'Lagavulin 16'), cat)[2].wood, 'sherry');
 
   /* A wish is not a bottle on the shelf. The version this replaced read
-     pd.name off the catalogue, so saving a flight blanked the name and the
+     pd.name off the catalog, so saving a flight blanked the name and the
      proof of every pour that was not owned. */
   const wish = { kind: 'wish', name: 'Pappy 15', proof: 107, note: 'the ringer' };
   eq('a wish keeps its name, proof and line',
@@ -5103,7 +5121,7 @@ sec('§198 a host line stays with its pour');
 /* §199  a name somebody typed is cased like the shelf ------------------
  *
  * "heaven hill grain to glass wheated bourbon" went onto the shelf exactly
- * as typed and sat in lower case among 344 title-cased neighbours. It read
+ * as typed and sat in lower case among 344 title-cased neighbors. It read
  * as correct on the bottle screen and wrong on the shelf for one reason:
  * the headings are set in Cinzel, a capitals-only face, so every name looks
  * capitalised there whatever case it holds. The list was the only screen
@@ -5195,7 +5213,7 @@ sec('§200 a first load may not replace newer local work');
     L.syncDecision(1500, 1500), 'remote');
 
   // The two cases where there is nothing to compare. Both keep the old
-  // behaviour, because a device that has never saved has nothing to lose
+  // behavior, because a device that has never saved has nothing to lose
   // and an account written before the stamp existed cannot be dated.
   eq('a device that has never saved takes the account',
     L.syncDecision(0, 2000), 'remote');
@@ -5231,7 +5249,7 @@ sec('§200 a first load may not replace newer local work');
     L.mergeSyncValue('custom', { a: 1 }, { b: 2 }), { a: 1, b: 2 });
 
   /* And the state a half-applied sync leaves: a bottle whose whisky is not
-     in the catalogue. It is on no screen — the shelf iterates products and
+     in the catalog. It is on no screen — the shelf iterates products and
      skips any with no bottles — so it has to be reported somewhere. */
   eq('a bottle with no whisky is found',
     L.orphanBottles([{ id: 'B346', k: 'gone one', status: 'open' },
@@ -5408,7 +5426,7 @@ sec('§202 what a flight is asking');
  * That is the other half of §200. The load no longer overwrites newer local
  * work, but the write still has to land, and this one never did. fbPush sent
  * EVERY key on EVERY save with set(): 31KB of bottles and 161KB of custom
- * flights, 189KB minimum, re-uploaded to log a pour or star a favourite.
+ * flights, 189KB minimum, re-uploaded to log a pour or star a favorite.
  *
  * It now sends only the keys whose value differs from what was last written,
  * with update() rather than set() — update writes the named children and
@@ -5661,7 +5679,7 @@ sec('§206 one signature for the same data');
  *
  * The load push came down from 61,647 bytes to 179 — and 179 was still
  * wrong. Firebase cannot STORE an empty list or an empty map: write [] and
- * the key is simply absent afterwards. So an empty wishlist never matched
+ * the key is simply absent afterward. So an empty wishlist never matched
  * an account holding nothing, and the same 179 bytes went up on every load,
  * for ever. Same shape as the key-order fault, three orders smaller.
  */
@@ -6135,7 +6153,7 @@ sec('§213 removing a run takes its pours');
 /* §214  a backup you can hold, and a number that is never NaN ---------
  *
  * The CSV export carries bottles and products: twelve columns. It does NOT
- * carry the history, the custom flights, the edits, the favourites, the
+ * carry the history, the custom flights, the edits, the favorites, the
  * barcodes, the wishlist or the dismissals — so 36 designed flights, the
  * least replaceable thing on this shelf, lived in one browser and one
  * Firebase node and in no file BZ could hold.
@@ -6339,7 +6357,7 @@ sec('§216 a path is not a key');
   });
   eq('it lands under the key the library is read by',
     Object.keys(landed), [L.libKey(p.name)]);
-  eq('so nothing is left pending afterwards',
+  eq('so nothing is left pending afterward',
     L.pendingForLibrary({ [p.k]: p }, landed), []);
 }
 
@@ -6739,7 +6757,7 @@ sec('\u00a7223 what the shelf adds up to');
  *   reason is null — one or the other, never both.
  *   With no such flight, forFlight is null and reason is the fit verdict.
  *   The name is stored through L.typedName, so spacing and case are
- *   normalised: "  ardbeg   uigeadail " becomes "Ardbeg Uigeadail".
+ *   normalized: "  ardbeg   uigeadail " becomes "Ardbeg Uigeadail".
  */
 sec('\u00a7224 what goes on the wishlist, and why');
 {
@@ -6762,7 +6780,7 @@ sec('\u00a7224 what goes on the wishlist, and why');
     catalog, bottles);
   eq('no flight wants it, so none is named', miss.forFlight, null);
   eq('and then it carries a reason instead', typeof miss.reason, 'string');
-  eq('spacing and case are normalised', miss.name, 'Ardbeg Uigeadail');
+  eq('spacing and case are normalized', miss.name, 'Ardbeg Uigeadail');
   eq('no estimate stays null', miss.est, null);
 
   /* A keyed pour is not a wish pour: the flight already has that bottle
@@ -6790,7 +6808,7 @@ sec('\u00a7224 what goes on the wishlist, and why');
  */
 sec('§226 the shelf tiles, the money column and the count');
 {
-  /* Four products, three of them owned. d is in the catalogue and owned by
+  /* Four products, three of them owned. d is in the catalog and owned by
      nobody here, which is the case that made the tiles disagree with the
      list: the library carries entries this shelf has never bought. */
   const catalog = {
@@ -6805,7 +6823,7 @@ sec('§226 the shelf tiles, the money column and the count');
   eq('the biggest type leads', t.tiles[0].sub, 'bourbon');
   eq('and carries its count', t.tiles[0].n, 2);
   eq('the smaller follows', t.tiles[1].sub, 'scotch');
-  eq('a catalogue entry nobody owns is not a tile',
+  eq('a catalog entry nobody owns is not a tile',
     t.tiles.some(x => x.sub === 'rye'), false);
 
   /* Ties break on name, so the order cannot depend on key insertion. */
@@ -6813,8 +6831,8 @@ sec('§226 the shelf tiles, the money column and the count');
     { x: { sub: 'zzz' }, y: { sub: 'aaa' } }, { x: 1, y: 1 });
   eq('a tie breaks on name', tie.tiles[0].sub, 'aaa');
 
-  eq('an empty catalogue is not an error', L.shelfTypeTiles({}, {}).total, 0);
-  eq('a missing catalogue is not an error either',
+  eq('an empty catalog is not an error', L.shelfTypeTiles({}, {}).total, 0);
+  eq('a missing catalog is not an error either',
     L.shelfTypeTiles(null, null).types, 0);
 
   /* A product with no sub is filed under other rather than dropped. */
@@ -6823,7 +6841,7 @@ sec('§226 the shelf tiles, the money column and the count');
 
   eq('owned counts products, not bottles',
     L.ownedProductCount(catalog, counts), 3);
-  eq('nothing owned is zero, not the catalogue size',
+  eq('nothing owned is zero, not the catalog size',
     L.ownedProductCount(catalog, {}), 0);
 
   /* Untouched: the state in which tiles are the way in. */
@@ -6835,7 +6853,7 @@ sec('§226 the shelf tiles, the money column and the count');
     L.shelfUntouched('   ', { types: [] }), true);
   eq('a facet makes it touched',
     L.shelfUntouched('', { types: ['bourbon'] }), false);
-  eq('favourites only makes it touched',
+  eq('favorites only makes it touched',
     L.shelfUntouched('', { types: [], favsOnly: true }), false);
 
   /* The money column. What you paid wins over the price when it is known;
@@ -6963,7 +6981,7 @@ sec('§227 shop fields, seeds and what a lookup may overwrite');
   eq('what you typed is left alone',
     L.lookupMayOverwrite('100', false), false);
 
-  /* What the note says afterwards. Looking the source up a second time
+  /* What the note says afterward. Looking the source up a second time
      returned null on a miss and threw here once. */
   eq('a lookup says to check it',
     L.lookupNote({ source: 'lookup' }, {}),
@@ -7099,7 +7117,7 @@ sec('§228 wood families, taste profile and the likely-to-like list');
     list.every(g => g.kind === 'affinity'), true);
   eq('no two findings say the same thing',
     new Set(list.map(g => L.shopNorm(g.name))).size, list.length);
-  eq('the limit is honoured',
+  eq('the limit is honored',
     L.likelyToLike(catalog, bottles, [], 2).length, 2);
 
   /* Interleaving. Straight weight order put "An aged X" three times at the
@@ -7212,7 +7230,7 @@ sec('§229 books on a shelf');
   eq('the biggest is band four', five.tiles[0].band, 4);
   eq('the smallest is band zero', five.tiles[4].band, 0);
 
-  /* Colour now comes from the app's own liquid palette (TYPE_HEX), which
+  /* Color now comes from the app's own liquid palette (TYPE_HEX), which
      the type column already uses, so there is nothing here to test that
      the render does not read directly. The invented L.spineColour it
      replaced is gone. */
@@ -7354,7 +7372,7 @@ sec('§231 what belongs on the already-yours card');
   eq('an empty list is not an error', L.ownFindings([]).length, 0);
   eq('a missing list is not an error either', L.ownFindings(null).length, 0);
   /* And when nothing is upstairs the card has nothing to say, which is a
-     real state rather than an empty shelf to apologise for. */
+     real state rather than an empty shelf to apologize for. */
   eq('a shelf with nothing upstairs yields nothing',
     L.ownFindings([{ kind: 'region', name: 'A Lowland Scotch' },
                    { kind: 'wish', name: 'Something wanted' }]).length, 0);
@@ -7385,7 +7403,7 @@ sec('§232 the portrait a shelf earns');
 
   /* A shelf with nothing to insist on is told so, not flattered. */
   /* TWELVE, not six. A shelf under a dozen bottles is no longer given a
-     title at all — a judgement needs evidence, and BZ's fresh account with
+     title at all — a judgment needs evidence, and BZ's fresh account with
      one bottle of Jack Daniel's was being called The Generalist, you
      collect broadly, without a single thing you insist on. This section is
      about what a shelf with no OPINION is called, so the fixture has to
@@ -7846,7 +7864,7 @@ sec('§235 what is worth looking up twice');
   eq('the gap is counted in days',
     L.lookupDaysSince('2026-09-01', '2026-09-04'), 3);
   eq('a missing date is not a date', L.lookupDaysSince(null, today), null);
-  /* A record we cannot read is not a licence to blacklist. */
+  /* A record we cannot read is not a license to blacklist. */
   eq('an unreadable date means ask again',
     L.shouldLookUp({ f: { ok: 0, no: 9, at: 'whenever' } }, 'f', today), true);
 
@@ -7862,7 +7880,7 @@ sec('§235 what is worth looking up twice');
   const ledger = { p4: { ok: 0, no: 2, at: today } };
   /* planLibraryFill was a wrapper that returned ask/skip; libraryLists
      returns the three buckets BZ asked for and the run uses that. Same
-     behaviour, expressed once. */
+     behavior, expressed once. */
   const ll = L.libraryLists(products, ledger, today);
   const plan = { ask: ll.todo, skip: ll.waiting, thin: ll.todo.length };
   /* `thin` counted everything short of something, due or not, which is
@@ -8098,7 +8116,7 @@ sec('§238 what you could pour tonight');
   const t2 = L.tonight(flights, cat, bottles, older);
   eq('longest since leads when both have run', t2[0].title, 'READY NEVER RUN');
 
-  eq('the limit is honoured', L.tonight(flights, cat, bottles, hist, 1).length, 1);
+  eq('the limit is honored', L.tonight(flights, cat, bottles, hist, 1).length, 1);
   eq('no flights is not an error', L.tonight([], cat, bottles, hist).length, 0);
   eq('a shelf with nothing open offers nothing',
     L.tonight(flights, cat, [], hist).length, 0);
@@ -8451,7 +8469,7 @@ sec('§243 what is in this email for me');
   eq('a bottle you own says so', by['Ardbeg Corryvreckan'].verdict, 'have it');
   /* The brand match: six Wellers on a shelf that records Buffalo Trace as
      the distillery matched nothing until brands were counted separately. */
-  eq('a brand you buy is recognised even when the house differs',
+  eq('a brand you buy is recognized even when the house differs',
     by['Weller Full Proof'].verdict, 'worth a look');
   eq('and says how many you have',
     /6 of those/.test(by['Weller Full Proof'].why), true);
@@ -8570,13 +8588,13 @@ sec('§244 how a bottle helps the chart');
 sec('§245 the actions a shelf earns');
 {
   const full = L.nextActions({
-    tonight: 4, tonightTitle: 'AGE IS NOT A FLAVOUR', trophies: 5,
+    tonight: 4, tonightTitle: 'AGE IS NOT A FLAVOR', trophies: 5,
     pours: 120, thinnest: { label: 'Origin', pct: 67, gap: 'Lowland' },
     pick: 'An Amontillado cask', waiting: 3
   });
   eq('never more than three', full.length, 3);
   eq('an evening you already own comes first', full[0].id, 'tonight');
-  eq('and names the flight', /AGE IS NOT A FLAVOUR/.test(full[0].why), true);
+  eq('and names the flight', /AGE IS NOT A FLAVOR/.test(full[0].why), true);
   eq('then the bottles you bought twice and never opened',
     full[1].id, 'trophies');
   eq('and spending money is below both', full[2].id, 'gap');
@@ -9169,7 +9187,7 @@ sec('§254 what a bottle would unlock');
   eq('and a bottle no flight wants unlocks nothing',
     L.flightsUnlockedBy('Utterly Unrelated', flights, cat, bs).length, 0);
 
-  /* Matched by NAME, because a flight can name a pour with no catalogue
+  /* Matched by NAME, because a flight can name a pour with no catalog
      entry — which is exactly the case where the bottle is not owned. */
   const byName = L.flightsUnlockedBy('Ghost Bottle',
     [{ title: 'NAMED ONLY', core: [{ k: 'a' }, { card: 'Ghost Bottle' }] }],
@@ -9260,7 +9278,7 @@ sec('§256 several asks, one list');
 
   const pooled = L.poolCandidates([r1, r2, r3]);
   eq('the answers become one list', pooled.bottles.length, 4);
-  /* Deduped by NAME: neighbouring gaps surface the same bottle and
+  /* Deduped by NAME: neighboring gaps surface the same bottle and
      offering it twice makes a list look padded. */
   eq('a bottle two asks both found appears once',
     pooled.bottles.filter(b => /shared bottle/i.test(b.name)).length, 1);
@@ -9555,7 +9573,7 @@ sec('§260 sharing what was poured');
   eq('and when', /2026-09-04/.test(g.where), true);
 
   /* Matched by name as well as by key, because two shelves need not share
-     a catalogue key for the same whisky. */
+     a catalog key for the same whisky. */
   const byName = L.tastingForGuest(rec,
     { zz: { k: 'zz', name: 'ardbeg corryvreckan' } },
     [{ k: 'zz', status: 'open' }]);
@@ -9715,7 +9733,7 @@ sec('§263 an answer is paid for once');
   eq('so a verdict already on one is still there',
     pooled.bottles[0].verified, true);
 
-  /* Deduping matters more once asks are pooled: neighbouring gaps return
+  /* Deduping matters more once asks are pooled: neighboring gaps return
      the same bottle and verifying it twice is paying twice. */
   const dupe = L.poolCandidates([
     { bottles: [{ name: 'Kavalan Solist' }] },
@@ -9883,7 +9901,7 @@ sec('§264 online wins unless there is unsent work');
   /* An account with no stamp is an OLDER account rather than an empty
      one — the caller has already established there is data there — so it
      still wins. §200 has asserted this since before the stamp existed,
-     and a first pass at this change got it backwards. */
+     and a first pass at this change got it backward. */
   eq('an unstamped account is old, not empty',
     L.syncDecision(T, 0, 0), 'remote');
 
@@ -10414,7 +10432,7 @@ sec('§273 reading a number people actually type');
  *
  * What makes it different from an ordinary pour is that there is no
  * bottle, so the entry carries the NAME. historyRows dropped any pour
- * whose bottle the catalogue did not know, which was right when every pour
+ * whose bottle the catalog did not know, which was right when every pour
  * came off your own shelf and would have made an away pour invisible the
  * moment it was logged.
  */
@@ -10444,11 +10462,11 @@ sec('§274 pouring something you do not own');
   eq('and where is optional', !!L.awayPour('Yamazaki 18', '', cat), true);
 
   /* It has to SURVIVE in the log, which is the part that would have been
-     missed: the row is filtered on the catalogue knowing the bottle. */
+     missed: the row is filtered on the catalog knowing the bottle. */
   const rows = L.historyRows([away], cat, [], 'pour');
   eq('an away pour appears in the log', rows.length, 1);
   eq('under the name it was given', rows[0].label, 'Yamazaki 18');
-  eq('and an ordinary pour still resolves from the catalogue',
+  eq('and an ordinary pour still resolves from the catalog',
     L.historyRows([mine], cat, [], 'pour')[0].label, 'Ardbeg Ten');
 
   /* The wishlist half is asked only when there is something to ask. */
@@ -10519,7 +10537,7 @@ sec('§274 pouring something you do not own');
  * and a category nothing acts on is data that looks like insight and is
  * not.
  *
- * A buddy's house earns it, because it has a BEHAVIOUR rather than a
+ * A buddy's house earns it, because it has a BEHAVIOR rather than a
  * label. Their shelf probably holds the bottle, so the app can name it
  * properly instead of trusting a spelling typed in somebody's kitchen.
  */
@@ -10647,7 +10665,7 @@ sec('§275 poured at a buddy\u2019s');
 /* §276  what you thought, and what you will not open ----------------
  *
  * The app knew 325 bottles and nothing about which ones BZ likes: no
- * favourites, no notes he wrote, no ratings anywhere. Everything it said
+ * favorites, no notes he wrote, no ratings anywhere. Everything it said
  * about his taste was inferred from what he BOUGHT — and buying is a guess
  * about a whisky while drinking is the verdict on it.
  *
@@ -10846,7 +10864,7 @@ sec('§278 would I like this');
   eq('and two unrelated whiskies do not',
     L.nameOverlap('Ardbeg Ten', 'Woodford Reserve') < 0.3, true);
 
-  /* The judgement itself. */
+  /* The judgment itself. */
   const cat = { a: { k: 'a', name: 'Ardbeg 10 Years Old', dist: 'Ardbeg',
                      proof: 92, sub: 'scotch' } };
   const bs = [{ k: 'a', status: 'open' }];
@@ -11484,7 +11502,7 @@ sec('§284 merging two shelves');
  * express an absence. Merging two copies of a list can only ever ADD, so
  * anything taken out on one device is put back by the other.
  *
- *   - unstar a favourite: favs merges by union, the star returns
+ *   - unstar a favorite: favs merges by union, the star returns
  *   - delete a custom flight: customFlights merges by title, it returns
  *   - delete a pour: history merges by kind+bottle+date, it returns
  *
@@ -11520,7 +11538,7 @@ sec('§285 removals survive a merge');
     L.mergeRecords('customFlights', [flights[1]], flights, true, {}).length,
     2);
 
-  /* THE FAVOURITE. A map, so the tombstone drops the key rather than a
+  /* THE FAVORITE. A map, so the tombstone drops the key rather than a
      record — but it is the same list of removals. */
   eq('an unstarred bottle stays unstarred',
     L.mergeMapWithRemovals({ b: 1 }, { a: 1, b: 1 },
@@ -11615,8 +11633,8 @@ sec('\u00a7291 reading somebody else\u2019s shelf');
 
   eq('every bottle read comes through', seen.items.length, 3);
   /* "Lagavulin 16" off a shelf against "Lagavulin 16 Year Old Single Malt
-     Scotch Whisky" in the catalogue: the same overlap the shop search uses. */
-  eq('a shelf name matches a catalogue name', seen.items[0].own, true);
+     Scotch Whisky" in the catalog: the same overlap the shop search uses. */
+  eq('a shelf name matches a catalog name', seen.items[0].own, true);
   eq('and is counted', seen.owned, 1);
   eq('a wishlisted bottle is marked', seen.items[1].want, true);
   eq('and counted separately', seen.wanted, 1);
@@ -11680,7 +11698,7 @@ sec('\u00a7292 the three helpers the review found untested');
   eq('a field has a human name', L.labelLabel('proof'), 'Proof');
   eq('and a compound one reads properly', L.labelLabel('mash'), 'Mash bill');
   /* An unknown field falls back to itself rather than to blank: a row with
-     no label is worse than a row labelled with a field name. */
+     no label is worse than a row labeled with a field name. */
   eq('an unnamed field labels itself', L.labelLabel('zzz'), 'zzz');
 
   eq('a size carries its unit', L.labelShow('size', 750), '750ml');
@@ -11705,7 +11723,7 @@ sec('\u00a7293 five more the review found untested');
 {
   /* A full review on 2026-09-07 added a consistency check for L functions
      the app calls and no test asserts anything about, and it found eight.
-     These five are the ones whose behaviour a test can pin down without
+     These five are the ones whose behavior a test can pin down without
      rebuilding half a screen; judgeListing and fitUnlocks are left in the
      check, deliberately, and named in BACKLOG.md. */
 
@@ -11957,7 +11975,7 @@ sec('\u00a7296 what the library rows actually carry');
   };
   const shape = L.libraryShape(rows);
   eq('a row with no name is not a row', shape.total, 4);
-  /* THE ONE THAT MATTERS: a row published before style travelled carries
+  /* THE ONE THAT MATTERS: a row published before style traveled carries
      none, and the law cannot fire on it. */
   eq('rows carrying a style are counted', shape.styled, 3);
   eq('and the law closes the ones it can', shape.byLaw, 2);
@@ -11975,7 +11993,7 @@ sec('\u00a7296 what the library rows actually carry');
 sec('\u00a7297 the style a name already states');
 {
   /* BZ's diagnostics on 2026-09-07: 433 library rows, 326 with a style, 107
-     without. Those were published before style travelled in libraryEntry,
+     without. Those were published before style traveled in libraryEntry,
      and mashByLaw needs one — so a Scotch single malt among them is asked
      for a mash bill on every run and the answer can never arrive, because
      no producer publishes what the law already fixes. For most of them the
@@ -11987,7 +12005,7 @@ sec('\u00a7297 the style a name already states');
   eq('and single pot still is read before single malt',
     L.styleFromName({ name: 'Redbreast 12 Single Pot Still Irish Whiskey' }),
     'single pot still');
-  /* Longest first, or "blended malt" reads as "single malt"'s neighbour and
+  /* Longest first, or "blended malt" reads as "single malt"'s neighbor and
      the wrong one wins. */
   eq('blended malt is its own thing',
     L.styleFromName({ name: 'Compass Box Blended Malt Scotch' }), 'blended malt');
@@ -12096,14 +12114,14 @@ sec('\u00a7298 a name that names no bottle, and a bottler that is not a house');
     L.houseSplit('', 'Anything', shelf), null);
 }
 
-sec('\u00a7299 one house, however it is spelt');
+sec('\u00a7299 one house, however it is spelled');
 {
   /* BZ's bottle screen contradicted itself in one card: "This is your only
      bottle from Angel's Envy" three lines above "Pour it against Angel's
      Envy Bourbon Madeira Cask Finish. Same house, same strength."
 
      A label read had stored the brand as the bottle etches it — ANGELS
-     ENVY, no apostrophe — beside ten spelt Angel's Envy. bottleContext
+     ENVY, no apostrophe — beside ten spelled Angel's Envy. bottleContext
      compared with === and found none; the flight suggestion compares
      through shopNorm and found the sibling. Two paths, one fact. */
   const cat = {
@@ -12120,7 +12138,7 @@ sec('\u00a7299 one house, however it is spelt');
                 { id: '3', k: 'c', status: 'open' },
                 { id: '4', k: 'd', status: 'open' }];
   const ctx = L.bottleContext(cat.c, cat, bots);
-  eq('a house spelt two ways is one house', ctx.fromHouse, 2);
+  eq('a house spelled two ways is one house', ctx.fromHouse, 2);
   eq('and a different house is still different',
     L.bottleContext(cat.d, cat, bots).fromHouse, 0);
 
@@ -12265,7 +12283,7 @@ sec('\u00a7302 try the resting ones again');
   eq('the ledger it was given is untouched', led.a.at, '2026-09-06');
 }
 
-sec('\u00a7303 a house that does not publish, and one spelt two ways');
+sec('\u00a7303 a house that does not publish, and one spelled two ways');
 {
   /* BZ's first real fill: 58 asked, 14 written, 44 waitlisted — a 24% hit
      rate, and the misses are not scattered. Nine Barrell Craft Spirits came
@@ -12302,7 +12320,7 @@ sec('\u00a7303 a house that does not publish, and one spelt two ways');
   eq('unasked entries do not count as misses',
     Object.keys(L.housesThatDoNotPublish(rows, {}, 'mash')).length, 0);
 
-  /* MERGING ONE HOUSE SPELT TWO WAYS, on a person's say-so rather than a
+  /* MERGING ONE HOUSE SPELLED TWO WAYS, on a person's say-so rather than a
      guess: houseVariants reports and refuses to fix, and a button is not a
      guess. Everything moves to the spelling most of the shelf uses. */
   const split = {
@@ -12559,7 +12577,7 @@ sec('\u00a7309 building a shelf from a photograph of it');
   eq('and counted rather than dropped silently', plan.already, 1);
   eq('the whole reading is reported', plan.read, 4);
 
-  /* A whisky the catalogue carries arrives with its details; one nobody has
+  /* A whisky the catalog carries arrives with its details; one nobody has
      seen is a name and nothing else, and saying which is the difference
      between a tick and a form. */
   const ardbeg = plan.add.filter(x => /Ardbeg/.test(x.name))[0];
@@ -12948,7 +12966,7 @@ sec('\u00a7320 an import is judged against what you own');
   /* BZ made a second account, imported a friend's Only Drams export, and
      the first page said 89 were already on his shelf — on an account with
      an EMPTY shelf. The import was handed S.catalog, which is the merged
-     catalogue: the shipped seed, plus the shared library everybody adds
+     catalog: the shipped seed, plus the shared library everybody adds
      to, plus your own bottles. That answers "has anybody heard of this
      whisky", and the question is "do you have one".
 
@@ -12978,7 +12996,7 @@ sec('\u00a7320 an import is judged against what you own');
   eq('so every row is new', tally(L.prepareImport(rows, mine, false)).add, 2);
   /* THE BUG, kept as an assertion so the difference is visible: judged
      against everything the app knows, both are wrongly already yours. */
-  eq('judged against the catalogue they would be refused',
+  eq('judged against the catalog they would be refused',
     matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* AND OWNING ONE STILL WORKS, which is the half that must not break: a
@@ -12988,7 +13006,7 @@ sec('\u00a7320 an import is judged against what you own');
   const mine2 = {};
   Object.keys(known).forEach(k => { if (k2[k]) mine2[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, mine2, false));
-  eq('the one you own is recognised', matched(t2), 1);
+  eq('the one you own is recognized', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
@@ -13013,7 +13031,7 @@ sec('\u00a7320 an import is judged against what you own');
     return t;
   };
 
-  /* The catalogue knows both bottles; the shelf owns neither. */
+  /* The catalog knows both bottles; the shelf owns neither. */
   const known = {};
   ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
     const k = L.libKey(n);
@@ -13022,7 +13040,7 @@ sec('\u00a7320 an import is judged against what you own');
 
   /* THE FAULT, kept as an assertion so the shape cannot come back: judged
      against everything known, a new shelf is told it already has them. */
-  eq('against the whole catalogue they look owned',
+  eq('against the whole catalog they look owned',
     matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* THE FIX: only entries somebody actually owns are handed over. */
@@ -13038,22 +13056,22 @@ sec('\u00a7320 an import is judged against what you own');
   const half = {};
   Object.keys(known).forEach(k => { if (oneOwned[k]) half[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognised', matched(t2), 1);
+  eq('the one you own is recognized', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
-sec('\u00a7320 an import is judged against your shelf, not the catalogue');
+sec('\u00a7320 an import is judged against your shelf, not the catalog');
 {
   /* BZ made a second account, imported a friend's Only Drams export, and
      the sheet said 89 were ALREADY ON HIS SHELF — on an account whose
-     shelf was empty. S.catalog is the merged catalogue: the shipped seed,
+     shelf was empty. S.catalog is the merged catalog: the shipped seed,
      plus the shared library everybody adds to, plus your own bottles. So
      the import was asking "has anybody heard of this whisky" when the
      question is "do you have one", and a new user importing 206 bottles
      would have had 87 of them quietly turned into sealed spares.
 
      Measured on the friend's real file: against an empty shelf 199 add;
-     against the whole catalogue only 119, with 87 wrongly claimed. */
+     against the whole catalog only 119, with 87 wrongly claimed. */
   const rows = [['Name', 'Distillery', 'Proof'],
                 ['Ardbeg Ten', 'Ardbeg', '92'],
                 ['Lagavulin 16', 'Lagavulin', '86']];
@@ -13062,7 +13080,7 @@ sec('\u00a7320 an import is judged against your shelf, not the catalogue');
     plan.rows.forEach(r => { t[r.action] = (t[r.action] || 0) + 1; });
     return t;
   };
-  /* The catalogue knows both bottles; the shelf owns neither. */
+  /* The catalog knows both bottles; the shelf owns neither. */
   const known = {};
   ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
     const k = L.libKey(n);
@@ -13076,8 +13094,8 @@ sec('\u00a7320 an import is judged against your shelf, not the catalogue');
   eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
   eq('so every row is new to it', tally(L.prepareImport(rows, mine, false)).add, 2);
   /* And the bug it replaces, asserted so it cannot come back: judged
-     against the CATALOGUE, the same rows read as already owned. */
-  eq('judged against the catalogue they would read as owned',
+     against the CATALOG, the same rows read as already owned. */
+  eq('judged against the catalog they would read as owned',
     matched(tally(L.prepareImport(rows, known, false))), 2);
 
   /* A shelf that really owns one gets the honest answer for that one. */
@@ -13086,7 +13104,7 @@ sec('\u00a7320 an import is judged against your shelf, not the catalogue');
   const half = {};
   Object.keys(known).forEach(k => { if (ok2[k]) half[k] = known[k]; });
   const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognised', matched(t2), 1);
+  eq('the one you own is recognized', matched(t2), 1);
   eq('and the one you do not is added', t2.add, 1);
 }
 
@@ -13097,7 +13115,7 @@ sec('\u00a7320 an import compares against what you own');
      an EMPTY shelf. He read it right: the import is comparing to my shelf
      and that is muddying everything else.
 
-     S.catalog is the MERGED catalogue — the shipped seed, plus the shared
+     S.catalog is the MERGED catalog — the shipped seed, plus the shared
      library everybody adds to, plus your own bottles. Comparing an import
      against that asks "has anybody ever heard of this whisky" when the
      question is "do you have one". */
@@ -13110,7 +13128,7 @@ sec('\u00a7320 an import compares against what you own');
     return t;
   };
 
-  /* The catalogue knows both bottles; the shelf owns neither. */
+  /* The catalog knows both bottles; the shelf owns neither. */
   const known = {
     a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92 },
     b: { k: 'b', name: 'Lagavulin 16', dist: 'Lagavulin', proof: 86 }
@@ -13122,11 +13140,11 @@ sec('\u00a7320 an import compares against what you own');
   eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
   eq('so every row is new', tally(L.prepareImport(rows, mine, false)).add, 2);
   /* THE BUG, kept as an assertion so it cannot come back: handed the whole
-     catalogue, the same import claims both are already his. */
-  eq('against the catalogue they would look owned',
+     catalog, the same import claims both are already his. */
+  eq('against the catalog they would look owned',
     matched(tally(L.prepareImport(rows, known, false))), 2);
 
-  /* And once one IS owned, it is correctly recognised. */
+  /* And once one IS owned, it is correctly recognized. */
   const oneOwned = L.ownedCounts([{ id: 'x', k: 'a', status: 'open' }]);
   const mine2 = {};
   Object.keys(known).forEach(k => { if (oneOwned[k]) mine2[k] = known[k]; });
@@ -13160,11 +13178,11 @@ sec('\u00a7320 a new account has an empty shelf');
   eq('and claims nothing is already there',
     matched(tally(L.prepareImport(rows, owned, false))), 0);
   /* THE BUG, kept as an assertion so the difference is visible: handing it
-     the catalogue instead says both are already yours. */
-  eq('handing it the catalogue would claim both',
+     the catalog instead says both are already yours. */
+  eq('handing it the catalog would claim both',
     matched(tally(L.prepareImport(rows, known, false))), 2);
-  /* And once you DO own one, it is correctly recognised. */
-  eq('a bottle you own is recognised',
+  /* And once you DO own one, it is correctly recognized. */
+  eq('a bottle you own is recognized',
     matched(tally(L.prepareImport(rows, { a: known.a }, false))), 1);
   eq('and the one you do not still arrives',
     tally(L.prepareImport(rows, { a: known.a }, false)).add, 1);
@@ -13198,16 +13216,16 @@ sec('\u00a7321 a shelf that has just started is not judged');
   eq('a dozen is enough to be read', mk(12).title, 'The Generalist');
 }
 
-sec('\u00a7320 the map shows your shelf, not the catalogue');
+sec('\u00a7320 the map shows your shelf, not the catalog');
 {
   /* BZ's test account held ONE bottle of Jack Daniel's and the map drew
-     filled dots on eight countries — the shipped catalogue's spread, the
+     filled dots on eight countries — the shipped catalog's spread, the
      same on every account, which is why he said it looked familiar. The
      line above it read "1 of 15 countries" and was right; the map beside
      it was answering a different question.
 
      All three layers had it: countries, distillery pins and US states each
-     counted every catalogue entry and used `bottles` only to work out how
+     counted every catalog entry and used `bottles` only to work out how
      many were OPEN. A bottle you do not have is not open or shut. */
   const catalog = {
     a: { k: 'a', name: 'Jack Daniel\u2019s', sub: 'tennessee', dist: 'Jack Daniel\u2019s' },
@@ -13242,7 +13260,7 @@ sec('\u00a7320 the map shows your shelf, not the catalogue');
 
   /* THE THREE LAYERS AGREE WITH EACH OTHER, which is the property that
      broke: the sentence above the map counted owned bottles and the map
-     counted the catalogue, so they disagreed and only one was right.
+     counted the catalog, so they disagreed and only one was right.
      Compared directly rather than through shelfAxes, which needs the whole
      MAPDATA shape and would be testing the fixture rather than this. */
   const owned2 = [{ id: 'x', k: 'a', status: 'open' },
@@ -13299,7 +13317,7 @@ sec('\u00a7322 the column a field actually reads');
 
 sec('\u00a7323 what country a house works in');
 {
-  /* Read off the catalogue rather than declared, so it grows with the
+  /* Read off the catalog rather than declared, so it grows with the
      library. A house that has only ever made one country's whisky places a
      bottle whose name says nothing. */
   const cat = {
@@ -13359,7 +13377,7 @@ sec('\u00a7323 what country a house works in');
 sec('\u00a7324 an import is a start-up, not a shopping trip');
 {
   /* BZ: on import, assume start-up so ignore complete matches. The old
-     behaviour added a sealed spare per matching row, so re-uploading a
+     behavior added a sealed spare per matching row, so re-uploading a
      344-row export produced 344 phantom bottles. */
   const csv = 'name,proof,category\n'
     + '"Ardbeg Ten",92,scotch\n'
@@ -13420,10 +13438,10 @@ sec('\u00a7324 an import is a start-up, not a shopping trip');
   eq('and proposes no changes', quiet.rows[0].changes, []);
 
   /* Two spellings of one category are not a difference. */
-  const spelt = L.prepareImport(
+  const spelled = L.prepareImport(
     L.parseCSV('name,proof,category\n"Ardbeg Ten",92,Scotch Whisky\n'), rich, false);
-  eq('a category spelt differently is still the same category',
-    spelt.rows[0].changes.indexOf('sub'), -1);
+  eq('a category spelled differently is still the same category',
+    spelled.rows[0].changes.indexOf('sub'), -1);
   /* And an ABV is compared as the proof it means, not as the number written. */
   const abv = L.prepareImport(
     L.parseCSV('name,proof\n"Ardbeg Ten",46\n'), rich, false);
@@ -13567,12 +13585,20 @@ sec('\u00a7327 clearing filters and counting them agree');
 
   /* Everything the counter looks at, the clearer must reach. This is the
      check that keeps them together as either list grows. */
+  /* L.FILTERS, not L.FACET_KEYS: one declaration of what a filter IS,
+     which is what fixed the back button for the fifth time. The old list
+     described only the chips, so a probe built from it could not see the
+     Wanted pill or the status - which is precisely how the counter and the
+     clearer drifted apart in the first place. */
   const probe = {};
-  L.FACET_KEYS.forEach(k => { probe[k] = ['x']; });
-  probe.cask = 'x'; probe.age = 'x';
+  L.FILTERS.forEach(f => {
+    probe[f.k] = (f.k === 'status') ? 'sealed'
+      : (f.k === 'cask' || f.k === 'age') ? 'x'
+        : (f.k === 'wishOnly' || f.k === 'favsOnly') ? true : ['x'];
+  });
   /* Counted BEFORE clearing, because clearFacets works in place now. */
   eq('and the counter sees everything the clearer clears',
-    L.activeFacets(probe), L.FACET_KEYS.length + 2);
+    L.activeFacets(probe), L.FILTERS.length);
   eq('the clearer reaches everything the counter counts',
     L.activeFacets(L.clearFacets(probe)), 0);
 
@@ -13590,7 +13616,7 @@ sec('\u00a7327 clearing filters and counting them agree');
   eq('and the caller\u2019s own reference is now empty', same.types, []);
 }
 
-sec('\u00a7328 the import check survives a house spelt two ways');
+sec('\u00a7328 the import check survives a house spelled two ways');
 {
   /* SHIPPED BROKEN IN v1.9.11. BZ pressed Check the import on a freshly
      imported shelf and got "threw on shelf: g.map is not a function", which
@@ -13726,7 +13752,7 @@ sec('\u00a7330 a house says where it is from');
      chip that would have said so was blank, and no smoke-and-Islay set
      could win. Laphroaig is Islay whether the file says so or not.
 
-     Read off the catalogue, unanimous only, the same move that fixed the
+     Read off the catalog, unanimous only, the same move that fixed the
      import this morning (L.houseCountry). */
   const cat = {
     a: { k: 'a', name: 'Laphroaig 10', dist: 'Laphroaig', region: 'Islay' },
@@ -14034,7 +14060,7 @@ sec('\u00a7336 a new lookup address reaches a device that has the old one');
     L.lookupUrlFor('', NEW, true), NEW);
 
   /* THE ONE-TIME MIGRATION. Every device that existed before the flag did
-     carries an address and no flag, and afterwards a missing key and a
+     carries an address and no flag, and afterward a missing key and a
      stored false are the same value - so it is settled once, from whether
      the key was ever written at all. The failure being prevented is
      stomping the address of somebody running their own script. */
@@ -14046,7 +14072,7 @@ sec('\u00a7336 a new lookup address reaches a device that has the old one');
     L.lookupWasChosen('', NEW, false, false), false);
   eq('once recorded, the record is what counts',
     L.lookupWasChosen(MINE, NEW, true, false), false);
-  eq('and a recorded choice is honoured even on the shipped address',
+  eq('and a recorded choice is honored even on the shipped address',
     L.lookupWasChosen(NEW, NEW, true, true), true);
   /* And end to end: the old device with its own script survives a build
      that ships a different address. */
@@ -14223,7 +14249,7 @@ sec('\u00a7341 a claim about your shelf is counted from your shelf');
      A guard for this already existed in consistency.js and it named THREE
      functions. It was written around the three offenders that scan found,
      so it is a whitelist rather than a rule, and the twenty-five
-     catalogue-walking functions written since have never been checked by
+     catalog-walking functions written since have never been checked by
      anything. This is the rule: EVERY function a call site hands
      S.catalog, run twice - once with the whole library, once with only
      the products the shelf actually holds - and the answers must match.
@@ -14300,7 +14326,7 @@ sec('\u00a7341 a claim about your shelf is counted from your shelf');
   /* AND NOTHING MAY BE UNJUDGED IN SILENCE. A function this cannot call is
      a function nothing is checking, which is exactly the gap the old
      three-name guard left. */
-  eq('every catalogue-walking function could actually be judged \u2014 '
+  eq('every catalog-walking function could actually be judged \u2014 '
     + 'unjudged: ' + (unjudged.join(' | ') || 'none'),
     unjudged.length, 0);
 }
@@ -14350,7 +14376,7 @@ sec('\u00a7342 the by-name sweep is bounded by your buddies, not by the app');
 sec('\u00a7344 a deletion survives the other device');
 {
   /* `deleted` was in SYNC_KEYS and in nothing that merges, so whichever
-     side won REPLACED it: a catalogue entry removed on the phone came back
+     side won REPLACED it: a catalog entry removed on the phone came back
      the moment the desktop pushed. A plain union could not be the fix,
      because then un-deleting on one device would be undone by the other
      still holding the deletion. It needed the tombstone treatment the
@@ -14368,19 +14394,19 @@ sec('\u00a7344 a deletion survives the other device');
   eq('a deletion taken back stays taken back',
     Object.keys(lifted).join(','), 'B');
 
-  /* THE PREFIX KEEPS THE TWO MAPS APART. Removing a FAVOURITE of a whisky
+  /* THE PREFIX KEEPS THE TWO MAPS APART. Removing a FAVORITE of a whisky
      must not lift the DELETION of the same whisky. */
   const favTomb = L.tombstone({}, 'v:A');
-  eq('a favourite removal does not lift a deletion',
+  eq('a favorite removal does not lift a deletion',
     Object.keys(L.mergeMapWithRemovals({}, { A: true }, favTomb, 'd:')).join(','),
     'A');
-  eq('and a deletion lift does not un-favourite',
+  eq('and a deletion lift does not un-favorite',
     Object.keys(L.mergeMapWithRemovals({}, { A: true },
       L.tombstone({}, 'd:A'), 'v:')).join(','), 'A');
 
   /* THE DEFAULT IS UNCHANGED, because every existing caller means 'v:' and
      a shared helper must not move under them (rule 7a). */
-  eq('with no prefix given it still honours favourite removals',
+  eq('with no prefix given it still honors favorite removals',
     Object.keys(L.mergeMapWithRemovals({}, { A: true },
       L.tombstone({}, 'v:A'))).length, 0);
 
@@ -14395,7 +14421,7 @@ sec('\u00a7344 a deletion survives the other device');
     JSON.stringify(L.mergeMapWithRemovals({ A: true, B: true }, { C: true }, t2, 'd:')));
 }
 
-sec('\u00a7345 an admin\u2019s deletion is a judgement, not an absence');
+sec('\u00a7345 an admin\u2019s deletion is a judgment, not an absence');
 {
   /* BZ: a library delete doesn't stick - remove a bad entry, somebody
      searches, and it comes straight back. Two automatic paths wrote any
@@ -14477,7 +14503,7 @@ sec('\u00a7347 one number for one question, and a claim the count supports');
   /* THE HOUSE CHIP CLAIMS A COUNT, NOT A MOTIVE. It ranked houses by raw
      count and was called The Loyalist, so it fired on a big common house
      over a small rare one. There is no rarity signal in this app's data to
-     fix the ranking with - the catalogue IS the shelf - so the claim comes
+     fix the ranking with - the catalog IS the shelf - so the claim comes
      down to what the number supports. */
   /* Matched against the TITLE list rather than the whole file: the comment
      explaining the change names the old title on purpose, and a check that
@@ -14556,9 +14582,9 @@ sec('\u00a7349 the helpers nothing was asserting');
                     finish: 'long', overall: '' } };
   eq('every part of the note is searched',
     L.noteText(p), 'vanilla caramel and oak long ');
-  eq('a flavour is found whatever the case', L.hasFlavour(p, 'caramel'), true);
+  eq('a flavor is found whatever the case', L.hasFlavour(p, 'caramel'), true);
   eq('and searched for in any case', L.hasFlavour(p, 'VANILLA'), true);
-  eq('a flavour that is not there is not there',
+  eq('a flavor that is not there is not there',
     L.hasFlavour(p, 'peat'), false);
   eq('no word is not a match', L.hasFlavour(p, ''), false);
   eq('and no product is not a crash', L.hasFlavour(null, 'oak'), false);
@@ -14576,7 +14602,7 @@ sec('\u00a7349 the helpers nothing was asserting');
     L.varInText('Do you like it?'), null);
   eq('nothing at all is not a crash', L.varInText(null), null);
   /* Order matters where a question mentions two: proof is tested first,
-     which is a real behaviour and not an accident to be discovered later. */
+     which is a real behavior and not an accident to be discovered later. */
   eq('proof wins over finish when both are named',
     L.varInText('a high proof sherry cask'), 'proof');
 
@@ -14775,7 +14801,7 @@ sec('\u00a7350 the last thirteen');
   eq('and says what they would need to share',
     /category/.test(msg), true);
 
-  /* --- flavourOptions / flavourFlight: a flavour worth pouring -------- */
+  /* --- flavourOptions / flavourFlight: a flavor worth pouring -------- */
   const word = L.FLAVOUR_WORDS[0];
   const fcat = {}, fbot = [];
   ['H1', 'H2', 'H3', 'H4'].forEach((d, i) => {
@@ -14786,11 +14812,11 @@ sec('\u00a7350 the last thirteen');
     fbot.push({ id: 'fb' + i, k: k, status: 'open' });
   });
   const opts = L.flavourOptions(fcat, fbot, 4);
-  eq('a flavour across four houses is worth a flight',
+  eq('a flavor across four houses is worth a flight',
     opts.filter(o => o.word === word).length, 1);
   eq('and it counts the houses it spans',
     opts.filter(o => o.word === word)[0].houses, 4);
-  eq('a flavour on one house only is not offered',
+  eq('a flavor on one house only is not offered',
     L.flavourOptions({ X: { k: 'X', dist: 'One', sub: 'scotch',
       tn: { nose: word } } }, [{ k: 'X', status: 'open' }], 1).length, 0);
   const flight = L.flavourFlight(word, fcat, fbot, {});
@@ -15006,7 +15032,7 @@ sec('\u00a7355 what the library contradicts');
     ids.indexOf('dups') >= 0, true);
   eq('a proof stranded in a name is found',
     ids.indexOf('proofname') >= 0, true);
-  eq('and one house spelt two ways', ids.indexOf('houses') >= 0, true);
+  eq('and one house spelled two ways', ids.indexOf('houses') >= 0, true);
 
   /* AND THE FOUR ONLY A LIBRARY CAN BE WRONG ABOUT. */
   const own = {
@@ -15042,7 +15068,7 @@ sec('\u00a7355 what the library contradicts');
   eq('a nameless entry is skipped rather than reported as broken',
     L.libraryAudit({ x: { proof: 90 } }).length, 0);
 
-  /* ON THE REAL SHIPPED CATALOGUE, which is the closest thing here to a
+  /* ON THE REAL SHIPPED CATALOG, which is the closest thing here to a
      library: it must not cry wolf on 325 entries somebody curated. */
   const real = L.libraryAudit(data.catalog);
   const cnt = id => (real.filter(f => f.id === id)[0] || { n: 0 }).n;
@@ -15068,7 +15094,7 @@ sec('\u00a7355 what the library contradicts');
     /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0].text), true);
   eq('one pair under two names', cnt('dups'), 1);
   eq('six proofs stranded in names', cnt('proofname'), 6);
-  eq('and no grain bill on the shipped catalogue fails to add up',
+  eq('and no grain bill on the shipped catalog fails to add up',
     cnt('mashsum'), 0);
 }
 
@@ -15192,8 +15218,15 @@ sec('\u00a7358 pouring for a guest, by distance');
   eq('and they are his', L.POUR_RUNGS.map(r => r.id).join(','),
     'house,next,road,pond');
 
+  /* The country map has to carry every category the test names, or a
+     category with no country falls to the pond and the test proves the
+     fixture rather than the code. The app's own L.SUB_COUNTRY has them
+     all; this is the same shape, kept small on purpose. */
   const sc = { scotch: 'Scotland', bourbon: 'United States',
-               rye: 'United States', irish: 'Ireland' };
+               rye: 'United States', irish: 'Ireland',
+               tennessee: 'United States', wheat: 'United States',
+               'american single malt': 'United States',
+               canadian: 'Canada', japanese: 'Japan' };
   const seed = { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
                  region: 'Islay', proof: 92 };
 
@@ -15214,7 +15247,7 @@ sec('\u00a7358 pouring for a guest, by distance');
     L.SCOTCH_REGIONS.indexOf('Islands') >= 0, true);
   /* The road out of each category is a small table, which is BZ's rules
      written down: Scotch travels by region, Ireland across the sea,
-     Canada and the world to their nearest big neighbour. */
+     Canada and the world to their nearest big neighbor. */
   eq('Scotch travels by region', L.ROAD_TO.scotch, 'region');
   eq('Ireland goes across the sea to Scotland', L.ROAD_TO.irish, 'scotch');
   eq('Canada goes to bourbon', L.ROAD_TO.canadian, 'bourbon');
@@ -15236,6 +15269,34 @@ sec('\u00a7358 pouring for a guest, by distance');
   eq('a rye is down the road, still American',
     L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac',
       sub: 'rye' }, sc), 'road');
+  /* BZ: I'd go to ASM before crossing the pond. American single malt is
+     AMERICAN, so it was never across anything - the road out of bourbon
+     had been spelled as one named category and everything else fell into the
+     sea. Down the road stays in the country, which is what he said at the
+     start. */
+  eq('American single malt is down the road, not across it',
+    L.rungOf(bt, { name: 'Westward', dist: 'Westward',
+      sub: 'american single malt' }, sc), 'road');
+  eq('and so is a Tennessee',
+    L.rungOf(bt, { name: 'Dickel 13', dist: 'Dickel',
+      sub: 'tennessee' }, sc), 'road');
+  /* BZ: let's make Canada down the road from the US. A land border is not
+     a pond, and Canadian whisky picks up the rye thread rather than
+     starting a new one. */
+  eq('Canada is down the road from the US, not across a pond',
+    L.rungOf(bt, { name: 'Crown Royal', dist: 'Crown Royal',
+      sub: 'canadian' }, sc), 'road');
+  eq('and it reads the same way back',
+    L.rungOf({ name: 'Crown Royal', dist: 'Crown Royal', sub: 'canadian' },
+      bt, sc), 'road');
+  eq('but Scotland is still across it',
+    L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
+      sc), 'pond');
+  eq('and neither Canada nor ASM is left in the American pond order',
+    L.POND_ORDER.bourbon.indexOf('canadian') < 0
+    && L.POND_ORDER.bourbon.indexOf('american single malt') < 0, true);
+  eq('what is left across it starts with Ireland',
+    L.POND_ORDER.bourbon[0], 'irish');
   eq('and a Scotch is across the pond',
     L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
       sc), 'pond');
@@ -15243,6 +15304,46 @@ sec('\u00a7358 pouring for a guest, by distance');
   eq('an unplaceable pair does not count as the same country',
     L.rungOf({ name: 'A', dist: 'A', sub: 'mystery' },
       { name: 'B', dist: 'B', sub: 'enigma' }, sc), 'pond');
+
+  /* WHO YOU MEET FIRST ONCE YOU HAVE CROSSED. BZ: should scotch go to
+     ireland before US, and ireland to scotland, and should either land
+     with ASM before bourbon? Yes to all three - a malt drinker crossing
+     the pond should meet a single malt before a bourbon, because the
+     spirit is nearer than the country. */
+  eq('a Scotch drinker meets Ireland before America',
+    L.pondRank(seed, { sub: 'irish' })
+      < L.pondRank(seed, { sub: 'bourbon' }), true);
+  eq('and American single malt before bourbon',
+    L.pondRank(seed, { sub: 'american single malt' })
+      < L.pondRank(seed, { sub: 'bourbon' }), true);
+  const irishSeed = { name: 'Redbreast 12', dist: 'Midleton', sub: 'irish' };
+  eq('an Irish drinker meets American single malt before bourbon too',
+    L.pondRank(irishSeed, { sub: 'american single malt' })
+      < L.pondRank(irishSeed, { sub: 'bourbon' }), true);
+  /* Ireland to Scotland is DOWN THE ROAD, so by the time an Irish drinker
+     is across the pond they have already passed Scotland - which is why it
+     is not first in their pond. */
+  eq('Ireland reaches Scotland by road, not across the pond',
+    L.ROAD_TO.irish, 'scotch');
+  /* AND THE SAME RULE FROM THE AMERICAN SIDE. BZ: bourbon and rye are
+     close cousins, ASM is more distant, right? Right - and rye is not in
+     bourbon's pond at all, being down the road from it. The nearest
+     stranger is Canadian, grain whisky from next door; a malt is further
+     out however it is spelled. The first version had ASM first because it is
+     American, which is the passport rather than the spirit. */
+  eq('a bourbon drinker crossing the pond meets Ireland first',
+    L.pondRank(bt, { sub: 'irish' }), 0);
+  /* Canada picks up the rye thread - BZ: from US, bourbon/rye, Canada
+     picks up rye. And ASM is not in this list at all now, being down the
+     road rather than across the pond. */
+
+  eq('rye is not across the pond from bourbon at all',
+    L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac', sub: 'rye' },
+      sc), 'road');
+  eq('a category nobody ordered sorts last, not first',
+    L.pondRank(seed, { sub: 'mystery' }), 99);
+  eq('and a seed with no order at all ranks everything the same',
+    L.pondRank({ sub: 'mystery' }, { sub: 'irish' }), 99);
 
   /* THE SEED IS NEVER ITS OWN ANSWER. */
   const shelf = [seed,
@@ -15261,7 +15362,7 @@ sec('\u00a7358 pouring for a guest, by distance');
     L.pourAtRung(seed, 'house', shelf, sc)[0].name, 'Ardbeg Uigeadail');
 
   /* IT FAILS OUTWARD AND SAYS SO. BZ: if I have just one bottle that is
-     also their favourite, we can't stay home, we have to go next door. */
+     also their favorite, we can't stay home, we have to go next door. */
   const thin = [seed, { name: 'Lagavulin 16', dist: 'Lagavulin',
     sub: 'scotch', region: 'Islay', proof: 86 }];
   const out = L.pourFor(seed, 'house', thin, sc);
@@ -15274,6 +15375,119 @@ sec('\u00a7358 pouring for a guest, by distance');
   eq('and says it did not move', stay.moved, false);
   eq('a shelf of only the seed has no answer anywhere',
     L.pourFor(seed, 'house', [seed], sc).list.length, 0);
+}
+
+sec('\u00a7359 what they liked, held across the move');
+{
+  /* BZ: if someone says they like a PX finished scotch, would we hold PX
+     into the location ladder? Smoke? Proof level? Yes to all three, as an
+     ORDER rather than a gate - a gate would empty a rung the moment the
+     shelf had no other PX Islay, and the ladder would step outward to a
+     country it should not have reached for the wrong reason. */
+  /* A SPEYSIDE, not an Islay: Lagavulin is a peat house, so an Islay seed
+     scores every unpeated candidate on SMOKE as well and the cask tiers
+     stop being visible on their own. The first version of this test used
+     one and measured two rules at once. */
+  const px = { name: 'A PX sherry bomb', dist: 'Aberlour', sub: 'scotch',
+               region: 'Speyside', fin: 'Pedro Ximenez', proof: 96 };
+
+  eq('the same cask outright is nearest',
+    L.pourKinship(px, { name: 'X', fin: 'Pedro Ximenez', proof: 96 }), 0);
+  eq('the same family is next',
+    L.pourKinship(px, { name: 'X', fin: 'Oloroso', proof: 96 })
+      > L.pourKinship(px, { name: 'X', fin: 'Pedro Ximenez', proof: 96 }),
+    true);
+  eq('a different finish is further than the family',
+    L.pourKinship(px, { name: 'X', fin: 'Rum', proof: 96 })
+      > L.pourKinship(px, { name: 'X', fin: 'Oloroso', proof: 96 }), true);
+  eq('and no finish at all is furthest of the casks',
+    L.pourKinship(px, { name: 'X', proof: 96 })
+      > L.pourKinship(px, { name: 'X', fin: 'Rum', proof: 96 }), true);
+  eq('Pedro Ximenez and PX are one family',
+    L.caskFamily({ fin: 'PX Sherry' }), L.caskFamily({ fin: 'Pedro Ximenez' }));
+
+  /* SMOKE COSTS MORE THAN THE CASK WHEN IT IS WRONG: an unpeated malt
+     handed to a peat drinker is not a near miss. */
+  const peaty = { name: 'A peated one', dist: 'Ardbeg', sub: 'scotch',
+                  region: 'Islay', proof: 92 };
+  const noPeat = L.pourKinship(peaty,
+    { name: 'X', dist: 'Glenfiddich', proof: 92 });
+  const somePeat = L.pourKinship(peaty,
+    { name: 'X', dist: 'Talisker', proof: 92 });
+  eq('unpeated is further from a peat drinker than lightly peated',
+    noPeat > somePeat, true);
+  eq('and the same level is nearest of all',
+    L.pourKinship(peaty, { name: 'X', dist: 'Laphroaig', proof: 92 }), 0);
+
+  /* STRENGTH IS ONE-WAY. BZ: proof should be >=. */
+  const strong = { name: 'Cask strength', dist: 'Aberlour', sub: 'scotch',
+                   region: 'Speyside', proof: 121 };
+  eq('going weaker is a penalty',
+    L.pourKinship(strong, { name: 'X', dist: 'A', proof: 80 }) > 0, true);
+  eq('going stronger costs nothing',
+    L.pourKinship(strong, { name: 'X', dist: 'A', proof: 130 }), 0);
+  eq('the same band costs nothing either',
+    L.pourKinship(strong, { name: 'X', dist: 'A', proof: 123 }), 0);
+  eq('and a bigger drop costs more than a small one',
+    L.pourKinship(strong, { name: 'X', dist: 'A', proof: 80 })
+      > L.pourKinship(strong, { name: 'X', dist: 'A', proof: 110 }), true);
+
+  /* A seed that states none of these loses nothing. */
+  const bare = { name: 'Plain', dist: 'Somewhere', sub: 'bourbon' };
+  eq('a seed with nothing stated scores every candidate the same',
+    L.pourKinship(bare, { name: 'A', fin: 'Port', proof: 90 }),
+    L.pourKinship(bare, { name: 'B', proof: 130 }));
+}
+
+sec('\u00a7360 inventory without the bells and whistles');
+{
+  /* BZ, asked how the app would behave with more rum, vodka and tequila:
+     why not include inventory without all the bells and whistles. Right -
+     a bar shelf is stock rather than a collection with a shape, and it
+     belongs in the inventory. What it is not is whisky, and every analysis
+     in this app asks a whisky question. */
+  eq('a bourbon is whisky', L.isWhisky({ sub: 'bourbon' }), true);
+  eq('so is a world whisky', L.isWhisky({ sub: 'world' }), true);
+  eq('and a flavored whiskey still is',
+    L.isWhisky({ sub: 'flavored' }), true);
+  ['rum', 'vodka', 'gin', 'mezcal', 'tequila', 'liqueur', 'brandy']
+    .forEach(s => eq('a ' + s + ' is not', L.isWhisky({ sub: s }), false));
+  eq('and something with no category is not excluded on a guess',
+    L.isWhisky({ name: 'Mystery' }), true);
+
+  /* THEY KEEP THEIR CATEGORY. A sub the app does not declare is stored as
+     null, so leaving them out of L.TYPES would lose what the bottle IS -
+     which is the opposite of putting it in the inventory. */
+  ['rum', 'vodka', 'gin', 'mezcal', 'liqueur', 'brandy'].forEach(s =>
+    eq(s + ' is a declared type', L.TYPES.indexOf(s) >= 0, true));
+
+  /* AND THE ANALYSES LEAVE THEM OUT. A vodka has no cask, no region, no
+     age and no mash: counting it says the shelf is thin on wood when part
+     of it does not use wood. */
+  const cat = { w1: { k: 'w1', name: 'A Bourbon', dist: 'X', sub: 'bourbon',
+                      proof: 100, fin: 'Sherry' },
+                v1: { k: 'v1', name: 'A Vodka', dist: 'Y', sub: 'vodka',
+                      proof: 80 } };
+  const bots = [{ id: 'B1', k: 'w1', status: 'open' },
+                { id: 'B2', k: 'v1', status: 'open' }];
+  const axes = L.shelfAxes(cat, bots, {});
+  const counted = JSON.stringify(axes || {});
+  eq('the radar does not count the vodka',
+    /A Vodka/.test(counted), false);
+  /* But the shelf does: both are bottles you own and can pour. */
+  eq('the shelf counts both bottles', L.shelfStats(cat, bots).bottles, 2);
+  eq('and both are pourable', L.pourable('v1', bots), true);
+
+  /* THE GUEST LADDER IS IN WHISKY TERMS, so a bourbon seed stops offering
+     somebody vodka - which it did, because a vodka has no rung to sit on
+     and fell into `pond` by default. */
+  const sc = { bourbon: 'United States', vodka: 'Poland' };
+  const shelf2 = [cat.w1, cat.v1,
+    { k: 'w2', name: 'Another Bourbon', dist: 'Z', sub: 'bourbon',
+      proof: 100 }];
+  const pond = L.pourAtRung(cat.w1, 'pond', shelf2, sc);
+  eq('no vodka is offered as a pour for a guest',
+    pond.filter(p => p.sub === 'vodka').length, 0);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

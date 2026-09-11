@@ -5,7 +5,7 @@
  * state key that never synced, a literal \u2014 in a string, a dead
  * function left behind. Every one of those is visible in the source
  * without running anything — the suite could not see them because it
- * tests behaviour through L, and these live in the wiring.
+ * tests behavior through L, and these live in the wiring.
  *
  * This reads index.html as text and asks the questions that would have
  * caught them.
@@ -336,6 +336,84 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   check('nothing reports a shelf size by counting the array', bad);
 }
 
+/* ONE PHRASE FOR ONE ACT.
+
+   BZ asked for a check on consistent tense across the app. It found three
+   buttons doing one job - recording a glass already drunk - reading "I
+   poured this", "I had that" and "Poured it" on three different screens.
+   Nothing was broken and nobody would have reported it; it just made the
+   app sound like three people wrote it.
+
+   The distinction worth keeping is between DOING and RECORDING: "Pour it"
+   pours one now, "I drank this" logs one you have had. This fails if a
+   fourth way of saying either turns up. */
+{
+  const noC = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const labels = [...new Set([...noC.matchAll(
+    /el\('button',\s*'[^']*',\s*'((?:[^'\\]|\\.)+)'/g)].map(m => m[1]))];
+  /* THE ACT, NOT THE PRONOUN. The first version matched anything starting
+     with "I" and reported "I would rather not say" and "I bought it",
+     neither of which records a pour - and a checker that cries wolf is one
+     somebody switches off rather than satisfies. */
+  const past = labels.filter(x => /\b(poured|drank|had a glass)\b/i.test(x));
+  const odd = past.filter(x => x !== 'I drank this');
+  check('one phrase for recording a glass already drunk', odd);
+}
+
+/* NO CONSTANT IS DECLARED AND NEVER READ.
+
+   BZ asked for old comments to be tightened on 2026-09-10, and the longest
+   comment block in the file turned out to be sixty lines of reasoning for
+   the shelf arrangement feature he had removed thirty builds earlier - with
+   L.STORAGE_KINDS, L.STORAGE_LABEL and L.SCAR_RANK still sitting under it,
+   each referenced exactly once, by its own declaration.
+
+   The existing checks could not see it. One looks for L FUNCTIONS never
+   called and these are objects and arrays; the linter cares that a name
+   resolves, not that anybody wants it. A removal that takes the functions
+   and leaves the data leaves exactly this shape behind, and the comment
+   above it is the part that misleads: it reads as live reasoning. */
+{
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^\s*\/\/.*$/gm, ' ');
+  const dead = [];
+  const re = /^L\.([A-Z][A-Z0-9_]{2,})\s*=/gm;
+  let m;
+  while ((m = re.exec(code))) {
+    const n = m[1];
+    const uses = (code.match(new RegExp('L\\.' + n + '\\b', 'g')) || []).length;
+    /* A NAME THIS CHECKER READS OUT OF THE SOURCE IS NOT DEAD.
+       L.NOT_FILTERS exists so the filter check can tell "not a filter"
+       from "somebody forgot", and it is read here rather than by the app -
+       so the first version of this reported the checker's own contract as
+       rot. A checker that flags correct code gets switched off. */
+    const readHere = require('fs')
+      .readFileSync(__filename, 'utf8').indexOf('L.' + n) >= 0;
+    /* AND SOME ARE READ BY NAME AS A STRING. L.REF_GROUPS carries
+       { data: 'TASTING' } and the reference screen does L[g.data], so
+       L.TASTING is read every time somebody opens Learn - and looking for
+       `L.TASTING` finds nothing. Three false-positive classes now: read by
+       this checker, read dynamically, and read by a harness. The rule for
+       this check is that it reports; it does not drive a deletion on its
+       own. */
+    const namedAsString = new RegExp("'" + n + "'").test(code);
+    /* AND SOME ARE READ ONLY BY A HARNESS, which is a legitimate reader:
+       L.LOOKUP_MISS_LIMIT is asserted three times in the suite and used
+       nowhere else, and a constant the tests pin is not rot. Fourth and
+       last false-positive class. */
+    let inTests = false;
+    try {
+      inTests = require('fs')
+        .readFileSync(__dirname + '/killer-bs-test.js', 'utf8')
+        .indexOf('L.' + n) >= 0;
+    } catch (e) { /* no suite beside us, nothing to learn */ }
+    if (uses <= 1 && !readHere && !namedAsString && !inTests) {
+      dead.push('L.' + n + ' is declared and never read');
+    }
+  }
+  check('no constant is declared and never read', dead);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 
@@ -467,13 +545,37 @@ check('no fixed svg id is emitted by a repeated drawing',
 
        BZ: it better not use UK english. Screen literals only — the data
        keys stay as they are, because 'colour' is a field name on 325
-       catalogue entries and renaming it would break every one of them.
+       catalog entries and renaming it would break every one of them.
        This checks the strings a person reads, not the strings the code
        looks things up by. */
 {
-  const BR = /colour|flavour|favourite|neighbour|behaviour|centre|litre|grey/i;
+  /* EIGHT WORDS LET TWENTY-NINE THROUGH. BZ asked for a scan for any
+     non-US English on 2026-09-10 and it found spelled, judgment, catalog
+     and traveling all over the screen text - none of which this knew to
+     look for. A check is only as good as its list, and a short list reads
+     as a passing check rather than as an unasked question. */
+  /* THE LIST ITSELF MUST STAY BRITISH. The US-spelling pass of 2026-09-10
+     Americanised this array, so the checker started hunting for `judgment`
+     and `color` and flagging every correct word on the screen. A checker
+     that contains the thing it forbids is the one file a blanket
+     find-and-replace must never touch. */
+  const BR = new RegExp('\\b(' + [
+    'colour', 'flavour', 'favourite', 'neighbour', 'honour', 'labour',
+    'behaviour', 'harbour', 'rumour', 'organise[dr]?', 'recognise[d]?',
+    'realise[d]?', 'apologise', 'summarise', 'analyse[d]?', 'catalogue',
+    'dialogue', 'grey', 'travelling', 'travelled', 'cancelled', 'labelled',
+    'modelling', 'centre', 'metre', 'litre', 'theatre', 'defence',
+    'licence', 'whilst', 'amongst', 'learnt', 'spelt', 'burnt', 'storey',
+    'jewellery', 'programme', 'sceptical', 'ageing', 'judgement',
+    'acknowledgement', 'fulfil', 'instalment', 'enrol', 'maximise',
+    'minimise', 'prioritise', 'customise', 'specialise'
+  ].join('|') + ')\\b', 'i');
+  /* DATA KEYS AND SOMEBODY ELSE'S STRINGS. `color` is a field name on 325
+     catalog entries and renaming it orphans every tasting note; the
+     Firebase error codes are not ours to spell. */
   const KEYS = new Set(["'colour'", "'flavour'", "'flavoured'", "'grey'",
-                        "'centre'", "'litre'", "'favourite'"]);
+                        "'centre'", "'litre'", "'favourite'",
+                        "'auth/cancelled-popup-request'"]);
   const lines = src.split('\n');
   const found = [];
   lines.forEach((l, i) => {
@@ -486,6 +588,16 @@ check('no fixed svg id is emitted by a repeated drawing',
     });
   });
   check('screen text uses US spelling', found);
+
+  /* AND THE LIST IS STILL THE BRITISH ONE. A blanket US-spelling pass
+     Americanised this very array on 2026-09-10, so the check began hunting
+     for `judgment` and `color` and flagged every correct word on the
+     screen. A file that contains the thing it forbids is the one a
+     find-and-replace must never touch, and nothing was watching. */
+  check('the spelling list is still spelt the way it hunts',
+    ['colour', 'behaviour', 'catalogue', 'judgement', 'centre']
+      .filter(w => BR.source.indexOf(w) < 0)
+      .map(w => w + ' has gone from the list it is meant to catch'));
 }
 
 /* 16. The gap list and the weights that score it must agree.
@@ -607,7 +719,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Scan the library for inconsistencies',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
-    'With a guest', 'With a guest',
+    'With a guest', 'Whisky only', 'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
     'Their shelf'];
@@ -719,14 +831,14 @@ check('no fixed svg id is emitted by a repeated drawing',
 /* 26. A CLAIM ABOUT YOUR SHELF IS COUNTED FROM YOUR SHELF.
 
       BZ, after the map drew eight countries for a one-bottle shelf: can
-      you scan the whole of things for this owned versus catalogue issue.
-      The scan ran every catalogue-walking function twice — once against
-      the full catalogue holding one bottle, once against a catalogue of
+      you scan the whole of things for this owned versus catalog issue.
+      The scan ran every catalog-walking function twice — once against
+      the full catalog holding one bottle, once against a catalog of
       just that bottle — and seven answered differently. Three were
       user-facing claims reading everything the app knows: the gap advice,
       the import check, and what you have to publish.
 
-      S.catalog is the MERGED catalogue: the shipped seed, the shared
+      S.catalog is the MERGED catalog: the shipped seed, the shared
       library everybody adds to, and your own bottles. Handing it to
       something that speaks about "your shelf" asks has anybody heard of
       this whisky when the question is do you have one.
@@ -739,7 +851,7 @@ check('no fixed svg id is emitted by a repeated drawing',
       THIS IS NO LONGER THE MAIN GUARD, and on its own it never was one. It
       was written around the three offenders that one scan happened to
       find, which makes it a whitelist rather than a rule, and the
-      twenty-five catalogue-walking functions written since were checked by
+      twenty-five catalog-walking functions written since were checked by
       nothing at all. §341 in killer-bs-test.js is the rule now: every
       function a call site hands S.catalog is RUN twice, once against the
       whole library and once against a three-bottle shelf, and the answers
@@ -751,7 +863,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     const re = new RegExp('L\\.' + fn + '\\(\\s*S\\.catalog');
     return re.test(src);
   });
-  check('no claim about your shelf is counted from the whole catalogue',
+  check('no claim about your shelf is counted from the whole catalog',
     wrong.map(f => f + ' is handed S.catalog'));
   /* And the filter itself has to still exist, or the line above passes by
      accident the day somebody renames it. */

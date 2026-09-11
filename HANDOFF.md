@@ -1,6 +1,47 @@
-# Bottlefolio — handoff at v1.9.18
+# Bottlefolio — handoff at v2.0.48
 
-Written 2026-09-08, late, replacing the v1.9.10 version.
+Written 2026-09-08, late, replacing the v1.9.10 version. Brought current
+2026-09-10; what changed that day is at the end of this section.
+
+## WHAT CHANGED ON 2026-09-10
+
+A long session with BZ testing on real bottles in real places. In order of
+how much it matters to somebody picking this up:
+
+**The gate is ten steps now**, not nine: audit, data, tests, sync, lint,
+screens, render, two tabs, walk — and lint was added the same day. 3868
+assertions, 36 consistency checks.
+
+**With a guest** is new, on Taste. It is the first feature in this app that
+answers a question about somebody ELSE, and BZ corrected its rules five
+times in one sitting. The rules are his and they are written in L.ROAD_TO,
+L.ROAD_NEIGHBOURS and L.POND_ORDER. Do not re-derive them from first
+principles: three of my five attempts to reason them out were wrong and he
+caught each one in a sentence.
+
+**The bar shelf is inventory.** L.isWhisky and L.NOT_WHISKY are the one
+place that says which is which. Rum and vodka count as bottles and are
+excluded from every analysis. A sub that is not in L.TYPES is stored as
+NULL, which is why they are declared types with no reel face.
+
+**Every service call goes through one of two doors** — postWithRetry for
+POSTs, askService for questions — and both read through readService, which
+turns a stale Apps Script deployment into a sentence rather than a parser
+error. Before this there were ten call sites and seven had no retry.
+
+**Two lessons from the day that will save a round each:**
+
+1. THREE TIMES I told BZ a bug was in his build rather than the code, and
+   twice I was right and once I had not checked. The version is on Home
+   under the wordmark. Ask for it before diagnosing anything he reports —
+   he ships on his own schedule and is often two or three versions behind
+   the working copy.
+2. A BLANKET FIND-AND-REPLACE ACROSS THIS PROJECT WILL BREAK THE CHECKERS.
+   The US-spelling pass Americanised consistency.js's own British word
+   list, so it began hunting for `judgment` and flagged every correct word
+   on screen. There is a check for that now. The same class of trap:
+   `colour` is a DATA KEY on 325 catalogue entries and renaming it orphans
+   every tasting note.
 
 ---
 
@@ -26,7 +67,7 @@ Zip **everything** in the folder. The exact list, none of it optional:
 | `ship.py` | runs the gate end to end |
 | `CHANGELOG.md` | the audit fails without an entry for the current version |
 | `BACKLOG.md`, `DEV-RULES.md`, `HANDOFF.md` | rules and what is open |
-| `data.json` | shipped catalogue — suite and audit both read it |
+| `data.json` | shipped catalog — suite and audit both read it |
 | `map.json` | the map — the suite reads it |
 | `bz-bottles.json`, `bz-flights.json` | **BZ's real shelf; the suite will not start without them** |
 | `shared-catalog.json` | shared library snapshot |
@@ -80,18 +121,36 @@ changed.
 
 ## 3. WHERE THE BUILD IS
 
-- **v1.9.18** — 3459 assertions, 27 consistency checks, 26 audit checks,
-  walk green.
+- **v1.9.41** — 3808 assertions, 28 consistency checks, 26 audit checks,
+  walk green, **and sync green**: `sync.js` runs again after being dark from
+  v1.9.10 to v1.9.27, and it was never asserting one thing — it carries 24
+  assertions across twelve scenarios. That claim, made here and in BACKLOG,
+  was read off three lines of output instead of the file.
+- **READ BACKLOG.md FIRST, and read its new header.** It was reconciled
+  entry by entry against the source on 2026-09-09 after SEVEN entries turned
+  out to describe work already shipped. Its top section now says what is
+  actually open, split into waiting-on-code (nothing), waiting-on-BZ, and
+  waiting-on-the-world.
 - `sync.js` has **not run since v1.9.10**. See section 5.
 - Nothing is half-shipped.
+
+**4a is DONE at v1.9.20.** One grid, both directions, from `L.buddyRows`;
+the Tasting buddies list dissolved into it; the open/all toggle is gone;
+the Venn's segments are the control and the list they open can propose a
+pour and log it; `L.bulkStatus` marks open/sealed in bulk from Shelf tools.
+Two things were deliberately NOT done and are in BACKLOG.md: the third
+0.25 proof literal, and whether a buddy tab should be gated on mutual
+sharing rather than on their shelf being visible.
 
 ---
 
 ## 4. WHAT IS OPEN, IN BZ'S ORDER
 
-### 4a. Cross-buddy — do this first
+### 4a. Cross-buddy — DONE at v1.9.20
 
-Asked four times, deferred four times.
+Asked four times, deferred four times, built on the fifth. Kept below for
+the reasoning; the plan and what shipped agree except where BACKLOG.md says
+otherwise.
 
 Today the Buddies tab shows a folder tab per person **who shares with you**,
 and a separate "Tasting buddies" card above listing people **you share
@@ -156,7 +215,7 @@ BZ: "this must be an app wide setting set by admin." Today
 URL means shipping a new version to everyone.
 
 `bz-apps/whisky/shared/config` holding `lookupUrl`, admin-writable and
-world-readable, read once beside the catalogue stamp. Precedence: the user's
+world-readable, read once beside the catalog stamp. Precedence: the user's
 own setting, then the shared config, then the shipped constant as a floor
 for a first paint or an offline start. **Rules change — rule 33** — so
 `firebase-rules.json` ships as its own file with its own walkthrough and BZ
@@ -254,5 +313,10 @@ runs months-old code.
 ## 8. WORKING FILES
 
 `/home/claude/bottlefolio/`. It was `/home/claude/kb/` in sessions 3–4 and
-`/home/claude/dram/` in 1–2; `complexity.js` still hardcodes
-`/home/claude/kb/`. Outputs stage to `/mnt/user-data/outputs/`.
+`/home/claude/dram/` in 1–2. Outputs stage to `/mnt/user-data/outputs/`.
+
+**`complexity.js` is gone.** It scored functions by lines, branches and
+depth, and flagged `productForm` as the worst in the file (398 lines, 91
+branches). It was lost with the `kb` container, is not in the repo, and is
+not in the zip. It was never part of the gate. Rewrite it or drop the
+reference; do not go looking for it.
