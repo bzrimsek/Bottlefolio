@@ -414,6 +414,84 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
   check('no constant is declared and never read', dead);
 }
 
+/* TWO DOORS TO ONE ANSWER.
+
+   BZ, after the consistency scan missed this: how did you miss the library
+   consistency issue when I asked you to look for consistent things? Fair.
+   I scanned for ten pairs I had written down by hand, so the one I had not
+   thought of could not be found - a scan that confirms suspicions rather
+   than one that looks. And the miss was a bad one: L.libraryAudit LITERALLY
+   CALLS L.importAudit on its first line, adds four checks to the result,
+   and both were being called from screens. The shelf got five checks and
+   the library got nine, for no reason anybody chose.
+
+   The shape, stated so a machine can find it: A returns what B returned,
+   and the app calls BOTH. Then there are two ways to ask one question and
+   they can drift - which is rule 30d, written after L.mashbill and
+   L.mashShape did exactly this.
+
+   THE NARROWING MATTERS. "A calls B" finds 251 pairs, nearly all of them
+   helpers - L.shopNorm is called by ninety functions and is nobody's
+   second opinion. Requiring B's answer to BECOME A's answer finds 23, and
+   with tonight's bug put back, 24. A check that flags 251 correct pairs is
+   one somebody switches off.
+
+   A RATCHET, not a wall: the 23 here today are allowed by name, and
+   anything new fails the build. Most are legitimate - a wrapper that
+   relabels or clamps - but they are listed rather than reasoned about,
+   because the point is to catch the NEXT one. */
+const TWO_DOORS_OK = [
+  'ownedCount>myBottles', 'pourGlasses>reelMatches', 'viewFor>clampView',
+  'zoomAbout>clampView', 'shopIsNewBottle>shopNorm',
+  'parseDelimited>parseCSV', 'placeLine>titleCase', 'recap>lookupDaysSince',
+  'awayPour>logEntry', 'contribSig>syncSig', 'axisLabel>titleCase',
+  'addPour>relabel', 'removePour>relabel', 'movePour>relabel',
+  'sortByProof>relabel', 'mashOf>mashByLaw', 'readFailSays>isNetworkFail',
+  'shelfTodo>enhanceQueue', 'flightNoteQueue>pourable',
+  'enhanceQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
+  'lookupAllowed>lookupTally'
+];
+{
+  const cut = src.indexOf('STATE + RENDER');
+  const engineSrc = src.slice(0, cut).replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const appSrc = src.slice(cut).replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^\s*\/\/.*$/gm, ' ');
+  const bodies = {};
+  const fre = /^L\.([a-z][A-Za-z0-9]*)\s*=\s*function[\s\S]*?\n};/gm;
+  let fm; while ((fm = fre.exec(engineSrc))) bodies[fm[1]] = fm[0];
+  const fns = Object.keys(bodies);
+  const inApp = n =>
+    (appSrc.match(new RegExp('L\\.' + n + '\\(', 'g')) || []).length;
+  const twin = [];
+  fns.forEach(a2 => fns.forEach(b2 => {
+    if (a2 === b2) return;
+    const body = bodies[a2];
+    if (body.indexOf('L.' + b2 + '(') < 0) return;
+    if (!inApp(a2) || !inApp(b2)) return;
+    const direct = new RegExp('return\\s+L\\.' + b2 + '\\(').test(body);
+    let flows = false;
+    const asg = new RegExp('(?:const|let|var)\\s+(\\w+)\\s*=\\s*L\\.'
+      + b2 + '\\(', 'g');
+    let am; while ((am = asg.exec(body))) {
+      if (new RegExp('return\\s+' + am[1] + '\\b').test(body)) flows = true;
+    }
+    if (!direct && !flows) return;
+    const pair = a2 + '>' + b2;
+    if (TWO_DOORS_OK.indexOf(pair) >= 0) return;
+    twin.push('L.' + a2 + ' returns what L.' + b2 + ' returned, and the '
+      + 'screens call both \u2014 two ways to ask one question');
+  }));
+  check('no two functions answer one question for the screens', twin);
+
+  /* And the allowed list cannot rot: a pair that no longer exists must
+     come off it, or the list quietly stops meaning anything. */
+  const stale = TWO_DOORS_OK.filter(p2 => {
+    const ab = p2.split('>');
+    return !bodies[ab[0]] || bodies[ab[0]].indexOf('L.' + ab[1] + '(') < 0;
+  }).map(p2 => p2 + ' is allowed and no longer happens');
+  check('the two-doors allowance has no stale entries', stale);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 

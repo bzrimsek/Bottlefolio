@@ -15699,5 +15699,77 @@ sec('\u00a7364 adding more types needs a bit more care');
       L.needsEnhancing({ sub: sub, tn: {} }), false));
 }
 
+sec('\u00a7365 a vodka in the shared library');
+{
+  /* BZ: should a vodka go in the library, can't hurt right? It could, and
+     the measurement was the answer. Three functions disagreed about one
+     bottle: worthContributing said publish it, needsEnhancing said do not
+     look it up, and libraryGaps said it was short of NOTES and a MASH
+     BILL - so it would sit on the fill list for ever, never filled and
+     never finished. It IS complete; it is a vodka. */
+  const v = { k: 'v', name: 'Belvedere Vodka', dist: 'Belvedere',
+              sub: 'vodka', proof: 80 };
+  const w = { k: 'w', name: 'Lagavulin Sixteen', dist: 'Lagavulin',
+              sub: 'scotch', proof: 86 };
+  eq('a vodka is missing nothing', L.libraryGaps(v).length, 0);
+  eq('a whisky with no note still is', L.libraryGaps(w).length > 0, true);
+  ['gin', 'rum', 'tequila', 'mezcal', 'liqueur', 'brandy'].forEach(sub =>
+    eq('and nor is a ' + sub,
+      L.libraryGaps({ name: 'A Thing', dist: 'X', sub: sub, proof: 80 })
+        .length, 0));
+  /* The three must agree: publishable, not looked up, and finished. */
+  eq('the bar shelf is welcome in the library',
+    L.worthContributing(v, {}), true);
+  eq('it is never queued for a lookup', L.needsEnhancing(v), false);
+  eq('and it arrives finished', L.libraryGaps(v).length, 0);
+}
+
+sec('\u00a7366 the check names the fix');
+{
+  /* BZ, looking at fourteen duplicates and six names carrying a proof:
+     needs a merge button I think, or a delete duplicate. And: recommended
+     changes would be great - if you know there is an issue, you likely
+     also know the solve. Quite: every one of these was raised by a rule
+     that knew exactly what it objected to, and the screen printed the name
+     and stopped. */
+  eq('a duplicate is told to merge',
+    /merge/i.test(L.auditSuggestion('dups', {}, 'A  ==  B')), true);
+  eq('a name carrying a proof is given the name to use',
+    /Old Forester Bourbon/.test(
+      L.auditSuggestion('proofname',
+        { name: 'Old Forester 100 Proof Bourbon' }, '')), true);
+  eq('a bare entry is told what would be enough',
+    /distillery/i.test(L.auditSuggestion('bare', {}, '')), true);
+  eq('a Scotch region on a bourbon is told to clear it',
+    /clear it/i.test(L.auditSuggestion('region', {}, '')), true);
+  /* EXACT IDS. The first version matched /proof/i, which caught `proof` -
+     the out-of-range finding - and told somebody to rename a bottle whose
+     name was fine. */
+  eq('an out-of-range proof is NOT told to rename anything',
+    /rename/i.test(L.auditSuggestion('proof', { name: 'Fine Name' }, '')),
+    false);
+  eq('and is told to check the bottle instead',
+    /not bottled at this strength/i.test(
+      L.auditSuggestion('proof', { name: 'Fine Name' }, '')), true);
+  eq('a finding with no honest answer says nothing',
+    L.auditSuggestion('style', {}, ''), null);
+
+  /* THE PROOF OUT OF THE NAME, which is the fix that stops the
+     duplicates: "Old Forester 100 Proof Bourbon" and "Old Forester
+     Bourbon" are two entries for one whisky. */
+  eq('it takes the proof out and keeps the rest',
+    L.proofOutOfName('Old Forester 100 Proof Bourbon').name,
+    'Old Forester Bourbon');
+  eq('and hands back the number it took',
+    L.proofOutOfName('Sazerac 100 Proof Straight Rye Whiskey').proof, 100);
+  eq('a decimal proof too',
+    L.proofOutOfName('Belle Meade Bourbon 110.4 Proof').proof, 110.4);
+  eq('a name with no proof in it is left alone',
+    L.proofOutOfName('Rabbit Hole Dareringer Artist Series'), null);
+  /* And never leaves a bottle with nothing to be called. */
+  eq('"100 Proof" alone is left alone', L.proofOutOfName('100 Proof'), null);
+  eq('a year is not a proof', L.proofOutOfName("Booker's 2023-03"), null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
