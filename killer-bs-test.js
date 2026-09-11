@@ -15490,5 +15490,113 @@ sec('\u00a7360 inventory without the bells and whistles');
     pond.filter(p => p.sub === 'vodka').length, 0);
 }
 
+sec('\u00a7361 a name, or something that is not a name at all');
+{
+  /* BZ: I need to be able to enter a bottle that I don't have and that the
+     library does not have. And: my son's answer to what do you drink was
+     "dark beer", a type of answer we did not consider.
+
+     One box, two paths, and his rule for telling them apart: if it is
+     clearly a bottle, look it up and build the ladder; if it is a phrase,
+     parse out what you can and bring the lower proof and entry-level
+     things to the table. */
+  ["Jack Daniel's 7", 'Lagavulin 16', 'Macallan 12', 'Redbreast',
+   'Woodford Reserve', 'Yamazaki 55'].forEach(q =>
+    eq('"' + q + '" reads as a bottle', L.looksLikeBottle(q), true));
+  ['dark beer', 'sweet stuff', 'something smoky', 'light and fruity']
+    .forEach(q => eq('"' + q + '" reads as a phrase',
+      L.looksLikeBottle(q), false));
+
+  /* "dark beer" matches twice - dark-and-malty AND the not-a-whisky rule,
+     because it is a beer - so it asks for sherry wood, no smoke AND the
+     gentle end. That is right, and asserting the exact object was the test
+     being narrower than the feature. */
+  const dark = L.tasteWants('dark beer').want;
+  eq('dark beer asks for sherry wood', dark.fin, 'sherry');
+  eq('and no smoke', dark.peat, 'none');
+  eq('and the gentle end, being a beer drinker', dark.gentle, true);
+  eq('and somebody who does not drink whisky gets the gentle end',
+    L.tasteWants("I don't really drink whisky").want.gentle, true);
+
+  /* NOT IS THE WHOLE ANSWER. "Nothing peaty" was read as "they said
+     smoke" - the most wrong reading available, because somebody telling
+     you what to AVOID is being more helpful than somebody naming a
+     favorite, and handing them the opposite is worse than handing them
+     anything at all. */
+  ['nothing peaty', 'no smoke', 'not too smoky', 'hates peat',
+   'I avoid smoky stuff'].forEach(q =>
+    eq('"' + q + '" asks for no smoke',
+      L.tasteWants(q).want.peat, 'none'));
+  ['something smoky', 'smoky please', 'peated'].forEach(q =>
+    eq('"' + q + '" asks for smoke', L.tasteWants(q).want.peat, 'any'));
+
+  /* THE GENTLE END. Lower proof, nothing scarce, and nothing smoky when
+     they said no smoke. */
+  const shelf3 = [
+    { k: 'a', name: 'Hot One', dist: 'A', sub: 'bourbon', proof: 130 },
+    { k: 'b', name: 'Easy Sherry', dist: 'B', sub: 'scotch', proof: 86,
+      fin: 'Oloroso' },
+    { k: 'c', name: 'Ardbeg Smoky', dist: 'Ardbeg', sub: 'scotch',
+      proof: 92 },
+    { k: 'd', name: 'A Vodka', dist: 'D', sub: 'vodka', proof: 80 }
+  ];
+  const soft = L.pourForTaste(L.tasteWants('dark beer').want, shelf3);
+  eq('the sherried one leads', soft[0].name, 'Easy Sherry');
+  eq('the smoky one is left out when they said no smoke',
+    soft.filter(p => p.name === 'Ardbeg Smoky').length, 0);
+  eq('and the vodka is not offered at all',
+    soft.filter(p => p.sub === 'vodka').length, 0);
+  const gentle = L.pourForTaste(
+    L.tasteWants("I don't really drink whisky").want, shelf3);
+  eq('nothing over 100 proof for somebody starting out',
+    gentle.filter(p => p.proof > 100).length, 0);
+}
+
+sec('\u00a7362 one answer to what counts as having a note');
+{
+  /* BZ, for the fourth or fifth time: this continues to waste some time
+     and these done seem to get waitlisted, reported this many times. He
+     was right and I had been fixing the instance instead of the shape.
+     THREE functions were answering one question from different evidence:
+     needsEnhancing asked for a NOSE, notePartial wanted a nose AND a
+     palate, and enhanceDiff judged "nothing new" a third way.
+
+     So a bottle carrying a palate and no nose was queued every run, the
+     service answered with a palate, the answer was judged partial, nothing
+     was written, and it came back next time. The same two bottles for
+     ever. */
+  eq('a nose and a palate is a note',
+    L.noteComplete({ nose: 'a', palate: 'b' }), true);
+  eq('a palate alone is not', L.noteComplete({ palate: 'b' }), false);
+  eq('a nose alone is not', L.noteComplete({ nose: 'a' }), false);
+  eq('and nothing is not', L.noteComplete({}), false);
+  eq('a missing finish does not make it incomplete',
+    L.noteComplete({ nose: 'a', palate: 'b' }), true);
+
+  /* THE QUEUE AND THE JUDGE MUST AGREE, in all four states. This is the
+     assertion that would have caught it: before the fix, "palate only"
+     answered YES to the queue and YES to partial, which is the trap. */
+  [{ nose: 'a' }, { palate: 'b' }, { nose: 'a', palate: 'b' }, {}]
+    .forEach(tn => {
+      const asked = L.needsEnhancing({ tn: tn });
+      const complete = L.noteComplete(tn);
+      eq('the queue asks exactly when the note is incomplete: '
+        + JSON.stringify(tn), asked, !complete);
+    });
+
+  /* A reply that fills the gap is not partial; one that half-fills it is,
+     and the caller writes what came back rather than discarding it. */
+  eq('a reply with both is not partial',
+    L.notePartial({ nose: 'x', palate: 'y' }), false);
+  eq('a reply with only a palate is partial',
+    L.notePartial({ palate: 'y' }), true);
+  /* AND AN EMPTY REPLY IS NOT "ALREADY HAD EVERYTHING". That was the Old
+     Elk line in BZ's screenshot: the service said nothing and the app told
+     him the bottle was complete. */
+  eq('an empty reply is not partial either', L.notePartial({}), false);
+  eq('but the bottle it was about still needs a note',
+    L.needsEnhancing({ tn: {} }), true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

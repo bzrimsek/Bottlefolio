@@ -636,6 +636,46 @@ function step(n) {
       failures.push('guest: it stepped out and still found nothing');
     }
 
+    /* AND AN ANSWER THAT IS NOT A BOTTLE. BZ's son, asked what he drinks:
+       "dark beer". A good answer, and the ladder has no rung for it - so
+       the box takes it as a phrase and brings the gentle end of the shelf
+       instead of pretending it is a whisky. */
+    await page.locator('#guestBody input').fill('dark beer');
+    await page.waitForTimeout(450);
+    const offered = await page.locator('#guestBody .recent .btn')
+      .allTextContents();
+    if (!offered.some(t => /find something/i.test(t))) {
+      failures.push('guest: a phrase offered no way forward — '
+        + offered.join(','));
+    } else {
+      await page.locator('#guestBody .btn', { hasText: 'Find something' })
+        .click();
+      await page.waitForTimeout(400);
+      const soft = await page.evaluate(() => {
+        const cards = [...document.querySelectorAll('#guestBody .sheet')];
+        const last = cards[cards.length - 1];
+        return { head: (last.querySelector('h3') || {}).textContent || '',
+                 n: last.querySelectorAll('.item').length };
+      });
+      if (!soft.n) failures.push('guest: a phrase suggested nothing');
+      if (!/dark beer/.test(soft.head)) {
+        failures.push('guest: the answer did not say what it was for — '
+          + soft.head);
+      }
+    }
+
+    /* A bottle nobody owns and the library has not got must still offer a
+       way in - BZ: I need to be able to enter a bottle that I don't have
+       and that the library does not have. */
+    await page.locator('#guestBody input').fill('Yamazaki 55');
+    await page.waitForTimeout(450);
+    const look = await page.locator('#guestBody .recent .btn')
+      .allTextContents();
+    if (!look.some(t => /look up/i.test(t))) {
+      failures.push('guest: an unknown bottle offered no lookup — '
+        + look.join(','));
+    }
+
     await page.locator('#pourWhere button', { hasText: 'At home' }).click();
     await page.waitForTimeout(200);
   }
