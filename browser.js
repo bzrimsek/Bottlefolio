@@ -686,6 +686,43 @@ function step(n) {
      readService is what turns a stale Apps Script deployment into a
      sentence instead of a parser complaining about a bracket, which is the
      exact failure that cost BZ a rules paste he did not need. */
+  /* THE CAMERA SHEET MUST SAY WHAT IT IS READING. BZ: taking a photo to
+     import a shelf serves up the bottle photo page, not the shelf photo
+     page - big miss. Lifting eleven duplicated lines into pickShelfPhotos
+     carried the FILES and dropped the WORDS, so both shelf reads opened a
+     sheet headed "Photograph the label". Nothing could see it: the unit
+     suite cannot call a render function and the walk was not opening this
+     sheet at all. */
+  step('a shelf photo asks for a shelf, not a label');
+  {
+    const said = await page.evaluate(() => {
+      const out = {};
+      const seen = [];
+      const realPick = window.labelPick;
+      window.labelPick = (fn, opts) => { seen.push(opts || {}); };
+      try { photographMyShelf(); } catch (e) { out.threw = e.message; }
+      window.labelPick = realPick;
+      out.opts = seen[0] || null;
+      return out;
+    });
+    if (said.threw) {
+      failures.push('shelf photo: threw — ' + said.threw);
+    } else if (!said.opts) {
+      failures.push('shelf photo: never opened a camera sheet');
+    } else {
+      const title = String(said.opts.title || '');
+      const go = String(said.opts.go || '');
+      if (/label/i.test(title) || /label/i.test(go)) {
+        failures.push('shelf photo: the sheet says "' + title + '" / "'
+          + go + '" — that is the bottle page');
+      }
+      if (!/shelf/i.test(title + ' ' + go)) {
+        failures.push('shelf photo: the sheet never says shelf — "'
+          + title + '" / "' + go + '"');
+      }
+    }
+  }
+
   step('the service reader says what actually came back');
   {
     const said = await page.evaluate(async () => {

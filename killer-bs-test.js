@@ -15598,5 +15598,106 @@ sec('\u00a7362 one answer to what counts as having a note');
     L.needsEnhancing({ tn: {} }), true);
 }
 
+sec('\u00a7363 one check, and four things to do about a finding');
+{
+  /* BZ: asking to Leave it seems odd with no other action - so you give me
+     an inconsistency and I have to do something about it, research it (so
+     keep it for now), fix it, or dismiss it. And: we should have 1 check
+     and the results should all be actionable in bulk or line by line. And:
+     I might want to copy or print that whole list to work. */
+  const now = Date.now(), day = 86400000;
+  eq('a finding nobody has judged comes back',
+    L.auditVerdict({}, 'dups:a', now), null);
+  eq('one marked correct never comes back',
+    L.auditVerdict({ 'dups:a': { v: 'ok', at: now - 900 * day } },
+      'dups:a', now), 'ok');
+  /* KEEP FOR NOW IS THE ONE THAT WAS MISSING: it needs looking up and
+     tonight is not the night, so it rests a fortnight rather than for
+     ever. */
+  eq('one kept for now is quiet at first',
+    L.auditVerdict({ 'dups:a': { v: 'later', at: now - day } },
+      'dups:a', now), 'later');
+  eq('and comes back after a fortnight',
+    L.auditVerdict({ 'dups:a': { v: 'later', at: now - 15 * day } },
+      'dups:a', now), null);
+  /* A row stored before verdicts existed means "correct" - that is what
+     every Leave it press meant when Leave it was the only button. */
+  eq('an old Leave it still means correct',
+    L.auditVerdict({ 'dups:a': { at: now } }, 'dups:a', now), 'ok');
+  /* And a verdict is per FINDING and per BOTTLE, so putting one to rest
+     does not silence the same fault elsewhere. */
+  eq('a verdict on one bottle does not cover another',
+    L.auditVerdict({ 'dups:a': { v: 'ok', at: now } }, 'dups:b', now), null);
+  eq('nor the same bottle under another finding',
+    L.auditVerdict({ 'dups:a': { v: 'ok', at: now } }, 'proof:a', now), null);
+
+  /* THE WHOLE LIST AS TEXT, because some of these need a catalogue or a
+     bottle in your hand and neither is in the sheet. */
+  const txt = L.auditText([{ id: 'dups', title: '1 bottle appears twice',
+    why: 'two entries, one whisky',
+    items: [{ key: 'a', text: 'Ardbeg 10  ==  Ardbeg Ten' }] }], 325,
+    '2026-09-10');
+  /* Case-insensitive: the heading is upper-cased on purpose and a test
+     that breaks on a capital letter is testing the copy, not the tool. */
+  eq('the text names the finding', /appears twice/i.test(txt), true);
+  eq('and says which list it scanned',
+    /what your shelf contradicts/i.test(
+      L.auditText([], 10, 'x', 'your shelf')), true);
+  eq('and the bottles under it', /Ardbeg Ten/.test(txt), true);
+  eq('and says how many were scanned', /325 entries/.test(txt), true);
+  eq('an empty scan still says something',
+    /Nothing contradicts/.test(L.auditText([], 325, '2026-09-10')), true);
+
+  /* ONE CHECK. The shelf ran five and the library ran nine; the four the
+     shelf was missing are ones it wanted as much as the library did. */
+  const cat = {
+    a: { k: 'a', name: 'Real Whisky', dist: 'X', sub: 'bourbon',
+         proof: 100 },
+    b: { k: 'b', name: 'Odd One', dist: 'Y', sub: 'bourbon', proof: 42 }
+  };
+  const nine = L.libraryAudit(cat, {});
+  eq('the one check sees a proof whisky is not bottled at',
+    nine.some(f => /proof/i.test(f.title)), true);
+}
+
+sec('\u00a7364 adding more types needs a bit more care');
+{
+  /* BZ, after adding a vodka: it tagged it as bourbon, I selected vodka,
+     and then it wanted to look up the tasting notes. Adding the types to
+     L.TYPES was half the job - three things downstream had never heard of
+     them. */
+
+  /* ONE: THE GUESSER KNEW ELEVEN WHISKY WORDS AND NOT ONE SPIRIT, so a
+     bar bottle came back null and took whatever default was waiting. */
+  eq('a vodka is a vodka', L.guessSub('Belvedere Vodka', '', {}), 'vodka');
+  eq('a gin is a gin', L.guessSub("Hendrick's Gin", '', {}), 'gin');
+  eq('a rum is a rum', L.guessSub('Bacardi Superior Rum', '', {}), 'rum');
+  eq('a mezcal is a mezcal',
+    L.guessSub('Del Maguey Mezcal', '', {}), 'mezcal');
+  eq('a cognac is a brandy',
+    L.guessSub('Hennessy VS Cognac', '', {}), 'brandy');
+  eq('and a reposado is a tequila',
+    L.guessSub('Fortaleza Reposado', '', {}), 'tequila');
+
+  /* AND THE FIRST ATTEMPT PROVED BZ RIGHT TWICE IN ONE PROBE. Substring
+     matching on short words, and finish words that name other spirits. */
+  eq('VirGINia Gentleman is a bourbon, not a gin',
+    L.guessSub('Virginia Gentleman Bourbon', '', {}), 'bourbon');
+  eq('a rum CASK scotch is a scotch, not a rum',
+    L.guessSub('Rum Cask Finish Scotch', 'Ardbeg', {}), 'scotch');
+  eq('and a brandy barrel bourbon is a bourbon',
+    L.guessSub('Balcones Brandy Barrel Bourbon', '', {}), 'bourbon');
+
+  /* TWO: THE FILL-IN QUEUE WANTED TASTING NOTES FOR A VODKA. It would
+     have spent a lookup to be told there are none, and carried it for
+     ever. L.isWhisky was read by the radar, the ladder and the shelf
+     filter - and not by the one thing that spends money. */
+  eq('the queue asks about a bourbon with no note',
+    L.needsEnhancing({ sub: 'bourbon', tn: {} }), true);
+  ['vodka', 'gin', 'rum', 'tequila', 'mezcal', 'liqueur', 'brandy']
+    .forEach(sub => eq('and never about a ' + sub,
+      L.needsEnhancing({ sub: sub, tn: {} }), false));
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
