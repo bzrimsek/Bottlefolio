@@ -16516,5 +16516,99 @@ sec('\u00a7378 a field name is not a word, and a queue must be able to empty');
     L.flightNoteQueue(cat, [], { ledger: {}, today: today }).length, 0);
 }
 
+sec('\u00a7379 a map pin opens the shelf');
+{
+  /* BZ: from the map page, if we click a circle can we launch the list of
+     bottles under it, basically jump to shelf with a filter?
+
+     It used to open a plain list in a sheet - no sort, no search, no
+     whisky-only chip, and no way from a bottle back to where you were.
+     All of that already exists on the shelf, and the pin knows exactly
+     which keys sit under it.
+
+     Every other facet asks a QUESTION of a bottle: what type, what
+     region, what proof. This one carries an ANSWER somebody else worked
+     out, which is why it is a set rather than a rule. */
+  const cat = { a: { k: 'a', name: 'A', sub: 'scotch', proof: 90 },
+                b: { k: 'b', name: 'B', sub: 'scotch', proof: 90 },
+                c: { k: 'c', name: 'C', sub: 'bourbon', proof: 90 } };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'sealed' },
+                { id: '3', k: 'c', status: 'open' }];
+  const base = { status: 'all', favsOnly: false, wishOnly: false,
+                 whiskyOnly: false, types: [], obsc: [], regions: [],
+                 bands: [], proofs: [], scars: [], cask: '', age: '',
+                 q: '', sort: 'name', keys: [] };
+  const shown = o => L.shelfFilter(Object.values(cat), bots,
+    Object.assign({}, base, o)).map(p => p.name);
+
+  eq('with no set, the shelf is the shelf', shown({}).length, 3);
+  eq('a set narrows it to those bottles', shown({ keys: ['a', 'c'] }),
+    ['A', 'C']);
+  /* AND IT IS NOT THE ONLY FILTER. A pin says which bottles; the chips
+     still say which of those. */
+  eq('the other filters still apply on top',
+    shown({ keys: ['a', 'c'], types: ['scotch'] }), ['A']);
+  /* A SEALED BOTTLE IS STILL FROM THERE. A pin is about what you own from
+     a place and half of it is usually sealed, so opening on the open ones
+     would show a fraction of the thing just tapped. */
+  eq('sealed bottles are included', shown({ keys: ['b'] }), ['B']);
+  /* IT COUNTS AS A NARROWING, so Clear all clears it and the shelf knows
+     it is somewhere you WENT and offers the way back. */
+  eq('a key set is a filter like any other',
+    L.activeFacets(Object.assign({}, base, { keys: ['a'] })), 1);
+  eq('and Clear all clears it',
+    L.clearFacets(Object.assign({}, base, { keys: ['a'] })).keys.length, 0);
+}
+
+sec('\u00a7380 a gap nobody can fill is not a gap you are failing');
+{
+  /* BZ: my profile says Categories is weakest - when I search it looks
+     for single grain and finds nothing, so I'm docked points in an area
+     that is not possible.
+
+     Measured on the shipped catalog of 325 entries: ONE wheat, and zero
+     single grain, corn or blended malt. The app was marking him down for
+     categories it cannot name a single bottle in, then sending him to a
+     search that came back empty - not guidance, an accusation it cannot
+     back up. */
+  eq('single grain is not a shopping trip',
+    L.isHardGap('breadth', 'single grain'), true);
+  eq('nor is corn', L.isHardGap('breadth', 'corn'), true);
+  eq('but rye certainly is', L.isHardGap('breadth', 'rye'), false);
+  eq('and so is bourbon', L.isHardGap('breadth', 'bourbon'), false);
+
+  /* NAMED, NOT COUNTED. The first attempt counted the catalog instead,
+     which is self-maintaining and wrong: it made the profile change with
+     the size of the SHARED library, so somebody else publishing a bottle
+     would move BZ's score. A test written long before caught it in one
+     run - shelfAxes must answer the same whether it is handed the whole
+     library or only the shelf, because the profile is about his shelf.
+
+     This asserts the invariant directly, so the next person tempted by
+     the same idea meets it here rather than three checks later. */
+  {
+    const shelfOnly = { a: { k: 'a', name: 'A', sub: 'bourbon',
+      dist: 'D', proof: 90 } };
+    const huge = Object.assign({}, shelfOnly);
+    for (let i2 = 0; i2 < 40; i2++) {
+      huge['x' + i2] = { k: 'x' + i2, name: 'X' + i2, sub: 'single grain',
+        dist: 'D', proof: 90 };
+    }
+    eq('a library full of single grain does not make it easy',
+      L.isHardGap('breadth', 'single grain'), true);
+    eq('and the answer does not depend on the catalog at all',
+      L.isHardGap('breadth', 'single grain', huge)
+        === L.isHardGap('breadth', 'single grain', shelfOnly), true);
+  }
+
+  /* The named list still carries the other kind of hard: a 30 year old is
+     easy to FIND and hard to BUY, which no count could ever see. */
+  eq('a 30 year old is hard', L.isHardGap('age', '30'), true);
+  eq('Sweden stays hard', L.isHardGap('origin', 'Sweden'), true);
+  eq('and China is unexplored rather than hard',
+    L.isHardGap('origin', 'China'), false);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
