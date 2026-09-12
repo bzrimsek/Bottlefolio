@@ -680,6 +680,36 @@ function check(name, got, want) {
       r.nameKept, 'Changed here');
   }
 
+  /* A DEFAULT OF NULL IS NOT A SHAPE.
+
+     BZ's log, on every boot of both devices: "could not read showFill
+     from this device; taking the account copy instead", and a toast
+     saying some local data would not read. Nothing was damaged. showFill
+     defaults to NULL so an untouched device cannot outvote one with an
+     opinion - and typeof null is "object" while typeof true is "boolean",
+     so a perfectly good stored `true` failed the shape check on the way
+     in, every single time, threw the whole load onto the account copy and
+     told him his data was unreadable.
+
+     The check still does its real job; it just no longer has an opinion
+     about the shape of a key the app has no opinion about. */
+  {
+    const r = await run('a stored setting under a null default', {},
+      async page => page.evaluate(async () => {
+        S.showFill = true;
+        save_();
+        const raw = localStorage.getItem('kb.showFill');
+        /* Reload the way the app does, and see whether it survives. */
+        S.showFill = null;
+        load();
+        return { stored: raw, after: S.showFill,
+                 lost: (typeof DISCARDED !== 'undefined'
+                   ? DISCARDED.slice() : ['no list']) };
+      }));
+    check('a true stored under a null default reads back', r.after, true);
+    check('and nothing is reported as unreadable', r.lost, []);
+  }
+
   /* A DEVICE WITH NO OPINION TAKES THE ACCOUNT'S.
 
      BZ turned the fill gauge on at the shelf on his phone and his PC went

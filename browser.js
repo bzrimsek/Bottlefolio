@@ -946,6 +946,36 @@ function step(n) {
     }
   }
 
+  /* A POST THAT ARRIVED AS A GET. BZ's log: a 35-second, 364KB shelf read
+     that came back "name required" - doGet's answer to a missing ?name,
+     not anything doPost can say. The request went out as a POST with
+     mode:'shelf' and reached the single-bottle handler. */
+  step('a lookup answer to a shelf question names the deployment');
+  {
+    const said = await page.evaluate(async () => {
+      const real = window.fetch;
+      window.fetch = () => Promise.resolve(
+        new Response('{"error":"name required"}', { status: 200 }));
+      let msg = '';
+      try {
+        const r = await postWithRetry('https://example.test/exec',
+          JSON.stringify({ mode: 'shelf' }));
+        await readService(r, 'shelf');
+        msg = 'no complaint';
+      } catch (e) { msg = (e && e.message) || String(e); }
+      window.fetch = real;
+      return msg;
+    });
+    if (!/deployment/i.test(said)) {
+      failures.push('a GET answer to a shelf POST said "' + said
+        + '" rather than naming the deployment');
+    }
+    if (/name required/.test(said)) {
+      failures.push('it repeated the single-bottle handler\u2019s '
+        + 'complaint, which sends somebody looking for a missing name');
+    }
+  }
+
   step('the service reader says what actually came back');
   {
     const said = await page.evaluate(async () => {
