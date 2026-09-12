@@ -4538,13 +4538,30 @@ sec('§186 a flight prompt is not a tasting note');
     (L.enhanceDiff(mine, real) || {}).tn.nose, 'a');
   eq('a bottle with no note at all is filled',
     L.enhanceDiff(bare, real).tn.nose, 'apple');
-  // Half an answer is not a note, and taking it would destroy the prompt
-  // to put a fragment in its place.
+  /* EITHER NOSE OR PALATE IS A NOTE. This asserted the older, stricter
+     rule - both or nothing - and it was the oldest open complaint in the
+     app: BZ's Old Elk came back with "caramel, oak, hint of smoke" and a
+     color, the call was paid for, and every word was thrown away. Then
+     the bottle was queued to be paid for again.
+
+     The rule has been loosened twice and each time for the same reason.
+     It wanted nose, palate AND finish, which threw away three good
+     Barrells for want of a finish. Then nose and palate, which threw away
+     the Old Elk. A palate on its own is what somebody would write in a
+     notebook; so is a nose. What is not a note is a color and nothing
+     else, which is a fact about the liquid rather than a description of
+     it, and that is where the line sits now. */
   eq('a nose and a palate replaces the prompt',
     L.enhanceDiff(withPrompt, { nose: 'apple', palate: 'pear' }).tn.palate,
     'pear');
-  eq('half of that does not',
-    L.enhanceDiff(withPrompt, { nose: 'apple' }), null);
+  eq('and so does a palate on its own',
+    L.enhanceDiff(withPrompt, { palate: 'caramel, oak' }).tn.palate,
+    'caramel, oak');
+  eq('and a nose on its own',
+    L.enhanceDiff(withPrompt, { nose: 'apple' }).tn.nose, 'apple');
+  /* A COLOR IS NOT A TASTING NOTE. */
+  eq('but a color alone is still refused',
+    L.enhanceDiff(withPrompt, { colour: 'amber' }), null);
   eq('and the prompt survives being refused',
     withPrompt.tn.nose, 'a');
   // Once filled, it must not come back round on the next run.
@@ -4647,15 +4664,17 @@ eq('the tn_ prefix counts the same',
 {
   const prompt = { k: 'x', name: 'X', tnFrom: 'THREE MILES APART',
                    tn: { nose: 'a', palate: 'b', finish: 'c' } };
+  /* A NOSE IS NOW USABLE, so it left this list. What stays is the shape
+     that really is unusable: a finish or an age with nothing to describe
+     the whisky at all. */
   const answers = [
-    { nose: 'peat' },
     { finish: 'iodine' },
-    { nose: 'a', palate: 'b', finish: 'c' },
-    { nose: 'a', palate: 'b' },
     { age: 16 }
   ];
-  eq('every partial answer is one the diff could not use',
+  eq('a partial answer with no nose and no palate is still refused',
     answers.filter(a => L.notePartial(a) && L.enhanceDiff(prompt, a)), []);
+  eq('but one with a nose is taken',
+    !!L.enhanceDiff(prompt, { nose: 'peat' }), true);
   // The catch that found the third copy of the cask bug: a reply that got
   // as far as `finish` and stopped is a tasting word, and it was being
   // written into the cask field.
@@ -4669,12 +4688,18 @@ eq('the tn_ prefix counts the same',
                      finish: 'long and warming' }).fin,
      L.parseLookup({ name: 'X', proof: 90, finish: 'long and warming' }).fin],
     ['Oloroso', null]);
+  /* NAMED, NOT INDEXED. These read answers[2] and answers[3] out of the
+     list above, so shortening that list broke two assertions that had
+     nothing to do with the change. A fixture referred to by position is a
+     fixture that breaks when somebody edits a neighbour. */
+  const whole = { nose: 'a', palate: 'b', finish: 'c' };
+  const noFinish = { nose: 'a', palate: 'b' };
   eq('and the complete one is used rather than retried',
-    !!L.enhanceDiff(prompt, answers[2]) && !L.notePartial(answers[2]), true);
+    !!L.enhanceDiff(prompt, whole) && !L.notePartial(whole), true);
   // The case that sent three bottles round in circles: no finish, and it
   // is used rather than asked again for.
   eq('a note with no finish is used, not retried',
-    !!L.enhanceDiff(prompt, answers[3]) && !L.notePartial(answers[3]), true);
+    !!L.enhanceDiff(prompt, noFinish) && !L.notePartial(noFinish), true);
 }
 
 /* §189  the library screen ---------------------------------------------
