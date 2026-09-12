@@ -16266,15 +16266,33 @@ sec('\u00a7374 how much is left, in seven notches');
      good enough. Seven notches, and the two near the ends earn their
      place - 90 is barely touched and 10 is nearly gone, and plain
      quarters can say neither. */
+  /* BZ's scale, revised once he had used it: 10, 25, 33, 50, 66, 75, 90,
+     100. Thirds earn their place - "a third left" is a thing people say
+     and quarters cannot express it - and the ends stay, because nearly
+     gone and barely touched are the two a gauge is really for.
+
+     NO ZERO, which is his call and a coherent one: an empty bottle is
+     retired rather than logged at nothing, and Retire already exists.
+     Anything stored at 0 under the old scale snaps to 10, which reads as
+     nearly gone rather than as a bottle that quietly became full. */
   eq('a dragged finger cannot land on 73', L.fillSnap(73), 75);
   eq('nor on 13', L.fillSnap(13), 10);
-  eq('nor on 38', L.fillSnap(38), 50);
-  eq('empty is a real answer', L.fillSnap(0), 0);
-  eq('and so is full', L.fillSnap(100), 100);
+  eq('38 is nearer a third than a half', L.fillSnap(38), 33);
+  eq('and 63 is two thirds', L.fillSnap(63), 66);
+  eq('an old stored zero reads as nearly gone', L.fillSnap(0), 10);
+  eq('and so does its wording', L.fillWords(0), 'Nearly gone');
+  eq('and full is still full', L.fillSnap(100), 100);
   eq('out of range is pulled back', L.fillSnap(140), 100);
   eq('and nothing at all is nothing', L.fillSnap(null), null);
   eq('the ends have their own words', L.fillWords(90), 'Barely touched');
   eq('and so does the bottom', L.fillWords(10), 'Nearly gone');
+  /* THE THIRDS SAY WHAT THEY ARE, which is the whole reason they were
+     added - "33%" is a number and "a third left" is what somebody would
+     say holding the bottle. */
+  eq('a third says so', L.fillWords(33), 'A third left');
+  eq('and two thirds too', L.fillWords(66), 'Two thirds');
+  eq('every notch has words',
+    L.FILL_NOTCHES.filter(v => /%/.test(L.fillWords(v))), []);
 
   /* WHAT IS RUNNING OUT. BZ: this feature, if enabled, can lead to a
      Remember to Stock up suggestion on shop, maybe in the form of the
@@ -16447,9 +16465,11 @@ sec('\u00a7377 a photograph can see how full a bottle is');
     { name: 'Ardbeg 10', fill: 25 }
   ], read: '' }, cat, bots, []);
 
-  /* SNAPPED ON THE WAY IN, so a 63 never reaches the app as a 63. */
+  /* SNAPPED ON THE WAY IN, so a 63 never reaches the app as a 63. On
+     BZ's revised scale that is two thirds rather than three quarters,
+     which is the thirds doing exactly what they were added for. */
   eq('a service number lands on a notch',
-    seen.items[0].fill, 75);
+    seen.items[0].fill, 66);
   eq('and dark glass reporting nothing stays nothing',
     L.shelfSeen({ items: [{ name: 'X' }] }, {}, [], []).items[0].fill,
     null);
@@ -16690,6 +16710,51 @@ sec('\u00a7382 a grain bill on something made from agave');
   eq('it offers the bill or the category',
     /grain bill|category/.test(L.auditSuggestion('mashspirit', cat.t,
       'A Tequila')), true);
+}
+
+sec('\u00a7383 three ways a read fails, three sentences');
+{
+  /* BZ: toast says network dropped and that is a lie. It was. That line
+     ran on EVERY retry, and since a 404 is now thrown and retried, a
+     service that answered perfectly well and dropped the request got
+     reported as his connection failing. He would go and check his wifi.
+
+     His log settles what a 404 actually is: the same label read succeeded
+     at 10.7s with 772KB and failed with 404 at 22.2s with 571KB, minutes
+     apart, with a 33.8-second 909KB levels read going through between
+     them. Apps Script drops some of these. The photograph was never the
+     problem, and telling somebody to retake it wastes their afternoon. */
+  eq('a 404 blames the service, not the wifi',
+    /dropped that one/.test(L.readFailSays(new Error('HTTP 404'))), true);
+  eq('and does not send somebody to retake the photograph',
+    /signal|again from here/.test(L.readFailSays(new Error('HTTP 404'))),
+    false);
+  eq('a failed fetch is the network, and says where to stand',
+    /signal/.test(L.readFailSays(new Error('Failed to fetch'))), true);
+  eq('and anything else quotes what came back',
+    /no JSON/.test(L.readFailSays(new Error('no JSON in the reply'))),
+    true);
+  /* THE CLASSIFIER MUST NOT CLAIM A 404, or the sentence above can never
+     be reached. */
+  eq('a 404 is not a network failure',
+    L.isNetworkFail(new Error('HTTP 404')), false);
+}
+
+sec('\u00a7384 an unknown category is never quietly a bourbon');
+{
+  /* BZ: still issues knowing bottle type in photo - photo an Irish,
+     selector says bourbon. The app was not guessing WRONG; it was not
+     guessing at all. Three places read `|| 'bourbon'`, so a label read
+     with no category showed - and on one path SAVED - bourbon, and the
+     only way to catch it was to notice. `bourbon` is first in L.TYPES,
+     which is the whole reason it was the one. */
+  ['Redbreast 12', 'Green Spot', 'Bushmills 10 Single Malt',
+   'Teeling Small Batch', 'Jameson'].forEach(n => {
+    eq(n + ' reads as irish', L.guessSub(n, '', {}), 'irish');
+  });
+  /* THE KNOWLEDGE WAS ALREADY THERE. The forms simply were not asking. */
+  eq('and a name it cannot place stays blank rather than becoming one',
+    L.guessSub('Some Unlabelled Bottling', '', {}), null);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
