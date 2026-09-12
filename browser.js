@@ -801,6 +801,48 @@ function step(n) {
     });
   }
 
+  /* MANAGE FIRST, IMPORT FOLDED. BZ: import is once or infrequent while
+     manage is more frequent - please reorder shelf setting accordingly
+     and use folds. A fold that will not open is worse than no fold, so
+     this drives it rather than reading the source. */
+  step('shelf tools opens on Manage, with Import folded away');
+  {
+    const r = await page.evaluate(() => {
+      S.showFill = true;
+      showShelfTools();
+      const m = document.getElementById('modalBody')
+        || document.querySelector('.modal');
+      const seen = () => [...m.querySelectorAll('button, .portlabel')]
+        .filter(e => e.offsetParent !== null)
+        .map(e => e.textContent.trim());
+      const before = seen();
+      const fold = [...m.querySelectorAll('button')]
+        .filter(b => /^Import a shelf/.test(b.textContent.trim()))[0];
+      if (fold) fold.click();
+      const after = seen();
+      closeModal();
+      return { before: before, after: after };
+    });
+    const idx = t => r.before.findIndex(x => new RegExp(t).test(x));
+    if (idx('^Manage$') < 0) {
+      failures.push('shelf tools: no Manage section on open');
+    }
+    if (idx('^Import a shelf') < 0) {
+      failures.push('shelf tools: no way to reach Import');
+    }
+    if (idx('^Manage$') > idx('^Import a shelf')) {
+      failures.push('shelf tools: Import comes before Manage, and Import '
+        + 'is the once while Manage is the Sunday job');
+    }
+    if (r.before.some(x => /^Import a collection$/.test(x))) {
+      failures.push('shelf tools: Import is not folded away');
+    }
+    if (!r.after.some(x => /^Import a collection$/.test(x))) {
+      failures.push('shelf tools: the Import fold does not open, which is '
+        + 'worse than not folding it at all');
+    }
+  }
+
   step('a shelf photo asks for a shelf, not four bottle faces');
   {
     const sheet = await page.evaluate(() => {
