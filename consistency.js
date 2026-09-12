@@ -875,6 +875,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Text the list, or text a link', 'Diagnostics by user',
     'With a guest', 'Whisky only', 'The library', 'Add to the wishlist',
   'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
+  'Add to the list',
   'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',

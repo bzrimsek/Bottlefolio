@@ -722,6 +722,32 @@ function step(n) {
      A map with three kinds of circle and two behaviours is a map you have
      to learn. This drives every pin the map draws and requires all of
      them to land on the shelf with a set. */
+  /* THE FILTER PANEL HAS A WAY OUT AT ITS FOOT. BZ: filter got stuck,
+     mobile, clear all not working. One trap with two halves - the only
+     control that closes the panel is the More filters chip at the TOP,
+     and on a phone the panel is taller than the screen, so by the time
+     somebody reaches the foot there is nothing in view that closes it.
+     Then Clear all, the one button in reach, correctly does nothing when
+     no filters are on, which reads as broken. */
+  step('the filter panel can be closed from its foot');
+  {
+    const r = await page.evaluate(() => {
+      S.filters.showMore = true;
+      renderShelfFilters();
+      const done = document.getElementById('filtersDone');
+      if (!done) return { found: false };
+      const before = !!S.filters.showMore;
+      done.click();
+      return { found: true, before: before, after: !!S.filters.showMore,
+               says: done.textContent.trim() };
+    });
+    if (!r.found) {
+      failures.push('filters: nothing at the foot of the panel closes it');
+    } else if (r.after) {
+      failures.push('filters: the foot control did not close the panel');
+    }
+  }
+
   step('every circle on the map opens the shelf');
   {
     const r = await page.evaluate(() => {
@@ -897,9 +923,15 @@ function step(n) {
        mode and the same deployment, sometimes a 404. Remembering the FIRST
        one would turn a transient failure into a dead feature for the rest
        of the session without ever reaching his service again. */
-    if (r.calls !== 2) {
+    /* FOUR, not two: a 404 is now RETRIED, because BZ's log showed reads
+       that 404'd at 22 and 38 seconds sitting between reads that worked
+       at 10 and 12 - transient, not a missing mode. So one press costs
+       two round trips, and it takes two presses to conclude the door is
+       gone. The third press costs nothing, which is what this measures. */
+    if (r.calls !== 4) {
       failures.push('missing mode: asked the service ' + r.calls
-        + ' times, want 2 — one 404 is a blip, two is a missing door');
+        + ' times, want 4 — a 404 is retried once, and two presses is '
+        + 'what proves the door is missing');
     }
     if (!/404/.test(r.third)) {
       failures.push('missing mode: the third press said "' + r.third
