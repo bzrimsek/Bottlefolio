@@ -22,7 +22,10 @@ import sys, os, re, json, hashlib, subprocess
 # What actually goes to the web host. The tooling (bump, audit, ship,
 # validate, lookup.gs) and the notes never do.
 DEPLOYABLE = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
-              'mark.png', 'icon-192.png', 'icon-512.png']
+              'mark.png', 'icon-192.png', 'icon-512.png',
+              # Maskable, with a safe zone, so Android's circular crop
+              # does not cut the B's edge off the home screen.
+              'icon-mask-192.png', 'icon-mask-512.png']
 STATE = '.shipstate.json'
 
 
@@ -129,6 +132,83 @@ def main():
             summary = next((l.strip() for l in out.splitlines() if 'passed' in l),
                            'tests passed')
             print(f'  \u2713 {summary}')
+
+    # The sync cycle ──────────────────────────────────────────
+    # Dark from v1.9.10 to v1.9.27 because the fake could not build a
+    # reference — every ref() built its parent, down to a root that built
+    # itself for ever — and the failure read as though the app never
+    # reached auth. It was never in the gate, so nothing noticed for
+    # seventeen builds. It is in the gate now: this covers the merge, which
+    # decides which copy of a shelf survives, and that is the last place
+    # anybody should be running on trust.
+    sync = locate('sync.js', base)
+    if not sync:
+        print('  \u25b8 sync — sync.js not found, skipped')
+    else:
+        print('\u25b8 sync')
+        r = subprocess.run(['node', sync], capture_output=True, text=True, cwd=base)
+        out = r.stdout + r.stderr
+        if r.returncode != 0 or '\u2716' in out:
+            sys.stdout.write(out)
+            print('  \u2716 SYNC FAILED'); ok = False
+        else:
+            summary = next((l.strip() for l in out.splitlines()
+                            if 'cycle holds' in l), 'sync passed')
+            print(f'  \u2713 {summary}')
+
+    # The linter ──────────────────────────────────────────────
+    # Two ReferenceErrors reached real users on 2026-09-10 in a build this
+    # gate had passed, and nothing here could see either: a variable that
+    # does not exist in its scope is invisible to a text check, to
+    # node --check (both files parse), and to every harness that never
+    # executes that line. This is the check that catches them. Proved by
+    # putting both faults back and watching it name them.
+    lint = locate('lint.js', base)
+    if not lint:
+        print('  \u25b8 lint \u2014 lint.js not found, skipped')
+    else:
+        print('\u25b8 lint')
+        r = subprocess.run(['node', lint], capture_output=True, text=True,
+                           cwd=base)
+        sys.stdout.write(r.stdout)
+        if r.returncode != 0:
+            print('  \u2716 LINT FAILED'); ok = False
+
+    # The scans that were not in the gate ─────────────────────
+    # Four harnesses existed and this ran none of them. It cost exactly
+    # what you would expect: screens.js had been pointing at
+    # /home/claude/kb, a container path from an earlier session, so it
+    # threw before doing anything and had been unable to run for weeks —
+    # and nothing said so, because nothing asked it to run. It was also
+    # still expecting renderShared, a screen deleted in thread 6.
+    #
+    # A scan that cannot start is worse than one that fails: a failure gets
+    # reported. Found 2026-09-09 when BZ asked for all of them to be run,
+    # and the fix is not to remember to run them — it is this.
+    #
+    # browser.js is the slow one, about a minute. That is the price of a
+    # gate that covers the walk, and it is cheaper than the round it takes
+    # to discover a dead screen from a screenshot.
+    for name, label, want in (
+            ('screens.js', 'screens', 'screens draw'),
+            ('render.js', 'render', 'agree with the engine'),
+            ('twotab.js', 'two tabs', 'two tabs'),
+            ('browser.js', 'walk', 'loads, every screen draws')):
+        path = locate(name, base)
+        if not path:
+            print(f'  \u25b8 {label} \u2014 {name} not found, skipped')
+            continue
+        print(f'\u25b8 {label}')
+        r = subprocess.run(['node', path], capture_output=True, text=True,
+                           cwd=base)
+        out = r.stdout + r.stderr
+        if r.returncode != 0 or '\u2716' in out:
+            sys.stdout.write(out[-4000:])
+            print(f'  \u2716 {label.upper()} FAILED'); ok = False
+        else:
+            summary = next((l.strip() for l in out.splitlines()
+                            if want in l), f'{label} passed')
+            print(f'  \u2713 {summary[:150]}')
 
     # Verdict ─────────────────────────────────────────────────
     print()
