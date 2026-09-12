@@ -16610,5 +16610,40 @@ sec('\u00a7380 a gap nobody can fill is not a gap you are failing');
     L.isHardGap('origin', 'China'), false);
 }
 
+sec('\u00a7381 the shop price off the tag in the photograph');
+{
+  /* BZ: we started down this path for the store lookup price comp, that
+     is all we need.
+
+     The comparison already existed and already worked - priceVerdict
+     handles the currency, and what you actually PAID for one beats what
+     anybody lists it at. The only missing half was the shop's asking
+     price, and it is usually printed on a tag beside the bottle in the
+     photograph already being taken. So label.gs reads it and the app puts
+     it in the box the comparison already reads from: one door, not two. */
+  eq('a price in the box is found',
+    (L.offerPrice('Buffalo Trace $34') || {}).amount, 34);
+  eq('and a name alone carries none', L.offerPrice('Buffalo Trace'), null);
+
+  /* WHAT YOU PAID BEATS WHAT ANYBODY LISTS IT AT. */
+  const over = L.priceVerdict(L.offerPrice('Buffalo Trace $34'),
+    { home: 'USD', paid: 28, msrp: 30 });
+  eq('a shop asking more than you paid says so',
+    /over/.test(over.verdict), true);
+  eq('and says by how much', /21%/.test(over.why), true);
+
+  const under = L.priceVerdict(L.offerPrice('Buffalo Trace $24'),
+    { home: 'USD', paid: 28, msrp: 30 });
+  eq('and a bargain reads as one', /under|good/.test(under.verdict), true);
+
+  /* A WRONG SHOP PRICE IS WORSE THAN NONE - it turns a fair price into an
+     apparent bargain, which is the one mistake here that costs money. So
+     the read returns null unless the tag was legible and clearly belonged
+     to this bottle, and no price at all means no verdict rather than a
+     confident one. */
+  eq('no price means no verdict',
+    L.priceVerdict(null, { home: 'USD', paid: 28 }), null);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

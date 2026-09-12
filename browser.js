@@ -712,6 +712,69 @@ function step(n) {
      So it opens the real sheet and looks at what is in it. A shelf picker
      has one way to add a photograph and no named faces; the bottle picker
      has four. */
+  /* EVERY CIRCLE ON THE MAP DOES THE SAME THING. BZ asked whether
+     clicking one could open the shelf; I wired the COUNTRY circles to
+     jump and left the distillery and Scotch-region circles drawing an
+     inline card, so two of three kinds behaved differently and the card
+     could land below the fold - which reads as nothing happening. BZ,
+     plainly: no it does not.
+
+     A map with three kinds of circle and two behaviours is a map you have
+     to learn. This drives every pin the map draws and requires all of
+     them to land on the shelf with a set. */
+  step('every circle on the map opens the shelf');
+  {
+    const r = await page.evaluate(() => {
+      /* The shelf this test borrows, put back at the end. Emptying it
+         instead left Home with no summary tiles, which is the same fault
+         one step further on: a test that breaks its neighbours reports
+         its own mess as somebody else's bug. */
+      const hadBottles = S.bottles;
+      S.bottles = Object.keys(S.catalog).slice(0, 60).map((k, i) =>
+        ({ id: 'MB' + i, k: k, status: 'open', got: '2026-01-01' }));
+      rebuildCatalog();
+      renderMap();
+      const svg = document.getElementById('map');
+      const pins = svg ? svg.querySelectorAll('g[data-n]') : [];
+      const out = [];
+      for (let i = 0; i < pins.length && i < 8; i++) {
+        S.filters.keys = []; S.filters.keysFrom = '';
+        goTo('map');
+        pins[i].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        out.push({
+          landed: !!document.querySelector('#scr-shelf.on'),
+          keys: (S.filters.keys || []).length,
+          from: S.filters.keysFrom || ''
+        });
+      }
+      /* PUT IT BACK. This tap-tests the map by leaving the shelf
+         filtered to a key set, and the steps below it look at the shelf
+         and found no type tiles - a test that breaks its neighbours is
+         reporting its own mess as somebody else's bug. */
+      S.filters.keys = []; S.filters.keysFrom = '';
+      S.bottles = hadBottles;
+      rebuildCatalog();
+      renderShelfFilters(); renderShelf(); renderHome();
+      return { drawn: pins.length, taps: out };
+    });
+    if (!r.drawn) {
+      failures.push('map: no circles drawn, so nothing could be tapped');
+    }
+    r.taps.forEach((t, i) => {
+      if (!t.landed) {
+        failures.push('map: circle ' + (i + 1) + ' did not open the shelf');
+      }
+      if (!t.keys) {
+        failures.push('map: circle ' + (i + 1) + ' opened the shelf with '
+          + 'no bottles behind it');
+      }
+      if (!t.from) {
+        failures.push('map: circle ' + (i + 1) + ' did not say where the '
+          + 'list came from');
+      }
+    });
+  }
+
   step('a shelf photo asks for a shelf, not four bottle faces');
   {
     const sheet = await page.evaluate(() => {
