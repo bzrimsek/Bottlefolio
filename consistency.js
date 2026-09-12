@@ -441,6 +441,14 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* ONE SOURCE, TWO READERS. The audit names the release a bottle's name
+     implies, and the suggestion offers to set it - both by asking
+     L.guessScar, which is the single door. Rule 30d is about two
+     functions DECIDING one fact from different evidence; these decide
+     nothing, they quote. If a second way of reading a release ever
+     appears, that is the thing to catch, and this entry does not hide
+     it: it names guessScar specifically. */
+  'libraryAudit>guessScar', 'auditSuggestion>guessScar',
   'ownedCount>myBottles', 'pourGlasses>reelMatches', 'viewFor>clampView',
   'zoomAbout>clampView', 'shopIsNewBottle>shopNorm',
   'parseDelimited>parseCSV', 'placeLine>titleCase', 'recap>lookupDaysSince',
