@@ -894,6 +894,53 @@ check('no fixed svg id is emitted by a repeated drawing',
       .map(m => m.replace(/>|<\/button>/g, ''));
     check('every nav tab is described in App use',
       tabs.filter(t => ref.indexOf("term: '" + t + "'") < 0));
+
+    /* AND THE OTHER WAY ROUND. BZ: app use says 8 tabs, I count 7 - map
+       is removed. Both true. The check above only ever asked whether a
+       real tab was documented; nothing asked whether a documented tab was
+       still real, so Map sat in the help for however long after the
+       screen went, and the section still called them eight.
+
+       A help page describing a screen that does not exist is worse than
+       one saying nothing, which is rule 9z in BZ's own words. */
+    /* THE TAB SECTION ONLY. The first version ran to the next `{ section:`
+       and there is not one, so it swallowed the glossary and reported
+       Color, Nose and Palate as tabs. A boundary that is not really a
+       boundary is how a check invents work. */
+    /* THE TAB SECTION, BOUNDED BY THE NEXT ONE. There IS a next section -
+       "Shop, which is three screens" - and two versions of this check
+       walked past it: the first searched for ' { section:' with a leading
+       space that is not always there, the second started the search 14
+       characters in, which is inside the heading it had just found. Both
+       ran on into the glossary and reported Color, Nose and Palate as
+       tabs. A boundary that is not a boundary is how a check invents
+       work, and a check that cries wolf gets switched off. */
+    const secRe = /section: 'The \w+ tabs'/.exec(src);
+    const sec = secRe ? secRe.index : -1;
+    const secEnd = sec > 0 ? src.indexOf('section:', sec + 30) : -1;
+    const tabSec = sec > 0 && secEnd > sec ? src.slice(sec, secEnd) : '';
+    /* IT MUST NOT PASS BY FINDING NOTHING. The first version anchored on
+       the literal "The seven tabs", so renaming the heading to eight made
+       the slice empty and the check below passed on an empty list - proved
+       by putting a dead Map tab back and watching it stay green. A check
+       that goes quiet when its anchor moves is worse than no check, so a
+       missing section is now itself the failure. */
+    check('the tab section in App use can be found',
+      tabSec ? [] : ['no "The <n> tabs" section in App use']);
+    const described = (tabSec.match(/\{ term: '([A-Za-z ]+)'/g) || [])
+      .map(m => m.replace(/\{ term: '|'/g, ''))
+      .filter(t => t !== 'Getting started');
+    check('no tab is described that the nav does not have',
+      described.filter(t => tabs.indexOf(t) < 0));
+
+    /* And the number in the heading is the number of tabs. A count
+       written in prose is a fact that goes stale silently. */
+    const WORDS = { five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+    const said = /section: 'The (\w+) tabs'/.exec(src);
+    check('the tab count in App use matches the nav',
+      said && WORDS[said[1]] !== tabs.length
+        ? ['App use says ' + said[1] + ' tabs; the nav has ' + tabs.length]
+        : []);
   }
 }
 

@@ -680,6 +680,34 @@ function check(name, got, want) {
       r.nameKept, 'Changed here');
   }
 
+  /* A DEVICE WITH NO OPINION TAKES THE ACCOUNT'S.
+
+     BZ turned the fill gauge on at the shelf on his phone and his PC went
+     on showing nothing. The PC always has some unsent change, so it
+     always wins locally, so it skipped the key entirely - and the thing
+     it was protecting was a setting it had never been asked about, held
+     at its default because the device predates the feature.
+
+     A local win exists to protect work this device DID. A null is not
+     work. */
+  {
+    const r = await run('untouched setting',
+      { 'bz-apps': { whisky: { testuid: { showFill: true,
+        stamp: Date.now() } } } }, async page => {
+      return page.evaluate(async () => {
+        /* Unsent work, so this device wins locally - exactly BZ's PC. */
+        S.displayName = 'changed here';
+        save_();
+        await new Promise(r2 => setTimeout(r2, 300));
+        return { fill: S.showFill, name: S.displayName };
+      });
+    });
+    check('a device that never set it takes the account\u2019s answer',
+      r.fill, true);
+    check('and its own unsent work is still protected',
+      r.name, 'changed here');
+  }
+
   await browser.close();
 
   if (SLICE_FROM || SLICE_TO) {

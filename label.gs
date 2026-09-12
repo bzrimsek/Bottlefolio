@@ -80,9 +80,21 @@ function readLabel_(req) {
     + '"abv":number|null,"age":number|null,"sub":string|null,'
     + '"style":string|null,"fin":string|null,"size":number|null,'
     + '"msrp":number|null,"mash":string|null,"upc":string|null,'
+    + '"shelfPrice":number|null,'
     + '"tn":{"nose":string|null,"palate":string|null,"finish":string|null}|null,'
     + '"bottled":string|null,"notes":string|null,"read":string}';
 
+  /* THE PRICE ON THE SHELF TAG, if one is in the photograph.
+
+     BZ: we started down this path for the store lookup price comp, that
+     is all we need. Right - the app already knows MSRP on every whisky it
+     carries, so the only missing half of "is this a good price" is what
+     the shop is asking, and that is often printed on a tag beside the
+     bottle in the same picture.
+
+     Read it only when it is legible and clearly attached to THIS bottle.
+     A wrong number here is worse than none: it would call a fair price a
+     bargain, which is the one mistake that costs money. */
   var system = [
     'You read whisky bottle labels from photographs and return what is',
     'PRINTED ON THEM. You are not identifying the bottle from knowledge.',
@@ -165,6 +177,14 @@ function readLabel_(req) {
     '- size: the bottle volume in millilitres, as a number. 70cl is 700.',
     '- msrp: a price ONLY if printed on the bottle, which is rare. Almost',
     '  always null.',
+    '- shelfPrice: the SHOP price from a tag or sticker in the photograph,',
+    '  in dollars, digits only. Only when the tag is legible AND clearly',
+    '  belongs to THIS bottle - a tag on the shelf edge under a different',
+    '  bottle is not this one. Null whenever you are not certain.',
+    '  A wrong shop price is worse than none: it turns a fair price into',
+    '  an apparent bargain, which is the one mistake here that costs',
+    '  somebody money. It is not the same thing as msrp, which is what the',
+    '  bottle normally sells for rather than what this shop is asking.',
     '- mash: the mash bill EXACTLY as printed, e.g. "75% corn, 21% rye, 4%',
     '  malted barley". Most labels do not carry one. Null is the common and',
     '  correct answer. Do not derive it from the category: a single malt',
