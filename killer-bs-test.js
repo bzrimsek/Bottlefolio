@@ -16645,5 +16645,52 @@ sec('\u00a7381 the shop price off the tag in the photograph');
     L.priceVerdict(null, { home: 'USD', paid: 28 }), null);
 }
 
+sec('\u00a7382 a grain bill on something made from agave');
+{
+  /* BZ: a tequila with a grain mash bill flags as the grains add up to
+     70%. Right to flag, wrong complaint - the app was doing arithmetic on
+     a field that should not exist and saying nothing about the real
+     fault. Worse, a vodka carrying "100% corn" slid through entirely,
+     because wrong data that ADDS UP is invisible to a sum check. */
+  const cat = {
+    t: { k: 't', _key: 't', name: 'A Tequila', dist: 'D', sub: 'tequila',
+         proof: 80, mash: '51% corn, 19% rye' },
+    v: { k: 'v', _key: 'v', name: 'A Vodka', dist: 'D', sub: 'vodka',
+         proof: 80, mash: '100% corn' },
+    a: { k: 'a', _key: 'a', name: 'A Real Tequila', dist: 'D',
+         sub: 'tequila', proof: 80, mash: '100% blue agave' },
+    b: { k: 'b', _key: 'b', name: 'A Bourbon', dist: 'D', sub: 'bourbon',
+         proof: 100, mash: '70% corn, 20% rye' }
+  };
+  const found = L.libraryAudit(cat, {});
+  const named = id => (found.filter(f => f.id === id)[0] || { items: [] })
+    .items.map(i => String(i.text));
+
+  eq('a tequila with a grain bill is the finding',
+    named('mashspirit').some(t => /A Tequila/.test(t)), true);
+  /* THE ONE THAT ADDS UP IS THE DANGEROUS ONE: a sum check can never see
+     it, so it would have sat there for ever looking correct. */
+  eq('and so is a vodka whose grain bill adds up',
+    named('mashspirit').some(t => /A Vodka/.test(t)), true);
+  eq('agave on a tequila is not a fault',
+    named('mashspirit').some(t => /A Real Tequila/.test(t)), false);
+  eq('and a whisky is never in this finding',
+    named('mashspirit').some(t => /A Bourbon/.test(t)), false);
+
+  /* THE ARITHMETIC IS STILL DONE, but only where grain arithmetic means
+     something. */
+  eq('a bourbon short of 100 still says so',
+    named('mashsum').some(t => /A Bourbon/.test(t)), true);
+  eq('and the tequila is not told about its sum',
+    named('mashsum').some(t => /Tequila/.test(t)), false);
+
+  /* AND THE ADVICE NAMES BOTH WAYS OUT, because there is nothing to
+     correct a grain bill on an agave spirit TO - either the bill is
+     wrong or the category is, and somebody holding the bottle knows. */
+  eq('it offers the bill or the category',
+    /grain bill|category/.test(L.auditSuggestion('mashspirit', cat.t,
+      'A Tequila')), true);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
