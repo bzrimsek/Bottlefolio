@@ -531,6 +531,43 @@ const TWO_DOORS_OK = [
   check('no button is disabled by data the screen has not fetched', dead);
 }
 
+/* ONE HOUSE TEST, NOT FOUR.
+
+   BZ's bottle screen said "This is your only bottle from Angel's Envy"
+   above "Pour it against Angel's Envy Bourbon Madeira Cask Finish. Same
+   house, same strength." He owns many. A label read had stored ANGELS
+   ENVY beside Angel's Envy, and FOUR functions were asking whether two
+   whiskies come from the same house - one through L.houseSame and three
+   by comparing raw strings.
+
+   It was found and fixed once, in bottleContext, and the other three were
+   walked past. The worst of them fed the SERVICE, which wrote a true
+   sentence from false facts and stored it, so the prose stayed wrong
+   after the shelf changed.
+
+   Rule 30d: two functions must not answer one question from different
+   evidence. Nothing in the suite could see it - each was correct on its
+   own - so it is a text check, which would have caught it in a second. */
+{
+  const raw = [];
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, m2 =>
+    m2.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, ' ');
+  /* ANY comparison of a distillery, not just dist against dist. The
+     first version of this matched only `x.dist === y.dist` and passed
+     while five more sites compared a distillery to a plain value -
+     `p.dist === d`, `x.dist === h.value` - which is the same fault
+     wearing different clothes. */
+  const re = /\.dist\s*===\s*[^;)\n]+/g;
+  let dm;
+  while ((dm = re.exec(code))) {
+    const line = code.slice(0, dm.index).split('\n').length;
+    raw.push('index.html:' + line + '  ' + dm[0]
+      + ' \u2014 use L.houseSame, or ANGELS ENVY and Angel\'s Envy are '
+      + 'two houses');
+  }
+  check('one house test, not four', raw);
+}
+
 check('every axis has a search phrase',
   axisIds.filter(id => askBlock.indexOf(id + ':') < 0));
 
@@ -837,7 +874,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
     'With a guest', 'Whisky only', 'The library', 'Add to the wishlist',
-  'How much is left', 'Another one?', 'Gone', 'With a guest',
+  'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
+  'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
     'Their shelf'];
