@@ -17116,6 +17116,51 @@ sec('\u00a7393 learning from a search that found nothing');
     Object.keys(big).length, L.MISS_KEEP);
 }
 
+sec('\u00a7394 an ignore sticks, and the count matches the rows');
+{
+  /* BZ: all sections of this inconsistency stuff, the ignores must
+     stick. They were sticking - written correctly, read back correctly,
+     decoded correctly - and then never USED, because the screen painted
+     before the fetch of them resolved and nothing painted again. Every
+     ignore was recorded and every scan drawn as though none existed.
+     That is a render-order fault the engine cannot see, so what is
+     asserted here is the engine's half: a verdict, once known, removes
+     the row. */
+  const cat = {
+    a: { k: 'a', _key: 'a', name: 'J. Mattingly Private Barrel Select',
+         dist: 'J. Mattingly', proof: 100, sub: 'bourbon',
+         scar: 'standard' },
+    b: { k: 'b', _key: 'b', name: 'Barrell Craft Spirits Private Release',
+         dist: 'Barrell Craft Spirits', proof: 100, sub: 'bourbon',
+         scar: 'standard' }
+  };
+  const of = rev => (L.libraryAudit(cat, rev)
+    .filter(f => f.id === 'scarsays')[0] || { items: [], n: 0 });
+
+  eq('both are reported to begin with', of({}).items.length, 2);
+  /* AN IGNORE IS AN ANSWER. Marked ok, it never comes back. */
+  const after = of({ 'scarsays:a': { v: 'ok', at: Date.now() } });
+  eq('an ignored row is gone', after.items.length, 1);
+  eq('and it is the right one gone',
+    /Barrell/.test(after.items[0].text), true);
+
+  /* THE HEADING COUNTS WHAT THE LIST SHOWS. BZ: sometimes numbers on
+     buttons don't match the details under them. They did not - the
+     heading counted every item and the list drew the first twelve, so a
+     group of thirteen showed twelve rows, and the group buttons marked
+     all thirteen, dismissing a row nobody had been shown. */
+  eq('the count and the items agree', after.n, after.items.length);
+  eq('and it agrees before any verdict', of({}).n, of({}).items.length);
+
+  /* A "later" COMES BACK once its fortnight is up, which is the one
+     verdict that is meant to. */
+  const old = Date.now() - (L.AUDIT_LATER_DAYS + 1) * 86400000;
+  eq('a stale later is reported again',
+    of({ 'scarsays:a': { v: 'later', at: old } }).items.length, 2);
+  eq('but a fresh one is not',
+    of({ 'scarsays:a': { v: 'later', at: Date.now() } }).items.length, 1);
+}
+
 /* Run in its own async block: this harness is a plain script, so a
    top-level await is a syntax error rather than a slow test. */
 async function queueSection() {
