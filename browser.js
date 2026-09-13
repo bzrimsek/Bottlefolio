@@ -1481,6 +1481,132 @@ function step(n) {
     });
   }
 
+  /* A REAL NAME IS LONGER THAN A TEST NAME.
+     BZ's own screenshot of the Not Smoky Bill panel: the Venn captions
+     read "BOTHNOT SMOKY BILL ONLY", because the caption under a circle
+     repeated the buddy's name, centred at a fixed x, and a real name is
+     wider than the column it sits in. Every buddy in this walk was called
+     Tyson, Dave or Eli, so nothing ever overran and the suite was green
+     while the screen was wrong.
+
+     So the walk now drives the longest plausible name and MEASURES the
+     caption boxes rather than reading their text. Proved by putting the
+     name back into the caption and watching this go red. */
+  step('a long buddy name does not overrun the Venn');
+  {
+    await page.locator('nav button[data-scr="buddies"]').click();
+    await page.waitForTimeout(150);
+    const overlap = await page.evaluate(() => {
+      /* SIGNED IN, or renderBuddiesTab returns at its first line and
+         draws the signed-out card instead — which is exactly what this
+         check reported as "no venn drawn" the first time it ran. */
+      if (!FB.user) FB.user = { uid: 'walkuid', displayName: 'Walker' };
+      if (!window.firebase) {
+        const noop = Promise.resolve({ val: () => null, exists: () => false });
+        const ref = { child: () => ref, once: () => noop, on: () => {},
+                      update: () => noop, remove: () => noop, set: () => noop,
+                      orderByChild: () => ref, equalTo: () => ref };
+        window.firebase = { database: () => ({ ref: () => ref }) };
+      }
+      SHARED.shelves = {
+        u1: { name: 'Bartholomew Fitzwilliam-Smythe',
+              catalog: { a: { k: 'a', name: 'A', proof: 90 },
+                         b: { k: 'b', name: 'B', proof: 90 } },
+              bottles: [{ id: '1', k: 'a', status: 'open' },
+                        { id: '2', k: 'b', status: 'open' }] } };
+      SHARED.names = { u1: 'Bartholomew Fitzwilliam-Smythe' };
+      SHARED.granted = { u1: true };
+      BUD.panel = 'u1';
+      try { renderBuddiesTab(); } catch (e) { return 'threw: ' + e.message; }
+      const svg = document.querySelector('#scr-buddies svg.venn');
+      if (!svg) return 'no venn drawn';
+      /* The captions are the small words under each count. Compare their
+         painted boxes: two that touch are two that a reader sees as one
+         run of letters. */
+      const caps = [...svg.querySelectorAll('text')]
+        .filter(t => /only|both/i.test(t.textContent || ''));
+      if (caps.length < 2) return 'only ' + caps.length + ' captions';
+      const boxes = caps.map(t => {
+        const b = t.getBBox();
+        return { x1: b.x, x2: b.x + b.width, s: t.textContent };
+      }).sort((a, b) => a.x1 - b.x1);
+      for (let i = 1; i < boxes.length; i++) {
+        if (boxes[i].x1 < boxes[i - 1].x2) {
+          return 'captions overlap: "' + boxes[i - 1].s + '" ends at '
+            + boxes[i - 1].x2.toFixed(1) + ' and "' + boxes[i].s
+            + '" starts at ' + boxes[i].x1.toFixed(1);
+        }
+      }
+      return null;
+    });
+    if (overlap) failures.push('layout: ' + overlap);
+    await page.evaluate(() => {
+      SHARED.shelves = {}; SHARED.names = {}; SHARED.granted = {};
+      BUD.panel = 'all';
+      try { renderBuddiesTab(); } catch (e) { /* torn down either way */ }
+    });
+  }
+
+  /* EVERY TAB'S MASTHEAD STARTS AT THE SAME Y.
+     BZ: "some pages have a nice bar at the top, others don't. I also
+     noticed that those top bars are not in that exact same place as you
+     move from page to page. This is measurable by you."
+
+     It was: home 20, pour 76, buddies 76, shop 86, shelf 149.8, flights
+     149.8, and Reference had none at all. Three causes — a scroller's own
+     margin, the filter bar rendered above the masthead, and a missing
+     block — so three separate margin fixes would have drifted apart
+     again. This measures the thing he actually sees: the top edge of the
+     block, on the real screen, after clicking the real tab.
+
+     Home is exempt BY NAME rather than by a range: it has no back header
+     above it and its block is the app's identity, so it legitimately sits
+     at 20. Naming it means adding a seventh tab that misses the slot
+     fails, instead of quietly widening a tolerance. */
+  step('every tab opens with its bar in the same place');
+  {
+    const EXEMPT = { home: 1 };
+    const tops = {};
+    for (const scr of ['home', 'shelf', 'shop', 'pour', 'flights',
+                       'buddies', 'ref']) {
+      await page.locator('nav button[data-scr="' + scr + '"]').click();
+      await page.waitForTimeout(220);
+      tops[scr] = await page.evaluate(tab => {
+        const s = document.getElementById('scr-' + tab);
+        if (!s) return null;
+        /* AS OPENED, not as left. This check runs late in the walk and
+           earlier steps have scrolled these screens; a screen sitting at
+           scrollTop 0.3 reports a bar 0.3 higher, which is a leftover
+           from another test rather than the thing BZ is looking at. */
+        s.scrollTop = 0;
+        const m = [...s.querySelectorAll('.brand')]
+          .filter(e => e.getBoundingClientRect().height > 0)[0];
+        if (!m) return null;
+        const hd = s.querySelector('.hdr');
+        return { top: +m.getBoundingClientRect().top.toFixed(2),
+                 hdrBottom: hd ? +hd.getBoundingClientRect().bottom.toFixed(2) : null,
+                 hdrH: hd ? +hd.getBoundingClientRect().height.toFixed(2) : null };
+      }, scr);
+    }
+    Object.keys(tops).forEach(scr => {
+      if (tops[scr] === null) {
+        failures.push('layout: ' + scr + ' has no masthead at all');
+      }
+    });
+    console.log('      ' + Object.keys(tops).map(s => s + ' '
+      + (tops[s] ? tops[s].top + '/h' + tops[s].hdrH : 'none')).join('  '));
+    const measured = Object.keys(tops).filter(s => !EXEMPT[s] && tops[s]);
+    const first = measured.length ? tops[measured[0]].top : null;
+    measured.forEach(scr => {
+      if (tops[scr].top !== first) {
+        failures.push('layout: ' + scr + ' opens its bar at '
+          + tops[scr].top + ' (header ends ' + tops[scr].hdrBottom + ') but '
+          + measured[0] + ' opens at ' + first + ' (header ends '
+          + tops[measured[0]].hdrBottom + ') — the bar moves as you change tabs');
+      }
+    });
+  }
+
   /* THE BAR DOES NOT SIT OVER THE END OF A SCREEN. BZ: multiple reports of
      the bottom tab bar blocking content on iPhone. The audit had a check
      CALLED "nav cannot overlay content" that matched CSS text - a claim

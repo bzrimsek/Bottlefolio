@@ -17820,6 +17820,26 @@ sec('\u00a7403 the room, written out');
       onlyNote.n < 61, true);
   }
 
+  /* THE TWO SHELVES AS ONE SHELF. BZ: "not run on theirs, run on ours."
+     A whisky both own is ONE whisky and TWO bottles — the table has two
+     of it — and the ids must not collide or ownedCounts counts one twice.
+     Hand-counted from the fixtures: 12 + 12 products sharing 6 bourbons
+     is 18 distinct whiskies and 24 bottles. */
+  const merged = L.mergedShelf(sides);
+  eq('the merge keeps one entry per whisky',
+    Object.keys(merged.catalog).length, 18);
+  eq('and every bottle from both shelves', merged.bottles.length, 24);
+  eq('with no id colliding across the two',
+    new Set(merged.bottles.map(b => b.id)).size, 24);
+  eq('a merge of nothing is empty',
+    [Object.keys(L.mergedShelf([]).catalog).length,
+     L.mergedShelf([]).bottles.length], [0, 0]);
+  /* AND IT IS A DIFFERENT COLLECTION FROM EITHER HALF, which is the whole
+     reason for running the portrait on it. */
+  const pairPort = L.shelfPortrait(merged.catalog, merged.bottles, {});
+  eq('the merged shelf has a portrait of its own',
+    !!(pairPort && pairPort.title), true);
+
   eq('a room of one says nothing at all',
     L.roomNotes([sides[0]], 'me', { buckets: [] }), []);
   eq('and so does a room with no me in it',
