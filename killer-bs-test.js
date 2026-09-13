@@ -17717,6 +17717,41 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7405 a recap that cannot be written says why');
+{
+  /* The probe proved recap.gs works and returns real prose. Everything
+     that made it look broken was on this side: four paths that ended with
+     a blank card and no words, which a person reads as a broken feature
+     rather than as a spent allowance, an empty span, or a deployment that
+     needs a new version. */
+  eq('no pours in the span means there is nothing to ask',
+    L.recapAsk({ pours: 0, whiskies: [], houses: [], places: [] }, 'a month'),
+    null);
+  eq('and nothing at all means the same',
+    L.recapAsk(null, 'a month'), null);
+  /* THE ONE THAT WENT DOWN THE WIRE. JSON.stringify(null) is the string
+     "null", so the old call posted four letters to the service. */
+  eq('which must never be posted as a body',
+    JSON.stringify(L.recapAsk(null, 'a month')), 'null');
+  eq('a span with pours does ask',
+    (L.recapAsk({ pours: 3, different: 2, whiskies: [], houses: [],
+      places: [], kinds: {}, cities: [] }, 'a month') || {}).mode, 'recap');
+
+  /* WHAT COMES BACK IS CHECKED. A deployment serving an older version
+     answers without the key at all. */
+  eq('an answer with no recap key is nothing usable',
+    L.recapText({ ok: true }), null);
+  eq('and so is a paragraph too short to be one',
+    L.recapText({ recap: 'Nice month.' }), null);
+  eq('a real paragraph comes through',
+    L.recapText({ recap: 'Three distilleries each earned a second pour '
+      + 'this month, which suggests you were testing rather than just '
+      + 'enjoying.' }).slice(0, 12), 'Three distil');
+  eq('and is read from any of the three keys the service might use',
+    [L.recapText({ text: 'x'.repeat(50) }), L.recapText({ summary: 'y'.repeat(50) })]
+      .map(x => x.length), [50, 50]);
+}
+
 sec('\u00a7403 the room, written out');
 {
   /* BZ: "a description of the venn"... "Not 4 sentences. I did not

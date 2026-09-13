@@ -1481,6 +1481,94 @@ function step(n) {
     });
   }
 
+  /* EVERY CONTENTS LINK LANDS SOMEWHERE, AND NO TWO ENTRIES SHARE AN ID.
+     BZ: the app use is so long it is unusable - needs a TOC with
+     hyperlinks. 122 entries and 13,700 words, so the links are the only
+     way in and a link that goes nowhere is worse than no link. Duplicate
+     ids are the specific failure to watch (rule 19b): terms repeat across
+     reference groups, and two entries sharing an id makes every link to
+     either resolve to whichever came first. */
+  step('every contents link in Learn lands on something');
+  {
+    const r = await page.evaluate(() => {
+      const out = {};
+      ['features', 'terms'].forEach(g => {
+        S.refGroup = g;
+        try { renderReference(); } catch (e) { out[g] = 'threw: ' + e.message; return; }
+        const scr = document.getElementById('scr-ref');
+        const ids = [...scr.querySelectorAll('[id^="ref-"]')].map(e => e.id);
+        const dupes = [...new Set(ids.filter((x, i) => ids.indexOf(x) !== i))];
+        const links = [...scr.querySelectorAll('a.reflink')];
+        const broken = links
+          .map(a => (a.getAttribute('href') || '').slice(1))
+          .filter(id => !document.getElementById(id));
+        out[g] = { links: links.length, dupes: dupes.slice(0, 3),
+                   broken: broken.slice(0, 3) };
+      });
+      S.refGroup = 'features';
+      renderReference();
+      return out;
+    });
+    Object.keys(r).forEach(g => {
+      const x = r[g];
+      if (typeof x === 'string') { failures.push('learn ' + g + ': ' + x); return; }
+      if (x.dupes.length) {
+        failures.push('learn ' + g + ': ids used twice \u2014 '
+          + x.dupes.join(', ') + ' \u2014 every link to them lands on the first');
+      }
+      if (x.broken.length) {
+        failures.push('learn ' + g + ': ' + x.broken.length
+          + ' contents link(s) point at nothing \u2014 ' + x.broken.join(', '));
+      }
+    });
+    if ((r.features || {}).links < 8) {
+      failures.push('learn: App use drew only ' + ((r.features || {}).links || 0)
+        + ' contents links for 122 entries');
+    }
+  }
+
+  /* A PROGRESS TICKER RUNS OUT, IT DOES NOT LOOP.
+     BZ, watching a flight being designed: the toasts still rotate and not
+     run start to end. `(i + 1) % lines.length` wrapped, so twenty seconds
+     in it announced it was reading what is open again — which reads as
+     the work having restarted. Driven here with a short interval and
+     watched past the end of the list, because the fault only appears
+     AFTER the last line, which is exactly where nobody looks. */
+  step('the working ticker runs to the end and stops');
+  {
+    const seen = await page.evaluate(async () => {
+      const say = [];
+      const el = document.getElementById('workingText');
+      if (!el) return 'no workingText element';
+      working('start');
+      const stop = workingPhrases(['one', 'two', 'three'], 0.05);
+      for (let i = 0; i < 12; i++) {
+        await new Promise(r => setTimeout(r, 50));
+        if (say[say.length - 1] !== el.textContent) say.push(el.textContent);
+      }
+      stop();
+      /* working() WITH NO ARGUMENT is the close — there is no
+         workingDone(). Calling a name that does not exist inside a
+         try/catch left the depth at 1 and the overlay up, and the walk's
+         own "showing when nothing is running" check caught it two steps
+         later. Which is the check doing its job on the check. */
+      working();
+      return say;
+    });
+    if (typeof seen === 'string') {
+      failures.push('ticker: ' + seen);
+    } else {
+      if (seen[seen.length - 1] !== 'three') {
+        failures.push('ticker: ended on "' + seen[seen.length - 1]
+          + '" rather than the last line');
+      }
+      if (seen.filter(x => x === 'one').length > 1) {
+        failures.push('ticker: went back to the first line — it is looping, '
+          + 'not reporting progress (saw ' + seen.join(' \u2192 ') + ')');
+      }
+    }
+  }
+
   /* A REAL NAME IS LONGER THAN A TEST NAME.
      BZ's own screenshot of the Not Smoky Bill panel: the Venn captions
      read "BOTHNOT SMOKY BILL ONLY", because the caption under a circle
