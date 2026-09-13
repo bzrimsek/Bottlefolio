@@ -17678,6 +17678,22 @@ sec('\u00a7402 a key that lost a merge does not come back');
       [{ k: KEEP, name: KEEP, proof: 100 }], 1, graves).updates)
       .filter(k => k !== 'stamp'), ['catalog/products/' + kk]);
 
+  /* --- AND A DELETION IS THE SAME JUDGMENT ---------------------------
+     Identical shape to the merge: an admin removed an entry on purpose,
+     the library therefore does not have it, and the shelf offered to put
+     it back. The guard already knew about deletions; this path was not
+     telling it. */
+  const del = { [L.libKey('Ardbeg 10')]: { at: 1 } };
+  eq('a deleted entry is not offered back',
+    L.pendingForLibrary({ 'Ardbeg 10': fresh }, lib, graves, del), []);
+  eq('and the SAME bottle is offered when nothing was deleted',
+    L.pendingForLibrary({ 'Ardbeg 10': fresh }, lib, graves, {}).length, 1);
+  eq('publishWrite refuses a deleted key too',
+    L.publishWrite([fresh], 1, graves, del).refused.map(r => r.why),
+    ['it was removed']);
+  eq('and writes it when it was never deleted',
+    L.publishWrite([fresh], 1, graves, {}).names, ['Ardbeg 10']);
+
   /* --- THE SEQUENCE (rule 30e) ---------------------------------------
      Each step above is correct on its own. The fault was an interaction:
      merge, sync, offer again. So drive the whole round trip and look at
@@ -17699,6 +17715,121 @@ sec('\u00a7402 a key that lost a merge does not come back');
   // 4. the library is still one entry
   Object.assign(library, w2.updates.stamp ? {} : {});
   eq('so the library still holds one', Object.keys(library), [kk]);
+}
+
+sec('\u00a7403 the room, written out');
+{
+  /* BZ: "a description of the venn"... "Not 4 sentences. I did not
+     prescribe the profile on home. This needs to be drawn from the data
+     and make a few suggestions where people and whisky intersect."
+
+     So the contract under test is: nothing is said that did not clear a
+     floor, and what IS said carries the number that earned it. Every
+     expected value below is counted by hand from the fixtures rather than
+     read back out of the engine (rule 28). */
+
+  /* Six bourbons and six peated Islays for me; six bourbons and six
+     Speysides for them. Counted by hand: bourbon is 6 and 6 — the shared
+     category. Islay 6 against 0 — mine alone. Speyside 0 against 6 —
+     theirs alone. Peat heavy 6 against 0. */
+  const mk = (name, sub, extra) => Object.assign(
+    { k: name, name: name, sub: sub, proof: 100, dist: 'D ' + name }, extra || {});
+  const bourbons = n => { const o = {}; for (let i = 0; i < n; i++)
+    o['B' + i] = mk('B' + i, 'bourbon'); return o; };
+  const add = (o, n, pfx, sub, extra) => { for (let i = 0; i < n; i++)
+    o[pfx + i] = mk(pfx + i, sub, extra); return o; };
+
+  const myCat = add(bourbons(6), 6, 'I', 'scotch', { peat: 'heavy', region: 'Islay' });
+  const thCat = add(bourbons(6), 6, 'S', 'scotch', { region: 'Speyside' });
+  const bots = cat => Object.keys(cat).map((k, i) =>
+    ({ id: 'x' + i, k: k, status: 'open' }));
+  const myShelf = { catalog: myCat, bottles: bots(myCat) };
+  const thShelf = { catalog: thCat, bottles: bots(thCat) };
+
+  /* L.roomTop is the one place "what is this shelf most into on this axis"
+     is answered, and a floor is the whole of its job: without one, a shelf
+     holding two of something is declared deep in it. */
+  const prof = { styles: [{ value: 'bourbon', n: 6 }, { value: 'rye', n: 2 }],
+                 regions: [{ value: '?', n: 9 }, { value: 'Islay', n: 4 }] };
+  eq('roomTop takes the leader when it clears the floor',
+    (L.roomTop(prof, 'styles', 4) || {}).value, 'bourbon');
+  eq('and nothing when the leader is under it',
+    L.roomTop(prof, 'styles', 7), null);
+  eq('an unknown value is never the answer',
+    (L.roomTop(prof, 'regions', 3) || {}).value, 'Islay');
+  eq('a missing axis answers nothing', L.roomTop(prof, 'nope', 1), null);
+  eq('and so does no profile at all', L.roomTop(null, 'styles', 1), null);
+
+  eq('the fixtures are the size they are meant to be',
+    [Object.keys(myCat).length, Object.keys(thCat).length], [12, 12]);
+
+  const sets = [{ id: 'me', name: 'You', map: L.shelfSet(myShelf) },
+                { id: 't', name: 'Tyson', map: L.shelfSet(thShelf) }];
+  const buckets = L.roomBuckets(sets, 'me');
+  // Hand count: six bourbons are held by both, so one bucket of 6 with
+  // both holders; six each held alone.
+  eq('the Venn is six shared and six each',
+    buckets.map(b => b.who.join('+') + '=' + b.count).sort(),
+    ['me+t=6', 'me=6', 't=6']);
+
+  const sides = [
+    { id: 'me', name: 'You', profile: L.tasteProfile(myCat, myShelf.bottles, {}),
+      map: sets[0].map, shelf: myShelf },
+    { id: 't', name: 'Tyson', profile: L.tasteProfile(thCat, thShelf.bottles, {}),
+      map: sets[1].map, shelf: thShelf }];
+  const notes = L.roomNotes(sides, 'me', { buckets: buckets });
+  const kinds = notes.map(n => n.k.split(':')[0]);
+
+  eq('a shared category is spoken', kinds.indexOf('same') >= 0, true);
+  eq('and it names the one they actually agree on',
+    /bourbon/.test((notes.filter(n => n.k.indexOf('same') === 0)[0] || {}).text || ''),
+    true);
+  eq('the overlap is offered as something to pour',
+    kinds.indexOf('common') >= 0, true);
+  eq('and it says the hand-counted six',
+    /6 of the same whiskies/.test(
+      (notes.filter(n => n.k === 'common')[0] || {}).text || ''), true);
+
+  /* ONE NOTE PER KIND. A shelf deep in a category AND a region must not
+     say the same shape twice — that is a template wearing a rank. */
+  eq('no kind is spoken twice',
+    kinds.length, kinds.filter((k, i) => kinds.indexOf(k) === i).length);
+
+  /* NOTHING IS SAID THAT DID NOT EARN IT. Two bottles each is a pair with
+     nothing to describe, and the engine says nothing rather than saying it
+     thinly. */
+  const tiny = { A: mk('A', 'bourbon') };
+  const tinyShelf = { catalog: tiny, bottles: [{ id: 'z', k: 'A', status: 'open' }] };
+  const tinySets = [{ id: 'me', name: 'You', map: L.shelfSet(tinyShelf) },
+                    { id: 't', name: 'T', map: L.shelfSet(tinyShelf) }];
+  const tinySides = [
+    { id: 'me', name: 'You', profile: L.tasteProfile(tiny, tinyShelf.bottles, {}),
+      map: tinySets[0].map, shelf: tinyShelf },
+    { id: 't', name: 'T', profile: L.tasteProfile(tiny, tinyShelf.bottles, {}),
+      map: tinySets[1].map, shelf: tinyShelf }];
+  const tinyNotes = L.roomNotes(tinySides, 'me',
+    { buckets: L.roomBuckets(tinySets, 'me') });
+  eq('one bottle each says nothing about category or taste',
+    tinyNotes.filter(n => /^(same|share|deep|offer|ask)/.test(n.k)).length, 0);
+
+  /* A BIGGER SHELF IS NOT AN INSIGHT. The unshared note ranks on SHARE,
+     not on count, or it leads every pairing BZ will ever see. */
+  const onlyNote = notes.filter(n => n.k.indexOf('only') === 0)[0];
+  if (onlyNote) {
+    eq('the unshared note ranks on share, not on its raw count',
+      onlyNote.n < 61, true);
+  }
+
+  eq('a room of one says nothing at all',
+    L.roomNotes([sides[0]], 'me', { buckets: [] }), []);
+  eq('and so does a room with no me in it',
+    L.roomNotes(sides, 'nobody', { buckets: buckets }), []);
+
+  /* THE POSSESSIVE. "143 on you's" reached a probe because nameOf and the
+     possessive were one function. */
+  notes.forEach(n => {
+    eq('no note says you\u2019s', /you\u2019s/.test(n.text), false);
+  });
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

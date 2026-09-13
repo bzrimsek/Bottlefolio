@@ -441,6 +441,11 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* A CALLER, NOT A SECOND ANSWER. L.roomNotes asks L.pourable whether a
+     bottle both shelves own is open on both — so it QUOTES the single
+     door rather than deciding openness itself. Named specifically, so a
+     second way of deciding pourable would still fail this check. */
+  'roomNotes>pourable',
   /* ONE SOURCE, TWO READERS. The audit names the release a bottle's name
      implies, and the suggestion offers to set it - both by asking
      L.guessScar, which is the single door. Rule 30d is about two
@@ -879,6 +884,8 @@ check('no fixed svg id is emitted by a repeated drawing',
   const CONTROLS = ['Read the label', 'Export everything', 'Export for import',
     'Photograph it', 'Fill what is missing', 'Import a collection',
     'Back up everything', 'Add to the shelf',
+    /* Added with the portrait veto's way back, 2026-09-13. */
+    'Put aside',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
