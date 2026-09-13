@@ -17315,6 +17315,97 @@ sec('\u00a7396 the library, edited in a spreadsheet and brought back');
     nameless.changes.length + nameless.adds.length, 0);
 }
 
+sec('\u00a7397 three people cards become one list');
+{
+  /* BZ: we have 3 user based sections - diagnostics, sharing and
+     everybody - can we combine? And: include last log in, shelf count,
+     etc.
+
+     Three cards asking three questions about the same four people, and
+     they DISAGREED: Sharing listed four while Diagnostics said "1 account
+     has published one", which reads as a fault. It is not one - a person
+     appears in diagnostics only once their device has published a report,
+     and in sharing the moment a grant exists - but nothing said so, and
+     BZ reasonably read it as broken. One row per person makes both facts
+     ordinary. */
+  const now = Date.now();
+  const rows = L.peopleRows({
+    stats: { me: { name: 'BZ', bottles: 364, products: 350, pours: 40,
+                   at: now },
+             u2: { name: 'Tyson', bottles: 12, products: 12,
+                   at: now - 3 * 86400000 } },
+    directory: [{ uid: 'me', name: 'BZ' }, { uid: 'u2', name: 'Tyson' }],
+    shares: [{ uid: 'u2', name: 'Tyson', theySeeYours: true,
+               youSeeTheirs: true },
+             { uid: 'u3', name: 'Somebody', theySeeYours: true,
+               youSeeTheirs: false }],
+    diagUids: ['me'], me: 'me', now: now });
+
+  eq('everybody appears once', rows.length, 3);
+  /* YOU FIRST, then whoever was here most recently: the person who just
+     hit a problem is the person being asked about. */
+  eq('you lead the list', rows[0].uid, 'me');
+  eq('then the most recent', rows[1].uid, 'u2');
+
+  /* SOMEBODY KNOWN ONLY FROM A SHARE still gets a row - that is the
+     whole point, because they are the person whose shelf will not open
+     and who has never published a thing. */
+  const somebody = rows.filter(r => r.uid === 'u3')[0];
+  eq('a share-only person is listed', !!somebody, true);
+  eq('and reads as never synced rather than undefined',
+    /never synced/.test(L.peopleLine(somebody)), true);
+  eq('while saying which way the sharing runs',
+    /sees your shelf/.test(L.peopleLine(somebody)), true);
+
+  /* THE SHELF COUNT AND THE LAST VISIT come from adminPersonLine, which
+     already says both - a second vocabulary for "364 bottles, here
+     today" is how two screens start describing one person differently. */
+  eq('your own row carries the shelf count',
+    /364 bottles/.test(L.peopleLine(rows[0])), true);
+  eq('and when you were last here',
+    /here today/.test(L.peopleLine(rows[0])), true);
+  eq('and that a diagnostic is waiting',
+    /diagnostic waiting/.test(L.peopleLine(rows[0])), true);
+  /* AND NOT CLAIMING ONE WHERE THERE IS NONE. */
+  eq('no diagnostic is not announced',
+    /diagnostic/.test(L.peopleLine(rows[1])), false);
+}
+
+sec('\u00a7398 the heading counts the rows under it');
+{
+  /* BZ: the text says 3 when there is only 1. It did. The inherited
+     findings build their title with the count they FOUND, and dropSeen
+     then removes everything already reviewed - so a heading written for
+     three pairs sat above one row. The count beside it was recomputed
+     and the sentence was not: two numbers for one fact. */
+  const cat = {};
+  [['a', 'Penelope Wheated'], ['b', 'Penelope Wheated'],
+   ['c', 'Old Elk Blend'], ['d', 'Old Elk Blend'],
+   ['e', 'Barrell Dovetail'], ['f', 'Barrell Dovetail']]
+    .forEach(([k, n]) => {
+      cat[k] = { k: k, _key: k, name: n, dist: 'D', proof: 90,
+                 sub: 'bourbon' };
+    });
+  const dupsOf = rev => (L.libraryAudit(cat, rev)
+    .filter(x => x.id === 'dups')[0] || { items: [], title: '' });
+
+  const all = dupsOf({});
+  eq('three pairs, three rows', all.items.length, 3);
+  eq('and the heading says three', /^3 /.test(all.title), true);
+
+  const rev = {};
+  all.items.slice(1).forEach(i => {
+    rev['dups:' + i.key] = { v: 'ok', at: Date.now() };
+  });
+  const left = dupsOf(rev);
+  eq('two dismissed leaves one row', left.items.length, 1);
+  eq('and the heading says one', /^1 /.test(left.title), true);
+  /* AND THE SINGULAR IS CORRECTED WITH IT: "1 bottles appear twice"
+     would be its own small lie. */
+  eq('in the singular', /bottle appears twice/.test(left.title), true);
+  eq('the count beside it agrees too', left.n, left.items.length);
+}
+
 /* Run in its own async block: this harness is a plain script, so a
    top-level await is a syntax error rather than a slow test. */
 async function queueSection() {
