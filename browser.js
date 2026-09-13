@@ -828,6 +828,39 @@ function step(n) {
      pointer - so it is DRIVEN: click each end of the track and read the
      value back, which is the test that would have caught it the first
      time. */
+  /* ONE EVERYBODY CARD, HOWEVER MANY TIMES IT PAINTS.
+
+     BZ: and I see 2 Everybody boxes. Mine: the sharing audit and each
+     person's report arrive after the first paint and the redraw calls
+     renderUsers again, which APPENDED rather than replaced. A render
+     that cannot be called twice is a render that will be, because the
+     whole point of this screen is that its data arrives late.
+
+     Rule 30e in one line: the gate tests one pass, and this is a second
+     render. */
+  step('rendering the people list twice leaves one card');
+  {
+    const r = await page.evaluate(() => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      renderUsers(host);
+      renderUsers(host);
+      renderUsers(host);
+      const cards = host.querySelectorAll('#everybodyCard').length;
+      const heads = [...host.querySelectorAll('h3')]
+        .filter(h => /Everybody/.test(h.textContent || '')).length;
+      host.remove();
+      return { cards: cards, heads: heads };
+    });
+    if (r.cards !== 1) {
+      failures.push('people: ' + r.cards + ' Everybody cards after three '
+        + 'renders, want 1');
+    }
+    if (r.heads !== 1) {
+      failures.push('people: ' + r.heads + ' Everybody headings, want 1');
+    }
+  }
+
   step('the top of the fill gauge is full, the foot is empty');
   {
     const box = await page.evaluate(() => {
