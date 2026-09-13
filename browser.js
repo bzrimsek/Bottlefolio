@@ -805,6 +805,58 @@ function step(n) {
      manage is more frequent - please reorder shelf setting accordingly
      and use folds. A fold that will not open is worse than no fold, so
      this drives it rather than reading the source. */
+  /* A SCAN ROW FITS A PHONE. BZ, with a screenshot: borderlines
+     unusable. The buttons were flex:none, so they held their width while
+     a forty-character whisky name was crushed into what was left and ran
+     off the right edge.
+
+     Driven with the longest name on his shelf rather than a short one,
+     because a row only breaks when the name is long - which is exactly
+     when somebody needs to read it. */
+  step('a library scan row fits a phone, name and all');
+  {
+    const r = await page.evaluate(async () => {
+      const W = window.innerWidth;
+      const row = el('div', 'item scanrow');
+      const left = el('div');
+      left.appendChild(el('div', 'nm', 'J. Mattingly Small Batch Rye '
+        + 'Whiskey Private Barrel Select Cask Strength 2024'));
+      left.appendChild(el('div', 'src',
+        'Set it to Exclusive, or leave it if you meant Batched.'));
+      row.appendChild(left);
+      const acts = el('div', 'rowacts');
+      ['\u2713', '\u2715'].forEach(t => {
+        const c = el('button', 'chip iconchip');
+        c.textContent = t;
+        acts.appendChild(c);
+      });
+      row.appendChild(acts);
+      document.body.appendChild(row);
+      await new Promise(r2 => setTimeout(r2, 60));
+      const over = [];
+      row.querySelectorAll('*').forEach(e => {
+        const bb = e.getBoundingClientRect();
+        if (bb.right - W > 2) over.push(Math.round(bb.right - W));
+      });
+      const taps = [...row.querySelectorAll('.iconchip')].map(c => {
+        const bb = c.getBoundingClientRect();
+        return Math.min(bb.width, bb.height);
+      });
+      row.remove();
+      return { over: over, taps: taps, width: W };
+    });
+    if (r.over.length) {
+      failures.push('scan row at ' + r.width + 'px: '
+        + Math.max.apply(null, r.over) + 'px past the right edge');
+    }
+    /* AND THE ICONS ARE TAPPABLE. A tick only as big as a tick is a tick
+       somebody misses. */
+    if (r.taps.some(t => t < 36)) {
+      failures.push('scan row: an icon button is only '
+        + Math.round(Math.min.apply(null, r.taps)) + 'px');
+    }
+  }
+
   step('shelf tools opens on Manage, with Import folded away');
   {
     const r = await page.evaluate(() => {

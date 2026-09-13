@@ -16757,5 +16757,434 @@ sec('\u00a7384 an unknown category is never quietly a bourbon');
     L.guessSub('Some Unlabelled Bottling', '', {}), null);
 }
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed');
-process.exit(fail ? 1 : 0);
+sec('\u00a7386 the release pill guesses, from the name and the house');
+{
+  /* BZ: the three scans that would not work did so good! but all landed
+     on standard and really none are - can you check if we can set all
+     pills with best guess. Then the better half of it: house is also a
+     clue, not just bottle name.
+
+     Quite. An independent bottler's entire output is one cask at a time,
+     so the house answers before the name is read. */
+  eq('his first scan', L.guessScar(
+    'Nashville Barrel Company Single Barrel Canadian Whiskey Cask Strength',
+    'Nashville Barrel Company'), 'exclusive');
+  eq('his second', L.guessScar(
+    'Nashville Barrel Company VIP Rare Release Straight Rye Whiskey',
+    'Nashville Barrel Company'), 'exclusive');
+  eq('his third', L.guessScar(
+    'Teeling Whiskey Single Cask Single Malt Irish Whiskey Aged 17 Years',
+    'Teeling'), 'limited');
+
+  /* FITTED TO WHAT HE ALREADY MEANS. The first version called every
+     single barrel `exclusive` and his own shelf disagreed 34 times -
+     Angel's Envy Single Barrel and its kind are stored as `limited`. So a
+     distillery's single-barrel LINE is limited here, and `exclusive` is a
+     bottle picked for one shop. Measured on the shipped catalog of 325:
+     37 disagreements became 7, with 44 agreements. */
+  eq('a distillery single barrel is limited, not exclusive',
+    L.guessScar("Angel's Envy Single Barrel", "Angel's Envy"), 'limited');
+  eq('and a store pick is exclusive',
+    L.guessScar('Elijah Craig Private Selection', 'Heaven Hill'),
+    'exclusive');
+
+  /* STRONG SIGNALS ONLY. "Reserve" is in Woodford Reserve, Knob Creek
+     Reserve and a hundred everyday bottlings: a guess that fires on a
+     common word is worse than no guess, because it is wrong quietly and
+     often. */
+  eq('Woodford Reserve is not a limited edition',
+    L.guessScar('Woodford Reserve Kentucky Straight Bourbon Whiskey',
+      'Woodford Reserve'), null);
+  eq('nor is Buffalo Trace anything but ordinary',
+    L.guessScar('Buffalo Trace', 'Buffalo Trace'), null);
+  eq('small batch is batched', L.guessScar('Knob Creek Small Batch',
+    'Knob Creek'), 'batched');
+
+  /* BARRELL IS NOT AN INDEPENDENT BOTTLER for this purpose: Dovetail,
+     Armida and Foundation are batched blends, and a house rule naming it
+     would have relabelled seventeen of BZ's bottles. */
+  eq('Barrell Dovetail is not called a single cask',
+    L.guessScar('Barrell Craft Spirits Dovetail', 'Barrell Craft Spirits'),
+    null);
+
+  /* IT ONLY EVER FILLS A BLANK. Every caller reads `stored || guess`, so
+     a value somebody chose is never overwritten by a guess - which is
+     what makes a wrong guess a nuisance rather than data loss. */
+  eq('nothing fires on a name that says nothing',
+    L.guessScar('Some Bottling', 'Some House'), null);
+}
+
+sec('\u00a7387 the release the name disagrees with');
+{
+  /* BZ, after the guesser went in: can we add this as a shelf consistency
+     check? Yes, and it is the honest place for it - the guess only ever
+     fills a BLANK, so anything already set stays set and nobody would
+     ever find out the two disagree.
+
+     Measured on the shipped catalog of 325: 44 agreements, 274 silences
+     and 7 disagreements, and those seven are bottles whose name says
+     Private Barrel Select while the entry says Standard. */
+  const cat = {
+    a: { k: 'a', _key: 'a', name: 'J. Mattingly Private Barrel Select',
+         dist: 'J. Mattingly', proof: 100, sub: 'bourbon',
+         scar: 'standard' },
+    b: { k: 'b', _key: 'b', name: "Angel's Envy Single Barrel",
+         dist: "Angel's Envy", proof: 100, sub: 'bourbon',
+         scar: 'limited' },
+    c: { k: 'c', _key: 'c', name: 'Buffalo Trace', dist: 'Buffalo Trace',
+         proof: 90, sub: 'bourbon', scar: 'standard' },
+    d: { k: 'd', _key: 'd', name: 'Woodford Reserve', dist: 'Woodford',
+         proof: 90, sub: 'bourbon' }
+  };
+  const said = (L.libraryAudit(cat, {})
+    .filter(f => f.id === 'scarsays')[0] || { items: [] })
+    .items.map(i => String(i.text));
+
+  eq('a private barrel select filed as standard is flagged',
+    said.some(t => /Mattingly/.test(t)), true);
+  /* THE ONES THAT AGREE STAY QUIET, which is most of a shelf. */
+  eq('a single barrel filed as limited agrees, so nothing is said',
+    said.some(t => /Angel/.test(t)), false);
+  eq('and an ordinary bottle is never mentioned',
+    said.some(t => /Buffalo/.test(t)), false);
+  /* NOTHING TO DISAGREE WITH. An entry with no release set is a gap for
+     the guess to fill, not a contradiction to report. */
+  eq('an unset release is not a disagreement',
+    said.some(t => /Woodford/.test(t)), false);
+
+  /* IT POINTS RATHER THAN CORRECTS: a store pick of a small batch is
+     arguably either, and the stored value is somebody's decision until
+     they say otherwise. */
+  eq('and the advice offers both ways',
+    /Set it to|leave it/.test(L.auditSuggestion('scarsays', cat.a,
+      cat.a.name)), true);
+}
+
+sec('\u00a7388 Update says what it will change, and changes that');
+{
+  /* BZ: Keep It v Leave for Now are confusing. Simple. Update or Ignore
+     and be clear on what is changing.
+
+     Right twice over. The two buttons were "Keep for now" and "It is
+     correct", which are both ways of NOT fixing anything - the scan
+     pointed at a problem and then made somebody go and edit the entry by
+     hand - and "keep" against "correct" is a distinction nobody should
+     have to parse. */
+  const pick = { k: 'a', name: 'J. Mattingly Private Barrel Select',
+    dist: 'J. Mattingly', scar: 'standard' };
+  const fix = L.auditFix('scarsays', pick, pick.name);
+
+  eq('the button names the change', fix.label,
+    'Set Release to Exclusive');
+  /* THE LABEL AND THE WORK COME FROM ONE PLACE. A chip reading "Set
+     Release to Exclusive" that then wrote something else would be the
+     worst kind of wrong, so this asserts they agree. */
+  eq('and writes exactly that', fix.set.scar, 'exclusive');
+  eq('and touches nothing else', Object.keys(fix.set).join(','), 'scar');
+
+  /* A SPIRIT WITH A GRAIN BILL has one obvious fix and it is to clear
+     the bill - there is nothing to correct it TO. */
+  const teq = { k: 'b', name: 'A Tequila', dist: 'D', sub: 'tequila',
+    mash: '51% corn, 19% rye' };
+  eq('clearing a grain bill says so',
+    L.auditFix('mashspirit', teq, teq.name).label, 'Clear the grain bill');
+  eq('and clears it', L.auditFix('mashspirit', teq, teq.name).set.mash, '');
+
+  /* NO UPDATE WHERE THERE IS NO SINGLE OBVIOUS FIX. A duplicate pair
+     needs a merge and a missing note needs a lookup; a button that
+     apologises when pressed is worse than no button. */
+  eq('a duplicate offers no one-press fix',
+    L.auditFix('dups', pick, pick.name), null);
+  /* AND NOTHING IS OFFERED WHEN IT ALREADY AGREES. */
+  eq('an entry that already matches offers nothing',
+    L.auditFix('scarsays', { k: 'c', name: "Angel's Envy Single Barrel",
+      dist: "Angel's Envy", scar: 'limited' }, ''), null);
+}
+
+sec('\u00a7389 an unset level is full, and the slider stops on notches');
+{
+  /* BZ: can we default all fill levels to 100% and make sure the slider
+     stops on the agreed to notches.
+
+     THE SLIDER COULD NOT REACH TWO OF THEM. Its step was 5 and his scale
+     has 33 and 66 in it, which are not multiples of five - so a third and
+     two thirds were the two positions the thumb was unable to land on.
+     The notches are uneven by design, so no step value can express them:
+     it moves freely and every movement is snapped as it happens. */
+  const hit = {};
+  for (let v = 0; v <= 100; v++) { hit[L.fillSnap(v)] = 1; }
+  eq('a finger dragged the whole way lands only on notches',
+    Object.keys(hit).map(Number).sort((a2, b2) => a2 - b2).join(','),
+    L.FILL_NOTCHES.join(','));
+  eq('and every notch can be reached',
+    L.FILL_NOTCHES.filter(n => !hit[n]), []);
+  eq('a third is reachable', L.fillSnap(35), 33);
+  eq('and two thirds', L.fillSnap(64), 66);
+
+  /* AN UNSET LEVEL MEANS FULL. A bottle just opened, whose gauge nobody
+     has touched, is full - and saying so in ONE function means the rail,
+     the running-low list and the photograph proposals cannot disagree
+     about what an unset bottle is. */
+  eq('nothing set reads as full', L.fillOf({}), 100);
+  eq('and so does an explicit null', L.fillOf({ fill: null }), 100);
+  eq('a real level is itself', L.fillOf({ fill: 33 }), 33);
+  eq('and an odd stored number is snapped', L.fillOf({ fill: 64 }), 66);
+
+  /* AND NOTHING IS MIGRATED: a stored null still means nobody has said,
+     and this is the only place that turns it into a number. */
+  const shelf = [{ id: '1', k: 'a', status: 'open' }];
+  const cat = { a: { k: 'a', name: 'A', dist: 'D', proof: 90 } };
+  eq('an untouched open bottle is not running low',
+    L.runningLow(shelf, cat).length, 0);
+  eq('but one at a quarter is',
+    L.runningLow([{ id: '1', k: 'a', status: 'open', fill: 25 }],
+      cat).length, 1);
+}
+
+sec('\u00a7390 a uid list, whatever shape it arrives in');
+{
+  /* Twice a gate run threw here and passed on every re-run: once
+     "had.forEach is not a function" and once "(directory || []).filter is
+     not a function", both from a value arriving as an OBJECT where a list
+     was expected, both taking five walk steps down with them.
+
+     Every caller in the app and in these tests passes an array, so the
+     wrong shape comes out of the faked Firebase under some timing I never
+     caught. probeCandidates is a pure function and a uid MAP says exactly
+     what a uid ARRAY says, so it reads both - which closes the class
+     rather than one instance. */
+  eq('an array is itself', L.asUids(['a', 'b']).join(','), 'a,b');
+  /* THE SHAPE THAT THREW. Firebase hands back a map of uid to value. */
+  eq('a firebase map becomes its keys',
+    L.asUids({ a: 1, b: 1 }).join(','), 'a,b');
+  eq('null is empty', L.asUids(null).length, 0);
+  eq('and so is a number, which is neither',
+    L.asUids(7).length, 0);
+
+  /* AND THE CALLER SURVIVES IT, returning the right uids rather than an
+     exception - so if the wrong shape happens again it no longer hides
+     upstream, it just works. */
+  eq('a map handed in as a directory still probes',
+    L.probeCandidates(['t'], { x: 1, y: 1 }, 10).uids.join(','), 't,x,y');
+  eq('and traces as a map work too',
+    L.probeCandidates({ t: 1 }, ['x'], 10).uids.join(','), 't,x');
+}
+
+sec('\u00a7391 a sentence becomes the pills the shelf already has');
+{
+  /* BZ: will our shelf search support NLP type inputs? Measured first:
+     "lagavulin" found 5 and "something smoky" found 0, because the box
+     matched name and distillery only. And then: between all of the filter
+     items, the tasting notes, and the other data, this should be a solid
+     way to search. It is - the app knows type, region, proof, price band,
+     release, obscurity and every word of the tasting notes.
+
+     This maps words onto facets that ALREADY exist, so the screen shows
+     what it understood. A black box returning eleven bottles for reasons
+     nobody can see would be worse than the substring match it replaces. */
+  const q = t => L.parseQuery(t);
+
+  eq('a region is a pill', q('peaty islay').set.regions.join(''), 'Islay');
+  /* AND WHAT IT CANNOT PLACE STAYS TEXT, so no word is silently dropped
+     and "peaty" still searches the tasting notes. */
+  eq('and the rest is still searched for', q('peaty islay').q, 'peaty');
+
+  eq('a type is a pill', q('obscure rye').set.types.join(''), 'rye');
+  eq('and so is obscurity', q('obscure rye').set.obsc.join(''), 'obscure');
+
+  /* THE SHELF'S OWN BAND IDS. The first version emitted under90 and
+     over120 - ids from a different screen - and shelfFilter hands
+     anything that is not p-something to L.faceMatch, which returns TRUE
+     for a face it does not know. So the chip appeared and the shelf did
+     not narrow by one bottle: "cask strength bourbon" returned all 129
+     bourbons. Caught by measuring the RESULT, not by reading the parse,
+     which looked perfectly correct. */
+  eq('cask strength is a real band',
+    q('cask strength').set.proofs.join(''), 'p120');
+  eq('over 100 proof expands into the bands above it',
+    q('over 100 proof').set.proofs.join(','),
+    'p100,p110,p120,p130,p140,p150,p160');
+  eq('and under 90 into the ones below',
+    q('under 90 proof').set.proofs.join(','), 'p70,p80');
+
+  /* FILLER GOES, because the leftover is matched as ONE substring: on
+     BZ's shelf "smoky" finds 29 bottles and "something smoky" found none,
+     with the word `something` doing all the damage. */
+  eq('filler is dropped', q('i want something with cinnamon').q,
+    'cinnamon');
+  /* A BARE NAME IS UNTOUCHED, which is most searches. */
+  eq('a distillery name is left alone', q('lagavulin').q, 'lagavulin');
+  eq('and sets no pills', q('lagavulin').said.length, 0);
+
+  /* LONGEST PHRASE FIRST, so "small batch" is not eaten as "batch" and
+     "american single malt" is not eaten as "malt". */
+  eq('small batch is a release, not a stray word',
+    q('small batch bourbon').set.scars.join(''), 'batched');
+}
+
+sec('\u00a7392 a merge that goes round in a circle');
+{
+  /* BZ: on the inconsistency process, a few things keep coming back. His
+     log is the proof, and it is worse than a repeat:
+
+       17:04:21  merged barrell_bourbon_triple INTO barrell_whiskey_triple
+       19:49:34  merged barrell_whiskey_triple INTO barrell_bourbon_triple
+
+     A into B, then B back into A, two hours apart - and Penelope merged
+     into the same target twice. applyLibraryMoves read ONE hop and
+     applied the records in whatever order the keys came out, so with both
+     halves present it moved the bottles across and then straight back,
+     and the scan saw two entries again every time. */
+  eq('a single merge resolves',
+    L.mergedInto({ a: 'b' }, 'a'), 'b');
+  /* A CHAIN IS FOLLOWED TO ITS END, so a key merged twice answers where
+     it actually is rather than where it went first. */
+  eq('a chain answers its last link',
+    L.mergedInto({ a: 'b', b: 'c' }, 'a'), 'c');
+  /* AND A CYCLE STOPS rather than spinning - which is exactly the shape
+     his log recorded. */
+  eq('a round trip does not loop',
+    L.mergedInto({ a: 'b', b: 'a' }, 'a'), 'b');
+  eq('from either end', L.mergedInto({ a: 'b', b: 'a' }, 'b'), 'a');
+
+  /* WRITING ONE IS REFUSED IF IT WOULD CLOSE THE CIRCLE. */
+  const g1 = L.buryKey({}, 'bourbon', 'whiskey');
+  const g2 = L.buryKey(g1, 'whiskey', 'bourbon');
+  eq('the reverse merge is not recorded',
+    L.mergedInto(g2, 'bourbon'), 'whiskey');
+  eq('and the survivor stays the survivor',
+    L.mergedInto(g2, 'whiskey'), 'whiskey');
+
+  /* THE BOTTLE LANDS ONCE. With both records present the shelf used to
+     move it across and back; now it stops on the survivor. */
+  const moved = L.applyLibraryMoves(
+    { A: { k: 'A', name: 'Barrell Bourbon' },
+      B: { k: 'B', name: 'Barrell Whiskey' } },
+    [{ id: '1', k: 'A' }], {}, { A: { to: 'B' }, B: { to: 'A' } });
+  eq('the bottle ends on one key', moved.bottles[0].k, 'B');
+  eq('and only one entry survives',
+    Object.keys(moved.base).join(','), 'B');
+}
+
+sec('\u00a7393 learning from a search that found nothing');
+{
+  /* BZ: can we learn from searches not satisfied? Yes, and the useful
+     half is narrower than it sounds. A search that finds nothing has two
+     very different causes, and only one is worth recording:
+
+     - the app did not UNDERSTAND the word. "sherry bomb", "daily
+       driver". That is a vocabulary gap, and every one is a phrase
+       somebody expected to work.
+     - the app understood perfectly and he does not OWN one. "islay over
+       120 proof" on a shelf with none. That is an ANSWER, and recording
+       it would bury the first kind in noise. */
+  let led = {};
+  led = L.noteSearchMiss(led, 'sherry bomb', 0, 0);
+  eq('a word it could not place is kept', led['sherry bomb'], 1);
+
+  led = L.noteSearchMiss(led, 'lagavulin', 5, 0);
+  eq('a search that WORKED is not a gap', led.lagavulin, undefined);
+
+  led = L.noteSearchMiss(led, 'islay over 120 proof', 0, 2);
+  eq('nor is one it understood and could not satisfy',
+    led['islay over 120 proof'], undefined);
+
+  /* COUNTED, NOT LISTED: the same phrase typed three times is one gap,
+     and three rows is a wall. */
+  led = L.noteSearchMiss(led, 'sherry bomb', 0, 0);
+  eq('the same phrase counts up', led['sherry bomb'], 2);
+  eq('and there is still one entry', Object.keys(led).length, 1);
+
+  /* TOO SHORT TO MEAN ANYTHING is skipped, or every keystroke on the way
+     to a word becomes a gap. */
+  eq('two letters are not a gap',
+    L.noteSearchMiss({}, 'la', 0, 0).la, undefined);
+
+  /* BUSIEST FIRST, because that is the order worth reading. */
+  const many = L.missList({ rare: 1, common: 5, middling: 3 });
+  eq('the list leads with the most asked for', many[0].text, 'common');
+  eq('and ends with the least', many[2].text, 'rare');
+
+  /* AND IT CANNOT GROW WITHOUT BOUND on a device somebody searches from
+     every day: the rarest go first, because a phrase asked once is the
+     likeliest to be a typo. */
+  let big = {};
+  for (let i = 0; i < L.MISS_KEEP + 5; i++) {
+    big = L.noteSearchMiss(big, 'phrase number ' + i, 0, 0);
+  }
+  eq('it is trimmed to the keep count',
+    Object.keys(big).length, L.MISS_KEEP);
+}
+
+/* Run in its own async block: this harness is a plain script, so a
+   top-level await is a syntax error rather than a slow test. */
+async function queueSection() {
+  sec('\u00a7385 one at a time, and only once each');
+
+  /* BZ: i need it to queue and process. His log is the argument -
+     TWENTY-TWO bottle-story calls in ten minutes while he retired
+     bottles, one per retire, per clear, per favourite, per fill change,
+     all firing at an Apps Script that runs a handful of executions at
+     once. The label reads he actually cared about were stuck behind prose
+     nobody asked for, and the ones that lost came back 404 or timed out
+     at a hundred seconds.
+
+     A queue rather than a cap, because these are all worth doing - just
+     not all at once. */
+  const order = [];
+  let live = 0, mostAtOnce = 0;
+  const slow = key => async () => {
+    live++;
+    mostAtOnce = Math.max(mostAtOnce, live);
+    await new Promise(r => setTimeout(r, 5));
+    order.push(key);
+    live--;
+  };
+
+  const q = L.serialQueue({ max: 8 });
+  ['a', 'b', 'c', 'd'].forEach(kk => q.push(kk, slow(kk)));
+  await new Promise(r => setTimeout(r, 120));
+
+  eq('every job ran', order.length, 4);
+  /* THE WHOLE POINT: never two at once. */
+  eq('never more than one at a time', mostAtOnce, 1);
+  eq('and in the order they were asked for', order.join(''), 'abcd');
+
+  /* PRESSING THE SAME BOTTLE FOUR TIMES ASKS ONCE. Retiring a bottle
+     fired this on retire, on the re-render, and on the fill write. */
+  const q2 = L.serialQueue({ max: 8 });
+  const ran = [];
+  const one = async () => { await new Promise(r => setTimeout(r, 5));
+    ran.push(1); };
+  const says = ['a', 'a', 'a'].map(kk => q2.push(kk, one));
+  eq('the first is queued', says[0], 'queued');
+  eq('and the repeats say so', says[1], 'already queued');
+  await new Promise(r => setTimeout(r, 80));
+  eq('so the work happens once', ran.length, 1);
+
+  /* AND IT STOPS GROWING. A paragraph about a bottle somebody stopped
+     looking at twenty bottles ago is not worth a slot. */
+  const q3 = L.serialQueue({ max: 2 });
+  const held = () => new Promise(r => setTimeout(r, 30));
+  q3.push('x', held);
+  const takes = ['y', 'z', 'w'].map(kk => q3.push(kk, held));
+  eq('it fills to the limit', takes[0], 'queued');
+  eq('and then refuses, out loud',
+    takes.filter(t => t === 'queue full').length > 0, true);
+
+}
+/* The async section reports BEFORE the tally, and the tally is the last
+   thing that happens. A bare process.exit() used to sit here and killed
+   the run the moment the synchronous tests finished - so the queue
+   section printed its heading and then the process was gone, which reads
+   exactly like a hang. */
+queueSection()
+  .catch(e => {
+    console.log('\n  \u2717 the queue section threw: '
+      + ((e && e.stack) || e));
+    fail++;
+  })
+  .then(() => {
+    console.log('\n' + pass + ' passed, ' + fail + ' failed');
+    process.exit(fail ? 1 : 0);
+  });

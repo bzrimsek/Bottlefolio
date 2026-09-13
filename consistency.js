@@ -449,6 +449,13 @@ const TWO_DOORS_OK = [
      appears, that is the thing to catch, and this entry does not hide
      it: it names guessScar specifically. */
   'libraryAudit>guessScar', 'auditSuggestion>guessScar',
+  /* DIFFERENT QUESTIONS, one wrapping the other. L.fillSnap answers
+     "what notch is this number", which the slider asks of a raw drag
+     position. L.fillOf answers "what is this BOTTLE's level", which
+     includes deciding that an unset one is full, and it asks fillSnap to
+     finish the job. A screen calling both is a screen doing two things,
+     not two answers to one question. */
+  'fillOf>fillSnap',
   'ownedCount>myBottles', 'pourGlasses>reelMatches', 'viewFor>clampView',
   'zoomAbout>clampView', 'shopIsNewBottle>shopNorm',
   'parseDelimited>parseCSV', 'placeLine>titleCase', 'recap>lookupDaysSince',
