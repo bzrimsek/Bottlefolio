@@ -17832,6 +17832,83 @@ sec('\u00a7403 the room, written out');
   });
 }
 
+sec('\u00a7404 a flight is capped in drinks, not in glasses');
+{
+  /* BZ: "never build a flight over 10, recommending 3/4 oz pours" \u2014 then
+     "8, unless proof in the flight allows more."
+
+     Every expected number below is worked by hand. A US standard drink is
+     0.6 fl oz of ethanol and proof is twice ABV, so a 3/4 oz pour carries
+     0.75 * (proof/200) ounces of it:
+       80 proof  \u2192 0.75 * 0.40 = 0.300 oz \u2192 0.300/0.6 = 0.50 drinks
+       90 proof  \u2192 0.75 * 0.45 = 0.3375   \u2192 0.5625 drinks
+      100 proof  \u2192 0.75 * 0.50 = 0.375    \u2192 0.625 drinks
+      120 proof  \u2192 0.75 * 0.60 = 0.450    \u2192 0.75 drinks
+     The budget is 4.5 standard drinks, which is 8 glasses at 90 proof. */
+  const bot = (n, proof) => ({ k: 'x' + n, name: 'x' + n, proof: proof });
+  const many = (n, proof) => { const o = []; for (let i = 0; i < n; i++)
+    o.push(bot(i, proof)); return o; };
+
+  eq('one 100 proof pour is 0.625 of a drink',
+    +L.pourDrinks(100, 0.75).toFixed(4), 0.625);
+  eq('one 120 proof pour is three quarters of one',
+    +L.pourDrinks(120, 0.75).toFixed(4), 0.75);
+  eq('a bottle with no proof contributes nothing knowable',
+    L.pourDrinks(null, 0.75), null);
+
+  /* BZ'S OWN SHAPE: six glasses at 100 proof. Hand: 6 * 0.625 = 3.75. */
+  const six = L.flightDrinks(many(6, 100), 0.75);
+  eq('six at 100 proof is 3.75 drinks', six.drinks, 3.75);
+  eq('and four and a half ounces of whisky', six.oz, 4.5);
+  eq('which is inside the budget', six.over, false);
+
+  /* THE BUDGET IS EXACTLY EIGHT AT 90 PROOF. 8 * 0.5625 = 4.5. */
+  eq('eight at 90 proof is exactly the budget',
+    L.flightDrinks(many(8, 90), 0.75).drinks, 4.5);
+  eq('and is not over it',
+    L.flightDrinks(many(8, 90), 0.75).over, false);
+  eq('nine at 90 proof is over', L.flightDrinks(many(9, 90), 0.75).over, true);
+
+  /* PROOF ALLOWS MORE, WHICH IS THE WHOLE OF BZ'S RULE. At 80 proof each
+     pour is 0.50, so nine of them is 4.5 \u2014 still inside. */
+  eq('nine gentle pours fit where eight strong ones do not',
+    L.flightDrinks(many(9, 80), 0.75).drinks, 4.5);
+  eq('and nine gentle is allowed',
+    L.flightDrinks(many(9, 80), 0.75).over, false);
+  /* AND PROOF TAKES IT AWAY. 4.5 / 0.75 = 6 exactly at cask strength. */
+  eq('six cask strength pours are the whole budget',
+    L.flightDrinks(many(6, 120), 0.75).drinks, 4.5);
+  eq('seven of them are over',
+    L.flightDrinks(many(7, 120), 0.75).over, true);
+
+  /* THE GLASS CEILING THE BUDGET CANNOT TALK PAST. Eleven at 60 proof is
+     11 * 0.375 = 4.125 drinks, inside the budget and still eleven glasses. */
+  const eleven = L.flightDrinks(many(11, 60), 0.75);
+  eq('eleven weak pours are under the drink budget', eleven.drinks < 4.5, true);
+  eq('and refused anyway, on glasses', eleven.over, true);
+
+  /* HOW MANY MORE FIT, at the strength actually in the flight. */
+  eq('an empty flight has room for eight at 90 proof',
+    L.flightRoom([], 0.75, 90).room, 8);
+  eq('and for six at cask strength',
+    L.flightRoom([], 0.75, 120).room, 6);
+  eq('and for nine at 80 proof',
+    L.flightRoom([], 0.75, 80).room, 9);
+  eq('a full budget has room for none',
+    L.flightRoom(many(6, 120), 0.75, 120).room, 0);
+  eq('and says which ceiling stopped it',
+    L.flightRoom(many(6, 120), 0.75, 120).limitedBy, 'strength');
+  eq('while ten gentle glasses are stopped by the other one',
+    L.flightRoom(many(10, 60), 0.75, 60).limitedBy, 'glasses');
+
+  /* A HALF-KNOWN TOTAL TRAVELS WITH ITS POPULATION (rule 13d). */
+  const mixed = L.flightDrinks([bot(1, 100), bot(2, null), bot(3, 100)], 0.75);
+  eq('the total counts only the proofs it has', mixed.drinks, 1.25);
+  eq('and says how many it had', [mixed.known, mixed.of], [2, 3]);
+  eq('an unknown proof cannot push a flight over budget',
+    L.flightDrinks([bot(1, 80), bot(2, null)], 0.75).over, false);
+}
+
 /* The async section reports BEFORE the tally, and the tally is the last
    thing that happens. A bare process.exit() used to sit here and killed
    the run the moment the synchronous tests finished - so the queue

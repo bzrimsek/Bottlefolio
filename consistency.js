@@ -886,6 +886,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Back up everything', 'Add to the shelf',
     /* Added with the portrait veto's way back, 2026-09-13. */
     'Put aside',
+    /* Added with the drinks budget, 2026-09-13. */
+    'Running a tasting',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
