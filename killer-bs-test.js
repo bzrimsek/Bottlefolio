@@ -16292,8 +16292,14 @@ sec('\u00a7374 how much is left, in seven notches');
   eq('nor on 13', L.fillSnap(13), 10);
   eq('38 is nearer a third than a half', L.fillSnap(38), 33);
   eq('and 63 is two thirds', L.fillSnap(63), 66);
-  eq('an old stored zero reads as nearly gone', L.fillSnap(0), 10);
-  eq('and so does its wording', L.fillWords(0), 'Nearly gone');
+  /* ZERO IS A REAL NOTCH AGAIN. BZ dropped it - an empty bottle gets
+     retired rather than logged at nothing - and reversed that once the
+     scale was drawn with an empty bottle at the foot and no number beside
+     it: the foot of a gauge is where empty belongs, and a rail whose
+     lowest mark is 10 leaves the last tenth unsayable. */
+  eq('zero is a notch', L.fillSnap(0), 0);
+  eq('and it says empty', L.fillWords(0), 'Empty');
+  eq('a nearly-empty reading still snaps to it', L.fillSnap(4), 0);
   eq('and full is still full', L.fillSnap(100), 100);
   eq('out of range is pulled back', L.fillSnap(140), 100);
   eq('and nothing at all is nothing', L.fillSnap(null), null);
@@ -17211,6 +17217,85 @@ sec('\u00a7395 a bottle renamed after it was first searched');
     L.matchesQuery(q, 'bonfire'), true);
   q.fin = 'Pedro Ximenez';
   eq('and so is a cask', L.matchesQuery(q, 'px'), true);
+}
+
+sec('\u00a7396 the library, edited in a spreadsheet and brought back');
+{
+  /* BZ: get the data movement stuff done - mass editing is easier in a
+     spreadsheet sometimes. It is: nineteen columns and four hundred rows
+     is an afternoon in a sheet and a week on a phone. The library had an
+     export and no import, so every correction was one entry at a time.
+
+     IT MERGES, IT NEVER REPLACES. A file is a set of CHANGES, not a new
+     library: rows missing from it are left exactly alone, because
+     somebody who exported last week and edits ten lines must not delete
+     everything published since. That is the rule the whole feature turns
+     on, and it is the first thing asserted. */
+  /* KEYED THE WAY THE LIBRARY IS KEYED. The first version of this
+     fixture used 'a' and 'b', and the plan derives its key from the Name
+     column - so nothing matched and every row looked new. The test was
+     wrong, not the code, which is worth saying: a fixture that does not
+     look like the real thing proves nothing about it. */
+  const lib = {};
+  [{ name: 'Aberlour 18', dist: 'Aberlour', proof: 86, sub: 'scotch',
+     scar: 'standard',
+     tn: { nose: 'sherry', palate: 'raisin', finish: 'long' } },
+   { name: 'Buffalo Trace', dist: 'Buffalo Trace', proof: 90,
+     sub: 'bourbon' }].forEach(p2 => {
+    lib[L.libKey(p2.name)] = Object.assign({ k: L.libKey(p2.name) }, p2);
+  });
+  const row = (name, over) => Object.assign(
+    { Name: name, Nose: '', Palate: '', Finish: '' }, over || {});
+
+  /* A ROW LEFT OUT CHANGES NOTHING. */
+  const only = L.libraryImportPlan(
+    [row('Aberlour 18', { Scarcity: 'limited' })], lib);
+  eq('one row edits one entry', only.changes.length, 1);
+  eq('and says what it would do',
+    /standard/.test(only.changes[0].words.join(' ')), true);
+  eq('the entry left out of the file is untouched',
+    only.adds.length + only.same, 0);
+
+  /* A BLANK CELL LEAVES WHAT IS THERE. Somebody clearing a column by
+     accident, or a sheet that drops empty trailing fields, must not
+     erase a library nobody asked to change. */
+  const blanked = L.libraryImportPlan(
+    [row('Aberlour 18', { Distillery: '', Proof: '' })], lib);
+  eq('blanks are not erasures', blanked.changes.length, 0);
+  eq('so the row counts as already matching', blanked.same, 1);
+
+  /* A NEW NAME IS A NEW ENTRY, not a rename - guessing which of two
+     names somebody meant to keep is not a guess worth making. */
+  const added = L.libraryImportPlan([row('Something New',
+    { Distillery: 'A House', Type: 'Bourbon', Proof: '100' })], lib);
+  eq('an unknown name is added', added.adds.length, 1);
+  eq('and carries its fields', added.adds[0].set.proof, 100);
+
+  /* NUMBERS ARRIVE AS NUMBERS, or a proof of "90" sorts beside "9". */
+  const num = L.libraryImportPlan(
+    [row('Buffalo Trace', { MSRP: '32.99' })], lib);
+  eq('a price is a number', num.changes[0].set.msrp, 32.99);
+
+  /* THE TASTING NOTE IS THREE COLUMNS AND ONE OBJECT. Writing one field
+     alone would drop the other two. */
+  const note = L.libraryImportPlan(
+    [row('Aberlour 18', { Nose: 'apple' })], lib);
+  eq('a new nose is taken', note.changes[0].set.tn.nose, 'apple');
+  eq('and the palate it did not mention survives',
+    note.changes[0].set.tn.palate, 'raisin');
+
+  /* WHITESPACE IS NOT A CHANGE. On BZ's own 457-row export exactly one
+     row differed from itself by a trailing space, and reporting that
+     would make every honest round trip look like a hundred edits. */
+  const spaced = L.libraryImportPlan(
+    [row('Buffalo Trace', { Distillery: '  Buffalo Trace  ' })], lib);
+  eq('a trailing space is not an edit', spaced.changes.length, 0);
+
+  /* A ROW WITH NO NAME IS COUNTED, NOT GUESSED AT. */
+  const nameless = L.libraryImportPlan([row('', { Proof: '90' })], lib);
+  eq('an unnamed row is reported', nameless.unnamed, 1);
+  eq('and changes nothing',
+    nameless.changes.length + nameless.adds.length, 0);
 }
 
 /* Run in its own async block: this harness is a plain script, so a

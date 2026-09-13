@@ -813,6 +813,58 @@ function step(n) {
      Driven with the longest name on his shelf rather than a short one,
      because a row only breaks when the name is long - which is exactly
      when somebody needs to read it. */
+  /* THE TOP OF THE GAUGE IS FULL.
+
+     BZ: my shopping page thinks this is nearly empty - somewhere your
+     math is backwards. It was, and it was the SCALE: writing-mode
+     vertical-lr with direction ltr puts the MINIMUM at the top, so the
+     top of the track stored 10 and the bottom stored 100. He set a bottle
+     near the top meaning full, it stored 10, and Shop correctly called it
+     nearly out. The gauge was the liar.
+
+     `direction:rtl` was there originally and I removed it while chasing
+     an off-centre dot, without checking what else it was holding up.
+     Nothing in the app can see this - it is between the browser and a
+     pointer - so it is DRIVEN: click each end of the track and read the
+     value back, which is the test that would have caught it the first
+     time. */
+  step('the top of the fill gauge is full, the foot is empty');
+  {
+    const box = await page.evaluate(() => {
+      S.showFill = true;
+      const k = Object.keys(S.catalog)[0];
+      S.bottles = [{ id: 'FB1', k: k, status: 'open', fill: 50 }];
+      rebuildCatalog();
+      showBottle(k);
+      const sl = document.querySelector('.fillrail input[type=range]');
+      if (!sl) return null;
+      const b2 = sl.getBoundingClientRect();
+      return { x: b2.left + b2.width / 2, top: b2.top + 4,
+               bottom: b2.bottom - 4 };
+    });
+    if (!box) {
+      failures.push('fill gauge: no slider to measure');
+    } else {
+      await page.mouse.click(box.x, box.top);
+      const atTop = await page.evaluate(() =>
+        document.querySelector('.fillrail input[type=range]').value);
+      await page.mouse.click(box.x, box.bottom);
+      const atFoot = await page.evaluate(() =>
+        document.querySelector('.fillrail input[type=range]').value);
+      if (String(atTop) !== '100') {
+        failures.push('fill gauge: the TOP of the track gives ' + atTop
+          + ', not 100 — the scale is upside down');
+      }
+      /* BZ: bottom needs to be zero. The foot of a gauge is where empty
+         belongs, and a rail whose lowest mark is 10 leaves the last tenth
+         of the bottle unsayable. */
+      if (String(atFoot) !== '0') {
+        failures.push('fill gauge: the FOOT of the track gives ' + atFoot
+          + ', not 0');
+      }
+    }
+  }
+
   step('a library scan row fits a phone, name and all');
   {
     const r = await page.evaluate(async () => {
