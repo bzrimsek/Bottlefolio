@@ -16909,6 +16909,23 @@ sec('\u00a7388 Update says what it will change, and changes that');
     L.auditFix('mashspirit', teq, teq.name).label, 'Clear the grain bill');
   eq('and clears it', L.auditFix('mashspirit', teq, teq.name).set.mash, '');
 
+  /* THE STYLE CLASH CARRIES ITS OWN ANSWER. BZ: and no actions here.
+     The finding prints "name says single malt, row says single cask" and
+     offered nothing but a cross - so the one row where the correct value
+     is written in its own title was the row he had to go and edit by
+     hand. His Teeling came back twice that way. */
+  const teel = { k: 't', dist: 'Teeling', style: 'single cask, single malt',
+    name: 'Teeling Whiskey Single Cask Single Malt Irish Whiskey Aged '
+      + '17 Years' };
+  eq('the style clash offers the name\u2019s answer',
+    L.auditFix('style', teel, teel.name).label, 'Set Style to Single Malt');
+  eq('and writes exactly that',
+    L.auditFix('style', teel, teel.name).set.style, 'single malt');
+  /* AND NOTHING WHEN THEY ALREADY AGREE. */
+  eq('no offer when the row matches its name',
+    L.auditFix('style', Object.assign({}, teel, { style: 'single malt' }),
+      teel.name), null);
+
   /* NO UPDATE WHERE THERE IS NO SINGLE OBVIOUS FIX. A duplicate pair
      needs a merge and a missing note needs a lookup; a button that
      apologises when pressed is worse than no button. */

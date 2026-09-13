@@ -916,34 +916,47 @@ function step(n) {
       showShelfTools();
       const m = document.getElementById('modalBody')
         || document.querySelector('.modal');
-      const seen = () => [...m.querySelectorAll('button, .portlabel')]
-        .filter(e => e.offsetParent !== null)
+      /* A DISCLOSURE, NOT A BUTTON. BZ: to me a fold is like we did
+         with Advanced in settings - not a button. So this looks for the
+         summary and reads `details.open`, rather than hunting a button
+         that no longer exists.
+
+         And it does NOT use offsetParent to decide what is hidden: a
+         shut <details> still reports its children as having an offset
+         parent, which had me believing the folds were open when they
+         were not. The element's own `open` is the only honest answer. */
+      const det = [...m.querySelectorAll('details')]
+        .filter(d => /^Import a shelf/.test(
+          (d.querySelector('summary') || {}).textContent || ''))[0];
+      const labels = [...m.querySelectorAll('.portlabel')]
         .map(e => e.textContent.trim());
-      const before = seen();
-      const fold = [...m.querySelectorAll('button')]
-        .filter(b => /^Import a shelf/.test(b.textContent.trim()))[0];
-      if (fold) fold.click();
-      const after = seen();
+      const before = {
+        manage: labels.indexOf('Manage'),
+        hasImport: !!det,
+        importOpen: det ? det.open : null,
+        inside: det ? [...det.querySelectorAll('button')]
+          .map(e => e.textContent.trim()) : []
+      };
+      if (det) det.open = true;
+      const after = det ? det.open : false;
       closeModal();
       return { before: before, after: after };
     });
-    const idx = t => r.before.findIndex(x => new RegExp(t).test(x));
-    if (idx('^Manage$') < 0) {
+    if (r.before.manage < 0) {
       failures.push('shelf tools: no Manage section on open');
     }
-    if (idx('^Import a shelf') < 0) {
-      failures.push('shelf tools: no way to reach Import');
+    if (!r.before.hasImport) {
+      failures.push('shelf tools: no Import disclosure');
     }
-    if (idx('^Manage$') > idx('^Import a shelf')) {
-      failures.push('shelf tools: Import comes before Manage, and Import '
-        + 'is the once while Manage is the Sunday job');
-    }
-    if (r.before.some(x => /^Import a collection$/.test(x))) {
+    if (r.before.importOpen) {
       failures.push('shelf tools: Import is not folded away');
     }
-    if (!r.after.some(x => /^Import a collection$/.test(x))) {
-      failures.push('shelf tools: the Import fold does not open, which is '
+    if (!r.before.inside.some(x => /^Import a collection$/.test(x))) {
+      failures.push('shelf tools: the Import fold is empty, which is '
         + 'worse than not folding it at all');
+    }
+    if (!r.after) {
+      failures.push('shelf tools: the Import fold does not open');
     }
   }
 
