@@ -742,7 +742,12 @@ check('no fixed svg id is emitted by a repeated drawing',
   /* DATA KEYS AND SOMEBODY ELSE'S STRINGS. `color` is a field name on 325
      catalog entries and renaming it orphans every tasting note; the
      Firebase error codes are not ours to spell. */
+  /* A BRAND SPELLS ITSELF. Grey Goose is a name, not prose, and neither
+     is it ours to Americanise - the same way the Firebase error codes
+     below are not. The bare 'grey' was already allowed; the brand needed
+     saying separately because the check matches whole strings. */
   const KEYS = new Set(["'colour'", "'flavour'", "'flavoured'", "'grey'",
+                        "'grey goose'",
                         "'centre'", "'litre'", "'favourite'",
                         "'auth/cancelled-popup-request'"]);
   const lines = src.split('\n');

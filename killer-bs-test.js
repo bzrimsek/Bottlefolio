@@ -14757,8 +14757,21 @@ sec('\u00a7350 the last thirteen');
   eq('bottled in bond is searchable although only the proof is in the data',
     hay.indexOf('bottled in bond') >= 0, true);
   eq('the tasting note is searched too', hay.indexOf('vanilla') >= 0, true);
-  eq('a built haystack is reused rather than rebuilt',
-    L.searchText({ _hay: 'already done', name: 'ignored' }), 'already done');
+  /* THE CACHE IS KEYED TO WHAT IT WAS BUILT FROM, not merely "built".
+
+     This asserted that a stored haystack wins over the product's own
+     fields - which is exactly the fault BZ found: three vodkas on the
+     shelf, one in the search, and Tito's unfindable by name. They were
+     added by photograph, so the entry existed before the lookup filled
+     in its name, and the cache kept whatever it was called at that
+     instant for ever.
+
+     A haystack with no fingerprint is stale by definition now, so this
+     case rebuilds. The reuse it was protecting is asserted below,
+     properly: the SAME product, unchanged, is not rebuilt. */
+  eq('a haystack with no fingerprint is rebuilt from the product',
+    L.searchText({ _hay: 'already done', name: 'the real name' }),
+    'the real name');
   eq('and nothing is an empty string, not a crash', L.searchText(null), '');
 
   /* --- deviceLabel ---------------------------------------------------- */
@@ -17159,6 +17172,45 @@ sec('\u00a7394 an ignore sticks, and the count matches the rows');
     of({ 'scarsays:a': { v: 'later', at: old } }).items.length, 2);
   eq('but a fresh one is not',
     of({ 'scarsays:a': { v: 'later', at: Date.now() } }).items.length, 1);
+}
+
+sec('\u00a7395 a bottle renamed after it was first searched');
+{
+  /* BZ: why would I have 3 vodka on my shelf but only 1 in the database?
+     Then: search VODKA gets 1 record. Then, with a screenshot of the Type
+     pill: all three there, typed Vodka, Tito's at the top. And: search
+     tito and no records.
+
+     His export settles it - all three carry the word Vodka in the NAME,
+     so a fresh haystack would find every one. The haystack was built ONCE
+     per product and never rebuilt, and these three were added by
+     photograph: the entry exists before the lookup fills in its name, so
+     the cache held whatever it was called at that instant and nothing
+     since.
+
+     Searchable everywhere except in the search, which is the worst place
+     for a bottle to be missing from. */
+  const p = { name: '', dist: '', sub: '' };
+  L.searchText(p);                       // the entry is searched empty
+  p.name = "Tito's Handmade Vodka 25th Anniversary";
+  p.sub = 'vodka';
+  eq('it answers to its name once it has one',
+    L.matchesQuery(p, 'tito'), true);
+  eq('and to its type', L.matchesQuery(p, 'vodka'), true);
+
+  /* THE CACHE STILL DOES ITS JOB. It is not disabled - it is keyed to
+     what it was built from, so an unchanged product is not rebuilt. */
+  const q = { name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch' };
+  const first = L.searchText(q);
+  eq('an unchanged product reuses its haystack',
+    L.searchText(q) === first, true);
+  /* AND A CHANGE ANYWHERE IT READS FROM rebuilds it - a tasting note
+     arriving from a lookup counts as much as a rename. */
+  q.tn = { palate: 'iodine and bonfire' };
+  eq('a new tasting note is searchable at once',
+    L.matchesQuery(q, 'bonfire'), true);
+  q.fin = 'Pedro Ximenez';
+  eq('and so is a cask', L.matchesQuery(q, 'px'), true);
 }
 
 /* Run in its own async block: this harness is a plain script, so a

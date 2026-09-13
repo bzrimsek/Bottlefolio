@@ -1349,62 +1349,31 @@ function step(n) {
     if (!backs) failures.push('the bottle screen has no way back');
   }
 
-  step('home tiles hold one row');
-  // 6. The six home summary tiles hold one row at every width, and none of
-  //    them widens the page.
-  //
-  //    Six columns across a 360px phone leaves each number about 40px of
-  //    room, and "$32,807" does not break. A track that cannot shrink pushes
-  //    the document wider than the viewport; body{overflow:hidden} then
-  //    clips the last child of the flex column, which is the nav. That is
-  //    the disappearing tab bar, and it has arrived by three different
-  //    routes now. This walks the widths and fails on the first one where
-  //    the value overflows its tile, the page overflows the window, or the
-  //    row breaks in two.
-  await page.locator('nav button[data-scr="home"]').click();
-  await page.waitForTimeout(120);
-  for (const w of [360, 390, 430, 500, 600, 699, 700, 820, 1200]) {
-    await page.setViewportSize({ width: w, height: 780 });
-    await page.waitForTimeout(80);
-    const t = await page.evaluate(() => {
-      const wrap = document.querySelector('#homeBody > .tiles');
-      if (!wrap) return null;
-      const tiles = [...wrap.children];
-      const tops = new Set(tiles.map(x => Math.round(x.getBoundingClientRect().top)));
-      const worst = tiles.reduce((a, x) => {
-        const v = x.querySelector('.v');
-        const over = v.scrollWidth - v.clientWidth;
-        return over > a.over ? { over, text: v.textContent } : a;
-      }, { over: 0, text: '' });
-      const nav = document.querySelector('nav').getBoundingClientRect();
-      return {
-        count: tiles.length,
-        rows: tops.size,
-        over: worst.over,
-        text: worst.text,
-        pageOver: document.documentElement.scrollWidth - window.innerWidth,
-        navBottom: Math.round(nav.bottom),
-        vh: window.innerHeight
-      };
+  /* THE HOME TILES ARE GONE, so this measures that rather than their
+     layout. BZ: looking at these numbers, these are vanity stats really -
+     open and pourable are the same and ready to pour should equal open.
+     He was right and it was worse than duplication: on his shelf he keeps
+     one bottle open per whisky, so two tiles printed the SAME NUMBER for
+     two different questions, and "ready to pour tonight" counted flights
+     rather than bottles, so it could never equal open.
+
+     Four of the five already live on the shelf header. The fifth he
+     declined to move: it is a number for a number's sake. */
+  step('home does not carry the tile row any more');
+  {
+    const left = await page.evaluate(() => {
+      goTo('home');
+      renderHome();
+      const t = document.querySelector('#scr-home .tiles');
+      return t ? [...t.querySelectorAll('.tile')]
+        .map(e => e.textContent.trim().slice(0, 30)) : null;
     });
-    if (!t) { failures.push('home: no summary tiles'); break; }
-    if (t.rows !== 1) {
-      failures.push('home tiles at ' + w + 'px: ' + t.rows + ' rows, want 1');
-    }
-    if (t.over > 0) {
-      failures.push('home tiles at ' + w + 'px: ' + JSON.stringify(t.text)
-        + ' overflows its tile by ' + t.over + 'px');
-    }
-    if (t.pageOver > 0) {
-      failures.push('home tiles at ' + w + 'px: page is ' + t.pageOver
-        + 'px wider than the window');
-    }
-    if (t.navBottom > t.vh + 2) {
-      failures.push('home tiles at ' + w + 'px: nav pushed '
-        + (t.navBottom - t.vh) + 'px off the bottom');
+    if (left && left.length) {
+      failures.push('home still draws ' + left.length + ' tiles: '
+        + left.join(' | '));
     }
   }
-  await page.setViewportSize({ width: 390, height: 780 });
+
 
   step('the log splits, every row has an X');
   // 7. The log: pours on Taste, flights on Flights, and an X on every row.
@@ -1970,56 +1939,11 @@ function step(n) {
     await page.setViewportSize({ width: 390, height: 780 });
   }
 
-  step('home tiles go somewhere, map');
-  // 14. The home tiles go where their number lives, and the map is the way
-  //     to the map. A number you can read and not follow is a dead end.
-  {
-    await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(120);
-    const want = [['bottles on the shelf', 'shelf'],
-                  ['open and pourable', 'pour'],
-                  ['different whiskies', 'shelf'],
-                  ['ready to pour', 'flights']];
-    for (const [label, screen] of want) {
-      await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(80);
-      const tile = page.locator('#homeBody > .tiles > button.tile')
-        .filter({ hasText: label });
-      if (!(await tile.count())) {
-        failures.push('home: "' + label + '" is not tappable');
-        continue;
-      }
-      await tile.first().click();
-      await page.waitForTimeout(120);
-      const on = await page.evaluate(n =>
-        document.getElementById('scr-' + n).classList.contains('on'), screen);
-      if (!on) failures.push('home: "' + label + '" did not open ' + screen);
-    }
-    // The shelf value names no screen and must stay a label.
-    await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(80);
-    const val = page.locator('#homeBody > .tiles > button.tile')
-      .filter({ hasText: 'shelf value at MSRP' });
-    if (await val.count()) {
-      failures.push('home: the shelf value is tappable but goes nowhere');
-    }
-    // The map opens the map, and the chip that used to say so is gone.
-    const mapBtn = page.locator('#homeBody button.mapwrap');
-    if (!(await mapBtn.count())) {
-      failures.push('home: the map is not the way to the map');
-    } else {
-      if (await page.locator('#homeBody button', { hasText: 'Open the map' })
-            .count()) {
-        failures.push('home: the Open the map chip is still there');
-      }
-      await mapBtn.first().click();
-      await page.waitForTimeout(120);
-      if (!(await page.evaluate(() =>
-          document.getElementById('scr-map').classList.contains('on')))) {
-        failures.push('home: pressing the map did not open the map');
-      }
-    }
-  }
+  /* This required each tile to be a button leading to the screen its
+     number came from - a good rule while the tiles existed. They are gone
+     at BZ's request, so the rule goes with them rather than being kept as
+     a step that can only ever pass by finding nothing. */
+
 
   step('time for a taste holds its height');
   // 15. Time for a taste holds its height. It swung 466 -> 482 -> 417 as a
@@ -2042,84 +1966,11 @@ function step(n) {
     }
   }
 
-  step('home tiles lead somewhere');
-  // 14. The home tiles go where their number lives.
-  {
-    await page.locator('nav button[data-scr="home"]').click();
-    await page.waitForTimeout(120);
-    /* Named by what they lead to, not by their exact wording. This listed
-       'flights run', which was renamed to 'ready to pour tonight' — a walk
-       that breaks when a label is reworded is testing the copy rather than
-       the behavior, and the behavior is that every tile with a number on
-       it goes where that number lives. */
-    const want = { 'bottles on the shelf': 'shelf', 'open and pourable': 'pour',
-                   'different whiskies': 'shelf',
-                   'ready to pour': 'flights' };
-    for (const label of Object.keys(want)) {
-      const tile = page.locator('#homeBody > .tiles > button.tile')
-        .filter({ hasText: label });
-      if (!(await tile.count())) {
-        failures.push('home: "' + label + '" is not tappable');
-        continue;
-      }
-      await tile.first().click();
-      await page.waitForTimeout(100);
-      const on = await page.evaluate(() => {
-        const s = document.querySelector('.screen.on');
-        return s ? s.id.replace('scr-', '') : null;
-      });
-      if (on !== want[label]) {
-        failures.push('home: "' + label + '" opened ' + on
-          + ', want ' + want[label]);
-      }
-      await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(80);
-    }
-    // The shelf value is not a place, so it stays a label.
-    const notATile = await page.locator('#homeBody > .tiles > button.tile')
-      .filter({ hasText: 'shelf value at MSRP' }).count();
-    if (notATile) failures.push('home: the shelf value should not be a button');
+  /* The tiles they led from are gone, so the step that measured their
+     destinations goes with them rather than being kept green by a
+     condition that can never be true. Home's own cards still open the
+     screens they describe and the walk covers those above. */
 
-    /* The two chart lanes end near each other. column-count balances by
-       total height, which cannot help when one card is taller than the
-       rest together: By type has thirteen rows against Recognition's
-       three, and the right lane stopped half way up the page. */
-    const lanes = await page.evaluate(() => {
-      if (window.innerWidth < 700) return null;   // one lane below the break
-      const c = [...document.querySelectorAll('#homeCharts .chartcol')];
-      return c.length === 2
-        ? c.map(x => Math.round(x.getBoundingClientRect().height)) : c.length;
-    });
-    if (lanes && typeof lanes !== 'number') {
-      const gap = Math.abs(lanes[0] - lanes[1]);
-      const tallest = Math.max(lanes[0], lanes[1]);
-      // A third of the taller lane. Cards cannot be split, so they will
-      // never be equal; a lane ending half way up the page is the fault.
-      if (gap > tallest / 3) {
-        failures.push('home charts: lanes are ' + lanes.join(' and ')
-          + ' tall, ' + gap + 'px apart');
-      }
-    } else if (typeof lanes === 'number') {
-      failures.push('home charts: ' + lanes + ' lanes, want 2');
-    }
-
-    // The map IS the button; the chip that used to say so is gone.
-    const map = page.locator('#homeBody button.mapwrap');
-    if (!(await map.count())) {
-      failures.push('home: the map is not tappable');
-    } else {
-      await map.first().click();
-      await page.waitForTimeout(100);
-      const on = await page.evaluate(() =>
-        (document.querySelector('.screen.on') || {}).id);
-      if (on !== 'scr-map') failures.push('home: the map opened ' + on);
-      await page.locator('nav button[data-scr="home"]').click();
-      await page.waitForTimeout(80);
-    }
-    if (await page.locator('#homeBody button', { hasText: 'Open the map' }).count()) {
-      failures.push('home: the Open the map chip is still there');
-    }
-  }
 
   step('bottle controls sit in their sections');
   // 15. The bottle screen: one control per section, and Shop's two ways

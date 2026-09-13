@@ -97,7 +97,7 @@ function check(name, got, want) {
       });
       return out;
     });
-    check('every shelf row names a whisky the catalogue knows',
+    check('every shelf row names a whisky the catalog knows',
       rows.filter(r => r.unknown).map(r => r.name), []);
     check('every row shows the proof the engine holds',
       rows.filter(r => r.shownProof !== r.enginePro)
@@ -171,10 +171,16 @@ function check(name, got, want) {
         }
       };
     });
-    const by = l => (tiles.tiles.filter(t => t.l === l)[0] || {}).v;
-    check('bottles on the shelf', by('bottles on the shelf'), tiles.engine.bottles);
-    check('open and pourable', by('open and pourable'), tiles.engine.open);
-    check('different whiskies', by('different whiskies'), tiles.engine.products);
+    /* THE TILES ARE GONE, so what is checked is that they stay gone.
+       BZ: these are vanity stats really - open and pourable are the same
+       and ready to pour should equal open. Two of them printed the SAME
+       number for two different questions and one counted flights, so it
+       could never equal open. Four already live on the shelf header,
+       where the engine formats them once.
+
+       Kept as a check rather than deleted: a tile row quietly returning
+       would bring the disagreement back with it. */
+    check('home draws no tile row', String(tiles.tiles.length), '0');
     /* "Flights designed" was removed from the tiles: BZ called it a
        meaningless number and he was right — 36 of the 38 were designed by
        the app, so it was the shelf counting its own output. "Ready to pour
