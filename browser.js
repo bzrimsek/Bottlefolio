@@ -838,6 +838,42 @@ function step(n) {
 
      Rule 30e in one line: the gate tests one pass, and this is a second
      render. */
+  /* THE LIST SITS UNDER ITS HEADING, AFTER THE DATA LANDS.
+
+     BZ, three times: the People heading at the top with nothing under it
+     and the list at the foot of the page. Two causes, both mine - the
+     redraw appended rather than replaced, then replaced at the wrong
+     index - and my headless check passed each time because it measured
+     the FIRST paint, while what he saw was the screen after the sharing
+     audit and the diagnostics arrived.
+
+     So this renders, then redraws, and checks the position AFTER. */
+  step('the people list stays under its heading when data lands');
+  {
+    const r = await page.evaluate(() => {
+      S.admin = true;
+      renderDiag();
+      const box = document.getElementById('diagBody');
+      /* What actually happens: the late data triggers a redraw. */
+      renderUsers(box);
+      renderUsers(box);
+      const kids = [...box.children];
+      const card = box.querySelector('#everybodyCard');
+      const head = box.querySelector('#peopleHead');
+      return { at: kids.indexOf(card), head: kids.indexOf(head),
+               of: kids.length };
+    });
+    if (r.at < 0) {
+      failures.push('people: no Everybody card after a redraw');
+    } else if (r.head < 0) {
+      failures.push('people: no People heading to sit under');
+    } else if (r.at !== r.head + 1) {
+      failures.push('people: the list is at position ' + r.at + ' of '
+        + r.of + ' while its heading is at ' + r.head
+        + ' — it must sit directly under it');
+    }
+  }
+
   step('rendering the people list twice leaves one card');
   {
     const r = await page.evaluate(() => {
