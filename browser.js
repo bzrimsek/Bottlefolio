@@ -848,6 +848,156 @@ function step(n) {
      audit and the diagnostics arrived.
 
      So this renders, then redraws, and checks the position AFTER. */
+  /* NOTHING RUNS OFF THE EDGE, ON ANY SCREEN.
+
+     BZ: fix the text and scan every page, every modal, everything and
+     fix any text wrap issues. How many times are we going to cover the
+     same ground? Fair - I had been fixing this one screen at a time as
+     he found them, which is how the same fault kept appearing somewhere
+     new.
+
+     This walks every screen with a real shelf on it and fails on two
+     things: a leaf whose text is CLIPPED by white-space:nowrap, and
+     anything sitting past the right edge that is not inside a deliberate
+     horizontal scroller. */
+  /* COUNTING THE SHELF, AND PUTTING IT DOWN. BZ: we should build a shelf
+     setting tool to do a physical inventory, check bottles off a list.
+
+     The property that matters is not the ticking - it is that stopping
+     halfway retires nothing, because an inventory that quietly retires
+     fourteen bottles when somebody got bored is worse than none. */
+  step('a shelf count survives being put down');
+  {
+    const r = await page.evaluate(async () => {
+      S.catalog = { a: { k: 'a', name: 'Ardbeg 10', dist: 'Ardbeg',
+                         sub: 'scotch' },
+                    b: { k: 'b', name: 'Blanton', dist: 'BT',
+                         sub: 'bourbon' } };
+      S.bottles = [{ id: 'i1', k: 'a', status: 'open' },
+                   { id: 'i2', k: 'b', status: 'open' }];
+      S.invWalk = {};
+      rebuildCatalog();
+      inventoryScreen();
+      await new Promise(r2 => setTimeout(r2, 120));
+      const m = document.getElementById('modalBody')
+        || document.querySelector('.modal');
+      const ticks = [...m.querySelectorAll('.iconchip')];
+      if (!ticks.length) return { no: 'no tick buttons' };
+      ticks[0].click();                       // found the first
+      const saved = JSON.parse(JSON.stringify(S.invWalk));
+      closeModal();
+      /* Put it down and pick it up. */
+      inventoryScreen();
+      await new Promise(r2 => setTimeout(r2, 120));
+      const m2 = document.getElementById('modalBody')
+        || document.querySelector('.modal');
+      const kept = Object.keys(S.invWalk).length;
+      const finish = [...m2.querySelectorAll('button')]
+        .filter(b2 => /Finish/.test(b2.textContent))[0];
+      const label = finish ? finish.textContent.trim() : '';
+      closeModal();
+      return { saved: Object.keys(saved).length, kept: kept,
+               label: label };
+    });
+    if (r.no) {
+      failures.push('inventory: ' + r.no);
+    } else {
+      if (r.saved !== 1) {
+        failures.push('inventory: a tick did not record');
+      }
+      if (r.kept !== 1) {
+        failures.push('inventory: the count did not survive being closed');
+      }
+      /* AND IT SAYS WHAT FINISHING WOULD DO, rather than doing it
+         quietly. */
+      if (!/unchecked count as missing/.test(r.label)) {
+        failures.push('inventory: finishing early does not warn — "'
+          + r.label + '"');
+      }
+    }
+  }
+
+  /* NOTHING TOO SMALL TO PRESS. A sweep of every screen found exactly
+     one control under the size at which people start missing - the map's
+     zoom pair at 33px - which is the kind of thing nobody reports and
+     everybody suffers. */
+  step('no control is too small to press');
+  {
+    const small = await page.evaluate(async () => {
+      const out = [];
+      const seen = {};
+      const look = where => {
+        document.querySelectorAll('button, a, input, select').forEach(e => {
+          if (!e.offsetParent) return;
+          const r = e.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) return;
+          if (r.height < 36 || r.width < 24) {
+            const k = where + ' .'
+              + (String(e.className || '').split(' ')[0] || e.tagName);
+            if (seen[k]) return;
+            seen[k] = 1;
+            out.push(k + ' is ' + Math.round(r.width) + 'x'
+              + Math.round(r.height));
+          }
+        });
+      };
+      const screens = [...document.querySelectorAll('section.screen')]
+        .map(e => e.id.replace(/^scr-/, ''));
+      for (const s of screens) {
+        goTo(s);
+        await new Promise(r2 => setTimeout(r2, 60));
+        look(s);
+      }
+      return out;
+    });
+    small.slice(0, 6).forEach(x => failures.push('tap: ' + x));
+  }
+
+  step('no text runs off the edge on any screen');
+  {
+    const bad = await page.evaluate(async () => {
+      const W = window.innerWidth;
+      const out = [];
+      const look = where => {
+        document.querySelectorAll('*').forEach(e => {
+          if (!e.offsetParent || e.children.length) return;
+          const r = e.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) return;
+          const cs = getComputedStyle(e);
+          const nowrap = cs.whiteSpace === 'nowrap' || cs.whiteSpace === 'pre';
+          const clipped = e.scrollWidth > e.clientWidth + 2;
+          let anc = e.parentElement, scroller = false;
+          while (anc) {
+            const ac = getComputedStyle(anc);
+            if (ac.overflowX === 'auto' || ac.overflowX === 'scroll') {
+              scroller = true; break;
+            }
+            anc = anc.parentElement;
+          }
+          const past = scroller ? 0 : Math.round(r.right - W);
+          if ((clipped && nowrap) || past > 2) {
+            out.push(where + ': .'
+              + (String(e.className || '').split(' ')[0] || e.tagName)
+              + ' ' + (clipped ? 'clipped' : past + 'px past the edge')
+              + ' — "' + (e.textContent || '').trim().slice(0, 24) + '"');
+          }
+        });
+      };
+      const screens = [...document.querySelectorAll('section.screen')]
+        .map(e => e.id.replace(/^scr-/, ''));
+      for (const s of screens) {
+        goTo(s);
+        await new Promise(r2 => setTimeout(r2, 60));
+        look(s);
+      }
+      return out;
+    });
+    /* One line per distinct offender, or a broken screen reports fifty. */
+    const seen = {};
+    bad.forEach(x => { seen[x.split(' — ')[0]] = x; });
+    Object.values(seen).slice(0, 6).forEach(x => failures.push('wrap: ' + x));
+  }
+
   step('the people list stays under its heading when data lands');
   {
     const r = await page.evaluate(() => {

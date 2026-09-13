@@ -1099,5 +1099,99 @@ check('no fixed svg id is emitted by a repeated drawing',
     /function ownedCatalog\(\)/.test(src) ? [] : ['ownedCatalog is gone']);
 }
 
+/* NO ENGINE FUNCTION IS DEFINED TWICE.
+
+   Today L.noteMiss was defined a second time, for something completely
+   different, and the second silently replaced the first. Nothing caught
+   it: lint sees two valid assignments, and it only surfaced because a
+   test written months ago for the ORIGINAL function started failing with
+   "cannot read properties of undefined".
+
+   Two functions with one name is rule 30d in its crudest form, and it is
+   a one-line check that would have said so instantly. */
+{
+  const defs = (src.match(/^L\.([A-Za-z0-9_]+) = function/gm) || [])
+    .map(m => m.replace(/^L\.| = function$/g, ''));
+  const seen = {}, twice = [];
+  defs.forEach(n => {
+    if (seen[n] && twice.indexOf(n) < 0) twice.push(n);
+    seen[n] = 1;
+  });
+  check('no engine function is defined twice',
+    twice.map(n => 'L.' + n + ' is assigned more than once'));
+}
+
+/* EVERY FINDING'S ITEMS CARRY A KEY.
+
+   BZ: any places that should have actions that do not? The `sizename`
+   finding pushed bare STRINGS as its items while every other finding
+   pushes {key, text} - so its rows could not identify the entry, which
+   is why it was the one finding you could neither fix nor dismiss. A row
+   without a key is a row that cannot do anything, and nothing said so. */
+{
+  const pushes = src.match(/items: [a-zA-Z]+\.map\(p => p\.name\)/g) || [];
+  check('no finding lists bare names instead of keyed items',
+    pushes.map(x => x + ' — items need { key, text }'));
+}
+
+/* TWO RATCHETS, NOT TWO WALLS.
+
+   BZ: what other hygiene checks can we run? These two found real debt -
+   129 hard-coded hex colours and 2 !important - and both are too large to
+   clear in one go. Rule 28a is explicit about what to do: allow the known
+   offenders by NUMBER, fail anything new, so the debt can only shrink.
+
+   A check that stands between somebody and shipping gets switched off
+   rather than satisfied; a check that says "you added one more" gets
+   fixed in the same minute. */
+{
+  const hexes = (src.match(/#[0-9A-Fa-f]{6}\b/g) || []).length;
+  const HEX_TODAY = 129;
+  check('no new hard-coded colour outside the theme',
+    hexes > HEX_TODAY
+      ? [hexes + ' hard-coded hex colours, was ' + HEX_TODAY
+         + ' — use a CSS variable so a theme change reaches it']
+      : []);
+  /* And the allowance cannot rot: if the debt is paid down, the number
+     comes with it, or the ratchet stops ratcheting. */
+  check('the colour allowance is not stale',
+    hexes < HEX_TODAY - 5
+      ? ['only ' + hexes + ' hard-coded colours now — lower HEX_TODAY '
+         + 'to ' + hexes + ' so the ratchet keeps holding']
+      : []);
+
+  const bangs = (src.match(/!important/g) || []).length;
+  /* THREE, not two: my first baseline counted LINES containing
+     !important while the check counts occurrences, and one line carries
+     two. A ratchet set from the wrong measurement fires on day one. */
+  const BANG_TODAY = 3;
+  check('no new !important',
+    bangs > BANG_TODAY
+      ? [bangs + ' uses of !important, was ' + BANG_TODAY
+         + ' — a rule that cannot be overridden is a rule nobody can fix']
+      : []);
+}
+
+/* EVERY MODAL HAS A WAY OUT. Sixty-three of them build their own body,
+   and one without a close is a screen somebody is stuck on. */
+{
+  const opens = src.match(/openModal\([^,]{0,70}, (?:m|box|sheet) => \{/g)
+    || [];
+  const trapped = [];
+  opens.forEach(o => {
+    const at = src.indexOf(o);
+    let d = 1, i = at + o.length;
+    while (i < src.length && d > 0) {
+      if (src[i] === '{') d++;
+      else if (src[i] === '}') d--;
+      i++;
+    }
+    if (src.slice(at, i).indexOf('closeModal') < 0) {
+      trapped.push(o.slice(11, 50) + ' has no way out');
+    }
+  });
+  check('every modal can be closed', trapped);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
