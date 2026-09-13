@@ -17406,6 +17406,38 @@ sec('\u00a7398 the heading counts the rows under it');
   eq('the count beside it agrees too', left.n, left.items.length);
 }
 
+sec('\u00a7399 the bar bottles sit at the end of the shelf');
+{
+  /* BZ: for the shelf image, can we push the non-whiskey to the end? The
+     spines were ordered by count alone, so three vodkas and a gin sat in
+     the middle of the whisky - which is neither how the shelf is read nor
+     how it is kept. */
+  const cat = {}, counts = {};
+  [['bourbon', 143], ['scotch', 82], ['vodka', 3], ['gin', 2],
+   ['japanese', 2], ['liqueur', 4]].forEach(([sub, n]) => {
+    for (let i = 0; i < n; i++) {
+      const k = sub + i;
+      cat[k] = { k: k, sub: sub };
+      counts[k] = 1;
+    }
+  });
+  const order = L.shelfTypeTiles(cat, counts).tiles.map(t => t.sub);
+  const firstBar = order.findIndex(s2 => L.NOT_WHISKY.indexOf(s2) >= 0);
+  const lastWhisky = order.reduce((at, s2, i) =>
+    L.NOT_WHISKY.indexOf(s2) < 0 ? i : at, -1);
+
+  eq('every whisky comes before every bar bottle',
+    lastWhisky < firstBar, true);
+  /* AND A SMALL WHISKY STILL BEATS A BIG LIQUEUR, which is the whole
+     point - two Japanese bottles lead four liqueurs. */
+  eq('a two-bottle whisky outranks a four-bottle liqueur',
+    order.indexOf('japanese') < order.indexOf('liqueur'), true);
+  /* WITHIN EACH HALF THE BIGGEST STILL LEADS, so nothing else about the
+     picture changes. */
+  eq('bourbon still leads the whisky', order[0], 'bourbon');
+  eq('and liqueur leads the bar', order[firstBar], 'liqueur');
+}
+
 /* Run in its own async block: this harness is a plain script, so a
    top-level await is a syntax error rather than a slow test. */
 async function queueSection() {
