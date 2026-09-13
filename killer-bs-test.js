@@ -17717,6 +17717,65 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7406 the sheets say how to drink it');
+{
+  /* BZ: can we at least add the Taste Responsibly stuff on the tasting
+     sheets and guides. The sheets are the thing in somebody's hand at the
+     table, so they are the place it matters most.
+
+     The participant sheet is handed out at a BLIND tasting, so it carries
+     the line and the pour size and nothing that describes what is in the
+     glasses. Hand-worked: six pours at 100 proof is 6 * 0.625 = 3.75. */
+  const cat = {};
+  for (let i = 0; i < 6; i++) cat['p' + i] =
+    { k: 'p' + i, name: 'Whisky ' + i, proof: 100 };
+  const f = { title: 'A flight', core: Object.keys(cat).map(k => ({ k: k })),
+              ext: [], cards: [], why: [] };
+
+  /* L.sheetCare DIRECTLY, not only through the two cards that call it.
+     It is the one place either sheet gets its wording, so the host and the
+     room can never say different things about the same flight. */
+  eq('the host form carries the arithmetic',
+    /6 glasses/.test(L.sheetCare(f, cat, true).pour), true);
+  eq('the room form carries only the pour size',
+    L.sheetCare(f, cat, false).pour, '0.75 oz per glass');
+  eq('both forms say the same line',
+    L.sheetCare(f, cat, true).line === L.sheetCare(f, cat, false).line, true);
+  eq('an empty flight still answers',
+    typeof L.sheetCare({ core: [] }, {}, true).line, 'string');
+  eq('and with no catalog at all',
+    typeof L.sheetCare({ core: [{ k: 'z' }] }, null, true).pour, 'string');
+
+  const host = L.hostCard(f, cat);
+  eq('the host sheet carries the line', /nobody drives/.test(host.care.line), true);
+  eq('and the pour size', /0\.75 oz per glass/.test(host.care.pour), true);
+  eq('and the hand-worked total', host.care.drinks, 3.75);
+  eq('said on the host sheet itself',
+    /3\.75 standard drinks each/.test(host.care.pour), true);
+
+  const part = L.participantCard(f, cat);
+  eq('the room\u2019s sheet carries the same line',
+    part.care.line, host.care.line);
+  eq('and the pour size', part.care.pour, '0.75 oz per glass');
+  /* THE ONE THAT MATTERS. A drinks total is computed from the proofs in
+     the flight, and this sheet is handed out blind. */
+  eq('and never a proof', /proof/i.test(JSON.stringify(part.care)), false);
+  eq('nor a drinks count', part.care.drinks, undefined);
+  eq('nor a glass count', /glasses/.test(part.care.pour), false);
+
+  /* AND IT IS NOT A LEAK. The sheet checker must not start refusing to
+     print because of a line the app puts there itself. */
+  eq('the care line does not read as a leaked bottle name',
+    L.sheetLeaks(part, f, cat), []);
+
+  /* HALF-KNOWN PROOFS SAY SO ON THE HOST SHEET (rule 13d). */
+  const cat2 = { a: { k: 'a', name: 'A', proof: 100 }, b: { k: 'b', name: 'B' } };
+  const f2 = { title: 'T', core: [{ k: 'a' }, { k: 'b' }], ext: [], cards: [],
+               why: [] };
+  eq('a total off half a flight says which half',
+    /1 of 2 known proofs/.test(L.hostCard(f2, cat2).care.pour), true);
+}
+
 sec('\u00a7405 a recap that cannot be written says why');
 {
   /* The probe proved recap.gs works and returns real prose. Everything

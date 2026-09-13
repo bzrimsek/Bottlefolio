@@ -1481,6 +1481,58 @@ function step(n) {
     });
   }
 
+  /* THE PAPERS STILL FIT ONE PAGE, AND CARRY THE LINE.
+     BZ: can we at least add the Taste Responsibly stuff on the tasting
+     sheets and guides. Both sheets are sized to a single page and the host
+     card has already spilled once, by about a tenth of a page, which put
+     the end of the reasoning on a second sheet — the part read while
+     pouring. So the line is measured rather than assumed.
+
+     The participant sheet is the one that matters twice: it is handed out
+     at a BLIND tasting, so it must carry the line and the pour size and
+     nothing that describes what is in the glasses. A drinks total is
+     computed from the proofs in the flight and would be exactly that. */
+  step('the tasting papers fit a page and say how to drink it');
+  {
+    const html = await page.evaluate(() => {
+      const cat = {};
+      const core = [];
+      for (let i = 0; i < 8; i++) {
+        cat['q' + i] = { k: 'q' + i, name: 'Test Whisky ' + i, proof: 100 };
+        core.push({ k: 'q' + i });
+      }
+      Object.assign(S.catalog, cat);
+      const f = { title: 'A measured flight', tag: 'test', premise: 'x',
+                  core: core, ext: Object.keys(cat), cards: [], why: [] };
+      return { host: tastingPapers(f, 'host'),
+               sheet: tastingPapers(f, 'sheet') };
+    });
+    for (const w of ['host', 'sheet']) {
+      if (!html[w]) { failures.push('papers: ' + w + ' would not print'); continue; }
+      const q = await browser.newPage();
+      await q.setViewportSize({ width: 794, height: 1123 });
+      await q.setContent(html[w]);
+      const m = await q.evaluate(() => {
+        const pg = document.querySelector('.pg') || document.body;
+        return { h: Math.round(pg.getBoundingClientRect().height),
+                 care: ((document.querySelector('.care') || {}).textContent
+                        || '').trim() };
+      });
+      await q.close();
+      if (m.h > 950) {
+        failures.push('papers: the ' + w + ' sheet is ' + m.h
+          + 'px against 950 of a Letter page \u2014 it prints as two');
+      }
+      if (!/nobody drives/.test(m.care)) {
+        failures.push('papers: the ' + w + ' sheet lost its drinking line');
+      }
+      if (w === 'sheet' && /proof|standard drinks|glasses/i.test(m.care)) {
+        failures.push('papers: the participant sheet names what is in the '
+          + 'glasses \u2014 "' + m.care + '" \u2014 and it is handed out blind');
+      }
+    }
+  }
+
   /* EVERY CONTENTS LINK LANDS SOMEWHERE, AND NO TWO ENTRIES SHARE AN ID.
      BZ: the app use is so long it is unusable - needs a TOC with
      hyperlinks. 122 entries and 13,700 words, so the links are the only
