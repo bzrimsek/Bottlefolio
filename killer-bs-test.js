@@ -152,7 +152,15 @@ eq('missing both is null', L.premium(null, null), null);
 
 /* ---------------- exits ---------------- */
 sec('exit reasons');
-eq('six exit reasons', L.EXITS.length, 6);
+/* SEVEN NOW, and the seventh is not an exit. BZ: we need a retirement
+   reason for an adjustment out, for a duplicate or data issue - I've been
+   using broken. Every other reason is something that HAPPENED to a
+   bottle; a duplicate row or a bottle the app thinks you own and you do
+   not is none of them, and filing those as `broken` had been putting data
+   cleanup in the same bucket as accidents. */
+eq('seven reasons, six of them exits', L.EXITS.length, 7);
+eq('and exactly one is a correction rather than an ending',
+  L.EXITS.filter(e => L.isCleanup(e)).length, 1);
 eq('drain pour detected', L.isDrain('drain pour'), true);
 eq('gift is not a drain', L.isDrain('gifted'), false);
 
@@ -17438,6 +17446,109 @@ sec('\u00a7399 the bar bottles sit at the end of the shelf');
   eq('and liqueur leads the bar', order[firstBar], 'liqueur');
 }
 
+sec('\u00a7400 counting the shelf');
+{
+  /* BZ: we should build a shelf setting tool to do a physical inventory.
+     Check bottles off a list. And: retire - we need a retirement reason
+     for an adjustment out, for a duplicate or data issue. I've been using
+     broken. */
+  const cat = {
+    a: { k: 'a', name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
+    b: { k: 'b', name: 'Blanton', dist: 'Buffalo Trace', sub: 'bourbon' },
+    c: { k: 'c', name: 'Eagle Rare', dist: 'Buffalo Trace',
+         sub: 'bourbon' },
+    v: { k: 'v', name: "Tito's", dist: 'Tito', sub: 'vodka' }
+  };
+  const bots = [{ id: '1', k: 'a', status: 'open' },
+                { id: '2', k: 'b', status: 'sealed' },
+                { id: '3', k: 'c', status: 'open' },
+                { id: '4', k: 'v', status: 'open' },
+                { id: '5', k: 'a', status: 'gone', exit: 'finished' }];
+  const rows = L.inventoryList(cat, bots);
+
+  eq('a retired bottle is not on the walk', rows.length, 4);
+  /* IN SHELF ORDER: whisky first, then the bar, and within a type by
+     distillery - you are walking the bottles, not hunting a list. */
+  eq('the bar bottle is last', rows[rows.length - 1].k, 'v');
+  eq('and one distillery stays together',
+    rows.filter(r => r.dist === 'Buffalo Trace')
+      .map(r => r.k).join(','), 'b,c');
+  /* A SEALED BOTTLE IS STILL ON THE SHELF, so it is still counted. */
+  eq('sealed bottles are on the list',
+    rows.filter(r => r.status === 'sealed').length, 1);
+
+  /* STOPPING HALFWAY MUST NOT RETIRE HALF THE SHELF. An unanswered
+     bottle is not a missing one - it is one nobody has looked at. */
+  const part = {};
+  part[rows[0].id] = true;
+  part[rows[1].id] = false;
+  const half = L.inventoryResult(rows, part, false);
+  eq('found is counted', half.found.length, 1);
+  eq('missing is counted', half.missing.length, 1);
+  eq('and the rest are untouched, not missing', half.untouched.length, 2);
+  eq('an unfinished walk is not done', half.done, false);
+  eq('so only what was actually ticked away would retire',
+    half.wouldRetire.length, 1);
+
+  /* AND WHEN SOMEBODY SAYS THEY WALKED THE WHOLE SHELF, what they never
+     ticked is what is not there. */
+  const all = L.inventoryResult(rows, part, true);
+  eq('finishing counts the unchecked as missing',
+    all.wouldRetire.length, 3);
+
+  /* AN ADJUSTMENT IS NOT AN EXIT. Every other reason is something that
+     HAPPENED to a bottle; a duplicate row or a bottle the app thinks you
+     own is none of them, and filing those as `broken` put data cleanup
+     in the same bucket as accidents. */
+  eq('adjusted is a reason', L.EXITS.indexOf('adjusted') >= 0, true);
+  eq('and it is marked as cleanup', L.isCleanup('adjusted'), true);
+  eq('while breaking a bottle is not', L.isCleanup('broken'), false);
+  eq('nor is finishing one', L.isCleanup('finished'), false);
+}
+
+sec('\u00a7401 a finding that names a problem offers a way out');
+{
+  /* BZ: any places that should have actions that do not? The pattern
+     behind three of today's faults, so it was worth measuring rather
+     than guessing. Two real gaps came out of it. */
+
+  /* A SIZE IN THE NAME had no action at all - and worse, its items were
+     bare STRINGS rather than {key, text}, so the row could not identify
+     the entry to dismiss it either. Its twin, a proof in the name, has
+     offered the same fix for months. */
+  eq('a size in the name can be taken out',
+    L.auditFix('sizename', { k: 'a', name: 'Ardbeg 10 750ml' },
+      'Ardbeg 10 750ml').set.name, 'Ardbeg 10');
+  eq('a litre size too',
+    L.auditFix('sizename', { k: 'b', name: 'Jack Daniel 1.75L' },
+      'Jack Daniel 1.75L').set.name, 'Jack Daniel');
+  eq('and a clean name offers nothing',
+    L.auditFix('sizename', { k: 'c', name: 'Ardbeg 10' }, 'Ardbeg 10'),
+    null);
+
+  /* AN IMPOSSIBLE PROOF is usually a category, not a number. BZ's shelf
+     raises it once: Southern Comfort at 70 proof, flagged because whisky
+     is not bottled that low - it is a LIQUEUR, the proof is right and the
+     type is wrong. The finding's own text always said "either the number
+     is wrong or this is not a whisky" and only ever offered the first. */
+  const sc = { k: 's', name: 'Southern Comfort Original', sub: 'bourbon',
+    proof: 70 };
+  eq('an impossible proof offers the category',
+    L.auditFix('proof', sc, sc.name).label, 'It is a Liqueur');
+  eq('and writes the category, not the proof',
+    Object.keys(L.auditFix('proof', sc, sc.name).set).join(','), 'sub');
+  /* AND DOES NOT GUESS when it cannot tell, which is the whole
+     difference between an offer and a lie. */
+  eq('a bottle it cannot place gets no offer',
+    L.auditFix('proof', { k: 'm', name: 'Mystery Bottling',
+      sub: 'bourbon', proof: 70 }, 'Mystery Bottling'), null);
+  /* NOR WHEN THE ANSWER IS STILL A WHISKY: a rye at 70 proof is a number
+     worth questioning, and changing rye to bourbon would answer nothing. */
+  eq('and none when the guess is another whisky',
+    L.auditFix('proof', { k: 'r', name: 'Some Rye Whiskey', sub: 'bourbon',
+      proof: 70 }, 'Some Rye Whiskey'), null);
+}
+
 /* Run in its own async block: this harness is a plain script, so a
    top-level await is a syntax error rather than a slow test. */
 async function queueSection() {
@@ -17495,6 +17606,101 @@ async function queueSection() {
     takes.filter(t => t === 'queue full').length > 0, true);
 
 }
+sec('\u00a7402 a key that lost a merge does not come back');
+{
+  /* BZ, looking at the publish modal: "Worried that Penelope becomes a
+     dupe" — and he was right. Penelope Wheated was a CONSOLIDATION item
+     and the version offered was not the one that was kept.
+
+     The merge deletes the losing key from the library. Every path that
+     asks "is this in the library" then gets `no` for a key somebody buried
+     on purpose, and offers to put it back. The contributions path was
+     taught to read the graves; the admin publish modal was not, so the
+     shelf offered `penelope_wheated` as `not in the library` and
+     publishing it recreated the side that lost.
+
+     One guard now answers it for all three write paths. */
+  const DROP = 'Penelope Wheated';
+  const KEEP = 'Penelope Wheated Straight Bourbon Whiskey';
+  const dk = L.libKey(DROP), kk = L.libKey(KEEP);
+  const graves = { [dk]: kk };
+
+  /* --- the guard itself --- */
+  eq('a buried key is refused',
+    L.libraryAccepts(dk, false, null, graves).ok, false);
+  eq('and the reason says where it went',
+    L.libraryAccepts(dk, false, null, graves).why, 'merged into ' + kk);
+  eq('the survivor is not refused',
+    L.libraryAccepts(kk, false, null, graves).ok, true);
+  eq('an unrelated key is not refused',
+    L.libraryAccepts('ardbeg_10', false, null, graves).ok, true);
+  eq('a deletion still outranks everything',
+    L.libraryAccepts(dk, false, { [dk]: 1 }, graves).why, 'it was removed');
+  eq('and calling it the old way, with no graves, still works',
+    L.libraryAccepts(dk, false, null).ok, true);
+  // A chain resolves to the end, not to the next hop.
+  eq('a chain names the final survivor',
+    L.libraryAccepts('a', false, null, { a: 'b', b: 'c' }).why,
+    'merged into c');
+
+  /* --- the modal stops offering it --- */
+  const p = { k: DROP, name: DROP, proof: 95.6, dist: 'MGP', sub: 'bourbon' };
+  const fresh = { k: 'Ardbeg 10', name: 'Ardbeg 10', proof: 92,
+                  dist: 'Ardbeg', sub: 'scotch' };
+  const lib = { [kk]: { name: KEEP, proof: 95.6 } };
+
+  eq('the publish modal does not offer a buried key',
+    L.pendingForLibrary({ [DROP]: p }, lib, graves), []);
+  eq('and the SAME bottle is offered when nothing is buried',
+    L.pendingForLibrary({ [DROP]: p }, lib, {}).length, 1);
+  eq('a genuinely new bottle is still offered',
+    L.pendingForLibrary({ 'Ardbeg 10': fresh }, lib, graves)
+      .map(x => x.p.name), ['Ardbeg 10']);
+  eq('and a correction to a live entry is still offered',
+    L.pendingForLibrary(
+      { [KEEP]: { k: KEEP, name: KEEP, proof: 100, dist: 'MGP',
+                  sub: 'bourbon' } }, lib, graves).length, 1);
+
+  /* --- and the write refuses it even if something offers it --- */
+  const w = L.publishWrite([p], 1, graves);
+  eq('publishWrite writes no buried key',
+    Object.keys(w.updates).filter(k => k !== 'stamp'), []);
+  eq('it names what it refused', w.refused.map(r => r.key), [dk]);
+  eq('with the reason', w.refused[0].why, 'merged into ' + kk);
+  eq('the same call with no graves writes it — the guard can fail',
+    Object.keys(L.publishWrite([p], 1, {}).updates)
+      .filter(k => k !== 'stamp'), ['catalog/products/' + dk]);
+  eq('a clean bottle still publishes',
+    L.publishWrite([fresh], 1, graves).names, ['Ardbeg 10']);
+  eq('and an overwrite of a live entry is still allowed, because that is '
+    + 'what a correction IS',
+    Object.keys(L.publishWrite(
+      [{ k: KEEP, name: KEEP, proof: 100 }], 1, graves).updates)
+      .filter(k => k !== 'stamp'), ['catalog/products/' + kk]);
+
+  /* --- THE SEQUENCE (rule 30e) ---------------------------------------
+     Each step above is correct on its own. The fault was an interaction:
+     merge, sync, offer again. So drive the whole round trip and look at
+     the end of it, which is what BZ actually does. */
+  let library = { [dk]: { name: DROP, proof: 95.6 },
+                  [kk]: { name: KEEP, proof: 95.6 } };
+  let g = {};
+  // 1. the admin consolidates the two
+  g = L.buryKey(g, dk, kk);
+  delete library[dk];
+  eq('after the merge the library holds one', Object.keys(library), [kk]);
+  // 2. his shelf, which still carries the dropped name, is compared again
+  const again = L.pendingForLibrary({ [DROP]: p }, library, g);
+  eq('the round trip does not start', again, []);
+  // 3. and even pressing publish on a stale list writes nothing
+  const w2 = L.publishWrite([p], 2, g);
+  eq('a stale offer cannot resurrect it',
+    Object.keys(w2.updates).filter(k => k !== 'stamp'), []);
+  // 4. the library is still one entry
+  Object.assign(library, w2.updates.stamp ? {} : {});
+  eq('so the library still holds one', Object.keys(library), [kk]);
+}
+
 /* The async section reports BEFORE the tally, and the tally is the last
    thing that happens. A bare process.exit() used to sit here and killed
    the run the moment the synchronous tests finished - so the queue

@@ -1193,5 +1193,66 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every modal can be closed', trapped);
 }
 
+/* EVERY WRITE THAT CREATES A LIBRARY ENTRY ASKS THE ONE GUARD.
+ *
+ * BZ, at the publish modal: "Worried that Penelope becomes a dupe." He was
+ * right. Consolidating two entries DELETES the losing key, so every path
+ * that asks "is this in the library" gets `no` for a key somebody buried on
+ * purpose. The contributions path was taught to read the graves months ago
+ * and three other paths were not, so the shelf kept offering the losing
+ * side back and publishing it recreated it.
+ *
+ * L.libraryAccepts is the one question. This check says every path that
+ * CREATES an entry asks it — a field update does not (the entry already
+ * exists and nobody is resurrecting anything), and a delete obviously does
+ * not.
+ *
+ * A RATCHET, not a wall: the one deliberate exception is named, and a new
+ * unguarded creation fails. The companion check stops the exception list
+ * from rotting.
+ */
+{
+  const lines = src.split('\n');
+  /* An admin's Undo restores the exact entry the admin just removed, in
+     the same write that lifts the tombstone. That is a deliberate act by
+     the only person who can do it, and guarding it would make undo
+     impossible. Named, so it is a decision rather than an oversight. */
+  const ALLOWED_UNGUARDED = ['lifts the tombstone'];
+  const creations = [], unguarded = [];
+  lines.forEach((l, i) => {
+    if (!/catalog\/products\/'/.test(l)) return;
+    if (/\+ '\/'/.test(l)) return;                         // field update
+    if (/\/(style|dist|tn|tnSrc|name)'/.test(l)) return;   // named field
+    if (/\]\s*=\s*null|:\s*null/.test(l)) return;          // a delete
+    creations.push(i + 1);
+    // The guard is asked within the same block of work, not a file away.
+    const near = lines.slice(Math.max(0, i - 30), i + 4).join('\n');
+    if (near.indexOf('libraryAccepts') >= 0) return;
+    if (ALLOWED_UNGUARDED.some(a => near.indexOf(a) >= 0)) return;
+    unguarded.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 58)
+      + '  — creates a library entry without asking L.libraryAccepts');
+  });
+  check('every write that creates a library entry asks the guard', unguarded);
+
+  /* And the guard is only worth asking if it is TOLD about the merges.
+     Passing three arguments leaves `graves` undefined, which reads as "no
+     merges have ever happened" and is exactly the bug. */
+  const calls = src.match(/L\.libraryAccepts\([^;]*?\);/g) || [];
+  const blind = calls
+    .filter(c => c.split(',').length < 4)
+    .map(c => c.replace(/\s+/g, ' ').slice(0, 66) + '  — no graves argument');
+  check('and every call tells it about the merges', blind);
+
+  /* The allowance cannot rot. If the creation sites drop, the exception
+     may already be gone with them. */
+  const CREATIONS_TODAY = 5;
+  check('the library-write allowance is not stale',
+    creations.length < CREATIONS_TODAY
+      ? ['only ' + creations.length + ' library creation sites now, was '
+         + CREATIONS_TODAY + ' — lower CREATIONS_TODAY and re-check whether '
+         + 'ALLOWED_UNGUARDED still names anything real']
+      : []);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
