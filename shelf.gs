@@ -235,7 +235,15 @@ function readShelf_(req) {
     muteHttpExceptions: true,
     payload: JSON.stringify({
       model: FLIGHT_MODEL,
-      max_tokens: 2000,
+      /* A MENU IS A LIST, AND A LIST HAS NO NATURAL LENGTH.
+         2000 was enough for a shelf of a dozen bottles and not for a
+         two-page bar menu: the answer was cut off mid-array, which parses
+         as neither valid JSON nor an empty answer and lands in "bad json
+         from the model". BZ photographed two pages and got nothing back
+         after 87 seconds and two tries, both of which failed the same way
+         because a truncation fails identically however often it is
+         retried. */
+      max_tokens: 12000,
       system: system,
       messages: [{ role: 'user', content: content }]
     })
@@ -262,7 +270,14 @@ function readShelf_(req) {
   }
   try { return JSON.parse(text.slice(first, last + 1)); }
   catch (err2) {
-    return { error: 'bad json from the model', raw: text.slice(0, 300) };
+    /* THE END, NOT THE BEGINNING. A truncated answer is well formed for
+       its whole first 300 characters — the only thing that identifies it
+       is that it STOPS. Sending the head described nothing; the tail
+       names the fault on sight. */
+    return { error: 'bad json from the model',
+             raw: text.length > 300
+               ? '\u2026' + text.slice(-280) + ' [' + text.length + ' chars]'
+               : text };
   }
 }
 

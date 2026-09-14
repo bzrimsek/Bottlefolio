@@ -302,7 +302,14 @@ function readLabel_(req) {
   try {
     return JSON.parse(text.slice(first, last + 1));
   } catch (err2) {
-    return { error: 'bad json from the model', raw: text.slice(0, 300) };
+    /* THE END, NOT THE BEGINNING. A truncated answer is well formed for
+       its whole first 300 characters — the only thing that identifies it
+       is that it STOPS. Sending the head described nothing; the tail
+       names the fault on sight. */
+    return { error: 'bad json from the model',
+             raw: text.length > 300
+               ? '\u2026' + text.slice(-280) + ' [' + text.length + ' chars]'
+               : text };
   }
 }
 
