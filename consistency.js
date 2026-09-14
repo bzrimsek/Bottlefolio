@@ -58,10 +58,19 @@ const defined = (src.match(/^L\.([a-zA-Z_][a-zA-Z0-9_]*) = function/gm) || [])
    caller in the app, which is a different fault — built and never wired,
    like the admin badge writing to an element that no longer existed. That
    is worth knowing about, and it is not the same as unused. */
+const codeOnly = src
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '');
 const tests = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
 const dead = [], unwired = [];
 defined.forEach(fn => {
-  const inApp = src.split('L.' + fn).length - 1;
+  /* AGAINST THE CODE, NOT THE SOURCE. This counted mentions in `src`, so a
+     function named in its own explanatory comment looked called — which is
+     the same fault the plain-function check below already had fixed, three
+     lines away, with the reason written out. L.isCleanup and L.pendingUpcs
+     both hid here for as long as their comments existed. A checker that
+     reads comments is checking the wrong file. */
+  const inApp = codeOnly.split('L.' + fn).length - 1;
   if (inApp > 1) return;
   (tests.indexOf('L.' + fn) >= 0 ? unwired : dead).push(fn);
 });

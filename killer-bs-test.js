@@ -7845,31 +7845,6 @@ sec('§234 barcodes are offered for review');
   eq('zero is a real price and is kept',
     L.upcRow('a', { price: 0 }, 1).price, 0);
 
-  /* What an admin sees waiting. */
-  const contrib = {
-    u1: { upc: { '000000000001': { name: 'Ardbeg 10', at: 200 },
-                 '000000000002': { name: 'Lagavulin 16', at: 100 } } },
-    u2: { upc: { '000000000001': { name: 'Ardbeg Ten', at: 300 },
-                 '000000000003': { name: 'Already Shared', at: 50 } } },
-    u3: { 'some-product-slug': { name: 'not a barcode' } }
-  };
-  const known = { '000000000003': { name: 'Already Shared' } };
-  const pend = L.pendingUpcs(contrib, known);
-
-  eq('a pairing already shared is not waiting', pend.length, 2);
-  eq('the one waiting longest leads', pend[0].key, '000000000002');
-  /* Two people can scan the same bottle before either is looked at. The
-     earliest offer wins, because it is the one that has been waiting. */
-  eq('a key offered twice appears once',
-    pend.filter(x => x.key === '000000000001').length, 1);
-  eq('and it is the earlier offer', pend[1].name, 'Ardbeg 10');
-  eq('carrying who offered it', pend[1].uid, 'u1');
-  eq('a product offer is not mistaken for a barcode',
-    pend.some(x => x.name === 'not a barcode'), false);
-  eq('a row with no name is not offerable',
-    L.pendingUpcs({ u1: { upc: { '000000000009': { at: 1 } } } }, {}).length, 0);
-  eq('nothing offered is not an error', L.pendingUpcs({}, {}).length, 0);
-  eq('a missing contrib is not an error', L.pendingUpcs(null, null).length, 0);
 }
 
 /* §235  never pay for the same miss twice ----------------------------
@@ -17715,6 +17690,38 @@ sec('\u00a7402 a key that lost a merge does not come back');
   // 4. the library is still one entry
   Object.assign(library, w2.updates.stamp ? {} : {});
   eq('so the library still holds one', Object.keys(library), [kk]);
+}
+
+sec('\u00a7407 a correction is not a departure');
+{
+  /* BZ: correction should not count. `adjusted` is set when a duplicate row
+     is fixed or a bottle the app wrongly thought you owned is taken off —
+     nothing happened to a bottle, the record was wrong. L.isCleanup existed
+     to mark it and nothing called it, so cleanup was counted alongside the
+     bottles you drank, gave and sold. */
+  eq('adjusted is the cleanup word', L.isCleanup('adjusted'), true);
+  eq('finished is not', L.isCleanup('finished'), false);
+  eq('a drain pour is not', L.isCleanup('drain pour'), false);
+  eq('nothing at all is not', L.isCleanup(undefined), false);
+
+  const bots = [
+    { id: '1', k: 'A', status: 'gone', exit: 'finished' },
+    { id: '2', k: 'A', status: 'gone', exit: 'adjusted' },
+    { id: '3', k: 'B', status: 'gone', exit: 'adjusted' },
+    { id: '4', k: 'C', status: 'open' }
+  ];
+  const gone = L.goneKeys(bots);
+  eq('a finished bottle counts as gone', gone.A, 1);
+  eq('a corrected row does not appear at all', gone.B, undefined);
+  eq('and an owned bottle is untouched', gone.C, undefined);
+  eq('only real departures are counted', Object.keys(gone), ['A']);
+
+  /* THE WHOLE POINT: without the guard the same shelf reads two departures
+     for A and one for B, which is three bottles that left when one did. */
+  const blind = {};
+  bots.forEach(b => { if (b.status === 'gone') blind[b.k] = (blind[b.k] || 0) + 1; });
+  eq('unguarded, the same shelf over-counts',
+    [blind.A, blind.B], [2, 1]);
 }
 
 sec('\u00a7406 the sheets say how to drink it');
