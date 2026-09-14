@@ -17720,6 +17720,40 @@ sec('\u00a7409 the library audit reports an entry with no distillery');
       .filter(f => f.id === 'nodist')[0].title,
     '1 entry has no distillery');
 
+  /* ONLY WHERE A DISTILLERY COULD EXIST. Run against BZ's live library
+     this reported fourteen and ten were vodka, gin, rum and brandy —
+     categories this app does not have, so the lookup files them under
+     nothing and nulls the distillery with it. Asking him to fill a field
+     for a bottle the app does not model is how a check gets skimmed. */
+  const mixed = {
+    gin: { name: 'Bombay Sapphire London Dry Gin', proof: 94 },
+    vod: { name: "Tito's Handmade Vodka", proof: 80 },
+    rum: { name: 'Goslings Black Seal', sub: 'rum', proof: 80 },
+    wh: { name: 'Some Real Bourbon', sub: 'bourbon', proof: 100 },
+    blend: { name: 'Suntory Hibiki Japanese Harmony', sub: 'japanese', proof: 86 }
+  };
+  const got = L.libraryAudit(mixed, {}, 1).filter(f => f.id === 'nodist')[0];
+  eq('a spirit that is not whisky is not asked for a distillery',
+    got.items.map(i => i.key).sort(), ['blend', 'wh']);
+  eq('so the count is the whiskies only', got.n, 2);
+  /* THE APP'S OWN LIST, not a copy. The taxonomy carries rum, vodka, gin,
+     mezcal, liqueur and brandy, and L.NOT_WHISKY is where that is decided
+     — a second copy here would be right today and wrong the first time a
+     category is added to one of them (rule 30d). */
+  eq('every non-whisky category is covered',
+    L.NOT_WHISKY.filter(sub => {
+      const one = { x: { name: 'A thing', sub: sub, proof: 80 } };
+      return L.libraryAudit(one, {}, 1).some(f => f.id === 'nodist');
+    }), []);
+  eq('and an entry with no category at all is left to the bareness check',
+    L.libraryAudit({ x: { name: 'Nameless', proof: 80 } }, {}, 1)
+      .filter(f => f.id === 'nodist').length, 0);
+  /* A BLEND IS NOT EXCUSED: its house is its bottler, which is what house
+     grouping wants. Detecting one from its name was a guess that caught
+     neither Hibiki nor a sourced Bardstown. */
+  eq('a blend is still asked for its bottler',
+    got.items.some(i => i.key === 'blend'), true);
+
   /* A JUDGED ENTRY STOPS COMING BACK, the same as every other finding. */
   eq('a reviewed entry is not reported again',
     L.libraryAudit(bad, { 'nodist:b': 1, 'nodist:c': 1 }, 1)

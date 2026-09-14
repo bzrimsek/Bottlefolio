@@ -1309,6 +1309,39 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'own house "different maker"']);
 }
 
+/* THE SERVICE IS OFFERED THE SAME CATEGORIES THE APP CARRIES.
+ *
+ * BZ: we already widened the taxonomy. It was — L.TYPES carries rum,
+ * vodka, gin, mezcal, liqueur, brandy and other — and the lookup prompt
+ * was not widened with it, so the model was asked to file a gin into a
+ * whisky taxonomy and nulled what would not fit, the distillery among it.
+ * Thirteen of the fourteen entries his library scan reported had arrived
+ * through that prompt.
+ *
+ * Two files, one list, and they are edited in different sessions by
+ * different hands. This is the check that makes them stay equal.
+ */
+{
+  const gs = fs.readFileSync(__dirname + '/lookup.gs', 'utf8');
+  const appList = (src.match(/L\.TYPES = \[([\s\S]*?)\]/) || [])[1] || '';
+  const appTypes = [...appList.matchAll(/'([^']+)'/g)].map(m => m[1]);
+  const gsBlock = (gs.match(/sub is one of:([\s\S]{0,600})/) || [])[1] || '';
+  /* `other` is SELECTABLE, NEVER GUESSED — the app says so where the list
+     is declared, and a bottle the model cannot place must stay null so it
+     can be filled in later. The prompt forbids it by name, so it is the
+     one category that must NOT be offered. */
+  const missing = appTypes
+    .filter(t => t !== 'other')
+    .filter(t => gsBlock.indexOf(t) < 0);
+  /* And the forbidding has to still be there. */
+  if (!/Never answer "other"/.test(gs)) {
+    missing.push('the prompt no longer forbids answering "other"');
+  }
+  check('the lookup prompt offers every category the app carries',
+    missing.map(t => t + ' is in L.TYPES and not in the lookup.gs prompt '
+      + '\u2014 the service will never return it'));
+}
+
 /* SEAMS: AN ACTION THAT ONLY SOME OF ITS PLACES FINISH.
  *
  * BZ: I keep finding these little seams of inconsistent capability - can
