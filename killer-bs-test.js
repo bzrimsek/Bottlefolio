@@ -17692,6 +17692,109 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7409 the library audit reports an entry with no distillery');
+{
+  /* BZ, on whether the library scan would have caught the guest-ladder
+     bug: it would not, for two reasons. It only reads entries that EXIST,
+     and Jack Daniel's Old No. 7 is not in the library at all. And every
+     house check in it opens with `if (!r.dist) return`, so an entry
+     carrying no distillery was walked past by all of them and reported by
+     nothing — while its own row looked complete. */
+  const ok = { a: { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
+                    region: 'Islay', proof: 92 } };
+  eq('a complete library says nothing',
+    L.libraryAudit(ok, {}, 1).filter(f => f.id === 'nodist').length, 0);
+
+  const bad = Object.assign({}, ok, {
+    b: { name: "Jack Daniel's Old No. 7", sub: 'tennessee', proof: 80 },
+    c: { name: 'Some Bourbon', sub: 'bourbon', proof: 90, dist: '   ' } });
+  const found = L.libraryAudit(bad, {}, 1).filter(f => f.id === 'nodist')[0];
+  eq('a missing distillery is reported', !!found, true);
+  eq('and so is one that is only whitespace', found.n, 2);
+  eq('it names them',
+    found.items.map(i => i.key).sort(), ['b', 'c']);
+  eq('the count reads as a sentence', found.title,
+    '2 entries have no distillery');
+  eq('and one alone reads singular',
+    L.libraryAudit({ b: bad.b }, {}, 1)
+      .filter(f => f.id === 'nodist')[0].title,
+    '1 entry has no distillery');
+
+  /* A JUDGED ENTRY STOPS COMING BACK, the same as every other finding. */
+  eq('a reviewed entry is not reported again',
+    L.libraryAudit(bad, { 'nodist:b': 1, 'nodist:c': 1 }, 1)
+      .filter(f => f.id === 'nodist').length, 0);
+}
+
+sec('\u00a7408 a guest seed still knows its own house');
+{
+  /* BZ, at the guest ladder seeded with Jack Daniel's Old No. 7: why show
+     Jack family in next door when clearly house. Because that bottle is
+     not in the catalog — the seed was typed in and came back with a name
+     and no distillery, so the house rung was skipped and every Tennessee
+     whiskey fell through to next door, Jack's own among them. */
+  const seed = { name: "Jack Daniel's Old No. 7", sub: 'tennessee' };
+  const gj = { name: "Jack Daniel's Gentleman Jack", dist: "Jack Daniel's",
+               sub: 'tennessee' };
+  const bonded = { name: "Jack Daniel's Bonded", dist: "Jack Daniel's",
+                   sub: 'tennessee' };
+  const dickel = { name: 'George Dickel Reserve 17', dist: 'George Dickel',
+                   sub: 'tennessee' };
+
+  eq('the same house is the house rung', L.rungOf(seed, gj), 'house');
+  eq('and so is the other one', L.rungOf(seed, bonded), 'house');
+  eq('a different maker is next door', L.rungOf(seed, dickel), 'next');
+
+  /* EVERY OPTIONAL INPUT, ABSENT, ONE AT A TIME.
+     This is the general shape of the bug rather than the instance. rungOf
+     classifies on four optional fields, and every branch is guarded on the
+     field being present on BOTH sides — so a missing field does not fail,
+     it falls through to a weaker answer, which is the one thing a
+     classifier must never do quietly. Drive it with each field gone and
+     pin what it says, so a downgrade has to be chosen rather than
+     inherited. */
+  const full = { name: "Jack Daniel's Old No. 7", dist: "Jack Daniel's",
+                 sub: 'tennessee', region: null };
+  eq('with everything, the same house is the house',
+    L.rungOf(full, gj), 'house');
+  eq('with no dist, the name carries it', L.rungOf(
+    { name: full.name, sub: full.sub }, gj), 'house');
+  eq('with no sub, the house still wins', L.rungOf(
+    { name: full.name, dist: full.dist }, gj), 'house');
+  eq('with no name and no dist, it cannot claim a house', L.rungOf(
+    { sub: 'tennessee' }, gj), 'next');
+  eq('with nothing at all, it answers nothing',
+    L.rungOf({}, gj), 'pond');
+  eq('and a missing candidate is not a crash',
+    L.rungOf(full, null), null);
+  /* THE DOWNGRADE THAT STARTED THIS. A seed with no dist must not put the
+     seed's own house under "different maker". */
+  ['house', 'next', 'road', 'pond'].forEach(r => {
+    const got = L.rungOf({ name: full.name, sub: full.sub }, gj);
+    if (r === 'next') eq('a dist-less seed never calls its own house ' + r,
+      got === r, false);
+  });
+
+  /* A SEED THAT DOES HAVE A DISTILLERY IS UNAFFECTED. */
+  const seeded = { name: 'Whatever', dist: "Jack Daniel's", sub: 'tennessee' };
+  eq('a real seed still matches on its distillery',
+    L.rungOf(seeded, gj), 'house');
+  eq('and does not fall back to the name',
+    L.rungOf(seeded, dickel), 'next');
+
+  /* THE FRONT OF THE NAME ONLY. A house appearing mid-name is a
+     coincidence, and a short string matches everything. */
+  eq('a house buried mid-name is not a match',
+    L.rungOf({ name: 'Smooth Ambler Old Scout', sub: 'bourbon' },
+      { name: 'x', dist: 'Scout', sub: 'bourbon' }), 'next');
+  eq('a very short house name is not a match',
+    L.rungOf({ name: 'Old Elk Wheated', sub: 'bourbon' },
+      { name: 'x', dist: 'Old', sub: 'bourbon' }), 'next');
+  eq('an apostrophe does not break it',
+    L.rungOf({ name: 'Maker\u2019s Mark 46', sub: 'bourbon' },
+      { name: 'x', dist: "Maker's Mark", sub: 'bourbon' }), 'house');
+}
+
 sec('\u00a7407 a correction is not a departure');
 {
   /* BZ: correction should not count. `adjusted` is set when a duplicate row
