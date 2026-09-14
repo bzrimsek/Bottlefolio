@@ -235,6 +235,11 @@ function readShelf_(req) {
     muteHttpExceptions: true,
     payload: JSON.stringify({
       model: FLIGHT_MODEL,
+      /* TUNABLE FROM THE APP. BZ: make max tokens a parameter we can tune
+         with real data. It arrives in the payload so a ceiling can be
+         tried against a real menu without redeploying, which is the
+         slowest step in this loop. Clamped here as well as there, because
+         a service must not trust a number it was handed. */
       /* A MENU IS A LIST, AND A LIST HAS NO NATURAL LENGTH.
          2000 was enough for a shelf of a dozen bottles and not for a
          two-page bar menu: the answer was cut off mid-array, which parses
@@ -243,7 +248,8 @@ function readShelf_(req) {
          after 87 seconds and two tries, both of which failed the same way
          because a truncation fails identically however often it is
          retried. */
-      max_tokens: 12000,
+      max_tokens: Math.min(16000, Math.max(500,
+        Math.round(Number(req.maxTokens)) || 12000)),
       system: system,
       messages: [{ role: 'user', content: content }]
     })
@@ -268,7 +274,17 @@ function readShelf_(req) {
   if (first < 0 || last < first) {
     return { error: 'no json in the answer', raw: text.slice(0, 300) };
   }
-  try { return JSON.parse(text.slice(first, last + 1)); }
+  try {
+    var parsed = JSON.parse(text.slice(first, last + 1));
+    /* HOW MUCH OF THE CEILING THAT PAGE ACTUALLY USED. BZ asked for a
+       parameter he can tune with real data; this is the data. A page that
+       used 900 of 12000 says the ceiling is generous, and one that used
+       11900 says the next menu will truncate. */
+    if (parsed && typeof parsed === 'object' && out.usage) {
+      parsed.outTokens = out.usage.output_tokens || 0;
+    }
+    return parsed;
+  }
   catch (err2) {
     /* THE END, NOT THE BEGINNING. A truncated answer is well formed for
        its whole first 300 characters — the only thing that identifies it
