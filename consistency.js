@@ -897,6 +897,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Put aside',
     /* Added with the drinks budget, 2026-09-13. */
     'Running a tasting',
+    /* Added with the service build check, 2026-09-14. */
+    'Check the service',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
@@ -1307,6 +1309,22 @@ check('no fixed svg id is emitted by a repeated drawing',
       : ['nothing calls L.rungOf with an empty seed and a name-only seed '
          + '\u2014 that pair is what caught a dist-less seed calling its '
          + 'own house "different maker"']);
+}
+
+/* THE TWO BUILD STAMPS AGREE.
+ * Code.gs states which build it is and the app states which it needs. They
+ * live in different files edited in different sessions, which is exactly
+ * the pair that drifts. If they disagree the app would report a correct
+ * deployment as stale, or worse, a stale one as current.
+ */
+{
+  const gsB = (fs.readFileSync(__dirname + '/lookup.gs', 'utf8')
+    .match(/var GS_BUILD = '([^']+)'/) || [])[1];
+  const appB = (src.match(/L\.GS_BUILD = '([^']+)'/) || [])[1];
+  check('the app and Code.gs agree which service build is current',
+    (gsB && appB && gsB === appB) ? []
+      : ['Code.gs says ' + (gsB || '(none)') + ' and the app expects '
+         + (appB || '(none)') + ' \u2014 bump both together']);
 }
 
 /* THE SERVICE IS OFFERED THE SAME CATEGORIES THE APP CARRIES.

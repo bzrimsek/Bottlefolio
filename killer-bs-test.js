@@ -17692,6 +17692,33 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7411 a stale deployment says so instead of being guessed at');
+{
+  /* BZ: i pasted code - any way you can stub call those so you stop asking
+     and can validate instead? Not from here — script.google.com is not on
+     this container's allowlist, and the request comes back
+     host_not_allowed. So the APP asks instead: Code.gs states its own
+     build, the app carries the build it needs, and the two are compared
+     rather than assumed. */
+  eq('the same build is current',
+    L.serviceBuildVerdict('2.3.70', '2.3.70').ok, true);
+  eq('a different build is stale',
+    L.serviceBuildVerdict('2.3.70', '2.3.61').stale, true);
+  eq('and it names both numbers',
+    /2\.3\.61/.test(L.serviceBuildVerdict('2.3.70', '2.3.61').say)
+      && /2\.3\.70/.test(L.serviceBuildVerdict('2.3.70', '2.3.61').say), true);
+  /* THE CASE THAT MATTERS MOST. A deployment older than this feature does
+     not know the version mode at all, so it answers without a build — and
+     that silence is itself the answer. */
+  const none = L.serviceBuildVerdict('2.3.70', null);
+  eq('no build at all is not current', none.ok, false);
+  eq('and is read as older than the one we need',
+    /older than 2\.3\.70/.test(none.say), true);
+  eq('every verdict tells somebody what to do',
+    ['2.3.61', null, ''].every(g =>
+      /deploy/i.test(L.serviceBuildVerdict('2.3.70', g).say)), true);
+}
+
 sec('\u00a7410 the two house comparisons are not the same question');
 {
   /* BZ: merge them here - I'm on the library page!!! that button does

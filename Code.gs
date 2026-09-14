@@ -35,6 +35,10 @@
  * tell it from a real one afterwards.
  */
 
+/* The build this file is. Compared against L.GS_BUILD in index.html by
+   the app, so a stale deployment is reported rather than guessed. */
+var GS_BUILD = '2.3.70';
+
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
 // it gets the larger model. It runs once per flight, not once per bottle.
@@ -113,6 +117,17 @@ function doPost(e) {
      A mode whose file is not in the project throws a ReferenceError, which
      the catch below turns into a readable error rather than a 500. */
   try {
+    /* WHICH VERSION IS ACTUALLY SERVING.
+       Apps Script serves the DEPLOYED script, not the saved one, and
+       nothing on either side could tell the difference: probeWiring runs
+       in the editor against saved code and reports every mode present
+       while the live web app runs months-old code. So the deployment
+       states its own build, the app carries the build it expects, and the
+       two are compared instead of assumed.
+       Bump GS_BUILD in BOTH this file and L.GS_BUILD in index.html
+       whenever this file changes; consistency.js fails the build if they
+       disagree. */
+    if (body.mode === 'version') return json({ build: GS_BUILD });
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
     if (body.mode === 'recap') return json({ recap: writeRecap_(body) });
