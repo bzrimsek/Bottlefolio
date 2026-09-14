@@ -1311,6 +1311,35 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'own house "different maker"']);
 }
 
+/* EVERY SERVICE ANSWER IS READ THROUGH readService.
+ *
+ * BZ pressed Check the service on a deployment he had just pasted and was
+ * told it was too old to answer. Wrong, and mine: postWithRetry resolves
+ * to the fetch RESPONSE, so reading a field straight off it is always
+ * undefined — and the check reported every deployment, correct or not, as
+ * stale. A false accusation about somebody's deployment is worse than no
+ * check, because it sends them to redeploy something already right.
+ *
+ * The unit tests covered the verdict and the verdict was never the broken
+ * part. This is the wiring, which is what the suite cannot see: a
+ * postWithRetry whose result is used without readService between them.
+ */
+{
+  const lines = src.split('\n');
+  const bad = [];
+  lines.forEach((l, i) => {
+    if (!/=\s*await postWithRetry\(|postWithRetry\(/.test(l)) return;
+    const name = (l.match(/(?:const|let)\s+([a-zA-Z0-9_]+)\s*=\s*await postWithRetry/) || [])[1];
+    if (!name) return;                       // a .then chain, checked below
+    const near = lines.slice(i, i + 12).join('\n');
+    if (near.indexOf('readService(' + name) >= 0) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 52)
+      + '  \u2014 the response is used without readService, so every field '
+      + 'read off it is undefined');
+  });
+  check('every service answer is parsed before it is read', bad);
+}
+
 /* THE TWO BUILD STAMPS AGREE.
  * Code.gs states which build it is and the app states which it needs. They
  * live in different files edited in different sessions, which is exactly

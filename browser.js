@@ -1481,6 +1481,60 @@ function step(n) {
     });
   }
 
+  /* WHOSE SHELF COUNTS IS ONE PICK LIST, THE SAME WIDTH EITHER WAY.
+     BZ: this is not going to scale - just make it a pure pick list, with
+     just me as the default. It was a chip that opened a row of chips, so
+     the open state showed the answer twice and the row grew with the names
+     in it. The promise is that the control does not change size with how
+     many buddies you have, so that is what is measured — at one buddy and
+     at six, including one deliberately long name. */
+  step('whose shelf counts is one pick list that does not grow');
+  {
+    const r = await page.evaluate(() => {
+      const out = {};
+      const sets = { one: { u1: 'Bill' },
+        six: { u1: 'Not Smoky Bill', u2: 'Tyson', u3: 'Dave', u4: 'Eli',
+               u5: 'Bartholomew Fitzwilliam-Smythe', u6: 'Jo' } };
+      Object.keys(sets).forEach(k => {
+        SHARED.names = sets[k];
+        SHARED.shelves = {};
+        Object.keys(sets[k]).forEach(u => {
+          SHARED.shelves[u] = { name: sets[k][u], catalog: {}, bottles: [] };
+        });
+        renderMatchRow();
+        const row = document.getElementById('matchRow');
+        const sel = row && row.querySelector('select');
+        out[k] = sel
+          ? { w: Math.round(sel.getBoundingClientRect().width),
+              h: Math.round(sel.getBoundingClientRect().height),
+              value: sel.value, first: sel.options[0].textContent,
+              chips: row.querySelectorAll('.chip').length }
+          : null;
+      });
+      SHARED.names = {}; SHARED.shelves = {}; renderMatchRow();
+      return out;
+    });
+    if (!r.one || !r.six) {
+      failures.push('matchpick: no pick list drawn');
+    } else {
+      if (r.one.w !== r.six.w) {
+        failures.push('matchpick: ' + r.one.w + 'px with one buddy and '
+          + r.six.w + 'px with six \u2014 it grows with the names');
+      }
+      if (r.six.chips) {
+        failures.push('matchpick: ' + r.six.chips + ' chip(s) still drawn '
+          + 'beside the pick list \u2014 the answer is shown twice');
+      }
+      if (r.six.first !== 'Just me' || r.six.value !== '') {
+        failures.push('matchpick: the default is "' + r.six.first
+          + '" at value "' + r.six.value + '", not Just me');
+      }
+      if (r.six.h < 36) {
+        failures.push('tap: the pick list is ' + r.six.h + 'px tall');
+      }
+    }
+  }
+
   /* THE PAPERS STILL FIT ONE PAGE, AND CARRY THE LINE.
      BZ: can we at least add the Taste Responsibly stuff on the tasting
      sheets and guides. Both sheets are sized to a single page and the host
