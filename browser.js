@@ -1481,6 +1481,134 @@ function step(n) {
     });
   }
 
+  /* THE ANSWER IS NOT SET IN THE SMALLEST TYPE ON THE CARD.
+     BZ, reading a Boss Hog verdict: text is too small, this is the
+     important stuff. The whole block inherited .looknote at 12px muted —
+     the size meant for a passing note — so the answer and the reasoning
+     were the least legible things on a screen somebody is reading at a
+     bar. Measured rather than eyeballed, because "looks bigger" is how it
+     drifts back. */
+  step('the verdict is not the smallest type on its own card');
+  {
+    const sz = await page.evaluate(() => {
+      const box = document.createElement('div');
+      box.className = 'looknote ok';
+      document.body.appendChild(box);
+      const add = (c, t) => {
+        const d = document.createElement('div');
+        d.className = c; d.textContent = t; box.appendChild(d); return d;
+      };
+      const facts = add('src', 'WhistlePig \u00b7 104 proof \u00b7 rye');
+      const verdict = add('nm', 'Order it');
+      const why = add('sub', 'You have 1 from WhistlePig on your shelf.');
+      const px = e => parseFloat(getComputedStyle(e).fontSize);
+      const out = { facts: px(facts), verdict: px(verdict), why: px(why) };
+      document.body.removeChild(box);
+      return out;
+    });
+    if (!(sz.verdict > sz.facts)) {
+      failures.push('verdict: the answer is ' + sz.verdict + 'px against '
+        + sz.facts + 'px context \u2014 it is not the largest thing on '
+        + 'its own card');
+    }
+    if (sz.why < 14) {
+      failures.push('verdict: the reasoning is ' + sz.why
+        + 'px, under reading size on a phone');
+    }
+  }
+
+  /* TWO WORKING BOTTLES ON ONE PAGE DO NOT SHARE A CLIP.
+     BZ asked for a filling bottle on the control, which means one built
+     per press rather than the single static one the working overlay owns.
+     A constructed SVG needs a unique id every time or url(#id) resolves to
+     whichever was painted first and the second bottle is empty (rule 19b)
+     — and an empty progress indicator is worse than none, because it reads
+     as a thing that has stalled. Two at once, and both measured. */
+  step('two working bottles at once both fill');
+  {
+    const r = await page.evaluate(() => {
+      const mk = t => {
+        const b = document.createElement('button');
+        b.className = 'btn'; b.textContent = t;
+        document.body.appendChild(b);
+        return b;
+      };
+      const b1 = mk('Look it up'), b2 = mk('Find it');
+      const u1 = buttonWorking(b1), u2 = buttonWorking(b2);
+      const ids = [...document.querySelectorAll('.btnbottle clipPath')]
+        .map(c => c.id);
+      /* Only the CLONES. The overlay owns one of these permanently and it
+         is hidden, so counting it makes the tally wrong by one and the
+         check green for the wrong reason. */
+      const painted = [...document.querySelectorAll('.btnbottle .bfliquid')]
+        .map(l => Math.round(l.getBoundingClientRect().height));
+      const out = { ids: ids, unique: new Set(ids).size === ids.length,
+                    painted: painted.filter(x => x > 0).length,
+                    bottles: painted.length,
+                    label: b1.textContent.trim(), off: b1.disabled };
+      u1(); u2();
+      out.back = b1.textContent;
+      out.enabled = !b1.disabled;
+      out.left = document.querySelectorAll('.btnbottle').length;
+      b1.remove(); b2.remove();
+      return out;
+    });
+    if (!r.unique) {
+      failures.push('working bottle: two share a clip id ('
+        + r.ids.join(', ') + ') \u2014 the second draws empty');
+    }
+    if (r.painted !== r.bottles) {
+      failures.push('working bottle: ' + (r.bottles - r.painted)
+        + ' of ' + r.bottles + ' painted nothing');
+    }
+    if (!/Looking it up/.test(r.label) || !r.off) {
+      failures.push('working bottle: the button does not say it is working');
+    }
+    if (r.back !== 'Look it up' || !r.enabled || r.left) {
+      failures.push('working bottle: the button was not put back '
+        + '(label "' + r.back + '", ' + r.left + ' bottle(s) left behind)');
+    }
+  }
+
+  /* A SCREEN DRAWN TWICE SHOWS ONE OF EVERYTHING.
+     BZ's screenshot of Settings had TWO "Advanced" rows. renderLookupSetup
+     builds a fresh <details> and appends it, and a handler on that page
+     called it again to update one sentence — so the page grew a second
+     copy of its own last section. This is rule 30e in miniature: the walk
+     takes ONE path through each screen, so a screen that is correct on
+     first paint and wrong on second is invisible to it.
+     Drawn twice on purpose, and the elements counted. */
+  step('a settings redraw does not stack a second copy of itself');
+  {
+    const r = await page.evaluate(() => {
+      /* A DETACHED BOX, not a real screen. The first version of this
+         emptied #scr-ref to measure in it and left the Learn screen
+         wiped, so the NEXT step in the walk died on a null element. A
+         check that damages the thing being walked is worse than no
+         check. */
+      const box = document.createElement('div');
+      document.body.appendChild(box);
+      const count = () => box.querySelectorAll('details.advanced').length;
+      renderLookupSetup(box);
+      const once = count();
+      box.innerHTML = '';
+      renderLookupSetup(box);
+      renderLookupSetup(box);
+      const twice = count();
+      document.body.removeChild(box);
+      return { once: once, twice: twice };
+    });
+    if (r.once !== 1) {
+      failures.push('settings: one draw produced ' + r.once
+        + ' Advanced sections');
+    }
+    if (r.twice !== 1) {
+      failures.push('settings: two draws produced ' + r.twice
+        + ' Advanced sections \u2014 the section stacks instead of being '
+        + 'replaced, which is the two Advanced rows BZ photographed');
+    }
+  }
+
   /* WHOSE SHELF COUNTS IS ONE PICK LIST, THE SAME WIDTH EITHER WAY.
      BZ: this is not going to scale - just make it a pure pick list, with
      just me as the default. It was a chip that opened a row of chips, so
