@@ -17692,6 +17692,34 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7410 the two house comparisons are not the same question');
+{
+  /* BZ: merge them here - I'm on the library page!!! that button does
+     nothing. It navigated to the screen it was already on. Underneath it
+     the shelf half of the merge had never run at all: two lines that could
+     not both be false, one returning when the house matched and the next
+     returning when it did not, so every entry returned and the count was
+     always zero.
+     The fix turns on the difference between the two comparisons, so that
+     difference is pinned here. */
+  eq('houseSame sees through punctuation and case',
+    L.houseSame("Angel's Envy", 'ANGELS ENVY'), true);
+  eq('exactHouse does not', L.exactHouse("Angel's Envy", 'ANGELS ENVY'), false);
+  eq('exactHouse is true only for the same string',
+    L.exactHouse("Angel's Envy", "Angel's Envy"), true);
+  /* THE PAIR THAT DOES THE WORK: same house, spelled differently, is
+     exactly the set a merge rewrites. Using houseSame for both tests
+     skips everything; using exactHouse for both rewrites nothing. */
+  const needsRewrite = (a, keep) =>
+    L.houseSame(a, keep) && !L.exactHouse(a, keep);
+  eq('a different spelling of the kept house is rewritten',
+    needsRewrite('ANGELS ENVY', "Angel's Envy"), true);
+  eq('the kept spelling itself is left alone',
+    needsRewrite("Angel's Envy", "Angel's Envy"), false);
+  eq('and another house entirely is left alone',
+    needsRewrite('Ardbeg', "Angel's Envy"), false);
+}
+
 sec('\u00a7409 the library audit reports an entry with no distillery');
 {
   /* BZ, on whether the library scan would have caught the guest-ladder
