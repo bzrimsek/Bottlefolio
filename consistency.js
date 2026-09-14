@@ -1272,5 +1272,109 @@ check('no fixed svg id is emitted by a repeated drawing',
       : []);
 }
 
+/* EVERY RUNG THE LADDER DECLARES IS PINNED BY AN ASSERTION, AND THE
+ * CLASSIFIER IS DRIVEN WITH ITS SEED FIELDS MISSING.
+ *
+ * BZ, at the guest ladder seeded with a bottle that is not in the catalog:
+ * why show Jack family in next door when clearly house. Because the seed
+ * was typed in and came back with a name and no distillery, and the house
+ * branch is guarded on the field being present on BOTH sides — so the
+ * missing field did not fail, it fell through to a weaker answer. That is
+ * the shape worth guarding, not the bottle: a classifier that downgrades
+ * quietly when an optional input is absent.
+ *
+ * Two ratchets. A rung nobody asserts can be wrong for as long as nobody
+ * looks, and the absent-seed cases are the ones that were missing when
+ * this shipped, so the suite has to keep carrying them.
+ */
+{
+  const ladderBlock = src.slice(src.indexOf('L.LADDER = ['),
+    src.indexOf('L.LADDER = [') + 900);
+  const rungs = [...new Set((ladderBlock.match(/\{ id: '([a-z]+)'/g) || [])
+    .map(m => m.split("'")[1]))];
+  const suite = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
+  check('every rung the ladder declares is pinned by an assertion',
+    rungs.filter(r => suite.indexOf("'" + r + "'") < 0)
+      .map(r => 'rung ' + r + ' is declared and no assertion expects it'));
+
+  /* The classifier must still be driven with the seed fields absent. Named
+     by the expected value rather than by the wording of the assertion, so
+     a rewrite of the test prose does not break the gate (rule 30c). */
+  const drivesEmpty = /L\.rungOf\(\s*\{\s*\}/.test(suite)
+    && /L\.rungOf\(\s*\{\s*name:[^}]*\}\s*,/.test(suite);
+  check('the rung classifier is still driven with its seed fields missing',
+    drivesEmpty ? []
+      : ['nothing calls L.rungOf with an empty seed and a name-only seed '
+         + '\u2014 that pair is what caught a dist-less seed calling its '
+         + 'own house "different maker"']);
+}
+
+/* SEAMS: AN ACTION THAT ONLY SOME OF ITS PLACES FINISH.
+ *
+ * BZ: I keep finding these little seams of inconsistent capability - can
+ * you scan for this? Four of them turned up in one day and every one was
+ * the same shape. A lookup answered and kept the answer, while every other
+ * lookup offered it to the library. The publish modal wrote a key without
+ * asking the merge record, while the contributions path asked. Both accept
+ * paths did the same. None of them failed — each did something slightly
+ * weaker, which is why they survived a green gate for months.
+ *
+ * A unit test cannot see this: every one of those paths is correct on its
+ * own. What is wrong is that the SET disagrees. So the check is a registry
+ * of "wherever X happens, Y happens near it", and the value is that adding
+ * a pair takes one line, so every seam found by hand from here becomes a
+ * seam found by the gate.
+ */
+{
+  const SEAMS = [
+    /* TWO DOORS TO ONE SERVICE, which is where this whole family of seams
+       comes from. askLookup counts the lookup against the daily cap,
+       refuses when the cap is spent, and offers the answer to the shared
+       library. askService does none of the three. Every caller of the raw
+       door silently gets a free, uncounted lookup whose answer is thrown
+       away, and each one looks perfectly correct on its own.
+       Allowed by name, so the four that exist today are a decision and a
+       fifth is a failure (rule 28a). */
+    { what: 'a lookup that goes round the counted door',
+      when: /\bawait askService\(/g, must: 'THIS_IS_THE_COUNTED_DOOR',
+      within: 8,
+      allow: ['Through the one door, like every other question',
+              'AN ARRAY. L.lookupUrl does',
+              'this is not the shop',
+              'The paid half, and the only half a person decides to run',
+              'lookMsg.textContent'],
+      why: 'askLookup counts the cap and teaches the library; askService '
+         + 'does neither. A caller on the raw door gets an uncounted '
+         + 'lookup and discards what came back.' },
+    /* CREATIONS ONLY. A write to catalog/products/<key>/<field> updates an
+       entry that already exists and resurrects nothing, which is the same
+       line the creation check above draws. Without it this reported four
+       field updates and taught nobody anything. */
+    { what: 'a library write that does not ask the guard',
+      when: /catalog\/products\/' \+ [a-zA-Z][a-zA-Z0-9_.]*\](?!\s*=\s*null)/g,
+      must: 'libraryAccepts',
+      within: 32, allow: ['lifts the tombstone'],
+      why: 'Consolidating deletes the losing key, so a path that does not '
+         + 'read the graves offers to put it back.' }
+  ];
+  SEAMS.forEach(seam => {
+    const hits = [];
+    let m;
+    seam.when.lastIndex = 0;
+    while ((m = seam.when.exec(src)) !== null) {
+      const at = m.index;
+      const line = src.slice(0, at).split('\n').length;
+      const lines = src.split('\n');
+      const near = lines.slice(Math.max(0, line - 1 - seam.within),
+        line - 1 + seam.within).join('\n');
+      if (near.indexOf(seam.must) >= 0) continue;
+      if ((seam.allow || []).some(a => near.indexOf(a) >= 0)) continue;
+      hits.push('index.html:' + line + '  ' + lines[line - 1].trim().slice(0, 52)
+        + '  \u2014 no ' + seam.must + ' within ' + seam.within + ' lines');
+    }
+    check(seam.what, hits);
+  });
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
