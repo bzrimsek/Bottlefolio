@@ -37,14 +37,32 @@ of taste:
 
 ## Building
 
+Two commands, on BZ's Windows PC (`python`, not `python3`):
+
 ```
-python3 bump.py "what changed, in full sentences"
+python bump.py "what changed, in full sentences"
+python push.py "short subject for the commit"
 ```
 
-That is the **only** way to set a version (rule 9). It writes five places
-and the changelog entry. Never edit a version by hand.
+`bump.py` is the **only** way to set a version (rule 9). It writes five
+places and the changelog entry. Never edit a version by hand.
 
-Then the gate, all ten, in this order:
+`push.py` does the rest and prints each step as it lands — relay them
+(rule 25c): the audit here; BZ's shelf files re-sealed if they changed;
+every changed file to the `build` branch as ONE commit; then the gate below
+runs on GitHub's servers (`.github/workflows/gate.yml`), and only a green
+gate moves `main` — which is what https://bzrimsek.github.io/Bottlefolio/
+serves. A red gate leaves the live site untouched and push.py prints the
+failing log. `python push.py --dry-run` lists what would go without sending.
+
+Credentials: BZ's `gh auth login` (Windows Credential Manager). The shelf
+files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
+`.gpg`; the key is `%USERPROFILE%\.bottlefolio\shelf.key`, outside OneDrive,
+and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
+plain shelf file, a CSV, the database export or `_superseded/`.
+
+The gate, all ten, in this order — `gate.py` runs them in the cloud with the
+clock pinned to UTC (test §351 expects it):
 
 ```
 python3 audit.py          # the named lock matches index.html
