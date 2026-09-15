@@ -471,12 +471,6 @@ const TWO_DOORS_OK = [
      lookupFailSay rather than wording it again. Named specifically, so a
      second way of phrasing a failure would still fail this check. */
   'lookupEmptySay>lookupFailSay',
-  /* A CALLER, NOT A SECOND ANSWER. readShelfQuestion normalises the
-     question and every house name through shopNorm so a match is
-     punctuation-blind; it returns a subject and what you own of it, which
-     is not a thing shopNorm has an opinion about. Named specifically, so
-     a genuine second normaliser would still fail this. */
-  'readShelfQuestion>shopNorm',
   /* ONE SOURCE, TWO READERS. The audit names the release a bottle's name
      implies, and the suggestion offers to set it - both by asking
      L.guessScar, which is the single door. Rule 30d is about two

@@ -1565,9 +1565,12 @@ eq('a good reply parses',
   L.parseLookup({ name: 'X', proof: 92 }).proof, 92);
 // An ABV where a proof was asked for is the commonest mistake.
 eq('an abv is doubled', L.parseLookup({ name: 'X', abv: 46 }).proof, 92);
-eq('an impossible proof is refused', L.parseLookup({ name: 'X', proof: 900 }), null);
+/* Dropped, not stored - and no longer a reason to refuse the bottle: a name
+   is the identity and a missing proof is filled later (BZ, 2026-09-15). */
+eq('an impossible proof is dropped, not stored', L.parseLookup({ name: 'X', proof: 900 }).proof, null);
 eq('no name is refused', L.parseLookup({ proof: 90 }), null);
-eq('no proof is refused', L.parseLookup({ name: 'X' }), null);
+/* Let in, to be filled later (BZ, 2026-09-15). This asserted a refusal. */
+eq('no proof is let in, with no proof', L.parseLookup({ name: 'X' }).proof, null);
 eq('junk is refused', L.parseLookup(null), null);
 eq('an unknown category is dropped, not stored',
   L.parseLookup({ name: 'X', proof: 90, sub: 'rocket fuel' }).sub, null);
@@ -3082,7 +3085,9 @@ sec('product validation');
 eq('valid product passes', L.validateProduct({ name: 'Ardbeg 10', proof: '92' }), []);
 eq('missing name fails', L.validateProduct({ name: '', proof: '92' }).length, 1);
 eq('one-char name fails', L.validateProduct({ name: 'A', proof: '92' }).length, 1);
-eq('missing proof fails', L.validateProduct({ name: 'Ardbeg 10', proof: '' }).length, 1);
+/* A PROOF IS WANTED, NOT REQUIRED (BZ, 2026-09-15: prompt for it but let
+   it in, because we can enrich it later). This asserted a refusal. */
+eq('a missing proof is allowed, to be filled later', L.validateProduct({ name: 'Ardbeg 10', proof: '' }), []);
 eq('proof below 20 fails', L.validateProduct({ name: 'X Y', proof: '19' }).length, 1);
 eq('proof above 200 fails', L.validateProduct({ name: 'X Y', proof: '201' }).length, 1);
 eq('proof 20 is allowed', L.validateProduct({ name: 'X Y', proof: '20' }), []);
@@ -3090,7 +3095,7 @@ eq('blank price is allowed', L.validateProduct({ name: 'X Y', proof: '92', msrp:
 eq('non-numeric price fails', L.validateProduct({ name: 'X Y', proof: '92', msrp: 'abc' }).length, 1);
 eq('age 80 allowed', L.validateProduct({ name: 'X Y', proof: '92', age: '80' }), []);
 eq('age 81 fails', L.validateProduct({ name: 'X Y', proof: '92', age: '81' }).length, 1);
-eq('two problems report two', L.validateProduct({ name: '', proof: '' }).length, 2);
+eq('two problems report two', L.validateProduct({ name: '', proof: 'x' }).length, 2);
 
 sec('product normalisation');
 const norm = L.normalizeProduct({ name: '  Ardbeg 10 ', proof: '92', sub: 'scotch',
@@ -4612,8 +4617,9 @@ sec('§187 the parse carries the notes the run reads');
 
   const noProof = { name: 'Lagavulin 16', proof: null, nose: 'peat',
                     palate: 'sherry', finish: 'iodine' };
-  eq('identifying still needs a name and a proof',
-    L.parseLookup(noProof), null);
+  /* A name is the identity now; the proof is filled later (BZ, 2026-09-15). */
+  eq('identifying needs a name, and a missing proof is filled later',
+    L.parseLookup(noProof).name, 'Lagavulin 16');
   eq('enriching does not, because the bottle is already named',
     L.parseLookup(noProof, { needIdentity: false }).nose, 'peat');
   eq('and the note it carries is usable',
@@ -19192,20 +19198,23 @@ sec('§430 one bottle reads the same on the shop, the bar and an offer');
   eq('and keeps its verdict for the advice', typeof one.verdict, 'string');
 }
 
-sec('§431 one box on the shelf: a search, or a question');
+sec('\u00a7431 a shop question names bourbon, scotch and irish too');
 {
-  /* NEXT-THREE #3. A person typing "woodford" should not have to know which
-     box does which. The box searches; a QUESTION naming something the shelf
-     knows also offers to ask, as a button. */
-  eq('a name is a search', L.looksLikeQuestion('Aberlour'), false);
-  eq('so is a whole bottle', L.looksLikeQuestion('Woodford Reserve Double Oaked'),
-    false);
-  eq('a question is a question',
-    L.looksLikeQuestion('what am I missing from Woodford'), true);
-  eq('with or without a question mark',
-    L.looksLikeQuestion('anything else from Buffalo Trace'), true);
-  eq('a question mark alone makes one', L.looksLikeQuestion('Islay?'), true);
-  eq('and nothing is not a question', L.looksLikeQuestion(''), false);
+  /* v2.4.5 read a question's category through L.shopNorm, which strips
+     bourbon, scotch and irish from bottle names because nearly every name
+     carries one - so the three commonest categories on BZ's shelf were the
+     three a question could not name. Rye worked because shopNorm leaves it
+     alone. The question box moved to Shop (BZ, 2026-09-15) and reads the
+     words as typed. */
+  const ask = q => L.readShelfQuestion(q, data.catalog, data.bottles, {});
+  eq('bourbon is heard', (ask('what bourbon am I missing') || {}).sub, 'bourbon');
+  eq('and scotch', (ask('any scotch I should try') || {}).sub, 'scotch');
+  eq('and irish', (ask('anything irish worth getting') || {}).sub, 'irish');
+  eq('a plural too', (ask('which bourbons am I missing') || {}).sub, 'bourbon');
+  eq('and a word on its own', (ask('bourbon') || {}).sub, 'bourbon');
+  eq('rye still is', (ask('what rye am I missing') || {}).sub, 'rye');
+  eq('a house still outranks a category',
+    (ask('what bourbon from Woodford') || {}).house, 'Woodford Reserve');
 }
 
 sec('§432 what the shelf thinks of a bottle has one door');
@@ -19268,6 +19277,66 @@ sec('\u00a7433 the pick is a bottle the read was sure of, and a whisky');
   eq('and the house', kept[1].dist, 'Nolet');
   eq('so it picks nothing the second time either',
     L.readPick({ items: kept }, cat, bots, []), null);
+}
+
+sec('\u00a7434 a lookup with no proof gets in, and asks for it');
+{
+  /* BZ, 2026-09-15: if a lookup returns no proof prompt for it but let it
+     in, because we can enrich it later. Six George T. Stagg answers on
+     09/14 carried the bottle with "proof":null, and every one was thrown
+     away as "found nothing". */
+  const stagg = { name: 'George T. Stagg', dist: 'Buffalo Trace Distillery',
+    proof: null, sub: 'bourbon', age: 15 };
+  const got = L.parseLookup(stagg);
+  eq('the bottle is let in', (got || {}).name, 'George T. Stagg');
+  eq('with no proof rather than an invented one', (got || {}).proof, null);
+  eq('and the form is told to ask for it',
+    /add it if the label shows one/.test(L.proofPrompt(got)), true);
+  eq('a lookup that brought its proof asks nothing',
+    L.proofPrompt(L.parseLookup({ name: 'X', proof: 90 })), '');
+  eq('nothing at all asks nothing', L.proofPrompt(null), '');
+  eq('saving without a proof is allowed',
+    L.validateProduct({ name: 'George T. Stagg', proof: '' }), []);
+  eq('while a typed proof must still be a proof',
+    L.validateProduct({ name: 'George T. Stagg', proof: '900' }).length, 1);
+  eq('and the library fill counts it as a gap to fill later',
+    L.libraryGaps({ name: 'George T. Stagg', sub: 'bourbon',
+      dist: 'Buffalo Trace' }).indexOf('proof') >= 0, true);
+  eq('still, no name is nothing', L.parseLookup({ proof: 90 }), null);
+}
+
+sec('\u00a7435 what you are missing, from the library');
+{
+  /* BZ, 2026-09-15: asking moves to Shop. A question on the planning screen
+     lists the library bottles for its subject that you do not own, each
+     judged through the one door, best fit first. Local and free: the
+     library is already on the phone. */
+  const cat = {}, bots = [];
+  const add = (k, name, dist, sub, region, own) => {
+    cat[k] = { k: k, name: name, dist: dist, sub: sub, region: region,
+               proof: 100 };
+    if (own) bots.push({ id: 'o' + k, k: k, status: 'open' });
+  };
+  add('w1', 'Woodford Reserve Double Oaked', 'Woodford Reserve', 'bourbon', null, true);
+  add('w2', 'Woodford Reserve Batch Proof', 'Woodford Reserve', 'bourbon', null, true);
+  add('w3', 'Woodford Reserve Rye', 'Woodford Reserve', 'rye', null, false);
+  add('b1', 'Buffalo Trace', 'Buffalo Trace', 'bourbon', null, true);
+  add('b2', 'Eagle Rare 10', 'Buffalo Trace', 'bourbon', null, false);
+  add('i1', 'Ardbeg 10', 'Ardbeg', 'scotch', 'Islay', false);
+  const read = q => L.readShelfQuestion(q, cat, bots, {});
+  const miss = q => L.libraryMissing(read(q), cat, bots, [], [], 12, {})
+    .map(m => m.name);
+  eq('a house lists the bottles of it you do not own',
+    miss('what am I missing from Woodford'), ['Woodford Reserve Rye']);
+  eq('a category lists them too, and only those you do not own',
+    miss('what bourbon am I missing'), ['Eagle Rare 10']);
+  eq('and a region', miss('anything from Islay'), ['Ardbeg 10']);
+  eq('each carries the shop card headline',
+    typeof (L.libraryMissing(read('what bourbon am I missing'), cat, bots,
+      [], [], 12, {})[0] || {}).say, 'string');
+  eq('the question knows its house by id, so aliases can reach it',
+    typeof (read('what am I missing from Woodford') || {}).houseId, 'string');
+  eq('no subject lists nothing', L.libraryMissing(null, cat, bots, [], [], 12, {}), []);
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

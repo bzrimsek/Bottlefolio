@@ -418,18 +418,15 @@ function step(n) {
       if (inputs !== 1) {
         failures.push('shelf: ' + inputs + ' text inputs above the list, want exactly one');
       }
+      /* THE SHELF BOX SEARCHES; ASKING LIVES ON SHOP (BZ, 2026-09-15:
+         Shelf searches, asking moves to Shop). A question typed here
+         is searched, and no ask of any kind is offered on this screen. */
       const q = page.locator('#q');
       await q.fill('what am I missing from Aberlour');
-      const ask = page.locator('#shelfAsk button');
-      await ask.first().waitFor({ state: 'visible', timeout: 4000 }).catch(() => {});
-      if (!(await ask.count())
-          || !/^Ask about /.test((await ask.first().innerText()) || '')) {
-        failures.push('shelf: a question naming a house offers no "Ask about" button');
-      }
-      await q.fill('Aberlour');
       await page.waitForTimeout(400);
-      if (await page.locator('#shelfAsk button').count()) {
-        failures.push('shelf: a plain search offers an Ask button');
+      if (await page.locator('#scr-shelf button',
+          { hasText: /^(Ask about|Look further)/ }).count()) {
+        failures.push('shelf: the search box offers an ask \u2014 asking moved to Shop');
       }
       await q.fill('');
       await page.waitForTimeout(80);
@@ -1620,6 +1617,61 @@ function step(n) {
     }
   }
 
+  /* WHAT AM I MISSING, ON SHOP (BZ, 2026-09-15: the Shelf box searches and
+     asking moves to Shop, the planning screen). The box sits in the markup
+     like the store search, so typing survives a redraw; the free half
+     answers as you type, and Look further is the paid half. */
+  step('the planning screen answers what am I missing');
+  {
+    await page.locator('nav button[data-scr="shop"]').click();
+    await page.waitForTimeout(250);
+    await page.evaluate(() => {
+      window.__walkWas = { mode: S.shopMode, url: S.lookupUrl, dim: S.shopDim };
+      S.lookupUrl = S.lookupUrl || 'https://example.invalid/x';
+      S.shopMode = 'plan'; S.shopDim = null;
+      renderShop();
+    });
+    const box = page.locator('#shopAskQ');
+    if (!(await box.count()) || !(await box.isVisible())) {
+      failures.push('shop plan: no question box on the planning screen');
+    } else {
+      await box.fill('what bourbon am I missing');
+      await page.waitForTimeout(600);
+      const r = await page.evaluate(() => {
+        const out = document.getElementById('shopAskOut');
+        const act = document.activeElement;
+        return {
+          card: !!out,
+          text: out ? out.textContent : '',
+          further: out ? Array.from(out.querySelectorAll('button'))
+            .some(b => /Look further/.test(b.textContent)) : false,
+          focused: act ? act.id : ''
+        };
+      });
+      if (!r.card) {
+        failures.push('shop plan: a question drew no answer');
+      } else {
+        if (!/Bourbon/.test(r.text)) {
+          failures.push('shop plan: "what bourbon am I missing" did not hear bourbon');
+        }
+        if (!/NOT ON YOUR SHELF YET/.test(r.text)) {
+          failures.push('shop plan: no Not on your shelf yet list');
+        }
+        if (!r.further) failures.push('shop plan: no Look further button');
+      }
+      if (r.focused !== 'shopAskQ') {
+        failures.push('shop plan: typing lost the box (' + (r.focused || 'nothing') + ' has focus)');
+      }
+      await box.fill('');
+    }
+    await page.evaluate(() => {
+      const w = window.__walkWas || {};
+      S.shopMode = w.mode; S.lookupUrl = w.url; S.shopDim = w.dim;
+      renderShop();
+    });
+    await page.waitForTimeout(80);
+  }
+
   step('the store search is a name and a button, nothing else');
   {
     /* ON SCREEN FIRST. A height measured on a hidden screen is zero, which
@@ -2546,36 +2598,11 @@ function step(n) {
           + order + ')');
       }
 
-      // A buy that cannot go through has to SAY so and point at the field
-      // it wants. It used to flash a toast over a screen with no proof
-      // field on it, which is indistinguishable from a button that does
-      // nothing.
+      /* A BUY WITH NO PROOF GOES THROUGH. BZ, 2026-09-15: if a lookup
+         returns no proof, prompt for it but let it in, because we can
+         enrich it later. This asserted a refusal; the bottle is added
+         now, proof blank, for the library fill to find. */
       const before = await page.evaluate(() => S.bottles.length);
-      await page.locator('#scr-shop button', { hasText: 'I bought it' })
-        .first().click();
-      await page.waitForTimeout(160);
-      const refused = await page.evaluate(() => {
-        const n = document.querySelector('#shopFixed .looknote');
-        const bad = document.querySelector('#shopFixed .field.needed');
-        return { msg: n ? n.textContent.trim() : '',
-                 field: bad ? bad.getAttribute('name') : null,
-                 grew: S.bottles.length };
-      });
-      if (!/proof/i.test(refused.msg)) {
-        failures.push('shop: a buy with no proof said '
-          + JSON.stringify(refused.msg.slice(0, 50)));
-      }
-      if (refused.field !== 'proof') {
-        failures.push('shop: a refused buy did not mark the proof field');
-      }
-      if (refused.grew !== before) {
-        failures.push('shop: a bottle with no proof was added anyway');
-      }
-
-      // Now fill the proof in and buy it properly.
-      await page.locator('#shopFixed [name="proof"]').fill('105');
-      await page.locator('#shopFixed [name="proof"]').dispatchEvent('change');
-      await page.waitForTimeout(160);
       await page.locator('#scr-shop button', { hasText: 'I bought it' })
         .first().click();
       await page.waitForTimeout(700);
@@ -2592,11 +2619,12 @@ function step(n) {
       }
       if (after !== before + 1) {
         const why = await page.evaluate(() => {
+          const n = document.querySelector('#shopFixed .looknote');
           const t = document.querySelector('.toast');
-          return t ? t.textContent.trim().slice(0, 60) : 'no toast';
+          return (n && n.textContent.trim()) || (t ? t.textContent.trim() : 'no message');
         });
-        failures.push('shop: I bought it did not add a bottle ('
-          + before + ' -> ' + after + ', ' + why + ')');
+        failures.push('shop: I bought it with no proof did not add a bottle ('
+          + before + ' -> ' + after + ', ' + why.slice(0, 60) + ')');
       }
     }
   }

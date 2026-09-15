@@ -45,6 +45,11 @@ to pick up and start; the deploy is one press.
 
 **Dragged fill levels were saved inverted from v2.3.17 to v2.3.35, and no
 repair exists.** Checked 2026-09-15.
+**CLOSED 2026-09-15 — BZ: close the issue, I believe it is ok; I'll re-open if
+there are other issues.** Nothing was repaired or rewritten, because the
+log could not name a single target. If a wrong level turns up, a full
+bottle wrongly saved nearly empty shows in the Shop's Running low list;
+dragging it now saves the right value.
 
 What happened (CHANGELOG v2.3.35): the gauge's range used
 `writing-mode:vertical-lr` with `direction:ltr`, which puts the MINIMUM at
@@ -305,11 +310,17 @@ copied within about a day of it.
 
 ### 4. Waiting on a decision from BZ
 
-- **The fill levels from 2026-09-12 (§0).** The log cannot name them, so
+- ~~**The fill levels from 2026-09-12 (§0).**~~ **CLOSED 2026-09-15, BZ: close
+  it, he believes they are ok and will re-open if not.** The log cannot name them, so
   there are two choices and both are his: check by eye the bottles whose
   gauge he dragged that day — he is the only record left — or leave them.
   Nothing is written without one of those.
-- **Is a name without a proof a bottle?** (cause found 2026-09-15, §3). The
+- ~~**Is a name without a proof a bottle?**~~ **DECIDED 2026-09-15, BZ: if a
+  lookup returns no proof prompt for it but let it in, because we can enrich
+  it later. BUILT v2.4.6:** a name is the identity, the Shop and Add forms
+  flag the proof field and say why, a bottle saves with the proof blank,
+  and the library fill counts it as a gap (§434). (cause found 2026-09-15,
+  §3). The
   identity rule at index.html:4619 rejects any reply without a proof, which
   throws away a barrel-proof release whose proof the model will not commit
   to. Loosening it lets entries with no proof into the library; keeping it
@@ -388,6 +399,19 @@ copied within about a day of it.
 
 Each of these is closed or corrected IN PLACE in the entry it names below.
 
+- **v2.4.6 — three open decisions closed in one build** (BZ: open items
+  complete with each build). (1) A lookup with no proof gets in and the
+  proof is asked for: `L.parseLookup` identifies on the name,
+  `L.validateProduct` allows a blank proof, both forms flag it
+  (`L.proofPrompt`), and the library fill picks it up (§434; the walk's
+  buy-with-no-proof check failed first). A lookup's impossible proof is
+  dropped instead of refusing the bottle. (2) The Shelf box searches what
+  you own and nothing else; asking moved to Shop's planning screen — a box
+  in the markup like the store search, NOT ON YOUR SHELF YET from the
+  library through the one door, free and instant, then Look further, the
+  paid lookup (§435; the walk failed first). (3) The question reader hears
+  bourbon, scotch and irish (§431). And the Sept 12 fill levels closed on
+  BZ's word.
 - **v2.4.5 — the first app release through the pipeline.** NEXT-THREE.md's
   three, each with a test that failed before its fix:
   (1) the offer reader keeps a line only on POSITIVE evidence that it names
@@ -417,7 +441,10 @@ Each of these is closed or corrected IN PLACE in the entry it names below.
   2.4.1, so the gate redeploys the service. **UNCHECKED:** whether "Buster
   Nolte" was read as low. BZ is asked; if the reader rated it high, the
   confidence rule does not bench it and something else is wrong.
-- **Found in passing, NOT fixed — mine.** `L.readShelfQuestion` cannot see
+- **Found in passing — FIXED v2.4.6.** BZ: the Shelf box searches, and
+  asking moves to Shop. The question box is on Shop's planning screen and
+  reads a category from the words as typed (§431, §435). As found:
+  `L.readShelfQuestion` could not see
   bourbon, scotch or irish as a category: it matches through `L.shopNorm`,
   which strips exactly those words, so `has('bourbon')` compares an empty
   string and "am I thin on bourbon" names no subject (read from the code;
