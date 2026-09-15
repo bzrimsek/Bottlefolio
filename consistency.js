@@ -1351,7 +1351,7 @@ check('no fixed svg id is emitted by a repeated drawing',
   if (!acts.length) bad.push('the inventory is empty');
   acts.forEach(act => {
     if (!act.id) bad.push('an action with no name');
-    (act.through || []).concat(act.pressed || []).forEach(fn => {
+    (act.through || []).concat(act.pressed || [], act.inner || []).forEach(fn => {
       /* The function it names has to be real, and has to be DEFINED here
          rather than merely mentioned. */
       const def = new RegExp('(?:function |L\\.)' + fn + '\\s*[=(]');
@@ -1377,6 +1377,29 @@ check('no fixed svg id is emitted by a repeated drawing',
   }
   check('the action inventory names real functions and gives its reasons',
     bad);
+}
+
+/* THE RETIRED ADDRESS.
+ *
+ * The repo was renamed from Bottle-Tracker to Bottlefolio, and GitHub Pages
+ * does not follow a rename: https://bzrimsek.github.io/Bottle-Tracker/
+ * answers 404. On 2026-09-15 two places still named it - the iPhone
+ * sign-in help, which sent people to a dead page, and SHELF_URL in Code.gs,
+ * which four enrichment jobs fetch their catalog from. Nothing caught
+ * either, because nothing here read a URL. Now the app and every service
+ * file are read for it.
+ */
+{
+  const dead = 'github.io/Bottle-Tracker';
+  const where = [];
+  if (src.indexOf(dead) >= 0) where.push('index.html');
+  ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs'].forEach(f => {
+    const p = __dirname + '/' + f;
+    if (fs.existsSync(p) && fs.readFileSync(p, 'utf8').indexOf(dead) >= 0) {
+      where.push(f);
+    }
+  });
+  check('nothing points at the retired Bottle-Tracker address', where);
 }
 
 /* THE ACTION INVENTORY.
@@ -1435,6 +1458,50 @@ check('no fixed svg id is emitted by a repeated drawing',
     });
   });
   check('every screen performs an action the one declared way', bad);
+}
+
+/* AND NOTHING GOES ROUND THE DOOR.
+ *
+ * The check above looks at the sites that USE an action's door. It never
+ * saw a site that skipped it - which is exactly what NEXT-THREE #2 found on
+ * v2.4.4: the offer reader said what the shelf thinks of a bottle in its
+ * own words while the shop and the bar went through fitTwoWays. An action
+ * that names `inner`, the answer living behind its door, makes a direct
+ * call to that answer from anywhere but the door a failure - unless the
+ * site is named in `allow`, with its reason.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const srcLines = src.split('\n');
+  const realLine = txt => {
+    const tt = txt.trim();
+    const at = srcLines.findIndex(x => x.trim() === tt);
+    return at >= 0 ? (at + 1) : '?';
+  };
+  /* The enclosing function, whether declared plainly or on L. */
+  const owner = i => {
+    for (let j = i; j >= 0; j--) {
+      const m = lines[j].match(/^(?:async )?function ([A-Za-z0-9_]+)/)
+        || lines[j].match(/^L\.([A-Za-z0-9_]+)\s*=\s*function/);
+      if (m) return m[1];
+    }
+    return '(top level)';
+  };
+  const bad = [];
+  (ENGINE.ACTIONS || []).forEach(act => {
+    (act.inner || []).forEach(fn => {
+      const rx = new RegExp('\\bL\\.' + fn + '\\(');
+      lines.forEach((l, i) => {
+        if (!rx.test(l)) return;
+        const who = owner(i);
+        if ((act.through || []).indexOf(who) >= 0) return;
+        if (Object.keys(act.allow || {}).indexOf(who) >= 0) return;
+        bad.push('index.html:' + realLine(l) + '  ' + who + ' calls ' + fn
+          + ' directly - "' + act.id + '" goes through ' + act.through[0]);
+      });
+    });
+  });
+  check('nothing answers a declared action by going round its door', bad);
 }
 
 /* EVERY LOOKUP BUTTON BEHAVES THE SAME.

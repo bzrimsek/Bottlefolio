@@ -8478,7 +8478,10 @@ sec('§243 what is in this email for me');
     'Unsubscribe'
   ].join('\n');
 
-  const names = L.offerNames(email);
+  /* The catalog travels with the paste since v2.4.5: a line is read as a
+     bottle only on positive evidence, and a house or a catalog match is
+     most of it (§429). */
+  const names = L.offerNames(email, data.catalog, {});
   eq('the bottles are found', names.length, 4);
   eq('a price is not part of a name',
     names.some(n => /\$/.test(n)), false);
@@ -8491,8 +8494,11 @@ sec('§243 what is in this email for me');
   eq('and nor is the furniture at the end',
     names.some(n => /Unsubscribe|Buy now/i.test(n)), false);
   eq('an empty paste finds nothing', L.offerNames('').length, 0);
+  /* A link names no whisky, so it is not read as one. This asserted 1
+     while its own label said a link finds nothing: the value documented
+     the permissive filter NEXT-THREE #1 replaced, the label the intent. */
   eq('and neither does a link on its own',
-    L.offerNames('https://example.com/releases').length, 1);
+    L.offerNames('https://example.com/releases', data.catalog, {}).length, 0);
 
   /* The ranking. Every verdict traces to the shelf. */
   const cat = {}, bottles = [];
@@ -19067,6 +19073,201 @@ sec('\u00a7404 a flight is capped in drinks, not in glasses');
   eq('and says how many it had', [mixed.known, mixed.of], [2, 3]);
   eq('an unknown proof cannot push a flight over budget',
     L.flightDrinks([bot(1, 80), bot(2, null)], 0.75).over, false);
+}
+
+sec('§429 a line from a page is a bottle only with evidence');
+{
+  /* NEXT-THREE #1. BZ pasted a release page on v2.4.4 and got four rows,
+     three of them page furniture: "537 reviews", "Special Reserve Bourbon
+     Bottle" and "star". The filter kept any line it could not rule out, and
+     a blacklist has to anticipate every website. It now asks for POSITIVE
+     evidence that a line names a whisky, from what the app already holds. */
+  const page = ['537 reviews', 'Special Reserve Bourbon Bottle', 'star',
+    "Blanton's Special Reserve"].join('\n');
+  eq('the three that are not bottles are dropped and the bottle survives',
+    L.offerNames(page, data.catalog, {}), ["Blanton's Special Reserve"]);
+
+  /* A NEW BOTTLE IS THE POINT of this screen, so the catalog is never
+     required: a proof, an age, a size or a house carries a line alone. */
+  eq('an unknown bottle with a proof is kept',
+    L.offerNames('Frey Ranch Straight Rye 100 proof', {}, {}),
+    ['Frey Ranch Straight Rye 100 proof']);
+  eq('and one with an age', L.offerNames('Nikka Days 12 Year', {}, {}),
+    ['Nikka Days 12 Year']);
+  eq('and one with a size, which is stripped from the name',
+    L.offerNames('Kasama Rum Cask Finish 750ml', {}, {}),
+    ['Kasama Rum Cask Finish']);
+  const cat = { w: { k: 'w', name: 'Woodford Reserve Double Oaked',
+    dist: 'Woodford Reserve', sub: 'bourbon' } };
+  eq('a house the shelf knows carries a bottling it has never met',
+    L.offerNames('Woodford Reserve Chocolate Malted Rye', cat, {}),
+    ['Woodford Reserve Chocolate Malted Rye']);
+
+  /* A CATEGORY WORD NEEDS A NAME BESIDE IT (BZ, 2026-09-15). "Special
+     Reserve Bourbon Bottle" says bourbon and names nothing. */
+  eq('a category beside a real name is kept',
+    L.offerNames('Old Carter Straight Bourbon', {}, {}),
+    ['Old Carter Straight Bourbon']);
+  eq('a category among nothing but shared vocabulary is not',
+    L.offerNames('Small Batch Bourbon', {}, {}).length, 0);
+
+  eq('evidence says what kind it is', [
+    L.whiskyEvidence('Stellum Black 116.1 proof', 'Stellum Black'),
+    L.whiskyEvidence('Kilkerran 16 Year Old', 'Kilkerran 16 Year Old'),
+    L.whiskyEvidence('Old Carter Bourbon', 'Old Carter Bourbon'),
+    L.whiskyEvidence('star', 'star')], ['proof', 'age', 'category', null]);
+  eq('the shared vocabulary is not distinctive',
+    L.distinctiveWords('Special Reserve Bourbon Bottle'), []);
+  eq('and a name is', L.distinctiveWords("Blanton's Special Reserve"),
+    ['blantons']);
+
+  /* ONE WAY TO FIND A HOUSE IN WORDS, shared with the shelf question. */
+  const houses = L.houseList(cat, {});
+  eq('a house is found in a line',
+    (L.houseInText('anything from Woodford Reserve', houses) || {}).name,
+    'Woodford Reserve');
+  eq('by its first word when that word is a name',
+    (L.houseInText('more Woodford please', houses) || {}).name,
+    'Woodford Reserve');
+  eq('and not in furniture', L.houseInText('537 reviews', houses), null);
+}
+
+sec('§430 one bottle reads the same on the shop, the bar and an offer');
+{
+  /* NEXT-THREE #2, and rule 30a. One question - what does my shelf think of
+     this bottle - was answered by the shop through L.fitTwoWays, by the bar
+     through fitTwoWays handed only a NAME, and by the offer reader through
+     its own sentences, one of them "Nothing on your shelf speaks to this one
+     either way", the shrug L.fitVerdict stopped using at v2.3.99. Each path
+     was green alone. This asks them the same question and compares. */
+  const axes = L.shelfAxes(data.catalog, data.bottles, mapData);
+  const held = L.ownedCounts(data.bottles);
+  const all = Object.values(data.catalog).filter(p => p && p.name && p.dist);
+  const owned = all.filter(p => held[p.k])[0];
+  /* THE CATALOG IS THE SHELF here - every one of its 325 products is
+     owned - so a bottle you do not own is made: a real entry, renamed,
+     which the shelf holds none of. */
+  const base = all.filter(p => p.fin)[0] || all[0];
+  const unowned = Object.assign({}, base, { k: 'zz_not_owned',
+    name: 'Zz Unowned Bottling of ' + base.dist });
+  const cat = Object.assign({}, data.catalog, { zz_not_owned: unowned });
+  [owned, unowned].forEach(p => {
+    const shop = L.fitTwoWays(p, cat, data.bottles, data.flights, axes);
+    const bar = L.fitTwoWays({ name: p.name }, cat, data.bottles,
+      data.flights, axes);
+    const row = L.rankOffer([p.name], cat, data.bottles, [], axes,
+      data.flights)[0];
+    eq('the bar says what the shop says about ' + p.name, bar.shelf, shop.shelf);
+    eq('and so does an offer row', row.shelf, shop.shelf);
+    eq('under the same headline', row.say, shop.say);
+  });
+
+  const blind = L.rankOffer(['Utterly Unheard Of'], data.catalog,
+    data.bottles, [], axes, data.flights)[0];
+  eq('an unknown offer row no longer shrugs',
+    /speaks to this one either way/.test(JSON.stringify(blind)), false);
+  eq('and still says what the shelf thinks', !!(blind.say && blind.shelf), true);
+  eq('nor does a listing nothing matches',
+    /speaks to this one/.test(L.judgeListing({}, 'Utterly Unheard Of',
+      data.catalog, data.bottles, axes).why), false);
+
+  /* THE DOOR FILLS WHAT A NAME LEAVES OUT, which is why the bar and the
+     shop now agree: a bare name is judged as the catalog entry it is. */
+  eq('a bare name is filled from the catalog',
+    L.candFill({ name: owned.name }, data.catalog).dist, owned.dist);
+  eq('what the caller knew wins',
+    L.candFill({ name: owned.name, dist: 'Somewhere Else' }, data.catalog).dist,
+    'Somewhere Else');
+  eq('a name the catalog lacks is left alone',
+    L.candFill({ name: 'Utterly Unheard Of' }, data.catalog),
+    { name: 'Utterly Unheard Of' });
+  eq('and nothing does not throw', L.candFill(null, null), {});
+
+  const facts = { dist: owned.dist, sub: owned.sub };
+  const one = L.offerOne(facts, owned.name, data.catalog, data.bottles, axes,
+    data.flights);
+  eq('one pasted listing carries the same lines',
+    one.shelf, L.fitTwoWays(Object.assign({ name: owned.name }, facts),
+      data.catalog, data.bottles, data.flights, axes).shelf);
+  eq('and keeps its verdict for the advice', typeof one.verdict, 'string');
+}
+
+sec('§431 one box on the shelf: a search, or a question');
+{
+  /* NEXT-THREE #3. A person typing "woodford" should not have to know which
+     box does which. The box searches; a QUESTION naming something the shelf
+     knows also offers to ask, as a button. */
+  eq('a name is a search', L.looksLikeQuestion('Aberlour'), false);
+  eq('so is a whole bottle', L.looksLikeQuestion('Woodford Reserve Double Oaked'),
+    false);
+  eq('a question is a question',
+    L.looksLikeQuestion('what am I missing from Woodford'), true);
+  eq('with or without a question mark',
+    L.looksLikeQuestion('anything else from Buffalo Trace'), true);
+  eq('a question mark alone makes one', L.looksLikeQuestion('Islay?'), true);
+  eq('and nothing is not a question', L.looksLikeQuestion(''), false);
+}
+
+sec('§432 what the shelf thinks of a bottle has one door');
+{
+  const act = (L.ACTIONS || []).filter(a =>
+    a.through && a.through[0] === 'fitTwoWays')[0];
+  eq('judging a bottle against the shelf is a declared action', !!act, true);
+  eq('and the answer inside the door is named, so a bypass can be found',
+    (act || {}).inner, ['fitVerdict']);
+  eq('the one exception says why',
+    typeof (((act || {}).allow) || {}).wishEntry, 'string');
+}
+
+sec('\u00a7433 the pick is a bottle the read was sure of, and a whisky');
+{
+  /* BZ, 2026-09-15: a shelf read crowned "Buster Nolte" under IF YOU POUR
+     ONE. The reader rates every bottle - high when the label is readable,
+     medium when the expression is inferred, low when it is reading a
+     partial word - and its own instructions say a low is worth listing and
+     NOT worth stating as fact. The pick stated it as fact. And the reader
+     puts the kind in sub - gin, rum - which the pick never looked at. */
+  const cat = {}, bots = [];
+  for (let i = 0; i < 12; i++) {
+    cat['b' + i] = { k: 'b' + i, name: 'My Bourbon ' + i, sub: 'bourbon',
+                     dist: 'House ' + i, proof: 100 };
+    bots.push({ id: 'x' + i, k: 'b' + i, status: 'open' });
+  }
+  const pick = items => L.readPick({ items: items }, cat, bots, []);
+  eq('a partial word is never the pick',
+    pick([{ name: 'Buster Nolte', sure: 'low' }]), null);
+  eq('the bottle the read was sure of wins instead',
+    (pick([{ name: 'Buster Nolte', sure: 'low' },
+           { name: 'Kavalan Solist', sure: 'high' }]) || {}).name,
+    'Kavalan Solist');
+  eq('a medium read is still a candidate',
+    (pick([{ name: 'Kavalan Solist', sure: 'medium' }]) || {}).name,
+    'Kavalan Solist');
+  eq('a kind the reader called gin is not the pick, whatever it is called',
+    pick([{ name: 'Nolet Silver', sub: 'gin', sure: 'high' }]), null);
+
+  /* THE READ KEEPS WHAT IT SAW. L.shelfSeen kept the name, proof, price
+     and confidence and dropped the kind and the house, so the pick had
+     only the name to go on. */
+  const seenNow = L.shelfSeen({ items: [
+    { name: 'Nolet Silver', sub: 'Gin', dist: 'Nolet', sure: 'high' }] },
+    {}, [], []).items[0];
+  eq('a read keeps the kind the photograph showed', seenNow.sub, 'gin');
+  eq('and the house', seenNow.dist, 'Nolet');
+
+  /* KEPT READS PICK THE SAME. A read put back on screen was stripped to
+     name, proof and price, so the same photograph could crown a bottle
+     the second time that it benched the first. */
+  const kept = L.rememberRead([], { items: [
+    { name: 'Buster Nolte', own: false, want: false, proof: null,
+      sure: 'low', sub: null, dist: null },
+    { name: 'Nolet Silver', own: false, want: false, proof: null,
+      sure: 'high', sub: 'gin', dist: 'Nolet' }] }, 'shop', 1)[0].items;
+  eq('a kept read keeps how sure it was', kept[0].sure, 'low');
+  eq('and the kind it saw', kept[1].sub, 'gin');
+  eq('and the house', kept[1].dist, 'Nolet');
+  eq('so it picks nothing the second time either',
+    L.readPick({ items: kept }, cat, bots, []), null);
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

@@ -395,6 +395,46 @@ function step(n) {
       await page.waitForTimeout(80);
     }
 
+    /* ONE BOX ON THE SHELF. v2.4.2 put an ask card with its own input
+       directly under the search box - two identical-looking inputs a
+       centimetre apart, both taking words about the shelf (NEXT-THREE #3).
+       One box now: it searches locally, and offers the ask as a BUTTON only
+       when what was typed reads as a question naming something the shelf
+       knows. So: exactly one text input above the list; a question naming a
+       house shows "Ask about ..."; a plain search shows nothing extra. */
+    await page.evaluate(() => {
+      S.shelfSub = null; L.clearFacets(S.filters);
+      renderShelfFilters(); renderShelf();
+    });
+    await page.waitForTimeout(80);
+    {
+      const inputs = await page.evaluate(() => {
+        const list = document.getElementById('shelfList');
+        return Array.from(document.querySelectorAll('#scr-shelf input'))
+          .filter(i => /^(text|search)$/.test(i.type) && list
+            && (i.compareDocumentPosition(list)
+              & Node.DOCUMENT_POSITION_FOLLOWING)).length;
+      });
+      if (inputs !== 1) {
+        failures.push('shelf: ' + inputs + ' text inputs above the list, want exactly one');
+      }
+      const q = page.locator('#q');
+      await q.fill('what am I missing from Aberlour');
+      const ask = page.locator('#shelfAsk button');
+      await ask.first().waitFor({ state: 'visible', timeout: 4000 }).catch(() => {});
+      if (!(await ask.count())
+          || !/^Ask about /.test((await ask.first().innerText()) || '')) {
+        failures.push('shelf: a question naming a house offers no "Ask about" button');
+      }
+      await q.fill('Aberlour');
+      await page.waitForTimeout(400);
+      if (await page.locator('#shelfAsk button').count()) {
+        failures.push('shelf: a plain search offers an Ask button');
+      }
+      await q.fill('');
+      await page.waitForTimeout(80);
+    }
+
     /* THE WANTED VIEW IS A ROUTE TOO, and it returns early out of
        renderShelf - which is how the fix that covered the other routes
        missed this one. BZ opened his wishlist and had no way back. */
@@ -1538,6 +1578,48 @@ function step(n) {
      written; the pills were not.
      Checked on the answering screen, because that is the only place the
      scroller is short enough for it to show. */
+  /* A SHELF READ GETS THE ROOM. BZ, 2026-09-15: I photoed a shelf and the
+     content was buried on a small scroll. The wishlist held the fixed foot
+     of the store screen and the read was left the scroller's 54px
+     minimum. Measured at phone size, with a read on screen and a wishlist
+     to push against it. canScan() needs a camera API a headless browser
+     does not have, so one is stood in, or the read never draws at all. */
+  step('a shelf read on the store screen gets the room');
+  {
+    await page.setViewportSize({ width: 390, height: 780 });
+    await page.locator('nav button[data-scr="shop"]').click();
+    await page.waitForTimeout(250);
+    const r = await page.evaluate(() => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        Object.defineProperty(navigator, 'mediaDevices', { configurable: true,
+          value: { getUserMedia: () => Promise.reject(new Error('walk')) } });
+      }
+      const was = { url: S.lookupUrl, mode: S.shopMode, wish: S.wish };
+      S.lookupUrl = S.lookupUrl || 'https://example.invalid/x';
+      S.shopMode = 'store';
+      if (!(S.wish && S.wish.length)) {
+        S.wish = [{ name: 'A Wanted Bottle', why: 'walk' },
+                  { name: 'Another Wanted Bottle', why: 'walk' }];
+      }
+      const q = document.getElementById('shopQ');
+      if (q) q.value = '';
+      AWAY.result = { items: Array.from({ length: 14 }, (_, i) =>
+        ({ name: 'Read Bottle ' + i, own: false, want: false, proof: 100,
+           sure: 'high' })), take: 'A take.', read: '', owned: 0, wanted: 0 };
+      renderShop();
+      const sc = document.getElementById('shopScroll');
+      const out = { h: sc ? sc.clientHeight : 0, vh: window.innerHeight };
+      AWAY.result = null;
+      S.lookupUrl = was.url; S.shopMode = was.mode; S.wish = was.wish;
+      renderShop();
+      return out;
+    });
+    if (r.h < r.vh * 0.4) {
+      failures.push('shop: a shelf read gets ' + r.h + 'px of a ' + r.vh
+        + 'px screen — the results are buried in a small scroll');
+    }
+  }
+
   step('the store search is a name and a button, nothing else');
   {
     /* ON SCREEN FIRST. A height measured on a hidden screen is zero, which

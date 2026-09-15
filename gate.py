@@ -127,6 +127,13 @@ def main():
             bad = name
             print('')
             print('\n'.join('    ' + l for l in lines[-16:]))
+            # THE ERROR IS THE USEFUL PART. A crash writes to stderr and this
+            # printed stdout only, so the cloud gate reported "tests FAIL
+            # 0.0s (no output)" for a harness that had thrown at load
+            # (2026-09-15, CRLF from bump.py on Windows).
+            err = [l for l in (r.stderr or '').strip().split('\n') if l.strip()]
+            if err:
+                print('\n'.join('    ' + l for l in err[-16:]))
             break
 
     with open(LOG, 'w') as f:

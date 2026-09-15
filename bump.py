@@ -86,6 +86,10 @@ def next_version(major, minor, patch):
 
 
 def main():
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
     if len(sys.argv) < 2 or not sys.argv[1].strip():
         sys.exit('Refusing to bump: a changelog entry is required.\n'
                  'Usage: python3 bump.py [--renumber] [x.y.z] "what changed"')
@@ -114,8 +118,11 @@ def main():
     if '[describe changes here]' in entry:
         sys.exit('Refusing to bump: changelog placeholder not filled in.')
 
-    html = INDEX.read_text()
-    sw = SW.read_text()
+    # UTF-8 and LF, said outright. On Windows the defaults are the ANSI
+    # codepage and CRLF, and a CRLF index.html is one the harness cannot
+    # split (2026-09-15: the cloud gate's tests died at load).
+    html = INDEX.read_text(encoding='utf-8')
+    sw = SW.read_text(encoding='utf-8')
 
     cur = tuple(read_version(html))
     if forced:
@@ -185,7 +192,7 @@ def main():
     header = ("# Killer B's Bottle Tracker \u2014 changelog\n\n"
               "Newest first. The file header in index.html carries the "
               "headlines; the full entries live here.\n")
-    body = CHANGELOG.read_text() if CHANGELOG.exists() else header
+    body = CHANGELOG.read_text(encoding='utf-8') if CHANGELOG.exists() else header
     record = '\n## v%s  \u00b7  %s\n\n%s\n' % (ver, stamp, entry)
     marker = 'live here.\n'
     if marker in body:
@@ -193,9 +200,9 @@ def main():
     else:
         body = body.rstrip() + '\n' + record
 
-    INDEX.write_text(html)
-    SW.write_text(sw)
-    CHANGELOG.write_text(body)
+    INDEX.write_text(html, encoding='utf-8', newline='\n')
+    SW.write_text(sw, encoding='utf-8', newline='\n')
+    CHANGELOG.write_text(body, encoding='utf-8', newline='\n')
 
     # Lock files, cut from the working copies just written (rule 23).
     lock_html = HERE / ('bottlefolio-v%s.html' % ver)

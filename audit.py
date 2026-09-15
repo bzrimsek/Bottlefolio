@@ -420,6 +420,26 @@ def run_audit(html_path):
     except Exception as e:
         fail(f'screens.js did not run: {e}')
 
+    # ── Line endings ──────────────────────────────────────────
+    # bump.py wrote CRLF on BZ's Windows PC (2026-09-15): text-mode writes
+    # translate \n there, the test harness splits the engine on a marker
+    # containing \n, and the cloud gate's tests died at load with 'logic
+    # block not found'. This audit passed that build, because nothing here
+    # looked at line endings. Now it looks.
+    crlf = []
+    names = ['index.html', 'sw.js', 'CHANGELOG.md']
+    if version:
+        names += ['bottlefolio-v%s.html' % version, 'bottlefolio-v%s-sw.js' % version]
+    for name in names:
+        p = os.path.join(base, name)
+        if os.path.exists(p) and b'\r\n' in open(p, 'rb').read():
+            crlf.append(name)
+    if crlf:
+        fail('Windows line endings (CRLF) in ' + ', '.join(crlf)
+             + ' - the test harness cannot find the engine in them')
+    else:
+        ok('line endings are LF')
+
     print()
     if failures == 0:
         print('  \u2714 All checks passed — safe to deliver\n')

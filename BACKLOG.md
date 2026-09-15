@@ -388,6 +388,41 @@ copied within about a day of it.
 
 Each of these is closed or corrected IN PLACE in the entry it names below.
 
+- **v2.4.5 — the first app release through the pipeline.** NEXT-THREE.md's
+  three, each with a test that failed before its fix:
+  (1) the offer reader keeps a line only on POSITIVE evidence that it names
+  a whisky — a proof, age or size, a house, a whole-word catalog match, or a
+  category beside a distinctive word (BZ's call: a category alone is not
+  enough) — so "537 reviews", "star" and "Special Reserve Bourbon Bottle" are
+  dropped and a genuinely new bottle is still caught (§429);
+  (2) one bottle reads the same on the shop card, the bar and an offer row:
+  `L.fitTwoWays` fills a bare name from the catalog and judges taste from
+  everything it knows, offer rows carry its headline and two lines with the
+  offer reader's own extras under them, "Nothing on your shelf speaks to this
+  one either way" is gone, and `L.ACTIONS` declares the door with
+  `inner: ['fitVerdict']` so a site going round it fails consistency —
+  proven by removing the `wishEntry` exception on a scratch copy and
+  watching it name index.html:3022 (§430, §432);
+  (3) one box on the Shelf screen, with an Ask about … button right under
+  it when the typing is a question naming something the shelf knows, and
+  Enter presses it (§431; the walk failed at two inputs before the fix).
+  Plus BZ's two from the same afternoon: a shelf read on the store screen
+  gets the room — the walk measured 58px of a 780px phone before; the
+  wishlist and the cameras now move into the scroll while a read is on
+  screen — and IF YOU POUR ONE no longer crowns a read the reader rated low
+  or a kind it called not whisky ("Buster Nolte"), with kept reads keeping
+  `sure`, `sub` and `dist` so they pick the same way twice (§433). And the
+  retired Bottle-Tracker address is gone from the iPhone help and from
+  Code.gs's `SHELF_URL`, with a consistency check that fails on it; GS_BUILD
+  2.4.1, so the gate redeploys the service. **UNCHECKED:** whether "Buster
+  Nolte" was read as low. BZ is asked; if the reader rated it high, the
+  confidence rule does not bench it and something else is wrong.
+- **Found in passing, NOT fixed — mine.** `L.readShelfQuestion` cannot see
+  bourbon, scotch or irish as a category: it matches through `L.shopNorm`,
+  which strips exactly those words, so `has('bourbon')` compares an empty
+  string and "am I thin on bourbon" names no subject (read from the code;
+  §427 tests rye only, which survives). Raised rather than folded into
+  v2.4.5 (rule 5a).
 - **Code.gs 2.4.0 — CLOSED, live.** BZ's Check the service answered build
   2.4.0, current, on 2026-09-15. `shelf.gs` answers its modes; the recap
   route was NOT live on 2.3.70 (09/14 11:46) and IS live on 2.4.0 — closed

@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.0';
+var GS_BUILD = '2.4.1';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -665,7 +665,7 @@ function fillMissingNotes() {
    lookup and flight features above.
 */
 
-var SHELF_URL = 'https://bzrimsek.github.io/Bottle-Tracker/data.json';
+var SHELF_URL = 'https://bzrimsek.github.io/Bottlefolio/data.json';
 var WE_BASE = 'https://thewhiskyedition.com/api/whisky-reviews';
 var PP_MCP = 'https://nqnigdqkcvrziwcbgily.supabase.co/functions/v1/mcp';
 var SHEET_NAME = "Killer B's — enrichment review";
