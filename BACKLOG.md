@@ -390,7 +390,29 @@ Each of these is closed or corrected IN PLACE in the entry it names below.
 
 - **Code.gs 2.4.0 — CLOSED, live.** BZ's Check the service answered build
   2.4.0, current, on 2026-09-15. `shelf.gs` answers its modes; the recap
-  route was NOT live on 2.3.70 (09/14 11:46) and is UNCHECKED on 2.4.0 (§1).
+  route was NOT live on 2.3.70 (09/14 11:46) and IS live on 2.4.0 — closed
+  by cloning the deployed project (§1).
+- **Deploys are automated end to end — BUILT 2026-09-15.** `python
+  push.py` → one commit to `build` → the cloud gate (`.github/workflows/
+  gate.yml`) → the Apps Script service if a service file changed → the
+  Firebase rules if `firebase-rules.json` changed → `main` and the live
+  site. Verified three ways on the first runs: the site (commit 11bdc14,
+  live in 160s), the service (deployment redeployed @33, answering 2.4.0),
+  the rules (below). Nothing moves on a red gate. How it works is in
+  CLAUDE.md, Building.
+- **Live Firebase rules — TWO FIXES DEPLOYED, 2026-09-15, BZ's go.** Read
+  with `rules.js diff`: the database holds only `bz-apps/whisky`, with no
+  comments, and the live rules lacked two things the file already had. (1)
+  `shares/$ownerUid/$withUid/name` — the app writes `{ at, name }` trimmed
+  to 40 (index.html:39093), the live `$other: false` refused it, and the app
+  fell back to saving every share WITHOUT the name. (2) The
+  `diagnostics/$uid/.read` admin check read `whisky/shared/admins` while
+  admins live at `whisky/admins` — the bug CHANGELOG records at its fix and
+  that was never pasted, so an admin could never read anyone's diagnostics.
+  Live rules backed up first to `%USERPROFILE%\.bottlefolio\
+  rules-live-before-2026-09-15-1343.json`, deployed, read back: the branch
+  matches the file exactly and nothing else moved. The `.validate` gap on
+  `diagnostics` (§4) is a separate question and still open.
 - **BZ's log of 09/14–09/15 was read line by line**, and it moved five
   entries:
   - **Fill levels:** the log's oldest line is 09/14 10:21 and the Firebase

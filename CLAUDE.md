@@ -106,6 +106,35 @@ the service changes, both move together — `consistency.js` fails if they
 disagree, and the **Check the service** button in Settings asks the live
 deployment which build it is actually running.
 
+**Deployed by the cloud gate since 2026-09-15.** When `Code.gs`,
+`label.gs`, `recap.gs`, `shelf.gs` or `apps-script/appsscript.json`
+changes, `gate.yml` sends exactly those five — the live project's file set,
+script "Enrich Bottles", checked by cloning it — with clasp, runs
+`update-deployment` on the SAME deployment so the app's URL never changes,
+and asks the live service for its build before the site moves. That is a
+paste AND a deploy, so rule 25e is satisfied by the machine. `lookup.gs` is
+a second copy of `Code.gs` and `recap-handler.gs` is not in the project;
+neither is ever sent, because either would define every function twice.
+A hand paste is now only the fallback. Credentials: secrets `CLASPRC`,
+`GAS_SCRIPT_ID`, `GAS_DEPLOYMENT_ID`.
+
+---
+
+## Firebase rules
+
+`firebase-rules.json` holds this app's branch, `rules → bz-apps → whisky`,
+which on 2026-09-15 was the whole database. When the file changes, the
+cloud gate runs `node rules.js deploy`: it swaps in that branch and nothing
+else, refuses if the live rules carry comments a rewrite would lose, and
+reads the rules back to prove the branch matches and nothing else moved —
+before the site publishes. Never paste the whole file over the console
+again; that is what `rules.js` exists to stop.
+
+To compare live with the file at any time, on BZ's PC:
+`FIREBASE_SA_FILE=%USERPROFILE%\.bottlefolio\firebase-admin.json node rules.js diff`.
+The admin key lives only there and in the `FIREBASE_SA` secret; push.py
+refuses any key file.
+
 ---
 
 ## What this app has learned the hard way

@@ -139,6 +139,30 @@ jobs:
           echo "::error::The service was deployed but did not report build $want. main has NOT moved."
           exit 1
 
+      # THE FIREBASE RULES, only when firebase-rules.json changed. rules.js
+      # never writes the whole rules document from the file: it swaps in
+      # this app's branch (bz-apps/whisky) and nothing else, refuses if the
+      # live rules carry comments a rewrite would lose, and reads the result
+      # back to prove the branch matches the file and nothing else moved.
+      # Before the site, like the service: a page that needs a new rule must
+      # not arrive before the rule does.
+      - name: Did the Firebase rules change?
+        id: rules
+        run: |
+          if git diff --quiet origin/main HEAD -- firebase-rules.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "firebase-rules.json unchanged - the live rules are left alone."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat origin/main HEAD -- firebase-rules.json
+          fi
+
+      - name: Deploy the Firebase rules (this app's branch only)
+        if: steps.rules.outputs.changed == 'true'
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: node rules.js deploy
+
       # Fast-forward only. If somebody changed main by hand since push.py
       # read it, this refuses rather than overwriting their change, and the
       # run fails saying so.

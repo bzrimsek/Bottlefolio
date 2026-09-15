@@ -65,6 +65,7 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
+           'rules.js',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
 # The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
 # apps-script/appsscript.json - the live project's exact file set, checked by
@@ -80,7 +81,10 @@ SHELF = ['bz-bottles.json', 'bz-flights.json']      # sealed, never plain
 # key would unlock the sealed copies. A name matching any of these stops
 # the push before anything leaves.
 NEVER = [r'^bz-(bottles|flights)\.json$', r'\.csv$', r'\.xlsx$',
-         r'rtdb-export', r'shelf\.key$', r'^_superseded/', r'\.sealstate']
+         r'rtdb-export', r'shelf\.key$', r'^_superseded/', r'\.sealstate',
+         # A Firebase admin key can rewrite the whole database. One landed in
+         # this folder on 2026-09-15 on its way to ~/.bottlefolio.
+         r'adminsdk', r'firebase-admin', r'\.clasprc', r'service.?account']
 
 
 def gh_path():
