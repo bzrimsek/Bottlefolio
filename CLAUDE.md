@@ -37,7 +37,12 @@ of taste:
 
 ## Building
 
-Two commands, on BZ's Windows PC (`python`, not `python3`):
+Two commands, on BZ's Windows PC (`python`, not `python3`). Run push.py
+(and audit.py or gate.py) with the Python install's own
+`%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe`. The `python` on PATH
+is the WindowsApps alias, which cannot see the Playwright browsers, so under
+it the audit's browser checks crash. Since 2026-09-15 a crash fails the
+audit, so the push stops there:
 
 ```
 python bump.py "what changed, in full sentences"
@@ -53,7 +58,11 @@ every changed file to the `build` branch as ONE commit; then the gate below
 runs on GitHub's servers (`.github/workflows/gate.yml`), and only a green
 gate moves `main` — which is what https://bzrimsek.github.io/Bottlefolio/
 serves. A red gate leaves the live site untouched and push.py prints the
-failing log. `python push.py --dry-run` lists what would go without sending.
+failing log. `python push.py --dry-run` lists what would go without sending,
+and writes nothing here — not even the sealed shelf files. push.py refuses
+to push while an earlier gate run on `build` is still queued or running,
+and prints that run's link; the gate itself refuses, before deploying
+anything, a build whose `main` has moved since it was pushed.
 
 Credentials: BZ's `gh auth login` (Windows Credential Manager). The shelf
 files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
@@ -65,9 +74,9 @@ The gate, all ten, in this order — `gate.py` runs them in the cloud with the
 clock pinned to UTC (test §351 expects it):
 
 ```
-python3 audit.py          # the named lock matches index.html
-node lint.js              # nothing undefined, duplicated, unreachable
+python3 audit.py index.html  # the named lock matches index.html
 node killer-bs-test.js    # ~4,600 assertions
+node lint.js              # nothing undefined, duplicated, unreachable
 node consistency.js       # ~66 wiring checks
 node screens.js           # 21 screens draw
 node render.js            # screens agree with the engine
@@ -129,6 +138,13 @@ else, refuses if the live rules carry comments a rewrite would lose, and
 reads the rules back to prove the branch matches and nothing else moved —
 before the site publishes. Never paste the whole file over the console
 again; that is what `rules.js` exists to stop.
+
+The database is the one the app uses: `rules.js` reads `databaseURL` and
+`projectId` from index.html's Firebase config and refuses a key for any other
+project. The project is `bottlefolio`. `bottle-tracker-7d3a1` is the old,
+dormant one, and the first automated deploy went there by mistake
+(2026-09-15). The admin Remove person flow reads another user's
+`shares/{uid}` and `requests/{uid}`; keep those admin reads.
 
 To compare live with the file at any time, on BZ's PC:
 `FIREBASE_SA_FILE=%USERPROFILE%\.bottlefolio\firebase-admin.json node rules.js diff`.

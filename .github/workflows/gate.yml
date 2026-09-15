@@ -7,7 +7,8 @@
 # runs the whole gate on GitHub's servers against that commit, and only a
 # green gate deploys anything:
 #
-#   gate  ->  Apps Script service (if a service file changed)  ->  the site
+#   gate  ->  main not moved since the push  ->  Apps Script service and
+#   Firebase rules (each only if its files changed)  ->  the site
 #
 # The service goes before the site, because a new page that needs a new
 # service must never arrive first; if the service deploy or its check fails,
@@ -80,6 +81,26 @@ jobs:
 
       - name: The gate - all ten checks
         run: python3 gate.py
+
+      # MAIN MUST NOT HAVE MOVED UNDER THIS BUILD. push.py makes each build
+      # on main as it was at push time and force-moves `build` onto it, so
+      # two pushes close together leave the second build sitting on a main
+      # the first has since moved. That build can never publish - the
+      # fast-forward at the end refuses it - but the service and rules
+      # steps come first, so it could put its Apps Script and Firebase
+      # rules live and then fail to move main: half a deploy. Checked here,
+      # after the gate and before anything is deployed, so a stale build
+      # stops while everything live still belongs to one build. push.py
+      # refuses to push while a run is going, which stops most of these
+      # before they start; this is the one that cannot be skipped.
+      - name: Is this build still a fast-forward of main?
+        run: |
+          git fetch --quiet origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "::error::main moved to $(git rev-parse --short origin/main) after this build was made, so this build cannot publish. Nothing was deployed - the live service, rules and site are as they were. Push again from the current main: python push.py"
+            exit 1
+          fi
+          echo "main $(git rev-parse --short origin/main) is an ancestor of this build - safe to deploy."
 
       # Compared against main, which is what is live right now, before main
       # moves. Only these five make up the live project - checked by cloning

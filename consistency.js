@@ -649,12 +649,18 @@ check('every stored key is synced or marked local on purpose',
 
 /* 6. Anything L.SYNC_MERGE declares must actually be in L.SYNC_KEYS, or
       the declaration is a comment. libLedger sat like that for weeks. */
-const mergeBlock = src.slice(src.indexOf('L.SYNC_MERGE'),
-  src.indexOf('L.SYNC_MERGE') + 500);
-const mergeKeys = (mergeBlock.match(/'([a-zA-Z]+)'/g) || [])
+/* To the CLOSING BRACKET, the way the merge check further down reads it.
+   This took the first 500 characters, and the declaration passed 1,300 once
+   its comments grew: the seven keys from 'tastingsSeen' on were never
+   looked at, and the check stayed green - the fault check 7 below
+   describes, a truncating reader under-reporting. A declaration it cannot
+   find fails, rather than passing with nothing to compare. */
+const mergeBlock = (src.match(/L\.SYNC_MERGE = \[([\s\S]*?)\];/) || [])[1];
+const mergeKeys = ((mergeBlock || '').match(/'([a-zA-Z]+)'/g) || [])
   .map(m => m.replace(/'/g, ''));
 check('every mergeable key is actually synced',
-  mergeKeys.filter(k => syncBlock.indexOf("'" + k + "'") < 0));
+  mergeBlock === undefined ? ['L.SYNC_MERGE = [ ... ]; is not in index.html']
+    : mergeKeys.filter(k => syncBlock.indexOf("'" + k + "'") < 0));
 
 /* 7. Three lists must agree: the state defaults, what is written to this
       device (KEYS), and what follows the account (L.SYNC_KEYS). A key in

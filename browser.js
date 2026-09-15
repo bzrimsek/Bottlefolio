@@ -1672,6 +1672,55 @@ function step(n) {
     await page.waitForTimeout(80);
   }
 
+  /* A FINISHED LOOKUP TAKES ITS "LOOKING IT UP" NOTE WITH IT. The review of
+     2026-09-15 found "Nothing you own matches that. Looking it up…" still on
+     the screen seven seconds after the answer had been written into the
+     form, which reads as stuck. The stand-in service at app.local answers
+     whatever is asked, so a name nothing knows gets an answer. */
+  step('a finished lookup clears its looking-it-up note');
+  {
+    await page.locator('nav button[data-scr="shop"]').click();
+    await page.waitForTimeout(200);
+    await page.evaluate(() => {
+      window.__walkLook = { url: S.lookupUrl, mode: S.shopMode,
+                            shop: S.shop, found: S.shopFound };
+      S.lookupUrl = 'http://app.local/lookup';
+      S.shopMode = 'store';
+      renderShop();
+    });
+    await page.locator('#shopQ').fill('Zzzqx Nonesuch Whisky');
+    await page.waitForTimeout(400);
+    const before = await page.evaluate(() =>
+      !!document.getElementById('shopPending'));
+    const look = page.locator('#scr-shop button', { hasText: /Look it up/ }).first();
+    if (!(await look.count())) {
+      failures.push('shop: no Look it up button for a name nothing knows');
+    } else {
+      await look.click();
+      await page.waitForTimeout(1500);
+      const after = await page.evaluate(() => ({
+        pending: !!document.getElementById('shopPending'),
+        note: ((document.querySelector('#shopDims .looknote') || {})
+          .textContent || '').trim()
+      }));
+      if (!before) {
+        failures.push('shop: a name nothing knows showed no looking-it-up note');
+      }
+      if (after.pending) {
+        failures.push('shop: "Looking it up" stayed on the screen after the '
+          + 'answer came back (' + after.note.slice(0, 60) + ')');
+      }
+    }
+    await page.locator('#shopQ').fill('');
+    await page.evaluate(() => {
+      const w = window.__walkLook || {};
+      S.lookupUrl = w.url; S.shopMode = w.mode;
+      S.shop = w.shop || {}; S.shopFound = w.found || null;
+      renderShop();
+    });
+    await page.waitForTimeout(80);
+  }
+
   step('the store search is a name and a button, nothing else');
   {
     /* ON SCREEN FIRST. A height measured on a hidden screen is zero, which
@@ -2465,9 +2514,47 @@ function step(n) {
     } else {
       await card.click();
       await page.waitForTimeout(140);
-      const edit = page.locator('#scr-detail button', { hasText: /^Edit$/ }).first();
+      /* THE FLIGHT'S HEADER FITS A PHONE AND NAMES A FLIGHT. The review of
+         2026-09-15 measured it 576px wide at 390, Back past the edge, the
+         title reading "The bottle" squeezed to nothing. Measured at phone
+         width, then the viewport goes back to what the walk had. */
+      {
+        const vp = page.viewportSize();
+        await page.setViewportSize({ width: 390, height: 780 });
+        await page.waitForTimeout(120);
+        const hd = await page.evaluate(() => {
+          const h = document.querySelector('#scr-detail .hdr');
+          const t = document.getElementById('detailTitle');
+          return h ? { need: h.scrollWidth, room: h.clientWidth,
+                       title: t ? t.textContent.trim() : '' } : null;
+        });
+        if (!hd) {
+          failures.push('flight: no header on the flight screen');
+        } else {
+          if (hd.need > hd.room + 1) {
+            failures.push('flight: the header needs ' + hd.need + 'px of a '
+              + hd.room + 'px phone — something is past the edge');
+          }
+          if (hd.title !== 'The flight') {
+            failures.push('flight: the header says ' + JSON.stringify(hd.title));
+          }
+        }
+        if (vp) await page.setViewportSize(vp);
+        await page.waitForTimeout(80);
+      }
+      /* EDIT LIVES UNDER MORE since the review of 2026-09-15: six buttons in
+         the flight's header ran it 576px wide on a 390px phone, with Back
+         past the edge. The header keeps Back, the pour and More. */
+      const more = page.locator('#scr-detail button', { hasText: /^More$/ }).first();
+      if (!(await more.count())) {
+        failures.push('flight: no More button in the header');
+      } else {
+        await more.click();
+        await page.waitForTimeout(140);
+      }
+      const edit = page.locator('#modal button', { hasText: /^Edit$/ }).first();
       if (!(await edit.count())) {
-        failures.push('flight editor: no Edit button on a flight');
+        failures.push('flight editor: no Edit button under More');
       } else {
         await edit.click();
         await page.waitForTimeout(140);
@@ -2482,7 +2569,11 @@ function step(n) {
             .first().click();
           await page.waitForTimeout(200);
 
-          await page.locator('#scr-detail button', { hasText: /^Edit$/ })
+          // Reopened the same way a person would: More, then Edit.
+          await page.locator('#scr-detail button', { hasText: /^More$/ })
+            .first().click();
+          await page.waitForTimeout(140);
+          await page.locator('#modal button', { hasText: /^Edit$/ })
             .first().click();
           await page.waitForTimeout(160);
           const back = await page.locator('.pourrow .pnote').first().inputValue();

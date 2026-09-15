@@ -60,7 +60,7 @@ FIREBASE
 STATE
 22a Three lists must agree: the state defaults, what is written to this device, and what follows the account. A key in one and not the others silently does not survive a reload or does not follow the account. Anything declared mergeable must actually be synced.
 
-22b THE GATE IS NINE STEPS AND A LINTER IS ONE OF THEM. Added 2026-09-10, after two ReferenceErrors reached real users in a build the eight-step gate had passed — `arr` orphaned by a removal, and a bare `user` that stopped a shelf loading for anybody who arrived by an invite link. Neither was visible to a text check, to node --check (both files parse), or to any harness that never executes that line. Run `node lint.js` — it is in ship.py. Its allowed list is EMPTY and nothing joins it silently. And the lesson underneath it: the FIRST version of that linter passed with both faults deliberately put back, because its own regex had declared every function-local variable a global. Break the thing on purpose before believing the guard.
+22b THE GATE IS TEN STEPS AND A LINTER IS ONE OF THEM. (Nine when this was written; gscheck.js is the tenth, and gate.py's FAST and SLOW lists are the count.) Added 2026-09-10, after two ReferenceErrors reached real users in a build the eight-step gate had passed — `arr` orphaned by a removal, and a bare `user` that stopped a shelf loading for anybody who arrived by an invite link. Neither was visible to a text check, to node --check (both files parse), or to any harness that never executes that line. Run `node lint.js` — it is in ship.py. Its allowed list is EMPTY and nothing joins it silently. And the lesson underneath it: the FIRST version of that linter passed with both faults deliberately put back, because its own regex had declared every function-local variable a global. Break the thing on purpose before believing the guard.
 
 DELIVERY
 22 Run the pre-delivery audit script before every delivery. All checks must pass. No exceptions, no skipping.
@@ -109,7 +109,7 @@ BZ, after a build that ran the slowest harness in silence: you did that build
 with no process status? That needs to be part of the new process - predictable,
 faster and more communicative.
 
-The gate is nine harnesses and two of them take over a minute. Run as one
+The gate is ten harnesses and two of them take over a minute. Run as one
 command it prints nothing anybody can look at until it finishes, and a wait
 with no evidence in it is indistinguishable from a broken session. That
 happened repeatedly on 2026-09-10, and my answers made it worse: I said the
@@ -121,8 +121,9 @@ So, every time:
 1. **Say what is about to run and how long it takes**, from `gatetime.py`,
    which keeps the last thirty runs and expects the MEDIAN OF NINE (rule 13e).
    Under nine runs it says so - it never invents a number.
-2. **Run it in groups that match the timing.** The seven fast steps together
-   are 24 seconds and belong in one call. The walk (43s) and sync (77s) get a
+2. **Run it in groups that match the timing.** The eight fast steps belong in
+   one call (the seven there were on 2026-09-10 took 24 seconds together;
+   gscheck.js is the eighth). The walk (43s) and sync (77s) get a
    call each, because each is long enough that somebody would otherwise be
    sitting in silence wondering.
 3. **Report the result the moment it lands**, with actual against expected.

@@ -341,6 +341,54 @@ copied within about a day of it.
   app does with a stored flight over budget. The cap is enforced in
   `L.buildFlight`, which sizes proposals, and the entry does not say whether
   a flight already on the shelf is trimmed, flagged, or left.
+- **A spend limit on the Anthropic key — TABLED 2026-09-15, BZ: not worried
+  yet.** The 2026-09-15 security review found the Apps Script endpoint answers
+  anyone: it is deployed ANYONE_ANONYMOUS, and its address is public in
+  index.html. So anyone who finds it can run paid lookups on his key. The
+  cheap guard is a monthly limit at console.anthropic.com → Settings →
+  Limits (his to set). The fuller fix, sign-in and per-user quotas on the
+  service, is code. **UNCHECKED:** whether a limit is already set; nobody
+  has looked.
+- ~~**The 2026-09-15 review: what to build.**~~ **DECIDED 2026-09-15, BZ:
+  approve 1 thru 30** of the review report (artifact "Bottlefolio Full
+  Review"). They ship as two releases: 1–18, then 19–30. His answers to the
+  four open questions:
+  - **Clear my shelf, Restore and Reset my changes apply to the ACCOUNT**
+    when signed in, on every device. Today they change one phone, and the
+    next sync merges everything back.
+  - **One verdict, the Shop's four sentences, everywhere.** At a bar the
+    same verdict adds a line of bar advice ("Worth the glass rather than the
+    bottle"). A bottle you own says "On your shelf".
+  - **One name per action:** Add to wishlist → On your wishlist (message:
+    Added to your wishlist); Log a pour; Look it up (paid step: Look
+    further); Photograph. Each screen is titled with its tab's name.
+  - **Photograph goes straight to the camera.** The sheet appears after the
+    first photo, with Add another and Read.
+
+  My defaults, told to him and not objected to:
+  - A typed confirmation only for deleting the account and removing a
+    person. Everything else gets Undo.
+  - 12px as the smallest text.
+  - Flight detail on a phone keeps Back and Pour visible, with the rest
+    under More.
+- **Review release 1 (items 1–18, and 30): BUILT v2.4.7, 2026-09-15.**
+  What each item became is in CHANGELOG v2.4.7.
+  - **Checked on BZ's PC before the push:** 4,690 assertions, 68 wiring
+    checks, lint, 21 screens, render, two tabs, the walk, and all 19 sync
+    scenarios. Every one passes.
+  - **Guards shown red first:** the two new walk checks (the flight header
+    at phone width, and the Shop note clearing) and each of the helper's
+    six guards were run against a broken copy and failed before being
+    trusted.
+  - **Found on the way, now in CLAUDE.md:** on BZ's PC, `python` is the
+    WindowsApps alias, which cannot see the Playwright browsers. So
+    audit.py, now honest about a crashed check, fails at screens.js when run
+    under it. push.py runs through
+    `%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe`, which can.
+  - **Still open from it:** L.SYNC_KEYS lists noteLedger and reviewed twice
+    (index.html ~8734; item 36), and HANDOFF.md lists an old gate
+    (item 39).
+  - Release 2 is items 19–29.
 - Standing from before, both closed with their entries kept below:
   ~~road trip planner~~ DROPPED 2026-09-09; ~~shelf organizer~~ REMOVED
   WHOLE at v2.0.14.
@@ -462,6 +510,29 @@ Each of these is closed or corrected IN PLACE in the entry it names below.
   live in 160s), the service (deployment redeployed @33, answering 2.4.0),
   the rules (below). Nothing moves on a red gate. How it works is in
   CLAUDE.md, Building.
+- **CORRECTION, same day — WRONG PROJECT.** The rules below were read and
+  deployed on Firebase project `bottle-tracker-7d3a1`, the OLD project named
+  in DEPLOY.md. The app uses project `bottlefolio`, database
+  `bottlefolio-default-rtdb` (index.html:37960). So the app's live rules were
+  NOT changed: neither fix is live for the app, and the FIREBASE_SA secret and
+  rules.js point at the old project. Found by the 2026-09-15 docs review.
+  **REWIRED, same day.** A `bottlefolio` key replaced FIREBASE_SA. rules.js
+  now reads the database and project from index.html and refuses a key for
+  any other project (tried with the old key: refused). The real live rules,
+  backed up to `%USERPROFILE%\.bottlefolio\rules-live-bottlefolio-before-
+  2026-09-15.json`, ALREADY carried both fixes below, pasted by hand at some
+  point. The file had removed admin READ of `shares/{uid}` and
+  `requests/{uid}`, which the admin Remove person flow needs
+  (removePersonData, index.html:31813), and admin READ of `sharedWith`,
+  which the share audit reads (fbShareAudit, index.html:38962). All three
+  are restored in the file. The file still differs from live in 2 places,
+  both admin powers it takes away: an admin could WRITE anyone's `shares` and
+  `sharedWith`, and so grant themselves a view of any shelf. The file lets an
+  admin only delete there, which is all Remove person does.
+  **CLOSED 2026-09-15 — DEPLOYED with BZ's go.** `rules.js deploy` from his
+  PC: "deployed 2 change(s) to bz-apps/whisky; everything else unchanged",
+  then `diff`: the live branch matches firebase-rules.json exactly. The
+  entry as written follows; it describes the OLD project.
 - **Live Firebase rules — TWO FIXES DEPLOYED, 2026-09-15, BZ's go.** Read
   with `rules.js diff`: the database holds only `bz-apps/whisky`, with no
   comments, and the live rules lacked two things the file already had. (1)

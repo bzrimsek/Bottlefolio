@@ -35,7 +35,7 @@ const notes = [];
 /* RUN A SLICE OF IT, so ninety seconds of silence becomes four reports.
 
    BZ, after a night of asking for progress: is there a way to chunk up the
-   big ones? For this one yes - the seventeen scenarios are independent by
+   big ones? For this one yes - the scenarios are independent by
    construction, each with its own page and its own seeded database, which
    is the whole design. (The walk is the opposite and must not be cut: its
    forty-three steps are a SEQUENCE, and step thirty depends on what step
@@ -150,8 +150,8 @@ function check(name, got, want) {
     await page.goto('http://app.local/' + path.basename(file));
     /* 600ms, MEASURED RATHER THAN PICKED.
 
-       This was 1500 and nobody had ever asked why. Seventeen scenarios
-       means seventeen of these, so it was 25 seconds of a 91-second
+       This was 1500 and nobody had ever asked why. When there were
+       seventeen scenarios that was seventeen of these, 25 seconds of a 91-second
        harness spent waiting for a number somebody guessed once.
 
        Measured: 1500 -> 600 took the harness to 75.7s and everything still
@@ -583,10 +583,38 @@ function check(name, got, want) {
       async page => {
         await page.waitForTimeout(1400);
         await page.evaluate(() => { appLog('a line from this device'); });
-        await page.locator('nav button[data-scr="settings"]').click()
-          .catch(() => {});
-        await page.evaluate(() => { renderDiag(); goTo('diag'); });
+        /* THE WAY A PERSON GETS THERE, and a failure that shows. This
+           clicked a nav Settings button that no longer exists, sat out
+           Playwright's thirty seconds, threw the error away and then drew
+           the screen by calling renderDiag() itself - so the route was
+           never tested and every run paid half a minute for it. BZ chose
+           the real route: the gear on Home, then Show me the log, the
+           button Settings keeps for anybody whose app is misbehaving. It is
+           found by its words because that is how a person finds it. If
+           either is missing, or pressing them does not land on
+           Diagnostics, the scenario fails and says which. */
+        const reach = async (what, target) => {
+          try {
+            await target.click({ timeout: 5000 });
+            return true;
+          } catch (e) {
+            failures.push('diag: ' + what + ' - '
+              + String(e.message).split('\n')[0]);
+            return false;
+          }
+        };
+        const there = await reach('no Settings gear on Home to press',
+            page.locator('#settingsBtn'))
+          && await reach('Settings has no Show me the log button',
+            page.locator('#scr-settings').getByRole('button',
+              { name: 'Show me the log' }));
         await page.waitForTimeout(1200);
+        /* Landing is the point of a route. The screen's text is read below
+           whether or not it is showing, so a button that drew Diagnostics
+           somewhere nobody could see it would have passed. */
+        if (there && !(await page.locator('#scr-diag').isVisible())) {
+          failures.push('diag: Show me the log did not bring Diagnostics up');
+        }
         /* THE LOG FOLDS NOW, so innerText alone would report it missing -
            a closed <details> is not rendered text. It is opened first,
            which is also the honest check: the question is whether the

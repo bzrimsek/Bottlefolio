@@ -3444,14 +3444,14 @@ const twoBottles = shopBottles.concat([{ id: 'S4', k: 'Ardbeg 10', status: 'seal
 fit = L.shelfFit({ name: 'Ardbeg 10 Year Old', dist: 'Ardbeg', sub: 'scotch', proof: 92 },
   shopCat, twoBottles);
 eq('two owned warns', fit.findings.some(f => f.level === 'warn' && /already own 2/.test(f.msg)), true);
-eq('verdict when covered', L.fitVerdict(fit), 'You have this covered.');
+eq('verdict when covered', L.fitVerdict(fit), 'On your shelf — you have 2.');
 // Owning one open bottle is a backup decision, not new ground -- the verdict
 // must not read as "adds something" just because the stocking finding is
 // tagged ok.
 const owned1 = L.shelfFit({ name: 'Ardbeg 10 Year Old', dist: 'Ardbeg',
   sub: 'scotch', proof: 92 }, shopCat, shopBottles);
 eq('owning one reads as the backup', L.fitVerdict(owned1),
-  'You have it open. This would be the backup.');
+  'On your shelf, open. This would be the backup.');
 
 sec('plurals');
 // A naive plural gives "scotchs" and "irishs".
@@ -3483,21 +3483,27 @@ for (let i = 0; i < 6; i++) {
   crowded['B' + i] = { k: 'B' + i, name: 'Bourbon ' + i, dist: 'D' + i,
     sub: 'bourbon', proof: 100 + i * 0.5, msrp: 60 };
 }
+/* HELD, one bottle each. The shelf is what you hold, not the catalog
+   (review, 2026-09-15, §436): these six were "on the shelf" only because
+   the catalog named them, which is the fault that told a twenty-bottle
+   shelf it owned the whole library. */
+const crowdedBottles = Object.keys(crowded)
+  .map((k, i) => ({ id: 'CB' + i, k: k, status: 'sealed' }));
 fit = L.shelfFit({ name: 'Another Bourbon', dist: 'New Co', sub: 'bourbon', proof: 101 },
-  crowded, []);
+  crowded, crowdedBottles);
 eq('crowded corner warns',
   fit.findings.some(f => f.level === 'warn' && /within five proof points/.test(f.msg)), true);
 eq('neighbors counted', fit.neighbors.length, 6);
 
 // An empty corner is worth saying too.
 fit = L.shelfFit({ name: 'Odd One', dist: 'New Co', sub: 'bourbon', proof: 140 },
-  crowded, []);
+  crowded, crowdedBottles);
 eq('empty corner noted',
   fit.findings.some(f => /Nothing else on the shelf sits near it/.test(f.msg)), true);
 
 // Price is reported against the median for that category, not in the abstract.
 fit = L.shelfFit({ name: 'Pricey', dist: 'New Co', sub: 'bourbon', proof: 140, msrp: 250 },
-  crowded, []);
+  crowded, crowdedBottles);
 eq('price band reported',
   fit.findings.some(f => /Vault/.test(f.msg) && /median is \$60/.test(f.msg)), true);
 
@@ -19337,6 +19343,60 @@ sec('\u00a7435 what you are missing, from the library');
   eq('the question knows its house by id, so aliases can reach it',
     typeof (read('what am I missing from Woodford') || {}).houseId, 'string');
   eq('no subject lists nothing', L.libraryMissing(null, cat, bots, [], [], 12, {}), []);
+}
+
+sec('§436 owning is holding a bottle, not being in the catalog');
+{
+  /* Review, 2026-09-15: the shop card read ownership off the catalog, which
+     carries the shared library, so a bottle never bought came back as the
+     backup to one you have open, and a house only the library held counted
+     as a house you own. */
+  const cat = {
+    a1: { k: 'a1', name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
+          region: 'Islay', proof: 92 },
+    w1: { k: 'w1', name: 'Weller 12', dist: 'Buffalo Trace', sub: 'bourbon',
+          proof: 90 },
+    g1: { k: 'g1', name: 'Gone Bottle', dist: 'Gone House', sub: 'rye',
+          proof: 100 }
+  };
+  const bots = [{ id: 'b1', k: 'a1', status: 'open' },
+                { id: 'b2', k: 'g1', status: 'gone' }];
+  const a = L.ownsIt('Ardbeg 10', cat, bots) || {};
+  eq('a bottle held is owned', a.key, 'a1');
+  eq('with its count and whether it is open', [a.count, a.open], [1, true]);
+  eq('a library bottle nobody bought is not', L.ownsIt('Weller 12', cat, bots), null);
+  eq('nor is one drunk to the end', L.ownsIt('Gone Bottle', cat, bots), null);
+  eq('the bar\'s looser match finds a spelled-out age',
+    (L.ownsIt('Ardbeg Ten', cat, bots, true) || {}).key, 'a1');
+  eq('and the shop\'s exact match does not', L.ownsIt('Ardbeg Ten', cat, bots), null);
+  const fit = L.shelfFit({ name: 'Weller 12', dist: 'Buffalo Trace',
+    sub: 'bourbon', proof: 90 }, cat, bots, []);
+  eq('the shop card does not claim it', fit.own, null);
+  eq('a house only the library holds is new ground',
+    fit.findings.some(f => /distillery you do not own yet/.test(f.msg)), true);
+  eq('and so is a category only the library holds',
+    fit.findings.some(f => /category you do not own yet/.test(f.msg)), true);
+  eq('a sealed one says so',
+    L.fitVerdict({ own: { count: 1, open: false }, findings: [] }),
+    'On your shelf, still sealed.');
+}
+
+sec('§437 a missing proof one way, the setup in one place, a wait that counts');
+{
+  eq('a proof is drawn as it is', L.proofCell({ proof: 92 }), '92');
+  eq('a missing one is a dash, never "undefined"', L.proofCell({}), '—');
+  eq('and so is a blank one', L.proofCell({ proof: '' }), '—');
+  eq('and no bottle at all', L.proofCell(null), '—');
+  eq('the lookup is set up in Settings, Advanced',
+    L.LOOKUP_SETUP, 'Settings › Advanced › Bottle lookup');
+  eq('a short wait says only what it is doing', L.waitSay('Asking…', 3),
+    'Asking…');
+  eq('from five seconds it counts', L.waitSay('Asking…', 7.4),
+    'Asking… 7s');
+  eq('past twenty it says it is still going', L.waitSay('Asking…', 25),
+    'Asking… 25s, still going');
+  eq('past forty-five it says it is slow', L.waitSay('Asking…', 60),
+    'Asking… 60s, slower than usual');
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

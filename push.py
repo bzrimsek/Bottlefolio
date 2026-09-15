@@ -13,18 +13,24 @@ So this is the whole road, in one command:
 
   1. The audit runs here first. It is the check that says the named lock is
      the file that was tested (rule 25), and it takes seconds.
-  2. BZ's shelf files are re-sealed if they changed. The repo is public and
+  2. No earlier gate run may still be going. This build is made on main as
+     it is NOW, and a run still gating is about to move main - so a build
+     pushed under it can never publish, and before gate.yml checked for
+     that it could deploy its service and rules first and go half-live.
+     Refused, with that run's link.
+  3. BZ's shelf files are re-sealed if they changed. The repo is public and
      the suite needs them, so only encrypted copies ever leave this PC.
-  3. Every changed file goes to the `build` branch as ONE commit. The old
+  4. Every changed file goes to the `build` branch as ONE commit. The old
      version of this script wrote one commit per file, and Pages redeployed
      after each - six half-updated sites in a row on the morning of
      2026-09-15.
-  4. GitHub runs the full gate on that commit (.github/workflows/gate.yml).
+  5. GitHub runs the full gate on that commit (.github/workflows/gate.yml).
      Green moves `main`, Pages serves it, and the run waits until the live
      site says the new version. Red stops before `main` moves: the live site
      is untouched.
-  5. This script watches that run and prints each step as it finishes, so
-     nobody waits in silence.
+  6. This script watches that run and prints each step as it finishes, so
+     nobody waits in silence - for twenty minutes at most, after which it
+     stops watching and says what to check.
 
 Credentials: the `gh` command's own sign-in (`gh auth login`, stored in
 Windows Credential Manager). This script never sees a token.
@@ -32,7 +38,8 @@ Windows Credential Manager). This script never sees a token.
 Usage:
     python push.py                 push, then watch the cloud gate to the end
     python push.py --no-wait       push and return without watching
-    python push.py --dry-run       say what would be pushed, push nothing
+    python push.py --dry-run       say what would be pushed; push nothing and
+                                   write nothing here, sealed files included
 """
 
 import base64
@@ -52,6 +59,18 @@ BRANCH = 'build'
 HERE = os.path.dirname(os.path.abspath(__file__))
 KEYFILE = os.path.join(os.path.expanduser('~'), '.bottlefolio', 'shelf.key')
 SEALSTATE = os.path.join(HERE, '.sealstate.json')
+
+# How long the watch follows a run before it stops and says what to check.
+# The job's own limit in gate.yml is thirty minutes; this is shorter so the
+# person at the keyboard hears something before GitHub gives up on it.
+WATCH_LIMIT = 20 * 60
+
+# What a passing fault looks like from gh: GitHub's own 5xx, or the network
+# between here and it. Anything else - a 404, a 403, a malformed request -
+# is an answer, and asking again would only get the same one.
+TRANSIENT = re.compile(r'HTTP 5\d\d|timed out|timeout|connection (reset|refused)'
+                       r'|error connecting|dial tcp|no such host|TLS handshake'
+                       r'|unexpected EOF|temporar', re.I)
 
 # What a delivery is. The app and its lock files (rule 25), the docs that
 # teach the next session (CLAUDE.md is read at the start of every one), the
@@ -100,20 +119,43 @@ def gh_path():
 GH = None
 
 
-def gh(path, method='GET', body=None, quiet404=False):
+def gh(path, method='GET', body=None, quiet404=False, retry=False):
     """One GitHub API call through gh's own sign-in. Returns parsed JSON,
-    or None for a 404 when asked to treat that as an answer."""
+    or None for a 404 when asked to treat that as an answer.
+
+    With retry, a passing fault - GitHub's own 5xx, or the network dropping
+    for a moment - is asked again, four tries in all over about a minute.
+    The watch asks for that: it polls for minutes, and one 502 in the
+    middle used to print "GitHub refused" and end this script while the
+    gate carried on with nobody watching it."""
     cmd = [GH, 'api', '-X', method, path]
     data = None
     if body is not None:
         cmd += ['--input', '-']
         data = json.dumps(body).encode()
-    r = subprocess.run(cmd, input=data, capture_output=True)
-    if r.returncode:
-        err = (r.stderr or r.stdout).decode(errors='replace')
+    waits = [5, 15, 40] if retry else []
+    tries = 0
+    while True:
+        tries += 1
+        r = subprocess.run(cmd, input=data, capture_output=True)
+        if not r.returncode:
+            break
+        err = (r.stderr or r.stdout).decode(errors='replace').strip()
         if quiet404 and 'HTTP 404' in err:
             return None
-        sys.exit('GitHub refused %s %s: %s' % (method, path, err.strip()[:300]))
+        if retry and TRANSIENT.search(err):
+            if waits:
+                wait = waits.pop(0)
+                say('  (GitHub did not answer %s %s: %s - asking again in %ds)'
+                    % (method, path.split('?')[0],
+                       (err.splitlines() or ['?'])[0][:120], wait))
+                time.sleep(wait)
+                continue
+            sys.exit('GitHub did not answer %s %s after %d tries: %s\n'
+                     'This script has stopped; nothing on GitHub has. Follow '
+                     'the run at https://github.com/%s/actions'
+                     % (method, path, tries, err[:300], REPO))
+        sys.exit('GitHub refused %s %s: %s' % (method, path, err[:300]))
     out = r.stdout.decode()
     return json.loads(out) if out.strip() else {}
 
@@ -148,6 +190,25 @@ def audited():
     return ok
 
 
+def gate_busy():
+    """The gate run on `build` that has not finished yet, or None.
+
+    Two pushes close together are how a build could go half-live. This
+    script makes each build on main as it is NOW and force-moves `build`
+    onto it, so a second push while the first is still gating makes a
+    commit on a main that is about to move. The first run publishes; the
+    second could deploy its service and rules and then fail to move main.
+    gate.yml now refuses that before deploying anything - this stops the
+    stale build being made at all. Any status but completed counts:
+    queued, waiting and in progress all mean main may yet move."""
+    runs = gh('repos/%s/actions/workflows/gate.yml/runs?branch=%s&per_page=20'
+              % (REPO, BRANCH))
+    for run in runs.get('workflow_runs', []):
+        if run.get('status') != 'completed':
+            return run
+    return None
+
+
 def msys(p):
     """Git's gpg reads paths the Unix way: C:\\x becomes /c/x."""
     p = os.path.abspath(p).replace('\\', '/')
@@ -161,43 +222,64 @@ def gpg_path():
     sys.exit('gpg not found - it comes with Git for Windows.')
 
 
-def seal_shelf():
+def seal_shelf(dry=False):
     """Re-encrypt BZ's shelf files if they changed since they were last
     sealed. gpg output differs on every run (a fresh salt), so the decision
-    is made on the PLAIN file's hash, recorded here and never pushed."""
-    if not os.path.exists(KEYFILE):
-        sys.exit('No shelf key at %s - the sealed files cannot be made.' % KEYFILE)
-    key = open(KEYFILE, encoding='ascii').read().strip().encode()
+    is made on the PLAIN file's hash, recorded here and never pushed.
+
+    A dry run only says what it WOULD seal. It used to seal for real and
+    rewrite .sealstate.json on every run, dry or not, so "push nothing"
+    still changed files in this folder - and the state file's date moved
+    even when nothing had been sealed. Now a dry run writes nothing, and a
+    real run writes the state only when it sealed something."""
     try:
         state = json.load(open(SEALSTATE, encoding='utf-8'))
     except Exception:
         state = {}
+    due = []
+    for name in SHELF:
+        plain_path = os.path.join(HERE, name)
+        if not os.path.exists(plain_path):
+            continue
+        with open(plain_path, 'rb') as fh:
+            digest = hashlib.sha256(fh.read()).hexdigest()
+        if state.get(name) != digest or not os.path.exists(plain_path + '.gpg'):
+            due.append(name)
+    if not due:
+        return
+    if dry:
+        for name in due:
+            say('  would seal %s -> %s.gpg (changed since last push); '
+                'dry run, left alone' % (name, name))
+        return
+    if not os.path.exists(KEYFILE):
+        sys.exit('No shelf key at %s - the sealed files cannot be made.' % KEYFILE)
+    key = open(KEYFILE, encoding='ascii').read().strip().encode()
     gpg = gpg_path()
     home = tempfile.mkdtemp(prefix='gpghome-')
     base = [gpg, '--homedir', msys(home), '--batch', '--yes', '--quiet',
             '--pinentry-mode', 'loopback', '--passphrase-fd', '0']
-    for name in SHELF:
-        plain_path = os.path.join(HERE, name)
-        sealed = plain_path + '.gpg'
-        if not os.path.exists(plain_path):
-            continue
-        plain = open(plain_path, 'rb').read()
-        digest = hashlib.sha256(plain).hexdigest()
-        if state.get(name) == digest and os.path.exists(sealed):
-            continue
-        r = subprocess.run(base + ['--symmetric', '--cipher-algo', 'AES256',
-                                   '-o', msys(sealed), msys(plain_path)],
-                           input=key, capture_output=True)
-        if r.returncode:
-            sys.exit('Sealing %s failed: %s' % (name, r.stderr.decode(errors='replace')[:300]))
-        back = subprocess.run(base + ['--decrypt', msys(sealed)], input=key,
-                              capture_output=True)
-        if back.returncode or back.stdout != plain:
-            sys.exit('Sealed %s does not open back to the same file. Nothing pushed.' % name)
-        state[name] = digest
-        say('  sealed   %s -> %s.gpg (changed since last push)' % (name, name))
-    json.dump(state, open(SEALSTATE, 'w', encoding='utf-8'), indent=1)
-    shutil.rmtree(home, ignore_errors=True)
+    try:
+        for name in due:
+            plain_path = os.path.join(HERE, name)
+            sealed = plain_path + '.gpg'
+            plain = open(plain_path, 'rb').read()
+            r = subprocess.run(base + ['--symmetric', '--cipher-algo', 'AES256',
+                                       '-o', msys(sealed), msys(plain_path)],
+                               input=key, capture_output=True)
+            if r.returncode:
+                sys.exit('Sealing %s failed: %s' % (name, r.stderr.decode(errors='replace')[:300]))
+            back = subprocess.run(base + ['--decrypt', msys(sealed)], input=key,
+                                  capture_output=True)
+            if back.returncode or back.stdout != plain:
+                sys.exit('Sealed %s does not open back to the same file. Nothing pushed.' % name)
+            state[name] = hashlib.sha256(plain).hexdigest()
+            say('  sealed   %s -> %s.gpg (changed since last push)' % (name, name))
+    finally:
+        shutil.rmtree(home, ignore_errors=True)
+    # LF, like every other file here, on Windows too.
+    with open(SEALSTATE, 'w', encoding='utf-8', newline='\n') as fh:
+        json.dump(state, fh, indent=1)
 
 
 def wanted(v):
@@ -260,11 +342,18 @@ def push(v, subject, dry):
 
 
 def watch(sha, v):
-    """Follow the cloud gate for this commit, a line per finished step."""
+    """Follow the cloud gate for this commit, a line per finished step.
+
+    For WATCH_LIMIT at most. Past that something is stuck, and a script
+    that polls for ever is a wait with no evidence in it (rule 35) - so it
+    stops and says what to look at. Stopping here stops nothing on GitHub:
+    the run carries on and still decides on its own whether main moves."""
+    deadline = time.time() + WATCH_LIMIT
     say('\nWaiting for GitHub to start the gate...')
     run = None
     for _ in range(40):
-        runs = gh('repos/%s/actions/runs?head_sha=%s&per_page=5' % (REPO, sha))
+        runs = gh('repos/%s/actions/runs?head_sha=%s&per_page=5' % (REPO, sha),
+                  retry=True)
         if runs.get('workflow_runs'):
             run = runs['workflow_runs'][0]
             break
@@ -276,7 +365,19 @@ def watch(sha, v):
     t0 = time.time()
     shown = set()
     while True:
-        jobs = gh('repos/%s/actions/runs/%d/jobs' % (REPO, run['id']))
+        if time.time() > deadline:
+            say('\nStopped watching after %d minutes, with the gate still %s.'
+                % (WATCH_LIMIT // 60, run.get('status', 'running').replace('_', ' ')))
+            say('Nothing on GitHub was stopped: the run carries on, and only a '
+                'green one moves main.')
+            say('Check, in this order:')
+            say('  1. The run: %s - which step it is on, or how it ended. '
+                'Red means the live site is unchanged.' % run['html_url'])
+            say('  2. Whether v%s published: `python push.py --dry-run` says '
+                '"Nothing differs from what main already has" once it has.' % v)
+            say('  3. The live site: %s' % LIVE)
+            return 1
+        jobs = gh('repos/%s/actions/runs/%d/jobs' % (REPO, run['id']), retry=True)
         for job in jobs.get('jobs', []):
             for step in job.get('steps', []):
                 key = (job['id'], step['number'])
@@ -284,7 +385,7 @@ def watch(sha, v):
                     shown.add(key)
                     mark = {'success': 'ok  ', 'skipped': 'skip'}.get(step['conclusion'], 'FAIL')
                     say('  %s  %4.0fs  %s' % (mark, time.time() - t0, step['name']))
-        run = gh('repos/%s/actions/runs/%d' % (REPO, run['id']))
+        run = gh('repos/%s/actions/runs/%d' % (REPO, run['id']), retry=True)
         if run['status'] == 'completed':
             break
         time.sleep(8)
@@ -318,11 +419,24 @@ def main():
         sys.exit('The audit has not passed. Nothing pushed.')
     say('   passed')
 
-    say('2. shelf files')
-    seal_shelf()
-    say('   sealed copies current')
+    say('2. nothing else gating')
+    busy = gate_busy()
+    if busy:
+        why = ('A gate run on %s is still %s: %s\n'
+               'Wait for it to finish, then push again. A build pushed now '
+               'would be made on the main that run is about to move.'
+               % (BRANCH, busy['status'].replace('_', ' '), busy['html_url']))
+        if not dry:
+            sys.exit('REFUSED. ' + why + ' Nothing pushed.')
+        say('   a real push would be REFUSED now. ' + why)
+    else:
+        say('   no gate run on %s is queued or running' % BRANCH)
 
-    say('3. push')
+    say('3. shelf files')
+    seal_shelf(dry)
+    say('   checked; a dry run writes nothing' if dry else '   sealed copies current')
+
+    say('4. push')
     sha = push(v, subject, dry)
     if not sha:
         return 0
@@ -330,7 +444,7 @@ def main():
         say('Not waiting. Follow it at https://github.com/%s/actions' % REPO)
         return 0
 
-    say('4. the cloud gate, then live')
+    say('5. the cloud gate, then live')
     return watch(sha, v)
 
 

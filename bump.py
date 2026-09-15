@@ -223,7 +223,10 @@ def main():
     if head.rstrip('\u2026') != entry.strip().rstrip('.'):
         print('full entry (%d chars) written to CHANGELOG.md' % len(entry))
     print('locks:     bottlefolio-v%s.html + bottlefolio-v%s-sw.js' % (ver, ver))
-    print('now run:   python3 ship.py')
+    # ship.py was retired on 2026-09-15; push.py sends and gates the build.
+    # On BZ's PC it runs under the Python install's own python.exe, because
+    # the WindowsApps alias cannot see the test browser (CLAUDE.md).
+    print('now run:   python push.py "short subject"')
 
 
 if __name__ == '__main__':

@@ -25,7 +25,22 @@ const fs = require('fs');
 const path = require('path');
 const { GoogleAuth } = require('google-auth-library');
 
-const DB = 'https://bottle-tracker-7d3a1-default-rtdb.firebaseio.com';
+/* THE DATABASE THE APP ACTUALLY USES, read from index.html's own Firebase
+   config rather than typed here. It was typed here, as the OLD project's
+   address (bottle-tracker-7d3a1), and the first rules deploy on 2026-09-15
+   went to a database the app had stopped using - read back, "verified",
+   and wrong. Read from the app, the two cannot disagree. */
+const APP = (function () {
+  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const db = html.match(/databaseURL:\s*'([^']+)'/);
+  const project = html.match(/projectId:\s*'([^']+)'/);
+  if (!db || !project) {
+    console.log('  ✖ rules: no databaseURL or projectId in index.html');
+    process.exit(1);
+  }
+  return { db: db[1].replace(/\/$/, ''), project: project[1] };
+})();
+const DB = APP.db;
 const FILE = path.join(__dirname, 'firebase-rules.json');
 const BRANCH = ['bz-apps', 'whisky'];      // the only part this app owns
 
@@ -38,7 +53,13 @@ function credentials() {
   const raw = process.env.FIREBASE_SA
     || (process.env.FIREBASE_SA_FILE && fs.readFileSync(process.env.FIREBASE_SA_FILE, 'utf8'));
   if (!raw) fail('no key - set FIREBASE_SA (the JSON) or FIREBASE_SA_FILE (its path)');
-  try { return JSON.parse(raw); } catch (e) { fail('the key is not valid JSON'); }
+  let key;
+  try { key = JSON.parse(raw); } catch (e) { fail('the key is not valid JSON'); }
+  // A key for another project would be refused by Firebase anyway - or,
+  // worse, accepted by that other project's database. Stopped here, by name.
+  if (key.project_id !== APP.project)
+    fail('the key is for project "' + key.project_id + '" but the app uses "' + APP.project + '"');
+  return key;
 }
 
 async function token() {

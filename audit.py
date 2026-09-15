@@ -40,6 +40,31 @@ def ok(msg):
     print(f'  \u2713 {msg}')
 
 
+def run_check(label, cmd, timeout):
+    """Run one harness, and fail the audit if it exits non-zero whatever it
+    printed.
+
+    The audit judged a harness by the marks in its output. One that CRASHED
+    - threw at load, missed a file - prints a stack to stderr and no mark at
+    all, and the audit read that silence as a pass: "All checks passed"
+    over a check that never ran. The consistency step ignored the exit code
+    entirely, and the screens step noticed it and then only failed on a
+    printed mark. The exit code is the one thing a crash cannot forget.
+
+    UTF-8 by name: on BZ's Windows PC Python reads a child's output as
+    cp1252 unless PYTHONUTF8 is set, and the mark this looks for arrives as
+    three other characters. push.py sets it; a hand run does not."""
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8',
+                       errors='replace', timeout=timeout)
+    if r.returncode != 0:
+        fail(f'{label} exited {r.returncode}')
+        said = [ln for ln in (r.stderr or '').split('\n') if ln.strip()] \
+            or [ln for ln in (r.stdout or '').split('\n') if ln.strip()]
+        for ln in said[-20:]:
+            print(f'      {ln}')
+    return r
+
+
 def run_audit(html_path):
     global failures
     failures = 0
@@ -387,8 +412,8 @@ def run_audit(html_path):
     # writing to a missing element since the Library moved into Settings.
     # Part of the gate rather than a thing to remember to run.
     try:
-        r = subprocess.run(['node', os.path.join(base, 'consistency.js')],
-                           capture_output=True, text=True, timeout=120)
+        r = run_check('consistency.js',
+                      ['node', os.path.join(base, 'consistency.js')], 120)
         out = r.stdout or ''
         bad = [ln.strip() for ln in out.split('\n') if '\u2716' in ln]
         # The summary line counts the others and must not be counted as one
@@ -398,7 +423,11 @@ def run_audit(html_path):
         if fired:
             for b in fired:
                 fail('consistency: ' + b.lstrip('\u2716 ').strip())
-        else:
+        elif r.returncode == 0 and 'consistency checks pass' not in out:
+            # Exit 0 with no summary is a harness that stopped early and
+            # did not say so. Silence is not a pass.
+            fail('consistency.js ended without saying its checks passed')
+        elif r.returncode == 0:
             ok('the wiring is consistent (consistency.js)')
     except Exception as e:
         fail(f'consistency.js did not run: {e}')
@@ -408,14 +437,13 @@ def run_audit(html_path):
     # while drawing, and that does not need clicking to prove. Added after
     # a name collision broke the walk and cost two full runs to find.
     try:
-        r = subprocess.run(['node', os.path.join(base, 'screens.js')],
-                           capture_output=True, text=True, timeout=180)
+        r = run_check('screens.js',
+                      ['node', os.path.join(base, 'screens.js')], 180)
         out = (r.stdout or '') + (r.stderr or '')
-        if r.returncode != 0 or '\u2716' in out:
-            for ln in out.split('\n'):
-                if '\u2716' in ln:
-                    fail('screens: ' + ln.strip().lstrip('\u2716 ').strip())
-        else:
+        marks = [ln for ln in out.split('\n') if '\u2716' in ln]
+        for ln in marks:
+            fail('screens: ' + ln.strip().lstrip('\u2716 ').strip())
+        if r.returncode == 0 and not marks:
             ok('every screen draws without throwing (screens.js)')
     except Exception as e:
         fail(f'screens.js did not run: {e}')
