@@ -17692,6 +17692,244 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7425 new data adapts, and says so');
+{
+  /* BZ: not worth it for 2 tables, wanting to ensure new data adapts
+     without a build. It already does — an unrecognised category renders,
+     counts and lands in the portrait, verified by pushing one through
+     every place a category is used. The SERVICE was the closed door: the
+     prompt said "one of" and listed eighteen, so a single grain Scotch, a
+     rice whisky or a genever could not come back at all. That is open
+     now, and the other half of the risk is a taxonomy growing silently
+     until two names for one thing sit side by side. */
+  const cat = {
+    a: { k: 'a', sub: 'bourbon' },
+    b: { k: 'b', sub: 'bourbon' },
+    c: { k: 'c', sub: 'single grain' },
+    d: { k: 'd', sub: 'single grain' },
+    e: { k: 'e', sub: 'genever' },
+    f: { k: 'f' }
+  };
+  const out = L.newTypes(cat);
+  /* Hand-counted: two declared bourbons ignored, two single grains and
+     one genever reported, one entry with no category at all skipped. */
+  eq('only undeclared categories are reported',
+    out.map(x => x.value), ['single grain', 'genever']);
+  eq('with how many entries carry each', out.map(x => x.n), [2, 1]);
+  eq('the commonest leads', out[0].value, 'single grain');
+
+  /* A DECLARED CATEGORY IS NEVER REPORTED, however many there are. */
+  eq('a shelf of only declared categories reports nothing',
+    L.newTypes({ x: { sub: 'rye' }, y: { sub: 'scotch' } }), []);
+  eq('and an empty catalog reports nothing', L.newTypes({}), []);
+  eq('and nothing at all does not throw', L.newTypes(null), []);
+
+  /* NOT WHISKY IS STILL A DECLARED CATEGORY. Vodka is in L.TYPES, so a
+     bar full of it is not a pile of new arrivals. */
+  eq('vodka is declared, not new',
+    L.newTypes({ v: { sub: 'vodka' } }), []);
+
+  /* AND THE APP GENUINELY HANDLES AN UNKNOWN ONE, which is what makes
+     reporting it a note rather than an error. */
+  eq('an unknown category still renders a label',
+    typeof L.typeLabel('single grain'), 'string');
+  eq('and counts in the taste profile',
+    (L.tasteProfile({ c: { k: 'c', sub: 'single grain', dist: 'X' } },
+      [{ id: '1', k: 'c', status: 'open' }], {}).styles || [])
+      .some(x => x.value === 'single grain'), true);
+}
+
+sec('\u00a7424 a distillery is an entity, not a spelling');
+{
+  /* BZ, laying out the data model in three layers: objects that have
+     relationships, data needing consistent edit rules, and attributes
+     picked from common lists. Distillery reads like the third and behaves
+     like the first \u2014 109 of them across 325 products, and every fact a
+     house carries is repeated on each of its bottles.
+     The app already solved this for PRODUCTS: LIB.graves maps a merged
+     key to the key it became and nothing is rewritten. A house merge did
+     the opposite, writing dist on every affected bottle. */
+  const cat = {
+    a1: { k: 'a1', name: 'A One', dist: 'Buffalo Trace', region: 'Kentucky' },
+    a2: { k: 'a2', name: 'A Two', dist: 'Buffalo Trace', region: 'Kentucky' },
+    a3: { k: 'a3', name: 'A Three', dist: 'Buffalo Trace Distillery' },
+    b1: { k: 'b1', name: 'B One', dist: 'Barrell' },
+    c1: { k: 'c1', name: 'C One', dist: 'Jim Beam', region: 'Kentucky' }
+  };
+
+  /* PUNCTUATION AND SUFFIXES ARE NOT DIFFERENT HOUSES. */
+  eq('a suffix does not make a second house',
+    L.houseKey('Buffalo Trace Distillery'), L.houseKey('Buffalo Trace'));
+  eq('nor does punctuation',
+    L.houseKey("Angel's Envy"), L.houseKey('Angels Envy'));
+  eq('and nothing is nothing', L.houseKey(''), '');
+
+  const idx = L.houseIndex(cat, {});
+  /* Hand-counted: three Buffalo Trace bottles under two spellings, one
+     Barrell, one Jim Beam \u2014 three houses. */
+  eq('the catalog holds three houses', Object.keys(idx).length, 3);
+  const bt = idx[L.houseKey('Buffalo Trace')];
+  eq('with its bottles counted together', bt.n, 3);
+  /* THE SPELLING MOST OF ITS BOTTLES USE WINS. Two say Buffalo Trace and
+     one says Buffalo Trace Distillery. */
+  eq('and the majority spelling is its name', bt.name, 'Buffalo Trace');
+
+  /* A FACT ITS PRODUCTS AGREE ON BELONGS TO THE HOUSE. */
+  eq('the house carries the region', bt.region, 'Kentucky');
+  /* AND ONE THEY CONTRADICT DOES NOT. A house cannot be in two regions,
+     so the entity holds nothing rather than picking a side. */
+  const split = L.houseIndex({
+    x1: { k: 'x1', dist: 'Split House', region: 'Islay' },
+    x2: { k: 'x2', dist: 'Split House', region: 'Speyside' }
+  }, {});
+  eq('a contradicted fact is left off the house',
+    split[L.houseKey('Split House')].region, null);
+
+  /* AN ALIAS MERGES WITHOUT REWRITING ANY PRODUCT, which is the whole
+     point: today a house merge writes dist on every affected bottle. */
+  const al = {}; al[L.houseKey('Barrell')] = 'Buffalo Trace';
+  const merged = L.houseIndex(cat, al);
+  eq('an alias removes a house', Object.keys(merged).length, 2);
+  eq('and its bottles join the other',
+    merged[L.houseKey('Buffalo Trace')].n, 4);
+  eq('and the catalog is untouched', cat.b1.dist, 'Barrell');
+
+  /* A CHAIN RESOLVES TO THE END. Merging B into A and later A into C must
+     leave B pointing at C, not at a name nobody uses. */
+  const ch = {};
+  ch[L.houseKey('Barrell')] = 'Buffalo Trace';
+  ch[L.houseKey('Buffalo Trace')] = 'Jim Beam';
+  eq('a chain lands on the last name',
+    L.houseResolve('Barrell', ch), L.houseKey('Jim Beam'));
+  eq('and everything gathers there',
+    L.houseIndex(cat, ch)[L.houseKey('Jim Beam')].n, 5);
+
+  /* A CYCLE STOPS. A registry that can be edited can be edited wrongly,
+     and a hang is the one failure nobody can diagnose from a screenshot. */
+  const cy = {};
+  cy[L.houseKey('Buffalo Trace')] = 'Barrell';
+  cy[L.houseKey('Barrell')] = 'Buffalo Trace';
+  eq('a cycle resolves rather than hanging',
+    typeof L.houseResolve('Buffalo Trace', cy), 'string');
+
+  /* AN EMPTY REGISTRY CHANGES NOTHING, which is what makes this safe to
+     ship before anything writes to it. */
+  eq('no aliases means the houses as they were',
+    Object.keys(L.houseIndex(cat, {})).length,
+    Object.keys(L.houseIndex(cat, null)).length);
+}
+
+sec('\u00a7423 the inventory of fundamental actions');
+{
+  /* BZ, after the same thing turned up done three ways for the third time
+     in one day: why, after so many builds, so many tests and so many
+     scans, did we just find this now.
+     Because every check in this repository asked \u201cis this correct?\u201d and
+     none asked \u201cis this the same as that?\u201d. The suite drives one path
+     at a time, so three screens photographing a bottle three ways are
+     three correct paths. Their disagreement is not expressible in a test
+     that only ever sees one of them, and no consistency check could catch
+     it either, because every one of those anchors to a stated promise and
+     nobody had ever stated this one. L.ACTIONS states it. */
+  const acts = L.ACTIONS || [];
+  eq('the inventory exists', acts.length > 0, true);
+
+  /* EVERY ACTION NAMES ITS ONE FUNCTION. An action routing through
+     nothing enforces nothing while reporting that it passed. */
+  eq('every action names a shared function',
+    acts.filter(a2 => !(a2.through || []).length).map(a2 => a2.id), []);
+  eq('and every action has a name',
+    acts.filter(a2 => !a2.id).length, 0);
+  eq('no two actions share a name',
+    new Set(acts.map(a2 => a2.id)).size, acts.length);
+
+  /* EVERY EXCEPTION CARRIES ITS REASON. A bare allowance is a hole with
+     no note on it, which is indistinguishable from an oversight the day
+     somebody reads it back. */
+  const bare = [];
+  acts.forEach(a2 => Object.keys(a2.allow || {}).forEach(who => {
+    if (!a2.allow[who] || a2.allow[who].length < 12) bare.push(a2.id + '/' + who);
+  }));
+  eq('no exception is allowed without a reason', bare, []);
+
+  /* THE ACTIONS THAT COST THIS DAY ARE IN IT. Looking a bottle up was
+     seven sites in five shapes; photographing a subject was three screens
+     in three shapes; reaching the service was one raw fetch with no
+     retry, no wake lock and no queue. */
+  ['look a bottle up', 'photograph a subject', 'reach the lookup service']
+    .forEach(id => eq('the inventory carries "' + id + '"',
+      acts.some(a2 => a2.id === id), true));
+}
+
+sec('\u00a7422 nothing new is not nothing to say');
+{
+  /* BZ, at a WhistlePig rye on a shelf holding 36 ryes: the taste line
+     said he knew the territory and the shelf line said nothing either
+     way. Zero findings is not the absence of an answer — it means the
+     shelf already covers every axis the bottle has, which is a strong
+     statement, and it was being read out as a shrug. */
+  const cat = {}, bots = [];
+  for (let i = 0; i < 12; i++) {
+    cat['r' + i] = { k: 'r' + i, name: 'Rye ' + i, sub: 'rye',
+                     dist: 'House ' + i, proof: 100 };
+    bots.push({ id: 'b' + i, k: 'r' + i, status: 'open' });
+  }
+  const fit = L.shelfFit({ name: 'Another Rye', sub: 'rye' }, cat, bots, []);
+  eq('what the shelf covers is recorded',
+    (fit.covered || []).map(c => c.word), ['Rye']);
+  eq('with how many', (fit.covered || [])[0].n, 12);
+  eq('and the verdict names it',
+    /you already have 12 Rye/.test(L.fitVerdict(fit)), true);
+  eq('rather than shrugging',
+    /Nothing either way/.test(L.fitVerdict(fit)), false);
+
+  /* THE DEEPEST AXIS LEADS. Twelve of a category says more about a shelf
+     than one matching region. */
+  const two = L.fitVerdict({ findings: [], covered:
+    [{ word: 'Islay', n: 2 }, { word: 'Rye', n: 12 }] });
+  eq('the biggest count comes first', /12 Rye/.test(two), true);
+  eq('and the second is mentioned', /2 Islay/.test(two), true);
+
+  /* AND A BOTTLE THE SHELF GENUINELY HAS NO OPINION ON still says so. */
+  eq('nothing covered is still nothing either way',
+    /Nothing either way/.test(L.fitVerdict({ findings: [], covered: [] })),
+    true);
+  eq('and a fit with no covered list does not throw',
+    typeof L.fitVerdict({ findings: [] }), 'string');
+}
+
+sec('\u00a7421 one photograph pattern, three screens');
+{
+  /* BZ: shop (bottle, shelf) is a subset of Taste (bottle, shelf, menu)
+     and we should likely make shelf setting work the same way. One
+     pattern, three times. The subjects a screen may offer are a list, not
+     a second card. */
+  const S2 = L.SUBJECT_SCREENS;
+  eq('out offers all three', S2.out.subjects, ['bottle', 'shelf', 'menu']);
+  eq('shop is the subset', S2.shop.subjects, ['bottle', 'shelf']);
+  eq('and so is your own shelf', S2.mine.subjects, ['bottle', 'shelf']);
+
+  /* A SHOP HAS NO MENU, which is the whole of why it is a subset. */
+  eq('no screen but out offers a menu',
+    Object.keys(S2).filter(k => S2[k].subjects.indexOf('menu') >= 0),
+    ['out']);
+
+  /* EACH SCREEN TELLS THE SERVICE WHERE IT IS, because a bar is money for
+     one pour, a shop is shelf space and your own shelf is a stocktake. */
+  eq('every screen names a where',
+    Object.keys(S2).filter(k => !S2[k].where), []);
+  eq('and no two screens share one',
+    new Set(Object.keys(S2).map(k => S2[k].where)).size,
+    Object.keys(S2).length);
+
+  /* EVERY SUBJECT A SCREEN OFFERS IS A REAL ONE. A list naming a subject
+     AWAY_SUBJECTS does not carry would render a pill that does nothing. */
+  const known = ['bottle', 'shelf', 'menu'];
+  eq('no screen offers a subject that does not exist',
+    Object.keys(S2).filter(k =>
+      S2[k].subjects.some(id => known.indexOf(id) < 0)), []);
+}
+
 sec('\u00a7420 a lookup fails the same way everywhere');
 {
   /* BZ: these types of fundamental user actions must be the same, I don't

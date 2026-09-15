@@ -61,6 +61,17 @@ const defined = (src.match(/^L\.([a-zA-Z_][a-zA-Z0-9_]*) = function/gm) || [])
 const codeOnly = src
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '');
+/* THE ENGINE ITSELF, so the inventory check below reads the app's own
+   declaration rather than a copy of it kept in this file. A contract
+   restated in two places is the very fault these checks exist to find. */
+const ENGINE = (() => {
+  const a = src.indexOf('const L = {};');
+  const b = src.indexOf('/* =====================================================================\n   STATE + RENDER');
+  const m = { exports: {} };
+  new Function('module', src.slice(a, b) + '\nmodule.exports = L;')(m);
+  return m.exports;
+})();
+
 const tests = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
 const dead = [], unwired = [];
 defined.forEach(fn => {
@@ -1318,6 +1329,106 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'own house "different maker"']);
 }
 
+/* AND THE INVENTORY ITSELF IS CHECKED.
+ *
+ * A declaration nobody validates rots into decoration. An action naming a
+ * function that no longer exists enforces nothing and says it passed; an
+ * `allow` entry for a screen that was deleted is a hole left open for a
+ * reason that expired. Both fail silently and look green, which is the
+ * exact shape of the problem the inventory was written to end.
+ */
+{
+  const bad = [];
+  const acts = ENGINE.ACTIONS || [];
+  if (!acts.length) bad.push('the inventory is empty');
+  acts.forEach(act => {
+    if (!act.id) bad.push('an action with no name');
+    (act.through || []).concat(act.pressed || []).forEach(fn => {
+      /* The function it names has to be real, and has to be DEFINED here
+         rather than merely mentioned. */
+      const def = new RegExp('(?:function |L\\.)' + fn + '\\s*[=(]');
+      if (!def.test(codeOnly)) {
+        bad.push('"' + act.id + '" routes through ' + fn
+          + ', which is not defined anywhere');
+      }
+    });
+    if (!(act.through || []).length) {
+      bad.push('"' + act.id + '" names no shared function, so it enforces '
+        + 'nothing');
+    }
+    Object.keys(act.allow || {}).forEach(who => {
+      if (!act.allow[who] || act.allow[who].length < 12) {
+        bad.push('"' + act.id + '" allows ' + who + ' with no reason given');
+      }
+    });
+  });
+  /* NO TWO ACTIONS SHARE A NAME, or one silently replaces the other. */
+  const ids = acts.map(a => a.id);
+  if (new Set(ids).size !== ids.length) {
+    bad.push('two actions share a name');
+  }
+  check('the action inventory names real functions and gives its reasons',
+    bad);
+}
+
+/* THE ACTION INVENTORY.
+ *
+ * BZ: why, after so many builds, so many tests and so many scans, did we
+ * just find this now — literally the same stuff, 3x, done 3 ways.
+ *
+ * Because nothing here ever asked "is this the same as that?". Every check
+ * anchors to a stated promise, and nobody had stated that three screens
+ * photograph a bottle the same way. L.ACTIONS states it. This enforces it.
+ *
+ * For each declared action: find every site performing it, and fail any
+ * that does not go through the one shared function. Sites that
+ * legitimately differ are named in the action's `allow` WITH THE REASON,
+ * so the exceptions are a short readable list rather than a silence.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const srcLines = src.split('\n');
+  const realLine = txt => {
+    const t = txt.trim();
+    const at = srcLines.findIndex(x => x.trim() === t);
+    return at >= 0 ? (at + 1) : '?';
+  };
+  /* The enclosing function of a line, which is how a site is named. */
+  const owner = i => {
+    for (let j = i; j >= 0; j--) {
+      const m = lines[j].match(/^(?:async )?function ([a-zA-Z0-9_]+)/);
+      if (m) return m[1];
+    }
+    return '(top level)';
+  };
+
+  const bad = [];
+  (ENGINE.ACTIONS || []).forEach(act => {
+    const through = act.through[0];
+    const rx = new RegExp('\\b' + through + '\\(');
+    lines.forEach((l, i) => {
+      if (!rx.test(l)) return;
+      if (/^(?:async )?function /.test(l)) return;      // the definition
+      const who = owner(i);
+      /* A site named in `allow` is a deliberate exception and its reason
+         is on record. */
+      if (Object.keys(act.allow || {}).some(k =>
+        who.toLowerCase().indexOf(k.split(' ')[0].toLowerCase()) >= 0)) return;
+      const near = lines.slice(Math.max(0, i - 16), i + 40).join('\n');
+      /* Only the ones a person pressed: a site that reports to a message
+         element or a button is one somebody is waiting on. */
+      const isPressed = /lookMsg|say\(|buttonWorking/.test(near);
+      (act.pressed || []).forEach(need => {
+        if (!isPressed) return;
+        if (near.indexOf(need) >= 0) return;
+        bad.push('index.html:' + realLine(l) + '  ' + who + ' performs "'
+          + act.id + '" without ' + need);
+      });
+    });
+  });
+  check('every screen performs an action the one declared way', bad);
+}
+
 /* EVERY LOOKUP BUTTON BEHAVES THE SAME.
  *
  * BZ: the bottle lookup for shop and taste are very different — and then,
@@ -1547,8 +1658,23 @@ check('no fixed svg id is emitted by a repeated drawing',
 {
   const gs = fs.readFileSync(__dirname + '/lookup.gs', 'utf8');
   const appList = (src.match(/L\.TYPES = \[([\s\S]*?)\]/) || [])[1] || '';
-  const appTypes = [...appList.matchAll(/'([^']+)'/g)].map(m => m[1]);
-  const gsBlock = (gs.match(/sub is one of:([\s\S]{0,600})/) || [])[1] || '';
+  /* 'other' IS DELIBERATELY NOT OFFERED. It is the category somebody
+     chooses by hand when nothing fits, and the prompt forbids the service
+     from ever answering it.
+     This check used to pass on it for the worst possible reason: it read
+     600 characters past the enumeration, which swept in the sentence
+     "Never answer other" — so the word appearing in its own PROHIBITION
+     counted as the category being offered. Narrowing the window to the
+     enumeration exposed it. A check satisfied by a word in a sentence
+     forbidding that word was green and meant nothing. */
+  const appTypes = [...appList.matchAll(/'([^']+)'/g)].map(m => m[1])
+    .filter(t => t !== 'other');
+  /* ONLY THE ENUMERATION. The prompt now explains, after the list, that a
+     category outside it is allowed as a last resort — so reading 600
+     characters past "sub is one of" swept that prose in and reported
+     sentences as missing categories. The list ends at the full stop that
+     closes it. */
+  const gsBlock = (gs.match(/sub is one of:([\s\S]*?)\./) || [])[1] || '';
   /* `other` is SELECTABLE, NEVER GUESSED — the app says so where the list
      is declared, and a bottle the model cannot place must stay null so it
      can be filled in later. The prompt forbids it by name, so it is the

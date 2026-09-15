@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.3.93';
+var GS_BUILD = '2.4.0';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -405,12 +405,30 @@ function askAboutOnce_(name, notesOnly) {
     'infer from a similar bottling, never write a plausible-sounding tasting',
     'note. A null is the correct answer when the fact is not established.',
     'proof is US proof (twice ABV), not ABV.',
+    /* PREFER THE LIST, BUT DO NOT BE TRAPPED BY IT.
+       BZ: wanting to ensure new data adapts without a build. The app
+       already does — an unrecognised category renders, counts and lands
+       in the portrait, verified by pushing one through every place a
+       category is used. The SERVICE was the closed door: "one of" meant a
+       single grain Scotch, a rice whisky or a genever could not come back
+       at all, whatever the bottle actually was.
+       The list still leads, because the reason it exists is that a model
+       left to its own words produces bourbon whiskey and Kentucky bourbon
+       and splits one category into three. A term outside it is a last
+       resort, and the app logs every one so the taxonomy grows on purpose
+       rather than by accident. */
     'sub is one of: bourbon, tennessee, rye, wheat, american single malt,',
     'scotch, irish, canadian, japanese, world, flavored, tequila, rum,',
-    'vodka, gin, mezcal, liqueur, brandy. The app carries all of',
-    'these; a bottle that is not whisky still gets its real category.',
-    'Never answer "other". It is a category somebody chooses by hand, and',
-    'a bottle you cannot place must stay null so it can be filled in later.',
+    'vodka, gin, mezcal, liqueur, brandy. Use one of these whenever one',
+    'genuinely fits. A bottle that is not whisky still gets its real',
+    'category.',
+    'If NONE of them fits, give the standard name for what it actually',
+    'is, lower case and as short as it can be: single grain, rice whisky,',
+    'genever. Never a longer version of a category already on the list:',
+    'a Kentucky bourbon is bourbon.',
+    'Never answer "other". It is a category somebody chooses by hand,',
+    'and a bottle you cannot place at all must stay null so it can be',
+    'filled in later.',
     'dist is whoever MAKES it, and it is wanted for every category, not',
     'only whisky. For a blend or a sourced bottling that is the bottler',
     'or the brand owner. Returning null here because a spirit has no',
