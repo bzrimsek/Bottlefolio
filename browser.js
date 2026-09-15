@@ -564,10 +564,21 @@ function step(n) {
          of it - the Copy button exists to save reading them. */
       if (rowAt < 0) out.push('no log button row');
       else if (logAt >= 0 && rowAt > logAt) out.push('log buttons are below the log');
-      if (rowAt >= 0
-          && kids[rowAt].querySelectorAll('.chip').length !== 4) {
-        out.push('log buttons scattered: '
-          + kids[rowAt].querySelectorAll('.chip').length + ' in the row');
+      /* THREE, AND THEY ARE BUTTONS. It counted four chips, which was
+         right when Measure the tab bar was one of them and they were all
+         styled as chips. Measure went — every boot already logs the nav —
+         and the rest became btn btn-sm like every other control that DOES
+         something, since a chip in this app is for picking one of a set.
+         The thing being guarded has not changed: the log's own buttons
+         sit together, above the log rather than under six hundred lines
+         of it, because Copy exists to save reading them. */
+      const rowBtns = rowAt >= 0
+        ? kids[rowAt].querySelectorAll('button').length : 0;
+      if (rowAt >= 0 && rowBtns !== 3) {
+        out.push('log buttons scattered: ' + rowBtns + ' in the row');
+      }
+      if (rowAt >= 0 && kids[rowAt].querySelectorAll('.chip').length) {
+        out.push('a log button is styled as a chip, which is for picking');
       }
       /* A card with a heading and nothing else is the shape the crash
          left behind. */
@@ -1527,7 +1538,7 @@ function step(n) {
      written; the pills were not.
      Checked on the answering screen, because that is the only place the
      scroller is short enough for it to show. */
-  step('the dimension pills do not scroll away from their caption');
+  step('the store search is a name and a button, nothing else');
   {
     /* ON SCREEN FIRST. A height measured on a hidden screen is zero, which
        is how the first version of this reported a caption that was in
@@ -1541,28 +1552,40 @@ function step(n) {
       const q = document.getElementById('shopQ');
       if (q) q.value = 'stagg';
       renderShop();
+      const field = document.getElementById('shopQ');
+      const look = document.getElementById('shopLookBtn');
       const dims = document.getElementById('shopDims');
-      const scroll = document.getElementById('shopScroll');
-      const cap = dims && dims.querySelector('.dimcap');
+      if (!field || !look) return { err: 'no search field or lookup button' };
+      const f = field.getBoundingClientRect();
+      const l = look.getBoundingClientRect();
       return {
-        inSlot: !!(dims && dims.querySelector('.dimrow')),
-        inScroller: !!(scroll && scroll.querySelector('.dimrow')),
-        capTall: cap ? Math.round(cap.getBoundingClientRect().height) : 0,
+        /* BZ: we have a screen for suggestions so let's remove the pills
+           here — we are conflating two things. An axis is the shape of a
+           SUGGESTION; this is somebody in a shop with a name. */
+        pills: scr.querySelectorAll('.dimrow').length,
+        /* BZ: the filling bottle remains too far from the data entry
+           point, copy the taste version. */
+        gap: Math.round(l.top - f.bottom),
+        tall: Math.round(l.height),
         slotScrolls: dims ? dims.scrollHeight > dims.clientHeight + 1 : false
       };
     });
-    if (r.err) { failures.push('pills: ' + r.err); }
+    if (r.err) { failures.push('store search: ' + r.err); }
     else {
-      if (!r.inSlot || r.inScroller) {
-        failures.push('pills: the dimension row is inside the scrolling '
-          + 'content again \u2014 its caption will scroll out of sight');
+      if (r.pills) {
+        failures.push('store search: ' + r.pills + ' dimension row(s) back '
+          + 'on the search screen \u2014 that is the suggestion screen\u2019s job');
       }
-      if (!r.capTall) {
-        failures.push('pills: the caption has no height, so nothing says '
-          + 'what the eight nouns are for');
+      if (!r.tall) {
+        failures.push('store search: the lookup button has no height');
+      }
+      if (r.gap > 40) {
+        failures.push('store search: the lookup button is ' + r.gap
+          + 'px below the field \u2014 the progress shows where nobody is '
+          + 'looking');
       }
       if (r.slotScrolls) {
-        failures.push('pills: the row has grown a scrollbar of its own');
+        failures.push('store search: the slot under the field scrolls');
       }
     }
     /* PUT THE WALK BACK WHERE IT WAS. This left Shop showing, so the next
@@ -2384,9 +2407,36 @@ function step(n) {
         document.activeElement && document.activeElement.id === 'shopQ');
       if (!stillFocused) failures.push('shop: the box lost focus while typing');
 
-      // The pills say what they are for.
-      if (!(await page.locator('#scr-shop .dimcap').count())) {
-        failures.push('shop: the axis pills have no caption');
+      /* THE PILLS SAY WHAT THEY ARE FOR — on the screen that still has
+         them. They were on the store search too, where an axis is the
+         shape of a SUGGESTION and the person is holding a name; they now
+         live only on the planning screen, so that is where the caption is
+         checked. The store search asserts the opposite, that no pills are
+         there at all. */
+      /* AND IT PUTS THE SCREEN BACK. The first version rendered the
+         planning screen to look at it and left the walk sitting there, so
+         every assertion after it in this same step — Want it, I bought
+         it, the details block — failed on a screen that no longer had
+         them. Third time one of my checks has broken what came after it
+         by not restoring what it found. */
+      const capOnPlanner = await page.evaluate(() => {
+        const q = document.getElementById('shopQ');
+        const wasVal = q ? q.value : '';
+        const wasMode = S.shopMode;
+        if (q) q.value = '';
+        /* 'plan' is the planning screen. Measured rather than assumed:
+           the null mode draws no pills at all. */
+        S.shopMode = 'plan';
+        renderShop();
+        const n = document.querySelectorAll('#scr-shop .dimcap').length;
+        if (q) q.value = wasVal;
+        S.shopMode = wasMode;
+        renderShop();
+        return n;
+      });
+      if (!capOnPlanner) {
+        failures.push('shop: the axis pills have no caption on the '
+          + 'planning screen, where they live');
       }
 
       // Both actions on the glass, no fold to open first.
