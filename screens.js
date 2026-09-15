@@ -17,7 +17,13 @@
  */
 const { chromium } = require('playwright');
 const path=require('path'), fs=require('fs');
-const dir='/home/claude/kb';
+/* The folder this file is IN, not a path typed once and outlived. It said
+   /home/claude/kb, which was the container path in an earlier session and
+   has not existed for weeks - so this scan threw on its own data file and
+   stayed broken for however long nobody ran it. A scan that cannot run is
+   worse than one that fails, because a failure is reported and this was
+   not. Found 2026-09-09 when BZ asked for all of them to be run. */
+const dir = __dirname;
 (async()=>{
   const b=await chromium.launch();
   const p=await b.newPage({viewport:{width:900,height:900}});
@@ -47,7 +53,12 @@ const dir='/home/claude/kb';
        does not need clicking to prove it. */
     [['home', 'renderHome'], ['shelf', 'renderShelf'],
      ['flights', 'renderFlights'], ['settings', 'renderSettings'],
-     ['library', 'renderLibraryScreen'], ['shared', 'renderShared'],
+     ['library', 'renderLibraryScreen'],
+     /* ['shared', 'renderShared'] stood here. The screen was deleted in
+        thread 6 when the Buddies tab replaced it, and this list kept
+        asking for it - reported as "shared MISSING renderShared" on every
+        run, which nobody saw because the scan itself had been unable to
+        start since its data path went stale. */
      ['pour', 'renderReels'], ['info', 'renderReference'],
      ['map', 'renderMap'], ['log', 'renderHistory']].forEach(([nm, fn]) => {
       if (typeof window[fn] !== 'function') { r[nm] = 'MISSING ' + fn; return; }
@@ -113,7 +124,7 @@ const dir='/home/claude/kb';
       if (!r2.width || !r2.height) return;
       const hasText = el2.textContent.trim().length > 0;
       const hasSvg = !!el2.querySelector('svg, img');
-      /* The sync dot is a coloured circle by design — it IS the icon, drawn
+      /* The sync dot is a colored circle by design — it IS the icon, drawn
          in CSS, and it carries an aria-label. Excluded by name rather than
          by weakening the rule to "or has a background", which would let a
          genuinely blank button through. */
