@@ -307,7 +307,14 @@ def run_audit(html_path):
         for why in bad:
             fail('layout: ' + why)
     else:
-        ok('nav cannot overlay content (flex column, screen scrolls)')
+        # Renamed 2026-09-09. It said "nav cannot overlay content", which
+        # is a claim about the RESULT, and it tests the CSS TEXT - so it
+        # passed happily while BZ had multiple reports of the bar sitting
+        # over content on an iPhone. A check that names an outcome it
+        # cannot see is the kind that teaches you to trust it wrongly.
+        # The real one is in browser.js, which scrolls a screen to the
+        # bottom on a phone viewport and measures.
+        ok('the layout declarations for the nav are intact (text only)')
 
     # ── 11. Manifest ──────────────────────────────────────────────
     mf = os.path.join(base, 'manifest.json')
