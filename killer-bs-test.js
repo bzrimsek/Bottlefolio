@@ -17706,9 +17706,16 @@ sec('\u00a7420 a lookup fails the same way everywhere');
     /took too long/.test(say('the lookup timed out')), true);
   eq('an expired answer says to try again',
     /again/.test(say('HTTP 404')), true);
-  eq('an unreadable reply suggests the printed name',
-    /full name as it is printed/.test(
+  /* AND IT DOES NOT BLAME THE INPUT. BZ typed stagg, which is the name
+     printed on a Buffalo Trace bottle, and was told to try the full name
+     as it is printed — advice that sends somebody to fix the one thing
+     that was right. */
+  eq('an unreadable reply blames the service, not the typing',
+    /service answered with something unreadable/.test(
       say('no JSON in the reply. stop_reason=end_turn text=The s')), true);
+  eq('and never tells them their name was wrong',
+    /full name|printed|distillery with it/.test(
+      say('no JSON in the reply. stop_reason=end_turn')), false);
   eq('offline says offline', /offline/i.test(say('you are offline')), true);
   eq('the allowance says the allowance',
     /allowance/.test(say('that is 600 lookups today, which is the daily limit')),

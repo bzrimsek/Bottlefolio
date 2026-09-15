@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.3.91';
+var GS_BUILD = '2.3.93';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -367,7 +367,27 @@ function apiHeaders_() {
   return h;
 }
 
+/* AN UNREADABLE ANSWER IS WORTH ASKING ONCE MORE.
+   BZ ran the same word, stagg, on two screens: one came back with a bottle
+   and one came back with five characters and stopped. Identical query,
+   identical service, two answers — so it is not a property of the name,
+   it is a glitch, and a glitch is exactly what a second ask fixes.
+   The app already retries TRANSPORT failures through postWithRetry. This
+   is the same idea one layer up: the call succeeded and the ANSWER was
+   unusable, which no retry anywhere was covering.
+   Once only. A model that cannot produce JSON twice running is not having
+   a bad moment, and a third ask spends BZ's money to learn nothing. */
 function askAbout(name, notesOnly) {
+  try {
+    return askAboutOnce_(name, notesOnly);
+  } catch (err) {
+    if (!/no JSON in the reply/.test(String(err && err.message))) throw err;
+    Logger.log('unreadable answer for ' + name + ', asking once more');
+    return askAboutOnce_(name, notesOnly);
+  }
+}
+
+function askAboutOnce_(name, notesOnly) {
 
   var shape = notesOnly
     ? '{"name":string,"colour":string|null,"nose":string|null,' +

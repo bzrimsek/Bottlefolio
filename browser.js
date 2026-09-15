@@ -1517,6 +1517,64 @@ function step(n) {
     }
   }
 
+  /* A CONTROL DOES NOT LIVE INSIDE THE THING IT CONTROLS.
+     BZ: noticed the scroll with the pills, such a bad design, put the
+     text where I cant read it. The dimension pills were drawn into
+     #shopScroll, so they inherited its overflow — and on the answering
+     screen, where that box is deliberately short, the caption scrolled
+     out of sight and the row grew a scrollbar of its own. The search row
+     above them had been kept outside for exactly this reason since it was
+     written; the pills were not.
+     Checked on the answering screen, because that is the only place the
+     scroller is short enough for it to show. */
+  step('the dimension pills do not scroll away from their caption');
+  {
+    /* ON SCREEN FIRST. A height measured on a hidden screen is zero, which
+       is how the first version of this reported a caption that was in
+       fact there — the same trap the masthead check fell into. */
+    await page.locator('nav button[data-scr="shop"]').click();
+    await page.waitForTimeout(250);
+    const r = await page.evaluate(() => {
+      const scr = document.getElementById('scr-shop');
+      if (!scr) return { err: 'no shop screen' };
+      S.shopMode = 'store';
+      const q = document.getElementById('shopQ');
+      if (q) q.value = 'stagg';
+      renderShop();
+      const dims = document.getElementById('shopDims');
+      const scroll = document.getElementById('shopScroll');
+      const cap = dims && dims.querySelector('.dimcap');
+      return {
+        inSlot: !!(dims && dims.querySelector('.dimrow')),
+        inScroller: !!(scroll && scroll.querySelector('.dimrow')),
+        capTall: cap ? Math.round(cap.getBoundingClientRect().height) : 0,
+        slotScrolls: dims ? dims.scrollHeight > dims.clientHeight + 1 : false
+      };
+    });
+    if (r.err) { failures.push('pills: ' + r.err); }
+    else {
+      if (!r.inSlot || r.inScroller) {
+        failures.push('pills: the dimension row is inside the scrolling '
+          + 'content again \u2014 its caption will scroll out of sight');
+      }
+      if (!r.capTall) {
+        failures.push('pills: the caption has no height, so nothing says '
+          + 'what the eight nouns are for');
+      }
+      if (r.slotScrolls) {
+        failures.push('pills: the row has grown a scrollbar of its own');
+      }
+    }
+    /* PUT THE WALK BACK WHERE IT WAS. This left Shop showing, so the next
+       step measured a hidden screen and reported a pick list 0px tall.
+       Second time one of my own checks has broken a later one by leaving
+       the page somewhere it did not find it — the settings step wiped the
+       Learn screen the same way. A check that damages the walk is worse
+       than no check. */
+    await page.locator('nav button[data-scr="home"]').click();
+    await page.waitForTimeout(200);
+  }
+
   /* TWO WORKING BOTTLES ON ONE PAGE DO NOT SHARE A CLIP.
      BZ asked for a filling bottle on the control, which means one built
      per press rather than the single static one the working overlay owns.
@@ -1618,6 +1676,13 @@ function step(n) {
      at six, including one deliberately long name. */
   step('whose shelf counts is one pick list that does not grow');
   {
+    /* ON ITS OWN SCREEN. This measured on whatever tab happened to be
+       showing, which was the pour tab by luck of ordering — a later step
+       left Shop up and it reported a pick list 0px tall. A check that
+       depends on where the previous step finished is not measuring what
+       it claims to. */
+    await page.locator('nav button[data-scr="pour"]').click();
+    await page.waitForTimeout(250);
     const r = await page.evaluate(() => {
       const out = {};
       const sets = { one: { u1: 'Bill' },
