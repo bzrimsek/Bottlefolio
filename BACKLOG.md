@@ -371,8 +371,12 @@ copied within about a day of it.
   - 12px as the smallest text.
   - Flight detail on a phone keeps Back and Pour visible, with the rest
     under More.
-- **Review release 1 (items 1–18, and 30): BUILT v2.4.7, 2026-09-15.**
-  What each item became is in CHANGELOG v2.4.7.
+- **Review release 1 (items 1–18, and 30): CLOSED, LIVE v2.4.7,
+  2026-09-15.** It went live 178s from the push, commit db41187, run
+  35026182748. The cloud gate passed all ten checks in 91s; sync took 21s,
+  down from about 50. The rules step ran with the new `bottlefolio` key and
+  said "already live - nothing to deploy". What each item became is in
+  CHANGELOG v2.4.7.
   - **Checked on BZ's PC before the push:** 4,690 assertions, 68 wiring
     checks, lint, 21 screens, render, two tabs, the walk, and all 19 sync
     scenarios. Every one passes.
@@ -389,6 +393,48 @@ copied within about a day of it.
     (index.html ~8734; item 36), and HANDOFF.md lists an old gate
     (item 39).
   - Release 2 is items 19–29.
+- **Review release 2 (items 19–29): BUILT v2.4.8, 2026-09-15. BZ looked at
+  the phone pictures first and said ship it.** What each item became is in
+  CHANGELOG v2.4.8.
+  - **Checked on BZ's PC:** 4,716 assertions, 68 wiring checks, lint,
+    screens, render, the walk, and all 22 sync scenarios.
+  - **Guards shown red first:**
+    - The three new sync scenarios (20–22) failed on v2.4.7, where the
+      cleared bottle came back.
+    - The flight title-width walk check failed at 22px with Log the flight
+      back in the header.
+  - **Carried to release 3, said to BZ before shipping:**
+    - Confirmations stay on the bulk and shared actions: clear, restore,
+      reset, sharing, library removal, cache, dropped offers. Only the
+      everyday deletes became Undo.
+    - Double-tap guards are on sign-in, Let in/No, Save for everybody and
+      Read it, not on every button.
+    - "Log the flight" and "Log it" (several pours at once) keep their own
+      names.
+    - The facts lines agree on labels and units, but are not yet one
+      function (item 24).
+    - There are more text sizes than a six-step scale (item 25).
+    - The three gear icons are unchanged (item 27).
+  - **Also found and fixed:** a pour's Undo, the pour list's ×, and "I
+    bought it" removed without a tombstone, so the sync put the pour or the
+    wish back. They are stored-data bugs, fixed in this release.
+- **Review release 3 (items 31–40): DECIDED 2026-09-15, BZ, "31-40 all make
+  sense to me".**
+  - **31, the lookup service:** require sign-in for lookups. The service
+    verifies the caller is signed in to the app. Bigger build.
+  - **33, the old project bottle-tracker-7d3a1:** BZ, "i just delete it".
+    His to do in the Firebase console. Once it is gone, the old key in
+    %USERPROFILE%\.bottlefolio is dead too.
+  - **32 and 40, GitHub settings:** protect main against force-push and
+    deletion, without requiring pull requests, which would block the
+    gate's publish. BZ: "think the first, what is best practice". Told him
+    it will be applied at the start of release 3 unless he objects.
+    Publishing from the workflow is to be built and tested in release 3.
+  - **34, diagnostics:** keep the upload, and Settings says plainly that it
+    happens and why.
+  - **35–39:** on defaults: a size ratchet, the synced-key table, comments
+    pruned as code is touched, dead code and pasted rows, and stale docs
+    moved to _superseded plus a README.
 - Standing from before, both closed with their entries kept below:
   ~~road trip planner~~ DROPPED 2026-09-09; ~~shelf organizer~~ REMOVED
   WHOLE at v2.0.14.

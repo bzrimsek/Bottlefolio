@@ -18,13 +18,14 @@ gives me ten chances to stop. Chunked mode is still there for when
 somebody wants to watch it:
 
     python3 gate.py              everything, one call
-    python3 gate.py --fast       the eight quick ones only (25s)
-    python3 gate.py --slow       walk and sync only (120s)
+    python3 gate.py --fast       the eight quick ones only, all at once
+    python3 gate.py --slow       walk and sync only
 
 Expectations come from gatetime.py's record: the median of the last nine
 runs, which is rule 13e. Under nine it says so rather than inventing one.
 """
 import json, os, re, subprocess, sys, time
+from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(HERE, '.gatetimes.json')
@@ -47,6 +48,59 @@ SLOW = [
     ('walk',  ['node', 'browser.js']),
     ('sync',  ['node', 'sync.js']),
 ]
+
+# EACH GROUP RUNS AT ONCE, AND THE NEXT WAITS FOR IT TO PASS.
+#
+# Review item 29, 2026-09-15: the cloud gate took 91 seconds and the eight
+# fast checks spent 21 of them waiting for each other. None of them shares
+# anything with another. Each reads the project's files, and the ones that
+# drive a browser serve those files to a browser of their own on a fake
+# origin through Playwright's router, so there is no port to collide on.
+# Nothing is written that another reads: the audit's scratch copy of the
+# script is its own, and .gatetimes.json is written by this file after
+# every step has finished. So they start together, and a group takes as
+# long as its slowest member rather than the sum of them all.
+#
+# The results still PRINT IN THIS ORDER, one line each, whatever order they
+# finish in (rule 35), because a list that reorders itself every run cannot
+# be read against the last one. And nothing in a group starts until every
+# step in the group before it has passed, as before: a build that fails the
+# half-second suite is not worth a minute of browser.
+#
+# EXCEPT THE SUITE, WHICH GOES FIRST WITH THE AUDIT AND NOTHING ELSE. §385
+# in killer-bs-test.js queues four jobs of a 5ms timer each and then waits
+# a fixed 120ms for all four; started beside five Chromiums it counted three
+# (2026-09-15, one run in three on four CPUs). The queue was right - the
+# wait was the wall clock, and a loaded machine stretches it. The suite
+# takes half a second, so running it where nothing competes costs less than
+# a flaky gate, and the printed order is unchanged.
+#
+# AND THE WALK AND SYNC SIDE BY SIDE, which is the one that needed proving.
+# The walk sleeps a fixed time in about 130 places and a busy machine could
+# make it flaky, so this was adopted only after NINE CONSECUTIVE RUNS of
+# the whole gate passed with the two together, pinned to four CPUs - the
+# size of GitHub's runner - on 2026-09-15. Walk 51.9s against 50.9 on its
+# own, sync 23.2 against 22.8, the pair 51.9 against 73.7 one after the
+# other (medians of nine and five). If the walk ever starts failing on a
+# timing alone, this is the first thing to split back: [FAST[:2], FAST[2:],
+# SLOW[:1], SLOW[1:]] runs them one after the other again.
+GROUPS = [FAST[:2], FAST[2:], SLOW]
+
+# The audit runs consistency.js and screens.js itself, for push.py's local
+# audit. Here both are steps of their own, so the audit's copies ran the
+# same two harnesses a second time in every gate. This tells the audit to
+# leave them out. It is set on the audit's own process only, never on this
+# one, so no other harness can see it.
+HAND_OVER = 'GATE_RUNS_CONSISTENCY_AND_SCREENS'
+
+# WHAT THE AUDIT JUDGED THAT THIS FILE DID NOT. Once the audit hands those
+# two over, they must be judged here at least as hard as the audit judged
+# them. consistency.js reports a finding with a mark and exits 0 either
+# way, so the audit also failed it for ending without its pass line: that is
+# a harness that stopped early and did not say so. And the audit read the
+# marks on stderr as well as stdout, for both.
+MUST_SAY = {'consistency': 'consistency checks pass'}
+BOTH_STREAMS = ('consistency', 'screens')
 
 # SYNC IN THREE, AT ONCE.
 #
@@ -129,51 +183,127 @@ def run_sync(cmd):
     return subprocess.CompletedProcess(cmd, code, '\n'.join(outs), '')
 
 
+def failed(name, r):
+    """A step fails on a non-zero exit or a failure mark, and the two the
+    audit handed over are judged by its rules as well (MUST_SAY above)."""
+    out = r.stdout or ''
+    if name in BOTH_STREAMS:
+        out += '\n' + (r.stderr or '')
+    if r.returncode != 0 or '✖' in out or '✗' in out:
+        return True
+    return name in MUST_SAY and MUST_SAY[name] not in out
+
+
+def record(h, name, took):
+    h.setdefault(name, []).append(round(took, 1))
+    h[name] = h[name][-30:]
+
+
+def group_key(group):
+    """A group of one is its step. A group of several keeps its own record
+    under all its names joined, because its time is the slowest member's
+    under contention and matches no single step's."""
+    return '+'.join(n for n, _ in group)
+
+
+def run_step(name, cmd, env):
+    """One step, timed by itself, so each step's time is its own even while
+    others run beside it."""
+    t0 = time.time()
+    if name == 'sync':
+        r = run_sync(cmd)
+    else:
+        r = subprocess.run(cmd, capture_output=True, text=True, cwd=HERE,
+                           env=env)
+    return r, time.time() - t0
+
+
+def run_group(group, hand_over):
+    """Every step in the group at once. The results come back in the
+    group's own order, never the order they finished in."""
+    jobs = []
+    for name, cmd in group:
+        env = dict(os.environ)
+        if name == 'audit' and hand_over:
+            env[HAND_OVER] = '1'
+        jobs.append((name, cmd, env))
+    with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
+        futures = [pool.submit(run_step, *job) for job in jobs]
+        return [f.result() for f in futures]
+
+
 def main():
     args = sys.argv[1:]
-    steps = FAST + SLOW
+    # By what the groups HOLD, never by their position: the fast steps are
+    # two groups, and taking the first group as "fast" ran two of the eight
+    # and passed a build with a broken twotab (found by breaking it on
+    # purpose, 2026-09-15).
+    groups = GROUPS
     if '--fast' in args:
-        steps = FAST
+        groups = [g for g in GROUPS if all(s in FAST for s in g)]
     elif '--slow' in args:
-        steps = SLOW
+        groups = [g for g in GROUPS if all(s in SLOW for s in g)]
+    steps = [s for g in groups for s in g]
+    names = [n for n, _ in steps]
+    # Only when this run includes both steps the audit would leave out.
+    hand_over = all(n in names for n in ('audit', 'consistency', 'screens'))
 
+    # The whole run's expectation is the sum of its GROUPS, since a group
+    # takes as long as its slowest member. Until every group has nine runs
+    # on record it says so rather than adding up the ones it has.
     h = history()
-    total = sum(expected(h, n) or 0 for n, _ in steps)
-    print('running %d steps, about %.0fs expected\n' % (len(steps), total))
+    exp = [expected(h, group_key(g)) for g in groups]
+    if all(exp):
+        print('running %d steps, about %.0fs expected\n'
+              % (len(steps), sum(exp)))
+    else:
+        print('running %d steps, no expectation yet (under nine runs '
+              'on record)\n' % len(steps))
 
     t_all = time.time()
-    bad = None
-    for name, cmd in steps:
-        e = expected(h, name)
+    bad = []
+    for group in groups:
         t0 = time.time()
-        if name == 'sync':
-            r = run_sync(cmd)
-        else:
-            r = subprocess.run(cmd, capture_output=True, text=True, cwd=HERE)
-        took = time.time() - t0
-        h.setdefault(name, []).append(round(took, 1))
-        h[name] = h[name][-30:]
+        results = run_group(group, hand_over)
+        took_all = time.time() - t0
 
-        lines = [l for l in r.stdout.strip().split('\n') if l.strip()]
-        last = lines[-1].strip()[:60] if lines else '(no output)'
-        failed = r.returncode != 0 or '✖' in r.stdout \
-            or '✗' in r.stdout
-        mark = 'FAIL' if failed else 'ok  '
-        against = ('%5.1fs against %.0fs' % (took, e)) if e \
-            else ('%5.1fs (no expectation yet)' % took)
-        print('%-12s %s  %s  %s' % (name, mark, against, last))
+        for (name, cmd), (r, took) in zip(group, results):
+            e = expected(h, name)
+            record(h, name, took)
+            lines = [l for l in (r.stdout or '').strip().split('\n')
+                     if l.strip()]
+            last = lines[-1].strip()[:60] if lines else '(no output)'
+            no = failed(name, r)
+            mark = 'FAIL' if no else 'ok  '
+            against = ('%5.1fs against %.0fs' % (took, e)) if e \
+                else ('%5.1fs (no expectation yet)' % took)
+            print('%-12s %s  %s  %s' % (name, mark, against, last))
+            if no:
+                bad.append((name, r, lines))
 
-        if failed:
-            bad = name
-            print('')
-            print('\n'.join('    ' + l for l in lines[-16:]))
-            # THE ERROR IS THE USEFUL PART. A crash writes to stderr and this
-            # printed stdout only, so the cloud gate reported "tests FAIL
-            # 0.0s (no output)" for a harness that had thrown at load
-            # (2026-09-15, CRLF from bump.py on Windows).
-            err = [l for l in (r.stderr or '').strip().split('\n') if l.strip()]
-            if err:
-                print('\n'.join('    ' + l for l in err[-16:]))
+        if len(group) > 1:
+            e = expected(h, group_key(group))
+            record(h, group_key(group), took_all)
+            print('%-12s       %.1fs for these %d at once%s'
+                  % ('', took_all, len(group),
+                     (', against %.0fs' % e) if e else ''))
+
+        if bad:
+            for name, r, lines in bad:
+                print('')
+                print('%s:' % name)
+                print('\n'.join('    ' + l for l in lines[-16:]))
+                # THE ERROR IS THE USEFUL PART. A crash writes to stderr and
+                # this printed stdout only, so the cloud gate reported "tests
+                # FAIL 0.0s (no output)" for a harness that had thrown at
+                # load (2026-09-15, CRLF from bump.py on Windows).
+                err = [l for l in (r.stderr or '').strip().split('\n')
+                       if l.strip()]
+                if err:
+                    print('\n'.join('    ' + l for l in err[-16:]))
+                if name in MUST_SAY and r.returncode == 0 \
+                        and MUST_SAY[name] not in (r.stdout or ''):
+                    print('    ended without saying "%s"' % MUST_SAY[name])
             break
 
     with open(LOG, 'w') as f:
@@ -182,7 +312,7 @@ def main():
     print('')
     if bad:
         print('✖ STOPPED AT %s after %.0fs — DO NOT SHIP'
-              % (bad, time.time() - t_all))
+              % (', '.join(n for n, _, _ in bad), time.time() - t_all))
         sys.exit(1)
     print('✔ all %d steps passed in %.0fs'
           % (len(steps), time.time() - t_all))

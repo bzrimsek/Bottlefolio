@@ -766,6 +766,80 @@ function check(name, got, want) {
       r.name, 'changed here');
   }
 
+  /* A CLEARED SHELF STAYS CLEARED. BZ, 2026-09-15: Clear my shelf, Reset
+     my changes and Restore apply on every device. Before, the very next
+     push read the account, merged every cleared bottle back in, and sent
+     them up again, on the device that had just cleared them. The map half
+     is here too: corrections were sent as a delta, which cannot empty what
+     another device added. */
+  {
+    const seed = { 'bz-apps': { whisky: { testuid: { updated: 5000,
+      bottles: [{ id: 'B1', k: 'Ardbeg 10', status: 'open' },
+                { id: 'B2', k: 'Weller 12', status: 'open' }],
+      edits: { 'Ardbeg 10': { userNote: 'peat' } } } } } };
+    const r = await run('a cleared shelf stays cleared', seed, async page => {
+      const first = await page.evaluate(async () => {
+        const had = (S.bottles || []).length;
+        replaceEverywhere({ bottles: [], custom: {}, edits: {}, deleted: {} },
+          'sync.js clear');
+        save_();
+        await new Promise(r2 => setTimeout(r2, 1600));
+        const acct = firebase.__store.data['bz-apps'].whisky.testuid;
+        return { had: had, here: (S.bottles || []).length,
+                 account: (acct.bottles || []).length,
+                 edits: Object.keys(acct.edits || {}).length,
+                 stamped: !!(acct.resets && acct.resets.bottles) };
+      });
+      /* The fake account starts from its seed again on a reload, so this is
+         a device whose replacement the account never heard: it must keep
+         its cleared shelf and send it, not take the old one back. */
+      await page.reload();
+      await page.waitForTimeout(900);
+      const after = await page.evaluate(() => (S.bottles || []).length);
+      return Object.assign(first, { afterReload: after });
+    });
+    check('the device had the account’s two bottles to clear', r.had, 2);
+    check('cleared here, and the next push did not merge them back', r.here, 0);
+    check('the account’s bottles are cleared too', r.account, 0);
+    check('and its corrections', r.edits, 0);
+    check('with the time the shelf was replaced', r.stamped, true);
+    check('a device whose clear the account never heard keeps it', r.afterReload, 0);
+  }
+
+  /* THE CLEAR REACHES A DEVICE THAT WAS AWAY. It holds the old shelf; the
+     account says the bottles were replaced after this device last looked. */
+  {
+    const r = await run('another device takes the clear',
+      { 'bz-apps': { whisky: { testuid: { updated: 9000,
+        resets: { bottles: 8000 }, displayName: 'BZ' } } } },
+      async page => page.evaluate(() =>
+        ({ here: (S.bottles || []).map(b => b.id) })),
+      { storage: { 'kb.bottles': JSON.stringify([
+          { id: 'B1', k: 'Ardbeg 10', status: 'open' }]),
+        'kb.updated': '1000' } });
+    check('a shelf cleared on another device arrives cleared', r.here, []);
+  }
+
+  /* AND ONE THAT IS OPEN AT THE TIME, through the live listener. */
+  {
+    const r = await run('a clear elsewhere arrives live',
+      { 'bz-apps': { whisky: { testuid: { updated: 5000,
+        bottles: [{ id: 'B1', k: 'Ardbeg 10', status: 'open' }] } } } },
+      async page => {
+        await page.waitForTimeout(800);
+        return page.evaluate(async () => {
+          const had = (S.bottles || []).length;
+          firebase.database().ref('bz-apps/whisky/testuid')
+            .update({ bottles: [], resets: { bottles: Date.now() },
+                      updated: Date.now() });
+          await new Promise(r2 => setTimeout(r2, 1200));
+          return { had: had, here: (S.bottles || []).length };
+        });
+      });
+    check('the open device had the bottle', r.had, 1);
+    check('and loses it the moment another device clears the shelf', r.here, 0);
+  }
+
   await browser.close();
 
   if (SLICE_FROM || SLICE_TO) {

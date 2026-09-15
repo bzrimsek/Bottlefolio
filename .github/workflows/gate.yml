@@ -62,8 +62,42 @@ jobs:
       - name: Install Playwright and eslint (exact versions from package.json)
         run: npm ci --no-audit --no-fund
 
-      - name: Install Chromium for the browser checks
-        run: npx playwright install --with-deps chromium
+      # THE BROWSER COMES FROM A CACHE. Downloading it took 20 of the run's
+      # seconds on every push, for the same bytes each time (review item
+      # 29, 2026-09-15). The browser build is fixed by the Playwright
+      # version, so the cache is keyed on exactly that: the version npm ci
+      # just installed, which is the exact one package.json pins, because
+      # npm ci refuses a lock file that disagrees with it. A new Playwright
+      # is a new key and a fresh download, never a stale browser.
+      #
+      # ONLY THE HEADLESS SHELL. Every harness that opens a browser -
+      # browser.js, sync.js, screens.js, render.js and twotab.js - calls
+      # chromium.launch() with no options, which is headless, and headless
+      # Chromium in this Playwright is the separate chrome-headless-shell
+      # build. Checked on 2026-09-15 by launching it that way and listing
+      # the process that started. The full Chrome and FFmpeg were downloaded
+      # on every run and never started.
+      - name: Which Playwright is installed
+        id: pw
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Chromium from the cache
+        id: pwcache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell
+
+      - name: Install Chromium for the browser checks (headless shell, with its system packages)
+        if: steps.pwcache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps --only-shell chromium
+
+      # The cache holds the browser, not the system packages it needs, and
+      # every run starts on a fresh machine. So a cache hit still installs
+      # them, which is the half of --with-deps the cache cannot supply.
+      - name: Chromium's system packages (the browser came from the cache)
+        if: steps.pwcache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium-headless-shell
 
       # BZ's real shelf. The suite will not start without it, and the repo is
       # public, so only the encrypted copies are committed. The key is the
@@ -79,8 +113,33 @@ jobs:
               --output "$f" --decrypt "$f.gpg"
           done
 
+      # THE TIMING HISTORY (rule 35). gate.py expects each step to take the
+      # median of its last nine runs, read from .gatetimes.json - and every
+      # runner is a new machine, so every cloud run began with no record and
+      # printed "no expectation yet" beside all ten. Restored from the
+      # newest run's copy. A cache entry can never be overwritten, so each
+      # run saves under a key of its own and restore-keys, a prefix, picks
+      # the most recent one.
+      - name: The gate's timing history, from the last run
+        uses: actions/cache/restore@v4
+        with:
+          path: .gatetimes.json
+          key: gatetimes-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: gatetimes-
+
       - name: The gate - all ten checks
         run: python3 gate.py
+
+      # Saved when the gate is red too, because gate.py records a failed
+      # run's times as well; skipped only when gate.py never got as far as
+      # writing the file. Saved here rather than at the end of the job, so a
+      # deploy step failing later cannot lose the gate's record.
+      - name: Keep the timing history for the next run
+        if: always() && hashFiles('.gatetimes.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .gatetimes.json
+          key: gatetimes-${{ github.run_id }}-${{ github.run_attempt }}
 
       # MAIN MUST NOT HAVE MOVED UNDER THIS BUILD. push.py makes each build
       # on main as it was at push time and force-moves `build` onto it, so
@@ -199,11 +258,15 @@ jobs:
 
       # The only check that proves it is live: ask the real site which
       # version it is serving, past the CDN's cache, until it says ours.
+      # Every 5 seconds, 120 times, for the same 10 minutes. It asked every
+      # 15, so a site that went live just after a look waited up to 14
+      # seconds more to be seen (review item 29, 2026-09-15): the last three
+      # publishes took 46, 61 and 46 seconds here, three and four sleeps.
       - name: Wait until the live site serves this version
         run: |
           want=$(grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" index.html)
           url="https://bzrimsek.github.io/Bottlefolio/index.html"
-          for i in $(seq 1 40); do
+          for i in $(seq 1 120); do
             got=$(curl -fsSL "$url?nocache=$(date +%s%N)" \
               | grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" || true)
             echo "live site says v${got:-?}, this build is v$want"
@@ -211,7 +274,7 @@ jobs:
               echo "LIVE: v$want at https://bzrimsek.github.io/Bottlefolio/"
               exit 0
             fi
-            sleep 15
+            sleep 5
           done
           echo "::error::The gate passed and main moved, but the site did not show v$want within 10 minutes."
           exit 1

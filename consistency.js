@@ -642,7 +642,10 @@ const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
      the dot is about what somebody sitting here has looked at, and a
      desktop clearing it should not clear the phone's. */
   'toolsSeen',
-  'offerText', 'barSort', 'reels', 'held'];
+  'offerText', 'barSort', 'reels', 'held',
+  /* Which account-wide replacements THIS device has applied (L.resetSide).
+     Synced, it would tell every device it had applied what only one had. */
+  'resetSeen'];
 check('every stored key is synced or marked local on purpose',
   stateKeys.filter(k => syncBlock.indexOf("'" + k + "'") < 0
     && LOCAL_ON_PURPOSE.indexOf(k) < 0));
@@ -912,7 +915,7 @@ check('no fixed svg id is emitted by a repeated drawing',
       any documentation at all. Named buttons only, because a chip or an
       icon is not something anybody looks up. */
 {
-  const CONTROLS = ['Read the label', 'Export everything', 'Export for import',
+  const CONTROLS = ['Photograph the label', 'Export everything', 'Export for import',
     'Photograph it', 'Fill what is missing', 'Import a collection',
     'Back up everything', 'Add to the shelf',
     /* Added with the portrait veto's way back, 2026-09-13. */
@@ -939,9 +942,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Scan the library for inconsistencies',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
-    'With a guest', 'Whisky only', 'The library', 'Add to the wishlist',
+    'With a guest', 'Whisky only', 'The library', 'Add to wishlist',
   'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
-  'Add to the list',
+  'Add to wishlist',
   'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',

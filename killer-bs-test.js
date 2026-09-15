@@ -4328,12 +4328,14 @@ sec('§181 the App use tab names controls that exist');
     ['Import',                'Shelf'],
     ['\u2039 Back',            'Shop'],
     ['I bought it',           'In a store, holding a bottle'],
-    ['Want it',               'In a store, holding a bottle'],
+    /* "Add to wishlist", the one name (BZ, 2026-09-15). */
+    ['Add to wishlist',       'In a store, holding a bottle'],
     ['Correct the details',  'Add a bottle you just bought'],
     ['Something else',        'Deciding what to buy next'],
     ['Read it',               'Looking at it on a website'],
     /* Renamed in the tense pass: three screens said this three ways. */
-    ['I drank this',          'Record a pour'],
+    /* "Log a pour", the one name (BZ, 2026-09-15). */
+    ['Log a pour',            'Record a pour'],
     ['Remix',                 'Run a flight again'],
     // Design, not build: the tile says "Design one from scratch" and the
     // sheet it opens says "Design a flight", because "run one you
@@ -4345,8 +4347,9 @@ sec('§181 the App use tab names controls that exist');
        the same check that caught "Correct these details" and "Change". */
     ['Find it',               'Poured, Find it, Another bottle'],
     ['+ Another bottle',      'Poured, Find it, Another bottle'],
-    ['Edit',                  'Look up, Edit, Delete'],
-    ['Delete',                'Look up, Edit, Delete']
+    /* "Edit details" since 2026-09-15, beside Edit tasting notes. */
+    ['Edit details',          'Look up, Edit details, Delete'],
+    ['Delete',                'Look up, Edit details, Delete']
   ];
   // A label is either a quoted string the script sets, or text between
   // tags in the markup. Both are the words printed on the control.
@@ -17569,7 +17572,13 @@ async function queueSection() {
 
   const q = L.serialQueue({ max: 8 });
   ['a', 'b', 'c', 'd'].forEach(kk => q.push(kk, slow(kk)));
-  await new Promise(r => setTimeout(r, 120));
+  /* WAIT FOR THE WORK, NOT A GUESS AT IT. A fixed 120ms failed "every job
+     ran: got 3, want 4" when the gate started five browsers at once (item
+     29, 2026-09-15): the timers were late, not wrong. Up to two seconds,
+     looked at every 10ms, and the assertions below are unchanged. */
+  for (let w = 0; w < 200 && order.length < 4; w++) {
+    await new Promise(r => setTimeout(r, 10));
+  }
 
   eq('every job ran', order.length, 4);
   /* THE WHOLE POINT: never two at once. */
@@ -17585,7 +17594,11 @@ async function queueSection() {
   const says = ['a', 'a', 'a'].map(kk => q2.push(kk, one));
   eq('the first is queued', says[0], 'queued');
   eq('and the repeats say so', says[1], 'already queued');
-  await new Promise(r => setTimeout(r, 80));
+  // The same: wait for the one run, then long enough for a wrong second.
+  for (let w = 0; w < 200 && ran.length < 1; w++) {
+    await new Promise(r => setTimeout(r, 10));
+  }
+  await new Promise(r => setTimeout(r, 40));
   eq('so the work happens once', ran.length, 1);
 
   /* AND IT STOPS GROWING. A paragraph about a bottle somebody stopped
@@ -19397,6 +19410,94 @@ sec('§437 a missing proof one way, the setup in one place, a wait that counts')
     'Asking… 25s, still going');
   eq('past forty-five it says it is slow', L.waitSay('Asking…', 60),
     'Asking… 60s, slower than usual');
+}
+
+sec('§438 a list replaced whole is taken whole, on every device');
+{
+  /* BZ, 2026-09-15: Clear my shelf, Reset my changes and Restore apply on
+     every device. Before this the next sync merged every cleared bottle
+     back from the account, on the very device that cleared it. */
+  eq('the account replaced it and this device has not applied that: take it',
+    L.resetSide('bottles', {}, { bottles: 200 }, {}), 'remote');
+  eq('once applied, merge as usual',
+    L.resetSide('bottles', { bottles: 200 }, { bottles: 200 }, { bottles: 200 }),
+    null);
+  eq('this device replaced it and the account has not heard: keep, send whole',
+    L.resetSide('bottles', { bottles: 300 }, { bottles: 200 }, { bottles: 300 }),
+    'local');
+  eq('the later of two replacements wins, whichever device made it',
+    L.resetSide('bottles', { bottles: 300 }, { bottles: 400 }, { bottles: 300 }),
+    'remote');
+  eq('nothing replaced anywhere: merge as usual',
+    L.resetSide('bottles', {}, {}, {}), null);
+  eq('a reset time only moves forward in a merge',
+    L.mergeSyncValue('resets', { bottles: 500, edits: 100 },
+      { bottles: 300, edits: 200 }), { bottles: 500, edits: 200 });
+  eq('marking stamps each key given',
+    L.markReset({ a: 1 }, ['b', 'c'], 9), { a: 1, b: 9, c: 9 });
+  eq('a list empties to a list', L.emptyOf('bottles'), []);
+  eq('a map empties to a map', L.emptyOf('edits'), {});
+  eq('every replaceable key is synced',
+    L.RESETTABLE.filter(k => L.SYNC_KEYS.indexOf(k) < 0), []);
+  eq('the reset times are synced and merged',
+    [L.SYNC_KEYS.indexOf('resets') >= 0, L.SYNC_MERGE.indexOf('resets') >= 0],
+    [true, true]);
+  eq('and read after the lists they govern',
+    L.SYNC_KEYS[L.SYNC_KEYS.length - 1], 'resets');
+  eq('each synced key is listed once',
+    L.SYNC_KEYS.filter((k, i) => L.SYNC_KEYS.indexOf(k) !== i), []);
+}
+
+sec('§439 one verdict: the shop\'s sentence on every screen');
+{
+  /* BZ, 2026-09-15: the Shop's four sentences everywhere; at a bar, a line
+     under them. The bar said "order it", the offer row "Unknown" and the
+     shop "New ground" about one bottle (review). */
+  const cat = {
+    a1: { k: 'a1', name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch',
+          region: 'Islay', proof: 92 },
+    l1: { k: 'l1', name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
+          region: 'Islay', proof: 86 }
+  };
+  const bots = [{ id: 'b1', k: 'a1', status: 'open' }];
+  const SAYS = ['New ground, and squarely your taste.',
+    'New ground, though not what you usually reach for.',
+    'Nothing new for the shelf — but squarely your taste.',
+    'Nothing either way — buy it if you want to drink it.'];
+  const bar = L.wouldILike('Kavalan Solist', cat, bots, []) || {};
+  eq('the bar says one of the shop\'s four sentences',
+    SAYS.indexOf(bar.say) >= 0, true);
+  eq('with the bar\'s line under it', bar.bar,
+    'Worth the glass rather than the bottle.');
+  eq('its ranking words are kept for ranking',
+    ['order it', 'worth trying', 'you know this one'].indexOf(bar.verdict) >= 0,
+    true);
+  const own = L.wouldILike('Ardbeg Ten', cat, bots, []) || {};
+  eq('a bottle you own says so', own.say, 'On your shelf.');
+  eq('and adds no bar line', own.bar, '');
+  const t = L.tasteProfile(cat, bots, {});
+  eq('a profile handed in judges exactly as one built inside',
+    L.judgeListing({ dist: 'Ardbeg', sub: 'scotch' }, 'X', cat, bots, [], t),
+    L.judgeListing({ dist: 'Ardbeg', sub: 'scotch' }, 'X', cat, bots, []));
+}
+
+sec('§440 a failure said in plain words');
+{
+  /* Review, 2026-09-15: "PERMISSION_DENIED" reached the screen. */
+  eq('a refusal', L.plainError({ code: 'PERMISSION_DENIED',
+    message: 'PERMISSION_DENIED: no permission' }),
+    'Your account is not allowed to do that.');
+  eq('no connection', L.plainError(new Error('Failed to fetch')),
+    'No connection just now — try again when you have signal.');
+  eq('too many', L.plainError({ code: 'resource-exhausted' }),
+    'Too many at once just now — try again in a minute.');
+  eq('anything else takes the caller\'s own words',
+    L.plainError(new Error('weird'), 'Could not read that photo'),
+    'Could not read that photo');
+  eq('or says where the detail went', /Running this/.test(L.plainError('weird')),
+    true);
+  eq('and never shows the raw code',
+    /PERMISSION|_/.test(L.plainError({ code: 'PERMISSION_DENIED' })), false);
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

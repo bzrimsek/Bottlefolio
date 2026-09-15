@@ -404,49 +404,64 @@ def run_audit(html_path):
             else:
                 ok(f'lock file {lock} matches {source}')
 
-    # The wiring check. It reads index.html as text and asks the questions
-    # the suite structurally cannot: an element id nobody declares, a
-    # literal \u escape in a string, a state key that does not survive a
-    # reload, a helper defined and never called. It found three real
-    # defects in its first two runs, including a badge that had been
-    # writing to a missing element since the Library moved into Settings.
-    # Part of the gate rather than a thing to remember to run.
-    try:
-        r = run_check('consistency.js',
-                      ['node', os.path.join(base, 'consistency.js')], 120)
-        out = r.stdout or ''
-        bad = [ln.strip() for ln in out.split('\n') if '\u2716' in ln]
-        # The summary line counts the others and must not be counted as one
-        # itself. A first pass filtered on the leading mark, which every
-        # line has, so it swallowed the lot and reported clean.
-        fired = [b for b in bad if 'checks found something' not in b]
-        if fired:
-            for b in fired:
-                fail('consistency: ' + b.lstrip('\u2716 ').strip())
-        elif r.returncode == 0 and 'consistency checks pass' not in out:
-            # Exit 0 with no summary is a harness that stopped early and
-            # did not say so. Silence is not a pass.
-            fail('consistency.js ended without saying its checks passed')
-        elif r.returncode == 0:
-            ok('the wiring is consistent (consistency.js)')
-    except Exception as e:
-        fail(f'consistency.js did not run: {e}')
+    # WHEN gate.py IS THE CALLER, IT RUNS THESE TWO ITSELF. The gate runs
+    # consistency.js and screens.js as steps of their own, at the same time
+    # as this audit, so the audit's copies were the same two harnesses run
+    # twice at once, fighting each other for the machine (review item 29,
+    # 2026-09-15). gate.py sets GATE_RUNS_CONSISTENCY_AND_SCREENS on this
+    # process only, and only on a run that includes both of those steps,
+    # and it judges them by every rule below: a mark on either stream, a
+    # non-zero exit, and consistency.js ending without its pass line.
+    # push.py's local audit never sets it, so both still run here there.
+    if os.environ.get('GATE_RUNS_CONSISTENCY_AND_SCREENS') == '1':
+        print('  \u00b7 consistency.js and screens.js not run here: gate.py '
+              'runs each as its own step')
+    else:
+        # The wiring check. It reads index.html as text and asks the
+        # questions the suite structurally cannot: an element id nobody
+        # declares, a literal \u escape in a string, a state key that does
+        # not survive a reload, a helper defined and never called. It found
+        # three real defects in its first two runs, including a badge that
+        # had been writing to a missing element since the Library moved
+        # into Settings. Part of the gate rather than a thing to remember
+        # to run.
+        try:
+            r = run_check('consistency.js',
+                          ['node', os.path.join(base, 'consistency.js')], 120)
+            out = r.stdout or ''
+            bad = [ln.strip() for ln in out.split('\n') if '\u2716' in ln]
+            # The summary line counts the others and must not be counted as
+            # one itself. A first pass filtered on the leading mark, which
+            # every line has, so it swallowed the lot and reported clean.
+            fired = [b for b in bad if 'checks found something' not in b]
+            if fired:
+                for b in fired:
+                    fail('consistency: ' + b.lstrip('\u2716 ').strip())
+            elif r.returncode == 0 and 'consistency checks pass' not in out:
+                # Exit 0 with no summary is a harness that stopped early
+                # and did not say so. Silence is not a pass.
+                fail('consistency.js ended without saying its checks passed')
+            elif r.returncode == 0:
+                ok('the wiring is consistent (consistency.js)')
+        except Exception as e:
+            fail(f'consistency.js did not run: {e}')
 
-    # Every screen, drawn directly. browser.js walks the app like a person
-    # and takes two minutes; most of what it catches is a screen that THREW
-    # while drawing, and that does not need clicking to prove. Added after
-    # a name collision broke the walk and cost two full runs to find.
-    try:
-        r = run_check('screens.js',
-                      ['node', os.path.join(base, 'screens.js')], 180)
-        out = (r.stdout or '') + (r.stderr or '')
-        marks = [ln for ln in out.split('\n') if '\u2716' in ln]
-        for ln in marks:
-            fail('screens: ' + ln.strip().lstrip('\u2716 ').strip())
-        if r.returncode == 0 and not marks:
-            ok('every screen draws without throwing (screens.js)')
-    except Exception as e:
-        fail(f'screens.js did not run: {e}')
+        # Every screen, drawn directly. browser.js walks the app like a
+        # person and takes two minutes; most of what it catches is a screen
+        # that THREW while drawing, and that does not need clicking to
+        # prove. Added after a name collision broke the walk and cost two
+        # full runs to find.
+        try:
+            r = run_check('screens.js',
+                          ['node', os.path.join(base, 'screens.js')], 180)
+            out = (r.stdout or '') + (r.stderr or '')
+            marks = [ln for ln in out.split('\n') if '\u2716' in ln]
+            for ln in marks:
+                fail('screens: ' + ln.strip().lstrip('\u2716 ').strip())
+            if r.returncode == 0 and not marks:
+                ok('every screen draws without throwing (screens.js)')
+        except Exception as e:
+            fail(f'screens.js did not run: {e}')
 
     # ── Line endings ──────────────────────────────────────────
     # bump.py wrote CRLF on BZ's Windows PC (2026-09-15): text-mode writes

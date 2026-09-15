@@ -2526,7 +2526,9 @@ function step(n) {
           const h = document.querySelector('#scr-detail .hdr');
           const t = document.getElementById('detailTitle');
           return h ? { need: h.scrollWidth, room: h.clientWidth,
-                       title: t ? t.textContent.trim() : '' } : null;
+                       title: t ? t.textContent.trim() : '',
+                       tw: t ? Math.round(t.getBoundingClientRect().width) : 0 }
+            : null;
         });
         if (!hd) {
           failures.push('flight: no header on the flight screen');
@@ -2537,6 +2539,14 @@ function step(n) {
           }
           if (hd.title !== 'The flight') {
             failures.push('flight: the header says ' + JSON.stringify(hd.title));
+          }
+          /* NOTHING PAST THE EDGE IS NOT ENOUGH. With three buttons in the
+             header nothing overflowed and the title was squeezed until its
+             letters stacked down the side - the release-2 pictures showed
+             it, and this check did not (2026-09-15). */
+          if (hd.tw < 60) {
+            failures.push('flight: the title is ' + hd.tw + 'px wide, too '
+              + 'narrow to read');
           }
         }
         if (vp) await page.setViewportSize(vp);
@@ -2665,7 +2675,8 @@ function step(n) {
       }
 
       // Both actions on the glass, no fold to open first.
-      for (const label of ['Want it', 'I bought it']) {
+      // "Add to wishlist" is the one name for wanting it (BZ, 2026-09-15).
+      for (const label of ['Add to wishlist', 'I bought it']) {
         const b = page.locator('#scr-shop button', { hasText: label }).first();
         if (!(await b.count()) || !(await b.isVisible())) {
           failures.push('shop: "' + label + '" is not visible');
@@ -3068,7 +3079,7 @@ function step(n) {
           + ', want ' + head);
       }
     };
-    wantIn('Pour it', 'Your bottle');
+    wantIn('Log a pour', 'Your bottle');
     // The filing key must never be on the screen.
     const ids = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#detailBody .sheet')]
