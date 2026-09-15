@@ -455,6 +455,11 @@ const TWO_DOORS_OK = [
      door rather than deciding openness itself. Named specifically, so a
      second way of deciding pourable would still fail this check. */
   'roomNotes>pourable',
+  /* A CALLER, NOT A SECOND ANSWER. An empty reply that carries a service
+     error IS a failure, so lookupEmptySay hands that case to
+     lookupFailSay rather than wording it again. Named specifically, so a
+     second way of phrasing a failure would still fail this check. */
+  'lookupEmptySay>lookupFailSay',
   /* ONE SOURCE, TWO READERS. The audit names the release a bottle's name
      implies, and the suggestion offers to set it - both by asking
      L.guessScar, which is the single door. Rule 30d is about two
@@ -899,6 +904,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Running a tasting',
     /* Added with the service build check, 2026-09-14. */
     'Check the service',
+    /* Added with the tunable read ceiling, 2026-09-14. */
+    'Most a shelf read may write',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
@@ -1311,6 +1318,175 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'own house "different maker"']);
 }
 
+/* EVERY LOOKUP BUTTON BEHAVES THE SAME.
+ *
+ * BZ: the bottle lookup for shop and taste are very different — and then,
+ * on what he wanted instead: I'd prefer the look ups to operate the same
+ * from a user pov even if one brings back or need more data. They had
+ * drifted in three ways at once. One grew a filling bottle on its button
+ * and the other still put a note at the far end of a row. One printed the
+ * raw exception on screen, internals and all. And an answer with no bottle
+ * in it was "nothing known yet, add it by name" on one and a red failure
+ * on the other, for the same event.
+ *
+ * Whether a screen needs a proof to accept the answer is internal. What a
+ * person sees is not, so the three user-facing pieces are shared and this
+ * fails when a lookup handler stops using one of them.
+ */
+{
+  /* REAL LINE NUMBERS. codeOnly has the comments stripped out, so its line
+     numbers are not the file's — reporting them sent me to publishBatch
+     looking for a lookup. The scan still runs on the stripped code, and
+     the number is found by locating the line in the real source. */
+  const lines = codeOnly.split('\n');
+  const srcLines = src.split('\n');
+  const realLine = txt => {
+    const t = txt.trim();
+    const at = srcLines.findIndex(x => x.trim() === t);
+    return at >= 0 ? (at + 1) : '?';
+  };
+  const bad = [];
+  lines.forEach((l, i) => {
+    if (!/await askLookup\(/.test(l)) return;
+    /* The handlers a person presses: the ones that report to a message
+       element. A background fill has nobody watching it. */
+    const near = lines.slice(Math.max(0, i - 14), i + 40).join('\n');
+    if (!/lookMsg|say\(/.test(near)) return;
+    if (!/buttonWorking\(/.test(near)) {
+      bad.push('index.html:' + realLine(l) + '  a lookup a person presses '
+        + 'with no progress on its control');
+    }
+    if (!/lookupFailSay/.test(near)) {
+      bad.push('index.html:' + realLine(l) + '  a lookup that reports its '
+        + 'failure in its own words rather than the shared sentence');
+    }
+  });
+  check('every lookup a person presses behaves the same', bad);
+}
+
+/* EVERY SERVICE CALL GOES THROUGH THE ONE DOOR.
+ *
+ * BZ: check everywhere for this same shape. postWithRetry carries the
+ * timeout, the 404 retry, the wake lock and the service queue. askService
+ * used a raw fetch because it asks with its question in the URL rather
+ * than in a body — so it alone had none of the four, which is why a shelf
+ * upload recovered from a 404 and a lookup gave up on the identical one.
+ * The door takes a GET now.
+ *
+ * A raw fetch of a LOCAL file is not this: map.json, data.json and a blob
+ * URL are not the service and have nothing to retry.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const bad = [];
+  lines.forEach((l, i) => {
+    if (!/\bfetch\(/.test(l)) return;
+    const near = lines.slice(Math.max(0, i - 3), i + 3).join('\n');
+    if (/postWithRetry/.test(near)) return;        // the door itself
+    if (/'\.\/|"\.\//.test(l)) return;              // a file beside the app
+    if (/blob|dataURL|createObjectURL/.test(near)) return;
+    if (/lookupUrl|S\.lookupUrl|script\.google/.test(near)) {
+      bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 50)
+        + '  \u2014 the service reached without the retry, the wake lock '
+        + 'or the queue');
+    }
+  });
+  check('every service call goes through the one door', bad);
+}
+
+/* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
+ *
+ * BZ typed Yellowstone and was told the lookup timed out — at twelve
+ * seconds. Every button in the app that looks a bottle up had a ceiling
+ * below the service's floor: three at 15000 and one at 12000, against a
+ * log where the real lookups answered at 18.1, 24.1, 49.7, 67.3, 82.7 and
+ * 86.9 seconds and not one came back under 15. A timeout beneath the
+ * ordinary answering time cannot protect anybody — it only guarantees the
+ * slow answers are discarded, and the slow ones are the searches that had
+ * work to do.
+ *
+ * The version check is the deliberate exception: it asks for a string the
+ * deployment already holds and answered in 0.8 to 8.3 seconds every time.
+ */
+{
+  const rx = /(askService|askLookup)\(([^;]{0,140}?)(\d{4,6})\s*[,)]/g;
+  const mean = [];
+  let m;
+  while ((m = rx.exec(codeOnly)) !== null) {
+    const ms = Number(m[3]);
+    if (ms >= 20000) continue;
+    mean.push('a lookup given only ' + ms + 'ms \u2014 this service answers '
+      + 'in 18 to 87 seconds, so the ceiling is under the floor');
+  }
+  check('no lookup is given less time than the service takes', mean);
+}
+
+/* A SERVICE ERROR IS LOGGED WITH ITS EVIDENCE.
+ *
+ * BZ photographed a two-page menu and got nothing. The log said "shelf
+ * read: bad json from the model" and no more — while the service had
+ * already sent back the unreadable text as `raw`, which the app threw
+ * away. The one fact that identifies a truncation is that the text STOPS
+ * rather than being wrong at the start, so the discarded part was the
+ * whole diagnosis.
+ *
+ * Handlers that read .error must log something alongside it. Costs
+ * nothing, and turns a six-round guess into a one-round read.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const bad = [];
+  lines.forEach((l, i) => {
+    if (!/appLog\(/.test(l)) return;
+    if (!/\.error\b/.test(l)) return;
+    const near = lines.slice(i, i + 4).join('\n');
+    /* EVIDENCE BEYOND THE VERDICT. The first version of this excused any
+       handler whose window contained the word `raw` — which every one of
+       them does, because the verdict is `raw.error`. Every handler
+       excused itself and the check was green against the bug it was
+       written for. It wants the BODY: raw.raw, a tail, a slice, a
+       stringify. */
+    if (/raw\.raw|\btail\b|slice\(|JSON\.stringify/.test(near)) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 52)
+      + '  \u2014 logs the verdict and drops what the service sent with it');
+  });
+  check('a service error is logged with what came back', bad);
+}
+
+/* NOTHING RELOADS THE PAGE TO "BE SURE".
+ *
+ * BZ: if I click Check for An Update, it actually goes back a version.
+ * reg.update() resolves when the new sw.js has been FETCHED, not when the
+ * worker built from it has installed, so reg.waiting was still null and
+ * the code concluded there was no update and reloaded anyway. That reload
+ * is served by the OLD worker out of the OLD cache — a freshly uploaded
+ * build replaced by the one before it.
+ *
+ * A reload is never a way to find something out. It serves what the cache
+ * already holds, so at best it changes nothing and at worst it undoes an
+ * install that was still in flight. The only legitimate reload is the one
+ * controllerchange fires after a NEW worker has taken over.
+ */
+{
+  /* AGAINST THE CODE, NOT THE PROSE. The first version of this allowed a
+     reload whose neighbourhood mentioned controllerchange — and the
+     comment explaining the fix says that word, so restoring the bug left
+     the check green. Twice in one day a checker has read comments and
+     believed them. */
+  const lines = codeOnly.split('\n');
+  const bad = [];
+  lines.forEach((l, i) => {
+    if (!/location\.reload\(/.test(l)) return;
+    const near = lines.slice(Math.max(0, i - 14), i + 3).join('\n');
+    /* The two reloads that are the point: a new worker taking over, and a
+       deliberate cache wipe somebody confirmed. */
+    if (/controllerchange|_swReloading|clean reload|confirmDelete/.test(near)) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 46)
+      + '  \u2014 a reload serves the cache, so it can only repeat or undo');
+  });
+  check('nothing reloads the page hoping to find a newer build', bad);
+}
+
 /* EVERY SERVICE ANSWER IS READ THROUGH readService.
  *
  * BZ pressed Check the service on a deployment he had just pasted and was
@@ -1421,7 +1597,6 @@ check('no fixed svg id is emitted by a repeated drawing',
       allow: ['Through the one door, like every other question',
               'AN ARRAY. L.lookupUrl does',
               'this is not the shop',
-              'The paid half, and the only half a person decides to run',
               'lookMsg.textContent'],
       why: 'askLookup counts the cap and teaches the library; askService '
          + 'does neither. A caller on the raw door gets an uncounted '

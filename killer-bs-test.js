@@ -17692,6 +17692,424 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7420 a lookup fails the same way everywhere');
+{
+  /* BZ: these types of fundamental user actions must be the same, I don't
+     understand why you'd vary. Measured across the file: four lookups a
+     person presses, in three shapes. One printed the raw exception on
+     screen — his read \u201cLookup failed (Error: no JSON in the reply.
+     stop_reason=end_turn text=The s)\u201d, every word of it written for me
+     and none of it telling him what to do. */
+  const say = m => L.lookupFailSay(new Error(m));
+
+  eq('a timeout says it took too long',
+    /took too long/.test(say('the lookup timed out')), true);
+  eq('an expired answer says to try again',
+    /again/.test(say('HTTP 404')), true);
+  eq('an unreadable reply suggests the printed name',
+    /full name as it is printed/.test(
+      say('no JSON in the reply. stop_reason=end_turn text=The s')), true);
+  eq('offline says offline', /offline/i.test(say('you are offline')), true);
+  eq('the allowance says the allowance',
+    /allowance/.test(say('that is 600 lookups today, which is the daily limit')),
+    true);
+  eq('anything else still says something useful',
+    /log/.test(say('some new thing nobody has seen')), true);
+
+  /* NO INTERNALS REACH THE SCREEN. The whole point. */
+  ['no JSON in the reply. stop_reason=end_turn text=The s',
+   'HTTP 404', 'signal is aborted without reason'].forEach(m => {
+    const out = say(m);
+    eq('nothing about stop_reason in "' + m.slice(0, 18) + '"',
+      /stop_reason|HTTP|signal|JSON/.test(out), false);
+  });
+
+  /* AN EMPTY ANSWER IS NOT A FAILURE, and reads the same on every screen.
+     One screen said nothing known yet, add it by name; another threw the
+     same event down the error path and showed a red message. */
+  eq('an empty reply invites you to add it',
+    /Add it by name/.test(L.lookupEmptySay({})), true);
+  eq('and so does one with only a note',
+    /Add it by name/.test(L.lookupEmptySay({ note: 'hm' })), true);
+  /* UNLESS THE SERVICE ITSELF ERRORED, which is a failure and is worded as
+     one \u2014 lookupEmptySay hands that case to lookupFailSay rather than
+     phrasing it a second time. */
+  eq('a service error is still a failure',
+    /took too long/.test(L.lookupEmptySay({ error: 'the lookup timed out' })),
+    true);
+  eq('nothing at all does not throw',
+    typeof L.lookupEmptySay(null), 'string');
+}
+
+sec('\u00a7419 a verdict uses what the lookup found out');
+{
+  /* BZ, at The Boss Hog XIII: The Golden Pharaoh. The card said WhistlePig
+     and rye, and the line under it said nothing on your shelf is much like
+     it — on a shelf holding a WhistlePig and 36 ryes. The name carries no
+     distillery and no category, so offerFacts answered {peated:false} and
+     the verdict judged on nothing while the answer sat directly above it. */
+  const cat = {}, bots = [];
+  for (let i = 0; i < 36; i++) {
+    cat['r' + i] = { k: 'r' + i, name: 'A Rye ' + i, sub: 'rye',
+                     dist: 'House ' + i, proof: 100 };
+    bots.push({ id: 'y' + i, k: 'r' + i, status: 'open' });
+  }
+  cat.wp = { k: 'wp', name: 'WhistlePig 10', sub: 'rye', dist: 'WhistlePig',
+             proof: 100 };
+  bots.push({ id: 'ywp', k: 'wp', status: 'open' });
+  const nm = 'The Boss Hog XIII: The Golden Pharaoh';
+
+  eq('the name alone carries no distillery',
+    (L.offerFacts(nm, cat) || {}).dist, undefined);
+  eq('nor a category', (L.offerFacts(nm, cat) || {}).sub, undefined);
+
+  /* WITHOUT the lookup it can only say it does not know the bottle. */
+  const blind = L.wouldILike(nm, cat, bots, []);
+  eq('judged on the name alone it reads as a stranger',
+    /Nothing on your shelf is much like it/.test(blind.why), true);
+
+  /* WITH it, the shelf is not a stranger to a WhistlePig rye. */
+  const seeing = L.wouldILike(nm, cat, bots, [],
+    { name: nm, dist: 'WhistlePig', sub: 'rye', proof: 104 });
+  eq('the lookup\u2019s answer reaches the verdict',
+    /Nothing on your shelf is much like it/.test(seeing.why), false);
+  eq('and it names what you have',
+    /WhistlePig/.test(seeing.why), true);
+
+  /* A GENUINE STRANGER STILL READS AS ONE. The fix must not turn every
+     bottle into something you half know. */
+  const far = L.wouldILike('Something Else Entirely', cat, bots, [],
+    { name: 'Something Else Entirely', dist: 'Nobody', sub: 'tequila' });
+  eq('an unknown house and category is still a stranger',
+    /Nothing on your shelf is much like it/.test(far.why), true);
+
+  /* THE NAME NEVER OVERWRITES THE LOOKUP. */
+  const both = L.wouldILike('Some Bourbon Thing', cat, bots, [],
+    { name: 'Some Bourbon Thing', sub: 'rye' });
+  eq('the lookup wins over what the name spells',
+    /Nothing on your shelf is much like it/.test(both.why), false);
+
+  eq('no lookup at all does not throw',
+    typeof L.wouldILike(nm, cat, bots, [], null).why, 'string');
+}
+
+sec('\u00a7418 model prose leads with the answer and folds the rest');
+{
+  /* BZ: can you ensure that we use the summary/detail construct on all
+     prose sections driven by gpt — and put the details under a fold. One
+     splitter, so the recap, the bottle story and a read's take cannot
+     present the same kind of writing three different ways. */
+
+  /* PARAGRAPHS FIRST. A writer who made two made them for a reason. */
+  const two = L.proseSplit('First para, the answer.\n\nSecond para, the '
+    + 'detail, and long enough to be worth a fold.');
+  eq('the first paragraph leads', two.lead, 'First para, the answer.');
+  eq('and the rest follows', /Second para/.test(two.rest), true);
+
+  /* ONE PARAGRAPH SPLITS AFTER THE FIRST SENTENCE. Real recap prose. */
+  const one = L.proseSplit('Three distilleries each earned a second pour '
+    + 'this month, which suggests you were testing. The two bar visits '
+    + 'split across Atlanta and Washington means almost all your drinking '
+    + 'was at home.');
+  eq('the first sentence leads',
+    /^Three distilleries.*testing\.$/.test(one.lead), true);
+  eq('and the second is folded', /^The two bar visits/.test(one.rest), true);
+
+  /* A FOLD HAS TO BE WORTH OPENING. Splitting two short sentences into one
+     and one hides nine words behind a control, which is worse than no
+     control. */
+  const tiny = L.proseSplit('Short one. Fine.');
+  eq('a short tail is not folded', tiny.rest, '');
+  eq('and the whole thing leads', tiny.lead, 'Short one. Fine.');
+
+  /* NOTHING IS NOTHING. */
+  eq('empty prose splits to nothing', L.proseSplit('').lead, '');
+  eq('and so does nothing at all', L.proseSplit(null).rest, '');
+
+  /* AN ABBREVIATION IS NOT A SENTENCE END. A bare full stop would cut
+     after the initial and lead with half a name. */
+  const abbr = L.proseSplit('You keep going back to E.H. Taylor and to '
+    + 'Col. Taylor bottlings all month long here. Nothing else came close '
+    + 'to that pattern in the whole of the period.');
+  eq('it does not split on an initial',
+    /E\.H\. Taylor/.test(abbr.lead), true);
+  eq('and the lead is a whole sentence', /month long here\.$/.test(abbr.lead),
+    true);
+}
+
+sec('\u00a7417 a read leads with the one to pour');
+{
+  /* BZ: on the shelf and menu reads the detail is awesome for me at 59 but
+     my 30yr old buddy wants the tldr — then, on what that means: more of
+     an exec summary with the best recommendation then the details. The
+     answer goes first and nothing is taken away. */
+  const cat = {}, bots = [];
+  for (let i = 0; i < 12; i++) {
+    cat['b' + i] = { k: 'b' + i, name: 'My Bourbon ' + i, sub: 'bourbon',
+                     dist: 'House ' + i, proof: 100 };
+    bots.push({ id: 'x' + i, k: 'b' + i, status: 'open' });
+  }
+  const read = names => ({ items: names.map(n => ({ name: n })) });
+
+  /* A BOTTLE ON THE SHELF IS NEVER THE PICK: the point of a back bar is
+     what you cannot pour at home. */
+  eq('a bar of only your own bottles recommends nothing',
+    L.readPick(read(['My Bourbon 3', 'My Bourbon 7']), cat, bots, []), null);
+  eq('an empty read recommends nothing',
+    L.readPick(read([]), cat, bots, []), null);
+  eq('and nothing at all does not throw',
+    L.readPick(null, cat, bots, []), null);
+
+  /* NOT WHISKY IS NOT THE RECOMMENDATION. "Nothing on your shelf is much
+     like it" is trivially true of a vodka, which is how Tito's came
+     second on a bar holding a Kavalan. */
+  eq("a bar of vodka and gin recommends nothing",
+    L.readPick(read(["Tito's Handmade Vodka", 'Bombay Sapphire London Dry Gin']),
+      cat, bots, []), null);
+
+  /* AND THE CATEGORY READER HAS TO KNOW THEM TO EXCLUDE THEM. It knew
+     scotch, bourbon, rye and irish only \u2014 the same drift the lookup
+     prompt had, a list widened in one place and not the other. */
+  eq('vodka is read as vodka',
+    (L.offerFacts("Tito's Handmade Vodka", {}) || {}).sub, 'vodka');
+  eq('gin as gin',
+    (L.offerFacts('Bombay Sapphire London Dry Gin', {}) || {}).sub, 'gin');
+  eq('rum as rum',
+    (L.offerFacts('Goslings Black Seal Rum', {}) || {}).sub, 'rum');
+  /* A RUM CASK IS A WHISKY FINISHED IN ONE, and must not read as rum. */
+  eq('a rum cask finish is not a rum',
+    (L.offerFacts('Isle of Skye 10 Year Rum Cask Finish', {}) || {}).sub,
+    undefined);
+
+  /* THE PICK IS THE LEAST LIKE WHAT YOU ALREADY POUR. Twelve bourbons on
+     the shelf: another bourbon is the wrong glass to spend at a bar. */
+  const pick = L.readPick(read(['Another Bourbon', 'Kavalan Solist']),
+    cat, bots, []);
+  eq('something is recommended', !!pick, true);
+  eq('and it is not more of what you own', pick.name, 'Kavalan Solist');
+  eq('it says how many it chose between', pick.outOf, 2);
+  eq('and gives a reason', !!(pick.why && pick.why.length > 10), true);
+}
+
+sec('\u00a7416 what a label could not say is asked for once');
+{
+  /* BZ: in these cases could we try to fill, more data after the scan? —
+     and then, on where: only on a single bottle scan so the extra work.
+     A label states what is PRINTED. Six bottles photographed on
+     2026-09-07 gave a name, a proof, a size and a cask, and not one gave
+     a mash bill, so a field the label cannot carry is a field the verdict
+     then judges blind. */
+  eq('a bare read wants the fillable fields',
+    L.labelGaps({ name: 'X', proof: 100 }, {}).sort(),
+    ['age', 'dist', 'fin', 'mash', 'region', 'sub'].sort());
+
+  /* THE LABEL WINS. A field the label stated is never asked about again:
+     the bottle in the hand outranks a model recalling it. */
+  eq('a field the label gave is not asked for',
+    L.labelGaps({ dist: 'Ardbeg', sub: 'scotch' }, {}).indexOf('dist'), -1);
+  eq('nor the other one',
+    L.labelGaps({ dist: 'Ardbeg', sub: 'scotch' }, {}).indexOf('sub'), -1);
+
+  /* AND NEITHER IS A FIELD ALREADY KNOWN. Paying to learn something the
+     shelf already holds is the whole cost with none of the gain. */
+  eq('a field already on the bottle is not asked for',
+    L.labelGaps({ name: 'X' }, { dist: 'Ardbeg', region: 'Islay' }).sort(),
+    ['age', 'fin', 'mash', 'sub'].sort());
+  eq('an empty string counts as missing',
+    L.labelGaps({ dist: '' }, { dist: '' }).indexOf('dist') >= 0, true);
+
+  /* NOTHING WORTH PAYING FOR IS AN EMPTY LIST, so the caller can skip the
+     lookup rather than spend one confirming it knows everything. */
+  eq('a complete read asks for nothing', L.labelGaps(
+    { dist: 'A', sub: 'b', region: 'c', fin: 'd', age: 10, mash: 'e' }, {}),
+    []);
+  eq('and so does a complete bottle', L.labelGaps({},
+    { dist: 'A', sub: 'b', region: 'c', fin: 'd', age: 10, mash: 'e' }), []);
+  eq('nothing at all does not throw', L.labelGaps(null, null).length,
+    L.LABEL_FILLABLE.length);
+}
+
+sec('\u00a7415 shelf and taste are two questions, both answered');
+{
+  /* BZ, at a sherry-finished rye: should be a big hit for me — and the
+     shop said nothing either way. BOTH engines were right. shelfFit asks
+     does this BROADEN the shelf and correctly said no, he owns 62 sherried
+     bottles and 36 ryes. judgeListing asks does this MATCH the taste and
+     correctly said yes. A screen showing only the first tells somebody
+     nothing about the bottle in their hand.
+     BZ: shelf and taste for both shop and taste, two dimensions the user
+     can take as input. */
+  const cat = {}, bots = [];
+  for (let i = 0; i < 20; i++) {
+    cat['s' + i] = { k: 's' + i, name: 'Sherried ' + i, sub: 'scotch',
+                     fin: 'Oloroso', dist: 'House ' + i, proof: 92 };
+    bots.push({ id: 'b' + i, k: 's' + i, status: 'open' });
+  }
+
+  /* DEEP AND ON TASTE: the quadrant BZ's bottle landed in, which had no
+     name on the screen at all. */
+  const deep = L.fitTwoWays({ name: 'Another Oloroso Cask Finish',
+    sub: 'scotch', fin: 'Oloroso' }, cat, bots, [], []);
+  eq('a shelf already deep in it is not new ground',
+    /adds something/.test(deep.shelf), false);
+  eq('and the quadrant says both things', deep.quadrant, 'deeper');
+  eq('in one sentence', /Nothing new for the shelf/.test(deep.say)
+    && /your taste/.test(deep.say), true);
+
+  /* NEW GROUND THAT IS NOT THE TASTE. */
+  const broad = L.fitTwoWays({ name: 'Some Blanco Tequila', sub: 'tequila' },
+    cat, bots, [], []);
+  eq('a category nobody owns is new ground', broad.quadrant, 'broadens');
+  eq('and says so without claiming it suits', /not what you usually/
+    .test(broad.say), true);
+
+  /* OWNING IT OUTRANKS BOTH QUESTIONS. */
+  const own = L.fitTwoWays({ name: 'Sherried 3', sub: 'scotch' },
+    cat, bots, [], []);
+  eq('owning it is the whole answer', own.own, true);
+  eq('and no taste line is offered', own.taste, '');
+
+  /* EVERY QUADRANT HAS A SENTENCE. A quadrant with no words is a verdict
+     somebody cannot read. */
+  ['best', 'broadens', 'deeper', 'skip'].forEach(q => {
+    const hit = [deep, broad,
+      L.fitTwoWays({ name: 'Nothing Much' }, cat, bots, [], [])]
+      .filter(x => x.quadrant === q)[0];
+    if (hit) eq('the ' + q + ' quadrant says something',
+      !!(hit.say && hit.say.length > 10), true);
+  });
+
+  eq('nothing at all does not throw',
+    typeof L.fitTwoWays({}, cat, bots, [], []).say, 'string');
+}
+
+sec('\u00a7414 the finish a name states');
+{
+  /* BZ, at a Sirdavis Rye Whisky Finished in Sherry Casks: sherry finished
+     rye, should be a big hit for me. It should — 62 of his bottles are in
+     sherry wood and rye is his third category — and the shop said nothing
+     either way, because the add form guessed the CATEGORY from the name
+     and the RELEASE from the name and guessed nothing for the finish. The
+     one field carrying his strongest signal arrived empty, so the findings
+     that judge a listing had no wood to match on. */
+  eq('the bottle that started this', L.finFromName(
+    'Sirdavis Rye Whisky Finished in Sherry Casks'), 'Sherry');
+  eq('a cask finish in the name', L.finFromName(
+    'Glenmorangie Lasanta 12 Sherry Cask Finish'), 'Sherry');
+  eq('PX is its own answer', L.finFromName(
+    'Penelope Toasted Series PX Cask Finish'), 'PX');
+  eq('and so is a port barrel', L.finFromName(
+    "Angel's Envy Port Barrel Finished"), 'Port');
+
+  /* THE WORD ALONE IS NOT THE EVIDENCE, its company is. Port Charlotte is
+     a peated Islay, not a port finish, and reading the wood off a bare
+     word would file it as one. */
+  eq('a distillery name is not a finish', L.finFromName('Port Charlotte 10'), '');
+  eq('and a plain bottle says nothing', L.finFromName('Ardbeg 10'), '');
+  eq('nor does nothing at all', L.finFromName(''), '');
+  eq('nor rubbish', L.finFromName(null), '');
+
+  /* TWO WOODS IN ONE NAME ARE BOTH KEPT. */
+  eq('a double finish keeps both', L.finFromName(
+    'Something Finished in Oloroso and Port Casks'), 'Oloroso+Port');
+
+  /* AND IT AGREES WITH offerFacts, which reads the same table — two
+     answers to what a name says is how this started (rule 30d). */
+  ['Sirdavis Rye Whisky Finished in Sherry Casks',
+   'Glenmorangie Lasanta 12 Sherry Cask Finish',
+   'Ardbeg 10'].forEach(n => {
+    const viaFacts = (L.offerFacts(n, {}) || {}).fin || '';
+    eq('offerFacts agrees on ' + n.slice(0, 22),
+      viaFacts.indexOf(L.finFromName(n)) >= 0 || !L.finFromName(n), true);
+  });
+}
+
+sec('\u00a7413 one page per call, put back together');
+{
+  /* BZ: seems like a photo of 20 bottles worked more quickly than a menu
+     photo. The cost is what the model WRITES — twenty bottles is twenty
+     short lines, a two-page menu is a hundred entries — and duration is
+     what expires the one-time URL an answer comes back on. So a read
+     sends one page per call and the answers are merged. */
+  const page = (names, extra) => ({ items: names.map(n =>
+    Object.assign({ name: n }, (extra || {})[n] || {})) });
+
+  const one = L.mergeShelfReads([page(['Ardbeg 10', 'Lagavulin 16'])]);
+  eq('one page comes through whole', one.items.map(i => i.name),
+    ['Ardbeg 10', 'Lagavulin 16']);
+  eq('and says how many pages it was', one.pages, 1);
+
+  const two = L.mergeShelfReads([
+    page(['Ardbeg 10', 'Lagavulin 16']),
+    page(['Talisker 10', 'Ardbeg 10'])]);
+  /* THE SAME BOTTLE ON TWO PAGES IS ONE BOTTLE. Hand-counted: three
+     distinct names across four entries. */
+  eq('a repeat across pages is one bottle', two.items.length, 3);
+  eq('in the order first seen', two.items.map(i => i.name),
+    ['Ardbeg 10', 'Lagavulin 16', 'Talisker 10']);
+  eq('and both pages are counted', two.pages, 2);
+
+  /* PUNCTUATION IS NOT A DIFFERENT BOTTLE. */
+  eq("Angel's Envy and ANGELS ENVY merge",
+    L.mergeShelfReads([page(["Angel's Envy"]), page(['ANGELS ENVY'])])
+      .items.length, 1);
+
+  /* A LATER PAGE FILLS BLANKS AND NEVER OVERWRITES. A price read clearly
+     on page one must survive a worse look at it on page two. */
+  const filled = L.mergeShelfReads([
+    page(['Ardbeg 10'], { 'Ardbeg 10': { price: 14, proof: null } }),
+    page(['Ardbeg 10'], { 'Ardbeg 10': { price: 99, proof: 92 } })]);
+  eq('the first reading of a field wins', filled.items[0].price, 14);
+  eq('and a blank is filled by the later one', filled.items[0].proof, 92);
+
+  /* A PAGE THAT FAILED TAKES ONLY ITSELF. */
+  eq('a failed page does not lose the others',
+    L.mergeShelfReads([page(['Ardbeg 10'])]).items.length, 1);
+  eq('no pages at all is nothing', L.mergeShelfReads([]), null);
+  eq('and neither is rubbish', L.mergeShelfReads([null, 'x']), null);
+  eq('an unnamed entry is dropped',
+    L.mergeShelfReads([{ items: [{ proof: 92 }, { name: 'Ardbeg 10' }] }])
+      .items.length, 1);
+
+  /* THE TUNABLE CEILING. BZ: make max tokens a parameter we can tune with
+     real data. Clamped, because a number typed into a settings box reaches
+     a paid service. */
+  eq('the default stands when nothing is set',
+    L.shelfTokens(0), L.SHELF_TOKENS_DEFAULT);
+  eq('and when it is nonsense', L.shelfTokens('abc'), L.SHELF_TOKENS_DEFAULT);
+  eq('a sane number is kept', L.shelfTokens(6000), 6000);
+  eq('too small is raised to the floor',
+    L.shelfTokens(1), L.SHELF_TOKENS_MIN);
+  eq('too large is cut to the ceiling',
+    L.shelfTokens(999999), L.SHELF_TOKENS_MAX);
+}
+
+sec('\u00a7412 a read says how many it read');
+{
+  /* BZ: we need better toast feedback on bottle count being processed.
+     shelfSeen computed all three numbers on every read and reported none
+     of them, so a menu of forty and a shelf of four ended the same way. */
+  const say = (n, owned, wanted) => L.shelfReadSay(
+    { items: new Array(n).fill({}), owned: owned, wanted: wanted });
+
+  eq('nothing read says so', L.shelfReadSay({ items: [] }),
+    'Nothing readable there');
+  eq('and so does nothing at all', L.shelfReadSay(null),
+    'Nothing readable there');
+  eq('one bottle is singular', say(1, 0, 0), '1 bottle read \u2014 1 new to you');
+  /* Hand-counted: 40 read, 12 owned, 3 wanted leaves 25 new. */
+  eq('the breakdown adds up', say(40, 12, 3),
+    '40 bottles read \u2014 12 you own, 3 on your list, 25 new to you');
+  /* A BAR WITH NOTHING OF YOURS IN IT MUST NOT SAY "0 you own". A zero
+     dressed as information is noise. */
+  eq('a zero is left out', say(9, 0, 0), '9 bottles read \u2014 9 new to you');
+  eq('and so is a zero wish count', say(5, 5, 0), '5 bottles read \u2014 5 you own');
+  /* AND IT NEVER INVENTS A NEGATIVE. A shelf where everything read is
+     both owned and wanted would otherwise report -2 new. */
+  eq('overlap never produces a negative', say(3, 3, 2),
+    '3 bottles read \u2014 3 you own, 2 on your list');
+}
+
 sec('\u00a7411 a stale deployment says so instead of being guessed at');
 {
   /* BZ: i pasted code - any way you can stub call those so you stop asking

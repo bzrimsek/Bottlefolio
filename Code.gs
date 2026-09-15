@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.3.78';
+var GS_BUILD = '2.3.91';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -449,8 +449,16 @@ function askAbout(name, notesOnly) {
   if (start < 0 || end < 0) {
     // Say what actually came back. "no JSON in the reply" on its own cost a
     // round trip every time it happened during the enrichment work.
+    /* WHICH BLOCKS CAME BACK, not just the text of them. BZ typed Stag and
+       got text=The s — five characters and then nothing. Text alone cannot
+       say whether the model wrote prose instead of JSON, or whether it
+       reached for a tool and the answer never came; those are different
+       faults and only the block types tell them apart. */
+    var kinds = (data.content || []).map(function (b) { return b.type; });
     throw new Error('no JSON in the reply. stop_reason='
-      + (data.stop_reason || '?') + ' text=' + text.slice(0, 200));
+      + (data.stop_reason || '?')
+      + ' blocks=' + (kinds.join('+') || 'none')
+      + ' text=' + JSON.stringify(text.slice(0, 200)));
   }
   try {
     return JSON.parse(text.slice(start, end + 1));
