@@ -168,6 +168,16 @@ file and a green `probeWiring` all run against saved code.
     2.3.93 or 2.4.0 deploys. The next recap's log line answers it: a
     single-bottle answer means the route is still missing; a recap means it
     is there.
+  - **CLOSED 2026-09-15 — both of the above, by cloning the deployed
+    project** with clasp (script "Enrich Bottles"). Deployed version 32 is
+    byte-for-byte the current code, and every file matches this folder:
+    `Code` = `Code.gs`, `label` = `label.gs`, `recap` = `recap.gs`,
+    `shelf` = `shelf.gs`. `Code.gs:133` routes `mode === 'recap'`, so the
+    recap route IS live on 2.4.0; the 09/14 failure was the 2.3.70
+    deployment. `recap-handler.gs` is not in the live project at all, and
+    `lookup.gs` is a second copy of `Code.gs`. Neither is deployed by the
+    cloud gate, which sends exactly the five files the live project holds
+    (the four above plus `apps-script/appsscript.json`).
 
 ### 2. Waiting on code — mine
 

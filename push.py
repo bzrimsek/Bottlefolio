@@ -66,8 +66,13 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
+# The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
+# apps-script/appsscript.json - the live project's exact file set, checked by
+# cloning it on 2026-09-15. lookup.gs and recap-handler.gs ride along for the
+# record only; the workflow never sends them to Apps Script.
 SERVICE = ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs',
-           'recap-handler.gs', 'firebase-rules.json']
+           'recap-handler.gs', 'apps-script/appsscript.json',
+           'firebase-rules.json']
 SHELF = ['bz-bottles.json', 'bz-flights.json']      # sealed, never plain
 
 # NEVER, whatever the lists above say. The repo is public and main is a

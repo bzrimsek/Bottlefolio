@@ -5,10 +5,15 @@
 #
 # push.py sends a finished build to the `build` branch as ONE commit. This
 # runs the whole gate on GitHub's servers against that commit, and only a
-# green gate moves `main` - which is what GitHub Pages serves at
-# https://bzrimsek.github.io/Bottlefolio/. A red gate leaves the live site
-# exactly as it was: the failure stops the job before the publish step, so
-# there is no ordering in which a broken build reaches a phone.
+# green gate deploys anything:
+#
+#   gate  ->  Apps Script service (if a service file changed)  ->  the site
+#
+# The service goes before the site, because a new page that needs a new
+# service must never arrive first; if the service deploy or its check fails,
+# main does not move. `main` is what GitHub Pages serves at
+# https://bzrimsek.github.io/Bottlefolio/. A red gate leaves everything live
+# exactly as it was.
 
 name: Gate and publish
 
@@ -75,6 +80,64 @@ jobs:
 
       - name: The gate - all ten checks
         run: python3 gate.py
+
+      # Compared against main, which is what is live right now, before main
+      # moves. Only these five make up the live project - checked by cloning
+      # it on 2026-09-15. lookup.gs is a second copy of Code.gs and
+      # recap-handler.gs is not in the project; they stay in the repo and are
+      # never sent, because either would define every function twice.
+      - name: Did the Apps Script service change?
+        id: gas
+        run: |
+          git fetch origin main --quiet
+          files="Code.gs label.gs recap.gs shelf.gs apps-script/appsscript.json"
+          if git diff --quiet origin/main HEAD -- $files; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Service files unchanged - the live service is left alone."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat origin/main HEAD -- $files
+          fi
+
+      # Same deployment, new version, so the URL the app calls never changes.
+      # A paste is not a deploy (rule 25e): push alone would change nothing
+      # the app can reach, so the redeploy is part of the same step.
+      - name: Deploy the Apps Script service (same deployment, new version)
+        if: steps.gas.outputs.changed == 'true'
+        env:
+          CLASPRC: ${{ secrets.CLASPRC }}
+          GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          npm install -g @google/clasp@3.4.1 --no-audit --no-fund
+          printf '%s' "$CLASPRC" > ~/.clasprc.json
+          dir=$(mktemp -d)
+          cp Code.gs label.gs recap.gs shelf.gs apps-script/appsscript.json "$dir"/
+          printf '{"scriptId":"%s","rootDir":"%s"}' "$GAS_SCRIPT_ID" "$dir" > "$dir/.clasp.json"
+          ver=$(grep -m1 -oP "var GS_BUILD\s*=\s*'\K[^']+" Code.gs)
+          cd "$dir"
+          clasp push --force
+          clasp update-deployment "$GAS_DEPLOYMENT_ID" -d "Bottlefolio service $ver"
+          rm -f ~/.clasprc.json
+
+      # The only proof the new code is what the app reaches: ask the live
+      # deployment the same question the app's Check the service asks.
+      - name: Confirm the live service reports the new build
+        if: steps.gas.outputs.changed == 'true'
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          want=$(grep -m1 -oP "var GS_BUILD\s*=\s*'\K[^']+" Code.gs)
+          for i in $(seq 1 12); do
+            got=$(curl -sL -H 'Content-Type: text/plain' -d '{"mode":"version"}' \
+              "https://script.google.com/macros/s/$GAS_DEPLOYMENT_ID/exec" \
+              | grep -oP '"build"\s*:\s*"\K[^"]+' || true)
+            echo "live service says ${got:-nothing}, this build is $want"
+            if [ "$got" = "$want" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::The service was deployed but did not report build $want. main has NOT moved."
+          exit 1
 
       # Fast-forward only. If somebody changed main by hand since push.py
       # read it, this refuses rather than overwriting their change, and the
