@@ -17692,6 +17692,56 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7428 what a bottle is, in one line, built once');
+{
+  /* BZ, looking at one whisky on two screens: consistently inconsistent
+     still. The shop said "Jack Daniel's · 80 proof · Tennessee · $64.99"
+     and the bar said "Jack Daniel Distillery · 80 proof · tennessee" — a
+     different house spelling, a different capitalisation, and one showing
+     a price. Sixteen places in the file build that line by hand. */
+  const cat = { j: { k: 'j', name: "Jack Daniel's Old No. 7",
+                     dist: "Jack Daniel's", sub: 'tennessee' } };
+  const shop = { dist: "Jack Daniel's", proof: 80, sub: 'tennessee',
+                 msrp: 64.99 };
+  const bar = { dist: 'Jack Daniel Distillery', proof: 80,
+                sub: 'tennessee' };
+
+  /* THE CATEGORY IS CAPITALISED THE SAME WAY WHEREVER IT IS SHOWN. */
+  eq('the shop line title-cases the category',
+    /Tennessee/.test(L.factsLine(shop, cat, { price: true })), true);
+  eq('and so does the bar',
+    /Tennessee/.test(L.factsLine(bar, cat, {})), true);
+  eq('never raw', /tennessee/.test(L.factsLine(bar, cat, {})), false);
+
+  /* THE HOUSE IS SNAPPED TO THE SPELLING THE SHELF USES, so two lookups
+     answering different names read as one house. */
+  eq('a distillery suffix does not change the house',
+    /Jack Daniel's/.test(L.factsLine(bar, cat, {})), true);
+
+  /* A POSSESSIVE IS NOT A DIFFERENT HOUSE. The suffix comes off both,
+     leaving "jack daniels" against "jack daniel" — one letter apart and
+     two houses as far as the app was concerned. Checked against all 109
+     houses in the catalog: a trailing s joins nothing that should stay
+     apart. */
+  eq('Jack Daniel and Jack Daniels are one house',
+    L.houseKey('Jack Daniel Distillery'), L.houseKey("Jack Daniel's"));
+
+  /* THE PRICE SHOWS WHERE IT IS PART OF THE DECISION and nowhere else:
+     in a shop it is the point, at a bar somebody else set it. */
+  eq('the shop shows the price',
+    /\$64\.99/.test(L.factsLine(shop, cat, { price: true })), true);
+  eq('the bar does not',
+    /\$/.test(L.factsLine(shop, cat, {})), false);
+
+  /* AND A BOTTLE NOBODY KNOWS ANYTHING ABOUT MAKES NO LINE, rather than a
+     row of separators. */
+  eq('nothing known is an empty line', L.factsLine({}, cat, {}), '');
+  eq('and nothing at all does not throw',
+    L.factsLine(null, cat, {}), '');
+  eq('one year is singular',
+    /1 year\b/.test(L.factsLine({ age: 1 }, cat, {})), true);
+}
+
 sec('\u00a7427 a question about your own shelf');
 {
   /* BZ: can we add a shelf feature that uses NLP — for example, what am I

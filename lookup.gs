@@ -35,6 +35,10 @@
  * tell it from a real one afterwards.
  */
 
+/* The build this file is. Compared against L.GS_BUILD in index.html by
+   the app, so a stale deployment is reported rather than guessed. */
+var GS_BUILD = '2.4.0';
+
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
 // it gets the larger model. It runs once per flight, not once per bottle.
@@ -113,6 +117,17 @@ function doPost(e) {
      A mode whose file is not in the project throws a ReferenceError, which
      the catch below turns into a readable error rather than a 500. */
   try {
+    /* WHICH VERSION IS ACTUALLY SERVING.
+       Apps Script serves the DEPLOYED script, not the saved one, and
+       nothing on either side could tell the difference: probeWiring runs
+       in the editor against saved code and reports every mode present
+       while the live web app runs months-old code. So the deployment
+       states its own build, the app carries the build it expects, and the
+       two are compared instead of assumed.
+       Bump GS_BUILD in BOTH this file and L.GS_BUILD in index.html
+       whenever this file changes; consistency.js fails the build if they
+       disagree. */
+    if (body.mode === 'version') return json({ build: GS_BUILD });
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
     if (body.mode === 'recap') return json({ recap: writeRecap_(body) });
@@ -352,7 +367,27 @@ function apiHeaders_() {
   return h;
 }
 
+/* AN UNREADABLE ANSWER IS WORTH ASKING ONCE MORE.
+   BZ ran the same word, stagg, on two screens: one came back with a bottle
+   and one came back with five characters and stopped. Identical query,
+   identical service, two answers — so it is not a property of the name,
+   it is a glitch, and a glitch is exactly what a second ask fixes.
+   The app already retries TRANSPORT failures through postWithRetry. This
+   is the same idea one layer up: the call succeeded and the ANSWER was
+   unusable, which no retry anywhere was covering.
+   Once only. A model that cannot produce JSON twice running is not having
+   a bad moment, and a third ask spends BZ's money to learn nothing. */
 function askAbout(name, notesOnly) {
+  try {
+    return askAboutOnce_(name, notesOnly);
+  } catch (err) {
+    if (!/no JSON in the reply/.test(String(err && err.message))) throw err;
+    Logger.log('unreadable answer for ' + name + ', asking once more');
+    return askAboutOnce_(name, notesOnly);
+  }
+}
+
+function askAboutOnce_(name, notesOnly) {
 
   var shape = notesOnly
     ? '{"name":string,"colour":string|null,"nose":string|null,' +
@@ -370,8 +405,35 @@ function askAbout(name, notesOnly) {
     'infer from a similar bottling, never write a plausible-sounding tasting',
     'note. A null is the correct answer when the fact is not established.',
     'proof is US proof (twice ABV), not ABV.',
+    /* PREFER THE LIST, BUT DO NOT BE TRAPPED BY IT.
+       BZ: wanting to ensure new data adapts without a build. The app
+       already does — an unrecognised category renders, counts and lands
+       in the portrait, verified by pushing one through every place a
+       category is used. The SERVICE was the closed door: "one of" meant a
+       single grain Scotch, a rice whisky or a genever could not come back
+       at all, whatever the bottle actually was.
+       The list still leads, because the reason it exists is that a model
+       left to its own words produces bourbon whiskey and Kentucky bourbon
+       and splits one category into three. A term outside it is a last
+       resort, and the app logs every one so the taxonomy grows on purpose
+       rather than by accident. */
     'sub is one of: bourbon, tennessee, rye, wheat, american single malt,',
-    'scotch, irish, canadian, japanese, world, flavored, tequila.',
+    'scotch, irish, canadian, japanese, world, flavored, tequila, rum,',
+    'vodka, gin, mezcal, liqueur, brandy. Use one of these whenever one',
+    'genuinely fits. A bottle that is not whisky still gets its real',
+    'category.',
+    'If NONE of them fits, give the standard name for what it actually',
+    'is, lower case and as short as it can be: single grain, rice whisky,',
+    'genever. Never a longer version of a category already on the list:',
+    'a Kentucky bourbon is bourbon.',
+    'Never answer "other". It is a category somebody chooses by hand,',
+    'and a bottle you cannot place at all must stay null so it can be',
+    'filled in later.',
+    'dist is whoever MAKES it, and it is wanted for every category, not',
+    'only whisky. For a blend or a sourced bottling that is the bottler',
+    'or the brand owner. Returning null here because a spirit has no',
+    'single distillery leaves the entry unable to group with its own',
+    'house anywhere in the app.',
     'scar is one of: standard, batched, limited, exclusive.',
     'region applies to Scotch only: Islay, Speyside, Highland, Islands,',
     'Lowland, Campbeltown.',
@@ -425,8 +487,16 @@ function askAbout(name, notesOnly) {
   if (start < 0 || end < 0) {
     // Say what actually came back. "no JSON in the reply" on its own cost a
     // round trip every time it happened during the enrichment work.
+    /* WHICH BLOCKS CAME BACK, not just the text of them. BZ typed Stag and
+       got text=The s — five characters and then nothing. Text alone cannot
+       say whether the model wrote prose instead of JSON, or whether it
+       reached for a tool and the answer never came; those are different
+       faults and only the block types tell them apart. */
+    var kinds = (data.content || []).map(function (b) { return b.type; });
     throw new Error('no JSON in the reply. stop_reason='
-      + (data.stop_reason || '?') + ' text=' + text.slice(0, 200));
+      + (data.stop_reason || '?')
+      + ' blocks=' + (kinds.join('+') || 'none')
+      + ' text=' + JSON.stringify(text.slice(0, 200)));
   }
   try {
     return JSON.parse(text.slice(start, end + 1));
