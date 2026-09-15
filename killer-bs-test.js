@@ -17692,6 +17692,140 @@ sec('\u00a7402 a key that lost a merge does not come back');
   eq('so the library still holds one', Object.keys(library), [kk]);
 }
 
+sec('\u00a7427 a question about your own shelf');
+{
+  /* BZ: can we add a shelf feature that uses NLP — for example, what am I
+     missing from the Woodford family that I should have.
+     The machinery to answer it already existed: the candidates mode takes
+     a described gap and what you own of it. What was missing was the
+     front door. The subject is found HERE rather than by asking the
+     service, because the house registry already knows every name and a
+     local match costs nothing, where a second call would double a wait
+     that is already the thing most likely to fail. */
+  const cat = {}, bots = [];
+  const add = (k, name, dist, sub, region, own) => {
+    cat[k] = { k: k, name: name, dist: dist, sub: sub, region: region };
+    if (own) bots.push({ id: 'o' + k, k: k, status: 'open' });
+  };
+  add('w1', 'Woodford Reserve Double Oaked', 'Woodford Reserve', 'bourbon', null, true);
+  add('w2', 'Woodford Reserve Batch Proof', 'Woodford Reserve', 'bourbon', null, true);
+  add('w3', 'Woodford Reserve Rye', 'Woodford Reserve', 'rye', null, false);
+  add('b1', 'Buffalo Trace', 'Buffalo Trace', 'bourbon', null, true);
+  add('i1', 'Ardbeg 10', 'Ardbeg', 'scotch', 'Islay', true);
+
+  const q = L.readShelfQuestion(
+    'What am I missing from the Woodford family that I should have?',
+    cat, bots, {});
+  eq('the house is found in the question', q.house, 'Woodford Reserve');
+  /* Hand-counted: two Woodfords owned, the third is in the catalog and
+     not on the shelf, so it is not something he has. */
+  eq('and only what you OWN of it is listed', q.owned.length, 2);
+  eq('the Buffalo Trace is not swept in',
+    q.owned.some(n => /Buffalo/.test(n)), false);
+  eq('and the ask is what the candidates mode understands',
+    q.ask, 'Woodford Reserve');
+
+  /* NAMED BY ITS FIRST WORD, which is how people say it — but only when
+     that word is long enough to be a name on its own. */
+  eq('the family is named by one word',
+    L.readShelfQuestion('anything else from Woodford', cat, bots, {}).house,
+    'Woodford Reserve');
+
+  /* A CATEGORY OR A REGION WORKS THE SAME WAY. */
+  eq('a category is a subject',
+    L.readShelfQuestion('am I thin on rye', cat, bots, {}).sub, 'rye');
+  eq('and a region is too',
+    L.readShelfQuestion('what Islay should I get', cat, bots, {}).region,
+    'Islay');
+
+  /* THE LONGEST NAME WINS, so a house called Buffalo cannot steal a
+     question about Buffalo Trace. */
+  add('x1', 'Buffalo Something', 'Buffalo', 'bourbon', null, true);
+  eq('the longer house name wins',
+    L.readShelfQuestion('what from Buffalo Trace', cat, bots, {}).house,
+    'Buffalo Trace');
+
+  /* A QUESTION ABOUT NOTHING IS NOT AN ASK. Sending it anyway would spend
+     a lookup to be told nothing, which is the cost this whole feature
+     exists to avoid. */
+  eq('a vague question is declined',
+    L.readShelfQuestion('anything good lately', cat, bots, {}), null);
+  eq('and so is an empty one', L.readShelfQuestion('', cat, bots, {}), null);
+  eq('and nothing at all does not throw',
+    L.readShelfQuestion(null, cat, bots, {}), null);
+}
+
+sec('\u00a7426 the last few walls you photographed');
+{
+  /* BZ: when we take a photo of a bar wall or menu, can we persist the
+     text/findings — maybe like the last 3? A read costs a lookup and 20
+     to 90 seconds and was thrown away the moment the screen changed, so
+     walking back to a table meant paying for the same wall twice.
+     The note in the code said a shelf you stood in front of once is not a
+     fact about your collection. True, and it missed the cost. */
+  const seen = n => ({ items: Array.from({ length: n }, (_, i) =>
+    ({ name: 'B' + i, own: i === 0, want: false, proof: 100 })),
+    take: 'a take' });
+
+  let list = L.rememberRead([], seen(3), 'bar', 1);
+  eq('a read is kept', list.length, 1);
+  eq('with its count', list[0].n, 3);
+  eq('and what the screen needs to draw it again',
+    list[0].items[0].name, 'B0');
+  eq('and which you own', list[0].items[0].own, true);
+
+  /* THREE, AND THE OLDEST LEAVES. */
+  list = L.rememberRead(list, seen(2), 'shop', 2);
+  list = L.rememberRead(list, seen(4), 'list', 3);
+  eq('three fit', list.length, 3);
+  list = L.rememberRead(list, seen(5), 'bar', 4);
+  eq('a fourth does not', list.length, L.READS_KEPT);
+  eq('the newest leads', list[0].at, 4);
+  eq('and the oldest is gone', list.map(r => r.at), [4, 3, 2]);
+
+  /* NOTHING IS COLLAPSED BY KIND. An earlier version replaced any read
+     sharing a `where`, which reads well until you notice `where` is the
+     KIND — bar, shop, list — not a place. Two different bars in one night
+     would have become one and the first would be gone. */
+  const twoBars = L.rememberRead(
+    L.rememberRead([], seen(3), 'bar', 10), seen(4), 'bar', 11);
+  eq('two bars in one night are two reads', twoBars.length, 2);
+  eq('and the earlier one survives', twoBars[1].n, 3);
+
+  /* A READ THAT FOUND NOTHING IS NOT KEPT, because a list of nothing is
+     not worth one of the three places. */
+  eq('an empty read changes nothing',
+    L.rememberRead(list, { items: [] }, 'bar', 5).map(r => r.at), [4, 3, 2]);
+  eq('and neither does nothing at all',
+    L.rememberRead(list, null, 'bar', 5).length, 3);
+
+  /* TWO DEVICES, TWO NIGHTS. A phone reads a bar and a laptop reads a
+     shop; returning remote wholesale would throw one away, which is the
+     fault the log already had and BZ already had to reconcile by hand. */
+  const phone = [{ at: 30, where: 'bar', n: 5, items: [] },
+                 { at: 10, where: 'bar', n: 2, items: [] }];
+  const laptop = [{ at: 20, where: 'shop', n: 3, items: [] }];
+  const both = L.mergeSyncValue('reads', phone, laptop);
+  eq('neither device loses its read', both.map(r => r.at), [30, 20, 10]);
+  eq('and it is still only three',
+    L.mergeSyncValue('reads',
+      phone.concat([{ at: 40, n: 1, items: [] }]), laptop).length,
+    L.READS_KEPT);
+  eq('newest first after a merge',
+    L.mergeSyncValue('reads', phone, laptop)[0].at, 30);
+  /* THE SAME READ ON BOTH DEVICES IS ONE READ. */
+  eq('a read that synced already is not duplicated',
+    L.mergeSyncValue('reads', phone, phone).length, 2);
+  eq('nothing remote leaves local alone',
+    L.mergeSyncValue('reads', phone, null), phone);
+
+  /* THE PHOTOGRAPH IS NEVER KEPT. It was never in question — the images
+     are thrown away at the moment they are sent — and this is what makes
+     three reads small enough to ride the account sync. */
+  eq('no image is stored',
+    JSON.stringify(list).indexOf('base64') < 0, true);
+}
+
 sec('\u00a7425 new data adapts, and says so');
 {
   /* BZ: not worth it for 2 tables, wanting to ensure new data adapts
