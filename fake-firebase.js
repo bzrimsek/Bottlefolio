@@ -54,6 +54,19 @@
 
   window.makeFakeFirebase = function (seed, opts) {
     const o = opts || {};
+    /* A REFUSED WRITE, which scenarios have been asking for since before it
+       existed. sync.js passes refOpts.failWrites and asserted that the work
+       stays queued afterwards; nothing here implemented it, so every write
+       succeeded, nothing stayed queued, and the check failed against a
+       capability nobody had written. A test resting on a claim nobody
+       verified (rule 26b) - it tested nothing for as long as it ran. */
+    const refuse = () => {
+      const why = (o.refOpts || {}).failWrites;
+      if (!why) return null;
+      const e = new Error(String(why));
+      e.code = 'PERMISSION_DENIED';
+      return e;
+    };
     const store = { data: clone(seed) || {}, log: [] };
     // Everything watching, keyed by the path it watches.
     const watchers = [];
@@ -127,7 +140,22 @@
         path: parts(path).join('/'),
         key: parts(path).slice(-1)[0] || null,
         child: c => ref(parts(path).concat(parts(c)).join('/')),
-        parent: ref(parts(path).slice(0, -1).join('/')),
+        /* LAZY, AND IT STOPS AT THE ROOT. This was eager - building a ref
+           built its parent, which built ITS parent, down to the root,
+           which built itself for ever. Every call to database().ref() blew
+           the stack, so the app could not construct a single reference and
+           nothing was ever written to the store. That is why sync.js has
+           reported "Cannot read properties of undefined (reading
+           'whisky')" for seventeen builds: the store was empty because the
+           fake could not make a ref, and the failure looked like the app
+           never reaching auth. It reaches auth fine.
+
+           A getter, so a parent is built only if something asks for one,
+           and null at the root because the root has no parent. */
+        get parent() {
+          const up = parts(path).slice(0, -1);
+          return up.length ? ref(up.join('/')) : null;
+        },
         // Queries are shape only: nothing in the app filters server-side,
         // and pretending to would test this file rather than the app.
         orderByChild: () => self,
@@ -151,6 +179,8 @@
         },
 
         set: v => {
+          const no = refuse();
+          if (no) return Promise.reject(no);
           store.log.push({ op: 'set', path: self.path, bytes: bytesOf(v),
                            keys: (v && typeof v === 'object' && !Array.isArray(v))
                              ? Object.keys(v) : [] });
@@ -159,6 +189,8 @@
           return Promise.resolve();
         },
         remove: () => {
+          const no = refuse();
+          if (no) return Promise.reject(no);
           store.log.push({ op: 'remove', path: self.path, bytes: 0, keys: [] });
           writeAt(self.path, null);
           fire(self.path);
@@ -169,14 +201,23 @@
            the top segment of each path, deduped, which is what the app's
            own callers mean by a key. */
         update: patch => {
+          const no = refuse();
+          if (no) return Promise.reject(no);
           const p = patch || {};
           const keys = [];
           Object.keys(p).forEach(k => {
             const top = parts(k)[0];
             if (top && keys.indexOf(top) < 0) keys.push(top);
           });
+          /* BOTH, because two scenarios ask two different questions of the
+             same write. "No bulk key rewritten when nothing in it changed"
+             is about the top segment; "one corrected bottle names one
+             entry" is about the FULL path, and could never be answered from
+             `keys` - it asserted edits/Bottle 7 against a list that by
+             design only ever holds `edits`. It failed for being right. */
           store.log.push({ op: 'update', path: self.path,
-                           bytes: bytesOf(p), keys: keys });
+                           bytes: bytesOf(p), keys: keys,
+                           paths: Object.keys(p) });
           Object.keys(p).forEach(k => {
             writeAt(parts(self.path).concat(parts(k)).join('/'), p[k]);
           });

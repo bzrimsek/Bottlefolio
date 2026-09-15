@@ -1,0 +1,109 @@
+# THE CLOUD GATE.
+#
+# BZ, 2026-09-15: automation from build to deploy to git, and not local -
+# we need to push this live when we go.
+#
+# push.py sends a finished build to the `build` branch as ONE commit. This
+# runs the whole gate on GitHub's servers against that commit, and only a
+# green gate moves `main` - which is what GitHub Pages serves at
+# https://bzrimsek.github.io/Bottlefolio/. A red gate leaves the live site
+# exactly as it was: the failure stops the job before the publish step, so
+# there is no ordering in which a broken build reaches a phone.
+
+name: Gate and publish
+
+on:
+  push:
+    branches: [build]
+  workflow_dispatch:
+
+# One build at a time, in order. A second push waits for the first rather
+# than racing it to main.
+concurrency:
+  group: gate-and-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # fast-forward main to the gated build
+  pages: write      # ask Pages to rebuild once main has moved
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # The suite's dates are written for a UTC clock (§351 expects the
+      # library export to read 2026-01-15 for midnight UTC). Pinned rather
+      # than inherited, so a runner change cannot move a date by a day.
+      TZ: UTC
+    steps:
+      - name: Check out this build
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright and eslint (exact versions from package.json)
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium for the browser checks
+        run: npx playwright install --with-deps chromium
+
+      # BZ's real shelf. The suite will not start without it, and the repo is
+      # public, so only the encrypted copies are committed. The key is the
+      # SHELF_KEY secret; the unlocked files exist only on this runner and
+      # vanish with it.
+      - name: Unlock BZ's shelf files
+        env:
+          SHELF_KEY: ${{ secrets.SHELF_KEY }}
+        run: |
+          for f in bz-bottles.json bz-flights.json; do
+            printf '%s' "$SHELF_KEY" | gpg --quiet --batch --yes \
+              --pinentry-mode loopback --passphrase-fd 0 \
+              --output "$f" --decrypt "$f.gpg"
+          done
+
+      - name: The gate - all ten checks
+        run: python3 gate.py
+
+      # Fast-forward only. If somebody changed main by hand since push.py
+      # read it, this refuses rather than overwriting their change, and the
+      # run fails saying so.
+      - name: Publish - move main to this build
+        run: git push origin HEAD:main
+
+      - name: Ask GitHub Pages to rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent \
+            || echo "Pages refused the explicit request; the push to main normally triggers a build on its own."
+
+      # The only check that proves it is live: ask the real site which
+      # version it is serving, past the CDN's cache, until it says ours.
+      - name: Wait until the live site serves this version
+        run: |
+          want=$(grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" index.html)
+          url="https://bzrimsek.github.io/Bottlefolio/index.html"
+          for i in $(seq 1 40); do
+            got=$(curl -fsSL "$url?nocache=$(date +%s%N)" \
+              | grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" || true)
+            echo "live site says v${got:-?}, this build is v$want"
+            if [ "$got" = "$want" ]; then
+              echo "LIVE: v$want at https://bzrimsek.github.io/Bottlefolio/"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::The gate passed and main moved, but the site did not show v$want within 10 minutes."
+          exit 1

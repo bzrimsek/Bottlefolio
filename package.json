@@ -1,0 +1,9 @@
+{
+  "name": "bottlefolio-gate",
+  "private": true,
+  "description": "The tools the gate runs, pinned so every cloud run is the same run. Nothing here is loaded by index.html.",
+  "devDependencies": {
+    "eslint": "8.57.1",
+    "playwright": "1.63.0"
+  }
+}

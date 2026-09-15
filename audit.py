@@ -54,8 +54,13 @@ def run_audit(html_path):
     # ── 1. JS syntax ──────────────────────────────────────────────
     blocks = re.findall(
         r'<script(?![^>]*\bsrc\b)(?![^>]*type=["\']module["\'])[^>]*>([\s\S]*?)</script>', html)
-    tmp = '/tmp/audit_killerbs.js'
-    with open(tmp, 'w') as f:
+    # The system's temp folder, not /tmp: /tmp exists on the Linux runner
+    # and in the old container, and not on BZ's Windows PC. UTF-8 because
+    # the script carries ✓ and ✖, which Windows' default encoding cannot
+    # write.
+    import tempfile
+    tmp = os.path.join(tempfile.gettempdir(), 'audit_killerbs.js')
+    with open(tmp, 'w', encoding='utf-8') as f:
         f.write('\n'.join(blocks))
     r = subprocess.run(['node', '--check', tmp], capture_output=True, text=True)
     if r.returncode != 0:

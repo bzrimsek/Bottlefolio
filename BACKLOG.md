@@ -1,14 +1,451 @@
 # Backlog
 
 Open work, in the order BZ set on 2026-09-03: security, then performance,
-then finding the bottle. Exercising sharing with a second person came off
-the top because it is not something he controls — it waits on somebody else
-turning up. Everything under Closed is kept for the reasoning rather than
-the task, and still carries the numbers the code comments refer to.
+then finding the bottle — with one class placed above all three on
+2026-09-15: **stored data that is wrong comes first**. Everything else here
+is code that can be fixed forward; a wrong value already in somebody's shelf
+cannot.
 
-Last reconciled **2026-09-10, at v2.0.48**, entry by entry against the
-source. The 2026-09-10 pass is at the end of this header and changed the
-Performance entry, closed With a guest, and added the bar-shelf ruling.
+Last reconciled **2026-09-15, at v2.4.4**, entry by entry against
+`index.html` (APP_VERSION 2.4.4, line 2531), `Code.gs`, `consistency.js`,
+`sync.js`, `sw.js`, `firebase-rules.json`, and every CHANGELOG entry from
+v2.0.49 to v2.4.4. The pass before was 2026-09-10 at v2.0.48, about a
+hundred and fifty builds back — and one entry it called "not started" had
+already shipped at v1.9.33 (the boot renders), which is the fault below
+happening again.
+
+## How this file works — three rules
+
+1. **Open the code before calling an entry open.** A status read off a
+   headline has been wrong here more often than right (see "How the previous
+   passes read", below). Where an entry names a function, the check is
+   whether it is defined and whether anything calls it; where it names a
+   behavior, the check is the call site.
+2. **Close in place. Never delete.** A closed entry keeps its text and gains
+   a status line at the top: CLOSED, which version, and what was checked.
+   "Closed at v2.0.14" is useful to the next reader; a line that vanished
+   looks like an oversight and gets raised again.
+3. **An unchecked premise says so (rule 26b).** Any entry resting on a fact
+   nobody verified carries **UNCHECKED:** and names the fact. HANDOFF once
+   said a mash bill is printed on most American whiskey; six photographs
+   disproved it in twenty minutes, and a feature had been built to the wrong
+   brief until then. An unmarked assumption becomes a requirement by the
+   time somebody reads it back.
+
+Five kinds of open, not one: stored DATA that is wrong, a DEPLOY waiting on
+one button, CODE, a DECISION from BZ, and the WORLD — a second person, a log
+line that has not recurred, a fill that has not run. Only code is something
+to pick up and start; the deploy is one press.
+
+---
+
+## WHAT IS ACTUALLY OPEN, 2026-09-15 — the short list
+
+### 0. Stored data that is wrong — FIRST
+
+**Dragged fill levels were saved inverted from v2.3.17 to v2.3.35, and no
+repair exists.** Checked 2026-09-15.
+
+What happened (CHANGELOG v2.3.35): the gauge's range used
+`writing-mode:vertical-lr` with `direction:ltr`, which puts the MINIMUM at
+the top, so every level set by dragging stored 110 minus what was meant. A
+bottle set near full stored 10, and Shop correctly called it nearly out.
+Fixed FORWARD at v2.3.35: `direction:rtl` is back (index.html:804) and the
+walk clicks each end and reads the value back.
+
+The window, checked against the shipped files rather than taken from the
+changelog: v2.3.15 still set the range vertical with
+`-webkit-appearance:slider-vertical`; v2.3.17 removed that (its own entry
+says so); v2.3.20 carries `direction:ltr`; v2.3.35 carries `direction:rtl`.
+In time: 2026-09-12, 07:33 AM to 09:25 PM ET. Levels read from a photograph
+write a percentage directly and were never affected.
+**UNCHECKED:** that v2.3.15's `slider-vertical` put the minimum at the foot
+in BZ's browser. That is inferred from the property, not clicked, and the
+v2.3.16 file is not in this folder.
+
+Nothing repairs the stored values. Checked 2026-09-15: nothing in
+index.html rewrites a stored fill.
+
+**Why the repair cannot be a formula.** `b.fill` is a bare number with no
+source and no timestamp. The drag writes `b.fill = L.fillSnap(sl.value)`
+(index.html:21198) and a photograph writes `b.fill = r.now`
+(index.html:23818) — same field, same shape. So the stored data cannot tell
+a value dragged inside the window from one set before it, one read from a
+photograph, or one re-dragged since v2.3.35 and already right. Un-inverting
+every fill would corrupt every one of those that was always correct. **A
+repair that cannot identify its targets does not guess.**
+
+**The only discriminator is the log.** A drag logs `fill: <key> at N%`
+(index.html:21201); a photograph logs `fill: set n level(s) from a
+photograph` (index.html:23822). A drag inside the window, on a bottle with
+no later drag or photograph, is a proven target, and its correct value is
+110 minus the logged number. So the honest options are exactly two:
+**repair what the log proves and leave the rest, or ask BZ** about any
+bottle the log cannot settle. There is no third option, and "un-invert
+everything in the range" is not one.
+
+**THE LOG CANNOT SETTLE IT — checked 2026-09-15.** BZ copied the log on
+2026-09-15 at 12:33. It holds 600 lines (`S.log` is capped there,
+index.html:37925), its oldest line is 09/14 10:21:01, and there is not one
+`fill:` line in it. The copy in Firebase is no older: `fbPushDiag`
+overwrites one document per account with the tail of the same log
+(index.html:38953–38959). Nothing the app keeps reaches 2026-09-12. So the
+log proves no targets, the repair it can justify is **nothing**, and the
+decision is BZ's — it is in §4.
+
+What that day did hold: a photographed levels read went through on
+2026-09-12 (CHANGELOG v2.3.20), and a photograph writes the correct value.
+Some levels set that day are right and look exactly like the wrong ones —
+the case against a blanket repair, in his own data.
+
+**UNCHECKED:** how many bottles are affected, and whether any device of his
+ran a build inside the window at all — the gauge is opt-in (v2.3.0). The
+values ride the account sync, so wherever they are wrong they are wrong on
+every device.
+
+**A category stored as bourbon when nothing was known.** Three places read
+`sub || 'bourbon'`, and on the shop path that WROTE bourbon for a label read
+that came back with no category (CHANGELOG v2.3.21). Fixed forward at
+v2.3.21: all three guess from the name and otherwise say Not sure. No
+cleanup was written. **UNCHECKED:** whether any stored bottle actually
+carries a bourbon that came from this; the v2.3.21 entry does not say when
+the shop write began, so the window is open at the start. Same rule as the
+fill levels: a real bourbon looks identical, so nothing changes without
+evidence per bottle. `L.guessSub` disagreeing with a stored bourbon is a
+lead, not proof.
+
+### 1. The deploy — Code.gs CLOSED, two files still unchecked
+
+**CLOSED 2026-09-15 for Code.gs: the live service answers build 2.4.0,
+current.** BZ pressed Check the service after this entry was written. The
+deployment matches `GS_BUILD` in Code.gs and `L.GS_BUILD` in index.html, so
+the v2.4.0 prompt change (the open category list) is live. What the button
+cannot see is still open — the last bullet below. The entry is kept as it was
+written.
+
+**Is Code.gs 2.4.0 live?** Press **Check the service** in Settings. It asks
+the live deployment which build it is running (`mode: 'version'`,
+Code.gs:130), which is the only thing that can answer — a paste, a saved
+file and a green `probeWiring` all run against saved code.
+
+- The file: `GS_BUILD = '2.4.0'` (Code.gs:40), matching
+  `L.GS_BUILD = '2.4.0'` (index.html:18748). Checked 2026-09-15.
+- BZ deployed through **2.3.93**. v2.4.0 changed Code.gs again — the prompt
+  stopped closing the category list at eighteen, so a single grain Scotch, a
+  rice whisky or a genever can come back (CHANGELOG v2.4.0) — and no deploy
+  has been confirmed since.
+- If the button answers 2.3.93: paste **Code.gs**, then Deploy → Manage
+  deployments → pencil on the existing deployment → New version, and press
+  the button again. A paste is not a deploy (rule 25e).
+- **GS_BUILD 2.4.0 against APP_VERSION 2.4.4 is correct, not drift.** The
+  service version moves only when a .gs file changes; consistency.js checks
+  that the two GS_BUILD values agree with each other, not that either
+  matches APP_VERSION. Leave it.
+- ~~The `lookup.gs` in this folder carries no GS_BUILD at all, so it is older
+  than the Code.gs beside it.~~ **CORRECTED 2026-09-15:** that was the
+  folder's stale copy. The repo's `lookup.gs` (committed 2026-09-15 with the
+  v2.4.4 suite) is now in the folder, and it is byte-for-byte identical to
+  `Code.gs`, both at GS_BUILD 2.4.0. Code.gs is still the name to paste
+  under (rule 25f).
+- The confirming line, from BZ's log: `09/15 12:33:30 service build:
+  deployment says 2.4.0, app needs 2.4.0 — current`. On 09/14 at 10:45 the
+  same check said 2.3.70.
+- What the version check cannot see: GS_BUILD lives in Code.gs only, so the
+  button proves which Code.gs is live and nothing about the other files.
+  What BZ's log of 09/14–09/15 shows about them:
+  - **`shelf.gs` — its modes answer.** A bar shelf read succeeded on
+    09/14 at 16:51 (31 bottles, 9 owned), and a photographed levels read
+    succeeded on 2026-09-12 (CHANGELOG v2.3.20). **UNCHECKED:** whether the
+    deployed `shelf.gs` is the latest file (paste-and-deploy flagged at
+    v2.1.0, v2.2.0, and v2.3.2). A mode answering proves the mode exists,
+    not which version of it.
+  - **The recap route was NOT live on 09/14.** At 11:46, on deployment
+    2.3.70, a recap came back "as if this were a single-bottle lookup rather
+    than a recap" — the deployed doPost did not route the recap mode, which
+    is the fault the `recap-handler.gs` duplicate-doPost fix (v2.0.73) was
+    for. A second recap at 12:30 got a 404 after 81.9s. **UNCHECKED:**
+    whether the route is live on 2.4.0 — no recap was asked for after the
+    2.3.93 or 2.4.0 deploys. The next recap's log line answers it: a
+    single-bottle answer means the route is still missing; a recap means it
+    is there.
+
+### 2. Waiting on code — mine
+
+**House aliases have no writer — my loose end, not a decision.** v2.3.99
+built the registry: `L.houseResolve` and `L.houseIndex` (index.html:11705,
+11722), alias chains followed, cycles stopped, `snapHouse` asking the
+registry. It shipped with nothing that records an alias. Checked
+2026-09-15: `LIB.houseGraves` is read at index.html:20476, 28120, and 34102
+and assigned nowhere, and firebase-rules.json has no node for it. Empty
+aliases change nothing, which made it safe to ship — and a feature with
+pending pieces is not finished however safe it is (rule 31). BZ declining
+admin tables at v2.4.0 does not cover it: that ruling was about editing
+reference tables, and this is the write half of a mechanism already in the
+file. What it needs: the house merge, which still rewrites `dist` on every
+affected bottle (v2.3.99), to record an alias instead, the way `LIB.graves`
+does for products; and a rules node for it, checked against rule 20 before
+anything writes. **Owner: me.**
+
+**Two functions still answer "should I buy this".** v2.3.79 named it as the
+thing to look at next: `L.wouldILike` answers from facts, `L.fitVerdict` from
+findings. v2.3.80's `L.fitTwoWays` pairs `fitVerdict` with `judgeListing` on
+Shop and did not retire the pair. Checked 2026-09-15: `wouldILike` is
+defined at index.html:7431 and called at 12387, 33677, and 34105;
+`fitVerdict` is defined at 5799 and called at 3022 and 5766. Rule 30d: one
+wins, and says so in a comment. Deferred from a build, so mine (rule 31).
+
+**An estimate before a lookup run, and a total after it.** Still absent,
+checked 2026-09-15. The cap (`L.LOOKUP_CAP = 600`, index.html:18778) and the
+breaker exist; this is the comfort half. Since the entry was written every
+button lookup goes through `askLookup` with one 45-second ceiling (v2.3.83),
+service calls share one lane (v2.3.40), and a question the app cannot place
+is refused before it spends a lookup (v2.4.2).
+
+**sync.js has no scenario for the tombstone / `wiped` merge.** Checked
+2026-09-15: no scenario mentions either. Seventeen scenarios, run in slices
+since v2.0.67 and in three processes since v2.3.13. The v1.9.29 storage keys
+the old entry also named went with the shelf organizer (`shelfCaps` survives
+only in a comment, sync.js:257), so that half is moot.
+
+**The library fill gives a lookup 30 seconds, and the service routinely
+needs more.** Found 2026-09-15 in BZ's log, 09/14 21:30–21:31 on his phone:
+the fill asked about four entries, wrote one and lost three, and all three
+were lost at 30.0–30.1s ("the lookup did not answer in time"); the one it
+kept answered in 10.9s. The fill asks with `askLookup(x.name, 30000,
+x.missing)` (index.html:30234), and the label-gap fill after a single bottle
+scan asks with 30000 too (index.html:38453). v2.3.83 moved the four BUTTON
+lookups to `L.LOOKUP_MS = 45000` (index.html:18776) on the evidence that
+answers take 18 to 87 seconds; these two paths were not among the four, and
+consistency.js's floor is 20 seconds, so 30 passes it. v2.3.83's own
+argument applies unchanged: a ceiling below the ordinary answering time
+throws the slow answers away, and the slow ones are the searches with work
+to do. Mine, not yet built.
+
+**Test §351 passes only on a UTC clock.** Found 2026-09-15, running the
+suite on BZ's PC (Eastern): 4607 passed, 1 failed — "and when, as a date
+rather than a number" got `2026-01-14` and wanted `2026-01-15`. With
+`TZ=UTC` the same suite is 4608 of 4608. The fixture is
+`Date.UTC(2026, 0, 15)`, midnight UTC, which is 7 pm on the 14th in
+Eastern, and `L.libraryExportRows` writes the date through `L.todayISO`
+(index.html:12125) in the machine's own time. The APP is right for BZ — a
+contribution at 7 pm on the 14th is the 14th where he is — and the TEST
+assumes the machine runs UTC. The cloud gate pins `TZ: UTC`
+(.github/workflows/gate.yml), so it passes there. The fixture moved to
+midday UTC would pass in every US zone. Mine, not changed without asking
+(rule 5).
+
+### 3. Waiting on evidence — each waits for a failure to recur with logging in place
+
+The log holds 600 lines, and on 09/14–09/15 that was about 26 hours of use
+(09/14 10:21 to 09/15 12:33). A failure is evidence only if the log is
+copied within about a day of it.
+
+- **Stagg: a lookup answered with five characters and stopped** (v2.3.92).
+  **EVIDENCE ARRIVED 2026-09-15** in BZ's log of 09/14, 20:02–21:11, and it
+  is three faults, not one:
+  - *Prose after a search.* 20:02:39 and 20:03:14 on the phone, asking
+    "Stag": `no JSON in the reply. stop_reason=end_turn text=Based on the
+    search results, there are several "Stag" whisky bottlings…`. 21:03:50
+    and 21:04:20 on the desktop: `stop_reason=end_turn
+    blocks=server_tool_use+web_search_tool_result+text+…`. The model
+    searched, got results and finished in prose. It did not hang and it did
+    not fail to return, which answers the question v2.3.92 left open: prose.
+    "Stag" is a real ambiguity, and the model said so in words instead of
+    JSON.
+  - *JSON the service could not parse.* 21:09:15: `JSON did not parse:
+    {"name":"George T. Stagg",…`. **UNCHECKED:** what broke the parse — the
+    log keeps 140 characters and the fault is past them.
+  - *A real bottle rejected by the app* — the next entry.
+  The v2.3.93 retry covers the first two, which arrive with no usable JSON.
+  It does not cover the third, which is not an error at all.
+  (The entry as written:) The cause is unknown and deliberately not guessed
+  at a fourth time. The instrumented Code.gs records which block types came
+  back. v2.3.93 asks once more when a reply has no JSON, and BZ confirmed
+  Stagg answers on the second ask (v2.3.94). The retry keeps the screen
+  working and hides the fault, so the log line is the only place it shows.
+- **A lookup that answers and shows nothing** (v2.3.84). **CAUSE FOUND
+  2026-09-15 from BZ's log; the decision is in §4.** Six replies on 09/14 —
+  20:03:37, 20:03:56, 21:03:57, 21:08:45, 21:09:02 and 21:09:24 — carried a
+  name (George T. Stagg, and once just Stagg) with Buffalo Trace as the
+  distillery, and every one carried `"proof":null`. `L.parseLookup` treats a
+  name and a proof together as the identity and returns null without both
+  (index.html:4619), and both lookup screens log "lookup found nothing" on
+  a null (index.html:28415, 35863). The app received a bottle and told BZ it
+  found nothing. The same question succeeded at 21:08:34 and 21:09:56, and
+  on that path a success means the reply carried a proof. So this entry and
+  Stagg are partly one fault: the third of the three above.
+  **UNCHECKED:** why the model returned no proof. The log shows the null,
+  not the reason; George T. Stagg is a barrel-proof release whose proof
+  changes by year, which fits, and nobody has asked. Also unchecked: whether
+  the Yellowstone case that raised this entry was the same rule — its lines
+  are older than the log.
+  (The entry as written:) The lookup now logs the keys a reply came back
+  with. Nothing was fixed, because nothing was known.
+- **`had.forEach is not a function` in share enumeration** (v2.3.19). One gate
+  run, not reproduced, explicitly not claimed fixed. An odd resolve no longer
+  takes the buddies tab down, and the log line beside it names what was
+  enumerated. Not in BZ's log of 09/14–09/15.
+- **A shelf photograph that results in nothing** (v2.0.70). The backgrounding
+  fix shipped that build; the harness reads a shelf end to end.
+  **UNCHECKED:** whether BZ has seen it since v2.0.70. There is no report
+  either way. His log of 09/14 has three shelf reads that failed, each with
+  a named cause — a 404 at 12:10, bad JSON from the model at 11:47, a timeout
+  at 130.7s at 12:32 — and one that succeeded at 16:51. None ended in
+  silence.
+
+### 4. Waiting on a decision from BZ
+
+- **The fill levels from 2026-09-12 (§0).** The log cannot name them, so
+  there are two choices and both are his: check by eye the bottles whose
+  gauge he dragged that day — he is the only record left — or leave them.
+  Nothing is written without one of those.
+- **Is a name without a proof a bottle?** (cause found 2026-09-15, §3). The
+  identity rule at index.html:4619 rejects any reply without a proof, which
+  throws away a barrel-proof release whose proof the model will not commit
+  to. Loosening it lets entries with no proof into the library; keeping it
+  keeps telling BZ "found nothing" about a bottle the service found. That is
+  a change to a rule, so it is his call; the code after it is mine.
+- **A public collection link** needs a Firebase node readable without sign-in
+  and a rules change he would deploy (v2.3.0). His call.
+- **Seven library Release mismatches** left for judgment (v2.3.26). The scan
+  points rather than corrects, because a store pick of a small batch is
+  arguably either.
+- **The `diagnostics` node bounds who writes and not what.**
+  firebase-rules.json:196–201: owner-write, admin-read, no `.validate`. It
+  arrived after the 2026-09-03 check that found nothing else unbounded.
+  Owner-only, so it is the `$uid` shape rather than the `upc` shape. Flagged,
+  not ruled on.
+- **Two of his 36 flights are over the drink budget** (v2.3.53: a 9-glass core
+  at 6.45 standard drinks and a 6-glass one at 4.6). **UNCHECKED:** what the
+  app does with a stored flight over budget. The cap is enforced in
+  `L.buildFlight`, which sizes proposals, and the entry does not say whether
+  a flight already on the shelf is trimmed, flagged, or left.
+- Standing from before, both closed with their entries kept below:
+  ~~road trip planner~~ DROPPED 2026-09-09; ~~shelf organizer~~ REMOVED
+  WHOLE at v2.0.14.
+
+### 5. Waiting on the world
+
+- **The mash bill gap** waits on the fill having run and its counts being
+  recorded. Checked 2026-09-15: `data.json` (the shipped catalog) carries no
+  bill field. Bills live in the shared library, which this folder cannot
+  see, and the library export is how they become countable. Since v2.0.48
+  the reading has been repaired: the bill parser reads segments (v2.0.57), a
+  bill that does not add up has Look it up on its row (v2.0.56), and a grain
+  bill on agave or cane is flagged (v2.3.13). One case still flags by
+  design: **95% rye alone**, the Angel's Envy gap, which is what Look it up
+  is for. **UNCHECKED:** whether the fill has run at all.
+- **The candidate finder has still never put a bottle in BZ's hands.** It has
+  a front door in his own words since v2.4.2 ("what am I missing from
+  Woodford"), and the crash he hit using it was fixed at v2.4.4. The crash is
+  in his log at 09/15 10:15 (`SHELF_ASK.result.forEach is not a function`,
+  on Home and on Shop). **UNCHECKED:** the fix in use — v2.4.4 booted on his
+  desktop at 11:15, and no shelf question was asked after it.
+- **Sharing with a second person — PARTLY STALE.** Shelves ARE shared with
+  real people: BZ's diagnostics card read four grants out of his shares
+  (v2.3.15), a real buddy's panel was in his screenshot at v2.3.54, and every
+  boot in his log of 09/14–09/15 reads three accounts by name out of his
+  `sharedWith` node (`enumerated 1, found 3 by name` — the enumeration is
+  best-effort by design, v2.3.15).
+  **UNCHECKED:** whether any of the rest has run with a second person — the
+  contribution queue from a non-admin, the tastings node, a guest's device
+  applying a tasting. Nothing this pass could read records any of them.
+- **Pooled blind flights** and **advent with others** need other people.
+- **Receipt ingest by email** needs an inbox. The reading half is built.
+- **Tasting night on phones** — paper works, and BZ deferred the rest. Since
+  v2.3.53 a Running a tasting guide sits behind an icon on Flights.
+
+### 6. Not started and not asked for — noted so nobody mistakes them for loose ends
+
+- **What have your buddies been drinking** and **what's popular** — neither
+  has a node in firebase-rules.json (checked 2026-09-15). The design notes
+  below stand.
+- **A flavor profile from the tasting notes** — search has read every word of
+  the notes since v2.3.27; nothing builds a profile from them.
+- **Two shelves side by side** — v2.3.54 portrays the two shelves MERGED (BZ:
+  run on ours). Nothing compares them, and nothing makes a flight runnable
+  only together.
+- **Per-buddy selection** in whose shelf counts — not wired, and v2.3.66
+  declined to invent it as a feature nobody asked for.
+- **navReport** was deleted at v2.4.4 because nothing called it; it is five
+  minutes to rebuild the day a screen stops scrolling.
+- **Debt ratchets** (v2.3.49): 129 hard-coded hex colors and 3 `!important`,
+  allowed at today's count; anything new fails.
+
+---
+
+## WHAT 2026-09-15 CHANGED
+
+Each of these is closed or corrected IN PLACE in the entry it names below.
+
+- **Code.gs 2.4.0 — CLOSED, live.** BZ's Check the service answered build
+  2.4.0, current, on 2026-09-15. `shelf.gs` answers its modes; the recap
+  route was NOT live on 2.3.70 (09/14 11:46) and is UNCHECKED on 2.4.0 (§1).
+- **BZ's log of 09/14–09/15 was read line by line**, and it moved five
+  entries:
+  - **Fill levels:** the log's oldest line is 09/14 10:21 and the Firebase
+    copy is the same tail, so nothing reaches 2026-09-12. The repair it can
+    justify is nothing; the choice went to BZ (§0, §4).
+  - **Lookup answers and shows nothing — CAUSE FOUND:** six replies carried
+    a bottle with `"proof":null`, and `L.parseLookup` rejects a name without
+    a proof (index.html:4619). The rule is BZ's call (§4).
+  - **Stagg** is three faults: prose after a web search, one unparseable
+    JSON, and the proof rule above (§3).
+  - **The library fill's 30-second ceiling** lost three of four lookups at
+    30.0s. New, mine (§2).
+  - **The SHELF_ASK crash** is in the log at 10:15, and the v2.4.4 fix has
+    not been used since (§5).
+- **Boot renders — CLOSED at v1.9.33**, a day BEFORE the 2026-09-10 pass
+  called it "not started". Home draws first and the rest on the next tick
+  (index.html:40232). The bigger version, rendering on reveal by moving
+  `TAB_RENDER` into `show()`, was deliberately declined in that comment
+  (rule 3a). v2.3.47 measured nine cold boots at a median 242ms on BZ's 364
+  bottles.
+- **Untested L functions — CLOSED.** All 495 have a test (v2.3.47);
+  `KNOWN_UNTESTED = []` (consistency.js:887) and the build fails on a new
+  one.
+- **Lookup cap — the 120 in item 11 was stale since v1.7.4**, which raised it
+  to 600. The code says 600 (index.html:18778).
+- **Comments — BZ's ask changed, the build did not.** At v2.3.60/61 he asked
+  for only necessary comments: 2063KB to 1769KB, with the history moved to
+  CHANGELOG. The 2026-09-09 ruling against a stripped BUILD stands, since
+  there is still one file.
+- **Security** — the v2.3.47 review found it sound, and `diagnostics` was
+  added to the decisions above.
+- **Nothing reads the tasting notes — PARTLY CLOSED** by search (v2.3.27).
+- **Sharing never exercised — PARTLY STALE** (v2.3.15, v2.3.54).
+- **A buddy tab — CLOSED, BUILT.** Buddies is a tab: `scr-buddies`
+  (index.html:2282) with its own nav button (2490).
+- **Editable reference data** — BZ declined admin tables at v2.4.0. New
+  categories adapt without a build and the scan reports undeclared ones. The
+  house registry's missing writer is an open item above, not part of this
+  ruling.
+- **The shelf organizer entry** that still read as open now carries its
+  closure.
+- **The Map tab is gone** (v2.3.7) and the map moved to the shelf (v2.3.31/32),
+  so the boot entry's `show('map')` call site is history.
+
+### Decided by BZ since 2026-09-10, kept for the reasoning
+
+- Lookup allowances stay per device, so two devices get two (v2.3.66).
+- No admin tables for reference data (v2.4.0).
+- The last three wall and menu reads are kept; the photographs are not
+  (v2.4.1).
+- After a single bottle scan, one lookup fills only what the label left
+  blank. Single scans only, because a menu of sixty is a bill (v2.3.81).
+- Flights are capped in drinks: 4.5 standard, with a 10-glass ceiling
+  (v2.3.53).
+- Zero is back at the foot of the gauge (v2.3.35).
+- No in-aisle barcode lookup (v2.3.0).
+- Every release gets a new version number; a re-cut version never updated a
+  phone (v2.2.0).
+- The library lives under Shelf settings, admin-only (v2.0.49). Fixed-list
+  fields are dropdowns (v2.0.55). A proof printed on the label stays in the
+  name, and the duplicate matcher ignores it (v2.0.56).
+
+---
+
+## How the previous passes read — kept
 
 A NOTE ON READING THIS FILE, written after nearly repeating its own
 documented fault. On 2026-09-10 I scanned the HEADINGS, saw "The shelf
@@ -20,13 +457,13 @@ said v1.26.19 — a version from before the scheme was reset and higher than
 anything that exists, because a header claiming to be current while naming a
 version nobody can find is worse than one with no version at all.
 
-**WHY THIS PASS HAPPENED, and how to repeat it.** On 2026-09-09 BZ asked
-what was left. SEVEN entries turned out to describe work already shipped:
-camera propagation into the other capture moments, `sub: world`, the Google
-button, gifts, receipt reading, the lookup budget, and the advent calendar —
-which was not a feature at all. Each one cost him a round of being told
-about work that was already done, and by then this file was less reliable
-than the code it describes.
+**WHY THE 2026-09-09 PASS HAPPENED, and how to repeat it.** On 2026-09-09 BZ
+asked what was left. SEVEN entries turned out to describe work already
+shipped: camera propagation into the other capture moments, `sub: world`,
+the Google button, gifts, receipt reading, the lookup budget, and the advent
+calendar — which was not a feature at all. Each one cost him a round of
+being told about work that was already done, and by then this file was less
+reliable than the code it describes.
 
 The cause is the same every time: a status read off an entry's HEADLINE
 instead of the source. So the rule for this file is the rule the app's own
@@ -37,13 +474,14 @@ whether it is defined and whether anything calls it; where it names a
 behavior, the check is the call site. Anything that could not be checked
 from the source says so rather than being left to look decided.
 
-Three kinds of entry live here now, and they are not the same kind of open:
-work waiting on CODE, work waiting on a DECISION from BZ, and work waiting
-on somebody or something outside the app — a second person in a room, a
-fill that has not run, an inbox that does not exist. Only the first is ever
-something to pick up and start.
+**AND 2026-09-15 FOUND IT ONCE MORE.** The boot-render entry said "not
+started" through the 2026-09-10 pass while the deferral had shipped at
+v1.9.33 the day before. It was checked against the source on 2026-09-10 for
+its NUMBERS and not for its STATUS, which is the same fault in a new place.
 
-## WHAT IS ACTUALLY OPEN, 2026-09-09 — the short list
+## SUPERSEDED 2026-09-15 — the short list of 2026-09-09 and the changes of 2026-09-10
+
+**SUPERSEDED by the 2026-09-15 short list above.** Kept as it read.
 
 Everything else below is either shipped, ruled on, or waiting on the world.
 Three kinds, because they are not the same kind of open.
@@ -52,6 +490,7 @@ Three kinds, because they are not the same kind of open.
 could pick up and start today without an answer from BZ or an event outside
 the app. That is worth stating plainly rather than leaving somebody to
 discover it by reading four hundred lines.
+*(2026-09-15: no longer true — see §0 and §2 of the short list above.)*
 
 **Waiting on a decision from BZ**
 - ~~The **road trip planner**~~ **DROPPED, BZ 2026-09-09**: not useful
@@ -83,6 +522,9 @@ discover it by reading four hundred lines.
   one-way. What the guest likes - the cask, the smoke, the strength -
   travels with them as an ORDER inside the rung rather than a gate, because
   a gate would empty a rung and send the ladder somewhere it should not go.
+  *(2026-09-15: extended since — the house is inferred from the front of the
+  name (v2.3.62/63), guest lookups feed the library (v2.3.64), and the
+  ladder feeds the wishlist through L.awayWishable (v2.3.20).)*
 - **The bar shelf is inventory** — RULED AND BUILT, v2.0.47. BZ: why not
   include inventory without all the bells and whistles. Rum, vodka, gin,
   mezcal, tequila, liqueur and brandy count as bottles, are searchable and
@@ -115,8 +557,15 @@ discover it by reading four hundred lines.
 - **13 of 456** L functions were untested on the morning of 2026-09-09;
   that is now **zero**, and the check fails on a new one, so this line is
   here to be deleted rather than acted on.
+  *(2026-09-15: CLOSED — 495 of 495 tested at v2.3.47. Kept rather than
+  deleted, per rule 2 of this file.)*
 
 ## The shelf organizer needs work — LOW PRIORITY, BZ 2026-09-09
+
+**CLOSED — REMOVED WHOLE at v2.0.14, BZ 2026-09-09.** Checked 2026-09-15:
+`showShelfPlan`, `L.storagePlan` and `shelfCaps` appear in no HTML file in
+this folder. The request is kept below as it was raised; the removal and its
+reasons are in the superseded short list above.
 
 BZ: backlog that we need to work on the shelf organizer, low priority for
 now. Raised while looking at the Buddies rebuild, so it is his judgment of
@@ -127,6 +576,10 @@ to arrange it", and it lays bottles out against the shelf capacities in
 S.shelfCaps.
 
 ## CORRECTION: sync.js was never asserting one thing (v1.9.30)
+
+**STATUS 2026-09-15: HALF MOOT, HALF OPEN.** The v1.9.29 storage keys went
+with the shelf organizer at v2.0.14. The tombstone merge is still not driven
+through two browsers — it is in the short list, §2.
 
 The v1.9.28 entry here said sync.js "asserts ONE composite thing". That was
 wrong, and it was wrong in the way this project keeps catching: judged from
@@ -166,6 +619,12 @@ debugging leftover.
 
 ## 1. Security
 
+**STATUS 2026-09-15:** no rules change since 2026-09-04 that this pass
+found. The v2.3.47 review found the rules sound: no node world-readable or
+world-writable, and none of 95 `innerHTML` assignments fed by user data. One
+node arrived after the check below and bounds WHO and not WHAT —
+`diagnostics`, in the short list §4.
+
 **A write ceiling on `upc`** — SHAPE DONE 2026-09-03, THE REST OPEN.
 Every shared node bounded what may be written to it except the barcode
 pairings, which any signed-in account could write anything to. The rule now
@@ -200,10 +659,23 @@ say so then, and not on every delivery.
 **Nothing else is unbounded.** Checked the whole file on 2026-09-03:
 directory, requests, shares, sharedWith, shared, view, admins, stats and
 contrib all bound both who may write and what shape it must be.
+*(STALE as of 2026-09-15: `diagnostics` (firebase-rules.json:196–201) was
+added later and has no `.validate`. The nine nodes named here still hold.)*
 
 ## 2. Performance
 
+**STATUS 2026-09-15: nothing open.** v2.3.47, median of nine on BZ's real
+364-bottle shelf: renderShelf 22ms as a list and 13ms as books, renderHome
+17ms, renderShop 4ms, filtering under a millisecond, nine cold boots to an
+interactive nav at a median 242ms. The boot-render fix below is CLOSED
+(v1.9.33). The data.json caching note is still not done (sw.js:41–44 is
+network-first) and still does not need doing.
+
 **THE DOCUMENT PARSE IS MEASURED AND RULED ON — BZ, 2026-09-09: don't.**
+*(2026-09-15: the ruling against a stripped BUILD stands. Separately, at
+v2.3.60/61 BZ asked for only necessary comments in the source; 294KB came
+out, 2063KB to 1769KB, with the history moved to CHANGELOG. The parse was
+not re-measured after that cut.)*
 Measured at v1.9.37, nine runs and a median, headless Chromium on an empty
 shelf: responseEnd to domInteractive **147.4ms** (min 116.2, max 305.8).
 The file is 1.64MB, 92.5% of it the script block, and **677KB of that —
@@ -268,6 +740,19 @@ Nothing on the planning screen is worth touching.
 
 **WHERE THE TIME ACTUALLY GOES** (BZ: don't quit on performance gains — he
 was right to push, the entry above was four helpers on one screen):
+
+**CLOSED at v1.9.33 — the boot renders, and not the way this entry proposed.**
+Checked 2026-09-15 against index.html:40232–40257: `boot()` draws Home, then
+draws the other screens on the next tick (`setTimeout(rest, 0)`), so none of
+them sits in front of the first paint. Moving `TAB_RENDER` into `show()` was
+considered in that comment and DECLINED: rendering on demand would make
+every screen track whether it had ever been drawn, which is seven new pieces
+of state and not a performance fix (rule 3a). Because every screen is still
+drawn once at boot, the three call sites below that rely on it are still
+safe. Two of them have moved since: the Map tab is gone (v2.3.7) and the map
+lives on the shelf (v2.3.31/32). The line numbers below are from the build
+that measured them. This entry said "Not started" through the 2026-09-10
+pass, a day after the fix shipped.
 
 | | desktop |
 |---|---|
@@ -346,7 +831,10 @@ which is consistent with the earlier finding that bytes are cheap to parse.
 A three-run sample said 358ms and was noise; nine runs is the number to
 trust.
 
-**TEST COVERAGE IS 95%, AND THE GAP IS NAMED.** 407 L functions, all used
+**TEST COVERAGE IS 95%, AND THE GAP IS NAMED.**
+**CLOSED 2026-09-15 — all 495 L functions tested at v2.3.47, and
+`KNOWN_UNTESTED = []` (consistency.js:887) fails the build on a new one.**
+407 L functions, all used
 by the app, 21 with no assertion over them. A nineteenth consistency check
 now catches this class — check 3 catches a helper defined and never used,
 the unwired check catches one tested and never called, and NEITHER caught
@@ -395,6 +883,11 @@ which `mashShape` has no equivalent for, so one cannot simply replace the
 other. Worth an hour and a conversation, before the fill makes it visible.
 
 ## 3c. The mash bill gap — LET THE RUN DECIDE
+
+**STATUS 2026-09-15: STILL WAITING ON THE RUN.** **UNCHECKED:** whether the
+fill has run at all — no counts have been recorded, and the shipped
+`data.json` carries no bill field, so this folder cannot answer it. The
+library export is the way to count.
 
 Adding mash as a fifth gap on 2026-09-07 made 411 library entries "to do"
 overnight. `lookup.gs` now asks for one, which it never did before, so the
@@ -549,7 +1042,8 @@ does NOT exist is the "by email" half, and that is not a build: it needs an
 inbox somewhere for receipts to arrive at, which is infrastructure rather
 than code. The entry named the delivery and hid the fact that the reading
 was done.
-**Road trip planner** — blocked on a routing decision (item 8).
+~~**Road trip planner** — blocked on a routing decision (item 8).~~
+**DROPPED, BZ 2026-09-09.** Not useful without detailed routing.
 **Tasting night on phones** — paper works; the phone variants are deferred
 (item 10).
 **A budget on a lookup run** (item 11) — **HALF BUILT, verified
@@ -560,7 +1054,8 @@ with the number left today shown on screen and a message when it is
 reached — so a CAP exists as well as a breaker. What is genuinely missing
 is only the ESTIMATE before a run starts and the total after it, which is
 comfort rather than protection. Checked: there is no estimate anywhere in
-the source.
+the source. *(Re-checked 2026-09-15 at v2.4.4: still none. Cap still 600,
+index.html:18778.)*
 **Pooled flights cannot be fully blind** — noted, not blocking (item 12).
 
 ## Occasions
@@ -596,14 +1091,16 @@ it on the strength of this note.
 **Tasting night** — exists on paper and works. The phone variants are
 deferred (item 10), and BZ was fine with paper as of 2026-09-01.
 
-**A trip** — the road trip planner is deferred on a routing decision
-(item 8). Listed here because a trip is an occasion before it is a feature:
-what it needs is a shape for "a run of pours away from the shelf", which
-the away pour already half is.
+**A trip** — ~~the road trip planner is deferred on a routing decision
+(item 8).~~ The planner was DROPPED 2026-09-09. Listed here because a trip
+is an occasion before it is a feature: what it needs is a shape for "a run
+of pours away from the shelf", which the away pour already half is.
 
 ## Two from 2026-09-07, both about other people
 
 **What have your buddies been drinking** (BZ, 2026-09-07 — not started).
+*(STATUS 2026-09-15: still not started — no node for it in
+firebase-rules.json.)*
 
 Attributed, consented, and therefore a Clubs item: it needs a second person
 before it can be built OR tested, which is the constraint that whole section
@@ -620,6 +1117,8 @@ by widening the existing share.**
 **What's popular** (BZ, 2026-09-07 — not started). App-wide and anonymous,
 in his words. The only idea discussed all day that gets BETTER as more
 people use it, and the only one where the unit is not one shelf.
+*(STATUS 2026-09-15: still not started — no node for it in
+firebase-rules.json.)*
 
 **The privacy design is the whole job and it is not a coding problem.**
 Anonymous is a claim that has to survive somebody trying to break it, and
@@ -649,6 +1148,10 @@ have the sharing paths working before anybody is invited, and neither is
 worth building for an audience of one.
 
 **A buddy tab, not a card in Settings** (BZ, 2026-09-07 — not started).
+**CLOSED — BUILT.** Checked 2026-09-15: Buddies is a tab, `scr-buddies`
+(index.html:2282) with its own nav button (index.html:2490). It carries the
+room notes (v2.3.52), the merged portrait and Venn (v2.3.54), and the
+whose-shelf pick list (v2.3.66). The entry is kept for the reasoning.
 
 His words: I think we will eventually need a buddy tab, not in settings.
 Right, and the evidence arrived the same evening. Everything about another
@@ -671,7 +1174,13 @@ A Club is people-shaped: it does not exist with one person, which makes it
 the test the app has never had. Everything in this section is blocked on a
 second human being rather than on code, and none of it is actionable alone.
 
-**Sharing has never run end to end with another person.** The library, the
+**Sharing has never run end to end with another person.**
+**PARTLY STALE, 2026-09-15.** Shelves are shared with real accounts: BZ's
+diagnostics card read four grants out of his shares (v2.3.15), and a real
+buddy's panel was in his screenshot at v2.3.54. **UNCHECKED:** whether the
+contribution queue, the tastings node or library publishing has run with a
+second person. Nothing this pass could read records it.
+The library, the
 contribution queue, suspend, the shared shelves — all of it has only ever
 been used by the account that owns it, and the week of 2026-09-03 shipped
 six changes into exactly those paths. Two devices on ONE account was already
@@ -692,7 +1201,8 @@ Filed here because the constraint only bites with a room in it.
 **The candidate finder has never put a bottle in BZ's hands.** Not a club
 item strictly, but the same class of unproven: until a suggestion is
 followed through to a purchase the feature is untested in the only way that
-counts.
+counts. *(2026-09-15: a plain-language front door since v2.4.2, crash fixed
+at v2.4.4. Still no purchase recorded.)*
 
 ## Closed
 
@@ -727,6 +1237,9 @@ Built, measured or abandoned. Kept as a list rather than as pages, because the r
 - 9. Flight re-instantiation
 - 13. Paste a shop URL for a verdict
 - 17. The shelf redraws whole, and counts by scanning
+- Boot renders eight screens before the first paint — closed at v1.9.33 (added 2026-09-15)
+- Untested L functions — closed at v2.3.47, 495 of 495 (added 2026-09-15)
+- A buddy tab, not a card in Settings — built (added 2026-09-15)
 
 ### An axis at 100% still has something to buy — DONE 2026-09-04
 Built. Every node opens the list, whatever the score, and the toast is
@@ -798,6 +1311,12 @@ Original entry follows.
 
 
 ### Nothing reads the tasting notes
+**PARTLY CLOSED, 2026-09-15.** Search reads every word of the tasting notes
+since v2.3.27 ("something smoky" went from 0 results to an answer). No
+flavor profile exists beside `L.tasteProfile`, and nothing matches a
+candidate's description against one — both halves of "What it needs" below
+are still unbuilt. Not asked for since; noted in the short list §6.
+
 The largest unused asset in the app. 930 note fields on BZ's shelf, and the
 flavor vocabulary is sitting in them: spice 145, sweet 140, fruit 134,
 vanilla 118, caramel 111, honey 63, chocolate 50, smoke 50.
@@ -825,6 +1344,12 @@ What it needs:
 
 
 ### Two shelves, side by side
+**STATUS 2026-09-15: NOT BUILT AS DESCRIBED.** v2.3.54 runs the portrait on
+the two shelves MERGED (`L.mergedShelf`; BZ: not run on theirs, run on
+ours), which asks what the pair is together. It does not answer what one
+house has that the other lacks, and nothing makes a flight runnable only
+together. Not asked for since.
+
 The sharing feature that has not been built. `L.shelfAxes` run twice
 answers a question neither shelf answers alone: what can I taste at their
 house that I cannot at mine. That is the reason to open the app while
@@ -837,6 +1362,14 @@ sharing a shelf that this app could make.
 
 
 ### Editable reference data — DEFERRED, and BZ is right to be wary
+**RULED 2026-09-15 (v2.4.0): no admin tables.** BZ: not worth it for 2
+tables, wanting to ensure new data adapts without a build. Measured at
+v2.4.0: an unrecognised category renders, counts and lands in the portrait
+without a build, and the library scan reports every undeclared category with
+its count. Separately, v2.3.99 built a house registry with alias resolution
+and **nothing that writes an alias** — that is an open item in the short
+list §2 and not part of this ruling.
+
 BZ, 2026-09-04: "should any of these scales and lists be settings to be
 managed, populated now and then edited without a release?" Then, having
 thought about it: "seems like trouble the more I think about it."
@@ -881,6 +1414,9 @@ the first has met a real user means debugging both at once.
 
 The visual pass covered contrast, the liquid band, one dark surface per
 screen and the type scale. Nothing else.
+*(2026-09-15: since then, v2.3.47 swept tap targets and grew four controls
+to 40px, and v2.3.51 put every tab's bar at the same top edge. Neither was a
+visual pass.)*
 
 ## A pattern worth keeping
 
@@ -931,6 +1467,9 @@ On his own data it took the shelf from 3 priced bottles to 21.
 
 
 ### 7. Receipt ingest by email
+**STATUS 2026-09-15: READING HALF BUILT, EMAIL HALF WAITING ON AN INBOX.**
+See Deferred features above.
+
 Forward a receipt to a dedicated Gmail account; Apps Script polls every
 fifteen minutes, parses it, and drops the acquisition into a pending queue
 for confirmation. No domain needed. Parsers are per retailer, so it grows
@@ -939,6 +1478,10 @@ one shop at a time. Same script project as item 2.
 
 
 ### 8. Road trip planner
+**DROPPED, BZ 2026-09-09.** Not useful without detailed route capability.
+It never had a line of code. Kept for the data note and the routing
+reasoning.
+
 You backlogged this yourself, and the data side is now finished: all 56 US
 distilleries, 23 Scottish and 18 Irish carry real coordinates.
 
@@ -950,6 +1493,11 @@ Nearest-neighbor ordering is fine for six stops.
 
 
 ### 10. Tasting night
+**STATUS 2026-09-15: PHONE VARIANTS STILL DEFERRED; PAPER WORKS.** Since
+v2.3.53 flights are capped at 4.5 standard drinks and 10 glasses, a Running
+a tasting guide sits behind an icon on Flights, and the printed sheets carry
+a responsible-drinking line (v2.3.58).
+
 Split out of item 1, which is otherwise done. Nothing here is built. The
 specification below is BZ's, from early on, and was nearly lost when item 1
 was closed with a one-line summary.
@@ -983,6 +1531,12 @@ never been done.
 
 
 ### 11. A cap on what a lookup run can spend — DONE 2026-09-04
+**CORRECTED 2026-09-15: the cap is 600 a day, not 120.** v1.7.4 raised it —
+a ceiling that stops deliberate work is set wrong, and a fill is not an
+accident. The code says `L.LOOKUP_CAP = 600` (index.html:18778). Since then:
+per device on purpose, BZ's call (v2.3.66); every button lookup counted
+through `askLookup` (v2.3.83). The 120 below is kept as it was written.
+
 120 lookups a day, counted on the device, enforced at all three callers —
 askLookup, the pooled radar search which spends three a press, and the
 flight designer. Two of those reached the service directly and would have
@@ -998,6 +1552,9 @@ Original entry follows.
 
 
 ### 12. Pooled flights cannot be fully blind
+**STATUS 2026-09-15: UNCHANGED.** Noted, not blocking; needs a room with
+people in it.
+
 Raised 2026-09-01, after it was built. Marcus knows what he brought, so a
 flight cast across the room is at best partly blind for whoever supplied
 the pours. This is a real limit, not a bug.
@@ -1020,6 +1577,9 @@ an hour.
 
 
 ### 16. Firebase write ceilings
+**CLOSED 2026-09-04.** `upc` is admin-write-only and a learned pairing goes
+through `contrib` — see Security above. Kept for the reasoning.
+
 Raised again 2026-09-03. Every shared node has a rule bounding what may be
 written to it except `upc`, the barcode pairings, which anybody signed in
 may write to without limit. A single script could fill it, and the cost
