@@ -140,6 +140,23 @@ def main():
     print('\u2714 all %d steps passed in %.0fs'
           % (len(steps), time.time() - t_all))
 
+    # AND PUSH, IF ASKED. BZ: can't we automate that push after a build?
+    #
+    # The push hangs off the END of the gate rather than being its own
+    # command, because that is the only ordering where a red build cannot
+    # reach the repo: the failure path above exits 1 and never arrives
+    # here. A separate push command is one somebody can run first.
+    #
+    # Off by default. `python3 gate.py --push` is a decision, and a build
+    # that goes to the repo the moment it goes green is a build nobody
+    # looked at.
+    if '--push' in sys.argv:
+        print('')
+        r = subprocess.run([sys.executable, 'push.py'], cwd=HERE)
+        if r.returncode:
+            print('\u2716 the gate passed and the push did not')
+            sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
