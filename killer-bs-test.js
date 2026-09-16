@@ -1303,6 +1303,65 @@ sec('one queue builder, and the two note queues do not overlap');
       today: '2026-09-16' }, p => p.k === 'none').length, 0);
 }
 
+sec('a sign-in token never reaches the log');
+{
+  const u = 'https://script.google.com/macros/s/X/exec?mode=ask&idToken=eyJhbGciOi.abc-def_ghi&x=1';
+  eq('a token in an address is hidden', L.redactSecrets('404 from ' + u),
+    '404 from https://script.google.com/macros/s/X/exec?mode=ask&idToken=[hidden]&x=1');
+  eq('and in a body', L.redactSecrets('{"mode":"ask","idToken":"eyJ.secret"}'),
+    '{"mode":"ask","idToken":"[hidden]"}');
+  eq('what the address built by withIdToken carries is hidden',
+    L.redactSecrets(L.withIdToken('https://s/exec', '', 'tok123').url)
+      .indexOf('tok123'), -1);
+  eq('an ordinary line is untouched', L.redactSecrets('fb push ok: 56 bytes'),
+    'fb push ok: 56 bytes');
+}
+
+sec('one answer each, after the 2026-09-16 duplicate hunt');
+{
+  /* 2. THE CHIPS COUNT WHAT THE LIST SHOWS. */
+  const cat = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' },
+    c: { k: 'c', name: 'C' } };
+  const bots = [
+    { id: 'B1', k: 'a', status: 'open' }, { id: 'B2', k: 'a', status: 'sealed' },
+    { id: 'B3', k: 'b', status: 'sealed' },
+    { id: 'B4', k: 'c', status: 'gone', exit: 'finished' }
+  ];
+  const st = ['open', 'sealed', 'all', 'gone'];
+  const counts = L.statusCounts(Object.values(cat), bots, st);
+  st.forEach(s => eq('the ' + s + ' chip counts what ' + s + ' shows',
+    counts[s], L.shelfFilter(Object.values(cat), bots, { status: s }).length));
+  eq('a whisky with one open and a spare sealed counts as sealed too',
+    counts.sealed, 2);
+  eq('gone counts what left the shelf', counts.gone, 1);
+
+  /* 4. ONE HOUSE KEY. */
+  eq('a possessive is not a different house',
+    L.houseSame('Jack Daniel\u2019s', 'Jack Daniel Distillery'), true);
+  eq('and houseSame agrees with the registry',
+    L.houseSame('Jack Daniel\u2019s', 'Jack Daniel Distillery'),
+    L.houseKey('Jack Daniel\u2019s') === L.houseKey('Jack Daniel Distillery'));
+
+  /* 3. A GAP'S HOUSE. */
+  const gap = { dist: 'Buffalo Trace Distillery' };
+  eq('a bottle from the house fits', L.candidateFits({ name: 'Blanton\u2019s',
+    dist: 'Buffalo Trace' }, gap), true);
+  eq('one naming the house fits', L.candidateFits({ name: 'Buffalo Trace Bourbon' },
+    gap), true);
+  eq('another house does not', L.candidateFits({ name: 'Old Forester 1920',
+    dist: 'Brown-Forman' }, gap), false);
+  eq('part of a word is not the house', L.candidateFits({ name: 'Glen Morayshire Blend' },
+    { dist: 'Glen Moray' }), false);
+
+  /* 5. ONE SEARCH. */
+  const sherryIslay = { name: 'Lagavulin Distillers Edition', sub: 'scotch',
+    region: 'Islay', fin: 'PX sherry' };
+  eq('every word through its synonyms', L.matchesSearch(sherryIslay,
+    'islay sherry'), true);
+  eq('an empty search matches', L.matchesSearch(sherryIslay, ''), true);
+  eq('a word it lacks does not', L.matchesSearch(sherryIslay, 'islay rye'), false);
+}
+
 sec('whose shelf is on this device');
 {
   eq('another account signed in here', L.otherAccount('a', 'b'), true);

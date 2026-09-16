@@ -186,6 +186,14 @@ file and a green `probeWiring` all run against saved code.
 
 ### 2. Waiting on code — mine
 
+**A per-person daily limit on the lookup service itself — BZ, 2026-09-16:
+"keep 1 on the back log".** The daily lookup cap lives in the app, so anybody
+signed in who calls the Apps Script directly is not held to it, and every
+call costs BZ. The fix is in `Code.gs`: count calls per verified account per
+day (the id token is already checked there) and refuse past the cap, and
+clamp the answer length the service asks the model for. A service change, so
+it goes through the gate's Apps Script deploy.
+
 **House aliases have no writer — my loose end, not a decision.** v2.3.99
 built the registry: `L.houseResolve` and `L.houseIndex` (index.html:11705,
 11722), alias chains followed, cycles stopped, `snapHouse` asking the
@@ -1716,6 +1724,39 @@ sorting acts on its own now.
 two progress vocabularies - they write different stores, and the rules they
 share are now one. A rule written *differently* twice cannot be found by a
 token check; those are found by reading.
+
+**2026-09-16, after the scan: v2.4.16 to v2.4.18.** BZ: "Everything high and
+medium", then "2 to 11 please - keep 1 on the back log".
+
+- Sync (v2.4.16): a save records what it SENT, not what S held when the write
+  came back; only the save that took the lock releases it; a change from
+  another device arriving mid-save is read again after (`fbCatchUp`); a value
+  taken from the account is recorded as pushed; sign-in and the live listener
+  attach once; another account signing in on the same browser has the last
+  one's shelf put away, not merged (`L.otherAccount`, `kb.owner`); a partial
+  account delete stops syncing; stats are updated, not set, so a suspension
+  survives; the shared view is marked sent only once sent; an update never
+  reloads over a form; the worker installs from the network.
+- Rules (v2.4.17, approved by BZ): only an admin writes the shared library;
+  entries and offers carry bounded names and real timestamps; a contributor
+  cannot write `vetted` or `dropped`; only an admin changes `suspended`.
+  Known limit: a very old client's `set` on stats can still delete
+  `suspended`, because a rule cannot refuse a delete by validation.
+- One answer each (v2.4.18): the shelf status chips ask `L.statusCounts`
+  (Gone counted "nothing open" and Sealed missed open-plus-spare); `houseSame`
+  asks `houseKey` ("Jack Daniel's" was two houses to it and one to the
+  registry; 0 of 109 shipped house pairs changed otherwise); `candidateFits`
+  asks `houseSame`/`houseInText` instead of its own suffix list and substring;
+  every search box asks `L.matchesSearch` (a buddy's shelf, Mark bottles and
+  the flight picker each had a substring match of their own).
+- Also v2.4.18: tap targets measured at 390px on every screen and sheet - the
+  header barrel 44px, chips and toggles 40px, chart bars 28px touching rows
+  (a deliberate trade against doubling the charts); no nested buttons found
+  on any screen or the sheets checked. Eight messages reworded out of
+  developer terms. Log lines pass through `L.redactSecrets`, so a sign-in token
+  in a lookup address never reaches the synced log. gate.yml: read-only by
+  default, each job asks for what it uses, and the checkout no longer leaves
+  the token in .git/config for the test suite to read.
 
 ## A pattern worth keeping
 

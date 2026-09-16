@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.18  ·  2026-09-16 01:46 PM ET
+
+One answer each, tap targets, wording, and security hardening. The shelf's status chips now count what each status shows: Gone counted whiskies with nothing open rather than what had left the shelf, and Sealed missed whiskies with one bottle open and a spare sealed. Two distillery names are compared through one key, so Jack Daniel's and Jack Daniel Distillery are one house everywhere; checked against all 109 shipped houses, no other pair changed. Suggestions for a named distillery are checked through the same house matching instead of a suffix list and substring of their own. Every search box uses the shelf's search, so a buddy's shelf, Mark bottles and the flight pour picker find sherried Islays for islay sherry. Tap targets: the header barrel is 44px, the tasting chips and toggles 40px, and chart bars are 28px touching rows. Eight messages reworded out of developer terms. Sign-in tokens are blanked from every log line before it is stored or synced. The GitHub gate is read-only by default, each job asks only for what it uses, and the checkout no longer leaves the token where the test suite can read it. A per-person lookup limit on the service is on the backlog at BZ's request.
+
 ## v2.4.17  ·  2026-09-16 01:32 PM ET
 
 Firebase rules tightened, approved by BZ on 2026-09-16. Only an admin can write to the shared library, where before anyone signed in could create an entry; a library entry needs a name of 2 to 200 characters and a timestamp that is not in the future. Only an admin can change a person's suspended flag. An offer to the library needs a name of up to 300 characters and a timestamp, its contributor name is capped at 200, a contributor cannot write a vetted mark, and only an admin can mark an offer dropped.

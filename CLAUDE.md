@@ -211,6 +211,12 @@ re-checked against the file that day rather than copied forward.
   without a press, stamped `autoIn` and listed for a fortnight with a take
   back. It reads the library fresh every run and judges nothing if the read
   is empty, because against an empty library every offer looks new.
+- **Only an admin writes the shared library** (rules, v2.4.17). Everybody
+  else offers through `offerToLibrary`, which files the offer in `contrib`;
+  an old comment or paper that says anybody may create a library entry
+  predates that.
+- **One search, one house key.** Every search box asks `L.matchesSearch`;
+  every "same distillery?" asks `L.houseSame`, which asks `L.houseKey`.
 - **A signed-in account's own node is deliberately unbounded.**
   `bz-apps/whisky/$uid` bounds who writes and not what shape, because a
   `.validate` on a node whose shape changes with every feature would break

@@ -33,15 +33,19 @@ concurrency:
   group: gate-and-publish
   cancel-in-progress: false
 
+# READ-ONLY UNLESS A JOB SAYS OTHERWISE. Every job ran with all three write
+# permissions, including the gate, which runs the whole test suite and its
+# npm packages (scan, 2026-09-16). Each job now asks for only what it uses.
 permissions:
-  contents: write   # fast-forward main to the gated build
-  pages: write      # read how Pages is configured, and deploy to it
-  id-token: write   # actions/deploy-pages signs its request with an OIDC token
+  contents: read
 
 jobs:
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write   # fast-forward main to the gated build, and nothing else
+      pages: read       # read how Pages is configured
     outputs:
       # Read once here and handed to the publish job, which has no checkout
       # and so cannot grep index.html for itself.
@@ -57,6 +61,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # NOT LEFT IN .git/config for every later step to read. The only
+          # step that writes to the repository is the last one, and it is
+          # handed the token itself.
+          persist-credentials: false
 
       - name: Node
         uses: actions/setup-node@v4
@@ -344,7 +352,9 @@ jobs:
       # read it, this refuses rather than overwriting their change, and the
       # run fails saying so.
       - name: Publish - move main to this build
-        run: git push origin HEAD:main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
 
   # THE PUBLISH. A job of its own because actions/deploy-pages requires the
   # github-pages environment, and an environment on the gate job would put
@@ -364,6 +374,10 @@ jobs:
     if: needs.gate.outputs.pages_source == 'workflow'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      pages: write      # deploy the artifact
+      id-token: write   # actions/deploy-pages signs its request with an OIDC token
+      actions: read     # fetch the artifact the gate uploaded
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -400,6 +414,8 @@ jobs:
     if: needs.gate.outputs.pages_source != 'workflow'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      pages: write      # ask Pages to rebuild the branch
     steps:
       - name: Ask Pages to rebuild the branch
         env:
