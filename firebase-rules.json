@@ -86,8 +86,13 @@
           "catalog": {
             "products": {
               "$key": {
-                ".write": "auth != null && (!data.exists() || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
-                ".validate": "newData.hasChildren(['name','at']) || !newData.exists()"
+                ".validate": "!newData.exists() || newData.hasChildren(['name','at'])",
+                "name": {
+                  ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 200"
+                },
+                "at": {
+                  ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+                }
               },
               ".indexOn": "at"
             },
@@ -112,7 +117,10 @@
           "$uid": {
             ".write": "auth != null && ($uid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
             ".read": "auth != null && $uid === auth.uid",
-            ".validate": "newData.hasChildren(['name','at','version'])"
+            ".validate": "newData.hasChildren(['name','at','version'])",
+            "suspended": {
+              ".validate": "newData.isBoolean() && (root.child('bz-apps/whisky/admins').child(auth.uid).exists() || newData.val() === data.val())"
+            }
           }
         },
         "contrib": {
@@ -138,6 +146,24 @@
                 "$other": {
                   ".validate": false
                 }
+              }
+            },
+            "$slug": {
+              ".validate": "$slug.matches(/^[a-z0-9_]{1,60}$/) && newData.hasChildren(['name','at'])",
+              "name": {
+                ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 300"
+              },
+              "at": {
+                ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+              },
+              "by": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "vetted": {
+                ".validate": false
+              },
+              "dropped": {
+                ".validate": "root.child('bz-apps/whisky/admins').child(auth.uid).exists() && newData.hasChildren(['why','at'])"
               }
             }
           }
