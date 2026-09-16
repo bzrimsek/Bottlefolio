@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.22  ·  2026-09-16 03:20 PM ET
+
+Multi-select on every list in the library offer queue, as BZ asked (2026-09-15: accept and deny efficiently, not row by row). The offers that need a decision, the dropped offers and the entries added on their own now share one picker: tap rows to tick them, All or None, then one button acts on what is ticked - Add or Drop, Put back, or Take out with a confirmation. The separate put-all and take-all buttons are gone, since All does the same. The tick now sits on the name's line.
+
 ## v2.4.21  ·  2026-09-16 02:44 PM ET
 
 The Everyone tab on Buddies, at BZ's asking (2026-09-16). It carries no descriptions: the line under each buddy's name, the footer about what a buddy sees, the shopping-list line and the blurb above what buddies are after are gone from it, and a buddy's own tab keeps them. Everyone is not a table, so its headings read Everyone, as one shelf and What everyone has, and the write-up says nobody else rather than nobody else at the table.
