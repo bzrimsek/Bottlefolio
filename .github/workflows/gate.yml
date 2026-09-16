@@ -12,9 +12,13 @@
 #
 # The service goes before the site, because a new page that needs a new
 # service must never arrive first; if the service deploy or its check fails,
-# main does not move. `main` is what GitHub Pages serves at
-# https://bzrimsek.github.io/Bottlefolio/. A red gate leaves everything live
-# exactly as it was.
+# main does not move. A red gate leaves everything live exactly as it was.
+#
+# THE SITE IS AN ARTIFACT, NOT THE REPOSITORY (review item 40, 2026-09-15).
+# The eleven files the app actually reaches are packaged and handed to
+# Pages; the 800KB changelog, the harnesses, the exports and the CSVs stay
+# out of it. `main` still moves to every published build, because it is the
+# record of what is live and the thing the next push is made on.
 
 name: Gate and publish
 
@@ -31,12 +35,18 @@ concurrency:
 
 permissions:
   contents: write   # fast-forward main to the gated build
-  pages: write      # ask Pages to rebuild once main has moved
+  pages: write      # read how Pages is configured, and deploy to it
+  id-token: write   # actions/deploy-pages signs its request with an OIDC token
 
 jobs:
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      # Read once here and handed to the publish job, which has no checkout
+      # and so cannot grep index.html for itself.
+      version: ${{ steps.version.outputs.app }}
+      pages_source: ${{ steps.pagessrc.outputs.build_type }}
     env:
       # The suite's dates are written for a UTC clock (§351 expects the
       # library export to read 2026-01-15 for midnight UTC). Pinned rather
@@ -243,16 +253,122 @@ jobs:
           FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
         run: node rules.js deploy
 
+      - name: Which version is this build
+        id: version
+        run: |
+          echo "app=$(grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" index.html)" >> "$GITHUB_OUTPUT"
+
+      # HOW IS PAGES CONFIGURED RIGHT NOW? A read, never a write - this
+      # workflow does not change the repository's settings.
+      #
+      #   build_type "legacy"   Pages builds the whole main branch itself
+      #                         (Settings -> Pages -> Deploy from a branch)
+      #   build_type "workflow" Pages serves what this run uploads
+      #                         (Settings -> Pages -> GitHub Actions)
+      #
+      # Both are handled below, so the switch can be made on BZ's schedule
+      # and a run in either state publishes the same site. Once it is
+      # "workflow" for good, the legacy branch of the publish job and this
+      # step go, and so does `contents: write`'s second purpose.
+      - name: How is GitHub Pages configured
+        id: pagessrc
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || echo unknown)
+          echo "build_type=$t" >> "$GITHUB_OUTPUT"
+          echo "Pages build_type is $t"
+
+      # WHAT THE SITE ACTUALLY SERVES, AND NOTHING ELSE.
+      #
+      # Review item 40, 2026-09-15: legacy Pages ran Jekyll over the whole
+      # repository on every push, twice per push, 44 to 92 seconds each.
+      # Measured on main the same day: 74 files, 23.5MB, of which ten are
+      # superseded lock copies of index.html at ~1.9MB apiece, plus the
+      # 805KB CHANGELOG and the 970KB test suite. The artifact below is 12
+      # files and 2.8MB. Nothing dropped is reachable from the app.
+      #
+      # This list is not a guess. It is every same-origin file index.html
+      # and sw.js name, read out of both files on 2026-09-15:
+      #   index.html   the app
+      #   sw.js        registered at './sw.js'
+      #   manifest.json, icon-192, icon-512, icon-mask-192, icon-mask-512
+      #                the install; the manifest names all four icons and
+      #                index.html's <link rel="icon"> names the first
+      #   mark.png     the wordmark, two <img src> in index.html
+      #   zxing.min.js the barcode decoder, loaded on demand
+      #   data.json, map.json   fetched by the app, precached by sw.js
+      # Every one of them is in sw.js's SHELL/EXTRAS/DATA lists, which is
+      # the same question asked from the other side: a file the worker
+      # precaches and the site does not serve is an install that 404s.
+      #
+      # The sealed shelf files are NOT here and never will be: `grep -c gpg`
+      # is 0 in both index.html and sw.js, and the plain ones exist only on
+      # this runner. The site has no use for either.
+      #
+      # .nojekyll because a Pages artifact is served as-is and Jekyll must
+      # not be invited back in - it would eat any file or folder beginning
+      # with an underscore.
+      - name: The site, and only the site
+        run: |
+          mkdir -p site
+          cp index.html sw.js manifest.json mark.png \
+             icon-192.png icon-512.png icon-mask-192.png icon-mask-512.png \
+             zxing.min.js data.json map.json site/
+          touch site/.nojekyll
+          echo "the artifact:"
+          ls -la site
+          du -sh site
+
+      - name: Package the site as a Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      # LAST, AFTER THE ARTIFACT EXISTS. Everything above this line can fail
+      # without changing anything live; below it, main is the record of what
+      # is published. Packaging first is the same rule the service and the
+      # rules follow - a step that could fail goes before the one that
+      # commits, so a failure is never half a deploy.
+      #
       # Fast-forward only. If somebody changed main by hand since push.py
       # read it, this refuses rather than overwriting their change, and the
       # run fails saying so.
       - name: Publish - move main to this build
         run: git push origin HEAD:main
 
-      - name: Ask GitHub Pages to rebuild
+  # THE PUBLISH. A job of its own because actions/deploy-pages requires the
+  # github-pages environment, and an environment on the gate job would put
+  # every gate run through the environment's rules rather than only the
+  # deploy.
+  #
+  # It runs in both Pages modes and the live check at the end is the same
+  # either way, so the only thing the setting changes is which of the two
+  # middle steps fires. `needs: gate` means a red gate publishes nothing.
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the artifact (Pages source is GitHub Actions)
+        id: deployment
+        if: needs.gate.outputs.pages_source == 'workflow'
+        uses: actions/deploy-pages@v4
+
+      # UNTIL THE SETTING IS SWITCHED. Moving main already triggers a legacy
+      # branch build on its own; this asks for it explicitly so the wait
+      # below has something to wait for, and does not fail the run when
+      # Pages declines a second build it is already running.
+      - name: Ask Pages to rebuild the branch (Pages source is still a branch)
+        if: needs.gate.outputs.pages_source != 'workflow'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "Pages build_type is '${{ needs.gate.outputs.pages_source }}', not 'workflow'."
+          echo "Switch Settings -> Pages -> Source to GitHub Actions to use the artifact above."
           gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent \
             || echo "Pages refused the explicit request; the push to main normally triggers a build on its own."
 
@@ -262,9 +378,12 @@ jobs:
       # 15, so a site that went live just after a look waited up to 14
       # seconds more to be seen (review item 29, 2026-09-15): the last three
       # publishes took 46, 61 and 46 seconds here, three and four sleeps.
+      #
+      # The version comes from the gate job rather than a checkout, because
+      # this job needs no working copy for anything else.
       - name: Wait until the live site serves this version
         run: |
-          want=$(grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" index.html)
+          want="${{ needs.gate.outputs.version }}"
           url="https://bzrimsek.github.io/Bottlefolio/index.html"
           for i in $(seq 1 120); do
             got=$(curl -fsSL "$url?nocache=$(date +%s%N)" \

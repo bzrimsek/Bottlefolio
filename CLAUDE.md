@@ -153,6 +153,39 @@ refuses any key file.
 
 ---
 
+## Facts that are easy to get wrong
+
+Carried out of `HANDOVER.md`, `HANDOFF.md` and `REVIEW.md` when those four
+papers were retired to `_superseded/2026-09-15/` on 2026-09-15. Each was
+re-checked against the file that day rather than copied forward.
+
+- **`data.json` ships an empty shelf on purpose.** 325 catalogue entries,
+  **0 bottles and 0 flights** — a new user starts empty. BZ's own shelf
+  lives beside the app in `bz-bottles.json` / `bz-flights.json` and is
+  never shipped.
+- **The bar shelf is inventory, and `L.isWhisky` / `L.NOT_WHISKY` are the
+  one place that says which is which.** Rum, vodka, gin, mezcal, tequila
+  and liqueur count as bottles and are excluded from every analysis.
+- **The guest rules are BZ's, not derivable.** `L.ROAD_TO`,
+  `L.ROAD_NEIGHBOURS` and `L.POND_ORDER` hold them. He corrected them five
+  times in one sitting; three of five attempts to reason them out from
+  first principles were wrong. Read them, do not re-derive them.
+- **Two doors to the service, and both read through `readService`.**
+  `postWithRetry` for POSTs, `askService` for questions. `readService`
+  turns a stale Apps Script deployment into a sentence rather than a parser
+  error. `consistency.js` fails a third door.
+- **The Firebase web API key in `index.html` is not a secret.** It
+  identifies the project and authorises nothing; every protection rests on
+  `firebase-rules.json`, which is why the rules review matters and the key
+  does not.
+- **A signed-in account's own node is deliberately unbounded.**
+  `bz-apps/whisky/$uid` bounds who writes and not what shape, because a
+  `.validate` on a node whose shape changes with every feature would break
+  weekly. Accepted with its eyes open (REVIEW.md §1.3, 2026-09-03), and the
+  only unbounded write in the app.
+
+---
+
 ## What this app has learned the hard way
 
 Short list, because each one cost a day. The detail is in `CHANGELOG.md`,
@@ -208,3 +241,15 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `browser.js` | the walk |
 | `CHANGELOG.md` | what changed and why, every build |
 | `DEV-RULES.md` | **the working agreement — read it** |
+| `README.md` | what the app is, and how to run the checks and ship |
+
+Four papers were retired on 2026-09-15 and are in `_superseded/2026-09-15/`:
+`HANDOVER.md` (written at v1.26.0, when the app was called Bottle Tracker
+and lived in another repo and another Firebase project), `HANDOFF.md`
+(v2.0.48, superseded by this file and `README.md`), `REVIEW.md` (a v1.5.0
+code review whose own status line says all six recommendations shipped in
+v1.5.1) and `RECAP-SETUP.md` (a walkthrough for a one-line Apps Script edit
+that is in `Code.gs` and has been deployed since). Everything in them that
+was still true is above, in `DEV-RULES.md`, or in `README.md`. They are kept
+because they are the record, not because they are current — do not take a
+fact from one of them without checking it against the file first.

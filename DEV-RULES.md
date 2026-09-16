@@ -1,4 +1,4 @@
-App Development Rules — Last updated: 2026-09-05
+App Development Rules — Last updated: 2026-09-15
 
 PHILOSOPHY
 1  Good structure + comments. Quality over speed.
@@ -27,7 +27,7 @@ DOCUMENTATION
 
 VERSIONING
 9  bump.py is the only way to bump versions. It reads the system clock — never write timestamps manually, never ask the user for the time. Fix bump.py if it fails; don't work around it.
-10 Version bump hits five locations automatically via bump.py: file header, APP_VERSION, BUILD_TIME, UI string, sw.js CACHE_NAME. Versions are three-part major.minor.patch (patch rolls to the next minor at 100). Paths: madgolf → outputs/madgolf/; friday → friday-game/; foursome → foursome-game/; extras → outputs/ root. bump.py writes the changelog entry once, to the single canonical header block.
+10 Version bump hits five locations automatically via bump.py: file header, APP_VERSION, BUILD_TIME, UI string, sw.js CACHE_NAME. Versions are three-part major.minor.patch (patch rolls to the next minor at 100). bump.py writes the changelog entry once, to the single canonical header block.
 11 Changelog entry must be filled in before delivery — never leave [describe changes here]. Write it before bumping, not after. No blank entries anywhere in the file.
 
 DIAGNOSIS BEFORE FIXING
@@ -39,11 +39,15 @@ DIAGNOSIS BEFORE FIXING
 
 13d A MEASUREMENT WITHOUT ITS POPULATION IS AN ANECDOTE. 13c says do not reason about data you cannot see. This is the other half: state which data you DID see, in the sentence, every time. Not "325 entries have a proof" but "325 entries on BZ's filled-in shelf, which is the end state of a shelf and not the one somebody imports tomorrow". Written that way the overreach is visible while you are writing it. Every time this was skipped the conclusion was wrong — an empty shelf said renders cost 8ms when they cost 112, a filled shelf said an enrichment feature had no users, and a stale catalog said three bottles were missing that were not.
 
+13f ASK WHICH BUILD HE IS ON BEFORE DIAGNOSING ANYTHING HE REPORTS. Carried from HANDOFF.md, 2026-09-10, when it was retired: three times in one day I told BZ a bug was in his build rather than in the code, and twice I was right and once I had not checked. He installs on his own schedule and is often two or three versions behind the working copy. The version is on Home under the wordmark, and Settings prints it with the build time. It is one question and it settles which file to read.
+
 13e ANYTHING THAT VARIES GETS NINE RUNS AND A MEDIAN. Three runs said boot was 358ms; nine said 254. Timings, and anything else with spread, are not facts until they are a median of nine. A number taken any other way does not go in a doc, a changelog or a sentence to me.
 14 Layout bugs: after two failed CSS attempts, read the working equivalent element's CSS — the fix is almost always already there. Never guess a third time without reading the working equivalent first.
 15 For any async-dependent feature: trace the execution order before writing. Ask "when is this value available relative to when it is used?" Answer it before writing code.
 16 When a Python edit script hits an AssertionError on any step, the file is in a partial state. Stop, re-read the file, confirm what was and wasn't applied, then fix cleanly. Never assume subsequent steps ran.
 16a An edit script that asserts on several patterns writes NOTHING if a later assert fails. After any failed edit, verify the change is actually in the file before reporting it. A change reported and not applied has cost a whole round more than once.
+
+16b A BLANKET FIND-AND-REPLACE ACROSS THIS PROJECT WILL BREAK THE CHECKERS AND THE DATA. Carried from HANDOFF.md, 2026-09-10, when it was retired. A US-spelling pass Americanised consistency.js's OWN British word list, so the checker began hunting for `judgment` and flagged every correct word on screen; there is a check for that now. The same trap in the data: `colour` is a KEY inside the tasting note — 268 of the 325 catalogue entries shipped in `data.json` carry `tn.colour` — and renaming it orphans every one of them. A replacement runs per file, with the hits read before they are written.
 
 LAYOUT & SCREEN PATTERNS
 17 Before writing any new screen, modal, or layout element: read how the nearest equivalent working screen handles display/hide, flex, overflow, z-index, and height. Document what you find before writing.
@@ -54,7 +58,7 @@ LAYOUT & SCREEN PATTERNS
 
 FIREBASE
 20 Before any new Firebase operation, verify method, path, and writeKey payload align with existing security rules.
-21 Never write to Firebase before the load completes (_fbLoaded guard). Check hasRemoteData includes all critical state fields (players, games, activeSession, sessions).
+21 Never write to Firebase before the load completes. In this app the guard is `FB.loaded`, set true only when the first read has landed, and every push reads it — `if (!FB.user || !FB.loaded) return;`. (It was `_fbLoaded` with a `hasRemoteData` field list when this rule was written; neither exists here. Corrected 2026-09-15.)
 21a Every uid-keyed node is writable only by its owner. When a feature needs one account to affect another, the owner records it and the other side applies it — never a cross-account write, however convenient.
 
 STATE
@@ -89,8 +93,10 @@ TESTING
 28a A RULE WITH NO CHECK BEHIND IT IS A SUGGESTION. Rule 27 was broken three times in one day and nothing noticed until a review went looking. When a rule turns out to have been broken, add the check that would have caught it IN THE SAME SESSION, before moving on. And where the debt is older than today's work, make the check a RATCHET rather than a wall: allow the known offenders by name, fail anything new, and add a second check so the allowed list cannot rot. A check that stands between me and shipping gets switched off rather than satisfied.
 
 29 Test harness is delivered alongside index.html and sw.js on any session that adds or modifies tests. Three files becomes four.
-30 Render/screen functions do templating only — no scoring, calculation, or business logic inline. Logic a screen needs goes in a named helper it calls (e.g. leagueSessionCtx, tripItineraryBody, tripBuildPublishMsg). The harness cannot call render functions, so logic buried in them ships untested. If you are computing inside an fsRender template, stop and extract.
-30a Cross-consistency — when one fact (a match status, a leaderboard row, a settlement) is rendered by more than one path (first paint, in-place updater, stored summary, live viewer), test that the paths agree from a shared game state, not each path's formatting in isolation. Two separately-green formatting tests can still disagree — that is exactly how the Nassau hole-completion popup drifted from the banner. Drive the real render through the recording-DOM harness and compare its output to the shared engine. (See madgolf-test.js §148 Nassau / §174 DOC / §175 walk-off.)
+30 Render/screen functions do templating only — no scoring, calculation, or business logic inline. Logic a screen needs goes in a named helper it calls (e.g. `L.shelfIndex`, `L.buddyRows`, `L.bulkStatus`). The harness cannot call render functions, so logic buried in them ships untested. If you are computing inside a render template, stop and extract. (The three helpers this rule used to name are from another app and are in no file here; replaced with three of this app's on 2026-09-15.)
+
+30f AND THE SCREENS ARE ON A SIZE RATCHET. Rule 30 was a suggestion until 2026-09-15, when the architecture review measured 19 top-level functions over 150 code lines, 16 of them screens, the largest a single 450-line card holding ten Firebase calls. `consistency.js` now measures every top-level function by code lines, allows today's 51 over-100 functions BY NAME at exactly today's size, and fails anything that grows, anything new over 100, a name that has left the file, and a listed function that shrank without its allowance following it down. `node consistency.js --sizes` prints the list ready to paste. A screen only gets smaller from here.
+30a Cross-consistency — when one fact (a match status, a leaderboard row, a settlement) is rendered by more than one path (first paint, in-place updater, stored summary, live viewer), test that the paths agree from a shared game state, not each path's formatting in isolation. Two separately-green formatting tests can still disagree — that is exactly how the Nassau hole-completion popup drifted from the banner. Drive the real render through the recording-DOM harness and compare its output to the shared engine. (The three sections this rule used to point at are in another app's harness, which is in no file here; `render.js` is where this app makes screens and engine agree. Pointer dropped 2026-09-15.)
 30b The suite tests behavior through the engine and cannot see the WIRING. An element id nobody declares, a literal escape in a string, a state key that does not persist, a helper defined and never called, two functions sharing a name — all invisible to it and all shipped. A text-level check of the source catches them in a second; keep adding to it whenever a bug turns out to have been visible in the file all along.
 30c A check that asserts a label is testing the copy. Assert the behavior — that the control leads somewhere, that the number matches the engine — so a rewording does not break the gate and a real fault does.
 

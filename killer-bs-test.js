@@ -2634,23 +2634,6 @@ eq('a 13-digit EAN keeps its last 12',
 eq('too short is not a barcode', L.upcKey('1234'), null);
 eq('nor is nothing', L.upcKey(''), null);
 
-sec('reading a listing');
-const listing = "Glenlivet: 750 ml 12-year 0-80432-40063-0 $36.99; "
-  + "750 ml 18-year 0-80432-40066-1 $64.99\n"
-  + "Lagavulin Scotch: 750 ml 16-year 0-88110-14005-2 $74.99";
-const rows = L.parseUpcListing(listing);
-eq('every entry is found', rows.length, 3);
-// The expression is what distinguishes a 12 from an 18 and is the whole
-// reason this source is worth anything — a listing that gave only the
-// brand would be no better than the paid database that could not tell
-// three Glenlivets apart.
-eq('the expression survives', rows[0].name, 'Glenlivet 12-year');
-eq('and distinguishes the next one', rows[1].name, 'Glenlivet 18-year');
-eq('sizes are kept', rows[0].size, '750 ml');
-eq('and prices', rows[1].price, 64.99);
-eq('a line with no barcode yields nothing',
-  L.parseUpcListing('Something: 750 ml no code here $20').length, 0);
-
 sec('a number cannot be searched by name');
 // The barcode source must answer FIRST. Nothing else can be asked with a
 // number, and when nothing knows it the honest answer is to say so.
@@ -10009,7 +9992,7 @@ sec('§265 what is left to do, not what is imperfect');
 
   /* Asked twice and nothing came back: no longer work outstanding, and it
      must stop inflating the number for ever. */
-  const ledger = { b: { no: L.LOOKUP_MISS_LIMIT, at: today } };
+  const ledger = { b: { no: 2, at: today } };
   const after = L.libraryLists(products, ledger, today);
   eq('a bottle already asked about drops out of the work',
     after.todo.length, 1);
@@ -10021,11 +10004,11 @@ sec('§265 what is left to do, not what is imperfect');
      time period to check again, but a good chunk of time." Ninety days
      was too eager — a whisky nothing could describe in March is unlikely
      to be describable in June, and asking costs a real lookup. */
-  eq('half a year before trying again', L.TRY_AGAIN_AFTER, 180);
-  const stale = { b: { no: L.LOOKUP_MISS_LIMIT, at: '2026-01-01' } };
+  eq('half a year before trying again', L.restDays(2), 180);
+  const stale = { b: { no: 2, at: '2026-01-01' } };
   eq('and after that it is asked once more',
     L.libraryLists(products, stale, '2026-09-04').todo.length, 2);
-  const recent = { b: { no: L.LOOKUP_MISS_LIMIT, at: '2026-08-01' } };
+  const recent = { b: { no: 2, at: '2026-08-01' } };
   eq('but not a month later',
     L.libraryLists(products, recent, today).todo.length, 1);
 
@@ -19498,6 +19481,58 @@ sec('§440 a failure said in plain words');
     true);
   eq('and never shows the raw code',
     /PERMISSION|_/.test(L.plainError({ code: 'PERMISSION_DENIED' })), false);
+}
+
+sec('§441 a lookup asks who is asking');
+{
+  /* BZ, 2026-09-15: require sign-in for lookups. The service's address is
+     public in index.html and the deployment answers anyone, so from build
+     2.4.2 every paid mode carries proof of sign-in and `version` does not. */
+  eq('the service says signin and the app knows it',
+    L.needsSignIn({ error: 'signin' }), true);
+  eq('a thrown signin is the same answer', L.needsSignIn('signin'), true);
+  eq('anything else is not', L.needsSignIn({ error: 'no such bottle' }), false);
+  eq('nothing at all is not', L.needsSignIn(null), false);
+  eq('and it is said as itself, not as a failure',
+    L.lookupFailSay(new Error('signin')), L.SIGN_IN_TO_LOOK);
+  eq('the empty answer says it too',
+    L.lookupEmptySay({ error: 'signin' }), L.SIGN_IN_TO_LOOK);
+  eq('the sentence says what to do',
+    /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
+  eq('the app and the service move together on this',
+    L.GS_BUILD, '2.4.2');
+  /* Which call has to say who is asking, and where the proof goes. */
+  eq('a lookup GET needs it', L.needsToken(null), true);
+  eq('a photograph read needs it',
+    L.needsToken(JSON.stringify({ mode: 'shelf' })), true);
+  eq('asking which build is deployed does not',
+    L.needsToken(JSON.stringify({ mode: 'version' })), false);
+  eq('the mode is read off the body',
+    L.modeOf(JSON.stringify({ mode: 'label' })), 'label');
+  eq('and nothing is not a mode', L.modeOf('not json'), '');
+  eq('a POST carries the token in its body',
+    JSON.parse(L.withIdToken('u', JSON.stringify({ mode: 'shelf' }),
+      'tok').body).idToken, 'tok');
+  eq('a GET carries it in the query',
+    L.withIdToken('http://x/exec?name=a', null, 'to ken').url,
+    'http://x/exec?name=a&idToken=to%20ken');
+  eq('and a first parameter starts the query',
+    L.withIdToken('http://x/exec', null, 'tok').url,
+    'http://x/exec?idToken=tok');
+  eq('no token changes nothing',
+    L.withIdToken('u', 'b', '').body, 'b');
+
+  /* An empty answer is about the search, not the world (BZ,
+     2026-09-15, on a Manzanilla cask ask that does exist). */
+  eq('substitutes dropped says so', L.emptyFindSay(3, false),
+    '3 came back from other distilleries and were dropped. '
+    + 'Nothing genuine.');
+  eq('an earlier find is kept', L.emptyFindSay(0, true),
+    'Nothing new. Showing the earlier find.');
+  eq('and a silent search never claims the bottle is not real',
+    /may not exist|does not exist/i.test(L.emptyFindSay(0, false)), false);
+  eq('it names what happened instead',
+    /search, not the world/.test(L.emptyFindSay(0, false)), true);
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

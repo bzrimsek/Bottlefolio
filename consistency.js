@@ -1835,5 +1835,195 @@ check('no fixed svg id is emitted by a repeated drawing',
   });
 }
 
+/* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
+ *
+ * Review item 35, 2026-09-15. The architecture pass measured 19 top-level
+ * functions over 150 code lines, 16 of them screens, and 43 over 100. The
+ * largest was libraryAdminCard, one function holding ten Firebase calls.
+ * Rule 30 says a screen lays things out and hands the computing to a named
+ * L. helper \u2014 a 450-line screen is not laying anything out, and every line
+ * of arithmetic inside it ships untested because the harness loads only the
+ * engine half.
+ *
+ * This is a RATCHET, not a wall (rule 28a): a wall across debt this size
+ * gets switched off rather than satisfied. Every function that is already
+ * over the ceiling is allowed BY NAME at exactly the size it is today, so
+ * the existing debt ships and cannot grow by one line, and anything new
+ * over the ceiling fails on the day it is written.
+ *
+ * THE CEILING IS 100 CODE LINES, from the measured distribution of the 854
+ * top-level functions in this file: 803 of them are at or under 100 (94%),
+ * the median is 12, and the count thins out steadily from there \u2014 131 over
+ * 50, 103 over 60, 73 over 75, 51 over 100. A hundred is where the curve
+ * has already flattened, so it fails the outliers and not the ordinary
+ * screens, and it is the same line the review drew.
+ *
+ * A CODE LINE is a line that is not blank and is not comment-only. This
+ * file comments heavily on purpose and a ratchet that counted comments
+ * would punish the thing it wants more of.
+ *
+ * TO UPDATE THE LIST, run:
+ *
+ *     node consistency.js --sizes
+ *
+ * which prints BIG_TODAY exactly as it should read for the file as it
+ * stands now. Paste it over the block below. That is the whole procedure,
+ * and it is deliberately one command, because a ratchet whose list is
+ * annoying to update gets its ceiling raised instead.
+ *
+ * AND THE LIST CANNOT ROT. Four checks, not one:
+ *   - a listed function that GREW is a failure, by any amount;
+ *   - an UNLISTED function over the ceiling is a failure (nothing new);
+ *   - a listed name that is no longer in the file is a failure, so a
+ *     rename or a removal cleans the list instead of leaving a ghost that
+ *     silently allows a future function of the same name;
+ *   - a listed function that SHRANK by more than 5 lines is a failure that
+ *     says which number to write, so the allowance follows the work down.
+ *     Five lines of slack, the same slack the colour ratchet above uses,
+ *     because a one-line tidy should not turn the gate red.
+ */
+{
+  const ls = src.split('\n');
+  /* A top-level function: the declaration starts at column 0. Anything
+     nested is measured as part of its parent, which is correct \u2014 a screen
+     does not get smaller by moving its arithmetic into a closure inside
+     itself. Four shapes exist at column 0 in this file: `function f(`,
+     `async function f(`, `L.f = function` / `L.f = (`, and
+     `const f = function` / `const f = (`. */
+  const OPEN = /^(?:async\s+function\s+([A-Za-z0-9_$]+)\s*\(|function\s+([A-Za-z0-9_$]+)\s*\(|(?:L|LIB)\.([A-Za-z0-9_$]+)\s*=\s*(?:async\s+)?(?:function\b|\()|(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*=\s*(?:async\s+)?(?:function\b|\())/;
+  /* The closing brace at column 0 ends it: `}`, `};`, `})`, `});`, `})();`.
+     A declaration that reaches the next column-0 declaration without one is
+     not measured rather than measured wrongly. */
+  const CLOSE = /^\}[)\];(\s]*$/;
+  const isCode = s => {
+    const t = s.trim();
+    return !!t && !t.startsWith('//') && !t.startsWith('/*')
+      && !t.startsWith('*');
+  };
+  const sized = new Map();
+  for (let i = 0; i < ls.length; i++) {
+    const m = OPEN.exec(ls[i]);
+    if (!m) continue;
+    const name = m[1] || m[2] || m[3] || m[4];
+    let end = -1;
+    for (let j = i + 1; j < ls.length; j++) {
+      if (CLOSE.test(ls[j])) { end = j; break; }
+      if (OPEN.test(ls[j])) break;
+    }
+    if (end < 0) continue;
+    let n = 0;
+    for (let j = i; j <= end; j++) if (isCode(ls[j])) n++;
+    /* One name, one size. lint.js already fails a name defined twice; if
+       one ever slips through, the ratchet holds the larger of the two
+       rather than whichever came last. */
+    const was = sized.get(name);
+    if (!was || n > was.n) sized.set(name, { name, n, line: i + 1 });
+    i = end;
+  }
+
+  const SIZE_CEILING = 100;
+  const SIZE_SLACK = 5;
+
+  /* TODAY'S OFFENDERS, measured 2026-09-15. Regenerate with
+     `node consistency.js --sizes` \u2014 never edit a number here by hand, the
+     same way a version is never edited by hand. */
+  const BIG_TODAY = {
+    libraryAdminCard: 592,
+    showBottle: 591,
+    likelyToLike: 475,
+    productForm: 452,
+    renderShelf: 363,
+    renderAway: 356,
+    renderLibrary: 345,
+    renderLookupSetup: 322,
+    showShelfTools: 305,
+    shopAnswer: 267,
+    renderHome: 251,
+    renderGuest: 247,
+    renderContrib: 231,
+    renderSettings: 230,
+    editLibraryEntry: 227,
+    libraryAudit: 219,
+    renderUsers: 205,
+    shelfAxes: 203,
+    renderDiag: 185,
+    shelfPortrait: 185,
+    renderShelfCharts: 184,
+    postWithRetry: 173,
+    renderGaps: 172,
+    fbLoadAfterWipeCheck: 169,
+    flightEditor: 164,
+    showCandidates: 154,
+    showEnhance: 154,
+    renderShop: 151,
+    renderFlights: 149,
+    renderBuddies: 144,
+    flightBuilder: 141,
+    shelfBuildSheet: 141,
+    awayLookingCard: 140,
+    fbPush: 137,
+    renderOffer: 136,
+    roomNotes: 136,
+    shelfFit: 135,
+    renderBuddiesTab: 130,
+    showImportCheck: 129,
+    showFlight: 128,
+    buddiesGrid: 121,
+    renderShelfFilters: 118,
+    vennSvg: 110,
+    renderRecap: 109,
+    showBulkStatus: 109,
+    exploreAxis: 108,
+    rankOffer: 107,
+    tastingPapers: 107,
+    renderFromUrl: 106,
+    importAudit: 101,
+    receiptsDialog: 101
+  };
+
+  if (process.argv.indexOf('--sizes') >= 0) {
+    const block = [...sized.values()]
+      .filter(f => f.n > SIZE_CEILING)
+      .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+      .map(f => '    ' + f.name + ': ' + f.n)
+      .join(',\n');
+    console.log('\n  const BIG_TODAY = {\n' + block + '\n  };');
+    process.exit(0);
+  }
+
+  const grew = [], ghosts = [], shrank = [];
+  Object.keys(BIG_TODAY).forEach(name => {
+    const f = sized.get(name);
+    if (!f) {
+      ghosts.push(name + ' is in BIG_TODAY and is not a top-level function '
+        + 'in index.html \u2014 drop the line, or the name is free to come '
+        + 'back at any size');
+      return;
+    }
+    if (f.n > BIG_TODAY[name]) {
+      grew.push('index.html:' + f.line + '  ' + name + ' is ' + f.n
+        + ' code lines, allowed ' + BIG_TODAY[name] + ' \u2014 move the '
+        + (f.n - BIG_TODAY[name]) + ' new line(s) into a named L. helper '
+        + '(rule 30). The allowance does not go up.');
+    } else if (f.n < BIG_TODAY[name] - SIZE_SLACK) {
+      shrank.push(name + ' is down to ' + f.n + ' from ' + BIG_TODAY[name]
+        + ' \u2014 write ' + f.n + ' so the ratchet keeps holding '
+        + '(node consistency.js --sizes)');
+    }
+  });
+  const fresh = [...sized.values()]
+    .filter(f => f.n > SIZE_CEILING && !(f.name in BIG_TODAY))
+    .sort((a, b) => b.n - a.n)
+    .map(f => 'index.html:' + f.line + '  ' + f.name + ' is ' + f.n
+      + ' code lines, over the ' + SIZE_CEILING + '-line ceiling \u2014 a '
+      + 'screen lays things out and calls a named L. helper for the rest '
+      + '(rule 30)');
+
+  check('no function over the ceiling has grown', grew);
+  check('no new function over the ' + SIZE_CEILING + '-line ceiling', fresh);
+  check('the size list has no ghosts', ghosts);
+  check('the size list has ratcheted down', shrank);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));

@@ -393,8 +393,11 @@ copied within about a day of it.
     (index.html ~8734; item 36), and HANDOFF.md lists an old gate
     (item 39).
   - Release 2 is items 19–29.
-- **Review release 2 (items 19–29): BUILT v2.4.8, 2026-09-15. BZ looked at
-  the phone pictures first and said ship it.** What each item became is in
+- **Review release 2 (items 19–29): CLOSED, LIVE v2.4.8, 2026-09-15. BZ
+  looked at the phone pictures first and said ship it.** It went live 142s
+  from the push (it was 178s at v2.4.7), commit 10f70b8, run 35031599068.
+  The gate step took 52s (it was 89s); that first run missed the browser
+  cache, and later runs should hit it. What each item became is in
   CHANGELOG v2.4.8.
   - **Checked on BZ's PC:** 4,716 assertions, 68 wiring checks, lint,
     screens, render, the walk, and all 22 sync scenarios.

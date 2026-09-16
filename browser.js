@@ -144,6 +144,17 @@ function step(n) {
     await page.waitForTimeout(240);
   }
 
+  /* SIGNED IN ONLY WHERE A LOOKUP IS SPENT. The service requires it from
+     build 2.4.2 (BZ, 2026-09-15), but signing the whole walk in sends
+     Buddies, Settings and the library down the Firebase path, and there
+     is no Firebase here. So the walk stays signed out - which is also a
+     real state - and each step that drives a lookup borrows a user. */
+  const signedIn = on => page.evaluate(v => {
+    FB.user = v ? { uid: 'walkuid', displayName: 'Walker',
+      getIdToken: () => Promise.resolve('walk-token-0123456789abcdef') }
+      : null;
+  }, on);
+
   step('did it start');
   // 1. Did it start? The banner is what BZ saw twice today.
   const banner = await page.locator('text=/failed to start/i').count();
@@ -1273,6 +1284,8 @@ function step(n) {
      had waited fifty seconds for was lost because he glanced at something
      else. */
   step('a read survives the app being left');
+  // Signed in: from service build 2.4.2 a paid call says who is asking.
+  await signedIn(true);
   {
     const out = await page.evaluate(async () => {
       /* First attempt fails the way a suspended tab fails; the second
@@ -1321,7 +1334,10 @@ function step(n) {
      wait was five seconds of round trip to an Apps Script that answers 404
      because the mode was never deployed - and the same five seconds again
      on the next press. */
+  await signedIn(false);
   step('a missing service mode is only asked for once');
+  // Signed in: from service build 2.4.2 a paid call says who is asking.
+  await signedIn(true);
   {
     const r = await page.evaluate(async () => {
       let calls = 0;
@@ -1367,7 +1383,10 @@ function step(n) {
 
   /* AND ANY SUCCESS FORGETS THE MISSES. A mode that has just worked is
      not missing, whatever it did a minute ago. */
+  await signedIn(false);
   step('a mode that works again is not remembered as dead');
+  // Signed in: from service build 2.4.2 a paid call says who is asking.
+  await signedIn(true);
   {
     const r2 = await page.evaluate(async () => {
       let calls = 0, fail = true;
@@ -1408,7 +1427,10 @@ function step(n) {
      that came back "name required" - doGet's answer to a missing ?name,
      not anything doPost can say. The request went out as a POST with
      mode:'shelf' and reached the single-bottle handler. */
+  await signedIn(false);
   step('a lookup answer to a shelf question names the deployment');
+  // Signed in: from service build 2.4.2 a paid call says who is asking.
+  await signedIn(true);
   {
     const said = await page.evaluate(async () => {
       const real = window.fetch;
@@ -1434,6 +1456,7 @@ function step(n) {
     }
   }
 
+  await signedIn(false);
   step('the service reader says what actually came back');
   {
     const said = await page.evaluate(async () => {
@@ -1679,6 +1702,7 @@ function step(n) {
      whatever is asked, so a name nothing knows gets an answer. */
   step('a finished lookup clears its looking-it-up note');
   {
+    await signedIn(true);
     await page.locator('nav button[data-scr="shop"]').click();
     await page.waitForTimeout(200);
     await page.evaluate(() => {
@@ -1718,6 +1742,7 @@ function step(n) {
       S.shop = w.shop || {}; S.shopFound = w.found || null;
       renderShop();
     });
+    await signedIn(false);
     await page.waitForTimeout(80);
   }
 

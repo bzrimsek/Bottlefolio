@@ -79,7 +79,12 @@ TRANSIENT = re.compile(r'HTTP 5\d\d|timed out|timeout|connection (reset|refused)
 APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
        'mark.png', 'icon-192.png', 'icon-512.png', 'icon-mask-192.png',
        'icon-mask-512.png', 'zxing.min.js']
-DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md']
+# README.md added 2026-09-15 with review item 39, when HANDOVER/HANDOFF/
+# REVIEW/RECAP-SETUP were retired to _superseded (which NEVER blocks). It is
+# the front door of a public repo, so a repo without it is a repo whose only
+# description of itself is a 1.9MB file.
+DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
+        'README.md']
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',

@@ -37,13 +37,55 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.1';
+var GS_BUILD = '2.4.2';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
 // it gets the larger model. It runs once per flight, not once per bottle.
 var FLIGHT_MODEL = 'claude-sonnet-4-6';
 var API = 'https://api.anthropic.com/v1/messages';
+
+/* WHO IS ASKING. This web app is deployed to anyone with the link - it
+   has to be, because the app is a page with no server of its own - so
+   anybody who read the address out of index.html could spend the key
+   (review, 2026-09-15; BZ: require sign-in for lookups). Every paid mode
+   carries a Firebase ID token from the app, checked with Firebase before
+   a single call is made. `version` stays open: it costs nothing and it
+   is how the app checks which build is deployed.
+   The key below is the app's own public web key, the same one in
+   index.html. It names the project; it grants nothing. */
+var FIREBASE_API_KEY = 'AIzaSyBdXTXIav4NZg_VjaOBdh_-tuBzBgVLVko';
+
+function signedIn_(token) {
+  var t = String(token || '');
+  if (t.length < 20) return false;
+  /* A token is good for an hour and this answer is kept for five
+     minutes, so a run of lookups costs one verification rather than one
+     each. Keyed by a digest of the token, never by the token. */
+  var key = 'tok' + Utilities.base64Encode(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, t));
+  var cache = CacheService.getScriptCache();
+  if (cache.get(key) === 'ok') return true;
+  var res = UrlFetchApp.fetch(
+    'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key='
+      + FIREBASE_API_KEY,
+    { method: 'post', contentType: 'application/json',
+      payload: JSON.stringify({ idToken: t }), muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) return false;
+  var body = {};
+  try { body = JSON.parse(res.getContentText()); }
+  catch (err) { return false; }
+  if (!body.users || !body.users[0]) return false;
+  cache.put(key, 'ok', 300);
+  return true;
+}
+
+/* One refusal, so both doors say it the same way. */
+function needSignIn_() {
+  return json({ error: 'signin',
+    why: 'Sign in to the app to look things up.' });
+}
+
 
 /**
  * Design a flight. POSTed because the shelf goes with the request.
@@ -127,6 +169,11 @@ function doPost(e) {
        Bump GS_BUILD in BOTH this file and L.GS_BUILD in index.html
        whenever this file changes; consistency.js fails the build if they
        disagree. */
+    /* Everything but `version` spends the key, so everything but
+       `version` has to say who is asking. */
+    if (body.mode !== 'version' && !signedIn_(body.idToken)) {
+      return needSignIn_();
+    }
     if (body.mode === 'version') return json({ build: GS_BUILD });
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
@@ -165,9 +212,13 @@ function suggestBottles(req) {
     'RULES:',
     '1. Three to five bottles, real ones that a US retailer stocks.',
     '2. NEVER suggest anything in the ALREADY OWNED list.',
-    '2b. An empty bottles array is a valid and useful answer. A substitute',
-    '    from another distillery is not — it will be rejected before it is',
-    '    shown, so it wastes the answer.',
+    '2b. Return an empty bottles array ONLY when the constraint itself',
+    '    cannot be met — that house makes no such thing at all. If you',
+    '    are merely unsure, name the real bottles you do know of and set',
+    '    confident false. The person reads an empty answer as "this does',
+    '    not exist", so returning one when it does is the worst answer',
+    '    available. A substitute from another distillery is also wrong:',
+    '    it is rejected before it is shown.',
     '2b. For EVERY suggestion give a "find" value, which is how hard it is',
     '   to actually buy in the United States right now:',
     '     shelf     — a liquor store of any size has it most weeks',
@@ -237,7 +288,7 @@ function suggestBottles(req) {
     payload: JSON.stringify({
       model: MODEL, max_tokens: 2000, system: system,
       messages: [{ role: 'user', content: user }],
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]
     })
   });
   if (res.getResponseCode() !== 200) {
@@ -332,6 +383,9 @@ function designFlight(req) {
 function doGet(e) {
   var name = (e && e.parameter && e.parameter.name) || '';
   if (!name || name.length < 3) return json({ error: 'name required' });
+  if (!signedIn_((e && e.parameter && e.parameter.idToken) || '')) {
+    return needSignIn_();
+  }
   try {
     return json(askAbout(name, false));
   } catch (err) {

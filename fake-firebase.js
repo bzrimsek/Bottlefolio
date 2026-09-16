@@ -251,6 +251,13 @@
 
     const user = o.user === undefined
       ? { uid: 'testuid', email: 'bz@example.com' } : o.user;
+    /* A REAL USER CAN PROVE IT IS ONE. From service build 2.4.2 every
+       paid call carries a Firebase ID token (BZ, 2026-09-15: require
+       sign-in for lookups), and the app asks the user object for it,
+       so the stand-in answers too. */
+    if (user && !user.getIdToken) {
+      user.getIdToken = () => Promise.resolve('fake-id-token-0123456789');
+    }
 
     const auth = {
       currentUser: user,
