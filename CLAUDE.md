@@ -1,6 +1,6 @@
 # Bottlefolio
 
-A whiskey collection app. One file, `index.html`, about 1.9 MB, plus a
+A whiskey collection app. One file, `index.html`, about 1.75 MB, plus a
 service worker and four Apps Script files. No build step, no framework, no
 bundler — what is in `index.html` is what runs.
 
@@ -285,6 +285,12 @@ them asks the other; there is always a door to route through (`sameName`,
 shape was assumed rather than opened — `postWithRetry` answers a fetch
 `Response`, `askForCandidates` answers `{all, capped}`. Both broke a screen.
 
+**Comments say why, not the story** (BZ, 2026-09-16). The story of a fix
+goes in CHANGELOG.md; a comment keeps what the code does when that is not
+obvious, why the obvious alternative breaks, and BZ's rules. On 2026-09-16
+comment text was cut from 751KB to 434KB with every code token proven
+unchanged.
+
 **An edit script that asserts on several patterns writes nothing if a later
 assert fails** (rule 16a). Verify the change is in the file before
 reporting it. One edit per script is the cheap way to avoid this.
@@ -304,6 +310,8 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `consistency.js` | the wiring checks |
 | `browser.js` | the walk |
 | `answers.js` | what the answers say, graded against the real shelf |
+| `engine.js` | loads the `L.` engine out of index.html for every tool |
+| `popular.js` | the nightly what's-popular count (`.github/workflows/popular.yml`) |
 | `shots.js` | every screen at phone size, into `shots/` |
 | `CHANGELOG.md` | what changed and why, every build |
 | `DEV-RULES.md` | **the working agreement — read it** |

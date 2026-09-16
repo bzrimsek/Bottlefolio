@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.20  ·  2026-09-16 02:32 PM ET
+
+Comment clean-up, the first step toward splitting index.html (BZ, 2026-09-16). Comments now say what the code does when that is not obvious, why the obvious alternative breaks, and BZ's rules; the story of how each fault was found stays in this changelog. 1,556 comment blocks were shortened or removed, comment text went from 751KB to 434KB and the file from 2.08MB to 1.76MB and 44,537 lines to about 39,800, and every code token was proven identical before and after. Comments that contradicted the code were corrected. The size ratchet was lowered to match. The header's resize handler was registered twice and now runs once.
+
 ## v2.4.19  ·  2026-09-16 02:12 PM ET
 
 Two features BZ chose on 2026-09-16. Did a suggestion pay off: a bottle opened from a Shop suggestion remembers which suggestion it was, on the wishlist entry and on the bottle once bought, and Shop says what the suggestions you bought came to, judged by the verdict given after pouring each one. A bottle's page says what it was suggested for. The same work fixed how a bottle shows where you came across it, which read field names a wishlist entry written by the app never had. What's popular: an opt-in switch in Buddies, How others see you, keeps a private list of the whiskies on your shelf and poured in the last 90 days, readable by you only. A nightly GitHub job adds everybody's lists up and writes totals only, leaving out anything fewer than three people have. Shown as a line on a bottle's page and a Shop result, and a Popular card on Shop. Firebase rules add the private lists and the read-only totals, approved by BZ. Four screens that removed a wishlist entry their own way now share one function, and the tests, the wiring checks and the nightly job load the engine through one file.
