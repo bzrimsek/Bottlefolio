@@ -52,6 +52,9 @@ FAST = [
 SLOW = [
     ('walk',  ['node', 'browser.js']),
     ('sync',  ['node', 'sync.js']),
+    # The Firebase rules, run in Google's emulator rather than read
+    # (2026-09-16). Needs Java, which the cloud runner has.
+    ('rules', ['node', 'rulestest.js']),
 ]
 
 # EACH GROUP RUNS AT ONCE, AND THE NEXT WAITS FOR IT TO PASS.
@@ -104,7 +107,9 @@ HAND_OVER = 'GATE_RUNS_CONSISTENCY_AND_SCREENS'
 # way, so the audit also failed it for ending without its pass line: that is
 # a harness that stopped early and did not say so. And the audit read the
 # marks on stderr as well as stdout, for both.
-MUST_SAY = {'consistency': 'consistency checks pass'}
+MUST_SAY = {'consistency': 'consistency checks pass',
+            # A skip is not a pass: without this line the rules were not run.
+            'rules': 'all rules checks pass'}
 BOTH_STREAMS = ('consistency', 'screens')
 
 # SYNC IN THREE, AT ONCE.

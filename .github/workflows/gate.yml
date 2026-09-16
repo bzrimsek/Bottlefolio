@@ -145,7 +145,22 @@ jobs:
           key: gatetimes-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: gatetimes-
 
-      - name: The gate - all twelve checks
+      # firebase-tools refuses any Java before 21; the runner's default is 17.
+      - name: Java 21, for the rules emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # The Firebase database emulator is a download of its own the first
+      # time it runs; kept between runs like the browser.
+      - name: The rules emulator, from the cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+
+      - name: The gate - all thirteen checks
         run: python3 gate.py
 
       # NO SCREENSHOTS LEAVE THE RUNNER. shots.js photographs every screen

@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.23  ·  2026-09-16 03:41 PM ET
+
+The Firebase rules are now tested by running them, not by reading them. rulestest.js starts Google's database emulator with firebase-rules.json and checks, as a stranger, a signed-in person, somebody else and an admin, what each may and may not do: a person's own shelf, the shared library, offers, stats and suspension, the popular lists and totals, sharing as a sequence of grant, read, revoke and read again, requests, the directory, tastings, wipes, diagnostics, admins and barcodes. It then runs again against four sets of rules broken on purpose and fails if it misses any. It needs Java, so at BZ's choice it runs in the cloud gate as the thirteenth check; on a PC without Java it says it was skipped.
+
 ## v2.4.22  ·  2026-09-16 03:20 PM ET
 
 Multi-select on every list in the library offer queue, as BZ asked (2026-09-15: accept and deny efficiently, not row by row). The offers that need a decision, the dropped offers and the entries added on their own now share one picker: tap rows to tick them, All or None, then one button acts on what is ticked - Add or Drop, Put back, or Take out with a confirmation. The separate put-all and take-all buttons are gone, since All does the same. The tick now sits on the name's line.

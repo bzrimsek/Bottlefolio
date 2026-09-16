@@ -96,6 +96,8 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-16: one engine loader for every tool, and the nightly
            # popular count that uses it.
            'engine.js', 'popular.js', '.github/workflows/popular.yml',
+           # The rules, run in the emulator (cloud gate only).
+           'rulestest.js', 'firebase.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
 # The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
 # apps-script/appsscript.json - the live project's exact file set, checked by

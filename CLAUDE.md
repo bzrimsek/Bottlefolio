@@ -70,7 +70,7 @@ files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
 and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
 plain shelf file, a CSV, the database export or `_superseded/`.
 
-The gate, all twelve, in this order — `gate.py` runs them in the cloud
+The gate, all thirteen, in this order — `gate.py` runs them in the cloud
 with the clock pinned to UTC (test §351 expects it):
 
 ```
@@ -86,9 +86,14 @@ node twotab.js            # two devices, merge holds
 node gscheck.js           # Apps Script wiring
 node browser.js           # the walk, a real browser  (~45s)
 node sync.js              # push, load, reload, refuse (~78s)
+node rulestest.js         # the Firebase rules, run in the emulator
 ```
 
-All twelve must pass. Report each one as it lands rather than running the
+`rulestest.js` needs Java, so it runs in the cloud gate only (BZ,
+2026-09-16); on BZ's PC it prints SKIPPED, which is not a pass. It also runs
+the suite against rules broken on purpose and fails if it misses one.
+
+All thirteen must pass. Report each one as it lands rather than running the
 loop silently (rule 25c) — and read the whole output of each, not the last
 line; a check once sat broken for several builds because the failure was
 thirty lines above a blank final line.
