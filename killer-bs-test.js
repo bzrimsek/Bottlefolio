@@ -8148,7 +8148,7 @@ sec('§232 the portrait a shelf earns');
   const plain = L.shelfPortrait(bland.cat, bland.bs, {});
   eq('a shelf with no strong opinion is a generalist',
     plain.title, 'The Generalist');
-  eq('and says how many it looked at', /12 whiskies/.test(plain.why), true);
+  eq('and says how many it looked at', /12 whiskeys/.test(plain.why), true);
   eq('a generalist has no runners-up', plain.also.length, 0);
 
   /* PX has to be earned: four is not a preference, and the threshold is

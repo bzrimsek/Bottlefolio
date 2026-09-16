@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.27  ·  2026-09-16 05:07 PM ET
+
+A pass over every word on screen for consistency, brevity and parallel wording (BZ, 2026-09-16). One word per thing: library, mash bill, distillery, buddies, offers; whiskey in general text, with legal names like Scotch whisky kept; everyone, someone and anyone; select for picking several. One verb per action on buttons (Log it, Save note, Not now, Add selected, Photograph it). Messages are shorter and failures read Could not ... or That did not go through. Long explanations and in-app help were cut to what a person needs, with history and how-it-works talk removed. Sort labels now match between the shelf and flights. 1,292 strings changed and the code around them was proven unchanged; labels and phrases the checks rely on were left as they are.
+
 ## v2.4.26  ·  2026-09-16 04:18 PM ET
 
 Sync is now also tested against a real database. In the cloud gate, after the rules checks, syncemu.js drives two browser devices on one account through Google's database and auth emulators with the real Firebase SDK and the real rules: a bottle added on one arrives on the other live, a wishlist entry removed on one stays removed when the other reloads, and a second account signing in on the same browser is not handed the first one's shelf.
