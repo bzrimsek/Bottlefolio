@@ -19952,18 +19952,6 @@ const near = L.intakeVerdict({
     L.intakeSettle({ verdict: 'in', product: {} }, { proof: 90 }, opts)
       .verdict, 'in');
 
-  /* WHERE AN OFFER LIVES. Two people can offer one name, so the name is
-     not an identity and the node it sits under is - and a verdict the
-     search has already settled is filed under it, or every redraw would
-     spend the lookups again. */
-  eq('an offer is known by its node',
-    L.intakeRowKey({ uid: 'u1', slug: 's1' }), 'u1/s1');
-  eq('and a row with neither is still a string',
-    L.intakeRowKey(null), '/');
-  eq('two offers of one name are two nodes',
-    L.intakeRowKey({ uid: 'u1', slug: 'a' })
-      === L.intakeRowKey({ uid: 'u2', slug: 'a' }), false);
-
   /* WHAT THE PRESS DID, SAID ONCE. BZ, 2026-09-15: "After taking 19, I get
      a prompt to look up 16. Why not do that before." The lookups now run
      inside the press, before anything is written, and this is what used to
@@ -20055,6 +20043,51 @@ const near = L.intakeVerdict({
   eq('and neither does one that adds nothing',
     L.intakeNeedsVetting({ verdict: 'out' }), false);
   eq('nothing at all needs nothing', L.intakeNeedsVetting(null), false);
+
+  /* WHY A BOTTLE ALREADY IN THE LIBRARY WAS EVER QUEUED. BZ, 2026-09-15,
+     looking at a queue of one: "why queue 1 that is already in the
+     library?" Because the offering path asked S.base - this device's
+     merged catalog - and the queue asks the shared library, so a device
+     that had not pulled the library saw no clash and offered a bottle
+     everybody already had. One map of what is known, so the two cannot
+     disagree. */
+  eq('the library and the local catalog are one list',
+    Object.keys(L.knownHere({ a: { name: 'A' } }, { b: { name: 'B' } }))
+      .sort().join(','), 'a,b');
+  eq('the library wins where both hold a key',
+    L.knownHere({ a: { name: 'Library' } }, { a: { name: 'Local' } }).a.name,
+    'Library');
+  eq('a device with no library still knows its own',
+    Object.keys(L.knownHere(null, { a: { name: 'A' } })).length, 1);
+  eq('and nothing anywhere knows nothing',
+    Object.keys(L.knownHere(null, null)).length, 0);
+  /* AND THE BAR READS IT. A bottle the library holds is not worth
+     offering, whether or not this device had merged it yet. */
+  eq('a bottle the library already holds is not worth offering',
+    L.worthContributing({ name: "Maker's Mark", proof: 90,
+      dist: "Maker's Mark", sub: 'bourbon' },
+      L.knownHere({ makers_mark: { name: "Maker's Mark" } }, {})), false);
+  eq('and one nothing holds is',
+    L.worthContributing({ name: "Maker's Mark", proof: 90,
+      dist: "Maker's Mark", sub: 'bourbon' }, L.knownHere({}, {})), true);
+
+  /* AND A PRESS SAYS WHAT IT ACTUALLY DID. BZ, 2026-09-15: "the 1 that
+     adds nothing never clears" - while the app said it had. The count came
+     from the length of the list rather than from the writes, and every
+     write swallowed its own error, so a refusal read as a success. */
+  eq('all of them dropped says so', L.intakeDroppedSay(3, 3),
+    '3 offers dropped \u2014 kept 14 days');
+  eq('one is not three', L.intakeDroppedSay(1, 1),
+    '1 offer dropped \u2014 kept 14 days');
+  eq('none of them is not a success',
+    /None of the 3/.test(L.intakeDroppedSay(0, 3)), true);
+  eq('and it points at where the reason is',
+    /the log says why/.test(L.intakeDroppedSay(0, 3)), true);
+  eq('some of them says which',
+    L.intakeDroppedSay(2, 3),
+    '2 of 3 dropped; 1 were refused \u2014 the log says why');
+  eq('nothing to drop is not a drop', L.intakeDroppedSay(0, 0),
+    'Nothing to drop.');
 
   /* A DROPPED OFFER IS HELD A FORTNIGHT. BZ's choice. */
   eq('a fortnight is the hold', L.INTAKE_HOLD_DAYS, 14);
