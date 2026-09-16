@@ -488,6 +488,11 @@ const TWO_DOORS_OK = [
      and says what the button would do. Named specifically, so a sentence
      that works a finding out on its own again is still caught. */
   'auditSuggestion>auditFix',
+  /* CALLERS THAT NARROW A DOOR. alreadyNamed asks libKeysNamed which keys
+     hold a name and hands back the first entry; offerSig asks contribSig to
+     sign an offer with its bookkeeping taken off. Neither decides the thing
+     its door decides. */
+  'alreadyNamed>libKeysNamed', 'offerSig>contribSig',
   /* A CALLER, NOT A SECOND ANSWER - and it did not use to be either. The
      body of libKeysNamed was COPIED into resolveLibKey eleven lines below
      it, which this check could not see: it finds duplicated call graphs,
@@ -1466,6 +1471,10 @@ check('no fixed svg id is emitted by a repeated drawing',
     if (/\+ '\/'/.test(l)) return;                         // field update
     if (/\/(style|dist|tn|tnSrc|name)'/.test(l)) return;   // named field
     if (/\]\s*=\s*null|:\s*null/.test(l)) return;          // a delete
+    /* A READ IS NOT A CREATION. `ref.child('catalog/products/' + key)
+       .once('value')` matched, once the guard it feeds sat five lines below
+       it rather than one (2026-09-16). */
+    if (/\.(once|on)\(\s*'value'/.test(l)) return;
     creations.push(i + 1);
     // The guard is asked within the same block of work, not a file away.
     const near = lines.slice(Math.max(0, i - 30), i + 4).join('\n');

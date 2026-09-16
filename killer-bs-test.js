@@ -1194,9 +1194,13 @@ sec('the sorting acts on its own');
   eq('and the other two are work', work.todo.length, 2);
   eq('a complete one only wants its verdict written',
     work.todo.filter(x => x.write).length, 1);
+  /* A finished verdict is no work - when it carries the signature of the
+     offer it was made about (a verdict with none is not trusted). */
+  const doneOffer = { name: 'X' };
+  doneOffer.vetted = { verdict: 'in', product: { name: 'X' },
+    sig: L.offerSig(doneOffer) };
   eq('a vetted offer that is finished is no work at all',
-    L.intakeWork([{ uid: 'u', slug: 'd', entry: { name: 'X',
-      vetted: { verdict: 'in', product: { name: 'X' } } } }], opts).todo.length,
+    L.intakeWork([{ uid: 'u', slug: 'd', entry: doneOffer }], opts).todo.length,
     0);
 
   /* AFTER THE LOOKUP. */
@@ -1297,6 +1301,149 @@ sec('one queue builder, and the two note queues do not overlap');
   eq('a bottle rested by the ledger waits',
     L.lookupQueue(cat, bots, { ledger: { none: { no: 1, at: '2026-09-16' } },
       today: '2026-09-16' }, p => p.k === 'none').length, 0);
+}
+
+sec('the intake after the 2026-09-16 scan');
+{
+  const LIB2 = {
+    heaven_hill_grain_to_glass_straight_bourbon_whiskey_1st_edition: {
+      name: 'Heaven Hill Grain to Glass Straight Bourbon Whiskey 1st Edition',
+      dist: 'Heaven Hill', proof: 100, sub: 'bourbon', tn: { nose: 'corn',
+        palate: 'sweet' }, mash: '70 corn, 20 rye, 10 barley',
+      msrp: 60, region: 'Kentucky' },
+    penelope_architect_bourbon_build_11: {
+      name: 'Penelope Architect Bourbon Build 11', dist: 'Penelope',
+      proof: 100, sub: 'bourbon' }
+  };
+  const o2 = { library: LIB2, removed: {}, graves: {} };
+
+  /* THE LIBRARY IS KEYED BY libKey AND ITS ROWS CARRY NO k - as in real
+     life. The fixtures above keyed by `k`, which is why this was invisible. */
+  const nr = L.intakeVerdict({ name: 'Heaven Hill Grain To Glass Straight '
+    + 'Wheated Bourbon', dist: 'Heaven Hill', sub: 'bourbon',
+    tn: { nose: 'wheat', palate: 'soft' }, mash: '70 corn, 20 wheat, 10 barley' },
+    o2);
+  eq('a near match hands back the key the library files it under', nr.near.k,
+    'heaven_hill_grain_to_glass_straight_bourbon_whiskey_1st_edition');
+  eq('so a lookup can settle it against the real entry',
+    L.intakeSettle(nr, { proof: 100 }, o2).verdict, 'out');
+  eq('a shortened name is near, not new',
+    L.intakeVerdict({ name: 'Penelope Architect Bourbon', dist: 'Penelope',
+      proof: 100, sub: 'bourbon' }, o2).rule, 'nearly one already in');
+
+  /* THE ROW AS STORED. */
+  eq('the offered key is ignored',
+    L.intakeProduct({ name: 'Ardbeg Ten', k: '1792 Small Batch' }).k,
+    'Ardbeg Ten');
+  eq('a name is bounded',
+    L.intakeProduct({ name: 'x'.repeat(5000) }).name.length, L.INTAKE_MAX.name);
+  eq('a note is bounded',
+    L.intakeProduct({ name: 'A', tn: { nose: 'y'.repeat(9000), palate: 'z' } })
+      .tn.nose.length, L.INTAKE_MAX.note);
+  eq('and a note carries only the parts a note has',
+    Object.keys(L.intakeProduct({ name: 'A', tn: { nose: 'a', palate: 'b',
+      evil: 'c' } }).tn).sort(), ['nose', 'palate']);
+  eq('an unstated size is not a stated 750',
+    L.intakeProduct({ name: 'A' }).size, undefined);
+
+  /* NEVER OVER AN ENTRY THE LIBRARY HOLDS. */
+  const over = L.intakeToWrite([{ product: { name: LIB2
+    .heaven_hill_grain_to_glass_straight_bourbon_whiskey_1st_edition.name } }],
+    {}, {}, {}, 1, true, LIB2);
+  eq('an offer for a bottle already in is refused', Object.keys(over.pending)
+    .length, 0);
+  eq('and says why', over.refused[0].why, 'already in the library');
+  eq('even when the library files it under another key',
+    Object.keys(L.intakeToWrite([{ product: { name: 'Ardbeg Ten' } }], {}, {},
+      {}, 1, true, { old_import_7: { name: 'Ardbeg Ten' } }).pending).length, 0);
+
+  /* GAPS: WHISKY ONLY, AND A PROOF ONLY WHEN THERE IS ONE. */
+  const mixed = { v: { k: 'v', name: 'Vodka', sub: 'vodka' },
+    r: { k: 'r', name: 'Rum', sub: 'rum' },
+    b: { k: 'b', name: 'Bourbon', sub: 'bourbon' } };
+  const mixedBots = Object.keys(mixed).map((x, i) =>
+    ({ id: String(i), k: x, status: 'open' }));
+  eq('no "Another Vodka" from the bar shelf',
+    L.gapsFromThinness(mixed, mixedBots).some(g => /Vodka|Rum/.test(g.name)),
+    false);
+  eq('no Scotch, no region gaps',
+    L.gapsFromThinness(mixed, mixedBots).some(g => g.kind === 'region'), false);
+  eq('a bottle with no proof is not under 90',
+    /Only 0 bottles under 90/.test((L.gapsFromProof(mixed, mixedBots)
+      .filter(g => /under 90/.test(g.name))[0] || {}).why || ''), true);
+
+  /* A PERSON'S NOTE KEEPS ITS SOURCE WHEN A PART IS ADDED. */
+  const theirs = { name: 'Z', proof: 100, dist: 'H', sub: 'scotch',
+    tn: { nose: 'mine' }, mash: '100% malted barley' };
+  const uz = L.libraryFillWrite([{ k: 'z', name: 'Z', missing: ['notes'],
+    got: { name: 'Z', nose: 'model nose', palate: 'model palate' } }],
+    { z: 1 }, { z: theirs }, 1).updates;
+  eq('the merged note is not relabelled the model\u2019s', uz['z/tnSrc'],
+    undefined);
+
+  /* A FAILED LOOKUP IS NOT AN ANSWER. */
+  const q = { verdict: 'ask', rule: 'nearly one already in', product: {} };
+  eq('a lookup that failed changes nothing', L.intakeAfterLookup(q, undefined,
+    o2), q);
+  eq('and does not mark it tried', !!L.intakeAfterLookup(q, undefined, o2).tried,
+    false);
+  eq('one that answered nothing does', L.intakeAfterLookup(q, null, o2).tried,
+    true);
+  /* A THIN ROW FROM AN UNKNOWN HOUSE GOES TO THE FILL, NOT THE SETTLE. */
+  const house = { verdict: 'fill', rule: 'a house this app has not seen',
+    needs: ['distillery'], product: { name: 'Foo', dist: 'Nowhere' } };
+  eq('an unknown house the search cannot confirm becomes a question',
+    L.intakeAfterLookup(house, { dist: 'Elsewhere' }, o2).verdict, 'ask');
+
+  /* THE PLAN SEES MERGES, AND THE WORK SEES THE PLAN. */
+  const rowsM = [
+    { uid: 'a', slug: 's', entry: { name: 'Ardbeg Ten', dist: 'Ardbeg',
+      proof: 92, sub: 'scotch' } },
+    { uid: 'b', slug: 's', entry: { name: 'Ardbeg Ten', dist: 'Ardbeg',
+      proof: 92, sub: 'scotch', age: 10 } }
+  ];
+  const planM = L.intakePlan(rowsM, o2);
+  const kept = planM.in.concat(planM.fill)[0];
+  eq('the merged row remembers what it absorbed', kept.absorbed.length, 1);
+  eq('and which offer that was', kept.absorbed[0].uid, 'b');
+  const rowsD = [
+    { uid: 'a', slug: 's', entry: { name: 'Ardbeg Ten', dist: 'Ardbeg',
+      proof: 92, sub: 'scotch' } },
+    { uid: 'b', slug: 's', entry: { name: 'Ardbeg Ten', dist: 'Ardbeg',
+      proof: 114, sub: 'scotch' } }
+  ];
+  eq('a disagreement between offers is work for the search',
+    L.intakeWork(rowsD, o2).todo.some(x => x.verdict.rule
+      === 'two offers disagree'), true);
+  eq('and names the field it is about',
+    L.intakePlan(rowsD, o2).ask[0].field, 'proof');
+  eq('two spellings of one house are not a disagreement',
+    L.intakeMergeOffers({ name: 'A', dist: 'Heaven Hill' },
+      { name: 'A', dist: 'heaven hill' }).clash.length, 0);
+  eq('nor two prices', L.intakeMergeOffers({ name: 'A', msrp: 59 },
+    { name: 'A', msrp: 65 }).clash.length, 0);
+
+  /* SAME BOTTLE, EVERY SHIPPED ROW AGAINST ITSELF. Fourteen were refused
+     before this scan. */
+  const shipped = JSON.parse(require('fs').readFileSync(
+    require('path').join(__dirname, 'data.json'), 'utf8')).catalog;
+  eq('every shipped bottle read by name is its own entry',
+    Object.values(shipped).filter(p => !L.sameBottle({ name: p.name }, p,
+      shipped)).map(p => p.name), []);
+  eq('a bourbon is still not a rye',
+    L.sameBottle({ name: 'Elijah Craig Barrel Proof Rye' },
+      { name: 'Elijah Craig Barrel Proof A124', sub: 'bourbon' }, shipped),
+    false);
+  eq('a Canadian rye filed canadian is one bottle',
+    L.factsAgree('sub', 'rye', 'canadian'), true);
+  eq('a Tennessee whisky is a bourbon by grain',
+    L.factsAgree('sub', 'tennessee', 'bourbon'), true);
+  eq('and a Scotch is never a bourbon', L.factsAgree('sub', 'scotch', 'bourbon'),
+    false);
+  eq('bourbon and Tennessee are one family', L.subFamily('tennessee'),
+    L.subFamily('bourbon'));
+  eq('a label that decides nothing has no family', L.subFamily('world'), null);
+  eq('and case does not matter', L.subFamily('RYE'), 'rye');
 }
 
 sec('gaps from matched pairs');
@@ -20288,9 +20435,15 @@ const near = L.intakeVerdict({
   eq('where a row is filed is not a disagreement',
     L.intakeMergeOffers({ k: 'a', name: 'A', proof: 90 },
       { k: 'b', name: 'A Bourbon', proof: 90 }).clash.length, 0);
-  eq('and a default loses to a statement',
+  /* SCARCITY IS NOT WHAT MAKES IT A DIFFERENT BOTTLE, so two offers never
+     disagree about it - and an offer that did not state it no longer
+     carries the default (L.intakeProduct), so there is no default to lose. */
+  eq('scarcity never makes two offers disagree',
     L.intakeMergeOffers({ name: 'A', scar: 'standard' },
-      { name: 'A', scar: 'limited' }).merged.scar, 'limited');
+      { name: 'A', scar: 'limited' }).clash.length, 0);
+  eq('an offer that said nothing about scarcity carries none',
+    L.intakeProduct({ name: 'Angel\u2019s Envy Single Barrel',
+      dist: 'Angel\u2019s Envy', sub: 'bourbon' }).scar, undefined);
   eq('whichever side states it',
     L.intakeMergeOffers({ name: 'A', scar: 'limited' },
       { name: 'A', scar: 'standard' }).merged.scar, 'limited');
@@ -20462,9 +20615,24 @@ const near = L.intakeVerdict({
 
   /* WHAT IS WRITTEN ONTO THE OFFER, so a second device reads the answer
      rather than paying for it. */
+  const signed = { name: 'X' };
+  signed.vetted = { verdict: 'in', sig: L.offerSig(signed) };
   eq('an offer that was vetted says so',
-    (L.intakeVetted({ name: 'X', vetted: { verdict: 'in' } }) || {}).verdict,
-    'in');
+    (L.intakeVetted(signed) || {}).verdict, 'in');
+  /* THE ATTACK THE SECURITY SCAN FOUND: a contributor writes `vetted` onto
+     their own offer. With no signature, or one for a different offer, it is
+     not a verdict. */
+  eq('a verdict with no signature is not trusted',
+    L.intakeVetted({ name: 'X', vetted: { verdict: 'in' } }), null);
+  const edited = { name: 'X', proof: 90 };
+  edited.vetted = { verdict: 'in', sig: L.offerSig({ name: 'X' }) };
+  eq('nor one made about the offer before it was edited',
+    L.intakeVetted(edited), null);
+  const olderShape = { name: 'Y' };
+  olderShape.vetted = { verdict: 'fill', needs: 'notes,mash',
+    sig: L.offerSig(olderShape) };
+  eq('needs saved as text reads back as a list',
+    L.intakeVetted(olderShape).needs, ['notes', 'mash']);
   eq('one that was not says nothing', L.intakeVetted({ name: 'X' }), null);
   eq('and half a record is not a verdict',
     L.intakeVetted({ vetted: { at: 1 } }), null);
