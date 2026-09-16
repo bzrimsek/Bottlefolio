@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.24  ·  2026-09-16 04:01 PM ET
+
+Library controls streamlined, at BZ's choice (2026-09-16). Removed: Look these up now, Add the N it would add and Clear the N that add nothing (the timed check does all three), Check the catalog (Fetch the whole catalog stays), Read N styles off their names (now the free first step of Fill what is missing), and Remove from the library in the editor. Taking entries out is now a multi-select on the library list, and a new Removed list puts them back with the entry restored. Duplicate entries merge through one writer, which also records the merge on the device, and the scan's dead link to the library screen is gone. Barcode offers are accepted automatically. The shelf fill now says it offers what it finds to the library, and two per-offer buttons that could never appear were deleted.
+
 ## v2.4.23  ·  2026-09-16 03:41 PM ET
 
 The Firebase rules are now tested by running them, not by reading them. rulestest.js starts Google's database emulator with firebase-rules.json and checks, as a stranger, a signed-in person, somebody else and an admin, what each may and may not do: a person's own shelf, the shared library, offers, stats and suspension, the popular lists and totals, sharing as a sequence of grant, read, revoke and read again, requests, the directory, tastings, wipes, diagnostics, admins and barcodes. It then runs again against four sets of rules broken on purpose and fails if it misses any. It needs Java, so at BZ's choice it runs in the cloud gate as the thirteenth check; on a PC without Java it says it was skipped.
