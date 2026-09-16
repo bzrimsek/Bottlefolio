@@ -1202,13 +1202,71 @@ const cCat = {
   c: { k: 'c', name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
        region: 'Islay' }
 };
-const ownedBT = L.gapOwned({ name: 'A finished Buffalo Trace' }, cCat);
+/* HELD, not merely known. The catalog carries the shared library, and
+   this list is what the app tells a paid search NOT to suggest - so a
+   library row counted as owned silenced exactly the answer being asked
+   for (BZ's empty Penelope, 2026-09-15). */
+const cBots = [{ id: '1', k: 'a', status: 'open' },
+               { id: '2', k: 'b', status: 'sealed' },
+               { id: '3', k: 'c', status: 'open' }];
+const ownedBT = L.gapOwned({ name: 'A finished Buffalo Trace' }, cCat, cBots);
 eq('it finds the house already owned', ownedBT.indexOf('Buffalo Trace') >= 0, true);
 eq('and everything else from that house', ownedBT.indexOf('Weller 12') >= 0, true);
 eq('but not an unrelated bottle', ownedBT.indexOf('Lagavulin 16'), -1);
 // Short words are ignored, or "A Campbeltown Scotch" would match on "a".
 eq('a region gap finds its own region',
-  L.gapOwned({ name: 'An Islay Scotch' }, cCat).indexOf('Lagavulin 16') >= 0, true);
+  L.gapOwned({ name: 'An Islay Scotch' }, cCat, cBots).indexOf('Lagavulin 16') >= 0,
+  true);
+/* THE LIBRARY ROW NOBODY OWNS. cCat with one bottle gone from the shelf:
+   the entry is still in the catalog and must NOT be sent as owned. */
+eq('a catalog entry off the shelf is not owned',
+  L.gapOwned({ name: 'A finished Buffalo Trace' }, cCat,
+    [{ id: '1', k: 'a', status: 'open' }]).indexOf('Weller 12'), -1);
+eq('and the one still held is', L.gapOwned({ name: 'A finished Buffalo Trace' },
+  cCat, [{ id: '1', k: 'a', status: 'open' }]).length, 1);
+eq('nothing owned sends nothing',
+  L.gapOwned({ name: 'A finished Buffalo Trace' }, cCat, []).length, 0);
+
+/* THE HOUSE THE GAP NAMES, found the one way this app finds a house in a
+   sentence. Any word over three letters used to count, so "An aged
+   Woodford Reserve" matched every bottle with RESERVE anywhere in it - on
+   BZ's real shelf that was 23 Woodfords where he owns 6, and this list is
+   what the paid search is told NOT to suggest. Measured by answers.js,
+   2026-09-15. */
+const rCat = {
+  w1: { k: 'w1', name: 'Woodford Reserve Double Oaked', dist: 'Woodford Reserve',
+        sub: 'bourbon' },
+  r1: { k: 'r1', name: "Blanton's Green Label Special Reserve",
+        dist: 'Buffalo Trace', sub: 'bourbon' },
+  r2: { k: 'r2', name: 'Knob Creek Small Batch Reserve', dist: 'Jim Beam',
+        sub: 'bourbon' }
+};
+const rBots = [{ id: '1', k: 'w1', status: 'open' },
+               { id: '2', k: 'r1', status: 'open' },
+               { id: '3', k: 'r2', status: 'open' }];
+eq('a gap that names a house counts that house only',
+  L.gapOwned({ name: 'An aged Woodford Reserve',
+    ask: 'Woodford Reserve age stated' }, rCat, rBots).length, 1);
+eq('and it is the right one',
+  L.gapOwned({ name: 'An aged Woodford Reserve',
+    ask: 'Woodford Reserve age stated' }, rCat, rBots)[0],
+  'Woodford Reserve Double Oaked');
+eq('the other house is counted for its own gap',
+  L.gapOwned({ name: 'Something obscure from Buffalo Trace',
+    ask: 'Buffalo Trace limited release' }, rCat, rBots).length, 1);
+/* A CATEGORY OR A REGION, when no house is named. */
+eq('a gap on a category counts the category',
+  L.gapOwned({ name: 'A stronger bourbon', sub: 'bourbon' }, rCat,
+    rBots).length, 3);
+eq('a gap on a region counts the region',
+  L.gapOwned({ name: 'An Islay Scotch', region: 'Islay' }, cCat,
+    cBots).length, 1);
+/* AND WHEN THE GAP NAMES NOTHING THIS APP FILES BY, the words are all
+   there is - "Heavy peat from outside Islay" is a real gap on BZ's shelf
+   and constrains no house, category or region. */
+eq('a gap that names nothing falls back to its words',
+  L.gapOwned({ name: 'Heavy peat from outside Islay' }, cCat,
+    cBots).indexOf('Lagavulin 16') >= 0, true);
 
 sec('candidates coming back');
 const raw = { bottles: [
@@ -19533,6 +19591,386 @@ sec('§441 a lookup asks who is asking');
     /may not exist|does not exist/i.test(L.emptyFindSay(0, false)), false);
   eq('it names what happened instead',
     /search, not the world/.test(L.emptyFindSay(0, false)), true);
+}
+
+sec('\u00a7442 sentences this app may not say');
+{
+  /* The Manzanilla answer, as it read: a fact about one search, printed as
+     a fact about whisky (BZ, 2026-09-15). */
+  eq('it catches a bottle talked out of existence',
+    !!L.saysBanned('That bottling may not exist.'), true);
+  eq('and says which rule',
+    /may not exist/.test(L.saysBanned('That bottling may not exist.').why),
+    true);
+  eq('no such bottle is the same fault',
+    !!L.saysBanned('There is no such whisky from that distillery.'), true);
+  eq('so is calling one made up',
+    !!L.saysBanned('It is probably made up.'), true);
+  eq('so is closing a distillery\u2019s catalogue from one search',
+    !!L.saysBanned('Penelope does not make anything you do not own.'), true);
+  /* AND THE HONEST SENTENCES STAY LEGAL, which is the half that makes the
+     check usable. Every one of these is on the screen today. */
+  eq('a search that found nothing is allowed to say so',
+    L.saysBanned(L.emptyFindSay(0, false)), null);
+  eq('so is the substitutes line', L.saysBanned(L.emptyFindSay(3, false)), null);
+  eq('so is the earlier find', L.saysBanned(L.emptyFindSay(0, true)), null);
+  eq('so is not having one yourself',
+    L.saysBanned('It searched and found nothing from Penelope you do not '
+      + 'already have.'), null);
+  eq('nothing at all says nothing', L.saysBanned(''), null);
+
+  /* The second list is about THIS APP'S INSIDES, and only on an answer. */
+  eq('an answer may not explain itself by the library',
+    !!L.saysBanned('Nothing from Penelope in the library that you do not own.',
+      L.SAYS_NOT_HERE), true);
+  eq('nor by the catalog',
+    !!L.saysBanned('Not in the catalog.', L.SAYS_NOT_HERE), true);
+  eq('nor by the cache',
+    !!L.saysBanned('Showing the cached answer.', L.SAYS_NOT_HERE), true);
+  eq('but the whisky itself is never a fault',
+    L.saysBanned('Penelope Four Grain Bourbon, 96 proof', L.SAYS_NOT_HERE),
+    null);
+  eq('and the two lists are separate',
+    L.saysBanned('Nothing from Penelope in the library.'), null);
+}
+
+sec('\u00a7443 two panels on one screen, disagreeing');
+{
+  /* The exact pair BZ saw: the answer said he had no Penelope while the
+     card under it offered "a stronger Penelope" and counted two. */
+  const pair = [
+    { subject: 'Penelope', has: false, n: 0, unit: 'whiskies',
+      where: 'the count line' },
+    { subject: 'A stronger Penelope', has: true, n: 2, unit: 'whiskies',
+      where: 'the ideas from your shelf' }];
+  eq('it finds the pair', L.contradictions(pair).length, 1);
+  eq('and names the subject', L.contradictions(pair)[0].subject, 'Penelope');
+  eq('and says which two panels',
+    L.contradictions(pair)[0].where.join(' vs '),
+    'the count line vs the ideas from your shelf');
+  eq('one naming the other is one subject',
+    L.sameSubject('Penelope', 'A stronger Penelope'), true);
+  eq('and an unrelated house is not',
+    L.sameSubject('Penelope', 'A stronger Weller'), false);
+  eq('nothing is not a subject', L.sameSubject('', 'Penelope'), false);
+
+  /* WHISKIES AND BOTTLES ARE NOT A CONTRADICTION. One bought twice is 1
+     and 2, which is the pair that started all of this - a check that
+     called it a fault would be turned off inside a week. */
+  eq('two units may differ', L.contradictions([
+    { subject: 'Penelope', has: true, n: 4, unit: 'whiskies', where: 'a' },
+    { subject: 'Penelope', has: true, n: 5, unit: 'bottles', where: 'b' }
+  ]).length, 0);
+  eq('one unit may not', L.contradictions([
+    { subject: 'Penelope', has: true, n: 4, unit: 'whiskies', where: 'a' },
+    { subject: 'Penelope', has: true, n: 5, unit: 'whiskies', where: 'b' }
+  ]).length, 1);
+  eq('agreeing panels are silent', L.contradictions([
+    { subject: 'Penelope', has: true, n: 4, unit: 'whiskies', where: 'a' },
+    { subject: 'A stronger Penelope', has: true, n: 4, unit: 'whiskies',
+      where: 'b' }]).length, 0);
+  eq('one panel cannot disagree with itself',
+    L.contradictions([pair[0]]).length, 0);
+  eq('and no panels say nothing', L.contradictions([]).length, 0);
+}
+
+sec('\u00a7444 what comes in, at volume');
+{
+  /* BZ, 2026-09-15: "a one by one add/drop for the library once volume
+     comes is crazy." Four answers, and only one of them is a screen. */
+  const LIBR = {
+    a: { k: 'a', name: 'Penelope Four Grain Bourbon', dist: 'Penelope Bourbon',
+         proof: 96, sub: 'bourbon', tn: { nose: 'vanilla' }, mash: '74 corn, 16 wheat, 10 barley' },
+    b: { k: 'b', name: 'Lagavulin 16 Year Old', dist: 'Lagavulin',
+         proof: 86, sub: 'scotch', region: 'Islay', tn: { nose: 'smoke' },
+         mash: '100 barley' },
+    /* A REAL PAIR, off the 457-row measurement. shopNorm keeps these two
+       apart - they are not the same entry - and 4 of their 5 words are
+       shared, which is exactly the shape only a person can settle. */
+    c: { k: 'c', name: 'Heaven Hill Grain to Glass Straight Bourbon Whiskey '
+         + '1st Edition', dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
+         tn: { nose: 'corn' }, mash: '70 corn, 20 rye, 10 barley' }
+  };
+  const opts = { library: LIBR, removed: {}, graves: {} };
+
+  /* OUT: nothing to add. */
+  eq('a nameless offer adds nothing',
+    L.intakeVerdict({ name: '' }, opts).verdict, 'out');
+  eq('and says so', L.intakeVerdict({ name: '' }, opts).rule, 'unreadable');
+  eq('one already in adds nothing',
+    L.intakeVerdict({ name: 'Penelope Four Grain Bourbon' }, opts).verdict,
+    'out');
+  eq('and names the entry it is already under',
+    /already in the library/.test(
+      L.intakeVerdict({ name: 'Penelope Four Grain Bourbon' }, opts).why),
+    true);
+  eq('one removed before stays removed', L.intakeVerdict(
+    { name: 'Old Thing' },
+    { library: LIBR, removed: { old_thing: 1 }, graves: {} }).verdict, 'out');
+  eq('and one merged away does not come back', L.intakeVerdict(
+    { name: 'Old Thing' },
+    { library: LIBR, removed: {}, graves: { old_thing: { to: 'new_thing' } } })
+    .verdict, 'out');
+
+  /* ASK: the judgments. */
+const near = L.intakeVerdict({
+    name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+    dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
+    tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' }, opts);
+  eq('a name that is nearly one already in is a question',
+    near.verdict, 'ask');
+  eq('and it names the one it reads like',
+    /1st Edition/.test(near.why), true);
+  /* A NAME THE SAME BOTTLE ALREADY ANSWERS TO is not a near-duplicate,
+     it is the entry: shopNorm drops bourbon, straight and whiskey, so
+     "Penelope Four Grain" IS "Penelope Four Grain Bourbon" and adding it
+     would be adding the row twice. */
+  eq('and a name that normalizes to one already in is simply in',
+    L.intakeVerdict({ name: 'Penelope Four Grain',
+      dist: 'Penelope Bourbon', proof: 96 }, opts).rule, 'already in');
+  /* AND THE HALF THAT KEEPS IT USABLE: two bottles that state different
+     facts are two bottles, whatever their names share. Seven of nine
+     questions on the first measured run were pairs like this. */
+  eq('a different cask is a different bottle', L.intakeVerdict({
+    name: 'Penelope Four Grain Bourbon Madeira', dist: 'Penelope Bourbon',
+    proof: 96, sub: 'bourbon', fin: 'Madeira' },
+    { library: { a: Object.assign({}, LIBR.a, { fin: 'Tawny Port' }) },
+      removed: {}, graves: {} }).verdict !== 'ask', true);
+  eq('a different age is too',
+    L.intakeSameBottle({ age: 12 }, { age: 16 }), false);
+  eq('a different proof is too',
+    L.intakeSameBottle({ proof: 96 }, { proof: 120 }), false);
+  eq('and a fact only one side states settles nothing',
+    L.intakeSameBottle({ proof: 96 }, { proof: null }), true);
+
+  const bad = L.intakeVerdict({ name: 'Something Blanco', dist: 'Penelope Bourbon',
+    sub: 'tequila', mash: '80 corn, 20 rye' }, opts);
+  eq('a grain bill on something not made from grain is a question',
+    bad.verdict, 'ask');
+  eq('and it says which contradiction',
+    /not made from grain/.test(bad.why), true);
+  eq('a proof whisky is not bottled at is a question', L.intakeVerdict({
+    name: 'Penelope Ten Grain', dist: 'Penelope Bourbon', proof: 240,
+    sub: 'bourbon' }, opts).verdict, 'ask');
+  eq('and a style the row already states is not a clash',
+    L.intakeChecks({ name: 'Teeling Single Malt', style: 'single cask, single malt',
+      sub: 'irish' }).length, 0);
+
+  /* FILL: thin rows are enriched, not dumped on anybody. BZ chose this. */
+  const thin = L.intakeVerdict({ name: 'Penelope Rio Rosa',
+    dist: 'Penelope Bourbon', proof: 100, sub: 'bourbon' }, opts);
+  eq('a row short of its notes still goes in', thin.verdict, 'fill');
+  eq('and says what it will look for', thin.needs.indexOf('notes') >= 0, true);
+  eq('and going in is the answer if the lookup finds nothing',
+    thin.ifEmpty, 'in');
+  const newHouse = L.intakeVerdict({ name: 'Foo Bar Single Malt',
+    dist: 'Nowhere Distillery', proof: 92, sub: 'scotch' }, opts);
+  eq('a house nobody has seen is looked up first', newHouse.verdict, 'fill');
+  eq('and only THEN becomes a question', newHouse.ifEmpty, 'ask');
+
+  /* IN: complete and uncontradicted, silently. */
+  const full = L.intakeVerdict({ name: 'Ardbeg Ten', dist: 'Lagavulin',
+    proof: 92, sub: 'scotch', mash: '100 barley',
+    tn: { nose: 'smoke', palate: 'peat', finish: 'long' } }, opts);
+  eq('a complete row goes in with nobody asked', full.verdict, 'in');
+
+  /* THE MECHANICAL FIXES, which are not judgments. */
+  const fixed = L.intakeVerdict({ name: 'Wild Thing 114 Proof',
+    dist: 'lagavulin', sub: 'scotch', mash: '100 barley',
+    tn: { nose: 'a', palate: 'b', finish: 'c' } }, opts);
+  eq('a proof printed in the name is read off it', fixed.product.proof, 114);
+  eq('and the house is spelled the way the rest of the list spells it',
+    fixed.product.dist, 'Lagavulin');
+  eq('the list knows every house in it', L.libraryHouses(LIBR).length, 3);
+
+  /* THE WHOLE QUEUE. */
+  const plan = L.intakePlan([
+    { name: 'Penelope Four Grain Bourbon' },                    // out
+    { name: '' },                                               // out
+    { name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+      dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
+      tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' },  // ask
+    { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 92, sub: 'scotch',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } },  // in
+    { name: 'Penelope Rio Rosa', dist: 'Penelope Bourbon', proof: 100,
+      sub: 'bourbon' }                                          // fill
+  ], opts);
+  eq('the queue splits four ways', [plan.in.length, plan.fill.length,
+    plan.ask.length, plan.out.length].join(','), '1,1,1,2');
+  eq('and what goes in is what nobody has to read', plan.adds, 2);
+  /* AND NOTHING IS BZ'S UNTIL THE WEB HAS TRIED. The near-duplicate is a
+     question the search can settle, so the sentence counts it as work in
+     progress rather than as work for him. */
+  eq('it says it in one sentence', L.intakeSay(plan),
+    '5 offered. 2 go in (1 of them thin, and filled in on the way), '
+    + '2 add nothing, 1 goes out to the web first, nothing needs you.');
+  eq('and what is still being worked on is not his', plan.yours.length, 0);
+  eq('the web has one to answer', plan.pending.length, 1);
+  eq('an empty queue says so', L.intakeSay(L.intakePlan([], opts)),
+    'Nothing waiting.');
+
+  /* TWO PEOPLE OFFERING ONE BOTTLE is the commonest thing at volume, and
+     each is judged against the LIBRARY, so both would have gone in. It is
+     not a question either: the union of what the two of them state is
+     better than either one, and only a field they state DIFFERENTLY is
+     anybody's decision. BZ, 2026-09-15: "I'd prefer to have every offering
+     vetted as far as possible before I have to get involved." */
+  const twice = L.intakePlan([
+    { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 92, sub: 'scotch',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } },
+    { name: 'Ardbeg Ten Years Old', dist: 'Lagavulin', proof: 92,
+      sub: 'scotch', age: 10, fin: 'Bourbon',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } }
+  ], opts);
+  eq('two offers of one bottle are one row', twice.in.length, 1);
+  eq('and nobody is asked about it', twice.ask.length, 0);
+  eq('what the second said is kept', twice.in[0].product.age, 10);
+  eq('and so is the fuller name', twice.in[0].product.name,
+    'Ardbeg Ten Years Old');
+  eq('the row remembers it was offered twice', twice.in[0].merged, 2);
+
+  /* ONLY A REAL DISAGREEMENT IS A QUESTION - and even that goes to the web
+     before it comes to him. */
+  const argue = L.intakePlan([
+    { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 92, sub: 'scotch',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } },
+    { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 114, sub: 'scotch',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } }
+  ], opts);
+  eq('two offers that disagree raise one question', argue.ask.length, 1);
+  eq('and it names the field', /proof: 92 against 114/.test(argue.ask[0].why),
+    true);
+  eq('which the web is asked first', argue.pending.length, 1);
+  eq('so none of it is his yet', argue.yours.length, 0);
+  /* A KEY IS NOT A FACT SOMEBODY STATED. Comparing it reported "k:
+     Penelope Wheated against Penelope Wheated Straight Bourbon Whiskey" as
+     a disagreement to settle, which is the app arguing with itself. */
+  eq('where a row is filed is not a disagreement',
+    L.intakeMergeOffers({ k: 'a', name: 'A', proof: 90 },
+      { k: 'b', name: 'A Bourbon', proof: 90 }).clash.length, 0);
+  eq('and a default loses to a statement',
+    L.intakeMergeOffers({ name: 'A', scar: 'standard' },
+      { name: 'A', scar: 'limited' }).merged.scar, 'limited');
+  eq('whichever side states it',
+    L.intakeMergeOffers({ name: 'A', scar: 'limited' },
+      { name: 'A', scar: 'standard' }).merged.scar, 'limited');
+
+  /* EACH PIECE ON ITS OWN, not only through a verdict. A helper asserted
+     only by its caller is a helper nobody can change safely. */
+  eq('the index files a name under every long word in it',
+    Object.keys(L.intakeIndex(LIBR)).indexOf('penelope') >= 0, true);
+  eq('and short words are not worth an index',
+    Object.keys(L.intakeIndex(LIBR)).indexOf('to'), -1);
+  eq('the index finds what a name reads like',
+    (L.intakeNear({ name: 'Heaven Hill Grain To Glass Straight Wheated '
+      + 'Bourbon', proof: 100 }, L.intakeIndex(LIBR)) || {}).k, 'c');
+  eq('and nothing like it finds nothing',
+    L.intakeNear({ name: 'Jim Beam White Label' }, L.intakeIndex(LIBR)), null);
+  eq('a house the list knows is known',
+    L.intakeHouse('Lagavulin', L.libraryHouses(LIBR)).known, true);
+  eq('spelled another way it is still known',
+    L.intakeHouse('lagavulin', L.libraryHouses(LIBR)).known, true);
+  eq('and it comes back spelled the way the list spells it',
+    L.intakeHouse('lagavulin', L.libraryHouses(LIBR)).spelling, 'Lagavulin');
+  eq('one the list has never seen is not',
+    L.intakeHouse('Nowhere', L.libraryHouses(LIBR)).known, false);
+  eq('and nothing at all is not a house',
+    L.intakeHouse('', L.libraryHouses(LIBR)).known, false);
+  eq('preparing once is preparing',
+    L.intakeReady({ library: LIBR }).houses.length, 3);
+  eq('and preparing twice does not do it again',
+    L.intakeReady(L.intakeReady({ library: LIBR })).ready, true);
+  /* THE ROW AS IT WILL BE STORED. normalizeProduct drops everything not on
+     its own list, which threw away the contributor's notes and region -
+     so the note came back as a gap and was bought again from the
+     lookup. */
+  eq('the notes somebody sent survive the door',
+    (L.intakeProduct({ name: 'X', tn: { nose: 'vanilla' } }).tn || {}).nose,
+    'vanilla');
+  eq('and so does the region',
+    L.intakeProduct({ name: 'X', region: 'Islay' }).region, 'Islay');
+  eq('an empty note is not a note',
+    L.intakeProduct({ name: 'X', tn: {} }).tn, undefined);
+
+  /* ============ NOTHING IS ASKED BEFORE THE WEB HAS TRIED ============
+     BZ, 2026-09-15: "I'd prefer to have every offering vetted as far as
+     possible before I have to get involved." Measured on the 457 rows:
+     four questions, and all four are ones the search can be sent at
+     instead. */
+  eq('a near-duplicate is a question for the search',
+    !!L.intakeAsks({ verdict: 'ask', rule: 'nearly one already in',
+      product: { name: 'X' } }), true);
+  eq('and it says what would settle it',
+    L.intakeAsks({ verdict: 'ask', rule: 'nearly one already in',
+      product: { name: 'X' } }).want,
+    'proof, age and cask, to tell two bottles apart');
+  eq('an answer nothing can settle is nobody\u2019s but his',
+    L.intakeAsks({ verdict: 'ask', rule: 'something else' }), null);
+  /* AND THE SEARCH IS ASKED ONCE. A question it has already failed to
+     answer is the residue - left marked pending it would never reach
+     anybody and the queue would never empty. */
+  eq('a question the search already failed is not still pending',
+    L.intakeAsks({ verdict: 'ask', rule: 'nearly one already in',
+      tried: true, product: { name: 'X' } }), null);
+  eq('and a failed search says it has been tried',
+    L.intakeSettle({ verdict: 'ask', rule: 'nearly one already in',
+      product: { name: 'X' }, why: 'w' }, null, opts).tried, true);
+
+  /* THE FACTS TELL TWO BOTTLES APART. */
+  const nearAgain = L.intakeVerdict({
+    name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+    dist: 'Heaven Hill', sub: 'bourbon', tn: { nose: 'wheat' },
+    mash: '70 corn, 20 wheat, 10 barley' }, opts);
+  eq('before the search it is a question', nearAgain.verdict, 'ask');
+  eq('a proof that differs settles it as a different bottle',
+    L.intakeSettle(nearAgain, { proof: 124 }, opts).verdict !== 'ask', true);
+  eq('facts that all match settle it as the one already in',
+    L.intakeSettle(nearAgain, { proof: 100 }, opts).verdict, 'out');
+  eq('and it says which entry it is',
+    /1st Edition/.test(L.intakeSettle(nearAgain, { proof: 100 }, opts).why),
+    true);
+  eq('a search that answered nothing settles nothing',
+    L.intakeSettle(nearAgain, null, opts).verdict, 'ask');
+  eq('and says so, so the question is honest about why it is here',
+    /could not settle it/.test(L.intakeSettle(nearAgain, null, opts).why),
+    true);
+
+  /* A ROW THAT CONTRADICTS ITSELF, put right by what came back. */
+  const conflicted = L.intakeVerdict({ name: 'Something Blanco',
+    dist: 'Penelope Bourbon', sub: 'tequila', mash: '80 corn, 20 rye' },
+    opts);
+  eq('it is a question first', conflicted.verdict, 'ask');
+  eq('and the search saying it is a bourbon settles it',
+    L.intakeSettle(conflicted, { sub: 'bourbon' }, opts).verdict !== 'ask',
+    true);
+  eq('a search that agrees with neither leaves it his',
+    L.intakeSettle(conflicted, { fin: 'Sherry' }, opts).verdict, 'ask');
+  eq('and it says the search could not help',
+    /agreed with neither/.test(
+      L.intakeSettle(conflicted, { fin: 'Sherry' }, opts).why), true);
+  eq('what is already settled is not settled twice',
+    L.intakeSettle({ verdict: 'in', product: {} }, { proof: 90 }, opts)
+      .verdict, 'in');
+
+  /* WHERE AN OFFER LIVES. Two people can offer one name, so the name is
+     not an identity and the node it sits under is - and a verdict the
+     search has already settled is filed under it, or every redraw would
+     spend the lookups again. */
+  eq('an offer is known by its node',
+    L.intakeRowKey({ uid: 'u1', slug: 's1' }), 'u1/s1');
+  eq('and a row with neither is still a string',
+    L.intakeRowKey(null), '/');
+  eq('two offers of one name are two nodes',
+    L.intakeRowKey({ uid: 'u1', slug: 'a' })
+      === L.intakeRowKey({ uid: 'u2', slug: 'a' }), false);
+
+  /* A DROPPED OFFER IS HELD A FORTNIGHT. BZ's choice. */
+  eq('a fortnight is the hold', L.INTAKE_HOLD_DAYS, 14);
+  eq('a drop from today is still held',
+    L.intakeExpired(1000000, 1000000 + 13 * 864e5), false);
+  eq('and one from a fortnight ago is not',
+    L.intakeExpired(1000000, 1000000 + 15 * 864e5), true);
+  eq('nothing dropped never expires', L.intakeExpired(0, Date.now()), false);
 }
 
 /* The async section reports BEFORE the tally, and the tally is the last

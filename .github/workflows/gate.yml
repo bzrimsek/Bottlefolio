@@ -137,8 +137,22 @@ jobs:
           key: gatetimes-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: gatetimes-
 
-      - name: The gate - all ten checks
+      - name: The gate - all twelve checks
         run: python3 gate.py
+
+      # THE PHONE SCREENSHOTS, KEPT. shots.js fails the gate on a page that
+      # scrolls sideways or text cut off with nothing to say it was cut, but
+      # the images themselves are for looking at: a squashed flight title
+      # passed every automated check on 2026-09-15 and was found by eye.
+      # Kept on a red run too - a failed run is when you most want to see
+      # what the screen looked like.
+      - name: Keep the phone screenshots
+        if: always() && hashFiles('shots/*.png') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-screenshots
+          path: shots/
+          retention-days: 14
 
       # Saved when the gate is red too, because gate.py records a failed
       # run's times as well; skipped only when gate.py never got as far as

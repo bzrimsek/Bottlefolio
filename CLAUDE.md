@@ -70,15 +70,17 @@ files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
 and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
 plain shelf file, a CSV, the database export or `_superseded/`.
 
-The gate, all ten, in this order — `gate.py` runs them in the cloud with the
-clock pinned to UTC (test §351 expects it):
+The gate, all twelve, in this order — `gate.py` runs them in the cloud
+with the clock pinned to UTC (test §351 expects it):
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # ~4,600 assertions
+node killer-bs-test.js    # ~4,800 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # ~66 wiring checks
+node consistency.js       # 72 wiring checks
 node screens.js           # 21 screens draw
+node answers.js           # what the answers SAY, on BZ's real shelf
+node shots.js             # every screen at 390px, photographed
 node render.js            # screens agree with the engine
 node twotab.js            # two devices, merge holds
 node gscheck.js           # Apps Script wiring
@@ -86,7 +88,7 @@ node browser.js           # the walk, a real browser  (~45s)
 node sync.js              # push, load, reload, refuse (~78s)
 ```
 
-All ten must pass. Report each one as it lands rather than running the
+All twelve must pass. Report each one as it lands rather than running the
 loop silently (rule 25c) — and read the whole output of each, not the last
 line; a check once sat broken for several builds because the failure was
 thirty lines above a blank final line.
@@ -239,6 +241,18 @@ wrong reason: one was satisfied by a word appearing inside the sentence
 that *forbade* it; another excused every caller because the excuse pattern
 matched the thing being tested.
 
+**A passing build can still lie.** Every check in this project proved
+that the code RUNS. On 2026-09-15 two screens said false things with all
+4,700 assertions green: a Penelope question answered "nothing" above a card
+offering "a stronger Penelope", and a Manzanilla ask said the bottle "may
+not exist". `answers.js` reads the sentences — it drives the planning
+answer with real questions against BZ's real shelf and fails on a screen
+that contradicts itself, on a sentence from `L.SAYS_NEVER` (nothing this
+app can see establishes that a whisky does not exist) or `L.SAYS_NOT_HERE`
+(an answer does not explain itself by naming the library), and on a house
+on the shelf coming back as one he does not own. The screens register what
+they claim in `ANSWER_SAID`; in the app that only writes to the log.
+
 **Read what a function returns before using it.** Twice in one day a return
 shape was assumed rather than opened — `postWithRetry` answers a fetch
 `Response`, `askForCandidates` answers `{all, capped}`. Both broke a screen.
@@ -261,6 +275,8 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `killer-bs-test.js` | the assertions |
 | `consistency.js` | the wiring checks |
 | `browser.js` | the walk |
+| `answers.js` | what the answers say, graded against the real shelf |
+| `shots.js` | every screen at phone size, into `shots/` |
 | `CHANGELOG.md` | what changed and why, every build |
 | `DEV-RULES.md` | **the working agreement — read it** |
 | `README.md` | what the app is, and how to run the checks and ship |

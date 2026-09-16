@@ -1636,6 +1636,55 @@ screen and the type scale. Nothing else.
 to 40px, and v2.3.51 put every tab's bar at the same top edge. Neither was a
 visual pass.)*
 
+## The library at volume, and the checks that read sentences — 2026-09-15
+
+BZ, after two screens told him things that were not true: "how can we
+uncover errors like I found and make the app more reliable and usable -
+also, a one by one add/drop for the library once volume comes is crazy -
+i'd hope the app can accept/reject most and I can just deal with the
+rejections." Then: "I'd prefer to have every offering vetted as far as
+possible before I have to get involved", and "Make sure I can accept and
+deny efficiently not row by row only. A grid or a multiselect."
+
+**His decisions.** Shadow mode for one release before the sorting acts on
+its own. A dropped offer is held fourteen days with its reason, not erased.
+Thin rows are enriched rather than handed to him. All four checks built.
+
+**What the intake does now.** One pure verdict per offer, from checks that
+already existed and were pointed the wrong way — `libraryAudit` found
+nine kinds of fault in rows that were already IN. Four answers: `in`,
+`fill` (goes in, and the fill-in run gets the rest), `ask`, `out`. Two
+people offering one bottle are merged rather than raised as a question, and
+every question the search could settle is put to the search first. Measured
+on 457 real library rows offered into the shipped 325: 325 already in, 128
+go in, and NOTHING reaches him until the web has tried — four
+questions, all four of them sent to the search. The residue is a
+multiselect grid: All / None / Add selected / Drop selected.
+
+**Three faults found while building it**, each invisible today and each
+appearing at volume:
+- `L.gapOwned` — the list the paid search is told NOT to suggest —
+  read the whole shared LIBRARY rather than the shelf. Every entry anybody
+  had published counted as owned. On BZ's PC the library and the shelf are
+  the same 325 rows, which is why it never showed; with eight Penelopes in
+  the library he does not own, twelve names went out as owned and four were
+  true. That is the empty Penelope answer.
+- The same function matched on any word over three letters, so "An aged
+  Woodford Reserve" matched everything with RESERVE in it: 23 Woodfords
+  where he owns 6, 46 Islays where he owns 39. It now finds the house the
+  way the planning question finds it.
+- The bottle count on the planning answer read a name out of a map keyed by
+  `libKey`. On a shelf fed by the library it answered 0 where the truth
+  was 2.
+
+And the contribution path threw away the contributor's own tasting notes
+and region on the way in, so the note came back as a gap and was bought
+again from the lookup.
+
+**Still open from this.** The sorting acts only when pressed, by BZ's
+choice; switching it on is the next release, after he has seen a queue go
+through it. Nothing else here is outstanding.
+
 ## A pattern worth keeping
 
 Every serious fault in the week of 2026-09-03 was two functions holding one

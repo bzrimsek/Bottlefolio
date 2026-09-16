@@ -87,6 +87,9 @@ DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
         'README.md']
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
+           # 2026-09-15: the two checks that read what the screen SAYS and
+           # how wide it is. Everything else here proves the code runs.
+           'answers.js', 'shots.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'rules.js',

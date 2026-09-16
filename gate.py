@@ -36,6 +36,11 @@ FAST = [
     ('lint',        ['node', 'lint.js']),
     ('consistency', ['node', 'consistency.js']),
     ('screens',     ['node', 'screens.js']),
+    # The sentences, and the phone. Every other check proves the code runs;
+    # these two ask what it SAID and how wide it was - the two faults that
+    # reached BZ on 2026-09-15 with 4,700 assertions green.
+    ('answers',     ['node', 'answers.js']),
+    ('shots',       ['node', 'shots.js']),
     ('render',      ['node', 'render.js']),
     ('twotab',      ['node', 'twotab.js']),
     # The four .gs files that answer the app. Added after a duplicate
