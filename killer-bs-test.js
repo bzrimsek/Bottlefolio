@@ -19964,6 +19964,24 @@ const near = L.intakeVerdict({
     L.intakeRowKey({ uid: 'u1', slug: 'a' })
       === L.intakeRowKey({ uid: 'u2', slug: 'a' }), false);
 
+  /* WHAT THE PRESS DID, SAID ONCE. BZ, 2026-09-15: "After taking 19, I get
+     a prompt to look up 16. Why not do that before." The lookups now run
+     inside the press, before anything is written, and this is what used to
+     be a second sheet asking about them. */
+  eq('a clean run says only what it added',
+    L.intakeAddedSay(19, { filled: 0, empty: 0, stopped: 0 }),
+    '19 added to the library');
+  eq('and one that filled some says so',
+    L.intakeAddedSay(19, { filled: 16, empty: 0, stopped: 0 }),
+    '19 added to the library, 16 filled in on the way');
+  eq('a lookup that found nothing is not a failure',
+    /asked again/.test(L.intakeAddedSay(19, { filled: 10, empty: 6 })), true);
+  eq('and the daily limit is said, not discovered',
+    /left for tomorrow/.test(
+      L.intakeAddedSay(19, { filled: 4, stopped: 12 })), true);
+  eq('nothing to report is still an answer',
+    L.intakeAddedSay(3, null), '3 added to the library');
+
   /* A DROPPED OFFER IS HELD A FORTNIGHT. BZ's choice. */
   eq('a fortnight is the hold', L.INTAKE_HOLD_DAYS, 14);
   eq('a drop from today is still held',
