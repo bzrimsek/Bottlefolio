@@ -64,15 +64,14 @@ const codeOnly = src
 /* THE ENGINE ITSELF, so the inventory check below reads the app's own
    declaration rather than a copy of it kept in this file. A contract
    restated in two places is the very fault these checks exist to find. */
-const ENGINE = (() => {
-  const a = src.indexOf('const L = {};');
-  const b = src.indexOf('/* =====================================================================\n   STATE + RENDER');
-  const m = { exports: {} };
-  new Function('module', src.slice(a, b) + '\nmodule.exports = L;')(m);
-  return m.exports;
-})();
+const ENGINE = require('./engine.js')().L;
 
 const tests = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
+/* THE NIGHTLY JOBS CALL THE ENGINE TOO. popular.js adds everybody's lists up
+   with L.popularTotals, which the app never does - on purpose, because no
+   device may read anybody else's list. A use there is a use. */
+const JOBS = ['popular.js'].map(f => fs.existsSync(__dirname + '/' + f)
+  ? fs.readFileSync(__dirname + '/' + f, 'utf8') : '').join('\n');
 const dead = [], unwired = [];
 defined.forEach(fn => {
   /* AGAINST THE CODE, NOT THE SOURCE. This counted mentions in `src`, so a
@@ -81,7 +80,8 @@ defined.forEach(fn => {
      lines away, with the reason written out. L.isCleanup and L.pendingUpcs
      both hid here for as long as their comments existed. A checker that
      reads comments is checking the wrong file. */
-  const inApp = codeOnly.split('L.' + fn).length - 1;
+  const inApp = codeOnly.split('L.' + fn).length - 1
+    + JOBS.split('L.' + fn).length - 1;
   if (inApp > 1) return;
   (tests.indexOf('L.' + fn) >= 0 ? unwired : dead).push(fn);
 });
@@ -1283,7 +1283,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     'showFill',
     /* How many lookups the offered-library queue may spend vetting on its
        own. One number somebody chose, not a collection to merge. */
-    'intakeBudget'];
+    'intakeBudget',
+    /* Whether this person's shelf counts toward what's popular. */
+    'popularOn'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at

@@ -227,6 +227,35 @@
             ".write": "auth != null && auth.uid == $uid",
             ".read": "auth != null && (auth.uid == $uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())"
           }
+        },
+        "popular": {
+          "in": {
+            "$uid": {
+              ".read": "auth != null && $uid === auth.uid",
+              ".write": "auth != null && $uid === auth.uid",
+              ".validate": "newData.hasChildren(['at'])",
+              "at": {
+                ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+              },
+              "shelf": {
+                "$key": {
+                  ".validate": "$key.matches(/^[a-z0-9_]{1,120}$/) && newData.isString() && newData.val().length <= 200"
+                }
+              },
+              "poured": {
+                "$key": {
+                  ".validate": "$key.matches(/^[a-z0-9_]{1,120}$/) && newData.isString() && newData.val().length <= 200"
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "totals": {
+            ".read": "auth != null",
+            ".write": false
+          }
         }
       }
     }

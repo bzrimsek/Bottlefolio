@@ -487,11 +487,14 @@ copied within about a day of it.
 
 ### 6. Not started and not asked for — noted so nobody mistakes them for loose ends
 
+- **What's popular — BUILT v2.4.19** (see the Clubs entry below).
 - **What have your buddies been drinking** and **what's popular** — neither
   has a node in firebase-rules.json (checked 2026-09-15). The design notes
   below stand.
 - **A flavor profile from the tasting notes** — search has read every word of
   the notes since v2.3.27; nothing builds a profile from them.
+- **Two shelves side by side — CLOSED, exists.** BZ, 2026-09-16: it exists
+  as the Venn on the Buddies tab. The note below predates him saying so.
 - **Two shelves side by side** — v2.3.54 portrays the two shelves MERGED (BZ:
   run on ours). Nothing compares them, and nothing makes a flight runnable
   only together.
@@ -1340,6 +1343,18 @@ to show you, and what they drank on a Tuesday is a diary. Those are
 different permissions and the rules currently have one. **Do not build this
 by widening the existing share.**
 
+**BUILT v2.4.19, BZ's design decisions of 2026-09-16.** Counts whiskies on
+shelves and poured in the last 90 days. Opt-in, off by default: the switch is
+in Buddies › How others see you. Each person's list is at
+`popular/in/<uid>`, readable by its owner only - not by an admin. The nightly
+GitHub job (`.github/workflows/popular.yml`, `popular.js`) is the only reader
+and writes `popular/totals`, dropping anything under three people
+(`L.POPULAR_FLOOR`). Shown as a line on a bottle's page and a Shop result,
+and a Popular card on Shop. The open question below - distinct accounts
+versus anonymity - was answered by keeping a per-person list private and
+counting it in a job, which knows distinct people without any screen
+knowing who.
+
 **What's popular** (BZ, 2026-09-07 — not started). App-wide and anonymous,
 in his words. The only idea discussed all day that gets BETTER as more
 people use it, and the only one where the unit is not one shelf.
@@ -1423,6 +1438,13 @@ brief to build a group mode.
 
 **Pooled flights cannot be fully blind** — noted, not blocking (item 12).
 Filed here because the constraint only bites with a room in it.
+
+**v2.4.19: now measurable.** A bottle bought from a suggestion carries
+`sugg` (the suggestion, from `L.suggestionTag`), and Shop says what the
+suggestions you bought came to, judged by the pour verdict (BZ, 2026-09-16).
+The same build fixed `L.discoveryFor`, which read `why`/`at` off wish entries
+that L.wishAdd writes as `reason`/`added`, so no bottle wished for in the app
+ever showed how you came across it.
 
 **The candidate finder has never put a bottle in BZ's hands.** Not a club
 item strictly, but the same class of unproven: until a suggestion is

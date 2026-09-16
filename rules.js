@@ -192,4 +192,7 @@ async function main() {
   fail('unknown command ' + cmd + ' - use get, diff or deploy');
 }
 
-main().catch(e => fail(e.message));
+/* Run as a command, or lent to another job: popular.js signs in with the
+   same key through the same code rather than a copy of it. */
+if (require.main === module) main().catch(e => fail(e.message));
+module.exports = { token: token, DB: DB };

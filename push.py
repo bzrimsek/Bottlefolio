@@ -93,6 +93,9 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'rules.js',
+           # 2026-09-16: one engine loader for every tool, and the nightly
+           # popular count that uses it.
+           'engine.js', 'popular.js', '.github/workflows/popular.yml',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
 # The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
 # apps-script/appsscript.json - the live project's exact file set, checked by

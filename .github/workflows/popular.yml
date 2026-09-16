@@ -1,0 +1,50 @@
+# WHAT'S POPULAR, counted once a night.
+#
+# BZ, 2026-09-16: each person who switches it on keeps a private list that
+# no screen - an admin's included - can read. This job is the only reader:
+# it adds the lists up and writes totals only, dropping anything fewer than
+# three people have (popular.js, L.popularTotals). It prints counts, never a
+# list or a name from one.
+#
+# It runs from main, which is what the gate published, so the count always
+# uses the engine the live app uses.
+name: Popular
+
+on:
+  schedule:
+    - cron: '17 7 * * *'     # 07:17 UTC, the small hours in the US
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: popular
+  cancel-in-progress: false
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # Only google-auth-library is needed. --ignore-scripts so nothing
+      # downloads a browser for a job that has no use for one.
+      - name: Install
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Count
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: node popular.js

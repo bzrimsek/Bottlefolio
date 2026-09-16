@@ -11,20 +11,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Pull the logic object out of index.html without a browser. The script
-// block assigns to `L` and exports it at the end.
-function loadLogic() {
-  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-  const start = html.indexOf("const L = {};");
-  const end = html.indexOf("/* =====================================================================\n   STATE + RENDER");
-  if (start < 0 || end < 0) throw new Error('logic block not found in index.html');
-  const src = html.slice(start, end);
-  const module_ = { exports: {} };
-  new Function('module', src + '\nmodule.exports = L;')(module_);
-  return module_.exports;
-}
-
-const L = loadLogic();
+// The logic object, out of index.html without a browser (engine.js).
+const L = require('./engine.js')().L;
 
 /* L.pickFromList was removed in v1.8.78 — nobody types a menu when they can
    photograph one, and pasting a list is the Shop screen's job.
@@ -1301,6 +1289,95 @@ sec('one queue builder, and the two note queues do not overlap');
   eq('a bottle rested by the ledger waits',
     L.lookupQueue(cat, bots, { ledger: { none: { no: 1, at: '2026-09-16' } },
       today: '2026-09-16' }, p => p.k === 'none').length, 0);
+}
+
+sec('did a suggestion pay off');
+{
+  /* THE TAG IS ABOUT ONE BOTTLE. */
+  const tag = L.suggestionTag('A Campbeltown Scotch', 'Springbank 10', '2026-09-16');
+  eq('a tag carries the suggestion and the bottle', tag,
+    { label: 'A Campbeltown Scotch', name: 'Springbank 10', at: '2026-09-16' });
+  eq('no suggestion, no tag', L.suggestionTag('', 'Springbank 10', 'x'), null);
+  eq('it applies to the bottle it was opened for',
+    L.suggestionFor(tag, 'Springbank 10'), { label: 'A Campbeltown Scotch', at: '2026-09-16' });
+  eq('and not to another bottle bought later', L.suggestionFor(tag, 'Ardbeg Ten'), null);
+  eq('nearly the same name counts', L.nearlyNamed('Springbank 10 Year', 'Springbank 10 Year Old'), true);
+  eq('a different bottle does not', L.nearlyNamed('Springbank 10', 'Ardbeg Ten'), false);
+
+  /* IT RIDES ON THE WISH, AND LANDS ON THE BOTTLE. */
+  const wish = L.wishAdd([], L.wishEntry('Springbank 10', null, [], {}, {}, [], tag));
+  eq('the wishlist entry remembers the suggestion', wish[0].sugg,
+    { label: 'A Campbeltown Scotch', at: '2026-09-16' });
+  eq('wanting it again keeps it', L.wishAdd(wish, { name: 'Springbank 10' })[0].sugg,
+    { label: 'A Campbeltown Scotch', at: '2026-09-16' });
+  const origin = L.bottleOrigin('Springbank 10', wish, null);
+  eq('bought later from the wishlist, the bottle still knows', origin.sugg,
+    { label: 'A Campbeltown Scotch', at: '2026-09-16' });
+  const nb = L.withOrigin({ id: 'B9', k: 'sb10', status: 'open' }, origin);
+  eq('and says it', L.bottleStory(nb)[0], 'Suggested: A Campbeltown Scotch \u00b7 2026-09-16');
+  eq('a bottle with no story gets none', L.withOrigin({ id: 'B1' }, L.bottleOrigin('X', [], null)),
+    { id: 'B1' });
+  /* THE FOUND BUG: a wish written by the app says reason and added. */
+  const plain = L.wishAdd([], { name: 'Ardbeg Ten', reason: 'want one', added: '2026-09-01' });
+  eq('how you came across it is read off a real wish entry',
+    L.discoveryFor('Ardbeg Ten', plain), { why: 'want one', at: '2026-09-01', sugg: null });
+
+  /* JUDGED BY THE POUR VERDICT. */
+  const cat = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' }, c: { k: 'c', name: 'C' } };
+  const s = { label: 'Something', at: '2026-09-01' };
+  const bots = [{ id: '1', k: 'a', sugg: s }, { id: '2', k: 'a', sugg: s },
+    { id: '3', k: 'b', sugg: s }, { id: '4', k: 'c' }];
+  const hist = [{ kind: 'pour', k: 'a', verdict: 'again', at: '2026-09-10' }];
+  const res = L.suggestionResults(bots, hist, cat);
+  eq('one row per whisky, only the suggested ones', res.rows.map(r => r.k), ['a', 'b']);
+  eq('counted by verdict', [res.bought, res.again, res.fine, res.notForMe, res.notYet],
+    [2, 1, 0, 0, 1]);
+  eq('and said', L.suggestionSay(res), 'Suggestions you bought: 2 \u2014 1 again, 1 not poured yet.');
+  eq('silent with none', L.suggestionSay(L.suggestionResults([], [], {})), '');
+}
+
+sec('what is popular');
+{
+  const cat = {
+    sb: { k: 'sb', name: 'Springbank 10', sub: 'scotch' },
+    vk: { k: 'vk', name: 'Tito\u2019s Vodka', sub: 'vodka' },
+    bt: { k: 'bt', name: 'Buffalo Trace', sub: 'bourbon' }
+  };
+  const bots = [{ id: '1', k: 'sb', status: 'open' }, { id: '2', k: 'vk', status: 'open' },
+    { id: '3', k: 'bt', status: 'gone' }];
+  const hist = [
+    { kind: 'pour', k: 'bt', at: '2026-09-01' },
+    { kind: 'pour', k: 'sb', at: '2026-05-01' },
+    { kind: 'pour', away: 'Somewhere', at: '2026-09-02' }
+  ];
+  const mine = L.popularContribution(cat, bots, hist, '2026-09-16');
+  eq('whiskies on the shelf, keyed as the library keys them', mine.shelf,
+    { springbank_10: 'Springbank 10' });
+  eq('poured in the last 90 days, a gone bottle included', mine.poured,
+    { buffalo_trace: 'Buffalo Trace' });
+
+  const p = (shelf, poured) => ({ shelf: shelf, poured: poured || {} });
+  const totals = L.popularTotals([
+    p({ springbank_10: 'Springbank 10', ardbeg_ten: 'Ardbeg Ten' }, { buffalo_trace: 'Buffalo Trace' }),
+    p({ springbank_10: 'Springbank 10 ' }, { buffalo_trace: 'Buffalo Trace' }),
+    p({ springbank_10: 'Springbank 10' }, { buffalo_trace: 'Buffalo Trace' }),
+    p({ ardbeg_ten: 'Ardbeg Ten', 'BAD KEY': 'x' })
+  ], 3);
+  eq('people counted', totals.people, 4);
+  eq('three people is enough', totals.items.springbank_10, { shelves: 3, name: 'Springbank 10' });
+  eq('two is not - one person\u2019s bottle cannot be picked out',
+    totals.items.ardbeg_ten, undefined);
+  eq('poured counts on its own', totals.items.buffalo_trace, { poured: 3, name: 'Buffalo Trace' });
+  eq('a key that is not a library key is ignored', Object.keys(totals.items).sort(),
+    ['buffalo_trace', 'springbank_10']);
+
+  eq('a bottle finds its line', L.popularOf(totals, 'Springbank 10'), totals.items.springbank_10);
+  eq('said plainly', L.popularLine({ shelves: 6, poured: 4 }), 'On 6 shelves \u00b7 poured by 4 lately');
+  eq('poured alone', L.popularLine({ poured: 4 }), 'Poured by 4 lately');
+  eq('nothing, nothing', L.popularLine(null), '');
+  const list = L.popularList(totals, cat, bots, 8);
+  eq('ranked by shelves, then pours', list.map(r => r.key), ['springbank_10', 'buffalo_trace']);
+  eq('and marks what you already have', list.map(r => r.have), [true, false]);
 }
 
 sec('a sign-in token never reaches the log');
