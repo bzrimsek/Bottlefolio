@@ -478,7 +478,24 @@ const TWO_DOORS_OK = [
      nothing, they quote. If a second way of reading a release ever
      appears, that is the thing to catch, and this entry does not hide
      it: it names guessScar specifically. */
-  'libraryAudit>guessScar', 'auditSuggestion>guessScar',
+  /* libraryAudit no longer reads guessScar itself: the five per-row
+     findings it shared with the intake are L.rowFaults now, and that is
+     the only caller. The suggestion still quotes the same single door. */
+  'rowFaults>guessScar',
+  /* THE ADVICE IS THE FIX, READ ALOUD. auditSuggestion used to work out the
+     release and the proof-in-the-name itself, beside auditFix doing the same
+     to offer its button - two readings of one finding. It now asks the fix
+     and says what the button would do. Named specifically, so a sentence
+     that works a finding out on its own again is still caught. */
+  'auditSuggestion>auditFix',
+  /* A CALLER, NOT A SECOND ANSWER - and it did not use to be either. The
+     body of libKeysNamed was COPIED into resolveLibKey eleven lines below
+     it, which this check could not see: it finds duplicated call graphs,
+     not duplicated expressions. Asking instead of copying is what turned
+     it into a pair anybody can review, and naming libKeysNamed here leaves
+     the check able to catch a genuinely second way of finding an entry by
+     name. */
+  'resolveLibKey>libKeysNamed',
   /* DIFFERENT QUESTIONS, one wrapping the other. L.fillSnap answers
      "what notch is this number", which the slider asks of a raw drag
      position. L.fillOf answers "what is this BOTTLE's level", which
@@ -492,8 +509,9 @@ const TWO_DOORS_OK = [
   'awayPour>logEntry', 'contribSig>syncSig', 'axisLabel>titleCase',
   'addPour>relabel', 'removePour>relabel', 'movePour>relabel',
   'sortByProof>relabel', 'mashOf>mashByLaw', 'readFailSays>isNetworkFail',
-  'shelfTodo>enhanceQueue', 'flightNoteQueue>pourable',
-  'enhanceQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
+  'shelfTodo>enhanceQueue',
+  /* The two note queues ask one builder now; pourable is its to ask. */
+  'lookupQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
   'lookupAllowed>lookupTally',
   /* THE SAME QUESTION, ASKED AGAIN WITH MORE TO GO ON - which is the whole
      point of it. L.intakeSettle does not judge an offer; it takes what the
@@ -553,6 +571,161 @@ const TWO_DOORS_OK = [
     return !bodies[ab[0]] || bodies[ab[0]].indexOf('L.' + ab[1] + '(') < 0;
   }).map(p2 => p2 + ' is allowed and no longer happens');
   check('the two-doors allowance has no stale entries', stale);
+}
+
+/* NO RULE IS WRITTEN OUT TWICE.
+
+   The check above finds one function CALLING another and handing back its
+   answer. It cannot see one function COPYING another - the same predicate
+   typed out again - because there is no call to find. That is how four
+   second answers were added to this file in one day with every check green,
+   and how twenty-one engine functions came to spell out "these two names
+   are one bottle" for themselves (BZ, 2026-09-16: "More different things
+   doing the same thing. Rules were not followed very well").
+
+   HOW. Every engine function is reduced to its shape: comments gone,
+   strings and numbers made alike, every local name made alike, and the
+   iterators that ask "is there one" (some, find, filter) made alike. Only
+   the L. calls keep their names, because those are the part that makes two
+   lines the SAME rule rather than similar code. A run of COPY_WINDOW tokens
+   that appears in two functions, and holds at least one L. call and one
+   comparison, is a rule written twice.
+
+   Proven red before trusting it: on its first run it found sixteen groups,
+   all of them real but one. */
+const SCREEN_COPY_WINDOW = 14;
+const SCREEN_COPIES_OK = [
+  /* CALLERS OF ONE DOOR, each asking it the same question and branching on
+     the answer. None of these decides the thing itself. */
+  // A run stops at the day's limit without spending: the check, not a copy
+  // of spendLookups, which is the only place that counts.
+  'contribFillFirst + libraryFillRun', 'libraryFillRun + spendLookups',
+  // Both sync paths and the push ask L.resetSide which side replaced a list.
+  'fbListen + fbLoadAfterWipeCheck + fbPush',
+  // Three screens ask L.flavourOptions of the shelf and draw if it answers.
+  'flightBuilder + renderShelfCharts', 'flightBuilder + renderShelfCharts + showLessons',
+  'flightBuilder + showLessons', 'renderCandidateList + showLessons',
+  // Three presses refuse with the one no-service sentence.
+  'labelCapture + libraryFillStart + pickShelfPhotos',
+  // The service answers, and L.parseLookup reads it.
+  'productForm + shopAnswer',
+  // What the shelf and the wishlist say about a bottle, asked of the engine.
+  'readShelf + renderAway', 'renderAway + renderShopQuestion',
+  // A name looked up in this device's catalog first.
+  'renderAway + shopAnswer',
+  // The shelf counts, asked once each.
+  'renderShelf + renderShelfFilters'
+];
+
+const COPY_WINDOW = 12;
+const COPIES_OK = [
+  /* ONE DOOR, THREE DIFFERENT QUESTIONS. What a pour is (pourKind) decides
+     how each of these answers - whether it can be poured, what to call it,
+     what proof to place it at. They quote the door; none decides the
+     kind. */
+  'pourAvailable + pourLabel + pourProof'
+];
+/* THE SHAPE OF CODE, for finding the same rule written twice. Comments
+   gone, strings and numbers made alike, local names made alike, the "is
+   there one" iterators made alike - and the names that make two lines the
+   SAME rule kept: engine calls, and the app's state roots. Shared by both
+   copy checks below, so the checks are not themselves written twice. */
+function copyGroups(text, fnRe, width, counts) {
+  const KEY = new Set(['if', 'return', 'const', 'let', 'function', 'true',
+    'false', 'null', 'undefined', 'typeof', 'new', 'else', 'for', 'of', 'in',
+    'Object', 'String', 'Number', 'Math', 'Array', 'JSON', 'await', 'async']);
+  const shape = body => {
+    const code = body.replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/\/\/[^\n]*/g, ' ');
+    const re = /L\.[A-Za-z0-9_]+|\.[A-Za-z_][A-Za-z0-9_]*|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`|\d+(?:\.\d+)?|[A-Za-z_$][A-Za-z0-9_$]*|===|!==|=>|&&|\|\||[<>]=?|[-+*/%!=?:;,(){}\[\]]/g;
+    const out = [];
+    let tk;
+    while ((tk = re.exec(code))) {
+      let x = tk[0];
+      if (/^['"`]/.test(x)) x = 'S';
+      else if (/^\d/.test(x)) x = 'N';
+      else if (/^L\./.test(x)) { /* an engine call keeps its name */ }
+      else if (/^(S|LIB|FB|firebase)$/.test(x)) { /* so does app state */ }
+      else if (/^[A-Za-z_$]/.test(x) && !KEY.has(x)) x = 'id';
+      if (x === '.some' || x === '.find' || x === '.filter') x = '.ITER';
+      out.push(x);
+    }
+    return out;
+  };
+  const where = {};
+  let fm;
+  fnRe.lastIndex = 0;
+  while ((fm = fnRe.exec(text))) {
+    const tk = shape(fm[2]);
+    for (let i = 0; i + width <= tk.length; i++) {
+      const w = tk.slice(i, i + width);
+      if (!counts(w)) continue;
+      (where[w.join(' ')] = where[w.join(' ')] || new Set()).add(fm[1]);
+    }
+  }
+  const groups = {};
+  Object.keys(where).forEach(k => {
+    const names = [...where[k]].sort();
+    if (names.length < 2) return;
+    const g = names.join(' + ');
+    if (!groups[g]) groups[g] = k;
+  });
+  return groups;
+}
+
+{
+  const cut = src.indexOf('STATE + RENDER');
+  const engineGroups = copyGroups(src.slice(0, cut),
+    /^L\.([A-Za-z0-9_]+)\s*=\s*function\s*\([^)]*\)\s*\{([\s\S]*?)\n\};/gm,
+    COPY_WINDOW,
+    w => w.some(x => x.indexOf('L.') === 0)
+      && w.some(x => x === '===' || x === '!==' || x === '<' || x === '>'));
+  const copies = Object.keys(engineGroups).sort()
+    .filter(g => COPIES_OK.indexOf(g) < 0)
+    .map(g => g + ' write out one rule twice: ' + engineGroups[g].slice(0, 90));
+  check('no rule is written out twice in the engine', copies);
+  const staleCopies = COPIES_OK.filter(g => !engineGroups[g])
+    .map(g => g + ' is allowed and no longer happens');
+  check('the copies allowance has no stale entries', staleCopies);
+
+  /* AND THE SCREENS, which is where most of today's copies were. BZ,
+     2026-09-16: "Are you confident that all duplicate/similar functions have
+     been consolidated?" Not while half the file went unscanned. The screens
+     are mostly layout - "append a line with this text" is the same shape in
+     three hundred places and means nothing - so a window only counts when it
+     DECIDES something (a comparison or an if), reads the engine or the app's
+     state at least twice, and is not DOM furniture. On its first run that
+     found twenty-two groups: the lookup limit checked seven ways with four
+     wordings, the no-service sentence seven ways, a publish path that
+     silently failed for everybody but an admin, a scan fix that never
+     reached other devices from one of its two screens. What is allowed
+     below are callers of one engine function, which is a door being used,
+     not a rule being copied. */
+  const DOM = ['.appendChild', '.textContent', '.className', '.style',
+    '.querySelector', '.querySelectorAll', '.onclick', '.dataset',
+    '.marginTop', '.disabled', '.innerHTML', '.type', '.placeholder',
+    '.value'];
+  const screenGroups = copyGroups(
+    src.slice(cut, src.lastIndexOf('</script>')),
+    /^(?:async\s+)?function\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/gm,
+    SCREEN_COPY_WINDOW,
+    w => {
+      const decides = w.some(x =>
+        ['===', '!==', '<', '>', '<=', '>=', 'if'].indexOf(x) >= 0);
+      const dom = w.filter(x => DOM.indexOf(x) >= 0).length;
+      const reads = w.filter(x => x.indexOf('L.') === 0).length
+        + w.filter((x, j) => (x === 'S' || x === 'LIB')
+          && /^\./.test(w[j + 1] || '')).length;
+      return decides && dom <= 1 && reads >= 2;
+    });
+  const screenCopies = Object.keys(screenGroups).sort()
+    .filter(g => SCREEN_COPIES_OK.indexOf(g) < 0)
+    .map(g => g + ' decide one thing the same way twice: '
+      + screenGroups[g].slice(0, 90));
+  check('no rule is written out twice in the screens', screenCopies);
+  const staleScreen = SCREEN_COPIES_OK.filter(g => !screenGroups[g])
+    .map(g => g + ' is allowed and no longer happens');
+  check('the screen copies allowance has no stale entries', staleScreen);
 }
 
 /* NO BUTTON IS DISABLED BY DATA THE SCREEN HAS NOT FETCHED.
@@ -1948,13 +2121,13 @@ check('no fixed svg id is emitted by a repeated drawing',
      `node consistency.js --sizes` \u2014 never edit a number here by hand, the
      same way a version is never edited by hand. */
   const BIG_TODAY = {
-    libraryAdminCard: 592,
     showBottle: 591,
+    libraryAdminCard: 549,
     likelyToLike: 475,
     productForm: 452,
     renderShelf: 363,
     renderAway: 356,
-    renderLibrary: 345,
+    renderLibrary: 331,
     showShelfTools: 305,
     renderLookupSetup: 294,
     shopAnswer: 267,
@@ -1962,40 +2135,40 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderGuest: 247,
     renderSettings: 230,
     editLibraryEntry: 227,
-    libraryAudit: 219,
     renderUsers: 205,
+    libraryAudit: 203,
     shelfAxes: 203,
     renderDiag: 185,
     shelfPortrait: 185,
     renderShelfCharts: 184,
     postWithRetry: 173,
     renderGaps: 172,
-    fbLoadAfterWipeCheck: 169,
+    fbLoadAfterWipeCheck: 167,
     flightEditor: 164,
     showCandidates: 154,
     showEnhance: 154,
     renderShop: 151,
     renderFlights: 149,
     renderBuddies: 144,
-    flightBuilder: 141,
     shelfBuildSheet: 141,
     awayLookingCard: 140,
     fbPush: 137,
+    flightBuilder: 137,
     renderOffer: 136,
     roomNotes: 136,
     shelfFit: 135,
     renderBuddiesTab: 130,
-    showImportCheck: 129,
     showFlight: 128,
     buddiesGrid: 121,
+    showImportCheck: 119,
     renderShelfFilters: 118,
     vennSvg: 110,
-    renderRecap: 109,
     showBulkStatus: 109,
-    exploreAxis: 108,
+    exploreAxis: 107,
     rankOffer: 107,
     tastingPapers: 107,
     renderFromUrl: 106,
+    renderRecap: 106,
     importAudit: 101,
     receiptsDialog: 101
   };

@@ -1681,9 +1681,41 @@ And the contribution path threw away the contributor's own tasting notes
 and region on the way in, so the note came back as a gap and was bought
 again from the lookup.
 
-**Still open from this.** The sorting acts only when pressed, by BZ's
-choice; switching it on is the next release, after he has seen a queue go
-through it. Nothing else here is outstanding.
+**2026-09-16: switched on, and the consolidation.** BZ: "More different
+things doing the same thing. Rules were not followed very well." Then his
+decisions: hold the release until the duplicates are gone; a described whisky
+has a nose AND a palate; fix the check first; take every duplicate; and the
+sorting acts on its own now.
+
+- The copy check (consistency.js) reduces functions to their shape and fails a
+  decision written in two of them - engine and screens. First run: sixteen
+  engine groups and twenty-two screen groups.
+- One door each for: two names being one bottle (`sameName`, was 21 copies),
+  two rows being one bottle (`sameBottle`: house, category, age, proof, cask),
+  what a row contradicts (`rowFaults`, shared with the audit), already in the
+  library (`alreadyNamed`), what needs notes (`slotOpen`, which `needsEnhancing`
+  and `enhanceDiff` now ask), building a note from columns and adding to a
+  person's note (`noteFromColumns`, `noteMerge`), the lookup queues
+  (`lookupQueue`, and the two note queues no longer overlap), spending the
+  day's lookups and saying the limit (`spendLookups`, `LOOKUP_LIMIT_SAY`, was
+  seven places and four wordings), the missing-service sentence
+  (`NO_SERVICE_SAY`, seven wordings), offering a bottle (`offerToLibrary`),
+  applying a scan fix (`applyAuditFix`), and changing library fields
+  (`libraryFieldWrite`).
+- Faults the consolidation exposed: `fbPublishToLibrary` wrote to the admin-only
+  library for everybody, so a label read by anybody but BZ was silently
+  refused; a scan fix made from the shelf check never reached other devices;
+  the shopping gaps counted the library as the shelf; a thin offer was
+  re-looked-up every run until the budget ran out; under nose-and-palate the
+  shelf fill would have paid for a palate and thrown it away.
+- The sorting acts on its own: complete offers go in stamped `autoIn`, listed
+  a fortnight with a take-back; the run reads the library fresh or judges
+  nothing.
+
+**Still open.** The shelf fill and the library fill remain two screens with
+two progress vocabularies - they write different stores, and the rules they
+share are now one. A rule written *differently* twice cannot be found by a
+token check; those are found by reading.
 
 ## A pattern worth keeping
 

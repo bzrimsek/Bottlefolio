@@ -75,9 +75,9 @@ with the clock pinned to UTC (test §351 expects it):
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # ~4,800 assertions
+node killer-bs-test.js    # ~5,000 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # 72 wiring checks
+node consistency.js       # 76 wiring checks, incl. rules copied twice
 node screens.js           # 21 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed
@@ -202,6 +202,15 @@ re-checked against the file that day rather than copied forward.
   identifies the project and authorises nothing; every protection rests on
   `firebase-rules.json`, which is why the rules review matters and the key
   does not.
+- **A described whisky has a nose AND a palate.** BZ decided it on
+  2026-09-16; `L.slotOpen(p, 'notes')` holds the whole rule and every notes
+  question asks it. A person's note short of a part is added to, never
+  replaced (`L.noteMerge`).
+- **The library intake acts on its own.** Offers are sorted, looked up
+  within a daily budget (Settings, default 100) and complete ones added
+  without a press, stamped `autoIn` and listed for a fortnight with a take
+  back. It reads the library fresh every run and judges nothing if the read
+  is empty, because against an empty library every offer looks new.
 - **A signed-in account's own node is deliberately unbounded.**
   `bz-apps/whisky/$uid` bounds who writes and not what shape, because a
   `.validate` on a node whose shape changes with every feature would break
@@ -252,6 +261,19 @@ app can see establishes that a whisky does not exist) or `L.SAYS_NOT_HERE`
 (an answer does not explain itself by naming the library), and on a house
 on the shelf coming back as one he does not own. The screens register what
 they claim in `ANSWER_SAID`; in the app that only writes to the log.
+
+**A check that finds calls cannot find copies.** The two-doors check
+fires when one function calls another and returns its answer, so a rule
+typed out a second time was invisible to it - four were added in one day
+with every check green, twenty-one engine functions spelled out "these two
+names are one bottle" for themselves, and the lookup limit was checked in
+seven places with four wordings. `consistency.js` now reduces every function
+to its shape and fails any decision that appears in two functions, in the
+engine AND the screens (2026-09-16). What it still cannot see is a rule
+written *differently* twice - `enhanceDiff` kept its own notes rule that way
+and it was found by reading. When two things answer one question, one of
+them asks the other; there is always a door to route through (`sameName`,
+`sameBottle`, `rowFaults`, `slotOpen`, `spendLookups`, `offerToLibrary`).
 
 **Read what a function returns before using it.** Twice in one day a return
 shape was assumed rather than opened — `postWithRetry` answers a fetch

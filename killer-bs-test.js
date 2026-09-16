@@ -993,7 +993,13 @@ eq('two agreeing pours are not evidence',
   L.gapsFromFlights([twoPour], oneCat, oneBot)[0].sub, null);
 
 sec('gaps from thinness');
-const thin = L.gapsFromThinness(gCat);
+/* WITH A SHELF. These were called with no bottles at all, and most still
+   passed - "you have none" satisfies "you have fewer than three" - so they
+   could not see that the function was counting the catalog, library and
+   all, instead of the shelf. */
+const gBots = Object.keys(gCat).map((k, i) => ({ id: 'g' + i, k: k,
+  status: 'open' }));
+const thin = L.gapsFromThinness(gCat, gBots);
 eq('a region with nothing is reported',
   thin.some(g => g.kind === 'region' && /Speyside/.test(g.name)), true);
 eq('a region with two islay bottles is still thin',
@@ -1002,6 +1008,296 @@ eq('a lone category is reported',
   thin.some(g => g.kind === 'category' && /Bourbon/.test(g.name)), true);
 // Two scotches is not enough to compare, so scotch is thin too.
 eq('every finding carries a reason', thin.every(g => !!g.why), true);
+
+sec('the shelf, not the library, is what is thin');
+{
+  /* THREE ISLAYS IN THE CATALOG, ONE ON THE SHELF. Before 2026-09-16 the
+     gaps counted all three, because the catalog carries the shared library,
+     and told somebody holding one Islay that Islay was covered. */
+  const cat3 = {
+    i1: { k: 'i1', name: 'Islay One', sub: 'scotch', region: 'Islay', proof: 92 },
+    i2: { k: 'i2', name: 'Islay Two', sub: 'scotch', region: 'Islay', proof: 92 },
+    i3: { k: 'i3', name: 'Islay Three', sub: 'scotch', region: 'Islay', proof: 92 }
+  };
+  const one = [{ id: '1', k: 'i1', status: 'open' }];
+  eq('one Islay on the shelf is thin, whatever the library holds',
+    L.gapsFromThinness(cat3, one).some(g => /Islay/.test(g.name)), true);
+  eq('and three on the shelf is not',
+    L.gapsFromThinness(cat3, Object.keys(cat3).map((k, i) =>
+      ({ id: String(i), k: k, status: 'open' }))).some(g => /Islay/.test(g.name)),
+    false);
+  eq('nothing on the shelf counts nothing',
+    L.thinRegions([]).filter(x => x.region === 'Islay')[0].have, 0);
+  eq('the rule is three', L.REGION_FLIGHT, 3);
+  eq('a region is counted from Scotch only',
+    L.thinRegions([{ sub: 'bourbon', region: 'Islay' }])
+      .filter(x => x.region === 'Islay')[0].have, 0);
+  /* AND THE PROOF LADDER, same fault. Twelve bottles over 120 in the
+     library is not a ladder on the shelf. */
+  const hot = {};
+  for (let i = 0; i < 12; i++) hot['h' + i] = { k: 'h' + i, proof: 125 };
+  eq('high proof in the library is not high proof on the shelf',
+    L.gapsFromProof(hot, [{ id: '1', k: 'h0', status: 'open' }])
+      .some(g => /above 120/.test(g.name)), true);
+  eq('and twelve on the shelf is',
+    L.gapsFromProof(hot, Object.keys(hot).map((k, i) =>
+      ({ id: String(i), k: k, status: 'open' })))
+      .some(g => /above 120/.test(g.name)), false);
+}
+
+sec('one door for a name, one for a pour on an axis');
+{
+  /* Twenty-one engine functions spelled out "these two names are one
+     bottle" for themselves, and two spelled out "this bottle can stand on
+     this axis". Each is one function now (the copy check, 2026-09-16). */
+  eq('two spellings of one bottle are one name',
+    L.sameName('Penelope Wheated', 'Penelope Wheated Straight Bourbon Whiskey'),
+    true);
+  eq('and two bottles are two names',
+    L.sameName('Penelope Wheated', 'Penelope Four Grain'), false);
+  eq('a name already normalized is still the same name',
+    L.sameName(L.shopNorm('Ardbeg 10 Years Old'), 'Ardbeg 10 Years Old'), true);
+  eq('an empty name is nobody\u2019s name', L.sameName('', ''), false);
+  eq('nor does it match a real one', L.sameName('', 'Ardbeg'), false);
+  eq('and nothing at all is nothing', L.sameName(null, undefined), false);
+
+  const open = { a: true, b: true };
+  const rye = { k: 'a', sub: 'rye', proof: 100 };
+  eq('an open bottle on the axis can stand on it',
+    L.axisPourable('proof', rye, open, null), true);
+  eq('a drained one cannot',
+    L.axisPourable('proof', Object.assign({}, rye, { drained: true }), open,
+      null), false);
+  eq('nor a sealed one', L.axisPourable('proof', rye, {}, null), false);
+  eq('nor one of another category when a category is held',
+    L.axisPourable('proof', rye, open, 'bourbon'), false);
+  eq('and nothing is not a pour', L.axisPourable('proof', null, open, null),
+    false);
+
+  /* AND ONE DOOR FOR "ALREADY IN THE LIBRARY". The offering path and the
+     queue each wrote it, one with .some and one with .find. */
+  const lib = { penelope_wheated: { k: 'penelope_wheated',
+    name: 'Penelope Wheated Straight Bourbon Whiskey' } };
+  eq('a name the library holds finds its entry',
+    (L.alreadyNamed(lib, 'Penelope Wheated') || {}).k, 'penelope_wheated');
+  eq('a name it does not hold finds nothing',
+    L.alreadyNamed(lib, 'Penelope Four Grain'), null);
+  eq('and no library holds nothing', L.alreadyNamed(null, 'Penelope'), null);
+  eq('the offering path and the queue now agree about it',
+    L.worthContributing({ name: 'Penelope Wheated', proof: 94,
+      dist: 'Penelope', sub: 'bourbon' }, lib) === false
+    && L.mergeContribution(lib, { name: 'Penelope Wheated' }).ok === false,
+    true);
+}
+
+sec('what counts as a described whisky');
+{
+  /* BZ, 2026-09-16, choosing between two answers this app had been giving:
+     a nose AND a palate. The notes slot asked only for a nose while
+     needsEnhancing asked for both; they agreed about all 324 shipped
+     whiskies that day, and now there is one rule. */
+  eq('a nose and a palate is a note',
+    L.slotOpen({ tn: { nose: 'peat', palate: 'smoke' } }, 'notes'), false);
+  eq('a nose alone is not',
+    L.slotOpen({ tn: { nose: 'peat' } }, 'notes'), true);
+  eq('and the shelf asks the same rule as the library',
+    L.needsEnhancing({ name: 'A', sub: 'scotch', tn: { nose: 'peat' } }),
+    L.slotOpen({ tn: { nose: 'peat' } }, 'notes'));
+  eq('a vodka still needs nothing',
+    L.needsEnhancing({ name: 'A', sub: 'vodka', tn: {} }), false);
+  eq('a flight-card prompt is still no note',
+    L.slotOpen({ tn: { nose: 'x', palate: 'y' }, tnFrom: 'A FLIGHT' },
+      'notes'), true);
+  eq('unless a real source has since written it',
+    L.slotOpen({ tn: { nose: 'x', palate: 'y' }, tnFrom: 'A FLIGHT',
+      tnSrc: 'model' }, 'notes'), false);
+
+  /* ONE WAY TO BUILD A NOTE FROM LOOSE COLUMNS. The gap check built
+     { nose: nose || palate || finish } - one field, whichever came first -
+     and so refused every full answer once a palate was required. */
+  eq('every column is carried',
+    L.noteFromColumns({ nose: 'a', palate: 'b', finish: 'c', colour: 'd' }),
+    { colour: 'd', nose: 'a', palate: 'b', finish: 'c' });
+  eq('and nothing is nothing', L.noteFromColumns({ name: 'X' }), null);
+  eq('so a full answer closes the gap',
+    L.gapsClosed({ nose: 'a', palate: 'b' }, ['notes']), ['notes']);
+  eq('and a nose on its own does not',
+    L.gapsClosed({ nose: 'a' }, ['notes']), []);
+
+  /* A NOTE SOMEBODY WROTE IS ADDED TO, NEVER REPLACED. Under the new rule a
+     real note with only a nose is an open slot, and the fill replacing the
+     whole object would have thrown away what a person wrote. */
+  const mine = { name: 'Y', proof: 100, dist: 'H', sub: 'scotch',
+    tn: { nose: 'what I wrote' }, mash: '100% malted barley' };
+  const u = L.libraryFillWrite([{ k: 'y', name: 'Y', missing: ['notes'],
+    got: { name: 'Y', nose: 'a model nose', palate: 'a model palate' } }],
+    { y: 1 }, { y: mine }, 1).updates;
+  eq('the palate that was missing goes in', (u['y/tn'] || {}).palate,
+    'a model palate');
+  eq('and the nose somebody wrote stays theirs', (u['y/tn'] || {}).nose,
+    'what I wrote');
+
+  /* THE SHELF'S FILL ASKS THE SAME RULE. enhanceDiff carried its own - a
+     note is present when it has a nose - so under nose-and-palate the queue
+     would ask about a bottle for its palate and this would refuse the
+     palate: a lookup paid for and thrown away, every run. */
+  const shelfBottle = { k: 's', name: 'S', sub: 'bourbon',
+    tn: { nose: 'what I wrote' } };
+  eq('a bottle with only a nose is queued', L.needsEnhancing(shelfBottle),
+    true);
+  const take = L.enhanceDiff(shelfBottle,
+    { nose: 'a model nose', palate: 'a model palate' }) || {};
+  eq('and the lookup it paid for is used', (take.tn || {}).palate,
+    'a model palate');
+  eq('without replacing the nose somebody wrote', (take.tn || {}).nose,
+    'what I wrote');
+  eq('a spreadsheet spelling of a column is read too',
+    (L.noteFromColumns({ tn_palate: 'honey' }) || {}).palate, 'honey');
+  eq('and a merge that adds nothing says so',
+    L.noteMerge({ nose: 'a', palate: 'b' }, { nose: 'c' }), null);
+  eq('a merge keeps what was there and adds what was not',
+    L.noteMerge({ nose: 'a' }, { nose: 'c', palate: 'd' }),
+    { nose: 'a', palate: 'd' });
+}
+
+sec('the sorting acts on its own');
+{
+  /* BZ, 2026-09-16, asked when the offer sorting should act without a
+     press: now. Everything it adds is stamped and can be taken back for a
+     fortnight. */
+  const LIBR = {
+    lag: { k: 'lag', name: 'Lagavulin 16 Year Old', dist: 'Lagavulin',
+      proof: 86, sub: 'scotch', tn: { nose: 'smoke', palate: 'peat' },
+      mash: '100 barley' }
+  };
+  const opts = { library: LIBR, removed: {}, graves: {} };
+
+  /* THE LIBRARY AS READ. An old library is a list; a new one is a map. */
+  eq('a keyed library stays keyed',
+    Object.keys(L.libraryFromValue({ a: { name: 'A' } })), ['a']);
+  eq('a list becomes a map by key',
+    Object.keys(L.libraryFromValue([{ name: 'Ardbeg Ten' }, null])),
+    ['ardbeg_ten']);
+  eq('and nothing is an empty library', L.libraryFromValue(null), {});
+
+  /* WHICH OFFERS NEED WORK. */
+  const rows = [
+    { uid: 'u', slug: 'a', entry: { name: 'Lagavulin 16 Year Old' } },
+    { uid: 'u', slug: 'b', entry: { name: 'Ardbeg Ten', dist: 'Lagavulin',
+      proof: 92, sub: 'scotch', mash: '100 barley',
+      tn: { nose: 'a', palate: 'b', finish: 'c' } } },
+    { uid: 'u', slug: 'c', entry: { name: 'Something New', dist: 'Lagavulin',
+      proof: 92, sub: 'scotch', mash: '100 barley' } }
+  ];
+  const work = L.intakeWork(rows, opts);
+  eq('one already in adds nothing', work.nothing.length, 1);
+  eq('and the other two are work', work.todo.length, 2);
+  eq('a complete one only wants its verdict written',
+    work.todo.filter(x => x.write).length, 1);
+  eq('a vetted offer that is finished is no work at all',
+    L.intakeWork([{ uid: 'u', slug: 'd', entry: { name: 'X',
+      vetted: { verdict: 'in', product: { name: 'X' } } } }], opts).todo.length,
+    0);
+
+  /* AFTER THE LOOKUP. */
+  const newHouse = { verdict: 'fill', rule: 'a house this app has not seen',
+    needs: ['distillery'], product: { name: 'Foo Single Malt',
+      dist: 'Nowhere Distillery', proof: 92, sub: 'scotch',
+      mash: '100 barley', tn: { nose: 'a', palate: 'b' } } };
+  eq('a new house the search confirms goes on',
+    L.intakeFilled(newHouse, { dist: 'Nowhere Distillery' }, opts).verdict,
+    'fill');
+  eq('one it does not confirm becomes a question',
+    L.intakeFilled(newHouse, { dist: 'Somebody Else' }, opts).verdict, 'ask');
+  eq('and so does one the search said nothing about',
+    L.intakeFilled(newHouse, null, opts).verdict, 'ask');
+  const thin = { verdict: 'fill', rule: 'short of notes', needs: ['notes'],
+    product: { name: 'Thin', dist: 'Lagavulin', proof: 92, sub: 'scotch',
+      mash: '100 barley' } };
+  eq('a thin row takes the notes the search found',
+    ((L.intakeFilled(thin, { nose: 'peat', palate: 'smoke' }, opts).product
+      || {}).tn || {}).palate, 'smoke');
+  eq('and is marked tried either way',
+    L.intakeFilled(thin, null, opts).tried, true);
+  eq('what is not a fill is left alone',
+    L.intakeFilled({ verdict: 'in' }, {}, opts).verdict, 'in');
+
+  /* READY TO GO IN WITHOUT ANYBODY. */
+  eq('complete goes in', L.intakeReadyToAdd({ verdict: 'in' }), true);
+  eq('thin goes in once the search has tried',
+    L.intakeReadyToAdd({ verdict: 'fill', tried: true }), true);
+  eq('but not before', L.intakeReadyToAdd({ verdict: 'fill' }), false);
+  eq('and a question never does', L.intakeReadyToAdd({ verdict: 'ask' }),
+    false);
+
+  /* WHAT IS WRITTEN, and the stamp that lets it be taken back. */
+  const w = L.intakeToWrite([
+    { product: { name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92, sub: 'scotch' } },
+    { product: { name: 'Gone Bottle' } }
+  ], { gone_bottle: { at: 1 } }, {}, {}, 5000, true);
+  eq('an offer becomes a row under its key', !!w.pending.ardbeg_ten, true);
+  eq('stamped as going in on its own', w.pending.ardbeg_ten.autoIn, 5000);
+  eq('a removed one is refused', w.refused[0].name, 'Gone Bottle');
+  eq('and a thin one is listed as thin', w.thin.length >= 1, true);
+  eq('the Add press does not stamp it',
+    L.intakeToWrite([{ product: { name: 'Ardbeg Ten' } }], {}, {}, {}, 5000,
+      false).pending.ardbeg_ten.autoIn, undefined);
+
+  /* WHAT CAN STILL BE TAKEN BACK. */
+  const now = 100 * 864e5;
+  const recent = L.autoAddedRecently({
+    a: { name: 'A', autoIn: now - 864e5 },
+    b: { name: 'B', autoIn: now - 20 * 864e5 },
+    c: { name: 'C' }
+  }, now);
+  eq('what went in on its own this fortnight is listed',
+    recent.map(p => p.name), ['A']);
+  eq('and it carries its key', recent[0]._key, 'a');
+}
+
+sec('one queue builder, and the two note queues do not overlap');
+{
+  /* The shelf tools offer two buttons - fill in notes for bottles with
+     none, replace notes written for a flight card - and the screen says
+     they are different bottles. They were not: a prompt needs enhancing
+     too, so it sat under both (2026-09-16). */
+  const cat = {
+    none: { k: 'none', name: 'No Note', sub: 'bourbon' },
+    card: { k: 'card', name: 'Card Note', sub: 'bourbon',
+            tn: { nose: 'x', palate: 'y' }, tnFrom: 'A FLIGHT' },
+    real: { k: 'real', name: 'Real Note', sub: 'bourbon',
+            tn: { nose: 'x', palate: 'y' } },
+    stale: { k: 'stale', name: 'Stale Marker', sub: 'bourbon',
+             tn: { nose: 'x', palate: 'y' }, tnFrom: 'OLD', tnSrc: 'model' }
+  };
+  const bots = Object.keys(cat).map((k, i) =>
+    ({ id: String(i), k: k, status: 'open' }));
+  const notes = L.enhanceQueue(cat, bots, {}).map(p => p.k);
+  const cards = L.flightNoteQueue(cat, bots, {}).map(p => p.k);
+  eq('a bottle with no note is in the notes queue', notes, ['none']);
+  eq('a flight-card note is in the card queue', cards, ['card']);
+  eq('and no bottle is in both',
+    notes.filter(k => cards.indexOf(k) >= 0).length, 0);
+  eq('a real note is in neither',
+    notes.concat(cards).indexOf('real'), -1);
+  eq('nor a real note carrying a stale marker',
+    notes.concat(cards).indexOf('stale'), -1);
+
+  eq('a marker makes a prompt', L.isFlightPrompt(cat.card), true);
+  eq('a recorded source outranks it', L.isFlightPrompt(cat.stale), false);
+  eq('and no marker is no prompt', L.isFlightPrompt(cat.real), false);
+
+  /* THE BUILDER ITSELF. */
+  const all = L.lookupQueue(cat, bots, {}, () => true);
+  eq('it takes what it is told to want', all.length, 4);
+  eq('and leaves what is not owned',
+    L.lookupQueue(cat, [bots[0]], {}, () => true).length, 1);
+  eq('unless asked for all of them',
+    L.lookupQueue(cat, [bots[0]], { all: true }, () => true).length, 4);
+  eq('a bottle rested by the ledger waits',
+    L.lookupQueue(cat, bots, { ledger: { none: { no: 1, at: '2026-09-16' } },
+      today: '2026-09-16' }, p => p.k === 'none').length, 0);
+}
 
 sec('gaps from matched pairs');
 // A house with three bottles and no two at one strength cannot hold the
@@ -1650,9 +1946,13 @@ eq('a name on its own fills nothing',
 /* And notes count, because `notes` is one of the four gaps the fill is
    hunting. They arrive flat from the service and as tn from a shelf. */
 eq('loose note columns count as notes',
-  L.lookupFilled({ name: 'X', nose: 'peat' }), ['notes']);
+  L.lookupFilled({ name: 'X', nose: 'peat', palate: 'smoke' }), ['notes']);
+/* A NOSE ALONE IS NOT A NOTE. BZ, 2026-09-16: a described whisky has a
+   nose and a palate. */
+eq('but a nose on its own does not',
+  L.lookupFilled({ name: 'X', nose: 'peat' }), []);
 eq('and a tn object does too',
-  L.lookupFilled({ name: 'X', tn: { nose: 'peat' } }), ['notes']);
+  L.lookupFilled({ name: 'X', tn: { nose: 'peat', palate: 'smoke' } }), ['notes']);
 eq('nothing filled is empty', L.lookupFilled(null), []);
 
 eq('a query is appended', L.lookupUrl('https://x/exec', 'A B'),
@@ -1717,7 +2017,9 @@ eq('no wishlist, no findings', L.gapsFromWish([], []), []);
 // The ends of the proof ladder.
 const lowShelf = {};
 [85, 86, 87].forEach((p, i) => { lowShelf['L' + i] = { k: 'L' + i, proof: p }; });
-const gp = L.gapsFromProof(lowShelf);
+const lowBots = Object.keys(lowShelf).map((k, i) => ({ id: 'l' + i, k: k,
+  status: 'open' }));
+const gp = L.gapsFromProof(lowShelf, lowBots);
 eq('a shelf with no high proof is told so',
   gp.some(g => /above 120/.test(g.name)), true);
 eq('and every finding explains itself', gp.every(g => !!g.why), true);
@@ -2159,8 +2461,11 @@ eq('but a distillery makes it findable',
   L.worthContributing({ name: 'Mystery', proof: 90, dist: 'Somewhere' }, lib), true);
 eq('so does a category',
   L.worthContributing({ name: 'Mystery', proof: 90, sub: 'rye' }, lib), true);
-eq('no proof, no entry',
-  L.worthContributing({ name: 'Mystery', dist: 'X' }, lib), false);
+/* A MISSING PROOF IS FILLED LATER, NOT A REASON TO REFUSE. BZ, 2026-09-15
+   and 2026-09-16. This read "no proof, no entry" until the offering bar was
+   brought into line with that decision. */
+eq('no proof is still an entry, to be filled in',
+  L.worthContributing({ name: 'Mystery', dist: 'X' }, lib), true);
 
 sec('what the library holds');
 const entry = L.libraryEntry({ k: 'x', name: 'A Whisky', proof: 100,
@@ -2249,7 +2554,7 @@ const lib = {};
  ['Buffalo Trace', 'Buffalo Trace', 'bourbon', 'Kentucky', 90]]
   .forEach(([n, d, s, r, pf]) => {
     lib[L.libKey(n)] = { name: n, dist: d, sub: s, region: r, proof: pf,
-                         tn: { nose: 'n' } };
+                         tn: { nose: 'n', palate: 'p' } };
   });
 
 eq('a distillery finds its bottles', L.searchLibrary(lib, 'ardbeg').length, 2);
@@ -2270,7 +2575,7 @@ eq('a complete entry has no gaps',
   L.libraryGaps(Object.assign({}, lib[L.libKey('Lagavulin 16')],
     { mash: '100% malted barley' })), []);
 eq('a missing proof shows',
-  L.libraryGaps({ name: 'X', dist: 'D', sub: 'rye', tn: { nose: 'n' },
+  L.libraryGaps({ name: 'X', dist: 'D', sub: 'rye', tn: { nose: 'n', palate: 'p' },
                   mash: '75% corn, 21% rye, 4% malted barley' }), ['proof']);
 eq('several show', L.libraryGaps({ name: 'X' }).length, 5);
 eq('notes count as a gap',
@@ -2714,7 +3019,7 @@ sec('a note made up for a flight is not a note');
 // them: the fill-in run reported 15 missing when it was 200.
 const card = { k: 'a', name: 'A', tn: { nose: 'Deeper fruit, oak' },
                tnFrom: 'THE ABERLOUR HOUSE' };
-const real = { k: 'b', name: 'B', tn: { nose: 'Honey and apple' },
+const real = { k: 'b', name: 'B', tn: { nose: 'Honey and apple', palate: 'Toffee' },
                tnSrc: 'review' };
 const bare = { k: 'c', name: 'C' };
 
@@ -4908,7 +5213,7 @@ sec('§192 a cleared marker has to survive the round trip');
       tn: { nose: 'x', palate: 'y', finish: 'z' }, tnSrc: 'model' }), false);
   eq('a review-sourced note counts the same',
     L.needsEnhancing({ k: 'a', name: 'A', tnFrom: 'X',
-      tn: { nose: 'x' }, tnSrc: 'review' }), false);
+      tn: { nose: 'x', palate: 'y' }, tnSrc: 'review' }), false);
   eq('but a flight prompt with no source still is',
     L.needsEnhancing(prompt), true);
   eq('and a bottle with no note at all still is',
@@ -7975,7 +8280,7 @@ sec('§235 what is worth looking up twice');
     { k: 'p1', name: 'Thin One', proof: null, dist: 'H', sub: 'bourbon' },
     { k: 'p2', name: 'Thin Two', proof: 90, dist: null, sub: 'bourbon' },
     { k: 'p3', name: 'Complete', proof: 90, dist: 'H', sub: 'bourbon',
-      tn: { nose: 'something' }, mash: '75% corn, 21% rye, 4% malted barley' },
+      tn: { nose: 'something', palate: 'more' }, mash: '75% corn, 21% rye, 4% malted barley' },
     { k: 'p4', name: 'Known Miss', proof: null, dist: 'H', sub: 'bourbon' }
   ];
   const ledger = { p4: { ok: 0, no: 2, at: today } };
@@ -8838,9 +9143,10 @@ sec('§247 the bar to publish is higher than the bar to ask');
   eq('and a short real one',
     L.worthContributing(full('Blue Spot'), {}), true);
 
-  /* The existing bar still applies: no proof, no publish. */
-  eq('no proof is still no publish',
-    L.worthContributing({ name: 'Ardbeg Ten', dist: 'Ardbeg' }, {}), false);
+  /* A missing proof no longer stops a publish (BZ, 2026-09-15: let it in
+     and enrich it later); the name rules above still do. */
+  eq('no proof publishes, and is filled in later',
+    L.worthContributing({ name: 'Ardbeg Ten', dist: 'Ardbeg' }, {}), true);
   eq('and a bottle already in the library is not published twice',
     L.worthContributing(full('Ardbeg Corryvreckan'),
       { x: { name: 'Ardbeg Corryvreckan' } }), false);
@@ -10038,7 +10344,7 @@ sec('§265 what is left to do, not what is imperfect');
 {
   const today = '2026-09-04';
   const full = { k: 'a', name: 'Complete', proof: 100, dist: 'H',
-                 sub: 'bourbon', tn: { nose: 'x' }, mash: '75% corn, 21% rye, 4% malted barley' };
+                 sub: 'bourbon', tn: { nose: 'x', palate: 'y' }, mash: '75% corn, 21% rye, 4% malted barley' };
   const thin1 = { k: 'b', name: 'Thin One', proof: 100 };
   const thin2 = { k: 'c', name: 'Thin Two', proof: 100 };
   const products = [full, thin1, thin2];
@@ -10104,9 +10410,9 @@ sec('§266 found means a gap closed');
   /* Notes arrive flat from the service and as tn from a shelf, and both
      are a real answer to the gap libraryGaps calls "notes". */
   eq('loose note columns close the notes gap',
-    L.gapsClosed({ nose: 'peat' }, gaps), ['notes']);
+    L.gapsClosed({ nose: 'peat', palate: 'smoke' }, gaps), ['notes']);
   eq('and a tn object does too',
-    L.gapsClosed({ tn: { nose: 'peat' } }, gaps), ['notes']);
+    L.gapsClosed({ tn: { nose: 'peat', palate: 'smoke' } }, gaps), ['notes']);
 
   /* The case that produced the wrong number: an answer that brought
      something real and nothing this bottle was short of. */
@@ -10119,7 +10425,7 @@ sec('§266 found means a gap closed');
   eq('a field it was not short of does not count',
     L.gapsClosed({ proof: 100 }, ['notes']).length, 0);
   eq('and one it was short of does',
-    L.gapsClosed({ proof: 100, nose: 'peat' }, ['notes']), ['notes']);
+    L.gapsClosed({ proof: 100, nose: 'peat', palate: 'smoke' }, ['notes']), ['notes']);
 
   eq('nothing back closes nothing', L.gapsClosed(null, gaps).length, 0);
   eq('and a bottle short of nothing cannot gain',
@@ -10146,7 +10452,7 @@ sec('§267 an occupied slot that is still a gap');
     L.libraryGaps(prompt), ['notes']);
 
   const found = [{ k: 'x', name: 'X', missing: ['notes'],
-    got: { name: 'X', tn: { nose: 'real' }, tnSrc: 'model' } }];
+    got: { name: 'X', tn: { nose: 'real', palate: 'also real' }, tnSrc: 'model' } }];
   const u = L.libraryFillWrite(found, { x: 1 }, { x: prompt }, 1).updates;
   eq('the note is written over the prompt', !!u['x/tn'], true);
   /* And the marker goes with it, or the entry reads as missing notes for
@@ -10198,7 +10504,7 @@ sec('§268 one rule, three steps');
   eq('a prompt leaves the notes slot open',
     L.slotOpen(prompt, 'notes'), true);
   eq('a real note fills it',
-    L.slotOpen({ tn: { nose: 'somebody wrote this' } }, 'notes'), false);
+    L.slotOpen({ tn: { nose: 'somebody wrote this', palate: 'and this' } }, 'notes'), false);
   eq('a missing proof is open', L.slotOpen({}, 'proof'), true);
   eq('and a proof that is there is not',
     L.slotOpen({ proof: 90 }, 'proof'), false);
@@ -10211,7 +10517,7 @@ sec('§268 one rule, three steps');
   eq('a name closes nothing',
     L.gapsClosed({ name: 'X' }, ['notes']).length, 0);
   eq('notes close notes',
-    L.gapsClosed({ nose: 'peat' }, ['notes']), ['notes']);
+    L.gapsClosed({ nose: 'peat', palate: 'smoke' }, ['notes']), ['notes']);
   eq('and a price closes nothing it was not short of',
     L.gapsClosed({ msrp: 90 }, ['notes']).length, 0);
 
@@ -10219,7 +10525,7 @@ sec('§268 one rule, three steps');
      question the count asked. */
   const u = L.libraryFillWrite(
     [{ k: 'x', name: 'X', missing: ['notes'],
-       got: { name: 'X', nose: 'orchard fruit' } }],
+       got: { name: 'X', nose: 'orchard fruit', palate: 'honey' } }],
     { x: 1 }, { x: prompt }, 1).updates;
   eq('the writer fills the slot the count called open', !!u['x/tn'], true);
 
@@ -10265,7 +10571,7 @@ sec('§269 the library in three lists');
 {
   const today = '2026-09-04';
   const done = { k: 'a', name: 'Complete', proof: 100, dist: 'H',
-                 sub: 'bourbon', tn: { nose: 'x' }, mash: '75% corn, 21% rye, 4% malted barley' };
+                 sub: 'bourbon', tn: { nose: 'x', palate: 'y' }, mash: '75% corn, 21% rye, 4% malted barley' };
   const fresh = { k: 'b', name: 'Never Asked', proof: 100 };
   const rested = { k: 'c', name: 'Asked Today', proof: 100 };
   const products = [done, fresh, rested];
@@ -10349,7 +10655,7 @@ sec('§270 everything asked about leaves the list');
   const ask = lists().todo.slice(0, 5);
   const found = [];
   ask.forEach((x, i) => {
-    const got = i < 3 ? { name: x.name, nose: 'peat' } : { name: x.name };
+    const got = i < 3 ? { name: x.name, nose: 'peat', palate: 'smoke' } : { name: x.name };
     if (L.gapsClosed(got, x.missing).length) {
       found.push({ k: x.k, name: x.name, got: got, missing: x.missing });
       led = L.recordLookup(led, x.k, 'found', today);
@@ -10401,7 +10707,7 @@ sec('§271 rows carry the key the map holds them under');
      rather than the fifth gap added in v1.8.47. */
   const byKey = {
     'ardbeg_ten': { name: 'Ardbeg Ten', proof: 92, dist: 'Ardbeg',
-                    sub: 'scotch', tn: { nose: 'peat' },
+                    sub: 'scotch', tn: { nose: 'peat', palate: 'smoke' },
                     mash: '100% malted barley' },
     'blue_spot': { name: 'Blue Spot', proof: 117, dist: 'Spot',
                    sub: 'irish', mash: 'Malted and unmalted barley' },
@@ -11381,7 +11687,7 @@ sec('§281 a bottle in context');
     L.slotOpen({ tn: { nose: 'POURED FIRST, and the loudest here' } },
       'notes'), true);
   eq('but a plain description closes it',
-    L.slotOpen({ tn: { nose: 'Corn sweetness, vanilla, oak' } },
+    L.slotOpen({ tn: { nose: 'Corn sweetness, vanilla, oak', palate: 'Caramel' } },
       'notes'), false);
 }
 
@@ -18211,9 +18517,21 @@ sec('\u00a7420 a lookup fails the same way everywhere');
     /full name|printed|distillery with it/.test(
       say('no JSON in the reply. stop_reason=end_turn')), false);
   eq('offline says offline', /offline/i.test(say('you are offline')), true);
-  eq('the allowance says the allowance',
-    /allowance/.test(say('that is 600 lookups today, which is the daily limit')),
-    true);
+  /* ONE SENTENCE FOR THE LIMIT, wherever it is met. It was said five ways;
+     this used to answer with a sixth. */
+  eq('the limit says the one limit sentence',
+    say('that is 600 lookups today, which is the daily limit'),
+    L.LOOKUP_LIMIT_SAY);
+  eq('including when the limit sentence is itself the error',
+    say(L.LOOKUP_LIMIT_SAY), L.LOOKUP_LIMIT_SAY);
+  eq('and it names the limit, which is how it is recognised',
+    /limit/.test(L.LOOKUP_LIMIT_SAY), true);
+  eq('it says when it comes back', /tomorrow/.test(L.LOOKUP_LIMIT_SAY), true);
+  /* AND ONE FOR A MISSING SERVICE. Seven wordings before 2026-09-16. */
+  eq('no service says the one no-service sentence',
+    say(L.NO_SERVICE_SAY), L.NO_SERVICE_SAY);
+  eq('and it says where to set it up',
+    L.NO_SERVICE_SAY.indexOf(L.LOOKUP_SETUP) >= 0, true);
   eq('anything else still says something useful',
     /log/.test(say('some new thing nobody has seen')), true);
 
@@ -19455,6 +19773,18 @@ sec('§437 a missing proof one way, the setup in one place, a wait that counts')
 
 sec('§438 a list replaced whole is taken whole, on every device');
 {
+  /* BOTH SYNC PATHS ASK THE SAME TWO QUESTIONS NOW. Whether a list has a
+     side was a test each wrapped around resetSide for itself, and "taken
+     whole, or empty if the account holds none" was written in each. */
+  eq('a list that cannot be replaced whole has no side',
+    L.resetSide('displayName', { displayName: 1 }, { displayName: 9 }, {}),
+    null);
+  eq('one that can, does',
+    L.resetSide('wish', {}, { wish: 9 }, {}), 'remote');
+  eq('a list the account no longer holds arrives empty',
+    L.wholeValue('bottles', undefined), L.emptyOf('bottles'));
+  eq('and one it holds arrives as it is',
+    L.wholeValue('wish', [{ name: 'X' }]), [{ name: 'X' }]);
   /* BZ, 2026-09-15: Clear my shelf, Reset my changes and Restore apply on
      every device. Before this the next sync merged every cleared bottle
      back from the account, on the very device that cleared it. */
@@ -19591,6 +19921,102 @@ sec('§441 a lookup asks who is asking');
     /may not exist|does not exist/i.test(L.emptyFindSay(0, false)), false);
   eq('it names what happened instead',
     /search, not the world/.test(L.emptyFindSay(0, false)), true);
+}
+
+sec('\u00a7446 are these one bottle? one door, reading everything');
+{
+  /* BZ, 2026-09-15, shown a photograph of a magazine cover claiming he
+     owned two whiskies he does not: "How can type and distillery be wrong
+     and a match happens." Because the matcher read NAMES and nothing else
+     while every row it compared against carried both facts. And then:
+     "Id hope we use as many data elements as possible. Age, proof, ..."
+
+     There were two answers to this one question before today - the intake
+     compared proof, age and cask, the ownership matcher compared house and
+     grain - each right about its own half and blind to the other's. */
+  const OWNED = { k: 'x', name: 'Elijah Craig Barrel Proof A124',
+    dist: 'Heaven Hill', sub: 'bourbon', proof: 124 };
+
+  /* EVERY FACT BOTH SIDES STATE HAS TO AGREE. */
+  eq('a different house is a different bottle',
+    L.sameBottle({ name: 'A', dist: 'New Riff Distilling' },
+      { name: 'B', dist: 'Bradshaw' }), false);
+  eq('the same house spelled another way is not',
+    L.sameBottle({ name: 'A', dist: "Maker's Mark" },
+      { name: 'B', dist: 'Makers Mark Distillery' }), true);
+  eq('a rye is not a bourbon',
+    L.sameBottle({ name: 'A', sub: 'rye' }, { name: 'B', sub: 'bourbon' }),
+    false);
+  eq('a different age is a different bottle',
+    L.sameBottle({ name: 'A', age: 12 }, { name: 'B', age: 16 }), false);
+  eq('a different proof is a different bottle',
+    L.sameBottle({ name: 'A', proof: 96 }, { name: 'B', proof: 124 }), false);
+  eq('a bottling variance is not',
+    L.sameBottle({ name: 'A', proof: 96 }, { name: 'B', proof: 96.4 }), true);
+  eq('a different cask is a different bottle',
+    L.sameBottle({ name: 'A', fin: 'Madeira' }, { name: 'B', fin: 'Tawny Port' }),
+    false);
+  /* AND A FACT ONLY ONE SIDE STATES SETTLES NOTHING. A shelf row knows its
+     cask and a magazine cover does not; refusing on that would deny every
+     honest match. */
+  eq('one side silent on the cask decides nothing',
+    L.sameBottle({ name: 'A', fin: 'Madeira' }, { name: 'B' }), true);
+  eq('one side silent on the proof decides nothing',
+    L.sameBottle({ name: 'A', proof: 96 }, { name: 'B' }), true);
+  eq('two silent sides are one bottle as far as this can tell',
+    L.sameBottle({ name: 'A' }, { name: 'B' }), true);
+  /* SIZE IS DELIBERATELY NOT A FACT HERE: a litre and a 750 are the same
+     whisky in different glass. */
+  eq('a different size is still the same whisky',
+    L.sameBottle({ name: 'A', size: 1750 }, { name: 'B', size: 750 }), true);
+
+  /* THE NAME SPEAKS WHEN THE ROW DOES NOT. A photograph read states a name
+     and little else, so what the name implies is read the same way for
+     both sides. */
+  eq('a name that says rye is a rye',
+    L.matchFacts({ name: 'Elijah Craig Barrel Proof Rye' }, {}).sub, 'rye');
+  eq('and the row it is compared against keeps what it states',
+    L.matchFacts(OWNED, {}).sub, 'bourbon');
+  eq('so the cover and the shelf are not one bottle',
+    L.sameBottle({ name: 'Elijah Craig Barrel Proof Rye' }, OWNED, {}), false);
+  eq('a name that implies nothing accuses nobody',
+    L.sameBottle({ name: 'Something Unreadable' }, OWNED, {}), true);
+
+  /* AND THE WHOLE POINT: the ownership claim BZ saw. */
+  const CAT = { x: OWNED,
+    y: { k: 'y', name: 'Bradshaw Kentucky Straight Rye', dist: 'Bradshaw',
+         sub: 'rye' } };
+  const BOTS = [{ id: '1', k: 'x', status: 'open' },
+                { id: '2', k: 'y', status: 'open' }];
+  eq('the cover does not own the bourbon',
+    L.ownsIt('Elijah Craig Barrel Proof Rye', CAT, BOTS, true), null);
+  eq('nor does a New Riff own a Bradshaw',
+    L.ownsIt('New Riff Balboa Rye Kentucky Straight Rye Whiskey', CAT, BOTS,
+      true), null);
+  /* AND THE BAR CASE THE LOOSE MATCHER EXISTS FOR STILL WORKS. */
+  const BAR = { a: { k: 'a', name: 'Ardbeg 10 Years Old', dist: 'Ardbeg',
+    sub: 'scotch', proof: 92 } };
+  eq('a back bar writing Ardbeg Ten still finds the shelf',
+    (L.ownsIt('Ardbeg Ten', BAR, [{ id: '1', k: 'a', status: 'open' }], true)
+      || {}).key, 'a');
+  /* WHAT THE CALLER ALREADY KNEW COUNTS TOO. A read that states a proof
+     must not be matched to a bottle of a different one. */
+  eq('a stated proof that agrees keeps the match',
+    (L.ownsIt('Ardbeg Ten', BAR, [{ id: '1', k: 'a', status: 'open' }], true,
+      { proof: 92 }) || {}).key, 'a');
+  eq('and one that disagrees ends it',
+    L.ownsIt('Ardbeg Ten', BAR, [{ id: '1', k: 'a', status: 'open' }], true,
+      { proof: 114 }), null);
+
+  /* EACH WORD ONCE. A name saying its grain twice counted it twice, so ONE
+     shared word scored a perfect match - and the score could reach 1.25,
+     which is not a proportion of anything. */
+  eq('a repeated word does not count twice',
+    L.nameOverlap('New Riff Balboa Rye Kentucky Straight Rye Whiskey',
+      'Bradshaw Kentucky Straight Rye') <= 1, true);
+  eq('and it is not a match at all',
+    L.nameOverlap('New Riff Balboa Rye Kentucky Straight Rye Whiskey',
+      'Bradshaw Kentucky Straight Rye') < 0.8, true);
 }
 
 sec('\u00a7442 sentences this app may not say');
@@ -19737,11 +20163,11 @@ const near = L.intakeVerdict({
     { library: { a: Object.assign({}, LIBR.a, { fin: 'Tawny Port' }) },
       removed: {}, graves: {} }).verdict !== 'ask', true);
   eq('a different age is too',
-    L.intakeSameBottle({ age: 12 }, { age: 16 }), false);
+    L.sameBottle({ age: 12 }, { age: 16 }), false);
   eq('a different proof is too',
-    L.intakeSameBottle({ proof: 96 }, { proof: 120 }), false);
+    L.sameBottle({ proof: 96 }, { proof: 120 }), false);
   eq('and a fact only one side states settles nothing',
-    L.intakeSameBottle({ proof: 96 }, { proof: null }), true);
+    L.sameBottle({ proof: 96 }, { proof: null }), true);
 
   const bad = L.intakeVerdict({ name: 'Something Blanco', dist: 'Penelope Bourbon',
     sub: 'tequila', mash: '80 corn, 20 rye' }, opts);
@@ -19752,9 +20178,23 @@ const near = L.intakeVerdict({
   eq('a proof whisky is not bottled at is a question', L.intakeVerdict({
     name: 'Penelope Ten Grain', dist: 'Penelope Bourbon', proof: 240,
     sub: 'bourbon' }, opts).verdict, 'ask');
+  /* THE SAME DOOR THE AUDIT READS. These five findings were written twice
+     and had already begun to disagree; L.rowFaults is the one of them. */
   eq('and a style the row already states is not a clash',
-    L.intakeChecks({ name: 'Teeling Single Malt', style: 'single cask, single malt',
+    L.rowFaults({ name: 'Teeling Single Malt', style: 'single cask, single malt',
       sub: 'irish' }).length, 0);
+  eq('a fault carries the id the audit files it under',
+    L.rowFaults({ name: 'A', sub: 'tequila', mash: '80 corn, 20 rye' })[0].id,
+    'mashspirit');
+  eq('and a sentence for the queue',
+    L.rowFaults({ name: 'A', sub: 'tequila', mash: '80 corn, 20 rye' })[0].say,
+    'a grain bill on something not made from grain');
+  eq('and a line for the audit, which lists the bottle with it',
+    /^A — tequila with a grain bill$/.test(
+      L.rowFaults({ name: 'A', sub: 'tequila',
+        mash: '80 corn, 20 rye' })[0].text), true);
+  eq('a clean row contradicts nothing',
+    L.rowFaults({ name: 'Ardbeg 10', sub: 'scotch', proof: 92 }).length, 0);
 
   /* FILL: thin rows are enriched, not dumped on anybody. BZ chose this. */
   const thin = L.intakeVerdict({ name: 'Penelope Rio Rosa',
