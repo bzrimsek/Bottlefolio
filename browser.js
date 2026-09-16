@@ -1093,7 +1093,7 @@ function step(n) {
       renderUsers(host);
       const cards = host.querySelectorAll('#everybodyCard').length;
       const heads = [...host.querySelectorAll('h3')]
-        .filter(h => /Everybody/.test(h.textContent || '')).length;
+        .filter(h => /Everyone/.test(h.textContent || '')).length;
       host.remove();
       return { cards: cards, heads: heads };
     });
@@ -2463,7 +2463,7 @@ function step(n) {
         failures.push('flights: ' + doors + ' actions offered, want 4');
       }
       await page.locator('#scr-flights .modetile',
-        { hasText: 'Run one you designed' }).click().catch(() => {});
+        { hasText: 'Run one' }).click().catch(() => {});
       await page.waitForTimeout(180);
       // And a way back to them, which every screen you go into needs.
       /* By what it SAYS, not what class it wears. This asserted .chip and
@@ -4238,7 +4238,7 @@ function step(n) {
         if (!/Nina/.test(b3.textContent)) {
           out.push('buddies: the one-way person is not named anywhere');
         }
-        if (/Once somebody shares back/.test(b3.textContent)) {
+        if (/Once someone shares back/.test(b3.textContent)) {
           out.push('buddies: the nobody-here state shows while somebody is here');
         }
       }

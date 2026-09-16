@@ -374,13 +374,13 @@ eq('no source claims to be the producer',
   /producer/.test(L.tnSource({ tn: { nose: 'x' }, tnFrom: 'A FLIGHT',
                    mash: '100% malted barley' })), false);
 eq('your own notes say so',
-  L.tnSource({ tn: { nose: 'x' }, tnSrc: 'you' }), 'your own tasting');
+  L.tnSource({ tn: { nose: 'x' }, tnSrc: 'you' }), 'your own notes');
 eq('producer notes say so',
   L.tnSource({ tn: { nose: 'x' }, tnSrc: 'distiller' }), "the producer's own notes");
 eq('an explicit source beats the card credit',
   L.tnSource({ tn: { nose: 'x' }, tnSrc: 'you', tnFrom: 'A FLIGHT',
                    mash: '100% malted barley' }),
-  'your own tasting');
+  'your own notes');
 eq('no notes means no source', L.tnSource({ k: 'z' }), null);
 eq('an unknown source falls back to the card wording',
   /prompt, not a source/.test(
@@ -4978,20 +4978,20 @@ sec('§181 the App use tab names controls that exist');
        An icon has no label to promise, so it comes off this list. */
     ['Import',                'Shelf'],
     ['\u2039 Back',            'Shop'],
-    ['I bought it',           'In a store, holding a bottle'],
+    ['I bought it',           'Shopping in a store'],
     /* "Add to wishlist", the one name (BZ, 2026-09-15). */
-    ['Add to wishlist',       'In a store, holding a bottle'],
+    ['Add to wishlist',       'Shopping in a store'],
     ['Correct the details',  'Add a bottle you just bought'],
     ['Something else',        'Deciding what to buy next'],
-    ['Read it',               'Looking at it on a website'],
+    ['Read it',               'Looking at a bottle online'],
     /* Renamed in the tense pass: three screens said this three ways. */
     /* "Log a pour", the one name (BZ, 2026-09-15). */
-    ['Log a pour',            'Record a pour'],
+    ['Log a pour',            'Log a pour'],
     ['Remix',                 'Run a flight again'],
     // Design, not build: the tile says "Design one from scratch" and the
     // sheet it opens says "Design a flight", because "run one you
     // DESIGNED" and "build" were two words for one act.
-    ['Design one from scratch', 'Flights'],
+    ['Design one', 'Flights'],
     /* The bottle screen, added 2026-09-03 when nine controls in one row
        were moved into the section each belongs to. The help now describes
        that layout, so the labels it names have to keep existing — this is
@@ -6050,7 +6050,7 @@ sec('§201 sorting the shelf by when a bottle arrived');
     L.shelfSort(products, 'name', bottles).map(p => p.name),
     ['New One', 'Newest', 'Old A', 'Old B']);
   eq('and the sort is offered on the shelf',
-    L.SORTS.filter(x => x.id === 'got').map(x => x.label), ['Recently added']);
+    L.SORTS.filter(x => x.id === 'got').map(x => x.label), ['Newest']);
 
   // A new bottle carries the date without any site having to remember to
   // add it — five sites create bottles and all five go through this.
@@ -6691,14 +6691,14 @@ sec('§211 deciding, apart from drawing');
   eq('a vault bottle says so', dear.dear, true);
   eq('the whole warning, in one string', dear.note,
     'You have 2 sealed. This is a Vault bottle. Opening it logs a pour, '
-    + 'because nobody opens one to look at it.');
+    + 'because no one opens one to look at it.');
 
   // An everyday bottle, and only one of it: neither clause appears.
   const plain = L.sealedPrompt('A', [{ id: 'B9', k: 'A', status: 'sealed' }],
     { name: 'A', msrp: 40 });
   eq('an everyday bottle is not called dear', plain.dear, false);
   eq('and one sealed bottle is not counted at you', plain.note,
-    'Opening it logs a pour, because nobody opens one to look at it.');
+    'Opening it logs a pour, because no one opens one to look at it.');
 
   eq('nothing sealed is refused, with the reason',
     L.sealedPrompt('B', bottles, {}), { ok: false, why: 'Nothing sealed to open' });
@@ -17169,7 +17169,7 @@ sec('\u00a7378 a field name is not a word, and a queue must be able to empty');
      nothing - tn is what the CODE calls tasting notes, and it reached the
      screen because the row printed Object.keys() straight out. */
   eq('tn is tasting notes', L.fieldWords('tn'), 'tasting notes');
-  eq('mash is a grain bill', L.fieldWords('mash'), 'grain bill');
+  eq('mash is a mash bill', L.fieldWords('mash'), 'mash bill');
   eq('msrp is a price', L.fieldWords('msrp'), 'price');
   eq('a list reads the way somebody says it',
     L.fieldList(['proof', 'sub', 'msrp']), 'proof, category and price');
@@ -17383,7 +17383,7 @@ sec('\u00a7382 a grain bill on something made from agave');
      correct a grain bill on an agave spirit TO - either the bill is
      wrong or the category is, and somebody holding the bottle knows. */
   eq('it offers the bill or the category',
-    /grain bill|category/.test(L.auditSuggestion('mashspirit', cat.t,
+    /mash bill|category/.test(L.auditSuggestion('mashspirit', cat.t,
       'A Tequila')), true);
 }
 
@@ -17562,7 +17562,7 @@ sec('\u00a7388 Update says what it will change, and changes that');
   const teq = { k: 'b', name: 'A Tequila', dist: 'D', sub: 'tequila',
     mash: '51% corn, 19% rye' };
   eq('clearing a grain bill says so',
-    L.auditFix('mashspirit', teq, teq.name).label, 'Clear the grain bill');
+    L.auditFix('mashspirit', teq, teq.name).label, 'Clear the mash bill');
   eq('and clears it', L.auditFix('mashspirit', teq, teq.name).set.mash, '');
 
   /* THE STYLE CLASH CARRIES ITS OWN ANSWER. BZ: and no actions here.
@@ -20144,7 +20144,7 @@ sec('§439 one verdict: the shop\'s sentence on every screen');
   eq('the bar says one of the shop\'s four sentences',
     SAYS.indexOf(bar.say) >= 0, true);
   eq('with the bar\'s line under it', bar.bar,
-    'Worth the glass rather than the bottle.');
+    'Worth a pour, not a bottle.');
   eq('its ranking words are kept for ranking',
     ['order it', 'worth trying', 'you know this one'].indexOf(bar.verdict) >= 0,
     true);
@@ -20493,9 +20493,9 @@ const near = L.intakeVerdict({
     'mashspirit');
   eq('and a sentence for the queue',
     L.rowFaults({ name: 'A', sub: 'tequila', mash: '80 corn, 20 rye' })[0].say,
-    'a grain bill on something not made from grain');
+    'a mash bill on something not made from grain');
   eq('and a line for the audit, which lists the bottle with it',
-    /^A — tequila with a grain bill$/.test(
+    /^A — tequila with a mash bill$/.test(
       L.rowFaults({ name: 'A', sub: 'tequila',
         mash: '80 corn, 20 rye' })[0].text), true);
   eq('a clean row contradicts nothing',

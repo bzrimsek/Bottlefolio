@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.28  ·  2026-09-16 07:24 PM ET
+
+The last labels the text pass could not reach, renamed with their tests (BZ: all). Whiskey only, Invite a buddy, Clear the mash bill, Publish marked, Log a pour, Save, Newest, the Everyone admin card, Shelf photo read limit, the Flights tiles Get suggestions, Design one, Run one and See what you poured, library for shared library, a mash bill for a grain bill, Worth a pour not a bottle, your own notes, no one and someone, price a pour, flight tags in sentence case, and the App use entries Shopping in a store and Looking at a bottle online to match the Shop tiles.
+
 ## v2.4.27  ·  2026-09-16 05:07 PM ET
 
 A pass over every word on screen for consistency, brevity and parallel wording (BZ, 2026-09-16). One word per thing: library, mash bill, distillery, buddies, offers; whiskey in general text, with legal names like Scotch whisky kept; everyone, someone and anyone; select for picking several. One verb per action on buttons (Log it, Save note, Not now, Add selected, Photograph it). Messages are shorter and failures read Could not ... or That did not go through. Long explanations and in-app help were cut to what a person needs, with history and how-it-works talk removed. Sort labels now match between the shelf and flights. 1,292 strings changed and the code around them was proven unchanged; labels and phrases the checks rely on were left as they are.

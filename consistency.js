@@ -1123,14 +1123,14 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* Added with the service build check, 2026-09-14. */
     'Check the service',
     /* Added with the tunable read ceiling, 2026-09-14. */
-    'Most a shelf read may write',
+    'Shelf photo read limit',
     /* Added with the shelf question, 2026-09-15. */
     'Ask your shelf',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
        is worse than one saying nothing. */
-    'Let anyone find me by name', 'Invite a drinking buddy',
+    'Let anyone find me by name', 'Invite a buddy',
     /* Added with bulk marking, v1.9.21. A control named in the app and not
        in here is one the check cannot see. */
     'Mark bottles open or sealed',
@@ -1140,7 +1140,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Scan the library for inconsistencies',
     /* v1.9.40 */
     'Text the list, or text a link', 'Diagnostics by user',
-    'With a guest', 'Whisky only', 'The library', 'Add to wishlist',
+    'With a guest', 'Whiskey only', 'The library', 'Add to wishlist',
   'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
   'Add to wishlist',
   'With a guest',

@@ -459,7 +459,7 @@ function check(name, got, want) {
         .first().click();
       await page.waitForTimeout(400);
       await page.locator('.modal button',
-        { hasText: 'Publish the ones marked publish' }).first().click();
+        { hasText: 'Publish marked' }).first().click();
       await page.waitForTimeout(1600);
       return page.evaluate(() => ({
         before: 1,
