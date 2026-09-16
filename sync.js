@@ -336,7 +336,10 @@ function check(name, got, want) {
         S.updated = Date.now();
         save_();
         await new Promise(r2 => setTimeout(r2, 1400));
-        const w = firebase.__store.log.filter(x => x.op === 'update');
+        /* THE SHELF'S OWN WRITES. The stats row is an update too since
+           2026-09-16 (a set wiped an admin's suspension). */
+        const w = firebase.__store.log.filter(x => x.op === 'update'
+          && x.path === 'bz-apps/whisky/testuid');
         return { writes: w.length, bytes: w.reduce((a, x) => a + x.bytes, 0),
                  keys: w.length ? w[0].keys : [],
                  paths: w.length ? w[0].paths : [],

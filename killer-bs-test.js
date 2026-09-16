@@ -1303,6 +1303,15 @@ sec('one queue builder, and the two note queues do not overlap');
       today: '2026-09-16' }, p => p.k === 'none').length, 0);
 }
 
+sec('whose shelf is on this device');
+{
+  eq('another account signed in here', L.otherAccount('a', 'b'), true);
+  eq('the same account', L.otherAccount('a', 'a'), false);
+  eq('a device that never recorded an owner is not assumed to be anybody else\u2019s',
+    L.otherAccount(null, 'b'), false);
+  eq('nobody signed in', L.otherAccount('a', null), false);
+}
+
 sec('the intake after the 2026-09-16 scan');
 {
   const LIB2 = {

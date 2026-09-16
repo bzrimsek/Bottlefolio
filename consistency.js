@@ -606,7 +606,7 @@ const SCREEN_COPIES_OK = [
   // of spendLookups, which is the only place that counts.
   'contribFillFirst + libraryFillRun', 'libraryFillRun + spendLookups',
   // Both sync paths and the push ask L.resetSide which side replaced a list.
-  'fbListen + fbLoadAfterWipeCheck + fbPush',
+  'fbLoadAfterWipeCheck + fbOnRemote + fbPush',
   // Three screens ask L.flavourOptions of the shelf and draw if it answers.
   'flightBuilder + renderShelfCharts', 'flightBuilder + renderShelfCharts + showLessons',
   'flightBuilder + showLessons', 'renderCandidateList + showLessons',
@@ -2161,7 +2161,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderBuddies: 144,
     shelfBuildSheet: 141,
     awayLookingCard: 140,
-    fbPush: 137,
+    fbPush: 109,
     flightBuilder: 137,
     renderOffer: 136,
     roomNotes: 136,
