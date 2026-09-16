@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.12  ·  2026-09-15 10:05 PM ET
+
+Offers are now sorted and looked up as they arrive, not when anybody opens a screen. BZ: why not just lookup before presenting - and there was no reason at all for the sorting, which is arithmetic over the library and takes 55ms for 457 rows, and one real reason for the lookups, which is that a hundred of them spend from the daily allowance and take minutes, so starting them because somebody opened a screen means a phone in a shop quietly working through a budget. They run instead when the app learns it is an admin and every ten minutes after that, a few at a time, and what they find is written onto the offer itself, so the work is done once for everybody rather than on each device that looks and a redraw costs nothing. They stop at their own budget, settable in Settings and a hundred a day by default, under the daily six hundred every lookup draws on, so a queue can never eat the allowance BZ wanted for his own lookups; zero turns it off and the lookups happen when he accepts instead. The run never starts from a render, because a background job that redraws a screen somebody is using replaced the library screen under an in-flight publish and the sync check caught it.
+
 ## v2.4.11  ·  2026-09-15 09:42 PM ET
 
 Accepting offers now looks up what is missing before anything is written, instead of writing them and then asking. BZ: after taking 19, I get a prompt to look up 16, why not do that before - and the app already knew which 16 were thin, because that is what put them in the fill pile. The button says what the press will do and what the daily lookup limit allows before it is pressed, the lookups run inside that press through the same parse and the same writer the library fill run uses, the answers are merged into the rows before they land, and the whole lot goes in one write with no second sheet. The library never holds the thin version, and what the press achieved is said in one line rather than asked about in a modal.

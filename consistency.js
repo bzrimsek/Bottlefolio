@@ -495,6 +495,17 @@ const TWO_DOORS_OK = [
   'shelfTodo>enhanceQueue', 'flightNoteQueue>pourable',
   'enhanceQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
   'lookupAllowed>lookupTally',
+  /* THE SAME QUESTION, ASKED AGAIN WITH MORE TO GO ON - which is the whole
+     point of it. L.intakeSettle does not judge an offer; it takes what the
+     search came back with, puts it on the row, and hands the row to
+     L.intakeVerdict, which is the single door. A second way of deciding an
+     offer's fate is exactly what this check should still catch, and naming
+     intakeVerdict specifically leaves it able to. */
+  'intakeSettle>intakeVerdict',
+  /* And the budget asks the day's allowance how much of it is left, the
+     same way lookupAllowed asks lookupTally above. */
+  'intakeBudgetLeft>lookupTally', 'intakeBudgetLeft>intakeSpent',
+  'countIntake>intakeSpent',
   /* resolveLibKey ASKS libKey and then checks the answer against the
      library, which is the point of it: a key worked out from a name can
      point at a node that is not there, and a delete against a node that is
@@ -634,6 +645,12 @@ const syncBlock = src.slice(src.indexOf('L.SYNC_KEYS'),
    about the account. */
 const LOCAL_ON_PURPOSE = ['filters', 'fflt', 'shop', 'shopMode', 'shopDim',
   'lastList', 'updated', 'pushedAt', 'lookupTally', 'axisTurn', 'base',
+  /* What the offered-library queue has spent vetting today. Per device for
+     exactly the reason lookupTally is (BZ: "I think we need to keep the
+     allowances separate") - it is drawn from that same per-device
+     allowance, so a shared count would be an allowance with two meanings.
+     The BUDGET it stops at is a preference and does sync. */
+  'intakeTally',
   'lookupUrl', 'lookupMine', 'libLedgerAt', 'reelState', 'seenTips',
   'installDismissed',
   /* 'log' was here and is not any more: BZ asked for one user and one
@@ -1085,7 +1102,10 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* showFill is a switch, not a collection: whether the fill gauge is
        drawn. The newer side wins, which is right - somebody turning it on
        at the shelf on their phone means it on, everywhere. */
-    'showFill'];
+    'showFill',
+    /* How many lookups the offered-library queue may spend vetting on its
+       own. One number somebody chose, not a collection to merge. */
+    'intakeBudget'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at
@@ -1935,8 +1955,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderShelf: 363,
     renderAway: 356,
     renderLibrary: 345,
-    renderLookupSetup: 322,
     showShelfTools: 305,
+    renderLookupSetup: 294,
     shopAnswer: 267,
     renderHome: 251,
     renderGuest: 247,

@@ -19982,6 +19982,80 @@ const near = L.intakeVerdict({
   eq('nothing to report is still an answer',
     L.intakeAddedSay(3, null), '3 added to the library');
 
+  /* ============ VETTING BEFORE ANYBODY LOOKS =========================
+     BZ, 2026-09-15: "Why not just lookup before presenting." It runs as
+     the offers arrive, and it stops at its OWN budget rather than at the
+     day's allowance - a queue that ate the allowance he wanted for his own
+     lookups would be the last time he let it run unattended. */
+  eq('a day that has spent nothing has the whole budget',
+    L.intakeBudgetLeft({}, '2026-09-15', 100, {}), 100);
+  eq('what it has spent comes off it',
+    L.intakeBudgetLeft({ date: '2026-09-15', n: 40 }, '2026-09-15', 100, {}),
+    60);
+  eq('yesterday\u2019s spending does not',
+    L.intakeBudgetLeft({ date: '2026-09-14', n: 100 }, '2026-09-15', 100, {}),
+    100);
+  eq('the budget spent out leaves nothing',
+    L.intakeBudgetLeft({ date: '2026-09-15', n: 100 }, '2026-09-15', 100, {}),
+    0);
+  /* AND THE DAY'S ALLOWANCE STILL BOUNDS IT. Either one alone is a way to
+     be surprised: 600 is the cap every lookup in the app draws on. */
+  eq('the day\u2019s allowance bounds the budget too',
+    L.intakeBudgetLeft({}, '2026-09-15', 100,
+      { date: '2026-09-15', n: L.LOOKUP_CAP - 7 }), 7);
+  eq('and a spent day stops it whatever the budget says',
+    L.intakeBudgetLeft({}, '2026-09-15', 500,
+      { date: '2026-09-15', n: L.LOOKUP_CAP }), 0);
+  eq('no budget set means the default',
+    L.intakeBudgetLeft({}, '2026-09-15', null, {}), L.INTAKE_BUDGET);
+  eq('the default is a hundred', L.INTAKE_BUDGET, 100);
+
+  /* THE NUMBER SOMEBODY TYPES, MADE SAFE. Zero is a real answer and turns
+     the background vetting off; the day's allowance is the most it could
+     ever spend, so anything above it is that. */
+  eq('a number typed is the number', L.intakeBudgetOf('250'), 250);
+  eq('zero is a real answer', L.intakeBudgetOf(0), 0);
+  eq('and it means off', L.intakeBudgetOf('0'), 0);
+  eq('nothing typed means the default', L.intakeBudgetOf(''),
+    L.INTAKE_BUDGET);
+  eq('nor does nonsense change it', L.intakeBudgetOf('lots'),
+    L.INTAKE_BUDGET);
+  eq('a negative is not a budget', L.intakeBudgetOf(-5), L.INTAKE_BUDGET);
+  eq('and nothing may exceed the day', L.intakeBudgetOf(9000),
+    L.LOOKUP_CAP);
+  eq('a fraction is rounded', L.intakeBudgetOf(10.6), 11);
+
+  eq('a lookup spent is counted',
+    L.countIntake({ date: '2026-09-15', n: 3 }, '2026-09-15').n, 4);
+  eq('and a new day starts again',
+    L.countIntake({ date: '2026-09-14', n: 90 }, '2026-09-15').n, 1);
+  eq('nothing spent today reads as nothing',
+    L.intakeSpent({ date: '2026-09-14', n: 90 }, '2026-09-15'), 0);
+
+  /* WHAT IS WRITTEN ONTO THE OFFER, so a second device reads the answer
+     rather than paying for it. */
+  eq('an offer that was vetted says so',
+    (L.intakeVetted({ name: 'X', vetted: { verdict: 'in' } }) || {}).verdict,
+    'in');
+  eq('one that was not says nothing', L.intakeVetted({ name: 'X' }), null);
+  eq('and half a record is not a verdict',
+    L.intakeVetted({ vetted: { at: 1 } }), null);
+
+  /* WHICH ONES STILL COST SOMETHING. */
+  eq('a thin row still wants filling',
+    L.intakeNeedsVetting({ verdict: 'fill', needs: ['notes'] }), true);
+  eq('a question the search has not had wants asking',
+    L.intakeNeedsVetting({ verdict: 'ask',
+      rule: 'nearly one already in' }), true);
+  eq('one it has already failed does not',
+    L.intakeNeedsVetting({ verdict: 'ask', rule: 'nearly one already in',
+      tried: true }), false);
+  eq('a complete row costs nothing more',
+    L.intakeNeedsVetting({ verdict: 'in' }), false);
+  eq('and neither does one that adds nothing',
+    L.intakeNeedsVetting({ verdict: 'out' }), false);
+  eq('nothing at all needs nothing', L.intakeNeedsVetting(null), false);
+
   /* A DROPPED OFFER IS HELD A FORTNIGHT. BZ's choice. */
   eq('a fortnight is the hold', L.INTAKE_HOLD_DAYS, 14);
   eq('a drop from today is still held',
