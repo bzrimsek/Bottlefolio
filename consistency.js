@@ -602,6 +602,9 @@ const SCREEN_COPY_WINDOW = 14;
 const SCREEN_COPIES_OK = [
   /* CALLERS OF ONE DOOR, each asking it the same question and branching on
      the answer. None of these decides the thing itself. */
+  // Two different engine questions (L.tastingForGuest, L.readShelfQuestion)
+  // that both take the shelf and give up on no answer. Shape, not a rule.
+  'fbReadTastings + renderShopAsk',
   // A run stops at the day's limit without spending: the check, not a copy
   // of spendLookups, which is the only place that counts.
   'contribFillFirst + libraryFillRun', 'libraryFillRun + spendLookups',

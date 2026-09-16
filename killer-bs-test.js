@@ -1380,6 +1380,19 @@ sec('what is popular');
   eq('and marks what you already have', list.map(r => r.have), [true, false]);
 }
 
+sec('a fill says how it went one way');
+{
+  eq('running', L.fillSay({ done: 3, total: 10, wrote: 2, waiting: 1 }),
+    '3 of 10 asked \u00b7 2 filled in \u00b7 1 waiting');
+  eq('with failures', L.fillSay({ done: 10, total: 10, wrote: 6, waiting: 3,
+    failed: 1, finished: true }),
+    'Done. 10 of 10 asked \u00b7 6 filled in \u00b7 3 waiting \u00b7 1 failed');
+  eq('stopped at the limit says so', /daily lookup limit/.test(
+    L.fillSay({ stopped: 'limit', finished: true })), true);
+  eq('a broken lookup says so', /failed five times/.test(
+    L.fillSay({ stopped: 'broken' })), true);
+}
+
 sec('a sign-in token never reaches the log');
 {
   const u = 'https://script.google.com/macros/s/X/exec?mode=ask&idToken=eyJhbGciOi.abc-def_ghi&x=1';

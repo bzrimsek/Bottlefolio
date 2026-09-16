@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.25  ·  2026-09-16 04:14 PM ET
+
+Three loose ends closed. The shelf fill and the library fill now report progress the same way, through L.fillSay: asked, filled in, waiting and failed, and why a run stopped. The seven reads of a house-alias list that nothing ever wrote were removed: every house merge the app offers joins spellings that already count as one house, so the list could never change an answer. And the reason an empty lookup answer is not an error is written down again where it is decided.
+
 ## v2.4.24  ·  2026-09-16 04:01 PM ET
 
 Library controls streamlined, at BZ's choice (2026-09-16). Removed: Look these up now, Add the N it would add and Clear the N that add nothing (the timed check does all three), Check the catalog (Fetch the whole catalog stays), Read N styles off their names (now the free first step of Fill what is missing), and Remove from the library in the editor. Taking entries out is now a multi-select on the library list, and a new Removed list puts them back with the entry restored. Duplicate entries merge through one writer, which also records the merge on the device, and the scan's dead link to the library screen is gone. Barcode offers are accepted automatically. The shelf fill now says it offers what it finds to the library, and two per-offer buttons that could never appear were deleted.

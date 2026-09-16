@@ -194,6 +194,8 @@ day (the id token is already checked there) and refuse past the cap, and
 clamp the answer length the service asks the model for. A service change, so
 it goes through the gate's Apps Script deploy.
 
+**CLOSED 2026-09-16 (v2.4.25): the reads were removed, no writer built.** Every house merge the app offers joins spellings with the same `L.houseKey`, which already count as one house, so an alias could never change an answer. The seven `LIB.houseGraves` reads (always undefined) went; the engine's optional alias argument stays for the day two differently keyed houses need joining.
+
 **House aliases have no writer — my loose end, not a decision.** v2.3.99
 built the registry: `L.houseResolve` and `L.houseIndex` (index.html:11705,
 11722), alias chains followed, cycles stopped, `snapHouse` asking the
