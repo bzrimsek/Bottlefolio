@@ -435,6 +435,10 @@ copied within about a day of it.
     Publishing from the workflow is to be built and tested in release 3.
   - **34, diagnostics:** keep the upload, and Settings says plainly that it
     happens and why.
+  - **40, DONE and live 2026-09-15.** BZ: "run it". Pages source switched to
+    GitHub Actions and the `github-pages` environment taught to allow the
+    `build` branch; proved by a hand-started run: gate green, publish green,
+    the branch job skipped, the live site serving v2.4.9 from the artifact.
   - **35–39:** on defaults: a size ratchet, the synced-key table, comments
     pruned as code is touched, dead code and pasted rows, and stale docs
     moved to _superseded plus a README.

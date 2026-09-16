@@ -129,6 +129,28 @@ A hand paste is now only the fallback. Credentials: secrets `CLASPRC`,
 
 ---
 
+## How the site gets published
+
+Since 2026-09-15 the gate packages the twelve files the site serves - the
+app, the worker, the manifest, the icons, the barcode decoder, data.json,
+map.json and .nojekyll - and deploys THAT, rather than GitHub rebuilding the
+whole repository (805KB changelog, the harnesses, ten superseded lock
+copies) with Jekyll twice per release.
+
+Two settings make it work, and both are already set:
+
+- **Settings -> Pages -> Source: GitHub Actions** (`build_type: workflow`).
+- **The `github-pages` environment must allow the `build` branch.** The gate
+  runs on `build`, and by default that environment only allows the default
+  branch: the publish job is then refused before a single step runs, in two
+  seconds, with no log. That is what a red run with a green gate looks like.
+
+`gate.yml` carries both publish jobs and picks by reading the live setting,
+so neither switch is assumed: `publish` deploys the artifact, and
+`publish-from-branch` asks for a branch build instead.
+
+---
+
 ## Firebase rules
 
 `firebase-rules.json` holds this app's branch, `rules → bz-apps → whisky`,
