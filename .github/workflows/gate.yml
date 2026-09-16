@@ -345,8 +345,14 @@ jobs:
   # It runs in both Pages modes and the live check at the end is the same
   # either way, so the only thing the setting changes is which of the two
   # middle steps fires. `needs: gate` means a red gate publishes nothing.
+  # TWO PUBLISH JOBS, ONE PER PAGES SOURCE. A job takes its environment
+  # unconditionally, and the github-pages environment is only grantable when
+  # the Pages source IS GitHub Actions - so a single job with `environment:`
+  # is refused outright while the source is a branch, before any step runs.
+  # That is how v2.4.9 reached the live site with a red run.
   publish:
     needs: gate
+    if: needs.gate.outputs.pages_source == 'workflow'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -355,32 +361,48 @@ jobs:
     steps:
       - name: Deploy the artifact (Pages source is GitHub Actions)
         id: deployment
-        if: needs.gate.outputs.pages_source == 'workflow'
         uses: actions/deploy-pages@v4
 
-      # UNTIL THE SETTING IS SWITCHED. Moving main already triggers a legacy
-      # branch build on its own; this asks for it explicitly so the wait
-      # below has something to wait for, and does not fail the run when
-      # Pages declines a second build it is already running.
-      - name: Ask Pages to rebuild the branch (Pages source is still a branch)
-        if: needs.gate.outputs.pages_source != 'workflow'
+      # The only check that proves it is live: ask the real site which
+      # version it is serving, past the CDN's cache, until it says ours.
+      - name: Wait until the live site serves this version
+        run: |
+          want="${{ needs.gate.outputs.version }}"
+          url="https://bzrimsek.github.io/Bottlefolio/index.html"
+          for i in $(seq 1 120); do
+            got=$(curl -fsSL "$url?nocache=$(date +%s%N)" \
+              | grep -m1 -oP "const APP_VERSION\s*=\s*'\K[\d.]+" || true)
+            echo "live site says v${got:-?}, this build is v$want"
+            if [ "$got" = "$want" ]; then
+              echo "LIVE: v$want at https://bzrimsek.github.io/Bottlefolio/"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::The gate passed and main moved, but the site did not show v$want within 10 minutes."
+          exit 1
+
+  # UNTIL THE SETTING IS SWITCHED. Moving main already triggers a branch
+  # build on its own; this asks for it explicitly so the wait has something
+  # to wait for, and does not fail when Pages declines a second build it is
+  # already running.
+  publish-from-branch:
+    needs: gate
+    if: needs.gate.outputs.pages_source != 'workflow'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Ask Pages to rebuild the branch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Pages build_type is '${{ needs.gate.outputs.pages_source }}', not 'workflow'."
-          echo "Switch Settings -> Pages -> Source to GitHub Actions to use the artifact above."
+          echo "Switch Settings -> Pages -> Source to GitHub Actions to publish the artifact instead."
           gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent \
             || echo "Pages refused the explicit request; the push to main normally triggers a build on its own."
 
       # The only check that proves it is live: ask the real site which
       # version it is serving, past the CDN's cache, until it says ours.
-      # Every 5 seconds, 120 times, for the same 10 minutes. It asked every
-      # 15, so a site that went live just after a look waited up to 14
-      # seconds more to be seen (review item 29, 2026-09-15): the last three
-      # publishes took 46, 61 and 46 seconds here, three and four sleeps.
-      #
-      # The version comes from the gate job rather than a checkout, because
-      # this job needs no working copy for anything else.
       - name: Wait until the live site serves this version
         run: |
           want="${{ needs.gate.outputs.version }}"
