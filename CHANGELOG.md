@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.26  ·  2026-09-16 04:18 PM ET
+
+Sync is now also tested against a real database. In the cloud gate, after the rules checks, syncemu.js drives two browser devices on one account through Google's database and auth emulators with the real Firebase SDK and the real rules: a bottle added on one arrives on the other live, a wishlist entry removed on one stays removed when the other reloads, and a second account signing in on the same browser is not handed the first one's shelf.
+
 ## v2.4.25  ·  2026-09-16 04:14 PM ET
 
 Three loose ends closed. The shelf fill and the library fill now report progress the same way, through L.fillSay: asked, filled in, waiting and failed, and why a run stopped. The seven reads of a house-alias list that nothing ever wrote were removed: every house merge the app offers joins spellings that already count as one house, so the list could never change an answer. And the reason an empty lookup answer is not an error is written down again where it is decided.

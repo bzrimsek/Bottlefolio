@@ -14,6 +14,9 @@
  * AND IT IS PROVEN ABLE TO FAIL: the same suite runs a second time against
  * rules broken on purpose, and must catch each break.
  *
+ * Then syncemu.js drives two devices through the sync faults that have cost
+ * the most, against the same emulator.
+ *
  * Needs Java. BZ, 2026-09-16: it runs in the cloud gate only; on a machine
  * without Java it says it was skipped, never that it passed. In the cloud
  * (CI set) a missing Java is a failure.
@@ -36,7 +39,7 @@ if (process.argv.indexOf('--inner') < 0) {
   }
   const bin = path.join(__dirname, 'node_modules', '.bin',
     process.platform === 'win32' ? 'firebase.cmd' : 'firebase');
-  const r = spawnSync(bin, ['emulators:exec', '--only', 'database',
+  const r = spawnSync(bin, ['emulators:exec', '--only', 'database,auth',
     '--project', PROJECT, 'node rulestest.js --inner'],
     { cwd: __dirname, stdio: 'inherit', shell: process.platform === 'win32' });
   process.exit(r.status === null ? 1 : r.status);
@@ -223,6 +226,9 @@ function mutants() {
     else if (hit.ok) { failed++; console.log('  ✖ self-test: rules where ' + what + ' passed "' + mustFail + '"'); }
   }
   if (!failed) console.log('  ✓ and it catches rules broken on purpose (' + ms.length + ' of ' + ms.length + ')');
+
+  /* AND SYNC, against the same emulator with the real SDK (syncemu.js). */
+  failed += await require('./syncemu.js')();
   console.log(failed ? '✖ ' + failed + ' rules check(s) failed' : '✓ all rules checks pass');
   process.exit(failed ? 1 : 0);
 })().catch(e => { console.log('  ✖ rules: ' + ((e && e.stack) || e)); process.exit(1); });
