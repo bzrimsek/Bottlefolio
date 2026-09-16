@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.29  ·  2026-09-16 07:54 PM ET
+
+Five messages that retyped the no-lookup-service and daily-limit sentences now use the shared ones. Show everything is Show all, and the flight builder's Design one myself and Pick the bottles myself are Design one and Pick the bottles. The 653 empty text pieces the text pass left in the code were removed, each proven to follow text so nothing changed behavior.
+
 ## v2.4.28  ·  2026-09-16 07:24 PM ET
 
 The last labels the text pass could not reach, renamed with their tests (BZ: all). Whiskey only, Invite a buddy, Clear the mash bill, Publish marked, Log a pour, Save, Newest, the Everyone admin card, Shelf photo read limit, the Flights tiles Get suggestions, Design one, Run one and See what you poured, library for shared library, a mash bill for a grain bill, Worth a pour not a bottle, your own notes, no one and someone, price a pour, flight tags in sentence case, and the App use entries Shopping in a store and Looking at a bottle online to match the Shop tiles.
