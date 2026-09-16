@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.21  ·  2026-09-16 02:44 PM ET
+
+The Everyone tab on Buddies, at BZ's asking (2026-09-16). It carries no descriptions: the line under each buddy's name, the footer about what a buddy sees, the shopping-list line and the blurb above what buddies are after are gone from it, and a buddy's own tab keeps them. Everyone is not a table, so its headings read Everyone, as one shelf and What everyone has, and the write-up says nobody else rather than nobody else at the table.
+
 ## v2.4.20  ·  2026-09-16 02:32 PM ET
 
 Comment clean-up, the first step toward splitting index.html (BZ, 2026-09-16). Comments now say what the code does when that is not obvious, why the obvious alternative breaks, and BZ's rules; the story of how each fault was found stays in this changelog. 1,556 comment blocks were shortened or removed, comment text went from 751KB to 434KB and the file from 2.08MB to 1.76MB and 44,537 lines to about 39,800, and every code token was proven identical before and after. Comments that contradicted the code were corrected. The size ratchet was lowered to match. The header's resize handler was registered twice and now runs once.
