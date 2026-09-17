@@ -93,9 +93,25 @@ async function ttbRange(from, to, depth) {
   say('TTB ' + mmddyyyy(from) + '-' + mmddyyyy(to) + ': ' + total + (total > 1000 ? ' (capped)' : ''));
 }
 
+/* Wikipedia's list of Scotch distilleries, for each one's whisky region. */
+const SCOTCH_LIST = 'https://en.wikipedia.org/w/index.php?title=List_of_whisky_distilleries_in_Scotland&action=raw';
+async function fetchScotchList() {
+  const r = await fetch(SCOTCH_LIST, { headers: { 'User-Agent': UA } });
+  const file = path.join(CACHE, 'scotch-distilleries.wiki');
+  if (r.ok) {
+    fs.writeFileSync(file, await r.text());
+    say('Wikipedia Scotch distilleries: saved');
+  } else if (fs.existsSync(file)) {
+    say('Wikipedia Scotch distilleries: HTTP ' + r.status + ', kept the copy from last time');
+  } else {
+    throw new Error('the Scotch distillery list answered HTTP ' + r.status);
+  }
+}
+
 async function fetchAll() {
   if (!fs.existsSync(CACHE)) fs.mkdirSync(CACHE);
   await fetchWikidata();
+  await fetchScotchList();
   const p = await fetch(PERMITS, { headers: { 'User-Agent': UA } });
   /* The permit list moves when TTB republishes it; the copy already here is
      kept rather than failing the month. */
@@ -134,7 +150,9 @@ async function fetchAll() {
 
 function build() {
   const wd = JSON.parse(fs.readFileSync(path.join(CACHE, 'wikidata.json'), 'utf8'));
-  const houses = L.refHouses(((wd.results || {}).bindings) || []);
+  const scotFile = path.join(CACHE, 'scotch-distilleries.wiki');
+  const houses = L.refRegions(L.refHouses(((wd.results || {}).bindings) || []),
+    fs.existsSync(scotFile) ? L.scotchRegions(fs.readFileSync(scotFile, 'utf8')) : {});
   const permits = L.permitNames(fs.readFileSync(path.join(CACHE, 'permits.csv'), 'utf8'));
   let rows = [];
   fs.readdirSync(CACHE).filter(f => /^ttb-.*\.csv$/.test(f)).forEach(f => {

@@ -1501,6 +1501,25 @@ sec('reference data: distilleries and brands');
   eq('and the mash bill it closes is fixed by law',
     L.libraryGaps({ name: 'Glenfiddich 30', sub: 'scotch', style: 'single malt',
       proof: 86, tn: { nose: 'x', palate: 'y' } }).indexOf('mash'), -1);
+  const wiki = "{| class=\"sortable wikitable\"\n"
+    + "||[[Aberlour distillery|Aberlour]]||[[Aberlour]]||[[Speyside single malt|Speyside]]\n"
+    + "|1879||[[Chivas Brothers]]\n|-\n"
+    + "||[[Abhainn Dearg distillery|Abhainn Dearg]]||Uig||[[Island single malt|Island]]\n"
+    + "||Girvan||Girvan||Grain\n";
+  const scot = L.scotchRegions(wiki);
+  eq('a Scotch distillery takes its region, named the app\u2019s way, and a grain row none',
+    [scot[L.refHouseKey('Aberlour')].region, scot[L.refHouseKey('Abhainn Dearg')].region,
+     scot[L.refHouseKey('Girvan')]], ['Speyside', 'Islands', undefined]);
+  const withRegions = L.refRegions({ bt: { name: 'Buffalo Trace', country: 'United States', place: 'Kentucky' },
+    ab: { name: 'Aberlour distillery', country: 'United Kingdom', place: 'Moray' } },
+    { ab: { name: 'Aberlour', region: 'Speyside' } });
+  eq('an American house takes its state, a Scotch one its region',
+    [withRegions.bt.region, withRegions.ab.region, withRegions.ab.place], ['Kentucky', 'Speyside', 'Moray']);
+  eq('a region is written where the library has none',
+    L.refFill({ x: { name: 'Aberlour 12', dist: 'Aberlour' } },
+      { houses: { [L.refHouseKey('Aberlour')]: { name: 'Aberlour', region: 'Speyside' } }, brands: {} })
+      .updates.x.region, 'Speyside');
+  eq('and a product keeps it', L.normalizeProduct({ name: 'X', region: 'Islay' }).region, 'Islay');
   eq('a Scotch made in Taiwan is listed, not written',
     plan.conflicts.map(x => x.k + ':' + x.says), ['b:made in Taiwan']);
 
