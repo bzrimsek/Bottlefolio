@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.54  ·  2026-09-17 07:08 PM ET
+
+Adding a whiskey the library already knows now works. The form refused any name in the library, saying it was already on the shelf, when the shelf had none of it - a label read files a whiskey in the library, and it could then never be added. Only a whiskey you already own is refused now; anything else keeps the library's record, takes from the form only what that record does not say, and lands on the shelf. Copy the log now sits beside Show me the log under Something not working.
+
 ## v2.4.53  ·  2026-09-17 06:58 PM ET
 
 Two fixes. Editing a bottle now redraws the page you edited from, so a renamed bottle shows its new name at once instead of after leaving and coming back. And your own copy of a whiskey no longer hides what the library knows: a blank field in your copy is filled from the library entry of the same name, so region, country and mash bill come through. Your typed values and your edits still win. On BZ's shelf this restores 4 regions and 10 countries, including five of the six Campbeltown bottles.

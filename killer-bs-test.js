@@ -3915,6 +3915,12 @@ eq('null product is safe', L.notesFor(null, [], 'mine').length, 0);
 sec('catalog merge');
 const base = { A: { k: 'A', name: 'Alpha', proof: 90 }, B: { k: 'B', name: 'Beta', proof: 100 } };
 eq('base passes through', Object.keys(L.mergeCatalog(base, {}, {}, {})).sort(), ['A', 'B']);
+/* WHAT A FORM ADDS TO A RECORD THE LIBRARY ALREADY HAS (BZ, 2026-09-17). */
+eq('only what the record does not say is kept, and nothing at all is null',
+  [L.newFacts({ name: 'X', proof: 92, fin: '' }, { k: 'X', name: 'X', proof: 90, fin: 'Port', age: null }),
+   L.newFacts({ name: 'X', proof: 92 }, { name: 'X', proof: 90 })],
+  [{ fin: 'Port' }, null]);
+
 /* YOUR OWN COPY LEADS, AND THE LIBRARY FILLS ITS BLANKS (BZ, 2026-09-17). */
 {
   const lib = { X: { k: 'X', name: 'Longrow 18', region: 'Campbeltown', country: 'United Kingdom',
