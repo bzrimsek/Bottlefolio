@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.36  ·  2026-09-16 11:19 PM ET
+
+Every button that records a pour now says Pour it, replacing Log a pour. The shelf's Type column shows the type, so a Tennessee bottled in bond reads Tennessee, and a style shows only when there is no type. Clean up's Check the country rows have a Correct as it stands button, saved with the other reviewed findings, so a checked entry stops being flagged.
+
 ## v2.4.35  ·  2026-09-16 11:15 PM ET
 
 The pour button on list rows says Pour it, because the table column clipped Log a pour; its hover title and spoken label still say Log a pour.

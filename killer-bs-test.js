@@ -5099,8 +5099,8 @@ sec('§181 the App use tab names controls that exist');
     ['Something else',        'Deciding what to buy next'],
     ['Read it',               'Looking at a bottle online'],
     /* Renamed in the tense pass: three screens said this three ways. */
-    /* "Log a pour", the one name (BZ, 2026-09-15). */
-    ['Log a pour',            'Log a pour'],
+    /* "Pour it", the one name (BZ, 2026-09-16). */
+    ['Pour it',               'Pour it'],
     ['Remix',                 'Run a flight again'],
     // Design, not build: the tile says "Design one from scratch" and the
     // sheet it opens says "Design a flight", because "run one you
@@ -16508,6 +16508,12 @@ sec('\u00a7363 one check, and four things to do about a finding');
   const now = Date.now(), day = 86400000;
   eq('a finding nobody has judged comes back',
     L.auditVerdict({}, 'dups:a', now), null);
+  eq('the Type column says the type, a style only when there is none',
+    [L.rowType({ sub: 'tennessee', style: 'bottled-in-bond' }), L.rowType({ style: 'single cask' })],
+    [L.typeLabel('tennessee'), 'Single Cask']);
+  eq('a reference disagreement called correct stays quiet, the others show',
+    L.refConflictsOpen([{ k: 'a' }, { k: 'b' }],
+      { 'refcountry:a': { v: 'ok', at: now } }, now).map(c => c.k), ['b']);
   eq('one marked correct never comes back',
     L.auditVerdict({ 'dups:a': { v: 'ok', at: now - 900 * day } },
       'dups:a', now), 'ok');

@@ -3104,7 +3104,7 @@ function step(n) {
           + ', want ' + head);
       }
     };
-    wantIn('Log a pour', 'Your bottle');
+    wantIn('Pour it', 'Your bottle');
     // The filing key must never be on the screen.
     const ids = await page.evaluate(() => {
       const c = [...document.querySelectorAll('#detailBody .sheet')]
