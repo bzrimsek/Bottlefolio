@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.34  ·  2026-09-16 11:12 PM ET
+
+Buddies: the Everyone panel no longer carries a shelf title, badges or a written description; it shows only where the shelves meet. Library Clean up: disagreements with reference data now show open under the heading Check the country instead of a collapsed line, the library is read when the page is drawn, an empty reference read is no longer remembered for the whole session, and the check logs what it compared.
+
 ## v2.4.33  ·  2026-09-16 11:06 PM ET
 
 The library editor has a Country field, so a country from reference data can be corrected by hand. The library list marks an entry that is missing something with the waiting bottle, standing still and filled to how complete the entry is, in place of an exclamation mark (BZ, 2026-09-16).
