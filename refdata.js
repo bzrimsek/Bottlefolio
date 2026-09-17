@@ -193,4 +193,9 @@ async function load(ref) {
   say(Object.keys(ref.houses).length + ' distilleries, ' + Object.keys(ref.brands).length + ' brands, '
     + Math.round(JSON.stringify({ houses: ref.houses, brands: ref.brands }).length / 1024) + ' KB');
   if (cmd === 'load') await load(ref);
-})().catch(e => { console.log('  ✖ refdata: ' + e.message); process.exit(1); });
+})().catch(e => {
+  /* "fetch failed" alone says nothing; the cause names the refusal. */
+  const c = e.cause || {};
+  console.log('  ✖ refdata: ' + e.message + (c.code || c.message ? ' (' + [c.code, c.message].filter(Boolean).join(': ') + ')' : ''));
+  process.exit(1);
+});

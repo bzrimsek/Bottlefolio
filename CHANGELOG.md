@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.41  ·  2026-09-17 09:09 AM ET
+
+The monthly reference data job now logs why a request failed, not only that it did, and first tests whether TTB answers GitHub's servers at all.
+
 ## v2.4.40  ·  2026-09-17 09:03 AM ET
 
 Reference data refreshes itself on the 2nd of every month (the Reference data workflow): Wikidata's distilleries, TTB's permit list and the finished month of TTB label approvals, loaded into shared/ref and filled into empty library fields. The downloads are kept between runs so only new months are read. refdata.js now refuses a TTB page with no record count rather than saving it as an empty month, reads finished months only so none is counted twice, keeps last month's permit list if TTB moves it, and will not load a set with far fewer brands than the live one.

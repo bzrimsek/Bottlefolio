@@ -61,6 +61,12 @@ jobs:
             echo "no earlier cache - reading every month"
           fi
 
+      # Says in the log whether TTB answers this runner at all, and how.
+      - name: Can TTB be reached
+        continue-on-error: true
+        run: |
+          curl -sS -o /dev/null --max-time 60 -w 'TTB answered HTTP %{http_code} in %{time_total}s from %{remote_ip}\n' -A 'Bottlefolio/2.4 reference data (whiskey collection app)' https://ttbonline.gov/colasonline/publicSearchColasBasic.do
+
       - name: Fetch
         run: node refdata.js fetch
 
