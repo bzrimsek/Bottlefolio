@@ -6666,6 +6666,12 @@ sec('§209 the column headers sort the shelf');
   eq('then back up again', L.nextSort('proof', 'proofd'), 'proof');
   eq('Price starts cheapest', L.nextSort('msrp', 'got'), 'cheap');
   eq('then dearest', L.nextSort('msrp', 'cheap'), 'price');
+  eq('Age starts oldest, then youngest', [L.nextSort('age', 'name'), L.nextSort('age', 'age')],
+    ['age', 'agey']);
+  eq('youngest first, no age stated last',
+    L.shelfSort([{ k: 'n', name: 'N' }, { k: 'o', name: 'O', age: 18 }, { k: 'y', name: 'Y', age: 4 }],
+      'agey').map(p => p.k), ['y', 'o', 'n']);
+  eq('an age cell, or a dash', [L.ageCell({ age: 12 }), L.ageCell({})], ['12', '\u2014']);
 
   /* Arriving from ANOTHER column starts at that column's first direction
      rather than inheriting a descending from wherever you were. */

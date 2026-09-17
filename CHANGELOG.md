@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.38  ·  2026-09-16 11:26 PM ET
+
+Every list of bottles sorts on a header click. A buddy's shelf and the Venn lists, and the bottles behind a chart bar, now show Bottle, Age, Price and Proof columns under headers that sort both ways, painted by the same function as the Shelf headers; the chart pop-up's Proof, Price, Age and Name chips are gone. Age sorts oldest or youngest, with no age stated last. The choice is remembered, highest proof first by default.
+
 ## v2.4.37  ·  2026-09-16 11:23 PM ET
 
 Shelf column headers: every column now sorts both ways on a second click - Bottle A to Z and Z to A, Type A to Z and Z to A, Have most and fewest - and each shows its direction. Type sorts by the words the column shows. Proof and Price read every value as a number, so a bottle with no proof no longer sits at the top of highest first; missing values sit last either way.
