@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.58  ·  2026-09-17 07:55 PM ET
+
+Bottle names wrap instead of being cut off. Every list showed a name on one line with an ellipsis, and what makes a bottle different is often at the end of its name - Gray Label Dovetail 16 Year, Single Barrel Cask Strength - which is exactly what an ellipsis eats. Names now run to two lines and then stop, in every list in the app.
+
 ## v2.4.57  ·  2026-09-17 07:43 PM ET
 
 Look up all, at the top of Still missing. One entry at a time was never going to happen, so a single button asks about every entry on the list, waits and give-ups included. It says first how many it will ask about, how many of those had been given up on, and where the day's allowance will stop it. Only gaps are filled and nothing written by hand is touched; what comes back empty goes on waiting.
