@@ -1977,3 +1977,30 @@ diff must be able to use; what the parse emits, the diff must be able to
 read; what one screen publishes, another must not immediately queue. That
 is the pattern worth keeping, and it is cheap — every one of those is two
 lines at the end of a section that already exists.
+
+
+### Parked, 2026-09-17: finding faults before BZ does
+Everything that escaped on 2026-09-17 had one shape: the code ran, every
+check passed, and the app was wrong on BZ's real data or his real device.
+Region blank on every bottle, Campbeltown showing 1 of 6, a whiskey the
+library knew that the add form refused, a bottle page that kept the old
+name after a rename, a synced switch that a second device turned off, a
+write lost when Android backgrounded the app, a cropped splash icon, a
+search box with no room around it.
+
+Four answers, cheapest first. BZ parked the decision.
+
+1. A SHELF REPORT on every build: load the real shelf and library and fail
+   on what should never be true - a field the library holds and the app
+   drops, a field blank for everything, a bottle whose product is missing,
+   counts that swing more than a few percent between builds. Catches the
+   region, Campbeltown and custom-copy faults.
+2. A ROUND TRIP ON EVERY FIELD: fill every field a whiskey can have, push
+   it through load, merge and export, fail on any that arrives empty. This
+   is exactly how region was lost.
+3. JOURNEY TESTS for what BZ does: add a bottle the library already knows,
+   rename a bottle while standing on its page, switch a setting while a
+   second device holds an older copy.
+4. LOOK AT THE PICTURES: shots.js already photographs every screen at phone
+   size and nobody reads them. Compare each release against the last and
+   look at what moved.

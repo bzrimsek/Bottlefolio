@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.57  ·  2026-09-17 07:43 PM ET
+
+Look up all, at the top of Still missing. One entry at a time was never going to happen, so a single button asks about every entry on the list, waits and give-ups included. It says first how many it will ask about, how many of those had been given up on, and where the day's allowance will stop it. Only gaps are filled and nothing written by hand is touched; what comes back empty goes on waiting.
+
 ## v2.4.56  ·  2026-09-17 07:22 PM ET
 
 Space around Search and pour. Flush against the felt, the box read as part of the machine; it now has room above and below, and so does the list of matches.

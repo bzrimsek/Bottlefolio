@@ -11163,6 +11163,18 @@ sec('§269 the library in three lists');
     { s: { no: 3, at: today }, r: { no: 1, at: today } }, today);
   eq('a stopped entry waits last, with no date, and is counted',
     [gone.waiting.map(x => x.k).join(''), gone.waiting[1].dueIn, gone.stopped], ['rs', null, 1]);
+  {
+    const two = [{ k: 'a' }, { k: 'b', stopped: true }];
+    eq('it counts the entries and names the ones given up on',
+      /2 entries, including 1 given up on/.test(L.askAllSay(two, 100)), true);
+    eq('a full allowance says nothing about stopping',
+      /left today/.test(L.askAllSay(two, 100)), false);
+    eq('a short allowance says where it stops',
+      /Only 1 lookups left today/.test(L.askAllSay(two, 1)), true);
+    eq('and none at all says so', /No lookups left today/.test(L.askAllSay(two, 0)), true);
+    eq('it always says what it will not touch',
+      /nothing you have written is touched/.test(L.askAllSay(two, 100)), true);
+  }
   eq('the Still missing line says what and when',
     [L.missingSay(gone.waiting[0], today), L.missingSay(gone.waiting[1], today),
      L.missingSay({ missing: ['notes'] }, today)].map(s => s.replace(/^No [^\u00b7]+\u00b7 /, '')),
