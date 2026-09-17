@@ -493,6 +493,10 @@ copied within about a day of it.
 - **What have your buddies been drinking** and **what's popular** — neither
   has a node in firebase-rules.json (checked 2026-09-15). The design notes
   below stand.
+- **Taste vs shelf — PASSED, BZ 2026-09-16.** A line on the portrait where
+  verdicts disagree with the shelf, and verdicts weighting suggestions. BZ:
+  "That level of data is not in there, at least not yet." Revisit once
+  pours carry enough again / fine / not for me verdicts.
 - **A flavor profile from the tasting notes** — search has read every word of
   the notes since v2.3.27; nothing builds a profile from them.
 - **Two shelves side by side — CLOSED, exists.** BZ, 2026-09-16: it exists

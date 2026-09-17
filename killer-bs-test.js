@@ -1380,6 +1380,120 @@ sec('what is popular');
   eq('and marks what you already have', list.map(r => r.have), [true, false]);
 }
 
+sec('reference data: distilleries and brands');
+{
+  const bindings = [
+    { d: { value: 'http://www.wikidata.org/entity/Q2927641' },
+      label: { value: 'Buffalo Trace Distillery' }, countryLabel: { value: 'United States' },
+      placeLabel: { value: 'Kentucky' } },
+    { d: { value: 'http://www.wikidata.org/entity/Q2927641' },
+      label: { value: 'Buffalo Trace Distillery' }, alias: { value: 'George T. Stagg Distillery' },
+      countryLabel: { value: 'United States' } },
+    { d: { value: 'http://www.wikidata.org/entity/Q1' }, label: { value: 'Kavalan' },
+      countryLabel: { value: 'Taiwan' } }
+  ];
+  const houses = L.refHouses(bindings);
+  eq('a distillery is found by its name without the suffix',
+    houses[L.refHouseKey('Buffalo Trace')].country, 'United States');
+  eq('and by an alias', houses[L.refHouseKey('George T. Stagg Distillery')].name,
+    'Buffalo Trace Distillery');
+  eq('with its place', houses[L.refHouseKey('Buffalo Trace')].place, 'Kentucky');
+
+  eq('a label permit and the permit list name one plant',
+    [L.permitKey('DSP-KY-15019'), L.permitKey('KY-S-15019'), L.permitKey('CA-I-21111')],
+    ['KY-15019', 'KY-15019', null]);
+  const permits = L.permitNames('\uFEFF"Permit_Number","Owner_Name","Operating_Name"\n'
+    + '"KY-S-15019","BROWN-FORMAN DISTILLERY, INC.","WOODFORD RESERVE DISTILLERS COMPANY"\n'
+    + '"KY-S-113","SAZERAC","Buffalo Trace Distillery"');
+  eq('the permit list gives the operating name', permits['KY-15019'],
+    'WOODFORD RESERVE DISTILLERS COMPANY');
+  eq('an operator is its name without the company',
+    [L.refMakerName('WOODFORD RESERVE DISTILLERS COMPANY'),
+     L.refMakerName('SAZERAC DISTILLERS, LLC dba BARTON BRANDS OF CALIFORNIA'),
+     L.refMakerName("MAKER'S MARK DISTILLERY, INC.")],
+    ['WOODFORD RESERVE', 'BARTON OF CALIFORNIA', "MAKER'S MARK"]);
+
+  const csv = 'TTB ID,Permit No.,Serial Number,Completed Date,Fanciful Name,Brand Name,Origin,Origin Desc,Class/Type,Class/Type Desc\n'
+    + "'17124001000313',DSP-KY-113,170134,05/14/2017,,COLONEL E.H. TAYLOR,22,KENTUCKY,101,STRAIGHT BOURBON WHISKY\n"
+    + "'17124001000314',DSP-KY-113,170135,05/14/2017,,COLONEL E.H. TAYLOR,22,KENTUCKY,101,STRAIGHT BOURBON WHISKY\n"
+    + "'19032001000402',DSP-KY-113,190016,02/19/2019,STRAIGHT RYE,COLONEL E.H. TAYLOR,22,KENTUCKY,151,STRAIGHT RYE WHISKY\n"
+    + "'14037001000434',CA-I-21111,14054A,02/10/2014,CLASSICAL,KAVALAN,8A,TAIWAN,191,OTHER IMPORTED WHISKY\n";
+  const rows = L.ttbCsvRows(csv);
+  eq('every approval is read, the quote mark off its id', [rows.length, rows[0].ttbId],
+    [4, '17124001000313']);
+  const shifted = L.ttbCsvRows("'21001001000001',DSP-OR-1,1,01/01/2021,,HOTEL TANGO, LLC,19,OREGON,101,STRAIGHT BOURBON WHISKY\n");
+  eq('a brand with a comma keeps the columns after it in place',
+    [shifted[0].brand, shifted[0].origin, shifted[0].cls],
+    ['HOTEL TANGO, LLC', 'OREGON', 'STRAIGHT BOURBON WHISKY']);
+  eq('a US place with a letter code is still the United States',
+    L.ttbInUS({ originCode: '4E', origin: 'ALASKA' }), true);
+  eq('a state is the United States, an import its country',
+    [L.ttbCountry(rows[0]), L.ttbCountry(rows[3])], ['United States', 'Taiwan']);
+  eq('an import filed under its importer\u2019s state is not American',
+    L.ttbCountry({ originCode: '22', origin: 'KENTUCKY', cls: 'OTHER IMPORTED WHISKY' }), null);
+  eq('one name for a country, whoever said it',
+    [L.refCountry('United Kingdom of Great Britain and Ireland'),
+     L.refCountry('DISTRICT OF COLUMBIA'), L.refCountry('TAIWAN')],
+    ['United Kingdom', 'United States', 'Taiwan']);
+  eq('Scotland is the United Kingdom',
+    L.ttbCountry({ originCode: 'SC', origin: 'SCOTLAND' }), 'United Kingdom');
+  eq('categories from the class; an import has none',
+    [L.ttbSub(rows[0]), L.ttbSub(rows[2]), L.ttbSub(rows[3])], ['bourbon', 'rye', null]);
+
+  const brands = L.refBrands(rows, permits, houses);
+  const taylor = brands[L.libKey('COLONEL E.H. TAYLOR')];
+  eq('a brand counts its categories', taylor.subs, { bourbon: 2, rye: 1 });
+  eq('and its maker, when the permit names a known distillery', taylor.house,
+    'Buffalo Trace Distillery');
+  eq('an import keeps its country', brands.kavalan.country, 'Taiwan');
+
+  eq('a bottle finds the longest brand its name starts with',
+    L.refBrandFor('Colonel E.H. Taylor Small Batch', brands).name, 'Colonel E.h. Taylor');
+  eq('a name that says rye takes rye', L.refSubFor('Colonel E.H. Taylor Straight Rye',
+    taylor.subs), 'rye');
+  eq('a name that says bourbon is bourbon whatever the approvals count',
+    L.refSubFor('Angel\u2019s Envy Bourbon Port Finish', { rye: 5 }, 40), 'bourbon');
+  eq('unclassified approvals count against a category',
+    L.refSubFor('Angel\u2019s Envy Cellar Collection', { rye: 5 }, 40), null);
+  eq('two in three is not decisive', L.refSubFor('Colonel E.H. Taylor Small Batch',
+    taylor.subs), null);
+
+  const lib = {
+    a: { name: 'Colonel E.H. Taylor Straight Rye' },
+    b: { name: 'Kavalan Classical', dist: 'Kavalan', sub: 'scotch' },
+    c: { name: 'Colonel E.H. Taylor Barrel Proof', dist: 'Buffalo Trace', country: 'Japan' }
+  };
+  const plan = L.refFill(lib, { houses: houses, brands: brands });
+  /* The library already spells the house Buffalo Trace (entry c), so that spelling wins. */
+  eq('an empty entry takes its maker, in the library’s spelling, country and category',
+    plan.updates.a, { dist: 'Buffalo Trace', country: 'United States', sub: 'rye' });
+  eq('a stated country is never overwritten', plan.updates.c, undefined);
+  eq('a Scotch made in Taiwan is listed, not written',
+    plan.conflicts.map(x => x.k + ':' + x.says), ['b:made in Taiwan']);
+
+  /* AN OFFER IS FILLED FROM IT ON THE WAY IN. */
+  const offered = L.intakeVerdict({ name: 'Colonel E.H. Taylor Straight Rye', proof: 100 },
+    { library: { z: { name: 'Something Else', dist: 'Z' } }, removed: {}, graves: {},
+      ref: { houses: houses, brands: brands } });
+  eq('an offer with no maker takes the brand\u2019s',
+    [offered.product.dist, offered.product.sub, offered.product.country],
+    ['Buffalo Trace Distillery', 'rye', 'United States']);
+  eq('and says so', offered.fixes.some(f => /reference data/.test(f)), true);
+  eq('a product keeps its country', L.normalizeProduct({ name: 'X', country: 'Japan' }).country,
+    'Japan');
+  eq('and the library entry carries it', L.libraryEntry({ name: 'X', country: 'Japan' }).country,
+    'Japan');
+}
+
+sec('a barcode named by Open Food Facts');
+{
+  eq('a barcode it knows gives its name, size taken off',
+    L.offName({ status: 1, product: { alcohol_100g: 33.4,
+      product_name: 'Buffalo Trace Kentucky Straight Bourbon Whiskey, 75CL' } }),
+    'Buffalo Trace Kentucky Straight Bourbon Whiskey');
+  eq('one it does not know gives nothing', L.offName({ status: 0 }), null);
+}
+
 sec('a fill says how it went one way');
 {
   eq('running', L.fillSay({ done: 3, total: 10, wrote: 2, waiting: 1 }),

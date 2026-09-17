@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.32  ·  2026-09-16 10:43 PM ET
+
+Public reference data for the library (BZ, 2026-09-16). refdata.js downloads every distillery on Wikidata, every whisky label approval of the last 14 years from the TTB public registry, and TTB's spirits producers list, and loads them into shared/ref as distilleries and brands. New offers are filled from it on the way in (maker, category and country where empty), a bottle's page shows the distillery's country, and Clean up lists where the library disagrees with the reference data. A label filed under an importer's US state is not taken as American. A barcode nothing else knows is named from Open Food Facts when the add form opens.
+
 ## v2.4.31  ·  2026-09-16 09:19 PM ET
 
 Offers of bottles already in the library no longer reach BZ (BZ, 2026-09-16: I have all of these so they should be in the library already). An offer whose name the library holds is dropped as already in before anything else is checked, so a contradiction inside it no longer holds it for a person. A name nearly one already in, with every stated fact agreeing, is dropped as that entry rather than asked about. A brand given as the distillery, such as Weller, is read as the house every library entry files it under. And a fresh already-in verdict beats an older saved question. Checked against the live queue: all six waiting offers now clear as already in.

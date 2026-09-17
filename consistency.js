@@ -70,7 +70,7 @@ const tests = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
 /* THE NIGHTLY JOBS CALL THE ENGINE TOO. popular.js adds everybody's lists up
    with L.popularTotals, which the app never does - on purpose, because no
    device may read anybody else's list. A use there is a use. */
-const JOBS = ['popular.js'].map(f => fs.existsSync(__dirname + '/' + f)
+const JOBS = ['popular.js', 'refdata.js'].map(f => fs.existsSync(__dirname + '/' + f)
   ? fs.readFileSync(__dirname + '/' + f, 'utf8') : '').join('\n');
 const dead = [], unwired = [];
 defined.forEach(fn => {
