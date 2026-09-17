@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.50  ·  2026-09-17 11:26 AM ET
+
+The Google Sheet switch no longer turns itself off. It started as off on every device, so a device where it was never touched synced that off, and an empty sheet address, over the on from the device where it was switched on. It now starts as no setting, the way the fill-level switch does, and only a press sets it.
+
 ## v2.4.49  ·  2026-09-17 11:11 AM ET
 
 Region reaches the screens, the export and the Google Sheet. The library held a region for 102 Scotch entries, but loading a product dropped the field, so every region read blank. It is now kept. The monthly reference data job also reads Wikipedia's list of Scotch distilleries for each one's whisky region, and Wikidata's state for American distilleries, and fills the region of library entries that have none.
