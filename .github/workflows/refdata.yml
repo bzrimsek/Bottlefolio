@@ -1,0 +1,78 @@
+# REFERENCE DATA, refreshed once a month (BZ, 2026-09-17).
+#
+# Wikidata's distilleries, TTB's permit list and the month of TTB label
+# approvals that has just finished, shaped by the engine and loaded into
+# shared/ref; library entries with an empty maker, country, category or
+# style are filled from it (refdata.js, L.refFill). Nothing stated is ever
+# overwritten.
+#
+# refcache/ is public government and Wikidata data. It is kept between runs
+# as an artifact (90 days, so a monthly run always finds the last one), and
+# only the missing months are asked for. With no artifact it reads fourteen
+# years, which is slow and polite by design.
+#
+# It runs from main, which is what the gate published.
+name: Reference data
+
+on:
+  schedule:
+    - cron: '41 8 2 * *'     # the 2nd of every month, 08:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: refdata
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Last month's cache
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p refcache
+          last=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow refdata.yml \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$last" ] && gh run download "$last" --repo "$GITHUB_REPOSITORY" \
+               --name refcache --dir refcache; then
+            echo "restored $(ls refcache | wc -l) files from run $last"
+          else
+            echo "no earlier cache - reading every month"
+          fi
+
+      - name: Fetch
+        run: node refdata.js fetch
+
+      - name: Keep the cache for next month
+        uses: actions/upload-artifact@v4
+        with:
+          name: refcache
+          path: refcache/
+          retention-days: 90
+          include-hidden-files: false
+
+      - name: Load
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: node refdata.js load

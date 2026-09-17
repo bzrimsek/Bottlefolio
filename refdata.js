@@ -11,6 +11,10 @@
  *              included), as brand -> category and country
  *   TTB        the spirits producers list, permit -> distillery name
  *
+ * Run on the 2nd of every month by .github/workflows/refdata.yml (BZ,
+ * 2026-09-17), which keeps refcache/ between runs as an artifact so only the
+ * month just finished is asked for.
+ *
  * The shaping is the engine's (L.refHouses, L.refBrands, L.refFill), so the
  * app and this script cannot disagree about what a row means.
  */
@@ -60,6 +64,13 @@ async function ttbRange(from, to, depth) {
     headers: { Cookie: jar, 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' } });
   const html = await res.text();
   const m = /Total Matching Records: (\d+)/.exec(html.replace(/<[^>]*>/g, ' '));
+  /* A PAGE WITH NO COUNT IS NOT AN EMPTY MONTH. Saved as one, a blocked or
+     broken answer would sit in the cache as "no labels" for good. Every
+     whisky month since 2012 has had approvals, so no count is a failure. */
+  if (!m) {
+    throw new Error('TTB did not answer a search for ' + mmddyyyy(from) + '-' + mmddyyyy(to)
+      + ' (HTTP ' + res.status + ')');
+  }
   const total = m ? +m[1] : 0;
   if (total > 1000 && depth < 6) {
     const days = Math.floor((to.getTime() - from.getTime()) / 86400000);
@@ -86,16 +97,36 @@ async function fetchAll() {
   if (!fs.existsSync(CACHE)) fs.mkdirSync(CACHE);
   await fetchWikidata();
   const p = await fetch(PERMITS, { headers: { 'User-Agent': UA } });
-  if (!p.ok) throw new Error('the permit list answered HTTP ' + p.status);
-  fs.writeFileSync(path.join(CACHE, 'permits.csv'), await p.text());
-  say('TTB permits: saved');
+  /* The permit list moves when TTB republishes it; the copy already here is
+     kept rather than failing the month. */
+  if (p.ok) {
+    fs.writeFileSync(path.join(CACHE, 'permits.csv'), await p.text());
+    say('TTB permits: saved');
+  } else if (fs.existsSync(path.join(CACHE, 'permits.csv'))) {
+    say('TTB permits: HTTP ' + p.status + ', kept the copy from last time');
+  } else {
+    throw new Error('the permit list answered HTTP ' + p.status);
+  }
+  /* FINISHED MONTHS ONLY. A month read part-way and read again once it ends
+     would count its first weeks twice, so a part-month file is removed and
+     the month waits until it is over. */
   const now = new Date();
-  for (let y = now.getFullYear() - 14; y <= now.getFullYear(); y++) {
+  const thisMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  fs.readdirSync(CACHE).forEach(f => {
+    const d = /^ttb-(\d{4}-\d{2}-\d{2})_/.exec(f);
+    if (d && new Date(d[1] + 'T00:00:00Z') >= thisMonth) {
+      fs.unlinkSync(path.join(CACHE, f));
+      say('removed part-month ' + f);
+    }
+  });
+  for (let y = now.getUTCFullYear() - 14; y <= now.getUTCFullYear(); y++) {
     for (let mo = 0; mo < 12; mo++) {
       const from = new Date(Date.UTC(y, mo, 1));
-      if (from > now) break;
+      if (from >= thisMonth) break;
       const to = new Date(Date.UTC(y, mo + 1, 0));
-      await ttbRange(from, to > now ? now : to, 0);
+      const had = fs.readdirSync(CACHE).some(f => f.indexOf('ttb-' + from.toISOString().slice(0, 10)) === 0);
+      if (had) continue;
+      await ttbRange(from, to, 0);
       await sleep(800);
     }
   }
@@ -122,6 +153,14 @@ async function load(ref) {
       body: JSON.stringify(v) });
     if (!r.ok) throw new Error(p + ' refused: HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
   };
+  /* NEVER SMALLER BY MUCH. A fetch that lost months builds a thinner set, and
+     loading it would quietly undo what the library was filled from. */
+  const live = await (await fetch(DB + '/bz-apps/whisky/shared/ref/brands.json?shallow=true',
+    { headers: { Authorization: 'Bearer ' + tok } })).json();
+  const liveN = Object.keys(live || {}).length, newN = Object.keys(ref.brands).length;
+  if (liveN && newN < liveN * 0.9) {
+    throw new Error('refused: ' + newN + ' brands against ' + liveN + ' live - a fetch lost data');
+  }
   const at = Date.now();
   await put('ref', { at: at, houses: ref.houses, brands: ref.brands });
   say('loaded ' + Object.keys(ref.houses).length + ' distilleries and '
