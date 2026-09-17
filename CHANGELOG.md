@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.45  ·  2026-09-17 10:05 AM ET
+
+The splash screen on Android no longer crops the icon's corners. Android draws the splash icon inside a circle and was using the full-bleed 512px icon, so the glass rim and the top of the B were cut off; the manifest's large icon is now the padded artwork, which sits inside the circle.
+
 ## v2.4.44  ·  2026-09-17 10:02 AM ET
 
 The page names its icon for browser tabs and bookmarks. Only the home-screen icon was declared, so desktop browsers asked for favicon.ico, which does not exist, and bookmarks showed a blank icon.
