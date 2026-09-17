@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.39  ·  2026-09-17 08:13 AM ET
+
+Reference data now reads single malt from the label registry: a Scotch with no style whose brand files four in five of its label approvals as single malt, and whose name does not say blend or grain, takes the style single malt. Its mash bill is then fixed by law, which closes a gap no lookup could. The same rule fills offers on the way in.
+
 ## v2.4.38  ·  2026-09-16 11:26 PM ET
 
 Every list of bottles sorts on a header click. A buddy's shelf and the Venn lists, and the bottles behind a chart bar, now show Bottle, Age, Price and Proof columns under headers that sort both ways, painted by the same function as the Shelf headers; the chart pop-up's Proof, Price, Age and Name chips are gone. Age sorts oldest or youngest, with no age stated last. The choice is remembered, highest proof first by default.

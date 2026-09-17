@@ -1490,6 +1490,17 @@ sec('reference data: distilleries and brands');
   eq('an empty entry takes its maker, in the library’s spelling, country and category',
     plan.updates.a, { dist: 'Buffalo Trace', country: 'United States', sub: 'rye' });
   eq('a stated country is never overwritten', plan.updates.c, undefined);
+  const malt = { name: 'Glenfiddich', n: 48, sm: 47 };
+  eq('a brand filed as single malt gives a Scotch with no style its style',
+    [L.refStyleFor({ name: 'Glenfiddich 30 Year Old', sub: 'scotch' }, malt),
+     L.refStyleFor({ name: 'Glenfiddich 30', sub: 'scotch', style: 'cask strength' }, malt),
+     L.refStyleFor({ name: 'Grant\u2019s Triple Wood', sub: 'scotch' }, { n: 4, sm: 1 }),
+     L.refStyleFor({ name: 'Johnnie Walker Blended Scotch', sub: 'scotch' }, malt),
+     L.refStyleFor({ name: 'Glenfiddich 30', sub: 'bourbon' }, malt)],
+    ['single malt', null, null, null, null]);
+  eq('and the mash bill it closes is fixed by law',
+    L.libraryGaps({ name: 'Glenfiddich 30', sub: 'scotch', style: 'single malt',
+      proof: 86, tn: { nose: 'x', palate: 'y' } }).indexOf('mash'), -1);
   eq('a Scotch made in Taiwan is listed, not written',
     plan.conflicts.map(x => x.k + ':' + x.says), ['b:made in Taiwan']);
 
