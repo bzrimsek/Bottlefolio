@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.33  ·  2026-09-16 11:06 PM ET
+
+The library editor has a Country field, so a country from reference data can be corrected by hand. The library list marks an entry that is missing something with the waiting bottle, standing still and filled to how complete the entry is, in place of an exclamation mark (BZ, 2026-09-16).
+
 ## v2.4.32  ·  2026-09-16 10:43 PM ET
 
 Public reference data for the library (BZ, 2026-09-16). refdata.js downloads every distillery on Wikidata, every whisky label approval of the last 14 years from the TTB public registry, and TTB's spirits producers list, and loads them into shared/ref as distilleries and brands. New offers are filled from it on the way in (maker, category and country where empty), a bottle's page shows the distillery's country, and Clean up lists where the library disagrees with the reference data. A label filed under an importer's US state is not taken as American. A barcode nothing else knows is named from Open Food Facts when the add form opens.
