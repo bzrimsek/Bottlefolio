@@ -2,6 +2,14 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.47  ·  2026-09-17 10:26 AM ET
+
+Tastes like and store picks, as described in v2.4.46, which the cloud walk stopped: long names in the Tastes like list were cut off on a phone. They now wrap.
+
+## v2.4.46  ·  2026-09-17 10:21 AM ET
+
+Tastes like: a bottle's page, and a bottle looked at in Shop, list up to five bottles on your shelf whose tasting notes share the most flavors, naming the flavors they share. Flavors are read from nose, palate and finish as families (sherry, dried fruit, peat, sea salt and so on), three in common at least, and rare ones count for more than the vanilla and oak nearly every note has. Store picks: Where did it come from? now takes who picked the barrel, barrel number, warehouse and floor, each optional, shown under that bottle.
+
 ## v2.4.45  ·  2026-09-17 10:05 AM ET
 
 The splash screen on Android no longer crops the icon's corners. Android draws the splash icon inside a circle and was using the full-bleed 512px icon, so the glass rim and the top of the B were cut off; the manifest's large icon is now the padded artwork, which sits inside the circle.

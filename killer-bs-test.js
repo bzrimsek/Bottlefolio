@@ -1518,6 +1518,31 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('tastes like: flavors from the notes');
+{
+  eq('flavors are read as families, whole words only',
+    L.flavorsOf({ tn: { nose: 'Raisins, nutmeg and sea spray', palate: 'Oloroso sherry, cocoa',
+      finish: 'Long, peppery, a season of oak' } }).sort(),
+    ['chocolate', 'dried fruit', 'nutmeg', 'oak', 'pepper', 'sea salt', 'sherry'].sort());
+  eq('no notes, no flavors', L.flavorsOf({ name: 'X' }), []);
+  const cat = {
+    a: { k: 'a', name: 'Sherry Bomb', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon', finish: 'oak, vanilla' } },
+    b: { k: 'b', name: 'Other Sherry Bomb', tn: { nose: 'dates and sherry', palate: 'chocolate, clove', finish: 'oak' } },
+    c: { k: 'c', name: 'Peat Monster', tn: { nose: 'peat smoke, iodine', palate: 'sea salt, vanilla', finish: 'oak, ash' } },
+    d: { k: 'd', name: 'Unowned Sherry', tn: { nose: 'raisin, sherry', palate: 'cocoa', finish: 'oak' } }
+  };
+  const owned = [{ id: 'B1', k: 'b', status: 'open' }, { id: 'B2', k: 'c', status: 'open' }];
+  const like = L.tastesLike(cat.a, cat, owned, 5);
+  eq('what you own that shares three flavors or more, and only that',
+    like.map(r => r.k), ['b']);
+  eq('the shared flavors are named, the rarest first, oak last',
+    like[0].shared[like[0].shared.length - 1], 'oak');
+  eq('a bottle is never like itself',
+    L.tastesLike(cat.b, cat, owned, 5).map(r => r.k).indexOf('b'), -1);
+  eq('two flavors are not enough to say anything',
+    L.tastesLike({ name: 'Thin', tn: { nose: 'oak', palate: 'vanilla' } }, cat, owned, 5), []);
+}
+
 sec('a barcode named by Open Food Facts');
 {
   eq('a barcode it knows gives its name, size taken off',
@@ -11921,6 +11946,15 @@ sec('§280 where it came from');
   eq('a retailer is a name, not a place', web.shop, 'Seelbachs');
   eq('and reads as one', L.fromLine(web), 'Bought from Seelbachs');
 
+  eq('a store pick keeps what was typed and drops the rest',
+    L.bottlePick({ by: ' Total Wine ', barrel: '1234', warehouse: '', floor: '5' }),
+    { by: 'Total Wine', barrel: '1234', floor: '5' });
+  eq('nothing typed is no pick', L.bottlePick({ by: ' ' }), null);
+  eq('and a pick reads as one line under the bottle',
+    L.bottleStory({ pick: { by: 'Total Wine', barrel: '1234', floor: '5' } }),
+    ['Picked by Total Wine \u00b7 barrel 1234 \u00b7 floor 5']);
+  eq('a pick with no picker still says what it is',
+    L.pickLine({ warehouse: 'H' }), 'Store pick \u00b7 warehouse H');
   const gift = L.bottleFrom('a gift', 'Marcus');
   eq('a gift is a person', gift.who, 'Marcus');
   eq('and reads as one', L.fromLine(gift), 'A gift from Marcus');
