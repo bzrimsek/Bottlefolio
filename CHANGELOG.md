@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.35  ·  2026-09-16 11:15 PM ET
+
+The pour button on list rows says Pour it, because the table column clipped Log a pour; its hover title and spoken label still say Log a pour.
+
 ## v2.4.34  ·  2026-09-16 11:12 PM ET
 
 Buddies: the Everyone panel no longer carries a shelf title, badges or a written description; it shows only where the shelves meet. Library Clean up: disagreements with reference data now show open under the heading Check the country instead of a collapsed line, the library is read when the page is drawn, an empty reference read is no longer remembered for the whole session, and the check logs what it compared.
