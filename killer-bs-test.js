@@ -3915,6 +3915,21 @@ eq('null product is safe', L.notesFor(null, [], 'mine').length, 0);
 sec('catalog merge');
 const base = { A: { k: 'A', name: 'Alpha', proof: 90 }, B: { k: 'B', name: 'Beta', proof: 100 } };
 eq('base passes through', Object.keys(L.mergeCatalog(base, {}, {}, {})).sort(), ['A', 'B']);
+/* YOUR OWN COPY LEADS, AND THE LIBRARY FILLS ITS BLANKS (BZ, 2026-09-17). */
+{
+  const lib = { X: { k: 'X', name: 'Longrow 18', region: 'Campbeltown', country: 'United Kingdom',
+    dist: 'Springbank', proof: 92 } };
+  const mine = { X: { k: 'X', name: 'Longrow 18', region: '', dist: 'Springbank', proof: 92.4 } };
+  const one = L.mergeCatalog(lib, {}, mine, {}).X;
+  eq('the blank takes the library\u2019s answer and what you typed stands',
+    [one.region, one.country, one.proof], ['Campbeltown', 'United Kingdom', 92.4]);
+  eq('and an edit still wins over both',
+    L.mergeCatalog(lib, { X: { region: 'Islay' } }, mine, {}).X.region, 'Islay');
+  eq('a copy of something the library has never heard of is untouched',
+    L.mergeCatalog({}, {}, { Y: { k: 'Y', name: 'Mine' } }, {}).Y.name, 'Mine');
+  eq('and a blank is only filled where there is something to fill it with',
+    L.fillBlanks({ a: 1 }, { a: 0, b: '' }), { a: 0, b: '' });
+}
 eq('edit overrides one field', L.mergeCatalog(base, { A: { proof: 92 } }, {}, {}).A.proof, 92);
 eq('edit keeps other fields', L.mergeCatalog(base, { A: { proof: 92 } }, {}, {}).A.name, 'Alpha');
 eq('base is not mutated', base.A.proof, 90);

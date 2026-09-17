@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.53  ·  2026-09-17 06:58 PM ET
+
+Two fixes. Editing a bottle now redraws the page you edited from, so a renamed bottle shows its new name at once instead of after leaving and coming back. And your own copy of a whiskey no longer hides what the library knows: a blank field in your copy is filled from the library entry of the same name, so region, country and mash bill come through. Your typed values and your edits still win. On BZ's shelf this restores 4 regions and 10 countries, including five of the six Campbeltown bottles.
+
 ## v2.4.52  ·  2026-09-17 06:51 PM ET
 
 Region is editable and judged sensibly. The add and correct form now holds Region and Country, so a region can be fixed without opening the library. Clean up no longer reports a state on a bourbon: it reports a Scotch region on something that is not Scotch, or a Scotch carrying a place that is not one of the six, and says which six. The maskable icons carry more space around the glass and the B, so the Android splash screen no longer cuts their corners.
