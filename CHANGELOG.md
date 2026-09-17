@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.52  ·  2026-09-17 06:51 PM ET
+
+Region is editable and judged sensibly. The add and correct form now holds Region and Country, so a region can be fixed without opening the library. Clean up no longer reports a state on a bourbon: it reports a Scotch region on something that is not Scotch, or a Scotch carrying a place that is not one of the six, and says which six. The maskable icons carry more space around the glass and the B, so the Android splash screen no longer cuts their corners.
+
 ## v2.4.51  ·  2026-09-17 11:47 AM ET
 
 The Google Sheet is written when the app opens, at once when its switch is pressed, ten seconds after a shelf change, and immediately when the app goes to the background. A phone stops a waiting timer as soon as you switch apps, and the first write after switching it on was lost that way.

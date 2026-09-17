@@ -16780,6 +16780,20 @@ sec('\u00a7366 the check names the fix');
     /distillery/i.test(L.auditSuggestion('bare', {}, '')), true);
   eq('a Scotch region on a bourbon is told to clear it',
     /clear it/i.test(L.auditSuggestion('region', {}, '')), true);
+  /* A STATE ON A BOURBON IS A REGION (BZ, 2026-09-17); a Scotch region on
+     something that is not Scotch is not. */
+  eq('which regions are a fault and which are not',
+    [L.regionFault({ sub: 'bourbon', region: 'Kentucky' }),
+     L.regionFault({ sub: 'bourbon', region: 'Islay' }),
+     L.regionFault({ sub: 'scotch', region: 'Islay' }),
+     L.regionFault({ sub: 'scotch', region: 'Kentucky' }),
+     L.regionFault({ sub: 'bourbon' })],
+    [false, true, false, true, false]);
+  eq('a faulty row names the entry, its category and the region',
+    L.regionFaultRow({ _key: 'a', name: 'Bourbon X', sub: 'bourbon', region: 'Islay' }),
+    { key: 'a', text: 'Bourbon X — bourbon, region Islay' });
+  eq('and the Scotch one is told what the six are',
+    /Islay/.test(L.auditSuggestion('region', { sub: 'scotch' }, '')), true);
   /* EXACT IDS. The first version matched /proof/i, which caught `proof` -
      the out-of-range finding - and told somebody to rename a bottle whose
      name was fine. */
