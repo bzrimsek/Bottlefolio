@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.51  ·  2026-09-17 11:47 AM ET
+
+The Google Sheet is written when the app opens, at once when its switch is pressed, ten seconds after a shelf change, and immediately when the app goes to the background. A phone stops a waiting timer as soon as you switch apps, and the first write after switching it on was lost that way.
+
 ## v2.4.50  ·  2026-09-17 11:26 AM ET
 
 The Google Sheet switch no longer turns itself off. It started as off on every device, so a device where it was never touched synced that off, and an empty sheet address, over the on from the device where it was switched on. It now starts as no setting, the way the fill-level switch does, and only a press sets it.
