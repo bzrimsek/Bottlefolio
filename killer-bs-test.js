@@ -20448,8 +20448,10 @@ const near = L.intakeVerdict({
     name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
     dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
     tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' }, opts);
-  eq('a name that is nearly one already in is a question',
-    near.verdict, 'ask');
+  /* BZ, 2026-09-16: a near name whose stated facts all agree is the entry
+     already in - dropped, not asked. */
+  eq('a name that is nearly one already in, facts agreeing, is dropped',
+    near.verdict, 'out');
   eq('and it names the one it reads like',
     /1st Edition/.test(near.why), true);
   /* A NAME THE SAME BOTTLE ALREADY ANSWERS TO is not a near-duplicate,
@@ -20534,23 +20536,23 @@ const near = L.intakeVerdict({
     { name: '' },                                               // out
     { name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
       dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
-      tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' },  // ask
+      tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' },  // out: already in
     { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 92, sub: 'scotch',
       mash: '100 barley', tn: { nose: 'a', palate: 'b', finish: 'c' } },  // in
     { name: 'Penelope Rio Rosa', dist: 'Penelope Bourbon', proof: 100,
       sub: 'bourbon' }                                          // fill
   ], opts);
   eq('the queue splits four ways', [plan.in.length, plan.fill.length,
-    plan.ask.length, plan.out.length].join(','), '1,1,1,2');
+    plan.ask.length, plan.out.length].join(','), '1,1,0,3');
   eq('and what goes in is what nobody has to read', plan.adds, 2);
   /* AND NOTHING IS BZ'S UNTIL THE WEB HAS TRIED. The near-duplicate is a
      question the search can settle, so the sentence counts it as work in
      progress rather than as work for him. */
   eq('it says it in one sentence', L.intakeSay(plan),
     '5 offered. 2 go in (1 of them thin, and filled in on the way), '
-    + '2 add nothing, 1 goes out to the web first, nothing needs you.');
+    + '3 add nothing, nothing needs you.');
   eq('and what is still being worked on is not his', plan.yours.length, 0);
-  eq('the web has one to answer', plan.pending.length, 1);
+  eq('and the web has nothing to answer', plan.pending.length, 0);
   eq('an empty queue says so', L.intakeSay(L.intakePlan([], opts)),
     'Nothing waiting.');
 
@@ -20668,11 +20670,15 @@ const near = L.intakeVerdict({
       product: { name: 'X' }, why: 'w' }, null, opts).tried, true);
 
   /* THE FACTS TELL TWO BOTTLES APART. */
-  const nearAgain = L.intakeVerdict({
+  const nearOut = L.intakeVerdict({
     name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
     dist: 'Heaven Hill', sub: 'bourbon', tn: { nose: 'wheat' },
     mash: '70 corn, 20 wheat, 10 barley' }, opts);
-  eq('before the search it is a question', nearAgain.verdict, 'ask');
+  eq('with nothing contradicting it, it is dropped without a search',
+    nearOut.verdict, 'out');
+  /* The settling itself still answers a question put to it. */
+  const nearAgain = Object.assign({}, nearOut, { verdict: 'ask',
+    why: 'reads like ' + nearOut.near.name });
   eq('a proof that differs settles it as a different bottle',
     L.intakeSettle(nearAgain, { proof: 124 }, opts).verdict !== 'ask', true);
   eq('facts that all match settle it as the one already in',
@@ -20685,6 +20691,35 @@ const near = L.intakeVerdict({
   eq('and says so, so the question is honest about why it is here',
     /could not settle it/.test(L.intakeSettle(nearAgain, null, opts).why),
     true);
+
+  /* ALREADY IN COMES FIRST, whatever the offer contradicts (BZ: "I have all
+     of these so they should be in the library already"). */
+  const inLib = { colonel_e_h_taylor_jr_small_batch: {
+    name: 'Colonel E.H. Taylor, Jr. Small Batch', dist: 'Buffalo Trace',
+    sub: 'bourbon', proof: 100 },
+    w_l_weller_12_year_old: { name: 'W.L. Weller 12 Year Old',
+      dist: 'Buffalo Trace Distillery', sub: 'bourbon', proof: 90, age: 12 } };
+  const oLib = { library: inLib, removed: {}, graves: {} };
+  eq('an offer the library already names is already in, contradiction or not',
+    L.intakeVerdict({ name: 'Colonel E.H. Taylor, Jr. Small Batch',
+      dist: 'Colonel E.H. Taylor, Jr.', scar: 'limited', proof: 100,
+      sub: 'bourbon' }, oLib).rule, 'already in');
+  /* A BRAND IS READ AS ITS HOUSE. */
+  eq('a brand every library entry files under one house is that house',
+    L.intakeHouse('Weller', L.libraryHouses(inLib), inLib).spelling,
+    'Buffalo Trace Distillery');
+  eq('so a Weller offered under the brand is the one already in',
+    L.intakeVerdict({ name: 'Weller 12 Year', dist: 'Weller', proof: 90,
+      sub: 'bourbon' }, oLib).verdict, 'out');
+  eq('and a house nobody names is still new',
+    L.intakeHouse('Nowhere Spirits', L.libraryHouses(inLib), inLib).known, false);
+  /* AN OLDER SAVED QUESTION DOES NOT OUTLIVE A FRESH "ALREADY IN". */
+  const asked = { name: 'Colonel E.H. Taylor, Jr. Small Batch',
+    dist: 'Colonel E.H. Taylor, Jr.', proof: 100, sub: 'bourbon' };
+  asked.vetted = { verdict: 'ask', rule: 'it contradicts itself',
+    sig: L.offerSig(asked), product: {} };
+  eq('a fresh already-in beats a saved question',
+    L.intakePlan([{ uid: 'u', slug: 's', entry: asked }], oLib).out.length, 1);
 
   /* A ROW THAT CONTRADICTS ITSELF, put right by what came back. */
   const conflicted = L.intakeVerdict({ name: 'Something Blanco',
