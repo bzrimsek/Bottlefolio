@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.37  ·  2026-09-16 11:23 PM ET
+
+Shelf column headers: every column now sorts both ways on a second click - Bottle A to Z and Z to A, Type A to Z and Z to A, Have most and fewest - and each shows its direction. Type sorts by the words the column shows. Proof and Price read every value as a number, so a bottle with no proof no longer sits at the top of highest first; missing values sit last either way.
+
 ## v2.4.36  ·  2026-09-16 11:19 PM ET
 
 Every button that records a pour now says Pour it, replacing Log a pour. The shelf's Type column shows the type, so a Tennessee bottled in bond reads Tennessee, and a style shows only when there is no type. Clean up's Check the country rows have a Correct as it stands button, saved with the other reviewed findings, so a checked entry stops being flagged.

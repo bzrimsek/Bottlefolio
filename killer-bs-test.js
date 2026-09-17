@@ -275,6 +275,28 @@ eq('missing price sorts last when cheapest first',
 // Ties fall back to name so the order never depends on insertion.
 const tied = [{ k: 'y', name: 'Yankee', proof: 90 }, { k: 'x', name: 'Xray', proof: 90 }];
 eq('ties break on name', L.shelfSort(tied, 'proof').map(p => p.k), ['x', 'y']);
+// One missing or typed-in proof must not scramble the rest.
+const gappy = [{ k: 'm', name: 'Mid', proof: '100' }, { k: 'n', name: 'None' },
+  { k: 'h', name: 'High', proof: 130 }, { k: 'l', name: 'Low', proof: 80 }];
+eq('highest proof first, a missing one last',
+  L.shelfSort(gappy, 'proofd').map(p => p.k), ['h', 'm', 'l', 'n']);
+/* Forty rows, every seventh with no proof: the old subtraction put those at
+   the TOP of highest-first, which is what BZ saw. */
+const forty = Array.from({ length: 40 }, (_, i) => ({ k: 'k' + i, name: 'N' + i,
+  proof: i % 7 === 0 ? undefined : 80 + (i * 37) % 60 }));
+{
+  const down = L.shelfSort(forty, 'proofd').map(p => p.proof);
+  const known = down.filter(v => v !== undefined);
+  eq('on a long shelf, highest first runs down and the missing sit last',
+    [known.every((v, i) => !i || known[i - 1] >= v), down.slice(-6).every(v => v === undefined)],
+    [true, true]);
+}
+eq('lowest proof first, a missing one last',
+  L.shelfSort(gappy, 'proof').map(p => p.k), ['l', 'm', 'h', 'n']);
+eq('name Z to A', L.shelfSort(S3, 'namez').map(p => p.k), ['c', 'b', 'a']);
+eq('type sorts by the words shown',
+  L.shelfSort([{ k: 'r', name: 'R', sub: 'rye' }, { k: 'b', name: 'B', sub: 'bourbon' }], 'sub')
+    .map(p => p.k), ['b', 'r']);
 eq('an unknown sort falls back to name', L.shelfSort(S3, 'zzz').map(p => p.k),
   ['a', 'b', 'c']);
 eq('sorting does not mutate the input', S3.map(p => p.k), ['a', 'b', 'c']);
@@ -6630,11 +6652,13 @@ sec('§208 renaming a library entry');
  */
 sec('§209 the column headers sort the shelf');
 {
-  // A single-direction column just selects itself, however often it is hit.
-  eq('Bottle selects name', L.nextSort('name', 'got'), 'name');
-  eq('and again is still name', L.nextSort('name', 'name'), 'name');
-  eq('Type selects sub', L.nextSort('sub', 'name'), 'sub');
-  eq('Have selects have', L.nextSort('have', 'name'), 'have');
+  // Every column goes both ways (BZ, 2026-09-16).
+  eq('Bottle starts A to Z', L.nextSort('name', 'got'), 'name');
+  eq('and again is Z to A', L.nextSort('name', 'name'), 'namez');
+  eq('Type starts A to Z, then Z to A', [L.nextSort('sub', 'name'), L.nextSort('sub', 'sub')],
+    ['sub', 'subz']);
+  eq('Have starts most, then fewest', [L.nextSort('have', 'name'), L.nextSort('have', 'have')],
+    ['have', 'havel']);
 
   // A number column swaps direction on the second click, and wraps back.
   eq('Proof starts ascending', L.nextSort('proof', 'got'), 'proof');
@@ -6652,8 +6676,8 @@ sec('§209 the column headers sort the shelf');
   eq('the sorted number column shows its direction',
     L.sortMark('proof', 'proof'), '\u2191');
   eq('and the other way', L.sortMark('proof', 'proofd'), '\u2193');
-  eq('a one-way column just shows it is the one',
-    L.sortMark('name', 'name'), '\u00b7');
+  eq('names show their direction too',
+    [L.sortMark('name', 'name'), L.sortMark('name', 'namez')], ['\u2191', '\u2193']);
   eq('a column that is not sorting shows nothing',
     L.sortMark('name', 'proof'), '');
   eq('and neither does any column under Recently added, which has none',
