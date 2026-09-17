@@ -61,11 +61,23 @@ jobs:
             echo "no earlier cache - reading every month"
           fi
 
-      # Says in the log whether TTB answers this runner at all, and how.
-      - name: Can TTB be reached
-        continue-on-error: true
+      # TTB'S SERVER LEAVES OUT ITS MIDDLE CERTIFICATE (2026-09-17: "unable to
+      # get local issuer certificate"). Windows fetches it on its own, Linux
+      # does not. It is fetched from the address TTB's own certificate names,
+      # and used only if it chains to a root this runner already trusts.
+      - name: TTB's missing certificate
         run: |
-          curl -sS -o /dev/null --max-time 60 -w 'TTB answered HTTP %{http_code} in %{time_total}s from %{remote_ip}\n' -A 'Bottlefolio/2.4 reference data (whiskey collection app)' https://ttbonline.gov/colasonline/publicSearchColasBasic.do
+          url=$(echo | openssl s_client -connect ttbonline.gov:443 -servername ttbonline.gov 2>/dev/null \
+            | openssl x509 -noout -text | grep -o 'CA Issuers - URI:[^ ]*' | head -1 | sed 's/CA Issuers - URI://')
+          echo "issuer certificate: $url"
+          curl -sSfL --max-time 60 "$url" -o ttb-ca.der
+          openssl x509 -inform DER -in ttb-ca.der -out ttb-ca.pem 2>/dev/null || cp ttb-ca.der ttb-ca.pem
+          openssl verify ttb-ca.pem
+          echo "NODE_EXTRA_CA_CERTS=$PWD/ttb-ca.pem" >> "$GITHUB_ENV"
+          cat /etc/ssl/certs/ca-certificates.crt ttb-ca.pem > ttb-bundle.pem
+          curl -sS -o /dev/null --max-time 60 --cacert ttb-bundle.pem \
+            -w 'TTB answered HTTP %{http_code}\n' \
+            https://ttbonline.gov/colasonline/publicSearchColasBasic.do || true
 
       - name: Fetch
         run: node refdata.js fetch

@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.42  ·  2026-09-17 09:13 AM ET
+
+The monthly reference data job supplies the middle certificate TTB's server leaves out, fetched from the address TTB's own certificate names and used only when it chains to a root the runner already trusts. Without it GitHub's Linux runners refused the connection; Windows fills the gap on its own.
+
 ## v2.4.41  ·  2026-09-17 09:09 AM ET
 
 The monthly reference data job now logs why a request failed, not only that it did, and first tests whether TTB answers GitHub's servers at all.
