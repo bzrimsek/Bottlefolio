@@ -1288,7 +1288,9 @@ check('no fixed svg id is emitted by a repeated drawing',
        own. One number somebody chose, not a collection to merge. */
     'intakeBudget',
     /* Whether this person's shelf counts toward what's popular. */
-    'popularOn'];
+    'popularOn',
+    /* The Google Sheet copy of the shelf: a switch, and its address. */
+    'sheetOn', 'sheetUrl'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at

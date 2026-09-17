@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.48  ·  2026-09-17 10:59 AM ET
+
+Google Sheet of the shelf. An admin can switch on Keep a Google Sheet of my shelf (Buddies, How others see you); half a minute after the shelf changes, the service rewrites a Sheet named Bottlefolio Shelf in its Google Drive, one row per bottle including gone ones, so another chat can read the shelf through the Google Drive connector. The service lets one account write it. The shelf export gains the stored fields it lacked: country, age statement, bottles held, level, corn, rye, wheat and malted barley shares, whether the mash bill is stated or fixed by law, acquired date, where it came from, store pick, how it left, pours, last poured and your own notes. Service build 2.4.3: sign-in answers which account is asking, and a new sheet mode.
+
 ## v2.4.47  ·  2026-09-17 10:26 AM ET
 
 Tastes like and store picks, as described in v2.4.46, which the cloud walk stopped: long names in the Tastes like list were cut off on a phone. They now wrap.

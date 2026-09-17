@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.2';
+var GS_BUILD = '2.4.3';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -62,10 +62,14 @@ function signedIn_(token) {
   /* A token is good for an hour and this answer is kept for five
      minutes, so a run of lookups costs one verification rather than one
      each. Keyed by a digest of the token, never by the token. */
-  var key = 'tok' + Utilities.base64Encode(
+  /* Answers WHO: the account id, which is truthy, so every caller that only
+     asks "signed in?" is unchanged. A new key prefix, so no cached 'ok' from
+     before can pass for an id. */
+  var key = 'uid' + Utilities.base64Encode(
     Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, t));
   var cache = CacheService.getScriptCache();
-  if (cache.get(key) === 'ok') return true;
+  var hit = cache.get(key);
+  if (hit) return hit;
   var res = UrlFetchApp.fetch(
     'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key='
       + FIREBASE_API_KEY,
@@ -75,9 +79,59 @@ function signedIn_(token) {
   var body = {};
   try { body = JSON.parse(res.getContentText()); }
   catch (err) { return false; }
-  if (!body.users || !body.users[0]) return false;
-  cache.put(key, 'ok', 300);
-  return true;
+  if (!body.users || !body.users[0] || !body.users[0].localId) return false;
+  cache.put(key, body.users[0].localId, 300);
+  return body.users[0].localId;
+}
+
+/* THE SHELF AS A GOOGLE SHEET (BZ, 2026-09-17), in the Drive of the account
+   this service runs as, so another chat can read it with the Google Drive
+   connector. One account writes it: the first signed-in account to write it
+   owns it, and it is rewritten whole each time. A cell that starts like a
+   formula is written as text. */
+function writeShelfSheet_(body, uid) {
+  var props = PropertiesService.getScriptProperties();
+  var owner = props.getProperty('SHEET_OWNER');
+  if (owner && owner !== uid) {
+    return { error: 'not yours', why: 'The shelf sheet belongs to another account.' };
+  }
+  var header = body.header || [];
+  var rows = body.rows || [];
+  if (!header.length) return { error: 'nothing to write' };
+  var ss = null;
+  var id = props.getProperty('SHEET_ID');
+  if (id) {
+    try { ss = SpreadsheetApp.openById(id); } catch (err) { ss = null; }
+  }
+  if (!ss) {
+    ss = SpreadsheetApp.create('Bottlefolio Shelf');
+    props.setProperty('SHEET_ID', ss.getId());
+  }
+  if (!owner) props.setProperty('SHEET_OWNER', uid);
+  var width = header.length;
+  var cell = function (v) {
+    if (v === null || v === undefined) return '';
+    return (typeof v === 'string' && /^[=+\-@]/.test(v)) ? "'" + v : v;
+  };
+  var data = [header].concat(rows.map(function (r) {
+    var out = (r || []).slice(0, width);
+    while (out.length < width) out.push('');
+    return out.map(cell);
+  }));
+  var sh = ss.getSheets()[0];
+  sh.setName('Shelf');
+  sh.clearContents();
+  sh.getRange(1, 1, data.length, width).setValues(data);
+  sh.setFrozenRows(1);
+  var about = ss.getSheetByName('About') || ss.insertSheet('About');
+  about.clearContents();
+  about.getRange(1, 1, 3, 2).setValues([
+    ['Updated', String(body.at || new Date().toISOString())],
+    ['Bottles', rows.length],
+    ['What this is', 'Bottlefolio, rewritten whenever the shelf changes. One row '
+      + 'per bottle, gone bottles included with how they left. Only what the app '
+      + 'stores; a blank cell is not known.']]);
+  return { ok: true, rows: rows.length, url: ss.getUrl() };
 }
 
 /* One refusal, so both doors say it the same way. */
@@ -181,6 +235,9 @@ function doPost(e) {
     if (body.mode === 'bottle') return json({ recap: writeBottle_(body) });
     if (body.mode === 'label') return json(readLabel_(body));
     if (body.mode === 'shelf') return json(readShelf_(body));
+    if (body.mode === 'sheet') {
+      return json(writeShelfSheet_(body, signedIn_(body.idToken)));
+    }
   } catch (err) {
     return json({ error: String(err) });
   }

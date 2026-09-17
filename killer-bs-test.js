@@ -13425,6 +13425,32 @@ sec('\u00a7308 the export, and the comma in a whisky name');
   const mashCol = L.EXPORT_COLS.indexOf('Mash bill');
   eq('a single malt exports the bill its category fixes',
     rows[0][mashCol], '100% malted barley');
+  /* THE SHEET'S EXTRA COLUMNS: only what is stored (BZ, 2026-09-17). */
+  const col = name => L.EXPORT_COLS.indexOf(name);
+  const cat2 = { r: { k: 'r', name: 'Rye One', sub: 'rye', proof: 100, country: 'United States',
+    mash: '51% rye, 45% corn, 4% malted barley' } };
+  const bs2 = [{ id: 'B1', k: 'r', status: 'open', fill: 50, got: '2026-01-02',
+      pick: { by: 'Total Wine', barrel: '7' } },
+    { id: 'B2', k: 'r', status: 'gone', exit: 'finished', exitDate: '2026-05-01' }];
+  const hist2 = [{ kind: 'pour', k: 'r', at: '2026-03-01' }, { kind: 'pour', k: 'r', at: '2026-04-01' }];
+  const full = L.exportRows(cat2, bs2, {}, {}, { gone: true, history: hist2,
+    edits: { r: { userNote: 'Spicy  one' } } });
+  eq('gone bottles are rows when asked for', full.length, 2);
+  eq('a grain share is read from the bill, blank when it is not there',
+    [L.mashPercent('75% corn, 13% rye, 12% malted barley', 'rye'),
+     L.mashPercent('75% corn, 13% rye, 12% malted barley', 'wheat'),
+     L.mashPercent('', 'corn')], [13, '', '']);
+  eq('and not otherwise', L.exportRows(cat2, bs2, {}, {}).length, 1);
+  eq('the stored facts come across',
+    [full[0][col('Country')], full[0][col('Age statement')], full[0][col('Bottles held')],
+     full[0][col('Level (%)')], full[0][col('Rye %')], full[0][col('Corn %')],
+     full[0][col('Malted barley %')], full[0][col('Wheat %')], full[0][col('Mash published')],
+     full[0][col('Acquired')], full[0][col('Store pick')], full[0][col('Pours')],
+     full[0][col('Last poured')], full[0][col('Your notes')]],
+    ['United States', 'no', 1, 50, 51, 45, 4, '', 'stated', '2026-01-02',
+     'Picked by Total Wine \u00b7 barrel 7', 2, '2026-04-01', 'Spicy one']);
+  eq('a gone bottle says how it left', !!full[1][col('Left')], true);
+  eq('and the extra columns are all present', full.every(r => r.length === L.EXPORT_COLS.length), true);
 }
 
 sec('\u00a7309 building a shelf from a photograph of it');
@@ -20356,7 +20382,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.2');
+    L.GS_BUILD, '2.4.3');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

@@ -37,7 +37,8 @@ const MODES = [
   ['recap', 'writeRecap_'],
   ['bottle', 'writeBottle_'],
   ['label', 'readLabel_'],
-  ['shelf', 'readShelf_']
+  ['shelf', 'readShelf_'],
+  ['sheet', 'writeShelfSheet_']
 ];
 
 const GLOBALS = new Set(['JSON', 'Object', 'Array', 'String', 'Number',
