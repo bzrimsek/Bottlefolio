@@ -1537,6 +1537,24 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('search and pour');
+{
+  const cat = {
+    a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', sub: 'scotch' },
+    b: { k: 'b', name: 'Ardbeg Uigeadail', dist: 'Ardbeg', sub: 'scotch' },
+    c: { k: 'c', name: 'Blanton\u2019s', dist: 'Buffalo Trace', sub: 'bourbon' }
+  };
+  const bs = [{ id: 'B1', k: 'a', status: 'sealed' }, { id: 'B2', k: 'b', status: 'open' },
+    { id: 'B3', k: 'c', status: 'open' }, { id: 'B4', k: 'd', status: 'open' }];
+  eq('what you own that matches, open first',
+    L.pourSearch(cat, bs, 'ardbeg').map(r => r.k + (r.open ? ':open' : ':sealed')),
+    ['b:open', 'a:sealed']);
+  eq('a house search finds them too', L.pourSearch(cat, bs, 'buffalo').map(r => r.k), ['c']);
+  eq('one letter is not a search yet', L.pourSearch(cat, bs, 'a'), []);
+  eq('and nothing you own is nothing to pour',
+    L.pourSearch(cat, [{ id: 'B9', k: 'a', status: 'gone' }], 'ardbeg'), []);
+}
+
 sec('tastes like: flavors from the notes');
 {
   eq('flavors are read as families, whole words only',

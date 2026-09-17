@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.55  ·  2026-09-17 07:14 PM ET
+
+Search and pour, at the top of Taste at home. When you already know what you want, type a name or a distillery and pour it without spinning for it. It searches what you own, the way every other search box does, open bottles first, and says which are sealed, because pouring a sealed one opens it.
+
 ## v2.4.54  ·  2026-09-17 07:08 PM ET
 
 Adding a whiskey the library already knows now works. The form refused any name in the library, saying it was already on the shelf, when the shelf had none of it - a label read files a whiskey in the library, and it could then never be added. Only a whiskey you already own is refused now; anything else keeps the library's record, takes from the form only what that record does not say, and lands on the shelf. Copy the log now sits beside Show me the log under Something not working.
