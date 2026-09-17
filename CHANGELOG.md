@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.43  ·  2026-09-17 09:23 AM ET
+
+Library lookups stop repeating. An entry that comes back empty three times, a week and then six months apart, is no longer asked by the daily intake or by Clean up, which also no longer skips the waits: its button asks only the entries that are due. Clean up adds a Still missing list of every incomplete entry, saying what it lacks and when it is next tried or that it is no longer asked; a row opens the entry to fill in by hand, and Look up now asks that one bottle whatever its wait.
+
 ## v2.4.42  ·  2026-09-17 09:13 AM ET
 
 The monthly reference data job supplies the middle certificate TTB's server leaves out, fetched from the address TTB's own certificate names and used only when it chains to a root the runner already trusts. Without it GitHub's Linux runners refused the connection; Windows fills the gap on its own.

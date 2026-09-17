@@ -8719,20 +8719,23 @@ sec('§235 what is worth looking up twice');
      the rest ESCALATES rather than becoming a blacklist: a week, then six
      months, then a year. Five misses is a year, so January is not yet due
      in September but the previous year is. */
-  const old = { d: { ok: 0, no: 5, at: '2025-01-01' } };
+  const old = { d: { ok: 0, no: 2, at: '2025-01-01' } };
   eq('an old miss is worth one more try',
     L.shouldLookUp(old, 'd', today), true);
-  const midway = { d2: { ok: 0, no: 5, at: '2026-01-01' } };
-  eq('but a year has to pass first',
+  const midway = { d2: { ok: 0, no: 2, at: '2026-06-01' } };
+  eq('but six months have to pass first',
     L.shouldLookUp(midway, 'd2', today), false);
-  const recent = { e: { ok: 0, no: 5, at: '2026-09-01' } };
+  /* THREE EMPTY ANSWERS AND IT STOPS (BZ, 2026-09-17), however long ago. */
+  eq('a third miss stops it for good',
+    L.shouldLookUp({ g: { ok: 0, no: 3, at: '2020-01-01' } }, 'g', today), false);
+  const recent = { e: { ok: 0, no: 2, at: '2026-09-01' } };
   eq('a recent one is not', L.shouldLookUp(recent, 'e', today), false);
   eq('the gap is counted in days',
     L.lookupDaysSince('2026-09-01', '2026-09-04'), 3);
   eq('a missing date is not a date', L.lookupDaysSince(null, today), null);
   /* A record we cannot read is not a license to blacklist. */
   eq('an unreadable date means ask again',
-    L.shouldLookUp({ f: { ok: 0, no: 9, at: 'whenever' } }, 'f', today), true);
+    L.shouldLookUp({ f: { ok: 0, no: 1, at: 'whenever' } }, 'f', today), true);
 
   /* The plan is the estimate AND the work, so the number approved and the
      number run cannot disagree. */
@@ -11072,7 +11075,15 @@ sec('§269 the library in three lists');
   eq('a first miss rests a week', L.restDays(1), 7);
   eq('a second six months', L.restDays(2), 180);
   eq('a third a year', L.restDays(3), 365);
-  eq('and a tenth is still a year, not for ever', L.restDays(10), 365);
+  eq('and a tenth is still a year', L.restDays(10), 365);
+  const gone = L.libraryLists([{ k: 's', name: 'Stopped' }, { k: 'r', name: 'Resting' }],
+    { s: { no: 3, at: today }, r: { no: 1, at: today } }, today);
+  eq('a stopped entry waits last, with no date, and is counted',
+    [gone.waiting.map(x => x.k).join(''), gone.waiting[1].dueIn, gone.stopped], ['rs', null, 1]);
+  eq('the Still missing line says what and when',
+    [L.missingSay(gone.waiting[0], today), L.missingSay(gone.waiting[1], today),
+     L.missingSay({ missing: ['notes'] }, today)].map(s => s.replace(/^No [^\u00b7]+\u00b7 /, '')),
+    ['next try ' + L.showDate('2026-09-11'), 'no longer asked after 3 empty lookups', 'due now']);
 }
 
 /* §270  one loop, one writer ----------------------------------------
@@ -13111,49 +13122,6 @@ sec('\u00a7301 styleBackfill takes rows OR the keyed map');
     L.styleBackfill(byKey).closes, L.styleBackfill(rows).closes);
   eq('neither shape throws on empty', L.styleBackfill({}).rows.length, 0);
   eq('nor on nothing at all', L.styleBackfill(null).rows.length, 0);
-}
-
-sec('\u00a7302 try the resting ones again');
-{
-  /* BZ: can we add an active Reprocess Waitlist feature.
-
-     The case for it is not impatience. The rest periods assume the ANSWER
-     might change, and sometimes what changes is the QUESTION: every entry
-     that waitlisted for "short of mash" before lookup.gs learned to ask for
-     a grain bill was structurally unclosable, and each then rested a week,
-     six months or a year for a miss that could never have gone otherwise. */
-  const today = '2026-09-08';
-  const led = {
-    a: { no: 1, at: '2026-09-06' },   // resting a week
-    b: { no: 3, at: '2026-01-01' },   // resting a year
-    c: { no: 1, at: '2026-09-07' }    // resting, and not chosen
-  };
-  eq('all three are resting first',
-    ['a', 'b', 'c'].filter(k => L.shouldLookUp(led, k, today)).length, 0);
-
-  const after = L.dueAgain(led, ['a', 'b']);
-  eq('the chosen two are due again',
-    ['a', 'b'].every(k => L.shouldLookUp(after, k, today)), true);
-  eq('and one nobody chose still rests',
-    L.shouldLookUp(after, 'c', today), false);
-
-  /* THE MISS COUNT SURVIVES. Clearing it too would forgive the history, so
-     an entry that has failed three times would rest a week after its fourth
-     rather than a year — the escalation is worth keeping and only the
-     waiting is worth skipping. */
-  eq('a three-time miss is still a three-time miss', after.b.no, 3);
-  eq('and a one-time miss still one', after.a.no, 1);
-
-  /* It does not invent entries for keys it has never seen. */
-  eq('an unknown key is not created',
-    L.dueAgain(led, ['nope']).nope, undefined);
-  eq('nothing to do leaves it alone',
-    Object.keys(L.dueAgain(led, [])).length, 3);
-  eq('and no ledger is an empty one',
-    Object.keys(L.dueAgain(null, ['a'])).length, 0);
-  /* The original is not modified: a caller that keeps the old ledger for
-     comparison must still have it. */
-  eq('the ledger it was given is untouched', led.a.at, '2026-09-06');
 }
 
 sec('\u00a7303 a house that does not publish, and one spelled two ways');
