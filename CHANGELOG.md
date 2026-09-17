@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.56  ·  2026-09-17 07:22 PM ET
+
+Space around Search and pour. Flush against the felt, the box read as part of the machine; it now has room above and below, and so does the list of matches.
+
 ## v2.4.55  ·  2026-09-17 07:14 PM ET
 
 Search and pour, at the top of Taste at home. When you already know what you want, type a name or a distillery and pour it without spinning for it. It searches what you own, the way every other search box does, open bottles first, and says which are sealed, because pouring a sealed one opens it.
