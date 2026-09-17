@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.30  ·  2026-09-16 08:17 PM ET
+
+The library screen, simplified at BZ's asking (2026-09-16). One card: how complete the library is, search with Select beside it (Select now works before searching too), the list, and one Clean up button. Clean up is one page for everything that tidies the library: look up what is missing with the resting entries retried, publish what your shelf would add, review notes written for flight cards, put back what was removed, and every inconsistency the scan finds with its fix. Offers show only when something is waiting or dropped. Export and Import sit side by side at the foot. The separate admin card, Fill what is missing, Try the waiting again, the to-do chip and the descriptions are gone.
+
 ## v2.4.29  ·  2026-09-16 07:54 PM ET
 
 Five messages that retyped the no-lookup-service and daily-limit sentences now use the shared ones. Show everything is Show all, and the flight builder's Design one myself and Pick the bottles myself are Design one and Pick the bottles. The 653 empty text pieces the text pass left in the code were removed, each proven to follow text so nothing changed behavior.

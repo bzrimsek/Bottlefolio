@@ -452,10 +452,13 @@ function check(name, got, want) {
          furniture. */
       await page.evaluate(() => { renderLibraryScreen(); goTo('library'); });
       await page.waitForTimeout(1200);
-      const before = await page.locator('#libBody button',
+      /* Publish lives on Clean up since 2026-09-16. */
+      await page.evaluate(() => openLibraryCleanUp());
+      await page.waitForTimeout(800);
+      const before = await page.locator('#scanBody button',
         { hasText: /^Publish \d+/ }).count();
       if (!before) return { before: 0 };
-      await page.locator('#libBody button', { hasText: /^Publish \d+/ })
+      await page.locator('#scanBody button', { hasText: /^Publish \d+/ })
         .first().click();
       await page.waitForTimeout(400);
       await page.locator('.modal button',
@@ -463,8 +466,8 @@ function check(name, got, want) {
       await page.waitForTimeout(1600);
       return page.evaluate(() => ({
         before: 1,
-        stillPending: document.querySelectorAll('#libBody button').length
-          && [...document.querySelectorAll('#libBody button')]
+        stillPending: document.querySelectorAll('#scanBody button').length
+          && [...document.querySelectorAll('#scanBody button')]
             .some(b => /^Publish \d+/.test(b.textContent)),
         library: Object.keys(firebase.__store.data['bz-apps'].whisky
           .shared.catalog.products || {}).sort()
