@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.62  ·  2026-09-17 10:43 PM ET
+
+The add form fills itself from public records before any lookup is paid for. Type a name and the maker, country, category, style and region arrive from the reference data - the same door the library fill and the offered-library intake already use - leaving a lookup to spend its money on proof, age, price and notes. It reads the one brand and the one distillery it needs by key rather than the megabyte and a half the whole file weighs, and it never touches a box that already says something.
+
 ## v2.4.61  ·  2026-09-17 10:16 PM ET
 
 Five library corrections, and two fields parked in the backlog. Baileys The Original Irish Cream and Southern Comfort Original are liqueurs rather than whiskey, so they no longer sit in Clean up short of a mash bill for ever. Three Macallan entries said Highland where the Scotch distillery list says Speyside.

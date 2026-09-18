@@ -1490,6 +1490,15 @@ sec('reference data: distilleries and brands');
   eq('an empty entry takes its maker, in the library’s spelling, country and category',
     plan.updates.a, { dist: 'Buffalo Trace', country: 'United States', sub: 'rye' });
   eq('a stated country is never overwritten', plan.updates.c, undefined);
+  eq('the keys a name could be filed under, longest first',
+    L.refKeysFor({ name: 'Blanton Single Barrel Bourbon' }).brands,
+    ['blanton_single_barrel_bourbon', 'blanton_single_barrel',
+     'blanton_single', 'blanton']);
+  eq('the house it names is one key of its own',
+    L.refKeysFor({ name: 'X', dist: 'Buffalo Trace Distillery' }).house,
+    L.refHouseKey('Buffalo Trace Distillery'));
+  eq('and a name with nothing in it has none',
+    [L.refKeysFor({}).brands.length, L.refKeysFor({}).house], [0, null]);
   const malt = { name: 'Glenfiddich', n: 48, sm: 47 };
   eq('a brand filed as single malt gives a Scotch with no style its style',
     [L.refStyleFor({ name: 'Glenfiddich 30 Year Old', sub: 'scotch' }, malt),
