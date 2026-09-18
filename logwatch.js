@@ -23,6 +23,25 @@ const BAD = [/would not/i, /failed/i, /refused/i, /\berror\b/i, /not written/i,
   /gave up/i, /timed out/i, /\b(404|500|503)\b/i, /unreadable/i, /could not/i,
   /denied/i, /THERE IS NO/, /is not data/i, /no answer/i];
 
+/* HOW FAR BACK A FAULT STILL COUNTS. A log holds six hundred lines, which
+   on a quiet account reaches back weeks; a stale deployment fixed nine days
+   ago is not news (BZ, 2026-09-17). */
+const DAYS_BACK = 30;
+
+/* A line's date. The stamp is MM/DD with no year, so a date ahead of today
+   belongs to last year. Returns the days since, or null when there is no
+   stamp to read - and an unstamped line is kept rather than dropped. */
+function daysOld(line, now) {
+  const m = /^(\d\d)\/(\d\d) /.exec(String(line));
+  if (!m) return null;
+  const today = now || new Date();
+  let when = new Date(Date.UTC(today.getUTCFullYear(), +m[1] - 1, +m[2]));
+  if (when.getTime() > today.getTime() + 86400000) {
+    when = new Date(Date.UTC(today.getUTCFullYear() - 1, +m[1] - 1, +m[2]));
+  }
+  return Math.floor((today.getTime() - when.getTime()) / 86400000);
+}
+
 /* Noise: the app narrating a phone being a phone. */
 const NOISE = [/keyboard: viewport/, /nav was 0/, /screen held awake/,
   /^\s*$/, /asked about/, /^.{0,20}fb push ok/];
@@ -46,6 +65,8 @@ function findings(logs) {
     const s = String(line);
     if (NOISE.some(r => r.test(s))) return;
     if (!BAD.some(r => r.test(s))) return;
+    const age = daysOld(s);
+    if (age !== null && age > DAYS_BACK) return;
     const shape = shapeOf(s);
     const f = out[shape] || (out[shape] = { shape: shape, n: 0, lines: [] });
     f.n++;
@@ -72,7 +93,8 @@ function findings(logs) {
     const log = (root[u] || {}).log;
     lines = lines.concat(Array.isArray(log) ? log : Object.values(log || {}));
   });
-  say(uids.length + ' account(s), ' + lines.length + ' log line(s)');
+  say(uids.length + ' account(s), ' + lines.length + ' log line(s), '
+    + 'reading the last ' + DAYS_BACK + ' days');
 
   const found = findings(lines);
   const seen = (await get('stats/logwatch/seen')) || {};
