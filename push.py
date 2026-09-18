@@ -98,6 +98,9 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'engine.js', 'popular.js', '.github/workflows/popular.yml',
            # 2026-09-16: loads public reference data into shared/ref (run by hand).
            'refdata.js', '.github/workflows/refdata.yml',
+           # 2026-09-17: the nightly read of what the app's log says
+           # went wrong, on every account.
+           'logwatch.js', '.github/workflows/logwatch.yml',
            # The rules, run in the emulator (cloud gate only).
            'rulestest.js', 'syncemu.js', 'firebase.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']

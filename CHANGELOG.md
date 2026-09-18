@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.59  ·  2026-09-17 08:14 PM ET
+
+A nightly read of what went wrong out there, and a Google Sheet write that survives a phone. logwatch.js reads the tail of the log every account keeps, reduces each failure to a shape with its numbers and names removed, and reports the kinds; the job fails when a kind turns up that has not been seen, which is the notification. Shapes and counts only reach the public workflow log; the lines go to stats/logwatch/report, which only an admin reads. The Sheet no longer writes as the app goes to the background, which is where three writes died in one evening: it writes when the app comes back, and a write that fails asks again then.
+
 ## v2.4.58  ·  2026-09-17 07:55 PM ET
 
 Bottle names wrap instead of being cut off. Every list showed a name on one line with an ellipsis, and what makes a bottle different is often at the end of its name - Gray Label Dovetail 16 Year, Single Barrel Cask Strength - which is exactly what an ellipsis eats. Names now run to two lines and then stop, in every list in the app.

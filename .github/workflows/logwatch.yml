@@ -1,0 +1,48 @@
+# WHAT WENT WRONG OUT THERE, read once a night (BZ, 2026-09-17).
+#
+# Every signed-in account keeps the tail of its log on its account. This
+# reads them all and reports the kinds of failure in them, printing shapes
+# and counts only - the repository is public and so is this log, so the
+# lines themselves go to stats/logwatch/report, which only an admin reads.
+#
+# The job FAILS when a kind of problem turns up that has not been seen
+# before. That failure is the notification; the fixing happens in a session
+# with the report open.
+name: Log watch
+
+on:
+  schedule:
+    - cron: '20 8 * * *'     # 08:20 UTC, after the night's activity
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: logwatch
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Read the logs
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: node logwatch.js
