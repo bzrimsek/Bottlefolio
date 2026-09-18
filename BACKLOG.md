@@ -2004,3 +2004,18 @@ Four answers, cheapest first. BZ parked the decision.
 4. LOOK AT THE PICTURES: shots.js already photographs every screen at phone
    size and nobody reads them. Compare each release against the last and
    look at what moved.
+
+### Parked, 2026-09-17: two fields the flights chat asked for
+Both derivable from what the library already stores, no lookups:
+
+1. SINGLE BARREL / SMALL BATCH / BLEND as a field of its own. Today it is
+   read off the product NAME by whoever needs it, which is why "One Barrel
+   or Many?" cannot be built against data. `style` and `scar` already carry
+   most of it (single barrel, small batch, batched, blended).
+2. FINISHED vs FULLY MATURED as a flag. `fin` says what the finishing cask
+   was and `finc` whether a person stated it, so a bottle with a finish is
+   finished and one without is not - except where the cask named IS the
+   maturation. That exception is the whole of the work.
+
+BZ parked the decision on 2026-09-17, with Region done and the rest of the
+chat's asks answered.

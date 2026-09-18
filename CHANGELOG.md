@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.61  ·  2026-09-17 10:16 PM ET
+
+Five library corrections, and two fields parked in the backlog. Baileys The Original Irish Cream and Southern Comfort Original are liqueurs rather than whiskey, so they no longer sit in Clean up short of a mash bill for ever. Three Macallan entries said Highland where the Scotch distillery list says Speyside.
+
 ## v2.4.60  ·  2026-09-17 08:21 PM ET
 
 The log watch reads the last thirty days only. A log holds six hundred lines, which on a quiet account reaches back weeks, and a stale deployment fixed nine days ago is not news. A line with no date is still read.
