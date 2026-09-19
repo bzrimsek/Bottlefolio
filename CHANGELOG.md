@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.65  ·  2026-09-19 04:58 PM ET
+
+A call to the service made in the first seconds after the app opens no longer fails as signed out. Sign-in takes a moment to come back when the app starts, and the recap asked during it (the log, 2026-09-18 20:48) and was refused. A device that was signed in when it last closed now waits up to eight seconds for sign-in before it calls.
+
 ## v2.4.64  ·  2026-09-19 04:55 PM ET
 
 A whiskey you poured out, or looked up, no longer reads as though it were on your shelf. A pour out of a whiskey the library knows was logged as a pour at home because the logger asked whether the name was known, not whether you own a bottle; now it must be owned. The Out form keeps the place after each pour and opens on the last place out when that was within four hours, so a second taste at the same bar keeps its bar. Each pour records its moment, so two tastes of one bottle on one night stay two when devices sync. The page of a whiskey you own none of says Not on your shelf, offers Add to your shelf rather than Another bottle, and no longer tells a story about your shelf that assumes you own it.
