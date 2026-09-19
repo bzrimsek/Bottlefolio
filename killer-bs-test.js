@@ -1546,6 +1546,33 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('lately: sessions, newest first');
+{
+  const cat = { a: { k: 'a', name: 'Rabbit Hole Dareringer' }, b: { k: 'b', name: 'Glen Scotia 12' },
+                c: { k: 'c', name: 'Penelope Toasted' } };
+  const hist = [
+    { kind: 'flight', at: '2026-09-10', flight: 'PEAT IS A POSTCODE', pours: ['b'] },
+    { kind: 'pour', at: '2026-09-10', k: 'b' },
+    { kind: 'pour', at: '2026-09-18', k: 'a' },
+    { kind: 'pour', at: '2026-09-18', k: 'b' },
+    { kind: 'pour', at: '2026-09-18', k: null, away: 'Michter\u2019s Sour Mash', at2: { kind: 'club', place: 'Walden' } },
+    { kind: 'pour', at: '2026-09-19', k: 'c' },
+    { kind: 'pour', at: '2026-08-01', k: 'a' }
+  ];
+  const s = L.latelySessions(hist, cat, '2026-09-19');
+  eq('sessions come newest first, home and out apart, the old one left out',
+    s.map(x => x.at + ' ' + x.where),
+    ['2026-09-19 home', '2026-09-18 home', '2026-09-18 out at Walden', '2026-09-10 home']);
+  eq('a session names what was poured', s[1].pours, ['Rabbit Hole Dareringer', 'Glen Scotia 12']);
+  eq('a flight is one event, and its pours are not counted again',
+    [s[3].flights.map(f => f.title + ':' + f.n), s[3].pours], [['PEAT IS A POSTCODE:1'], []]);
+  eq('the stamp moves when a pour is added',
+    L.latelyStamp(s) === L.latelyStamp(L.latelySessions(hist.concat([{ kind: 'pour', at: '2026-09-19', k: 'a' }]), cat, '2026-09-19')),
+    false);
+  eq('and it asks with the sessions and the day', [L.latelyAsk(s, '2026-09-19').sessions.length,
+    L.latelyAsk(s, '2026-09-19').today, L.latelyAsk([], '2026-09-19')], [4, '2026-09-19', null]);
+}
+
 sec('search and pour');
 {
   const cat = {
@@ -20525,7 +20552,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.3');
+    L.GS_BUILD, '2.4.4');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

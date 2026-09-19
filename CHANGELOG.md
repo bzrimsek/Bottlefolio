@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.67  ·  2026-09-19 05:14 PM ET
+
+Lately, under Recent pours on Home: a short paragraph on what you have been drinking, written from your last few sessions - an evening at home, a night out, a flight - newest first within two weeks, leading with the most recent. The month's recap was given counts alone, and two flight nights of eighteen pours drowned out the evening before; a flight now counts as one event. The paragraph is kept on your account and written again only when a pour changes it, so it costs one lookup an evening. Service build 2.4.4: the recap door takes sessions and writes to rules of their own.
+
 ## v2.4.66  ·  2026-09-19 05:08 PM ET
 
 Against your shelf, on the page of a whiskey you own none of: what it would be on your shelf, from the same measure as the On your shelf line - your second from Michter's and the strongest of them, your first Starward, the first thing finished in Port - with Add to wishlist beside it rather than in the row of actions. Words stored where a cask should be that name no cask, like standard or batched, no longer count as a finish in either line.

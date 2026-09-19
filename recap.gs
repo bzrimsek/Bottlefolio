@@ -32,7 +32,10 @@
  */
 
 function writeRecap_(r) {
-  var system = [
+  /* LATELY (BZ, 2026-09-19): the same door, given sessions instead of counts,
+     for the paragraph under Recent pours on Home. */
+  var lately = !!(r && r.sessions);
+  var system = lately ? LATELY_RULES_ : [
     'You write two or three sentences for somebody about their own whisky',
     'drinking over a stretch of time. You are given counts and nothing',
     'else.',
@@ -59,7 +62,7 @@ function writeRecap_(r) {
     '7. Return the sentences as plain text. Nothing else.'
   ].join('\n');
 
-  var user = [
+  var user = lately ? latelyFacts_(r) : [
     'THE STRETCH: ' + (r.span || 'this stretch'),
     '',
     recapFacts_(r)
@@ -97,6 +100,40 @@ function writeRecap_(r) {
     .replace(/<\/?cite[^>]*>/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/* WHAT SOMEBODY HAS BEEN DRINKING LATELY, from their last few sessions. */
+var LATELY_RULES_ = [
+  'You write a short summary, two sentences and three at most, of what',
+  'somebody has been drinking lately, from their own log. You are given their',
+  'last few sessions, newest first: the date, where it was, what they poured.',
+  '',
+  'RULES:',
+  '1. Lead with the most recent session. Name two or three of its bottles and',
+  '   say what joins them - a cask, a house, peat, a style, a strength - if',
+  '   something genuinely does. Say when it was relative to TODAY: tonight,',
+  '   last night, on Tuesday.',
+  '2. Then one line on the sessions before it, if they share a thread with it',
+  '   or break from it. If they do neither, leave them out.',
+  '3. A flight is one planned tasting, not a habit: mention it by its title as',
+  '   the event it was, and do not treat its bottles as favourites.',
+  '4. Name only bottles, places and flights given below. Never invent one.',
+  '5. Write plainly, to "you". No tasting-note flourish, no hedging, no',
+  '   heading, no markdown, no sign-off.',
+  '6. If there is one small session and nothing else, one sentence is enough.'
+].join('\n');
+
+function latelyFacts_(r) {
+  var out = ['TODAY: ' + (r.today || ''), ''];
+  (r.sessions || []).forEach(function (s) {
+    var bits = [];
+    (s.flights || []).forEach(function (f) {
+      bits.push('the flight "' + f.title + '" (' + f.n + ' pours)');
+    });
+    if ((s.pours || []).length) bits.push((s.pours || []).join(', '));
+    out.push(s.date + ', ' + s.where + ': ' + bits.join('; '));
+  });
+  return out.join('\n');
 }
 
 /** The counts as lines a model can read, and nothing else. */

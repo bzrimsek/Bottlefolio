@@ -1290,7 +1290,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* Whether this person's shelf counts toward what's popular. */
     'popularOn',
     /* The Google Sheet copy of the shelf: a switch, and its address. */
-    'sheetOn', 'sheetUrl'];
+    'sheetOn', 'sheetUrl',
+    /* The Lately paragraph, whole: the newer one is the one to keep. */
+    'lately'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at
