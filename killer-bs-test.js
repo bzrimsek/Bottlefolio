@@ -1582,6 +1582,11 @@ sec('lately: sessions, newest first');
   eq('a bottle with nothing known about it is just its name, and a known one says what it is',
     [L.latelyBottle('Mystery', null), L.latelyBottle('Plain', { name: 'Plain', proof: 90 })],
     ['Mystery', 'Plain (90 proof)']);
+  eq('a paragraph that names a time it was never told is not shown',
+    [L.recapText({ recap: 'Tonight you opened the Penelope, a single pour after a long run of sherry finishes.' }, true),
+     L.recapText({ recap: 'Yesterday was the heavier stretch, with sherry finishes across the board.' }, true),
+     L.recapText({ recap: 'Most recently you have been circling sherry finishes, the Bunnahabhain and the Laphroaig PX.' }, true)],
+    [null, null, 'Most recently you have been circling sherry finishes, the Bunnahabhain and the Laphroaig PX.']);
   eq('a bottle the app knows nothing about goes by its name',
     ask.sessions[2].pours[0], 'Michter\u2019s Sour Mash');
 }
@@ -20568,7 +20573,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.5');
+    L.GS_BUILD, '2.4.6');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

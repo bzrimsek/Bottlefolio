@@ -118,12 +118,15 @@ var LATELY_RULES_ = [
   '   the ones before. That observation is the whole point.',
   '2. Name at most three bottles, and only as evidence for that point. Never',
   '   list a session back: the log is shown directly under your sentences.',
-  '3. No times and no days: never tonight, last night, today, this week or a',
-  '   weekday. A pour is often logged long after it was drunk. Say "most',
-  '   recently" or "before that" when the order matters.',
-  '4. A flight is one planned tasting, not a habit. Mention it by its title',
-  '   as the event it was, if at all, and do not treat its bottles as',
-  '   favourites.',
+  '3. NO TIME WORDS AT ALL. You are not told when anything happened, on',
+  '   purpose: a pour is often logged long after it was drunk. Never write',
+  '   tonight, today, this morning, this evening, last night, yesterday, the',
+  '   day before, this week, last week, a weekday, a date, or "a big day".',
+  '   The only order you may state is "most recently" and "before that".',
+  '4. A flight is one planned tasting, not a habit, and ONLY a session that',
+  '   lists "the flight" is one. Several bottles at home is a session, never',
+  '   a flight. Mention a real flight by its title, if at all, and do not',
+  '   treat its bottles as favourites.',
   '5. Name only bottles, places and flights given below, and state nothing',
   '   about a bottle that its line does not say. Never invent.',
   '6. Write plainly, to "you". No tasting-note flourish, no hedging, no',
@@ -141,6 +144,7 @@ function latelyFacts_(r) {
     });
     (s.pours || []).forEach(function (p) { out.push('  ' + p); });
   });
+  out.push('', '(No dates or times are given, on purpose. Do not name any.)');
   return out.join('\n');
 }
 
