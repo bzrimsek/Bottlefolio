@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.63  ·  2026-09-18 11:06 PM ET
+
+Import a shelf is a section of its own in Shelf tools rather than a fold at the foot of the sheet, which was too subtle to find: last once there is a shelf, and first while there is none, because then it is the way in. And the Google Sheet write no longer queues for the service: a phone paused the app mid-write, the call's timeout is a timer a paused app does not run, and it held the one lane for twenty-five minutes while a scan waited behind it. It now goes around the lane with a one-minute limit.
+
 ## v2.4.62  ·  2026-09-17 10:43 PM ET
 
 The add form fills itself from public records before any lookup is paid for. Type a name and the maker, country, category, style and region arrive from the reference data - the same door the library fill and the offered-library intake already use - leaving a lookup to spend its money on proof, age, price and notes. It reads the one brand and the one distillery it needs by key rather than the megabyte and a half the whole file weighs, and it never touches a box that already says something.

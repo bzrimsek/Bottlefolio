@@ -1187,54 +1187,49 @@ function step(n) {
     }
   }
 
-  step('shelf tools opens on Manage, with Import folded away');
+  step('shelf tools holds Import as a section: last with a shelf, first without');
   {
+    /* NOT A FOLD ANY MORE (BZ, 2026-09-18: the fold was too subtle to find).
+       With a shelf it is the last section, a once-only job; with none it is
+       the first, because then it is the way in. Both are opened here. */
     const r = await page.evaluate(() => {
-      S.showFill = true;
-      showShelfTools();
-      const m = document.getElementById('modalBody')
-        || document.querySelector('.modal');
-      /* A DISCLOSURE, NOT A BUTTON. BZ: to me a fold is like we did
-         with Advanced in settings - not a button. So this looks for the
-         summary and reads `details.open`, rather than hunting a button
-         that no longer exists.
-
-         And it does NOT use offsetParent to decide what is hidden: a
-         shut <details> still reports its children as having an offset
-         parent, which had me believing the folds were open when they
-         were not. The element's own `open` is the only honest answer. */
-      const det = [...m.querySelectorAll('details')]
-        .filter(d => /^Import a shelf/.test(
-          (d.querySelector('summary') || {}).textContent || ''))[0];
-      const labels = [...m.querySelectorAll('.portlabel')]
-        .map(e => e.textContent.trim());
-      const before = {
-        manage: labels.indexOf('Manage'),
-        hasImport: !!det,
-        importOpen: det ? det.open : null,
-        inside: det ? [...det.querySelectorAll('button')]
-          .map(e => e.textContent.trim()) : []
+      const read = () => {
+        showShelfTools();
+        const m = document.getElementById('modalBody')
+          || document.querySelector('.modal');
+        const labels = [...m.querySelectorAll('.portlabel')]
+          .map(e => e.textContent.trim());
+        const buttons = [...m.querySelectorAll('button')]
+          .filter(b => b.offsetParent).map(b => b.textContent.trim());
+        const folded = [...m.querySelectorAll('details summary')]
+          .some(s => /^Import/.test(s.textContent || ''));
+        closeModal();
+        return { manage: labels.indexOf('Manage'),
+                 imp: labels.indexOf('Import a shelf'),
+                 visible: buttons.indexOf('Import a collection') >= 0,
+                 folded: folded };
       };
-      if (det) det.open = true;
-      const after = det ? det.open : false;
-      closeModal();
-      return { before: before, after: after };
+      S.showFill = true;
+      const withShelf = read();
+      const kept = S.bottles;
+      S.bottles = [];
+      rebuildCatalog();
+      const empty = read();
+      S.bottles = kept;
+      rebuildCatalog();
+      return { withShelf: withShelf, empty: empty };
     });
-    if (r.before.manage < 0) {
-      failures.push('shelf tools: no Manage section on open');
+    [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(([when, x]) => {
+      if (x.manage < 0) failures.push('shelf tools ' + when + ': no Manage section');
+      if (x.imp < 0) failures.push('shelf tools ' + when + ': no Import a shelf section');
+      if (x.folded) failures.push('shelf tools ' + when + ': Import is still behind a fold');
+      if (!x.visible) failures.push('shelf tools ' + when + ': Import a collection is not visible');
+    });
+    if (r.withShelf.imp >= 0 && r.withShelf.imp < r.withShelf.manage) {
+      failures.push('shelf tools: with a shelf, Import sits above Manage');
     }
-    if (!r.before.hasImport) {
-      failures.push('shelf tools: no Import disclosure');
-    }
-    if (r.before.importOpen) {
-      failures.push('shelf tools: Import is not folded away');
-    }
-    if (!r.before.inside.some(x => /^Import a collection$/.test(x))) {
-      failures.push('shelf tools: the Import fold is empty, which is '
-        + 'worse than not folding it at all');
-    }
-    if (!r.after) {
-      failures.push('shelf tools: the Import fold does not open');
+    if (r.empty.imp >= 0 && r.empty.imp > r.empty.manage) {
+      failures.push('shelf tools: with no shelf, Import sits below Manage');
     }
   }
 
