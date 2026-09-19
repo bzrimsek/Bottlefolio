@@ -1569,6 +1569,23 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('the log says who, not how many');
+{
+  eq('accounts are listed six characters at a time',
+    [L.shortIds(['cv2EMNKszFehDrNP1yf8O9e1siP2', 'P9XWi4nknnOGJgZbFmltMAX8B1o1']),
+     L.shortIds([])], ['[cv2EMN, P9XWi4]', '[none]']);
+  eq('and each person who shares says whether their shelf arrived',
+    L.shelvesSay([{ uid: 'aaaaaa11', name: 'Nik', shelf: { bottles: [1, 2, 3] } },
+      { uid: 'bbbbbb22', name: 'Tyson', shelf: null }]),
+    'Nik: 3 bottles \u00b7 Tyson: granted, no shelf');
+  eq('nobody sharing says that', L.shelvesSay([]), 'nobody shares with you');
+  eq('an ask names whoever anything knows of, and the account when nothing does',
+    [L.waitingName({ uid: 'aaaaaa11', name: 'Nik' }, {}),
+     L.waitingName({ uid: 'aaaaaa11' }, { aaaaaa11: 'Nik' }),
+     L.waitingName({ uid: 'LFp1OyZG3E' }, {})],
+    ['Nik', 'Nik', 'the account [LFp1Oy]']);
+}
+
 sec('an ask that reaches nobody');
 {
   const now = Date.parse('2026-09-20T00:00:00Z');
@@ -20156,6 +20173,52 @@ sec('\u00a7403 the room, written out');
   const pairPort = L.shelfPortrait(merged.catalog, merged.bottles, {});
   eq('the merged shelf has a portrait of its own',
     !!(pairPort && pairPort.title), true);
+
+  /* A PAIR IS NOT THE MERGE. The fixtures are 12 against 12 sharing six
+     bourbons; the pair card must be built from the six and from what each
+     has that the other has none of, not from the 18. */
+  {
+    const st = L.pairStand(sides, 'me');
+    eq('the pair card leads on what they share, not on either shelf',
+      [st.both, /^You both keep /.test(st.title)], [6, true]);
+    eq('and its evidence counts both sides of the shared ground',
+      /6 of the same whiskies/.test(st.why) && /18 whiskies between you/.test(st.why),
+      true);
+    eq('it says what each one opens up for the other, one line each way',
+      [st.lines.length <= 2, st.lines.every(x => /Tyson|You take/.test(x))],
+      [true, true]);
+    eq('a pair with nothing between them still answers',
+      !!L.pairStand(tinySides, 'me').title, true);
+    eq('and a room of three is not a pair',
+      L.pairStand(sides.concat([sides[1]]), 'me'), null);
+  }
+
+  /* ONE DOOR for a category one shelf has and the other has none of. */
+  eq('a gap wants depth on one side and a zero on the other',
+    [(L.topGap({ styles: [{ value: 'rye', n: 4 }] },
+      { styles: [{ value: 'bourbon', n: 9 }] }, 'styles', 3) || {}).value,
+     L.topGap({ styles: [{ value: 'rye', n: 2 }] }, { styles: [] }, 'styles', 3),
+     L.topGap({ styles: [{ value: 'rye', n: 9 }] },
+       { styles: [{ value: 'rye', n: 1 }] }, 'styles', 3)],
+    ['rye', null, null]);
+  /* WHAT BOTH SHELVES ARE MADE OF, not what both happen to hold. On shelves
+     of 100 and 10: A is 40% of one and 20% of the other, B is 3% and 30%.
+     Ranked on counts B leads (3 and 3 against 40 and 2); ranked on share A
+     does, which is the question a pair card is asking. */
+  eq('shared ground ranks on the share of each shelf, not the counts',
+    L.sameGroups({ owned: 100, houses: [{ value: 'A', n: 40 }, { value: 'B', n: 3 }] },
+      { owned: 10, houses: [{ value: 'A', n: 2 }, { value: 'B', n: 3 }] },
+      'houses', 2).map(x => x.value), ['A', 'B']);
+  eq('and a group only one of them has is not shared ground at all',
+    L.sameGroups({ owned: 10, houses: [{ value: 'A', n: 4 }] },
+      { owned: 10, houses: [{ value: 'B', n: 4 }] }, 'houses', 2), []);
+  eq('a share is said as a whole percent, and nothing over nothing is none',
+    [L.pct(3, 12), L.pct(1, 3), L.pct(4, 0)], ['25%', '33%', '0%']);
+
+  /* AND A NOTE THE CARD ABOVE ALREADY MADE IS NOT MADE TWICE. */
+  eq('a skipped kind is not spoken',
+    L.roomNotes(sides, 'me', { buckets: buckets, skip: ['offer', 'ask'] })
+      .filter(n => /^(offer|ask)/.test(n.k)).length, 0);
 
   eq('a room of one says nothing at all',
     L.roomNotes([sides[0]], 'me', { buckets: [] }), []);
