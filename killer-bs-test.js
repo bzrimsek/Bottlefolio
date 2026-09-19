@@ -12203,6 +12203,26 @@ sec('§281 a bottle in context');
     L.bottleContext(cat.d, cat, bs).onlyOfItsHouse, true);
   eq('and a shelf of one has no context',
     L.bottleContext(cat.a, cat, [{ k: 'a', status: 'open' }]), null);
+  /* AS A PROSPECT, the same measure read for a whiskey you do not own. */
+  const pros = Object.assign({}, cat.b, { k: 'z', name: 'Laphroaig Lore', proof: 120, fin: 'Port' });
+  const pc = L.prospectContext(pros, Object.assign({ z: pros }, cat), bs);
+  eq('a whiskey you do not own is read as what it would be',
+    L.prospectLine(pc),
+    'It would be your fourth from Laphroaig, and the strongest of them. '
+    + 'The first thing on your shelf finished in Port.');
+  eq('everything it would be the most of shares one "and"',
+    L.prospectLine({ house: 'Talisker', fromHouse: 1,
+      proofRank: { strongest: true }, ageRank: { oldest: true } }),
+    'It would be your second from Talisker, and the strongest and oldest of them.');
+  eq('a placeholder where the cask should be is not a cask',
+    L.shelfPlace(Object.assign({}, pros, { fin: 'standard' }),
+      Object.assign({ z: pros }, cat), bs).finish, null);
+  eq('and a whiskey you own has no prospect', L.prospectContext(cat.b, cat, bs), null);
+  eq('a house you have none of is a first',
+    /your first Nikka/.test(L.prospectLine(L.prospectContext(
+      { k: 'n', name: 'Nikka From The Barrel', dist: 'Nikka', proof: 102 }, cat, bs))), true);
+  eq('and both readings measure the shelf the same way',
+    L.shelfPlace(cat.b, cat, bs).fromHouse, L.bottleContext(cat.b, cat, bs).fromHouse);
   /* NOT YOURS, NO "YOUR" (BZ, 2026-09-19). */
   eq('a whiskey you own none of has no shelf context',
     L.bottleContext(Object.assign({}, cat.b, { k: 'z' }), cat, bs), null);

@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.66  ·  2026-09-19 05:08 PM ET
+
+Against your shelf, on the page of a whiskey you own none of: what it would be on your shelf, from the same measure as the On your shelf line - your second from Michter's and the strongest of them, your first Starward, the first thing finished in Port - with Add to wishlist beside it rather than in the row of actions. Words stored where a cask should be that name no cask, like standard or batched, no longer count as a finish in either line.
+
 ## v2.4.65  ·  2026-09-19 04:58 PM ET
 
 A call to the service made in the first seconds after the app opens no longer fails as signed out. Sign-in takes a moment to come back when the app starts, and the recap asked during it (the log, 2026-09-18 20:48) and was refused. A device that was signed in when it last closed now waits up to eight seconds for sign-in before it calls.
