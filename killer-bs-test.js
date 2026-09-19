@@ -1569,6 +1569,32 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('an ask that reaches nobody');
+{
+  const now = Date.parse('2026-09-20T00:00:00Z');
+  const asked = {
+    gone: { at: now - 30 * 86400000, name: 'BZ' },
+    soon: { at: now - 2 * 3600000, name: 'Nik' },
+    here: { at: now - 86400000, name: 'Tyson' }
+  };
+  const waiting = L.waitingOn(asked, { here: 1 }, {}, now);
+  eq('an ask to somebody not on the list is shown, newest first, and one to a buddy is not',
+    waiting.map(w => w.uid), ['soon', 'gone']);
+  eq('and it says who and when',
+    [L.waitingSay(waiting[0]), /old one/.test(L.waitingSay(waiting[1]))],
+    ['Asked today.', true]);
+  eq('a shelf that has arrived ends the wait',
+    L.waitingOn(asked, {}, { gone: { bottles: [] }, soon: { bottles: [] },
+      here: { bottles: [] } }, now).length, 0);
+  /* AND THE LINK SAYS WHO IT IS FROM. */
+  eq('an invite link carries the name, and is read back with it',
+    L.inviterFromUrl(L.buddyLink('https://x.test/app', 'abc123', 'BZ')),
+    { uid: 'abc123', name: 'BZ' });
+  eq('an older link with no name still works',
+    L.inviterFromUrl('https://x.test/app#buddy=abc123'), { uid: 'abc123', name: '' });
+  eq('and no link is nobody', L.inviterFromUrl('https://x.test/app'), null);
+}
+
 sec('a line about what a screen is showing');
 {
   const cat = {

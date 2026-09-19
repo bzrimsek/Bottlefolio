@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.73  ·  2026-09-19 07:40 PM ET
+
+The shelf list is readable on a Pixel again: the phone layout now starts at 560 pixels rather than 430, because a Pixel is 449 wide, where the seven fixed columns left the name about fifteen pixels and every letter wrapped onto its own line. A name also breaks between words now, and inside a word only when one cannot fit. And an invite link carries who it is from: the person opening it is told whose shelf they are asking for, the ask is remembered like any other, and Buddies shows who you are waiting on and how long - a request to an account that no longer exists left no trace on either side.
+
 ## v2.4.72  ·  2026-09-19 06:53 PM ET
 
 Against your shelf now reads as a prospect in full: under the derived line, one or two written sentences on what a whiskey you do not own would be here - the position it would take in its house, the pair it would complete, or that your shelf already covers it. It is measured exactly as a bottle you own is, kept with the facts it was written from so a changed shelf drops it, and it costs one lookup per bottle. Service build 2.4.7. A flight card gets no written line: its premise already says what it tests.
