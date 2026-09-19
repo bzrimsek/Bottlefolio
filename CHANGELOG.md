@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.71  ·  2026-09-19 06:41 PM ET
+
+A line on five screens saying what that screen is showing, from its own data and for nothing: the shelf says what the filters have left you looking at, the map how far the shelf reaches and which Scotch regions it misses, Flights how many wait on one bottle each beside what is pourable tonight, the wishlist what the wanting has in common, and the library what it is short of. Each is counted from the shelf rather than the library behind it. And a real fault found while wiring it: the Flights page asked for what is ready tonight with a date where a count belongs, which sliced the list to nothing, so that page never showed a ready flight.
+
 ## v2.4.70  ·  2026-09-19 06:29 PM ET
 
 Your shelf now inherits a library row whole, and only your own layers sit on top: your corrections, the whiskies only you have, and the facts that ride on a bottle rather than the whisky. Loading an entry used to keep sixteen named fields and drop the rest, so the library's tasting notes never reached the shelf - 554 of 566 library entries carry notes and the shelf showed 200 - and 141 bottles queued to look up notes the library already had. That queue is now 8, which are the ones nothing has notes for. A field the library gains from here on arrives with it.

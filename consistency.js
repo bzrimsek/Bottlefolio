@@ -461,6 +461,12 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* A CALLER, NOT A SECOND ANSWER. The flights line says where the whole
+     programme stands - what is pourable tonight, what waits on one bottle -
+     by asking L.flightReady about each flight, which stays the single door
+     for whether a flight can be poured. The cards ask it directly for one
+     flight; this asks it for all of them and writes a sentence. */
+  'flightsLine>flightReady',
   /* A CALLER, NOT A SECOND ANSWER. L.roomNotes asks L.pourable whether a
      bottle both shelves own is open on both — so it QUOTES the single
      door rather than deciding openness itself. Named specifically, so a

@@ -1569,6 +1569,49 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('a line about what a screen is showing');
+{
+  const cat = {
+    a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', sub: 'scotch', region: 'Islay', proof: 92, country: 'United Kingdom' },
+    b: { k: 'b', name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch', region: 'Islay', proof: 86, country: 'United Kingdom' },
+    c: { k: 'c', name: 'Blanton\u2019s', dist: 'Buffalo Trace', sub: 'bourbon', proof: 103, country: 'United States' }
+  };
+  const bs = [{ id: 'B1', k: 'a', status: 'open' }, { id: 'B2', k: 'b', status: 'sealed' },
+    { id: 'B3', k: 'c', status: 'open' }];
+  eq('what you own, as products and as a catalog of their own',
+    [L.ownedProducts(cat, bs).length, Object.keys(L.ownedCatalog(cat, bs)).sort().join(''),
+     L.ownedProducts(cat, [{ id: 'B9', k: 'a', status: 'gone' }]).length],
+    [3, 'abc', 0]);
+  eq('the commonest value in a column, and how many there are of it',
+    [L.topOf(Object.values(cat), p => p.sub).name, L.topOf(Object.values(cat), p => p.sub).n,
+     L.topOf(Object.values(cat), p => p.sub).kinds, L.topOf([], p => p.sub)],
+    ['scotch', 2, 2, null]);
+  eq('the shelf says what you are looking at',
+    L.listLine(Object.values(cat), bs, {}),
+    '3 whiskeys \u00b7 2 Scotch \u00b7 2 from Islay \u00b7 1 at 100 proof or more \u00b7 2 open');
+  eq('and nothing shown is nothing said', L.listLine([], bs, {}), '');
+  eq('the map says how far the shelf reaches and what it misses',
+    L.mapLine(cat, bs, {}),
+    '2 countries \u00b7 1 of the six Scotch regions');
+  eq('the flights line counts what is pourable and what waits on one bottle',
+    L.flightsLine([{ title: 'A', core: [{ k: 'a' }, { k: 'c' }] },
+      { title: 'B', core: [{ k: 'a' }, { k: 'b' }] }], cat, bs, []),
+    '1 of your 2 can be poured tonight without buying anything. 1 waits on one bottle each.');
+  eq('and with none ready it says what to do',
+    /Open a few more bottles/.test(L.flightsLine([{ title: 'B', core: [{ k: 'b' }] }], cat, bs, [])), true);
+  eq('the wishlist says what the wanting has in common',
+    L.wishLine([{ name: 'Ardbeg Ten' }, { name: 'Lagavulin 16', forFlight: 'PEAT' },
+      { name: 'Nothing Known' }], cat),
+    '3 wanted \u00b7 2 Scotch \u00b7 1 to finish a flight');
+  eq('the library says what it is short of',
+    L.libraryLine({ done: [{ k: 'x' }], score: 92,
+      todo: [{ k: 'a', missing: ['mash'] }], waiting: [{ k: 'b', missing: ['mash', 'notes'] }] }),
+    '3 entries \u00b7 2 short of mash bill and 1 short of tasting notes \u00b7 92% complete.');
+  eq('and a library with nothing missing says that',
+    L.libraryLine({ done: [{ k: 'x' }], todo: [], waiting: [] }),
+    '1 entries, and nothing missing.');
+}
+
 sec('lately: sessions, newest first');
 {
   const cat = { a: { k: 'a', name: 'Rabbit Hole Dareringer' }, b: { k: 'b', name: 'Glen Scotia 12' },
