@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.64  ·  2026-09-19 04:55 PM ET
+
+A whiskey you poured out, or looked up, no longer reads as though it were on your shelf. A pour out of a whiskey the library knows was logged as a pour at home because the logger asked whether the name was known, not whether you own a bottle; now it must be owned. The Out form keeps the place after each pour and opens on the last place out when that was within four hours, so a second taste at the same bar keeps its bar. Each pour records its moment, so two tastes of one bottle on one night stay two when devices sync. The page of a whiskey you own none of says Not on your shelf, offers Add to your shelf rather than Another bottle, and no longer tells a story about your shelf that assumes you own it.
+
 ## v2.4.63  ·  2026-09-18 11:06 PM ET
 
 Import a shelf is a section of its own in Shelf tools rather than a fold at the foot of the sheet, which was too subtle to find: last once there is a shelf, and first while there is none, because then it is the way in. And the Google Sheet write no longer queues for the service: a phone paused the app mid-write, the call's timeout is a timer a paused app does not run, and it held the one lane for twenty-five minutes while a scan waited behind it. It now goes around the lane with a one-minute limit.

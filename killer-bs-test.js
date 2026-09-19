@@ -11438,13 +11438,38 @@ sec('§274 pouring something you do not own');
   eq('and where it happened', L.placeLine(away.at2), 'The Aviary');
 
   /* Drinking your OWN bottle at a bar is still drinking your own bottle. */
-  const mine = L.awayPour('Ardbeg Ten', 'A bar', cat, '2026-09-05');
+  const mine = L.awayPour('Ardbeg Ten', 'A bar', cat, '2026-09-05', undefined, bs);
   eq('a whisky you own is an ordinary pour', mine.k, 'a');
   eq('and does not carry a name of its own', mine.away, undefined);
   /* Left exactly as typed: tidyName only touches all-caps or all-lower,
      so mixed case is somebody's own capitals and stays. */
   eq('but still remembers where', L.placeLine(mine.at2), 'A bar');
 
+  /* KNOWN IS NOT OWNED (BZ, 2026-09-18): a whiskey the library knows and
+     you do not own is still a pour out. */
+  const known = L.awayPour('Ardbeg Ten', 'Walden', cat, '2026-09-18', undefined, []);
+  eq('a whiskey the library knows and you do not own stays a pour out',
+    [known.k, known.away, L.placeLine(known.at2)], [null, 'Ardbeg Ten', 'Walden']);
+  /* TWO TASTES OF ONE BOTTLE STAY TWO. */
+  const t1 = Object.assign({}, known, { ts: 1000 });
+  const t2 = Object.assign({}, known, { ts: 2000 });
+  eq('two pours of one bottle on one night are two records',
+    L.mergeRecords('history', [t1, t2], [t1], true, {}).length, 2);
+  eq('and a pour from before the moment was recorded keeps its identity',
+    L.recordId('history', { kind: 'pour', k: 'a', at: '2026-09-05' }),
+    'h:pour|a|2026-09-05|');
+  /* WHERE YOU WERE, IF YOU STILL ARE. */
+  const now = 10 * 3600000;
+  eq('the last place out, within four hours',
+    L.placeLine(L.recentAway([{ kind: 'pour', at2: { place: 'Walden' }, ts: now - 3600000 }], now)),
+    'Walden');
+  eq('and not after', L.recentAway([{ kind: 'pour', at2: { place: 'Walden' },
+    ts: now - 5 * 3600000 }], now), null);
+  eq('a pour with no moment says nothing',
+    L.recentAway([{ kind: 'pour', at2: { place: 'Walden' } }], now), null);
+  eq('the heading over your bottles never says yours over none',
+    [L.bottlesHeading(0), L.bottlesHeading(1), L.bottlesHeading(3)],
+    ['Not on your shelf', 'Your bottle', '3 bottles']);
   eq('a blank name is not a pour', L.awayPour('', 'x', cat), null);
   eq('nor is one letter', L.awayPour('X', 'x', cat), null);
   eq('and where is optional', !!L.awayPour('Yamazaki 18', '', cat), true);
@@ -12178,6 +12203,11 @@ sec('§281 a bottle in context');
     L.bottleContext(cat.d, cat, bs).onlyOfItsHouse, true);
   eq('and a shelf of one has no context',
     L.bottleContext(cat.a, cat, [{ k: 'a', status: 'open' }]), null);
+  /* NOT YOURS, NO "YOUR" (BZ, 2026-09-19). */
+  eq('a whiskey you own none of has no shelf context',
+    L.bottleContext(Object.assign({}, cat.b, { k: 'z' }), cat, bs), null);
+  eq('and its page offers to add it rather than another',
+    [L.addBottleSay(0), L.addBottleSay(2)], ['+ Add to your shelf', '+ Another bottle']);
 
   /* A HOUSE NAME IS A PROPER NOUN wherever it lands in the sentence.
      sentenceCase lowercases the whole string, which turned "1792 Barton"
@@ -15956,7 +15986,7 @@ sec('\u00a7352 a calendar is pours, not bottles');
   /* And a calendar pour of something you DO own is an ordinary pour of
      your own bottle, with where it came from kept. */
   const mine = L.awayPour('Mine', '', { K: { k: 'K', name: 'Mine' } }, null,
-    'an advent calendar');
+    'an advent calendar', [{ id: 'B1', k: 'K', status: 'open' }]);
   eq('a whisky you own is poured from your shelf', mine.k, 'K');
   eq('and it is not logged as something you do not have',
     mine.away, undefined);
