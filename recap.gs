@@ -218,7 +218,27 @@ function probeRecap() {
 
 function writeBottle_(r) {
   var b = r.bottle || {};
-  var system = [
+  /* A WHISKY THEY DO NOT OWN is read as a prospect: what it WOULD be here
+     (BZ, 2026-09-19). Everything else about the job is the same. */
+  var system = r.prospect ? [
+    'You write ONE or TWO sentences about a whisky somebody is looking at',
+    'and does NOT own, given what is already on their shelf.',
+    '',
+    'RULES:',
+    '1. Say what it WOULD BE on their shelf: the position it would take in',
+    '   its house, the comparison it would make possible against a bottle',
+    '   they already have, or the gap it would fill. Write "would", never',
+    '   "your" as though they had it.',
+    '2. The most interesting thing is usually a PAIR it would complete: two',
+    '   bottles differing in one way and otherwise the same. Name both.',
+    '3. If their shelf already covers what it offers, say so plainly. That',
+    '   is worth more than a reason to buy it.',
+    '4. NEVER state a fact not in the data below - no history, no release',
+    '   years, no awards, no tasting notes, no prices.',
+    '5. One or two sentences, to "you", plainly. No heading, no preamble,',
+    '   no markdown, no sign-off.',
+    '6. Return the sentences as plain text and nothing else.'
+  ].join('\n') : [
     'You write ONE or TWO sentences about what a whisky is, to the person',
     'who owns it, given what else is on their shelf.',
     '',

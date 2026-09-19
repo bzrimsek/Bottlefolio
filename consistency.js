@@ -461,6 +461,12 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* A CALLER, NOT A SECOND ANSWER. A whisky nobody owns is asked about the
+     same way as one on the shelf - L.bottleAsk measures it - and
+     L.prospectAsk only hands it the prospect's context and marks the ask as
+     one. A second way of measuring a bottle against the shelf would still
+     fail this check. */
+  'prospectAsk>bottleAsk',
   /* A CALLER, NOT A SECOND ANSWER. The flights line says where the whole
      programme stands - what is pourable tonight, what waits on one bottle -
      by asking L.flightReady about each flight, which stays the single door

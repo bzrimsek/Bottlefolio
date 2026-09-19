@@ -12342,6 +12342,16 @@ sec('§281 a bottle in context');
   /* NOT YOURS, NO "YOUR" (BZ, 2026-09-19). */
   eq('a whiskey you own none of has no shelf context',
     L.bottleContext(Object.assign({}, cat.b, { k: 'z' }), cat, bs), null);
+  {
+    const notMine = Object.assign({}, cat.b, { k: 'z', name: 'Laphroaig Lore', fin: 'Port' });
+    const ask = L.prospectAsk(notMine, Object.assign({ z: notMine }, cat), bs);
+    eq('a whiskey you do not own asks as a prospect, measured the same way',
+      [ask.prospect, ask.mode, ask.fromTheSameHouse.length >= 2, ask.bottle.name],
+      [true, 'bottle', true, 'Laphroaig Lore']);
+    eq('and one you own does not', L.prospectAsk(cat.b, cat, bs), null);
+    eq('the facts a prospect was written from are recorded like any other',
+      typeof L.bottleFacts(notMine, Object.assign({ z: notMine }, cat), bs), 'string');
+  }
   eq('and its page offers to add it rather than another',
     [L.addBottleSay(0), L.addBottleSay(2)], ['+ Add to your shelf', '+ Another bottle']);
 
@@ -20639,7 +20649,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.6');
+    L.GS_BUILD, '2.4.7');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

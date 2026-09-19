@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.72  ·  2026-09-19 06:53 PM ET
+
+Against your shelf now reads as a prospect in full: under the derived line, one or two written sentences on what a whiskey you do not own would be here - the position it would take in its house, the pair it would complete, or that your shelf already covers it. It is measured exactly as a bottle you own is, kept with the facts it was written from so a changed shelf drops it, and it costs one lookup per bottle. Service build 2.4.7. A flight card gets no written line: its premise already says what it tests.
+
 ## v2.4.71  ·  2026-09-19 06:41 PM ET
 
 A line on five screens saying what that screen is showing, from its own data and for nothing: the shelf says what the filters have left you looking at, the map how far the shelf reaches and which Scotch regions it misses, Flights how many wait on one bottle each beside what is pourable tonight, the wishlist what the wanting has in common, and the library what it is short of. Each is counted from the shelf rather than the library behind it. And a real fault found while wiring it: the Flights page asked for what is ready tonight with a date where a count belongs, which sliced the list to nothing, so that page never showed a ready flight.
