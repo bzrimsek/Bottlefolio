@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.70  ·  2026-09-19 06:29 PM ET
+
+Your shelf now inherits a library row whole, and only your own layers sit on top: your corrections, the whiskies only you have, and the facts that ride on a bottle rather than the whisky. Loading an entry used to keep sixteen named fields and drop the rest, so the library's tasting notes never reached the shelf - 554 of 566 library entries carry notes and the shelf showed 200 - and 141 bottles queued to look up notes the library already had. That queue is now 8, which are the ones nothing has notes for. A field the library gains from here on arrives with it.
+
 ## v2.4.69  ·  2026-09-19 05:43 PM ET
 
 Lately and the recap no longer name a time they were never told. The writer rebuilt tonight and yesterday from the order of the sessions and called an evening of seven pours at home a flight. Its instructions now forbid every time word by name, including yesterday and the day before, and allow flight only for a session that lists one; and the app will not show or keep a paragraph that names a time anyway - no paragraph beats a wrong one. The change rewrites the paragraph. Service build 2.4.6.

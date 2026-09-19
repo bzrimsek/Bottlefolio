@@ -1529,6 +1529,29 @@ sec('reference data: distilleries and brands');
       { houses: { [L.refHouseKey('Aberlour')]: { name: 'Aberlour', region: 'Speyside' } }, brands: {} })
       .updates.x.region, 'Speyside');
   eq('and a product keeps it', L.normalizeProduct({ name: 'X', region: 'Islay' }).region, 'Islay');
+  /* AND ITS NOTES (BZ, 2026-09-19): dropped here, the library's notes never
+     reached the shelf and every bottle queued to fetch them again. */
+  {
+    const kept = L.normalizeProduct({ name: 'X', tn: { nose: 'pear', palate: 'oak' },
+      tnSrc: 'the distillery', tnFrom: 'A FLIGHT' });
+    eq('a product keeps the notes it was given, and where they came from',
+      [kept.tn.nose, kept.tn.palate, kept.tnSrc, kept.tnFrom],
+      ['pear', 'oak', 'the distillery', 'A FLIGHT']);
+    eq('and an empty note is not a note',
+      L.normalizeProduct({ name: 'X', tn: {} }).tn, undefined);
+    /* THE SHELF INHERITS THE LIBRARY ROW WHOLE (BZ, 2026-09-19). */
+  {
+    const row = { name: 'Y', proof: '92', tn: { nose: 'pear' }, region: 'Islay',
+      caskSize: 'quarter cask', at: 123, by: 'somebody' };
+    const mine = L.libraryProduct(row);
+    eq('the types are tidied, every field is kept, bookkeeping is not',
+      [mine.proof, mine.region, mine.tn.nose, mine.caskSize, mine.at, mine.by],
+      [92, 'Islay', 'pear', 'quarter cask', undefined, undefined]);
+  }
+  eq('a bottle with notes is not queued to look them up',
+      L.needsEnhancing(L.normalizeProduct({ name: 'X', sub: 'bourbon',
+        tn: { nose: 'pear', palate: 'oak' } })), false);
+  }
   eq('a Scotch made in Taiwan is listed, not written',
     plan.conflicts.map(x => x.k + ':' + x.says), ['b:made in Taiwan']);
 
