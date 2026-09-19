@@ -102,36 +102,44 @@ function writeRecap_(r) {
     .trim();
 }
 
-/* WHAT SOMEBODY HAS BEEN DRINKING LATELY, from their last few sessions. */
+/* WHAT SOMEBODY HAS BEEN DRINKING LATELY, from their last few sessions.
+   Rewritten 2026-09-19 (BZ): reading the list back is not insight, and the
+   first version said "tonight" of a glass logged hours after it was had. */
 var LATELY_RULES_ = [
-  'You write a short summary, two sentences and three at most, of what',
-  'somebody has been drinking lately, from their own log. You are given their',
-  'last few sessions, newest first: the date, where it was, what they poured.',
+  'You write a short read, two sentences and three at most, on what somebody',
+  'has been drinking lately - or over THE STRETCH, when one is named - from',
+  'their own log: their sessions, most recent first, each bottle with what it',
+  'is and how it tastes.',
   '',
   'RULES:',
-  '1. Lead with the most recent session. Name two or three of its bottles and',
-  '   say what joins them - a cask, a house, peat, a style, a strength - if',
-  '   something genuinely does. Say when it was relative to TODAY: tonight,',
-  '   last night, on Tuesday.',
-  '2. Then one line on the sessions before it, if they share a thread with it',
-  '   or break from it. If they do neither, leave them out.',
-  '3. A flight is one planned tasting, not a habit: mention it by its title as',
-  '   the event it was, and do not treat its bottles as favourites.',
-  '4. Name only bottles, places and flights given below. Never invent one.',
-  '5. Write plainly, to "you". No tasting-note flourish, no hedging, no',
+  '1. Say what it ADDS UP TO, not what it was. Find the thread - a cask they',
+  '   keep coming back to, a strength, a style, a house, a flavor that runs',
+  '   through the notes - or the turn, where the latest session breaks from',
+  '   the ones before. That observation is the whole point.',
+  '2. Name at most three bottles, and only as evidence for that point. Never',
+  '   list a session back: the log is shown directly under your sentences.',
+  '3. No times and no days: never tonight, last night, today, this week or a',
+  '   weekday. A pour is often logged long after it was drunk. Say "most',
+  '   recently" or "before that" when the order matters.',
+  '4. A flight is one planned tasting, not a habit. Mention it by its title',
+  '   as the event it was, if at all, and do not treat its bottles as',
+  '   favourites.',
+  '5. Name only bottles, places and flights given below, and state nothing',
+  '   about a bottle that its line does not say. Never invent.',
+  '6. Write plainly, to "you". No tasting-note flourish, no hedging, no',
   '   heading, no markdown, no sign-off.',
-  '6. If there is one small session and nothing else, one sentence is enough.'
+  '7. If there is too little to find a thread in, say so in one sentence.'
 ].join('\n');
 
 function latelyFacts_(r) {
-  var out = ['TODAY: ' + (r.today || ''), ''];
+  /* The recap names its stretch; Lately is simply lately. */
+  var out = (r.span && r.span !== 'lately') ? ['THE STRETCH: ' + r.span, ''] : [];
   (r.sessions || []).forEach(function (s) {
-    var bits = [];
+    out.push((s.order || 'a session') + ', ' + s.where + ':');
     (s.flights || []).forEach(function (f) {
-      bits.push('the flight "' + f.title + '" (' + f.n + ' pours)');
+      out.push('  the flight "' + f.title + '" (' + f.n + ' pours)');
     });
-    if ((s.pours || []).length) bits.push((s.pours || []).join(', '));
-    out.push(s.date + ', ' + s.where + ': ' + bits.join('; '));
+    (s.pours || []).forEach(function (p) { out.push('  ' + p); });
   });
   return out.join('\n');
 }

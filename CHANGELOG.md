@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.68  ·  2026-09-19 05:36 PM ET
+
+One writer for Lately and the recap, and a better one. Neither says tonight or last night any more - a pour is often logged long after it was drunk - and both say what the pours add up to, a thread or a turn, with at most three bottles named as evidence, rather than reading the log back. The writer now gets each bottle with its category, style, finish, strength, age, distillery and tasting notes, and the sessions in order without dates. The month recap on Taste uses the same sessions for the stretch chosen there instead of counts, so two flight nights no longer drown everything else, and it is kept on the account per stretch until a pour changes it. Service build 2.4.5.
+
 ## v2.4.67  ·  2026-09-19 05:14 PM ET
 
 Lately, under Recent pours on Home: a short paragraph on what you have been drinking, written from your last few sessions - an evening at home, a night out, a flight - newest first within two weeks, leading with the most recent. The month's recap was given counts alone, and two flight nights of eighteen pours drowned out the evening before; a flight now counts as one event. The paragraph is kept on your account and written again only when a pour changes it, so it costs one lookup an evening. Service build 2.4.4: the recap door takes sessions and writes to rules of their own.

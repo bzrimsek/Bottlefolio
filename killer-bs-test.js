@@ -1569,8 +1569,21 @@ sec('lately: sessions, newest first');
   eq('the stamp moves when a pour is added',
     L.latelyStamp(s) === L.latelyStamp(L.latelySessions(hist.concat([{ kind: 'pour', at: '2026-09-19', k: 'a' }]), cat, '2026-09-19')),
     false);
-  eq('and it asks with the sessions and the day', [L.latelyAsk(s, '2026-09-19').sessions.length,
-    L.latelyAsk(s, '2026-09-19').today, L.latelyAsk([], '2026-09-19')], [4, '2026-09-19', null]);
+  const ask = L.latelyAsk(s, Object.assign({}, cat,
+    { a: { k: 'a', name: 'Rabbit Hole Dareringer', sub: 'bourbon', fin: 'PX',
+      proof: 93, dist: 'Rabbit Hole', tn: { palate: 'raisin, toffee' } } }));
+  eq('it asks with every session, in order, and no dates',
+    [ask.sessions.length, ask.sessions[0].order, ask.sessions[1].order,
+     JSON.stringify(ask).indexOf('2026-') < 0, L.latelyAsk([], cat)],
+    [4, 'most recent', 'before that', true, null]);
+  eq('each bottle goes with what it is and how it tastes',
+    ask.sessions[1].pours[0],
+    'Rabbit Hole Dareringer (Bourbon, finished in PX, 93 proof, Rabbit Hole, tastes of raisin, toffee)');
+  eq('a bottle with nothing known about it is just its name, and a known one says what it is',
+    [L.latelyBottle('Mystery', null), L.latelyBottle('Plain', { name: 'Plain', proof: 90 })],
+    ['Mystery', 'Plain (90 proof)']);
+  eq('a bottle the app knows nothing about goes by its name',
+    ask.sessions[2].pours[0], 'Michter\u2019s Sour Mash');
 }
 
 sec('search and pour');
@@ -11831,23 +11844,28 @@ sec('§277 reading the log back');
     L.recap([{ kind: 'pour', k: 'a', at: today }], cat, 'month', today)),
     '1 pour');
 
-  /* IN WORDS, on demand. BZ: "ok want it on demand." Not on every tap — a
-     paragraph that rewrites itself each time you change the window is
-     noise, and it costs a lookup for numbers already on the screen.
-
-     What goes out is the COUNTS, never the log. */
-  const ask = L.recapAsk(year, 'the last year');
+  /* IN WORDS, from SESSIONS since 2026-09-19 (BZ): counts alone let two
+     flight nights drown the rest. Still nothing about WHICH NIGHT and nothing
+     about who was there: the order of sessions, where, and the bottles. */
+  const yearSessions = L.latelySessions([{ kind: 'pour', k: 'a', at: today },
+    { kind: 'pour', k: null, away: 'Somewhere Whisky', at: today,
+      at2: { place: 'The Aviary' } }], cat, today, 16, 365);
+  const ask = L.latelyAsk(yearSessions, cat, 'the last year');
   eq('it asks for a recap', ask.mode, 'recap');
   eq('and says which stretch', ask.span, 'the last year');
-  eq('the counts go', ask.pours, 5);
-  eq('and the tallies', ask.whiskies.length, 4);
-  /* Nothing about WHICH NIGHT, and nothing about who was there. A tally
-     is not a diary. */
   const sent = JSON.stringify(ask);
   eq('no dates leave the device', /20\d\d-\d\d-\d\d/.test(sent), false);
   eq('and no log entries', /"kind":"pour"/.test(sent), false);
   eq('nothing logged is nothing to write up',
-    L.recapAsk(L.recap([], cat, 'month', today)), null);
+    L.latelyAsk(L.latelySessions([], cat, today, 16, 30), cat, 'the last month'), null);
+  const rw = L.recapWriting([{ kind: 'pour', k: 'a', at: today }], cat, 'month', today,
+    { month: { stamp: 'x', text: 'kept words' } });
+  eq('a stretch is found by its id, and an unknown one is nothing',
+    [L.recapSpan('month').days, L.recapSpan('nope').days], [30, undefined]);
+  eq('the recap for a stretch knows its label, its sessions and what it kept',
+    [rw.label, rw.sessions.length, rw.kept.text], ['the last month', 1, 'kept words']);
+  eq('and a window of null is all of it',
+    L.latelySessions([{ kind: 'pour', k: 'a', at: '2019-01-01' }], cat, today, 16, null).length, 1);
 
   /* What comes back is checked. The failure worth guarding is not a wrong
      fact — it is a paragraph that says nothing, or says it at length. */
@@ -19883,18 +19901,16 @@ sec('\u00a7405 a recap that cannot be written says why');
      a blank card and no words, which a person reads as a broken feature
      rather than as a spent allowance, an empty span, or a deployment that
      needs a new version. */
-  eq('no pours in the span means there is nothing to ask',
-    L.recapAsk({ pours: 0, whiskies: [], houses: [], places: [] }, 'a month'),
-    null);
-  eq('and nothing at all means the same',
-    L.recapAsk(null, 'a month'), null);
+  eq('no sessions in the span means there is nothing to ask',
+    L.latelyAsk([], {}, 'a month'), null);
+  eq('and nothing at all means the same', L.latelyAsk(null, {}, 'a month'), null);
   /* THE ONE THAT WENT DOWN THE WIRE. JSON.stringify(null) is the string
      "null", so the old call posted four letters to the service. */
   eq('which must never be posted as a body',
-    JSON.stringify(L.recapAsk(null, 'a month')), 'null');
+    JSON.stringify(L.latelyAsk(null, {}, 'a month')), 'null');
   eq('a span with pours does ask',
-    (L.recapAsk({ pours: 3, different: 2, whiskies: [], houses: [],
-      places: [], kinds: {}, cities: [] }, 'a month') || {}).mode, 'recap');
+    (L.latelyAsk([{ at: '2026-09-01', where: 'home', pours: ['X'], ks: [null],
+      flights: [] }], {}, 'a month') || {}).mode, 'recap');
 
   /* WHAT COMES BACK IS CHECKED. A deployment serving an older version
      answers without the key at all. */
@@ -20552,7 +20568,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.4');
+    L.GS_BUILD, '2.4.5');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',
