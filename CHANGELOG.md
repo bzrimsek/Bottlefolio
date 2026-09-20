@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.81  ·  2026-09-20 09:49 AM ET
+
+The four group chips on Learn sat in a strip that scrolled sideways, so on a 360px phone Definitions was cut mid-word at the edge: nothing was unreachable, but a cut word reads as broken. They use the app's own wrapping chip row now, the one the filters already use, which shares the width between them and wraps rather than hides. Measured at both widths afterwards: all four fit on one line at 360px, none of them over the edge, and the row is the same height it was.
+
 ## v2.4.80  ·  2026-09-20 09:35 AM ET
 
 Buttons were measured at 430, 390 and 360 across every screen rather than eyeballed, and two faults came back. A row of actions sized each button to its own label, so on the bottle page Look up age and Photograph the label took one line and Edit details sat alone on the next beside a hole - and at 360 the three went one per line. Below 560px a row of actions is now two equal columns, with an odd last button spanning the full width, so every row is full and every target is the same size under a thumb. And the Nothing open card on Taste was being dropped into the three-column grid of glasses, so it took a third of the width and its button read Add, some, bottles down three lines; it spans the row now. Nothing was found cut off or over the edge at any of the three widths.
