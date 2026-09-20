@@ -1919,6 +1919,22 @@ sec('three that belong together, and one that does not');
     [4, 4, odd.answer]);
   const secOf = {};
   bank.forEach(x => { secOf[x.term] = x.section; });
+  /* AND NOT A TERM ITS OWN ENTRY DISCLAIMS. Islands says it is not one of
+     the five protected names, so it cannot stand as an example of one. */
+  eq('a term its own entry disclaims is never one of the three', (() => {
+    let state = {}, shown = 0;
+    for (let i = 0; i < bank.length * 2; i++) {
+      const q = L.quizNext(state, bank);
+      if (!q) break;
+      if (q.kind === 'odd') {
+        L.QUIZ_NOT_EXAMPLE.forEach(term => {
+          if (q.choices.indexOf(term) >= 0 && q.answer !== term) shown++;
+        });
+      }
+      state = L.quizRecord(state, q, q.answer, '2026-09-20');
+    }
+    return shown;
+  })(), 0);
   eq('three from the section and the answer from outside it',
     [odd.choices.filter(c => secOf[c] === odd.section).length,
      secOf[odd.answer] === odd.section], [3, false]);
