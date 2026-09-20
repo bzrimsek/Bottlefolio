@@ -1785,6 +1785,22 @@ sec('a statement to agree with or refuse');
 {
   const bank = L.quizBank();
   const tf = L.quizTrueFalse({}, bank);
+  /* IT MUST TURN ON SOMETHING CHECKABLE. */
+  eq('a number or a named thing counts; a general description does not',
+    [L.quizCheckable('At least 51% rye.'),
+     L.quizCheckable('The island, and the home of heavily peated Scotch.'),
+     L.quizCheckable('Two pours differing in one perceptible way.')],
+    [true, true, false]);
+  eq('and every statement it asks can be judged', (() => {
+    let state = {}, vague = 0;
+    for (let i = 0; i < 30; i++) {
+      const q = L.quizTrueFalse(state, bank);
+      if (!q) break;
+      if (!L.quizCheckable(q.ask.split('\u2014')[1] || '')) vague++;
+      state = L.quizRecord(state, q, q.answer, '2026-09-20');
+    }
+    return vague;
+  })(), 0);
   eq('two choices, and one of them is the answer',
     [tf.choices, tf.choices[tf.at], tf.kind], [['True', 'False'], tf.answer, 'tf']);
   eq('it asks a term against a sentence, and the sentence names nobody',
