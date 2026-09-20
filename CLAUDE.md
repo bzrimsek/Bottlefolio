@@ -70,17 +70,19 @@ files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
 and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
 plain shelf file, a CSV, the database export or `_superseded/`.
 
-The gate, all thirteen, in this order — `gate.py` runs them in the cloud
+The gate, all fifteen, in this order — `gate.py` runs them in the cloud
 with the clock pinned to UTC (test §351 expects it):
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # ~5,000 assertions
+node killer-bs-test.js    # ~5,300 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # 76 wiring checks, incl. rules copied twice
+node consistency.js       # 80 wiring checks, incl. rules copied twice
 node screens.js           # 21 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed
+node seq.js               # screens in PAIRS: what the last one left behind
+node papers.js            # both papers, one landscape page each
 node render.js            # screens agree with the engine
 node twotab.js            # two devices, merge holds
 node gscheck.js           # Apps Script wiring
@@ -93,7 +95,7 @@ node rulestest.js         # the Firebase rules, run in the emulator
 2026-09-16); on BZ's PC it prints SKIPPED, which is not a pass. It also runs
 the suite against rules broken on purpose and fails if it misses one.
 
-All thirteen must pass. Report each one as it lands rather than running the
+All fifteen must pass. Report each one as it lands rather than running the
 loop silently (rule 25c) — and read the whole output of each, not the last
 line; a check once sat broken for several builds because the failure was
 thirty lines above a blank final line.

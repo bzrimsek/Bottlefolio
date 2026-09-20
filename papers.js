@@ -78,21 +78,23 @@ const failures = [];
       }
       const q = await browser.newPage();
       await q.setContent(html);
-      const pdf = await q.pdf({ format: 'Letter', printBackground: true });
+      /* THE PAGE THE CSS ASKS FOR. `format` overrides @page, so without
+         this a landscape card was measured against a portrait page - the
+         check would have passed the very thing it exists to catch. */
+      const pdf = await q.pdf({ preferCSSPageSize: true,
+                                printBackground: true });
       const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
       await q.close();
       printed++;
-      /* Six pours or fewer has to be one page: that is the flight BZ
-         actually runs, and a card you turn over while pouring is a card
-         you put down. Above six a second page is honest. */
-      /* Most six-pour cards fit on one page and all of them must fit on
-         two. Two of the thirty-six run over: their host notes are long
-         enough that fitting them would mean type you cannot read at arm's
-         length across a table, which is the one thing this card is for.
-         The guard is the ceiling rather than the ideal — it catches the
-         regressions that took EVERY card to two pages, twice. */
+      /* ONE PAGE, every paper (BZ, 2026-09-20). The old ceiling was two,
+         because two cards had notes too long to fit at type you could read
+         at arm's length across a table - which is the one thing this card
+         is for. A sideways page bought back the width: the reasoning runs
+         in three columns and sets its own size, the writing rows divide
+         what is left, and all seventy-two fit. A card you turn over while
+         pouring is a card you put down. */
       if (pages > 1) long++;
-      if (pages > 2) {
+      if (pages > 1) {
         failures.push(title + ' (' + v.pours + ' pours): the ' + which
           + ' printed ' + pages + ' pages');
       }

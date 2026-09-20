@@ -48,6 +48,12 @@ FAST = [
     # in strips a few words wide, and the detail header collected a More
     # button on every redraw - neither of which a single screen can show.
     ('sequence',    ['node', 'seq.js']),
+    # THE PAPERS, PRINTED. Landscape and one page each (BZ, 2026-09-20).
+    # papers.js has existed since 2026-09-03 and ship.py ran it until
+    # ship.py was retired; from 2026-09-15 to 2026-09-20 nothing did, which
+    # is how seven host cards came to be over a page with a green gate.
+    # --all because the rule is about every paper, not a sample.
+    ('papers',      ['node', 'papers.js', 'index.html', '--all']),
     ('render',      ['node', 'render.js']),
     ('twotab',      ['node', 'twotab.js']),
     # The four .gs files that answer the app. Added after a duplicate

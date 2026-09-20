@@ -1034,6 +1034,9 @@ check('no fixed svg id is emitted by a repeated drawing',
      saying separately because the check matches whole strings. */
   const KEYS = new Set(["'colour'", "'flavour'", "'flavoured'", "'grey'",
                         "'grey goose'",
+                        /* The pigment is called burnt umber in American
+                           English too, the same as burnt sienna. */
+                        "'burnt umber'",
                         "'centre'", "'litre'", "'favourite'",
                         "'auth/cancelled-popup-request'"]);
   const lines = src.split('\n');
@@ -1439,6 +1442,30 @@ check('no fixed svg id is emitted by a repeated drawing',
     pushes.map(x => x + ' — items need { key, text }'));
 }
 
+/* ONE NOTICE. It appears in Settings, at the foot of both printed papers
+   and in LICENSE, and every one of them asks L.COPYRIGHT - because the
+   year moves, and a notice typed out four times moves in one of them. */
+{
+  const m = src.match(/L\.COPYRIGHT = '([^']+)'/);
+  check('the copyright notice exists once, in the engine',
+    m ? [] : ['L.COPYRIGHT is gone \u2014 the papers and Settings ask it '
+      + 'by name and would print nothing']);
+  if (m) {
+    const notice = m[1].replace('\\u00a9', '\u00a9');
+    /* A second hand-typed copy anywhere in the app. */
+    const typed = (src.match(/All rights reserved/g) || []).length;
+    check('nothing spells the notice out for itself',
+      typed > 1 ? [typed + ' copies of the notice in index.html \u2014 ask '
+        + 'L.COPYRIGHT instead, so the year only has to move once'] : []);
+    const lic = fs.existsSync('LICENSE')
+      ? fs.readFileSync('LICENSE', 'utf8').split('\n')[0].trim() : null;
+    check('LICENSE opens with the same notice the app shows',
+      lic === notice ? []
+        : ['LICENSE says ' + JSON.stringify(lic) + ', the app says '
+           + JSON.stringify(notice)]);
+  }
+}
+
 /* TWO RATCHETS, NOT TWO WALLS.
 
    BZ: what other hygiene checks can we run? These two found real debt -
@@ -1450,8 +1477,24 @@ check('no fixed svg id is emitted by a repeated drawing',
    rather than satisfied; a check that says "you added one more" gets
    fixed in the same minute. */
 {
-  const hexes = (src.match(/#[0-9A-Fa-f]{6}\b/g) || []).length;
+  /* EXCEPT the colour scale, whose colours ARE the content: they are what
+     whisky looks like, printed beside the Color box on the room's sheet,
+     and a CSS variable would be wrong for every one of them. Cut the table
+     out before counting, so the allowance below still covers everything
+     else at the number it always did. */
+  const scale = src.match(/L\.COLOUR_SCALE = \[[\s\S]*?\n\];/);
+  check('the colour scale is one table the counter can find',
+    scale ? [] : ['L.COLOUR_SCALE is not where the hex ratchet looks for it '
+      + '\u2014 its colours would be counted as theme debt']);
+  const counted = scale ? src.replace(scale[0], '') : src;
+  const hexes = (counted.match(/#[0-9A-Fa-f]{6}\b/g) || []).length;
   const HEX_TODAY = 129;
+  /* And the excluded block holds colours and nothing else. */
+  check('nothing hides inside the colour scale',
+    scale && /(function|=>|document\.|S\.)/.test(scale[0])
+      ? ['L.COLOUR_SCALE carries code, not just colours \u2014 the hex '
+         + 'ratchet skips this block, so anything in it goes unchecked']
+      : []);
   check('no new hard-coded colour outside the theme',
     hexes > HEX_TODAY
       ? [hexes + ' hard-coded hex colours, was ' + HEX_TODAY
@@ -2228,7 +2271,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     buddiesGrid: 110,
     renderShelfFilters: 100,
     showBulkStatus: 107,
-    tastingPapers: 107,
+    tastingPapers: 43,
     renderDiag: 105,
     renderFromUrl: 103,
     vennSvg: 103,

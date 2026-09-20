@@ -3389,6 +3389,55 @@ const abCat = { x: { k: 'x', name: 'Aberlour 12', dist: 'Aberlour', sub: 'scotch
 eq('a titled house is not a leak',
   L.sheetLeaks(L.participantCard(abFlight, abCat), abFlight, abCat), []);
 
+sec('the colour scale, off the printed sheet');
+eq('twenty-five steps', L.COLOUR_SCALE.length, 25);
+eq('it opens at gin clear', L.COLOUR_SCALE[0].name, 'gin clear');
+eq('and closes at molasses', L.COLOUR_SCALE[24].name, 'molasses');
+eq('every step is a real colour',
+  L.COLOUR_SCALE.filter(c => !/^#[0-9a-f]{6}$/.test(c.hex)).length, 0);
+eq('no name twice',
+  new Set(L.COLOUR_SCALE.map(c => c.name)).size, L.COLOUR_SCALE.length);
+// THE CLAIM THE STRIP MAKES. Read left to right it gets darker, every step,
+// and that is the only thing about it a person can check by looking.
+const lum = h => {
+  const n = parseInt(h.slice(1), 16);
+  return .299 * (n >> 16) + .587 * ((n >> 8) & 255) + .114 * (n & 255);
+};
+eq('it darkens at every step', L.COLOUR_SCALE
+  .filter((c, i) => i && lum(c.hex) >= lum(L.COLOUR_SCALE[i - 1].hex))
+  .map(c => c.name), []);
+eq('and it spans the whole range, clear to nearly black',
+  [lum(L.COLOUR_SCALE[0].hex) > 230, lum(L.COLOUR_SCALE[24].hex) < 30],
+  [true, true]);
+// ONE VOCABULARY. The prompt used to carry eight colour words of its own,
+// which were a shorter and different list from the strip beside them.
+eq('the colour prompt keeps no word list of its own',
+  L.COLOUR_SCALE.filter(c => L.SHEET_PROMPTS.colour.indexOf(c.name) >= 0)
+    .length, 0);
+
+sec('the papers fit one landscape page');
+// A Letter page turned sideways inside a 12mm margin is 192mm tall, and the
+// writing rows are what spend it. papers.js measures the result; these pin
+// the arithmetic it depends on.
+eq('few pours get the tallest box', L.sheetRowHeight(4), 17);
+eq('six still do', L.sheetRowHeight(6), 14.1);
+eq('nine share the same budget', L.sheetRowHeight(9), 9.4);
+eq('and the budget is what they share',
+  [6, 7, 8, 9].filter(n => L.sheetRowHeight(n) * n > L.SHEET_ROW_MM.budget), []);
+eq('a box never goes under the floor',
+  L.sheetRowHeight(40), L.SHEET_ROW_MM.least);
+eq('and a flight with no pours does not divide by zero',
+  L.sheetRowHeight(0), L.SHEET_ROW_MM.most);
+
+// The reasoning sizes itself by how much reasoning there is: six long
+// reasons fill more page than nine short ones, and it was six at 1,639
+// characters that ran the last card over.
+eq('short reasoning stays at full size', L.whyPt(['a', 'b']), 7.5);
+eq('the card that spilled comes down',
+  L.whyPt([...Array(6)].map(() => 'x'.repeat(273))), 6.5);
+eq('and there is a floor', L.whyPt(['x'.repeat(9000)]), 6);
+eq('no reasoning at all is not an error', L.whyPt([]), 7.5);
+
 sec('the columns follow the question');
 eq('a proof flight asks for a proof',
   L.sheetColumns({ tag: 'ONE VARIABLE: PROOF' })[0][0], 'Proof \u2014 your number');

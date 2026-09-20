@@ -83,8 +83,11 @@ APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
 # REVIEW/RECAP-SETUP were retired to _superseded (which NEVER blocks). It is
 # the front door of a public repo, so a repo without it is a repo whose only
 # description of itself is a 1.9MB file.
+# LICENSE added 2026-09-20. The repo is public and carried none, which
+# reads as help yourself - and the written content is the part worth
+# protecting. A licence that stays on this PC protects nothing.
 DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
-        'README.md']
+        'README.md', 'LICENSE']
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
