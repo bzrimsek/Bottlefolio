@@ -25,6 +25,23 @@ const check = (what, offenders) => {
   else ok(what);
 };
 
+/* A CHIP IS A CONTROL; A LABEL IS A PILL (BZ, 2026-09-20). .chip carries
+   min-height:40px so that a thumb can hit it, and a label wearing it spends
+   that height for nothing - four of them cost 88px of a phone screen on
+   Home, which is a tenth of the screen on four short words. Anything not
+   pressable is .pill, which has no target size to keep. */
+check('no label is dressed as a chip', (() => {
+  const found = [];
+  const re = /el\(\s*'(div|span|p|li)'\s*,\s*'([^']*\bchip\b[^']*)'/g;
+  let m;
+  while ((m = re.exec(src))) {
+    found.push('line ' + src.slice(0, m.index).split('\n').length + ': a '
+      + m[1] + " with class '" + m[2] + "' \u2014 a chip is a control, so "
+      + 'use pill for a label');
+  }
+  return found;
+})());
+
 /* 1. An element id that is written to but never exists in the markup.
       This is the brandActs bug: the dot was inserted into a container
       that had never been there, so it silently never appeared. */
@@ -1304,7 +1321,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* The Google Sheet copy of the shelf: a switch, and its address. */
     'sheetOn', 'sheetUrl',
     /* The Lately paragraph and the recap's, whole: the newer one is kept. */
-    'lately', 'recaps'];
+    'lately', 'recaps', 'quiz'];
   /* `deleted` used to sit here as a known gap: it cannot take a plain
      union, because a deletion undone on one device would be resurrected by
      the other. It got the tombstone treatment `wish` already had at

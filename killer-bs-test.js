@@ -1569,6 +1569,87 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('a question at a time out of Learn');
+{
+  const bank = L.quizBank();
+  eq('the bank is the whisky, not the app',
+    [bank.length >= 80, bank.some(x => x.group === 'FEATURES')], [true, false]);
+  /* NOTHING AMBIGUOUS AND NOTHING EMPTY. A term that appears twice in the
+     reference means two things, and a catch-all is not an answer. */
+  eq('no term is in the bank twice',
+    new Set(bank.map(x => x.term)).size, bank.length);
+  eq('and the catch-all category is not asked about',
+    bank.some(x => x.term === 'Other'), false);
+  const q = L.quizNext({}, bank);
+  eq('a question is a definition and four terms, one of them right',
+    [q.choices.length, q.choices[q.at], new Set(q.choices).size, typeof q.ask],
+    [4, q.answer, 4, 'string']);
+  /* THE WRONG ANSWERS MUST BE PLAUSIBLE, which means they come from the same
+     part of the reference - otherwise the answer gives itself away. */
+  const where = {};
+  bank.forEach(x => { where[x.term] = x.section; });
+  eq('every choice comes from the same section as the answer',
+    q.choices.every(c => where[c] === q.section), true);
+  eq('and the same question always looks the same',
+    L.quizNext({}, bank).choices.join('|'), q.choices.join('|'));
+  /* IT WAITS TO BE ANSWERED. The next one only arrives once this one is. */
+  const after = L.quizRecord({}, q, q.answer, '2026-09-20');
+  eq('answering moves it on', L.quizNext(after, bank).answer !== q.answer, true);
+  eq('and not answering does not',
+    L.quizNext({ day: '2026-09-19' }, bank).answer, q.answer);
+  /* ONE A DAY, and a day missed does not stack up. */
+  eq('due today, not again after answering',
+    [L.quizDue({}, '2026-09-20'), L.quizDue(after, '2026-09-20'),
+     L.quizDue(after, '2026-09-21')], [true, false, true]);
+  /* THE TALLY: right against tried, and nothing else. */
+  const two = L.quizRecord(after, L.quizNext(after, bank),
+    L.quizNext(after, bank).answer, '2026-09-21');
+  const miss = L.quizRecord(two, L.quizNext(two, bank), 'nonsense', '2026-09-22');
+  eq('two right of two, then two of three',
+    [two.right, two.asked, miss.right, miss.asked], [2, 2, 2, 3]);
+  eq('and it reads as a count',
+    [L.quizTally(two), L.quizTally(miss), L.quizTally({})],
+    ['2 right of 2 tried', '2 right of 3 tried', '']);
+  eq('it says whether you had it',
+    [L.quizSay(q, q.answer).slice(0, 10), /Not this time/.test(L.quizSay(q, 'x'))],
+    ['That is it', true]);
+  /* EVERY ENTRY GETS ASKED ONCE before any is asked twice. */
+  let state = {}, seen = [];
+  for (let i = 0; i < 30; i++) {
+    const nx = L.quizNext(state, bank);
+    seen.push(nx.answer);
+    state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+  }
+  eq('thirty questions, thirty different answers', new Set(seen).size, 30);
+  eq('a bank too small to field four says nothing',
+    L.quizNext({}, bank.slice(0, 3)), null);
+  /* EVERY ENTRY IN THE BANK MUST MAKE A QUESTION, not just the first one.
+     A stride of seven through fourteen peers lands on two of them for ever,
+     so some questions came back empty while the first one looked fine. */
+  {
+    let state = {}, empty = 0, thin = 0;
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) { empty++; break; }
+      if (new Set(nx.choices).size !== 4 || nx.choices[nx.at] !== nx.answer) thin++;
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    eq('all ' + bank.length + ' make a question, each with four distinct choices',
+      [empty, thin], [0, 0]);
+  }
+  /* THE ORDER IS THE TERM'S OWN, so it is the same on every device without
+     being stored, and it does not follow the order of the file - a week of
+     questions out of one section would read as a syllabus nobody chose. */
+  eq('a term always ranks the same, and two terms differ',
+    [L.quizRank('Speyside') === L.quizRank('Speyside'),
+     L.quizRank('Speyside') === L.quizRank('Islay')], [true, false]);
+  eq('the order does not depend on how the bank arrived',
+    L.quizOrder(bank.slice().reverse()).map(x => x.term).join('|'),
+    L.quizOrder(bank).map(x => x.term).join('|'));
+  eq('and it is not the file’s own order',
+    L.quizOrder(bank)[0].term === bank[0].term, false);
+}
+
 sec('telling the person who built it');
 {
   eq('what was typed goes into the log as one line, under the name',

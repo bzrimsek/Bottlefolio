@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.83  ·  2026-09-20 11:09 AM ET
+
+A question mark beside the gear on Home, with the gold dot every waiting thing uses, and behind it one question a day out of the reference. Learn is written as term and definition, which is a multiple choice question inside out: the definition is the question and four terms are the answers. The wrong three come from the SAME section - a Scotch region guessed against other Scotch regions - because three terms drawn at random out of eighty give the answer away. It waits to be answered rather than expiring, so a day missed loses nothing, and the tally is what a quiz keeps: right against tried. What has been answered is remembered by term, so adding to the reference cannot deal somebody a question twice. Reading the bank found faults nothing else would have: Other is a category and not an answer, and three terms mean two things each, so Finish, Proof and the duplicated No age statement are not asked - and the two No age statement entries, which each held half of it, are now one. A chip is a control and a label is a pill: the check that says so is the seventy seventh, and it was watched failing.
+
 ## v2.4.82  ·  2026-09-20 10:09 AM ET
 
 The titles a shelf has also earned sit on one row now, with the words wrapping inside each pill. They were carrying the 40px minimum height a chip has so a thumb can hit it, and nothing there is tappable: four of them spent 88px of a phone screen on four short words. Measured at 390 and 360 with the real shelf: one line each over two rows is 57px; allowing the words to wrap while the row is still free to flow is also 57px, because a wrapping flex row wraps the row before it ever squeezes an item, which is why the first attempt found nothing; forced onto one row so each pill must shrink, it is 42px with every pill the same height. BZ said a two line button would save the space and he was right. Safe at four, which is where shelfPortrait caps them.
