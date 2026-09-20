@@ -16921,9 +16921,9 @@ sec('\u00a7358 pouring for a guest, by distance');
      is hard deciding what to pour them. The guest names something they
      like and the app travels a known distance from it - his four rungs,
      his definitions, figurative not literal. */
-  eq('four rungs', L.POUR_RUNGS.length, 4);
+  eq('five rungs', L.POUR_RUNGS.length, 5);
   eq('and they are his', L.POUR_RUNGS.map(r => r.id).join(','),
-    'house,next,road,pond');
+    'house,region,type,road,pond');
 
   /* The country map has to carry every category the test names, or a
      category with no country falls to the pond and the test proves the
@@ -16955,7 +16955,7 @@ sec('\u00a7358 pouring for a guest, by distance');
         sub: 'bourbon', proof: 94 }, sc2), 'house');
     eq('but another maker is still next door',
       L.rungOf(mm, { name: 'Wild Turkey 101', dist: 'Wild Turkey',
-        sub: 'bourbon', proof: 101 }, sc2), 'next');
+        sub: 'bourbon', proof: 101 }), 'type');
   }
 
   eq('same maker is keeping it in the house',
@@ -16963,7 +16963,7 @@ sec('\u00a7358 pouring for a guest, by distance');
       sub: 'scotch', region: 'Islay' }, sc), 'house');
   eq('same region, another maker is next door',
     L.rungOf(seed, { name: 'Lagavulin 16', dist: 'Lagavulin',
-      sub: 'scotch', region: 'Islay' }, sc), 'next');
+      sub: 'scotch', region: 'Islay' }), 'region');
   /* SIX REGIONS, and they were already here: L.SCOTCH_REGIONS has listed
      Islands separately since long before this feature. BZ said five, I
      started folding Islands into Highland on the strength of the
@@ -16976,27 +16976,52 @@ sec('\u00a7358 pouring for a guest, by distance');
   /* The road out of each category is a small table, which is BZ's rules
      written down: Scotch travels by region, Ireland across the sea,
      Canada and the world to their nearest big neighbor. */
-  eq('Scotch travels by region', L.ROAD_TO.scotch, 'region');
-  eq('Ireland goes across the sea to Scotland', L.ROAD_TO.irish, 'scotch');
-  eq('Canada goes to bourbon', L.ROAD_TO.canadian, 'bourbon');
-  eq('and the world goes to Scotland', L.ROAD_TO.world, 'scotch');
-  eq('another Scotch region is down the road',
+  /* THE LADDER WIDENS BY TYPE, NOT BY BORDER (BZ, 2026-09-20: too literal
+     with down the road). The table is his: ASM bridges both families,
+     Canadian is adjacent to rye alone, and it reads the same both ways. */
+  eq('the malts are adjacent to one another',
+    [L.ADJACENT_TYPES.scotch.indexOf('irish') >= 0,
+     L.ADJACENT_TYPES.irish.indexOf('scotch') >= 0,
+     L.ADJACENT_TYPES.japanese.indexOf('scotch') >= 0], [true, true, true]);
+  eq('American single malt bridges both ways',
+    [L.ADJACENT_TYPES['american single malt'].indexOf('bourbon') >= 0,
+     L.ADJACENT_TYPES['american single malt'].indexOf('scotch') >= 0,
+     L.ADJACENT_TYPES.bourbon.indexOf('american single malt') >= 0,
+     L.ADJACENT_TYPES.scotch.indexOf('american single malt') >= 0],
+    [true, true, true, true]);
+  eq('Canadian is adjacent to rye and to nothing else',
+    [L.ADJACENT_TYPES.canadian, L.ADJACENT_TYPES.rye.indexOf('canadian') >= 0,
+     L.ADJACENT_TYPES.bourbon.indexOf('canadian') >= 0],
+    [['rye'], true, false]);
+  eq('every adjacency reads the same way back', (() => {
+    const bad = [];
+    Object.keys(L.ADJACENT_TYPES).forEach(a => {
+      L.ADJACENT_TYPES[a].forEach(b => {
+        if ((L.ADJACENT_TYPES[b] || []).indexOf(a) < 0) bad.push(a + '>' + b);
+      });
+    });
+    return bad;
+  })(), []);
+  eq('another Scotch region is the same kind, not down the road',
     L.rungOf(seed, { name: 'Arran 10', dist: 'Arran', sub: 'scotch',
-      region: 'Islands' }, sc), 'road');
-  eq('and leaving the country is across the pond',
+      region: 'Islands' }), 'type');
+  eq('an Irish is down the road from a Scotch now, not across the pond',
+    L.rungOf(seed, { name: 'Redbreast 12', dist: 'Midleton',
+      sub: 'irish' }), 'road');
+  eq('and a bourbon is still across the pond from a Scotch',
     L.rungOf(seed, { name: 'Buffalo Trace', dist: 'Buffalo Trace',
-      sub: 'bourbon' }, sc), 'pond');
+      sub: 'bourbon' }), 'pond');
 
   /* AWAY FROM SCOTCH the middle rung is a category inside one country:
      bourbon to rye is down the road, both being American. */
   const bt = { name: 'Buffalo Trace', dist: 'Buffalo Trace',
                sub: 'bourbon', proof: 90 };
-  eq('another bourbon house is next door',
+  eq('the same house is the house rung',
     L.rungOf(bt, { name: 'Eagle Rare', dist: 'Buffalo Trace',
-      sub: 'bourbon' }, sc), 'house');
-  eq('a rye is down the road, still American',
+      sub: 'bourbon' }), 'house');
+  eq('a rye is down the road from a bourbon',
     L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac',
-      sub: 'rye' }, sc), 'road');
+      sub: 'rye' }), 'road');
   /* BZ: I'd go to ASM before crossing the pond. American single malt is
      AMERICAN, so it was never across anything - the road out of bourbon
      had been spelled as one named category and everything else fell into the
@@ -17004,34 +17029,36 @@ sec('\u00a7358 pouring for a guest, by distance');
      start. */
   eq('American single malt is down the road, not across it',
     L.rungOf(bt, { name: 'Westward', dist: 'Westward',
-      sub: 'american single malt' }, sc), 'road');
+      sub: 'american single malt' }), 'road');
   eq('and so is a Tennessee',
     L.rungOf(bt, { name: 'Dickel 13', dist: 'Dickel',
-      sub: 'tennessee' }, sc), 'road');
+      sub: 'tennessee' }), 'road');
   /* BZ: let's make Canada down the road from the US. A land border is not
      a pond, and Canadian whisky picks up the rye thread rather than
      starting a new one. */
-  eq('Canada is down the road from the US, not across a pond',
+  /* CANADIAN PICKS UP THE RYE THREAD AND ONLY THAT (BZ, 2026-09-20). It
+     used to be down the road from anything American, on the strength of a
+     land border; a bourbon drinker now crosses the pond to reach it. */
+  eq('Canada is across the pond from a bourbon',
     L.rungOf(bt, { name: 'Crown Royal', dist: 'Crown Royal',
-      sub: 'canadian' }, sc), 'road');
-  eq('and it reads the same way back',
-    L.rungOf({ name: 'Crown Royal', dist: 'Crown Royal', sub: 'canadian' },
-      bt, sc), 'road');
-  eq('but Scotland is still across it',
-    L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
-      sc), 'pond');
-  eq('and neither Canada nor ASM is left in the American pond order',
-    L.POND_ORDER.bourbon.indexOf('canadian') < 0
-    && L.POND_ORDER.bourbon.indexOf('american single malt') < 0, true);
-  eq('what is left across it starts with Ireland',
+      sub: 'canadian' }), 'pond');
+  eq('but down the road from a rye, both ways',
+    [L.rungOf({ name: 'Sazerac Rye', dist: 'Sazerac', sub: 'rye' },
+      { name: 'Crown Royal', dist: 'Crown Royal', sub: 'canadian' }),
+     L.rungOf({ name: 'Crown Royal', dist: 'Crown Royal', sub: 'canadian' },
+      { name: 'Sazerac Rye', dist: 'Sazerac', sub: 'rye' })],
+    ['road', 'road']);
+  eq('and Scotland is across the pond from a bourbon',
+    L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' }),
+    'pond');
+  eq('ASM is not across the pond from a bourbon, being down the road',
+    L.POND_ORDER.bourbon.indexOf('american single malt') < 0, true);
+  eq('what is across it starts with Ireland',
     L.POND_ORDER.bourbon[0], 'irish');
-  eq('and a Scotch is across the pond',
-    L.rungOf(bt, { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' },
-      sc), 'pond');
-  /* Two unknown countries are two unknowns, not a match. */
-  eq('an unplaceable pair does not count as the same country',
+  /* Two kinds that are neither the same nor adjacent are a pond apart. */
+  eq('an unrelated pair is across the pond',
     L.rungOf({ name: 'A', dist: 'A', sub: 'mystery' },
-      { name: 'B', dist: 'B', sub: 'enigma' }, sc), 'pond');
+      { name: 'B', dist: 'B', sub: 'enigma' }), 'pond');
 
   /* WHO YOU MEET FIRST ONCE YOU HAVE CROSSED. BZ: should scotch go to
      ireland before US, and ireland to scotland, and should either land
@@ -17052,7 +17079,8 @@ sec('\u00a7358 pouring for a guest, by distance');
      is across the pond they have already passed Scotland - which is why it
      is not first in their pond. */
   eq('Ireland reaches Scotland by road, not across the pond',
-    L.ROAD_TO.irish, 'scotch');
+    L.rungOf({ name: 'Redbreast 12', dist: 'Midleton', sub: 'irish' },
+      { name: 'Ardbeg 10', dist: 'Ardbeg', sub: 'scotch' }), 'road');
   /* AND THE SAME RULE FROM THE AMERICAN SIDE. BZ: bourbon and rye are
      close cousins, ASM is more distant, right? Right - and rye is not in
      bourbon's pond at all, being down the road from it. The nearest
@@ -17066,8 +17094,8 @@ sec('\u00a7358 pouring for a guest, by distance');
      road rather than across the pond. */
 
   eq('rye is not across the pond from bourbon at all',
-    L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac', sub: 'rye' },
-      sc), 'road');
+    L.rungOf(bt, { name: 'Sazerac Rye', dist: 'Sazerac', sub: 'rye' }),
+    'road');
   eq('a category nobody ordered sorts last, not first',
     L.pondRank(seed, { sub: 'mystery' }), 99);
   eq('and a seed with no order at all ranks everything the same',
@@ -17094,7 +17122,7 @@ sec('\u00a7358 pouring for a guest, by distance');
   const thin = [seed, { name: 'Lagavulin 16', dist: 'Lagavulin',
     sub: 'scotch', region: 'Islay', proof: 86 }];
   const out = L.pourFor(seed, 'house', thin, sc);
-  eq('an empty rung walks out to the next one', out.rung, 'next');
+  eq('an empty rung walks out to the next one', out.rung, 'region');
   eq('and admits it moved', out.moved, true);
   eq('with something pourable at the end of it', out.list[0].name,
     'Lagavulin 16');
@@ -20336,7 +20364,7 @@ sec('\u00a7408 a guest seed still knows its own house');
 
   eq('the same house is the house rung', L.rungOf(seed, gj), 'house');
   eq('and so is the other one', L.rungOf(seed, bonded), 'house');
-  eq('a different maker is next door', L.rungOf(seed, dickel), 'next');
+  eq('a different maker is the same kind', L.rungOf(seed, dickel), 'type');
 
   /* EVERY OPTIONAL INPUT, ABSENT, ONE AT A TIME.
      This is the general shape of the bug rather than the instance. rungOf
@@ -20355,16 +20383,16 @@ sec('\u00a7408 a guest seed still knows its own house');
   eq('with no sub, the house still wins', L.rungOf(
     { name: full.name, dist: full.dist }, gj), 'house');
   eq('with no name and no dist, it cannot claim a house', L.rungOf(
-    { sub: 'tennessee' }, gj), 'next');
+    { sub: 'tennessee' }, gj), 'type');
   eq('with nothing at all, it answers nothing',
     L.rungOf({}, gj), 'pond');
   eq('and a missing candidate is not a crash',
     L.rungOf(full, null), null);
   /* THE DOWNGRADE THAT STARTED THIS. A seed with no dist must not put the
      seed's own house under "different maker". */
-  ['house', 'next', 'road', 'pond'].forEach(r => {
+  ['house', 'region', 'type', 'road', 'pond'].forEach(r => {
     const got = L.rungOf({ name: full.name, sub: full.sub }, gj);
-    if (r === 'next') eq('a dist-less seed never calls its own house ' + r,
+    if (r === 'type') eq('a dist-less seed never calls its own house ' + r,
       got === r, false);
   });
 
@@ -20373,16 +20401,16 @@ sec('\u00a7408 a guest seed still knows its own house');
   eq('a real seed still matches on its distillery',
     L.rungOf(seeded, gj), 'house');
   eq('and does not fall back to the name',
-    L.rungOf(seeded, dickel), 'next');
+    L.rungOf(seeded, dickel), 'type');
 
   /* THE FRONT OF THE NAME ONLY. A house appearing mid-name is a
      coincidence, and a short string matches everything. */
   eq('a house buried mid-name is not a match',
     L.rungOf({ name: 'Smooth Ambler Old Scout', sub: 'bourbon' },
-      { name: 'x', dist: 'Scout', sub: 'bourbon' }), 'next');
+      { name: 'x', dist: 'Scout', sub: 'bourbon' }), 'type');
   eq('a very short house name is not a match',
     L.rungOf({ name: 'Old Elk Wheated', sub: 'bourbon' },
-      { name: 'x', dist: 'Old', sub: 'bourbon' }), 'next');
+      { name: 'x', dist: 'Old', sub: 'bourbon' }), 'type');
   eq('an apostrophe does not break it',
     L.rungOf({ name: 'Maker\u2019s Mark 46', sub: 'bourbon' },
       { name: 'x', dist: "Maker's Mark", sub: 'bourbon' }), 'house');
