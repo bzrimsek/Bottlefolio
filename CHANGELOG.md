@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.82  ·  2026-09-20 10:09 AM ET
+
+The titles a shelf has also earned sit on one row now, with the words wrapping inside each pill. They were carrying the 40px minimum height a chip has so a thumb can hit it, and nothing there is tappable: four of them spent 88px of a phone screen on four short words. Measured at 390 and 360 with the real shelf: one line each over two rows is 57px; allowing the words to wrap while the row is still free to flow is also 57px, because a wrapping flex row wraps the row before it ever squeezes an item, which is why the first attempt found nothing; forced onto one row so each pill must shrink, it is 42px with every pill the same height. BZ said a two line button would save the space and he was right. Safe at four, which is where shelfPortrait caps them.
+
 ## v2.4.81  ·  2026-09-20 09:49 AM ET
 
 The four group chips on Learn sat in a strip that scrolled sideways, so on a 360px phone Definitions was cut mid-word at the edge: nothing was unreachable, but a cut word reads as broken. They use the app's own wrapping chip row now, the one the filters already use, which shares the width between them and wraps rather than hides. Measured at both widths afterwards: all four fit on one line at 360px, none of them over the edge, and the row is the same height it was.
