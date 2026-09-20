@@ -1571,19 +1571,20 @@ sec('reference data: distilleries and brands');
 
 sec('telling the person who built it');
 {
-  const ask = L.feedbackAsk('  the sorts are wrong  ',
-    { name: 'BZ', version: 'v2.4.74', device: 'Pixel', log: 'a line' });
-  eq('what was typed is trimmed and sent with the version, device and log',
-    [ask.mode, ask.text, ask.name, ask.version, ask.device, ask.log],
-    ['feedback', 'the sorts are wrong', 'BZ', 'v2.4.74', 'Pixel', 'a line']);
+  eq('what was typed goes into the log as one line, under the name',
+    L.feedbackLine('  the sorts\n  are wrong  ', 'BZ'),
+    'FEEDBACK from BZ: the sorts are wrong');
+  eq('somebody with no display name still says something',
+    L.feedbackLine('it crashed', '   '), 'FEEDBACK from somebody: it crashed');
   eq('an empty box is not a message',
-    [L.feedbackAsk('   ', {}), L.feedbackAsk(null, {})], [null, null]);
+    [L.feedbackLine('   ', 'BZ'), L.feedbackLine(null, 'BZ')], [null, null]);
   eq('a very long message is cut rather than refused',
-    L.feedbackAsk('x'.repeat(9000), {}).text.length, L.FEEDBACK_MAX);
-  eq('and it says nothing about who it reaches: the service knows that',
-    /@/.test(JSON.stringify(ask)), false);
-  /* IT IS A PAID MODE, so it carries proof of sign-in like every other. */
-  eq('feedback needs a token', L.needsToken(JSON.stringify(ask)), true);
+    L.feedbackLine('x'.repeat(9000), 'BZ').length,
+    L.FEEDBACK_MAX + 'FEEDBACK from BZ: '.length);
+  /* IT IS FOUND BY READING THE LOG, so the marker has to be the same every
+     time and at the front of the line. */
+  eq('every message starts with the same word',
+    /^FEEDBACK from /.test(L.feedbackLine('anything', 'BZ')), true);
 }
 
 sec('the log says who, not how many');
@@ -20755,7 +20756,7 @@ sec('§441 a lookup asks who is asking');
   eq('the sentence says what to do',
     /sign in/i.test(L.SIGN_IN_TO_LOOK), true);
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.10');
+    L.GS_BUILD, '2.4.11');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

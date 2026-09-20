@@ -38,15 +38,14 @@ const MODES = [
   ['bottle', 'writeBottle_'],
   ['label', 'readLabel_'],
   ['shelf', 'readShelf_'],
-  ['sheet', 'writeShelfSheet_'],
-  ['feedback', 'sendFeedback_']
+  ['sheet', 'writeShelfSheet_']
 ];
 
 const GLOBALS = new Set(['JSON', 'Object', 'Array', 'String', 'Number',
   'Math', 'Date', 'RegExp', 'Error', 'Set', 'Map', 'Promise', 'Logger',
   'UrlFetchApp', 'PropertiesService', 'ContentService', 'DriveApp',
   'SpreadsheetApp', 'Utilities', 'ScriptApp', 'LockService', 'MimeType',
-  'CacheService', 'Session', 'MailApp', 'parseInt', 'parseFloat', 'isFinite', 'isNaN',
+  'CacheService', 'Session', 'parseInt', 'parseFloat', 'isFinite', 'isNaN',
   'encodeURIComponent', 'decodeURIComponent', 'eval', 'Boolean',
   'if', 'for', 'while', 'switch', 'catch', 'return', 'function', 'typeof',
   'new', 'else', 'do', 'try', 'var']);

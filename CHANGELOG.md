@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.78  ·  2026-09-19 09:44 PM ET
+
+Feedback writes to the log instead of sending an email. It was to be an email from the service and the service could not be made to send one: asking Apps Script who owns it needs one scope, MailApp needs another, and three rounds of declaring and granting them ended where they started - the deployment kept answering that it did not have permission. The log already travels to the account and is already read from there, so a message written into it arrives by a road that is built and running, and it arrives beside what the app was doing at the time. Press Send it and the line goes in as FEEDBACK from the display name, whitespace collapsed to one line, and the log is pushed at once rather than on the next fifteen-second window. The service keeps seven modes again: the feedback mode, the mail function, the editor test and the send mail scope are all gone.
+
 ## v2.4.77  ·  2026-09-19 09:15 PM ET
 
 The feedback mail was refused for want of a scope the project never asked for, so appsscript.json now declares its five: external requests, Drive, Sheets, triggers and send mail. Declaring them takes the guesswork out of what Apps Script infers, and a scope set that has changed is what makes the editor ask the owner to authorise it again. probeWiring carried its own list of six modes and reported ALL SIX MODES WIRED while the project answered eight, which is a probe that cannot find the two it does not know about; it now reads the same MODES_ list the file itself keeps, says how many and on which build, and no longer tells anybody to hand-deploy, since the cloud gate does that. gscheck fails if that list and the app's disagree, and was watched failing on a mode removed on purpose.
