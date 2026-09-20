@@ -1948,6 +1948,39 @@ sec('a statement to agree with or refuse');
      /Not this time/.test(L.quizSay(tf, 'nonsense'))], ['Right', true]);
 }
 
+sec('the written ones');
+{
+  eq('every written question has an answer among its choices',
+    L.QUIZ_TRICKS.filter(x => x.choices.indexOf(x.answer) < 0), []);
+  eq('and every one says why',
+    L.QUIZ_TRICKS.filter(x => !x.why || x.why.length < 30), []);
+  eq('no two are the same question',
+    new Set(L.QUIZ_TRICKS.map(x => x.ask)).size, L.QUIZ_TRICKS.length);
+  eq('each has two choices or four, never three',
+    L.QUIZ_TRICKS.filter(x => x.choices.length !== 2
+      && x.choices.length !== 4), []);
+  const tr = L.quizTrick({});
+  eq('it is asked as a question of its own kind',
+    [tr.kind, tr.choices[tr.at], L.quizPrompt(tr)],
+    ['trick', tr.answer, tr.choices.length === 2 ? 'True or false?' : 'Pick one.']);
+  eq('and it says why, the same either way',
+    [L.quizExplain(tr, tr.answer), L.quizExplain(tr, 'nonsense')],
+    [tr.why, tr.why]);
+  eq('answering it moves to the next one',
+    L.quizTrick(L.quizRecord({}, tr, tr.answer, '2026-09-20')).ask !== tr.ask,
+    true);
+  /* EVERY ONE OF THEM GETS ASKED before any is asked twice. */
+  eq('all of them come round', (() => {
+    let state = {}, seen = new Set();
+    for (let i = 0; i < L.QUIZ_TRICKS.length; i++) {
+      const q = L.quizTrick(state);
+      seen.add(q.ask);
+      state = L.quizRecord(state, q, q.answer, '2026-09-20');
+    }
+    return seen.size;
+  })(), L.QUIZ_TRICKS.length);
+}
+
 sec('three that belong together, and one that does not');
 {
   const bank = L.quizBank();
@@ -1988,6 +2021,14 @@ sec('three that belong together, and one that does not');
       .every(d => !bank.some(x => x.term === d))), true);
   eq('picking it is told plainly that there is no such thing',
     /There is no such thing as /.test(L.quizExplain(odd, odd.answer)), true);
+  /* EVERY SECTION THAT CAN NAME WHAT IT HOLDS can be asked this way, and
+     the name has to read in the sentence "three of these are ...". */
+  eq('every noun reads in both places',
+    Object.keys(L.QUIZ_NOUNS).filter(s => {
+      const n = L.QUIZ_NOUNS[s];
+      return !Array.isArray(n) || n.length !== 2 || !n[0] || !n[1]
+        || /^an? /.test(n[1]);
+    }), []);
   eq('and it asks which one is not that kind of thing',
     /^Which one is not /.test(L.quizPrompt(odd)), true);
   /* THE LEAD-IN IS WRITTEN, NOT PLURALISED BY ADDING AN S: "category
@@ -1997,10 +2038,11 @@ sec('three that belong together, and one that does not');
     [-1, true]);
   /* IT IS ASKED AS EVERY THIRD QUESTION, and remembered by its section, so
      the term it borrowed is still asked about on its own later. */
-  eq('the three shapes come round in turn',
+  eq('the four shapes come round in turn',
     [L.quizNext({ asked: 0 }, bank).kind, L.quizNext({ asked: 1 }, bank).kind,
-     L.quizNext({ asked: 2 }, bank).kind, L.quizNext({ asked: 3 }, bank).kind],
-    [undefined, 'tf', 'odd', undefined]);
+     L.quizNext({ asked: 2 }, bank).kind, L.quizNext({ asked: 3 }, bank).kind,
+     L.quizNext({ asked: 4 }, bank).kind],
+    [undefined, 'tf', 'odd', 'trick', undefined]);
   const after = L.quizRecord({ asked: 2 }, odd, odd.answer, '2026-09-20');
   eq('it is remembered by section, not by the borrowed term',
     [!!after.done[odd.key], !!after.done[odd.answer]], [true, false]);
@@ -5142,7 +5184,7 @@ eq('every group has content',
   L.REF_GROUPS.every(g => L[g.data].length > 0), true);
 eq('tasting and whiskey items are substantial',
   L.TASTING.concat(L.WHISKEY).every(s => s.items.every(i => i.def.length > 40)), true);
-eq('sections present', L.REFERENCE.length, 8);
+eq('sections present', L.REFERENCE.length, 10);
 eq('every section has items', L.REFERENCE.every(s => s.items.length > 0), true);
 eq('every item has a term and a definition',
   L.REFERENCE.every(s => s.items.every(i => i.term && i.def && i.def.length > 20)), true);
