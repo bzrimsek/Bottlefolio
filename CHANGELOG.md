@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.79  ·  2026-09-20 09:17 AM ET
+
+The fill gauge's marks now sit where the handle stops. They were laid over the whole track box, but the handle cannot reach either end of it - the input carries a margin of 8px and inside that the thumb's centre stops half its own length short - so every mark was 11.5px out at the ends and a bottle set to 10 showed the bar below the 10. Three cuts to vertical space on a phone, each measured at 390 by 844 with the real shelf before and after: every card is 10px top and bottom rather than 14 with an 8px margin rather than 12, because the bottle page carried seven of them and 280px, a third of a phone screen, went on card edges; the mode tiles on Flights, Shop and Taste draw their art at 44px rather than 64, which was 70px of picture under a 15px label and 234px of a 786px screen; and the number tile on Flights is gone, because the sentence above it already opens with the same count. A buddy who shares both ways no longer carries a line saying so under their name: the two green lights on the row say it.
+
 ## v2.4.78  ·  2026-09-19 09:44 PM ET
 
 Feedback writes to the log instead of sending an email. It was to be an email from the service and the service could not be made to send one: asking Apps Script who owns it needs one scope, MailApp needs another, and three rounds of declaring and granting them ended where they started - the deployment kept answering that it did not have permission. The log already travels to the account and is already read from there, so a message written into it arrives by a road that is built and running, and it arrives beside what the app was doing at the time. Press Send it and the line goes in as FEEDBACK from the display name, whitespace collapsed to one line, and the log is pushed at once rather than on the next fifteen-second window. The service keeps seven modes again: the feedback mode, the mail function, the editor test and the send mail scope are all gone.
