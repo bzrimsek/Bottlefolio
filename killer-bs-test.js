@@ -1589,6 +1589,27 @@ sec('a question at a time out of Learn');
      after that, the rest of its own section. */
   const where = {};
   bank.forEach(x => { where[x.term] = x.section; });
+  /* A NEAR MISS IN EVERY QUESTION THAT CAN HAVE ONE: the entry names the
+     other, or the other names it. */
+  eq('nearly every question offers a term related to its own answer', (() => {
+    let state = {}, withNear = 0, asked = 0;
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) break;
+      asked++;
+      const other = c => (bank.filter(b => b.term === c)[0] || {});
+      const near = nx.choices.some(c => c !== nx.answer
+        && (L.quizCites(nx.full, c)
+          || (other(c).section === nx.section
+            && L.quizCites(other(c).def, nx.answer))));
+      if (near) withNear++;
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    /* Measured at 39 of 82. The rest cannot have one - their entry names no
+       other term and no other entry names them - and fall back to the
+       answer's own section, which is still four terms of one kind. */
+    return withNear / asked > 0.4;
+  })(), true);
   eq('a term the definition names is offered as a choice',
     q.choices.some(c => q.full.toLowerCase().indexOf(c.toLowerCase()) >= 0
       && c !== q.answer), true);
@@ -1615,14 +1636,21 @@ sec('a question at a time out of Learn');
   eq('and it reads as a count',
     [L.quizTally(two), L.quizTally(miss), L.quizTally({})],
     ['2 right of 2 tried', '2 right of 3 tried', '']);
-  /* THE ANSWER IS NOT IN THE QUESTION. */
-  /* Case-insensitively: an entry writes its own term in lower case as
-     often as not ("A wheat whiskey is not a wheated bourbon"). */
-  eq('the term is struck out of its own definition, and kept in the full one',
+  /* THE ANSWER IS NOT IN THE QUESTION, AND THE QUESTION IS STILL A
+     SENTENCE. A sentence that names the term is dropped whole rather than
+     having the term cut out of it: "A --- is not a wheated bourbon" is not
+     a question (BZ, 2026-09-20). */
+  eq('a sentence that names the term is dropped, not gutted',
     [q.ask.toLowerCase().indexOf(q.answer.toLowerCase()),
-     q.ask.indexOf(L.QUIZ_BLANK) >= 0,
+     q.ask.indexOf('\u2014\u2014\u2014'),
      q.full.toLowerCase().indexOf(q.answer.toLowerCase()) >= 0],
-    [-1, true, true]);
+    [-1, -1, true]);
+  eq('and what is asked is whole sentences out of the entry',
+    L.quizSentences(q.full).filter(s => q.ask.indexOf(s) >= 0).length > 0, true);
+  eq('the wheat example asks the half that does not name it',
+    L.quizAsk('At least 51% wheat, new charred oak, the same proof limits. '
+      + 'A wheat whiskey is not a wheated bourbon.', 'Wheat whiskey'),
+    'At least 51% wheat, new charred oak, the same proof limits.');
   eq('no question anywhere in the bank names its own answer', (() => {
     let state = {}, gave = [];
     for (let i = 0; i < bank.length; i++) {
@@ -1634,11 +1662,36 @@ sec('a question at a time out of Learn');
     }
     return gave;
   })(), []);
-  eq('plurals and possessives go with it',
-    [L.quizHide('A sherry cask, or sherry casks, is a cask.', 'Sherry casks'),
-     L.quizHide('The angel\u2019s share is what evaporates.', 'Angel\u2019s share')],
-    ['A \u2014\u2014\u2014, or \u2014\u2014\u2014, is a cask.',
-     'The \u2014\u2014\u2014 is what evaporates.']);
+  /* AND THE TWO JOBS ARE NOT THE SAME RULE. */
+  eq('a choice is only picked on an exact mention, not a stray plural',
+    [L.quizCites('It falls as a barrel ages.', 'Age'),
+     L.quizCites('A wheat whiskey is not a wheated bourbon.', 'Wheated'),
+     L.quizCites('Bottled at cask strength.', 'STR')],
+    [false, true, false]);
+  eq('plurals and possessives count as naming it',
+    [L.quizNames('Aged in a sherry cask.', 'Sherry casks'),
+     L.quizNames('The angel\u2019s share evaporates.', 'Angel\u2019s share'),
+     L.quizNames('Bottled at cask strength.', 'STR'),
+     L.quizNames('It ages in oak.', 'Age')],
+    /* The last is a verb, not the term, and it counts anyway: the plural
+       rule cannot tell "ages" from "Age" and dropping a sentence too many
+       costs a sentence, while keeping one too many gives the answer away. */
+    [true, true, false, true]);
+  /* AN ENTRY THAT ONLY NAMES ITSELF IS A CHOICE, NEVER A QUESTION. The
+     whole of the Highland entry is "North of the Highland line", so it
+     cannot be asked - and it is the one wrong answer worth having against
+     Lowland, so it stays in the bank. */
+  eq('such an entry is kept, and never asked', (() => {
+    const short = bank.filter(x => !L.quizAskable(x));
+    let state = {}, askedShort = 0;
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) break;
+      if (short.some(s => s.term === nx.answer)) askedShort++;
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    return [short.length > 0, askedShort];
+  })(), [true, 0]);
   /* AND IT ASKS SOMETHING, rather than showing a paragraph with buttons. */
   eq('the question names the kind of thing it wants',
     [L.quizPrompt({ section: 'Scotch regions' }),
