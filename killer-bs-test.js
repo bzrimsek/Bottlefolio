@@ -1810,6 +1810,18 @@ sec('three that belong together, and one that does not');
   eq('three from the section and the answer from outside it',
     [odd.choices.filter(c => secOf[c] === odd.section).length,
      secOf[odd.answer] === odd.section], [3, false]);
+  /* THE ODD ONE IS MADE UP WHERE THERE IS ONE TO MAKE UP. A real term
+     borrowed from elsewhere gives itself away: nobody weighs Water against
+     three Scotch regions (BZ, 2026-09-20). */
+  eq('the odd one out is a plausible invention, not a real term from elsewhere',
+    [bank.some(x => x.term === odd.answer),
+     (L.QUIZ_DECOYS[odd.section] || []).indexOf(odd.answer) >= 0],
+    [false, true]);
+  eq('and the invented ones are nowhere in the reference',
+    Object.keys(L.QUIZ_DECOYS).every(s => L.QUIZ_DECOYS[s]
+      .every(d => !bank.some(x => x.term === d))), true);
+  eq('picking it is told plainly that there is no such thing',
+    /There is no such thing as /.test(L.quizExplain(odd, odd.answer)), true);
   eq('and it asks which one is not that kind of thing',
     /^Which one is not /.test(L.quizPrompt(odd)), true);
   /* THE LEAD-IN IS WRITTEN, NOT PLURALISED BY ADDING AN S: "category
@@ -1829,11 +1841,11 @@ sec('three that belong together, and one that does not');
   eq('so the next one is a different section',
     L.quizOdd(after, bank).section !== odd.section, true);
   /* AND IT SAYS SOMETHING EITHER WAY. */
-  eq('right names what the odd one is; wrong says the one picked belongs',
-    [L.quizExplain(odd, odd.answer).indexOf(odd.answer), 0,
+  eq('right names the odd one either way; wrong says the one picked belongs',
+    [L.quizExplain(odd, odd.answer).indexOf(odd.answer) >= 0,
      L.quizExplain(odd, odd.choices.filter(c => c !== odd.answer)[0])
        .indexOf(' is ' + odd.noun + '.') > 0],
-    [0, 0, true]);
+    [true, true]);
   eq('and the verdict is about the odd one',
     [/That is the one/.test(L.quizSay(odd, odd.answer)),
      /The odd one is/.test(L.quizSay(odd, 'nonsense'))], [true, true]);

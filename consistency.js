@@ -25,6 +25,26 @@ const check = (what, offenders) => {
   else ok(what);
 };
 
+/* A DEFINITION IS READ IN A LIST AND ASKED ON ITS OWN (BZ, 2026-09-20).
+   "At least 51% wheat, new charred oak, the same proof limits" is clear
+   under the bourbon entry and means nothing as a question, because the
+   limits it refers to are on another line. An entry that leans on its
+   neighbours cannot be asked, so it must not be written that way. */
+check('no definition leans on the entry above it', (() => {
+  const found = [];
+  const DANGLE = /\bthe same (?:rules|proof limits|limits)\b|\bas (?:above|before)\b/i;
+  /* The definitions are quoted strings on `def:` lines in the reference. */
+  const re = /\bdef:\s*'((?:[^'\\]|\\.)*)'/g;
+  let m;
+  while ((m = re.exec(src))) {
+    if (DANGLE.test(m[1])) {
+      found.push('line ' + src.slice(0, m.index).split('\n').length + ': '
+        + m[1].slice(0, 70) + '\u2026');
+    }
+  }
+  return found;
+})());
+
 /* A CHIP IS A CONTROL; A LABEL IS A PILL (BZ, 2026-09-20). .chip carries
    min-height:40px so that a thumb can hit it, and a label wearing it spends
    that height for nothing - four of them cost 88px of a phone screen on
