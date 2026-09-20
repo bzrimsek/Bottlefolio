@@ -1584,12 +1584,17 @@ sec('a question at a time out of Learn');
   eq('a question is a definition and four terms, one of them right',
     [q.choices.length, q.choices[q.at], new Set(q.choices).size, typeof q.ask],
     [4, q.answer, 4, 'string']);
-  /* THE WRONG ANSWERS MUST BE PLAUSIBLE, which means they come from the same
-     part of the reference - otherwise the answer gives itself away. */
+  /* THE WRONG ANSWERS MUST BE PLAUSIBLE. Best of all is the term the entry
+     itself argues with - "a wheat whiskey is not a wheated bourbon" - and
+     after that, the rest of its own section. */
   const where = {};
   bank.forEach(x => { where[x.term] = x.section; });
-  eq('every choice comes from the same section as the answer',
-    q.choices.every(c => where[c] === q.section), true);
+  eq('a term the definition names is offered as a choice',
+    q.choices.some(c => q.full.toLowerCase().indexOf(c.toLowerCase()) >= 0
+      && c !== q.answer), true);
+  eq('and the rest come from the answer\u2019s own section',
+    q.choices.filter(c => where[c] !== q.section
+      && q.full.toLowerCase().indexOf(c.toLowerCase()) < 0).length, 0);
   eq('and the same question always looks the same',
     L.quizNext({}, bank).choices.join('|'), q.choices.join('|'));
   /* IT WAITS TO BE ANSWERED. The next one only arrives once this one is. */
