@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.80  ·  2026-09-20 09:35 AM ET
+
+Buttons were measured at 430, 390 and 360 across every screen rather than eyeballed, and two faults came back. A row of actions sized each button to its own label, so on the bottle page Look up age and Photograph the label took one line and Edit details sat alone on the next beside a hole - and at 360 the three went one per line. Below 560px a row of actions is now two equal columns, with an odd last button spanning the full width, so every row is full and every target is the same size under a thumb. And the Nothing open card on Taste was being dropped into the three-column grid of glasses, so it took a third of the width and its button read Add, some, bottles down three lines; it spans the row now. Nothing was found cut off or over the edge at any of the three widths.
+
 ## v2.4.79  ·  2026-09-20 09:17 AM ET
 
 The fill gauge's marks now sit where the handle stops. They were laid over the whole track box, but the handle cannot reach either end of it - the input carries a margin of 8px and inside that the thumb's centre stops half its own length short - so every mark was 11.5px out at the ends and a bottle set to 10 showed the bar below the 10. Three cuts to vertical space on a phone, each measured at 390 by 844 with the real shelf before and after: every card is 10px top and bottom rather than 14 with an 8px margin rather than 12, because the bottle page carried seven of them and 280px, a third of a phone screen, went on card edges; the mode tiles on Flights, Shop and Taste draw their art at 44px rather than 64, which was 70px of picture under a 15px label and 234px of a 786px screen; and the number tile on Flights is gone, because the sentence above it already opens with the same count. A buddy who shares both ways no longer carries a line saying so under their name: the two green lights on the row say it.
