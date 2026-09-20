@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.92  ·  2026-09-20 12:48 PM ET
+
+A flight you cannot pour now says what it would take. The core pours that are not available are named, with the two reasons kept apart because they are not the same errand: a bottle you do not own is a purchase, one you own sealed is a decision, and the line above says so - one to buy, one you own sealed. Each purchase can go on the wishlist, or all of them at once, through wishAdd with the flight as the reason, so Shop says why it is on the list. It asks pourAvailable, the same door the gap finder asks, rather than working out availability again in its own words. The Running a tasting button is gone from the Flights masthead: the line below the search says the same thing in a sentence, so that line opens the rest - pour sizes, water, food, getting home - and the masthead keeps only where you stand. And two questions that cannot be told apart are never offered together now: a matched pair IS two pours differing in one perceptible way, which is the variable, so offering both asks somebody to choose between a thing and the thing it is made of. No counting of shared words can see that, so it is written down as a pair.
+
 ## v2.4.91  ·  2026-09-20 12:30 PM ET
 
 The wrong answers are chosen on what the question SHOWS rather than on the whole entry, and a shared word counts for less the more entries use it. Against Cask strength's full definition the nearest were Sour mash and Wheated bourbon - a production term and a mashbill term, obviously wrong to anybody reading them, and near only on words like bottled, barrel, usually and thing that half that section uses. Against the sentences actually asked, bottled at whatever strength it came out of the barrel, the nearest are Unfiltered, Chill filtration and Bottled in Bond, which is the choice somebody would really have to weigh. Both halves came out of reading four questions rather than from a check: BZ said c is obviously wrong, and it was.

@@ -1569,6 +1569,27 @@ sec('reference data: distilleries and brands');
     'Japan');
 }
 
+sec('what it would take to pour a flight');
+{
+  const cat = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' },
+    c: { k: 'c', name: 'C' } };
+  const bs = [{ id: '1', k: 'a', status: 'open' },
+    { id: '2', k: 'b', status: 'sealed' }];
+  const f = { title: 'An evening', core: [{ k: 'a' }, { k: 'b' }, { k: 'c' }] };
+  const miss = L.flightMissing(f, cat, bs);
+  eq('the open one is not missing; the sealed one and the absent one are',
+    miss.map(m => m.name + ':' + (m.sealed ? 'sealed' : 'buy')),
+    ['B:sealed', 'C:buy']);
+  eq('and it says so in a line', L.flightMissingSay(miss),
+    '1 to buy \u00b7 1 you own, sealed');
+  eq('a flight you can pour needs nothing',
+    [L.flightMissing({ core: [{ k: 'a' }] }, cat, bs), L.flightMissingSay([])],
+    [[], '']);
+  /* A whisky the catalogue has never heard of is a purchase, not a crash. */
+  eq('a core pour with no product is still named',
+    L.flightMissing({ core: [{ k: 'z', name: 'Z' }] }, cat, bs)[0].name, 'Z');
+}
+
 sec('a question at a time out of Learn');
 {
   const bank = L.quizBank();
@@ -1590,6 +1611,34 @@ sec('a question at a time out of Learn');
       'At least 51% rye, new charred oak, bottled at 80 proof')
     > L.quizNearness('At least 51% wheat, new charred oak, bottled at 80 proof',
       'Neutral spirit, unaged, filtered to nothing'), true);
+  /* A TERM AND THE THING IT IS MADE OF ARE NOT A FAIR CHOICE. No counting
+     of words sees this - Matched pair and Variable share almost nothing -
+     so it is written down rather than measured. */
+  eq('a clashing pair is never offered together', (() => {
+    let state = {}, together = 0;
+    for (let i = 0; i < bank.length * 2; i++) {
+      const q = L.quizNext(state, bank);
+      if (!q) break;
+      /* The clash is between a RIGHT answer and a wrong one. Two wrong
+         answers that are confusable with each other cost nothing, since
+         neither is the answer - and in an odd-one-out both are correct,
+         sitting among three that belong. */
+      if (q.kind !== 'odd') {
+        L.QUIZ_NOT_WITH.forEach(pair => {
+          const both = q.choices.indexOf(pair[0]) >= 0
+            && q.choices.indexOf(pair[1]) >= 0;
+          if (both && (q.answer === pair[0] || q.answer === pair[1])) together++;
+        });
+      }
+      state = L.quizRecord(state, q, q.answer, '2026-09-20');
+    }
+    return together;
+  })(), 0);
+  eq('and the clash is symmetric',
+    [L.quizClashes('Matched pair', 'Variable'),
+     L.quizClashes('Variable', 'Matched pair'),
+     L.quizClashes('Variable', 'The ask')], [true, true, false]);
+
   /* AND IT IS MEASURED ON WHAT THE QUESTION SHOWS. Cask strength's whole
      entry is nearest to Sour mash; the sentences it actually asks are
      nearest to Unfiltered, which is the choice somebody weighs. */
