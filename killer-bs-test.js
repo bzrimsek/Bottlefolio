@@ -1785,6 +1785,13 @@ sec('a question at a time out of Learn');
     [false, true, false]);
   /* EVERY WORD OF THE TERM, not the phrase: a sentence that says cask in
      one clause and strength in another has named Cask strength. */
+  /* AND THE SHORT FORM OF A LONGER TERM. */
+  eq('the short form of a three-word term names it',
+    [L.quizNames('A single malt is normally a mix of many casks.',
+      'Single malt Scotch'),
+     L.quizNames('At least 51% wheat, distilled at no more than 160 proof.',
+      'Wheat whiskey')],
+    [true, false]);
   eq('a sentence naming every word of a term counts as naming it',
     [L.quizNames('Barrel proof and barrel strength mean the same thing \u2014 '
       + 'American labels tend to say barrel, Scottish ones cask.',

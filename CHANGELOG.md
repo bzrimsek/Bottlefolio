@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.98  ·  2026-09-20 02:32 PM ET
+
+No shouting in the reference and no leaking in the questions. The capitals were my emphasis and BZ hates them: fifteen words that were being shouted are sentences again, and the only capitals left are acronyms. The answer was still being given away, differently this time: the entry for single malt Scotch says a single malt is normally a mix of many casks, and a rule that wanted every word of the term walked straight past a sentence that named it in two. The short form of a term of three words or more now counts as naming it, which leaves that question as one line - malted barley and nothing else, distilled in pot stills at one distillery - and leaves two-word terms alone, because the first word of wheat whiskey is wheat and striking every sentence with wheat in it would leave nothing to ask. Checked across the whole bank afterwards: no question names its own answer.
+
 ## v2.4.97  ·  2026-09-20 02:25 PM ET
 
 Three things on the guest screen, all BZ's. A rung with nothing in it is not offered: region is a rung for Scotch and for nothing else, because Kentucky is a region in the data and a Kentucky wheat whiskey therefore had a region rung holding one bottle and a kind rung holding one more, which is how Buffalo Trace ended up four steps from Woodford. His ladders are now literal - a bourbon gets house, bourbon, then rye and ASM and wheat, then the pond for Irish and Scotch; a Scotch gets house, region, then Irish, then the US and Canada - and each button says how many are behind it. Typing a name is enough: Woodford entered is a HOUSE, and a house seed carries that house's usual kind and region so the ladder has something to stand on, with a bottling matched exactly when the words name one and the words themselves when nobody here owns it. And the list inside a rung is ordered with intent rather than falling into alphabetical order: kinship first, which already carries the finish and the peat, then proof, then age, and the makers are spread so five bottles from one distillery cannot fill the top of it.
