@@ -90,6 +90,8 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
            # how wide it is. Everything else here proves the code runs.
            'answers.js', 'shots.js',
+           # 2026-09-20: screens in sequence, for what one leaves behind.
+           'seq.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'rules.js',

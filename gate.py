@@ -41,6 +41,13 @@ FAST = [
     # reached BZ on 2026-09-15 with 4,700 assertions green.
     ('answers',     ['node', 'answers.js']),
     ('shots',       ['node', 'shots.js']),
+    # SCREENS IN SEQUENCE, not one at a time. shots.js draws each screen
+    # alone and photographs it; this draws them in PAIRS and asks what the
+    # one before left behind. Added 2026-09-20, after a flight opened from
+    # a bottle page inherited the bottle's two-column layout and was drawn
+    # in strips a few words wide, and the detail header collected a More
+    # button on every redraw - neither of which a single screen can show.
+    ('sequence',    ['node', 'seq.js']),
     ('render',      ['node', 'render.js']),
     ('twotab',      ['node', 'twotab.js']),
     # The four .gs files that answer the app. Added after a duplicate
