@@ -1597,6 +1597,8 @@ sec('a question at a time out of Learn');
       const nx = L.quizNext(state, bank);
       if (!nx) break;
       asked++;
+      if (nx.kind) { asked--; state = L.quizRecord(state, nx,
+        nx.answer, '2026-09-20'); continue; }
       const other = c => (bank.filter(b => b.term === c)[0] || {});
       const near = nx.choices.some(c => c !== nx.answer
         && (L.quizCites(nx.full, c)
@@ -1716,12 +1718,16 @@ sec('a question at a time out of Learn');
     ['That is it', true]);
   /* EVERY ENTRY GETS ASKED ONCE before any is asked twice. */
   let state = {}, seen = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; seen.length < 30 && i < 150; i++) {
     const nx = L.quizNext(state, bank);
-    seen.push(nx.answer);
+    /* Only the definition questions: an odd-one-out borrows a term as its
+       answer and is remembered by its section, so the same term can be the
+       odd one twice and still be asked about on its own. */
+    if (!nx.kind) seen.push(nx.answer);
     state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
   }
-  eq('thirty questions, thirty different answers', new Set(seen).size, 30);
+  eq('thirty definition questions, thirty different answers',
+    new Set(seen).size, 30);
   eq('a bank too small to field four says nothing',
     L.quizNext({}, bank.slice(0, 3)), null);
   /* EVERY ENTRY IN THE BANK MUST MAKE A QUESTION, not just the first one.
@@ -1732,7 +1738,10 @@ sec('a question at a time out of Learn');
     for (let i = 0; i < bank.length; i++) {
       const nx = L.quizNext(state, bank);
       if (!nx) { empty++; break; }
-      if (new Set(nx.choices).size !== 4 || nx.choices[nx.at] !== nx.answer) thin++;
+      /* Only the definition questions have four choices: true or false has
+         two, by definition. */
+      if (!nx.kind
+        && (new Set(nx.choices).size !== 4 || nx.choices[nx.at] !== nx.answer)) thin++;
       state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
     }
     eq('all ' + bank.length + ' make a question, each with four distinct choices',
@@ -1749,6 +1758,85 @@ sec('a question at a time out of Learn');
     L.quizOrder(bank).map(x => x.term).join('|'));
   eq('and it is not the file’s own order',
     L.quizOrder(bank)[0].term === bank[0].term, false);
+}
+
+sec('a statement to agree with or refuse');
+{
+  const bank = L.quizBank();
+  const tf = L.quizTrueFalse({}, bank);
+  eq('two choices, and one of them is the answer',
+    [tf.choices, tf.choices[tf.at], tf.kind], [['True', 'False'], tf.answer, 'tf']);
+  eq('it asks a term against a sentence, and the sentence names nobody',
+    [tf.ask.indexOf(tf.about),
+     /* The sentence itself - everything after the dash - must not name the
+        entry it was taken from, or a false one answers itself. */
+     tf.ask.split('\u2014')[1].toLowerCase()
+       .indexOf(tf.really.toLowerCase())],
+    [0, -1]);
+  eq('and it asks whether that is so', L.quizPrompt(tf), 'True or false?');
+  /* TRUE WHEN THE SENTENCE IS ITS OWN, FALSE WHEN IT BELONGS TO A MATE. */
+  eq('the answer follows whose sentence it is',
+    tf.answer === (tf.about === tf.really ? 'True' : 'False'), true);
+  /* EVERY TERM, BOTH WAYS ROUND, AND NEVER A QUESTION THAT ANSWERS ITSELF. */
+  eq('across the bank: both answers occur, and none gives itself away', (() => {
+    let state = {}, seen = {}, gave = 0;
+    for (let i = 0; i < 40; i++) {
+      const q = L.quizTrueFalse(state, bank);
+      if (!q) break;
+      seen[q.answer] = 1;
+      if (q.ask.toLowerCase().indexOf(q.really.toLowerCase()) >= 0
+        && q.really !== q.about) gave++;
+      state = L.quizRecord(state, q, q.answer, '2026-09-20');
+    }
+    return [Object.keys(seen).sort(), gave];
+  })(), [['False', 'True'], 0]);
+  eq('a false one says whose sentence it really was',
+    /That is /.test(L.quizExplain(
+      { kind: 'tf', answer: 'False', really: 'Islay', full: 'x' }, 'True')), true);
+  eq('and the verdict is about the statement',
+    [L.quizSay(tf, tf.answer).slice(0, 5),
+     /Not this time/.test(L.quizSay(tf, 'nonsense'))], ['Right', true]);
+}
+
+sec('three that belong together, and one that does not');
+{
+  const bank = L.quizBank();
+  const odd = L.quizOdd({}, bank);
+  eq('four choices, one from somewhere else',
+    [odd.choices.length, new Set(odd.choices).size, odd.choices[odd.at]],
+    [4, 4, odd.answer]);
+  const secOf = {};
+  bank.forEach(x => { secOf[x.term] = x.section; });
+  eq('three from the section and the answer from outside it',
+    [odd.choices.filter(c => secOf[c] === odd.section).length,
+     secOf[odd.answer] === odd.section], [3, false]);
+  eq('and it asks which one is not that kind of thing',
+    /^Which one is not /.test(L.quizPrompt(odd)), true);
+  /* THE LEAD-IN IS WRITTEN, NOT PLURALISED BY ADDING AN S: "category
+     defined in laws" is what that produced (BZ, 2026-09-20). */
+  eq('the lead-in reads as English',
+    [L.quizOdd({}, bank).ask.indexOf('laws'), /^Three of these are /.test(odd.ask)],
+    [-1, true]);
+  /* IT IS ASKED AS EVERY THIRD QUESTION, and remembered by its section, so
+     the term it borrowed is still asked about on its own later. */
+  eq('the three shapes come round in turn',
+    [L.quizNext({ asked: 0 }, bank).kind, L.quizNext({ asked: 1 }, bank).kind,
+     L.quizNext({ asked: 2 }, bank).kind, L.quizNext({ asked: 3 }, bank).kind],
+    [undefined, 'tf', 'odd', undefined]);
+  const after = L.quizRecord({ asked: 2 }, odd, odd.answer, '2026-09-20');
+  eq('it is remembered by section, not by the borrowed term',
+    [!!after.done[odd.key], !!after.done[odd.answer]], [true, false]);
+  eq('so the next one is a different section',
+    L.quizOdd(after, bank).section !== odd.section, true);
+  /* AND IT SAYS SOMETHING EITHER WAY. */
+  eq('right names what the odd one is; wrong says the one picked belongs',
+    [L.quizExplain(odd, odd.answer).indexOf(odd.answer), 0,
+     L.quizExplain(odd, odd.choices.filter(c => c !== odd.answer)[0])
+       .indexOf(' is ' + odd.noun + '.') > 0],
+    [0, 0, true]);
+  eq('and the verdict is about the odd one',
+    [/That is the one/.test(L.quizSay(odd, odd.answer)),
+     /The odd one is/.test(L.quizSay(odd, 'nonsense'))], [true, true]);
 }
 
 sec('telling the person who built it');
