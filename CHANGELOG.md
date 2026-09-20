@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.75  ·  2026-09-19 08:54 PM ET
+
+Settings has a Feedback card: write what you think, press Send it, and the service emails it to the person who owns the deployment. The address is nowhere in index.html on purpose - this file is served from a public repository, and an address written into it is one that gets scraped - so the app only knows that the service exists and sendFeedback_ asks Session.getEffectiveUser() where to send. The message goes first and the version, the device and the log follow it, because every report so far has needed the log and asking for it afterwards costs a round trip; the card says what goes and what does not. MailApp needs the send_mail scope, which this project did not hold before, so the owner authorises the script once after this deploy. The log's header is now one function, theLogText, rather than a copy inside Copy the log.
+
 ## v2.4.74  ·  2026-09-19 07:57 PM ET
 
 The pair card on a buddy tab no longer describes the two shelves merged into one: against a 400-bottle shelf a 40-bottle one changes nothing, so the merge was one person's shelf wearing both names and said 36 from Buffalo Trace, 9 percent of the shelf about a pair. L.pairStand now leads on the crossover - the whiskies on both shelves, the houses on both, and the category both shelves are substantially made of, ranked by share of each shelf rather than by count so a big shelf cannot carry a group the other barely has - and then says in one line each way what each shelf opens up for the other. The asks nobody has answered move out of the buddy panel, where they read as something to do with that buddy, into their own card on the Buddies summary above the tabs, and each one now names whoever it went to: the name the invite link carried, the name the directory has, or the account itself. The sharing log says which accounts an enumeration returned and which were found by name, and what came back for each person who shares, so a buddy that reads as missing can be identified.

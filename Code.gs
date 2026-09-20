@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.7';
+var GS_BUILD = '2.4.8';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -238,10 +238,43 @@ function doPost(e) {
     if (body.mode === 'sheet') {
       return json(writeShelfSheet_(body, signedIn_(body.idToken)));
     }
+    if (body.mode === 'feedback') return json(sendFeedback_(body));
   } catch (err) {
     return json({ error: String(err) });
   }
   return json({ error: 'unknown mode' });
+}
+
+/**
+ * What somebody thinks of the app, into the owner's inbox.
+ *
+ * The address is NOT in the app: index.html is served from a public
+ * repository, and an address written there is an address that gets
+ * scraped. The mail goes to whoever owns this script - the person who
+ * deployed it - so the app only has to know that the service exists.
+ *
+ * What they wrote comes first and the diagnostics come after it, because
+ * the first thing wanted is what went wrong in their words. MailApp needs
+ * the send_mail scope, which the project did not hold before 2026-09-19:
+ * adding it means the owner authorises the script once more.
+ */
+function sendFeedback_(req) {
+  var said = String(req.text || '').trim();
+  if (!said) return { error: 'nothing to send' };
+  var to = Session.getEffectiveUser().getEmail();
+  if (!to) return { error: 'this deployment has no owner address' };
+  var who = String(req.name || '').slice(0, 60);
+  var version = String(req.version || '?').slice(0, 40);
+  var body = said.slice(0, 4000)
+    + '\n\n---------------------------------------\n'
+    + 'From: ' + (who || 'somebody who set no display name') + '\n'
+    + 'App: ' + version + '\n'
+    + 'Service: ' + GS_BUILD + '\n'
+    + 'Device: ' + String(req.device || '?').slice(0, 300) + '\n\n'
+    + String(req.log || '').slice(0, 20000);
+  MailApp.sendEmail(to, 'Bottlefolio feedback' + (who ? ' from ' + who : '')
+    + ' \u2014 ' + version, body);
+  return { sent: true };
 }
 
 /**
