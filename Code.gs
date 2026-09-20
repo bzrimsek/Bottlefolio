@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.8';
+var GS_BUILD = '2.4.9';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -261,8 +261,17 @@ function doPost(e) {
 function sendFeedback_(req) {
   var said = String(req.text || '').trim();
   if (!said) return { error: 'nothing to send' };
-  var to = Session.getEffectiveUser().getEmail();
-  if (!to) return { error: 'this deployment has no owner address' };
+  /* THE ADDRESS IS A SCRIPT PROPERTY, not Session.getEffectiveUser(): asking
+     the script who owns it needs the userinfo.email scope, which this
+     deployment does not hold, and the whole call failed on that line before
+     any mail was attempted (BZ, 2026-09-19). A property is set once in
+     Project Settings, lives with the project rather than in the public
+     repository, and needs no scope at all. */
+  var to = PropertiesService.getScriptProperties().getProperty('FEEDBACK_TO');
+  if (!to) {
+    return { error: 'nobody has set FEEDBACK_TO on the script, so there is '
+      + 'no address to send this to' };
+  }
   var who = String(req.name || '').slice(0, 60);
   var version = String(req.version || '?').slice(0, 40);
   var body = said.slice(0, 4000)

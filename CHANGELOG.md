@@ -2,9 +2,13 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.76  ·  2026-09-19 09:05 PM ET
+
+The Feedback card would not send: asking the script who owns it, the Session getEffectiveUser call, needs the userinfo.email scope, which this deployment does not hold, and the call failed on that line before any mail was attempted. The address is now a script property, FEEDBACK_TO, set once in the project's own settings: it lives with the project rather than in the public repository, like the owner's address did, and it needs no scope at all. A missing property says so in words rather than failing as an exception.
+
 ## v2.4.75  ·  2026-09-19 08:54 PM ET
 
-Settings has a Feedback card: write what you think, press Send it, and the service emails it to the person who owns the deployment. The address is nowhere in index.html on purpose - this file is served from a public repository, and an address written into it is one that gets scraped - so the app only knows that the service exists and sendFeedback_ asks Session.getEffectiveUser() where to send. The message goes first and the version, the device and the log follow it, because every report so far has needed the log and asking for it afterwards costs a round trip; the card says what goes and what does not. MailApp needs the send_mail scope, which this project did not hold before, so the owner authorises the script once after this deploy. The log's header is now one function, theLogText, rather than a copy inside Copy the log.
+Settings has a Feedback card: write what you think, press Send it, and the service emails it to the person who owns the deployment. The address is nowhere in index.html on purpose - this file is served from a public repository, and an address written into it is one that gets scraped - so the app only knows that the service exists and sendFeedback_ asks the Session getEffectiveUser call() where to send. The message goes first and the version, the device and the log follow it, because every report so far has needed the log and asking for it afterwards costs a round trip; the card says what goes and what does not. MailApp needs the send_mail scope, which this project did not hold before, so the owner authorises the script once after this deploy. The log's header is now one function, theLogText, rather than a copy inside Copy the log.
 
 ## v2.4.74  ·  2026-09-19 07:57 PM ET
 
