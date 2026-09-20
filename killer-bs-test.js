@@ -1590,6 +1590,29 @@ sec('a question at a time out of Learn');
       'At least 51% rye, new charred oak, bottled at 80 proof')
     > L.quizNearness('At least 51% wheat, new charred oak, bottled at 80 proof',
       'Neutral spirit, unaged, filtered to nothing'), true);
+  /* AND IT IS MEASURED ON WHAT THE QUESTION SHOWS. Cask strength's whole
+     entry is nearest to Sour mash; the sentences it actually asks are
+     nearest to Unfiltered, which is the choice somebody weighs. */
+  eq('the choices are ranked on the sentences asked, not the whole entry',
+    (() => {
+      const df = L.quizDocFreq(bank);
+      const cs = bank.filter(x => x.term === 'Cask strength')[0];
+      const near = t2 => L.quizNearness(L.quizAsk(cs.def, cs.term),
+        L.quizAsk(t2.def, t2.term), df);
+      const peers = bank.filter(x => x.section === cs.section && x.term !== cs.term);
+      return peers.slice().sort((a, b) => near(b) - near(a))[0].term;
+    })(), 'Unfiltered');
+
+  /* A WORD TWO ENTRIES SHARE AND NOBODY ELSE USES SAYS MORE THAN ONE HALF
+     THE SECTION USES. */
+  eq('a rare word shared counts for more than a common one', (() => {
+    const df = L.quizDocFreq([{ def: 'bottled barrel peated' },
+      { def: 'bottled barrel' }, { def: 'bottled barrel' },
+      { def: 'bottled barrel' }, { def: 'peated' }]);
+    const rare = L.quizNearness('peated spirit', 'peated cask', df);
+    const common = L.quizNearness('bottled spirit', 'bottled cask', df);
+    return rare > common;
+  })(), true);
   eq('and the short words every sentence has are ignored',
     L.quizNearness('the and of at in on to', 'the and of at in on to'), 0);
   eq('a definition is reduced to the words worth comparing',
@@ -1796,7 +1819,10 @@ sec('a statement to agree with or refuse');
     for (let i = 0; i < 30; i++) {
       const q = L.quizTrueFalse(state, bank);
       if (!q) break;
-      if (!L.quizCheckable(q.ask.split('\u2014')[1] || '')) vague++;
+      /* Everything after the FIRST dash: the sentence may contain one of
+         its own, and cutting at it hid the half that carries the fact. */
+      const parts = q.ask.split('\u2014');
+      if (!L.quizCheckable(parts.slice(1).join('\u2014'))) vague++;
       state = L.quizRecord(state, q, q.answer, '2026-09-20');
     }
     return vague;

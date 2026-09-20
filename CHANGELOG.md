@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.4.91  ·  2026-09-20 12:30 PM ET
+
+The wrong answers are chosen on what the question SHOWS rather than on the whole entry, and a shared word counts for less the more entries use it. Against Cask strength's full definition the nearest were Sour mash and Wheated bourbon - a production term and a mashbill term, obviously wrong to anybody reading them, and near only on words like bottled, barrel, usually and thing that half that section uses. Against the sentences actually asked, bottled at whatever strength it came out of the barrel, the nearest are Unfiltered, Chill filtration and Bottled in Bond, which is the choice somebody would really have to weigh. Both halves came out of reading four questions rather than from a check: BZ said c is obviously wrong, and it was.
+
 ## v2.4.90  ·  2026-09-20 12:15 PM ET
 
 A true or false must turn on something checkable. The ask, two pours at the same proof differing in one perceptible way was true and horrible, as BZ said: that description fits a rye against a bourbon, a finish against none, or half the flights ever poured, so agreeing or refusing is a coin toss rather than knowledge. A statement is only asked now when it names a number or names a thing - 51 percent, 160 proof, three years, Islay, Scotch - and an entry whose sentences are all general description is skipped rather than asked about. A false one takes its sentence from the NEAREST sibling rather than any of them, so the two are alike everywhere but the fact that differs. A test walks thirty of them and fails on any that cannot be judged.
