@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.9';
+var GS_BUILD = '2.4.10';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -161,17 +161,25 @@ function needSignIn_() {
  *
  * This checks the wiring only. It calls nothing and costs nothing.
  */
+/* EVERY MODE THIS PROJECT ANSWERS, in one place. probeWiring carried its
+   own list of six and reported ALL SIX MODES WIRED while the project had
+   eight (BZ, 2026-09-19): a probe that cannot see a mode cannot find it
+   missing, which is the same fault as a check that cannot fail.
+   gscheck.js compares this list with the app's own. */
+var MODES_ = [
+  ['flight', 'designFlight', 'Code.gs (this file)'],
+  ['candidates', 'suggestBottles', 'Code.gs (this file)'],
+  ['recap', 'writeRecap_', 'recap.gs'],
+  ['bottle', 'writeBottle_', 'recap.gs'],
+  ['label', 'readLabel_', 'label.gs'],
+  ['shelf', 'readShelf_', 'shelf.gs'],
+  ['sheet', 'writeShelfSheet_', 'Code.gs (this file)'],
+  ['feedback', 'sendFeedback_', 'Code.gs (this file)']
+];
+
 function probeWiring() {
-  var need = [
-    ['flight', 'designFlight', 'Code.gs (this file)'],
-    ['candidates', 'suggestBottles', 'Code.gs (this file)'],
-    ['recap', 'writeRecap_', 'recap.gs'],
-    ['bottle', 'writeBottle_', 'recap.gs'],
-    ['label', 'readLabel_', 'label.gs'],
-    ['shelf', 'readShelf_', 'shelf.gs']
-  ];
   var missing = [];
-  need.forEach(function (row) {
+  MODES_.forEach(function (row) {
     var there = false;
     try { there = (eval('typeof ' + row[1]) === 'function'); } catch (e) {}
     Logger.log((there ? 'OK   ' : 'GONE ') + row[0] + '  \u2192  ' + row[1]
@@ -184,8 +192,10 @@ function probeWiring() {
 
   if (!missing.length) {
     Logger.log('');
-    Logger.log('ALL SIX MODES WIRED. Deploy: pencil on the existing '
-      + 'deployment, Version = New version, Deploy.');
+    Logger.log('ALL ' + MODES_.length + ' MODES WIRED, on build ' + GS_BUILD
+      + '. The cloud gate deploys this project when one of its files '
+      + 'changes; a hand deploy is the fallback (pencil on the existing '
+      + 'deployment, Version = New version, Deploy).');
     return;
   }
   Logger.log('');

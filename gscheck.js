@@ -113,6 +113,26 @@ while ((m = re.exec(code))) called.add(m[2]);
 });
 
 /* 3. EVERY MODE THE APP ASKS FOR HAS SOMETHING TO ANSWER IT. */
+/* AND THE PROJECT'S OWN LIST SAYS THE SAME. probeWiring reports what is
+   wired to whoever is standing in the Apps Script editor, and it reported
+   six of eight for a fortnight because its list was typed out separately. */
+{
+  const raw = fs.readFileSync(path.join(HERE, 'lookup.gs'), 'utf8');
+  const block = /var MODES_ = \[([\s\S]*?)\];/.exec(raw);
+  if (!block) {
+    failures.push('lookup.gs has no MODES_ list, so probeWiring cannot '
+      + 'know what this project answers');
+  } else {
+    const said = [...block[1].matchAll(/\['([a-z]+)',\s*'([A-Za-z_]+)'/g)]
+      .map(m => m[1] + '>' + m[2]).sort().join(', ');
+    const want = MODES.map(([m, f]) => m + '>' + f).sort().join(', ');
+    if (said !== want) {
+      failures.push('probeWiring answers for [' + said + '] and the app asks '
+        + 'for [' + want + ']');
+    }
+  }
+}
+
 MODES.forEach(([mode, fn]) => {
   if (!defined[fn]) {
     failures.push('mode "' + mode + '" needs ' + fn + ' and nothing '
