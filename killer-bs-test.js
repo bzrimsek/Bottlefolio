@@ -1584,6 +1584,18 @@ sec('a question at a time out of Learn');
   eq('a question is a definition and four terms, one of them right',
     [q.choices.length, q.choices[q.at], new Set(q.choices).size, typeof q.ask],
     [4, q.answer, 4, 'string']);
+  /* NEARNESS IS COUNTED, NOT JUDGED. */
+  eq('two entries about the same things are nearer than two that are not',
+    L.quizNearness('At least 51% wheat, new charred oak, bottled at 80 proof',
+      'At least 51% rye, new charred oak, bottled at 80 proof')
+    > L.quizNearness('At least 51% wheat, new charred oak, bottled at 80 proof',
+      'Neutral spirit, unaged, filtered to nothing'), true);
+  eq('and the short words every sentence has are ignored',
+    L.quizNearness('the and of at in on to', 'the and of at in on to'), 0);
+  eq('a definition is reduced to the words worth comparing',
+    Object.keys(L.quizWords('At least 51% wheat, and it is in the barrel.'))
+      .sort(), ['barrel', 'least', 'wheat']);
+
   /* THE WRONG ANSWERS MUST BE PLAUSIBLE. Best of all is the term the entry
      itself argues with - "a wheat whiskey is not a wheated bourbon" - and
      after that, the rest of its own section. */
@@ -1667,9 +1679,18 @@ sec('a question at a time out of Learn');
   /* AND THE TWO JOBS ARE NOT THE SAME RULE. */
   eq('a choice is only picked on an exact mention, not a stray plural',
     [L.quizCites('It falls as a barrel ages.', 'Age'),
-     L.quizCites('A wheat whiskey is not a wheated bourbon.', 'Wheated'),
+     L.quizCites('A wheat whiskey is not a wheated bourbon.', 'Wheated bourbon'),
      L.quizCites('Bottled at cask strength.', 'STR')],
     [false, true, false]);
+  /* EVERY WORD OF THE TERM, not the phrase: a sentence that says cask in
+     one clause and strength in another has named Cask strength. */
+  eq('a sentence naming every word of a term counts as naming it',
+    [L.quizNames('Barrel proof and barrel strength mean the same thing \u2014 '
+      + 'American labels tend to say barrel, Scottish ones cask.',
+      'Cask strength'),
+     L.quizNames('Bottled at whatever strength it came out of the barrel.',
+       'Cask strength')],
+    [true, false]);
   eq('plurals and possessives count as naming it',
     [L.quizNames('Aged in a sherry cask.', 'Sherry casks'),
      L.quizNames('The angel\u2019s share evaporates.', 'Angel\u2019s share'),
@@ -4989,8 +5010,10 @@ eq('house conventions claim no legal source',
   ours.items.every(i => !i.src), true);
 // Every category the app can file a bottle under must be defined somewhere.
 const defined = L.REFERENCE.reduce((a, s) => a.concat(s.items.map(i => i.term.toLowerCase())), []);
-const NAMED = { 'bourbon': 'bourbon', 'rye': 'rye whiskey', 'wheat': 'wheat whiskey',
-  'tennessee': 'tennessee whiskey', 'american single malt': 'american single malt',
+const NAMED = { 'bourbon': 'bourbon whiskey', 'rye': 'rye whiskey',
+  'wheat': 'wheat whiskey',
+  'tennessee': 'tennessee whiskey',
+  'american single malt': 'american single malt whiskey',
   'scotch': 'scotch whisky', 'irish': 'irish whiskey', 'canadian': 'canadian whisky',
   'japanese': 'japanese whisky', 'world': 'world whisky', /* US spelling, like the app: BZ asked for it and the reference entry is
      "Flavored Whiskey" now. The type KEY stays 'flavored', which it always
