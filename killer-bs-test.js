@@ -16915,6 +16915,40 @@ sec('\u00a7357 what became of the one that is not there');
   eq('and nothing at all is not a crash', L.exitLine(null), '');
 }
 
+sec('a typed name is enough');
+{
+  const shelf = [
+    { name: 'Woodford Reserve Double Oaked', dist: 'Woodford Reserve',
+      sub: 'bourbon', region: 'Kentucky', proof: 90.4 },
+    { name: 'Woodford Reserve Batch Proof', dist: 'Woodford Reserve',
+      sub: 'bourbon', region: 'Kentucky', proof: 123 },
+    { name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
+      region: 'Islay', proof: 86 }];
+  eq('a house named on its own carries that house\u2019s kind and region',
+    (() => { const s = L.seedFromText('Woodford Reserve', shelf);
+      return [s.dist, s.sub, s.region, s.house]; })(),
+    ['Woodford Reserve', 'bourbon', 'Kentucky', true]);
+  eq('a bottle named exactly is that bottle',
+    L.seedFromText('Lagavulin 16', shelf).proof, 86);
+  eq('and a few words find the plainest bottling that carries them',
+    L.seedFromText('Double Oaked', shelf).name,
+    'Woodford Reserve Double Oaked');
+  eq('something nobody has is still a seed',
+    L.seedFromText('Yamazaki 18', shelf), { name: 'Yamazaki 18' });
+  eq('and nothing typed is no seed at all',
+    [L.seedFromText('', shelf), L.seedFromText(null, shelf)], [null, null]);
+  eq('a house seed puts that house on the first rung',
+    L.pourAtRung(L.seedFromText('Woodford Reserve', shelf), 'house', shelf)
+      .length, 2);
+  eq('the makers are spread rather than clustered',
+    L.spreadHouses([
+      { name: 'A1', dist: 'A' }, { name: 'A2', dist: 'A' },
+      { name: 'B1', dist: 'B' }, { name: 'A3', dist: 'A' },
+      { name: 'C1', dist: 'C' }]).map(p => p.name),
+    ['A1', 'B1', 'C1', 'A2', 'A3']);
+  eq('and an empty list stays empty', L.spreadHouses([]), []);
+}
+
 sec('\u00a7358 pouring for a guest, by distance');
 {
   /* BZ, on the hardest thing about a wide shelf: when I have a visitor it
