@@ -1610,6 +1610,49 @@ sec('a question at a time out of Learn');
   eq('and it reads as a count',
     [L.quizTally(two), L.quizTally(miss), L.quizTally({})],
     ['2 right of 2 tried', '2 right of 3 tried', '']);
+  /* THE ANSWER IS NOT IN THE QUESTION. */
+  /* Case-insensitively: an entry writes its own term in lower case as
+     often as not ("A wheat whiskey is not a wheated bourbon"). */
+  eq('the term is struck out of its own definition, and kept in the full one',
+    [q.ask.toLowerCase().indexOf(q.answer.toLowerCase()),
+     q.ask.indexOf(L.QUIZ_BLANK) >= 0,
+     q.full.toLowerCase().indexOf(q.answer.toLowerCase()) >= 0],
+    [-1, true, true]);
+  eq('no question anywhere in the bank names its own answer', (() => {
+    let state = {}, gave = [];
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) break;
+      const said = nx.ask.toLowerCase();
+      if (said.indexOf(nx.answer.toLowerCase()) >= 0) gave.push(nx.answer);
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    return gave;
+  })(), []);
+  eq('plurals and possessives go with it',
+    [L.quizHide('A sherry cask, or sherry casks, is a cask.', 'Sherry casks'),
+     L.quizHide('The angel\u2019s share is what evaporates.', 'Angel\u2019s share')],
+    ['A \u2014\u2014\u2014, or \u2014\u2014\u2014, is a cask.',
+     'The \u2014\u2014\u2014 is what evaporates.']);
+  /* AND IT ASKS SOMETHING, rather than showing a paragraph with buttons. */
+  eq('the question names the kind of thing it wants',
+    [L.quizPrompt({ section: 'Scotch regions' }),
+     L.quizPrompt({ section: 'The barrel' })],
+    ['Which Scotch region is this?', 'Which one is this?']);
+
+  /* SOMETHING IS SAID EITHER WAY (BZ, 2026-09-20). */
+  eq('a right answer is told the next thing the entry says, not the first',
+    [L.quizExplain(q, q.answer) !== L.oneSentence(q.full),
+     q.full.indexOf(L.quizExplain(q, q.answer)) > 0], [true, true]);
+  eq('a wrong one is told what it picked instead, which is the half it did '
+    + 'not know',
+    L.quizExplain(q, q.choices.filter(c => c !== q.answer)[0])
+      .indexOf(q.choices.filter(c => c !== q.answer)[0] + ' \u2014 '), 0);
+  eq('every choice can explain itself',
+    q.choices.every(c => L.quizExplain(q, c).length > 10), true);
+  eq('one sentence is one sentence',
+    [L.oneSentence('First one. Second one.'), L.oneSentence('No stop at all'),
+     L.oneSentence('')], ['First one.', 'No stop at all', '']);
   eq('it says whether you had it',
     [L.quizSay(q, q.answer).slice(0, 10), /Not this time/.test(L.quizSay(q, 'x'))],
     ['That is it', true]);
