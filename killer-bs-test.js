@@ -1649,8 +1649,12 @@ sec('a question at a time out of Learn');
       const near = t2 => L.quizNearness(L.quizAsk(cs.def, cs.term),
         L.quizAsk(t2.def, t2.term), df);
       const peers = bank.filter(x => x.section === cs.section && x.term !== cs.term);
-      return peers.slice().sort((a, b) => near(b) - near(a))[0].term;
-    })(), 'Unfiltered');
+      const top = peers.slice().sort((a, b) => near(b) - near(a))[0].term;
+      /* Either of the two bottling-strength neighbours will do; what must
+         not come top is a production term like Sour mash, which is what
+         ranking on the whole entry produced. */
+      return ['Unfiltered', 'Chill filtration'].indexOf(top) >= 0;
+    })(), true);
 
   /* A WORD TWO ENTRIES SHARE AND NOBODY ELSE USES SAYS MORE THAN ONE HALF
      THE SECTION USES. */
@@ -1696,9 +1700,23 @@ sec('a question at a time out of Learn');
        answer's own section, which is still four terms of one kind. */
     return withNear / asked > 0.4;
   })(), true);
-  eq('a term the definition names is offered as a choice',
-    q.choices.some(c => q.full.toLowerCase().indexOf(c.toLowerCase()) >= 0
-      && c !== q.answer), true);
+  eq('where an entry names another term, that term is offered', (() => {
+    let state = {}, chances = 0, taken = 0;
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) break;
+      if (!nx.kind) {
+        const named = bank.filter(x => x.term !== nx.answer
+          && L.quizCites(nx.full, x.term));
+        if (named.length) {
+          chances++;
+          if (named.some(x => nx.choices.indexOf(x.term) >= 0)) taken++;
+        }
+      }
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    return chances > 5 && taken === chances;
+  })(), true);
   eq('and the rest come from the answer\u2019s own section',
     q.choices.filter(c => where[c] !== q.section
       && q.full.toLowerCase().indexOf(c.toLowerCase()) < 0).length, 0);
@@ -1726,11 +1744,22 @@ sec('a question at a time out of Learn');
      SENTENCE. A sentence that names the term is dropped whole rather than
      having the term cut out of it: "A --- is not a wheated bourbon" is not
      a question (BZ, 2026-09-20). */
-  eq('a sentence that names the term is dropped, not gutted',
-    [q.ask.toLowerCase().indexOf(q.answer.toLowerCase()),
-     q.ask.indexOf('\u2014\u2014\u2014'),
-     q.full.toLowerCase().indexOf(q.answer.toLowerCase()) >= 0],
-    [-1, -1, true]);
+  /* Asked of every question rather than of whichever comes first, which
+     changes whenever the reference grows. */
+  eq('no question shows its own answer, and none is gutted', (() => {
+    let state = {}, gave = 0, gutted = 0, checked = 0;
+    for (let i = 0; i < bank.length; i++) {
+      const nx = L.quizNext(state, bank);
+      if (!nx) break;
+      if (!nx.kind) {
+        checked++;
+        if (nx.ask.toLowerCase().indexOf(nx.answer.toLowerCase()) >= 0) gave++;
+        if (nx.ask.indexOf('\u2014\u2014\u2014') >= 0) gutted++;
+      }
+      state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
+    }
+    return [checked > 10, gave, gutted];
+  })(), [true, 0, 0]);
   eq('and what is asked is whole sentences out of the entry',
     L.quizSentences(q.full).filter(s => q.ask.indexOf(s) >= 0).length > 0, true);
   eq('the wheat example asks the half that does not name it',
@@ -1782,7 +1811,9 @@ sec('a question at a time out of Learn');
     for (let i = 0; i < bank.length; i++) {
       const nx = L.quizNext(state, bank);
       if (!nx) break;
-      if (short.some(s => s.term === nx.answer)) askedShort++;
+      /* Only a DEFINITION question is a question about that entry; an
+         odd-one-out may borrow any term as its wrong answer. */
+      if (!nx.kind && short.some(s => s.term === nx.answer)) askedShort++;
       state = L.quizRecord(state, nx, nx.answer, '2026-09-20');
     }
     return [short.length > 0, askedShort];
@@ -5104,7 +5135,7 @@ eq('every group has content',
   L.REF_GROUPS.every(g => L[g.data].length > 0), true);
 eq('tasting and whiskey items are substantial',
   L.TASTING.concat(L.WHISKEY).every(s => s.items.every(i => i.def.length > 40)), true);
-eq('sections present', L.REFERENCE.length, 6);
+eq('sections present', L.REFERENCE.length, 8);
 eq('every section has items', L.REFERENCE.every(s => s.items.length > 0), true);
 eq('every item has a term and a definition',
   L.REFERENCE.every(s => s.items.every(i => i.term && i.def && i.def.length > 20)), true);
