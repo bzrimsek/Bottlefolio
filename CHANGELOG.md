@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.9  ·  2026-09-20 11:24 PM ET
+
+Japanese whisky joins world on the secondary node. It had been standing on the unpeated Scotch node because it is made in the Scotch image, which is true of how it is made and wrong about what it costs to reach - BZ, 2026-09-20: I don't think I reach for japanese if starting with bourbon, the most common american thing. From a bourbon it was three steps, level with Speyside; it is four now, level with world whisky, which is where a man holding a Woodford would actually find it. The same node as world rather than one of its own, because a third pendant would say these two are further apart than they are.
+
 ## v2.5.8  ·  2026-09-20 11:16 PM ET
 
 The cloud gate unseals bz-custom.json, and a check makes sure the next sealed file cannot be forgotten. bz-custom.json joined the sealed shelf set with the harness fixture work, push.py sealed it and sent only the .gpg, but gate.yml decrypts by a list of names typed into a shell loop - so the runner had no such file and the assertions died on ENOENT after the build had passed every check on BZ's PC. The gate caught it before anything shipped, which is what it is for. consistency.js now reads the sealed list out of push.py and fails any name the workflow never decrypts; broken on purpose, it names the missing file.

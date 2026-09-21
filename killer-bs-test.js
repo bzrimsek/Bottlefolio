@@ -17200,6 +17200,13 @@ sec('a typed name is enough');
     L.flavorGap(of('scotch'), of('world')), 1);
   eq('so a bourbon is four steps from it, like the smoke',
     L.flavorGap(of('bourbon'), of('world')), 4);
+  // JAPANESE SITS WITH IT. Made in the Scotch image, but not what a man
+  // holding a bourbon reaches for before Speyside (BZ, 2026-09-20).
+  eq('and Japanese stands on the same node as world',
+    L.flavorPlace(of('japanese')), L.flavorPlace(of('world')));
+  eq('so it is further from a bourbon than Speyside is',
+    L.flavorGap(of('bourbon'), of('japanese'))
+      > L.flavorGap(of('bourbon'), of('scotch')), true);
   eq('and between the two pendants it is out and back',
     L.flavorGap(of('world'), peated), 2);
 
@@ -17211,7 +17218,8 @@ sec('a typed name is enough');
   eq('and every one of them is named',
     lay.filter(n => !n.label).map(n => n.at), []);
   eq('two of them hang off the ring',
-    lay.filter(n => n.pendant).map(n => n.label), ['Peated Scotch', 'World']);
+    lay.filter(n => n.pendant).map(n => n.label),
+    ['Peated Scotch', 'World & Japanese']);
   eq('the pendants sit further out', lay.filter(n => n.pendant)
     .every(n => n.out > lay.filter(r => !r.pendant)[0].out), true);
   eq('and not on top of each other',
