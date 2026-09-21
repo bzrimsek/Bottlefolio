@@ -17015,17 +17015,38 @@ sec('\u00a7357 what became of the one that is not there');
 
 sec('a typed name is enough');
 {
+  // WITH THE FIELDS THAT DECIDE IT. Without them every bottling ties and
+  // the shortest name wins, which is the fault these tests are about.
   const shelf = [
     { name: 'Woodford Reserve Double Oaked', dist: 'Woodford Reserve',
-      sub: 'bourbon', region: 'Kentucky', proof: 90.4 },
+      sub: 'bourbon', region: 'Kentucky', proof: 90.4,
+      alloc: 'common', scar: 'standard', obsc: 'known', msrp: 56 },
     { name: 'Woodford Reserve Batch Proof', dist: 'Woodford Reserve',
-      sub: 'bourbon', region: 'Kentucky', proof: 123 },
+      sub: 'bourbon', region: 'Kentucky', proof: 123,
+      alloc: 'rare', scar: 'batched', obsc: 'known', msrp: 150 },
     { name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch',
-      region: 'Islay', proof: 86 }];
-  eq('a house named on its own carries that house\u2019s kind and region',
+      region: 'Islay', proof: 86,
+      alloc: 'common', scar: 'standard', obsc: 'known', msrp: 90 }];
+  // A HOUSE NAMES ITS BASELINE. Double Oaked is the plainer of the two
+  // here and the one at 90.4 rather than 123, so it is what somebody
+  // saying "Woodford Reserve" across a table means.
+  eq('a house named on its own answers with its baseline bottle',
     (() => { const s = L.seedFromText('Woodford Reserve', shelf);
-      return [s.dist, s.sub, s.region, s.house]; })(),
-    ['Woodford Reserve', 'bourbon', 'Kentucky', true]);
+      return [s.name, s.dist, s.sub, s.region, s.proof]; })(),
+    ['Woodford Reserve Double Oaked', 'Woodford Reserve', 'bourbon',
+     'Kentucky', 90.4]);
+  eq('the first words of a house are enough',
+    L.seedFromText('Woodford', shelf).name, 'Woodford Reserve Double Oaked');
+  // AND NOT WHEN IT IS AMBIGUOUS: two houses open with the same word, so
+  // neither is what was meant.
+  eq('a word that opens two houses picks neither',
+    L.seedFromText('Wood', [{ name: 'X', dist: 'Woodford Reserve' },
+      { name: 'Y', dist: 'Woodinville' }]).dist, undefined);
+  // The batch proof is not a baseline: allocated, and the dear one.
+  eq('a rare batch never stands for the house',
+    L.baselineOf([
+      { name: 'H Batch Proof', dist: 'H', alloc: 'rare', msrp: 150 },
+      { name: 'H', dist: 'H', alloc: 'common', msrp: 40 }]).name, 'H');
   eq('a bottle named exactly is that bottle',
     L.seedFromText('Lagavulin 16', shelf).proof, 86);
   eq('and a few words find the plainest bottling that carries them',
@@ -17035,9 +17056,63 @@ sec('a typed name is enough');
     L.seedFromText('Yamazaki 18', shelf), { name: 'Yamazaki 18' });
   eq('and nothing typed is no seed at all',
     [L.seedFromText('', shelf), L.seedFromText(null, shelf)], [null, null]);
-  eq('a house seed puts that house on the first rung',
+  // ONE, not two: the seed IS one of the house's bottles now, and a ladder
+  // never offers back the bottle the guest just named.
+  eq('a house seed puts the rest of that house on the first rung',
     L.pourAtRung(L.seedFromText('Woodford Reserve', shelf), 'house', shelf)
-      .length, 2);
+      .map(x => x.name), ['Woodford Reserve Batch Proof']);
+  // TRAVEL AT THE LEVEL YOU STARTED FROM.
+  eq('a core seed is answered with core bottles first',
+    L.pourAtRung({ name: 'Seed', dist: 'S', sub: 'bourbon', proof: 90,
+      alloc: 'common', scar: 'standard', obsc: 'known' }, 'type', [
+        { name: 'Allocated', dist: 'a', sub: 'bourbon', proof: 90,
+          alloc: 'unicorn', scar: 'single barrel', obsc: 'cult' },
+        { name: 'Everyday', dist: 'b', sub: 'bourbon', proof: 90,
+          alloc: 'common', scar: 'standard', obsc: 'known' }])
+      .map(x => x.name), ['Everyday', 'Allocated']);
+  eq('and a rare seed is answered the other way round',
+    L.pourAtRung({ name: 'Seed', dist: 'S', sub: 'bourbon', proof: 90,
+      alloc: 'unicorn', scar: 'single barrel', obsc: 'cult' }, 'type', [
+        { name: 'Everyday', dist: 'b', sub: 'bourbon', proof: 90,
+          alloc: 'common', scar: 'standard', obsc: 'known' },
+        { name: 'Allocated', dist: 'a', sub: 'bourbon', proof: 90,
+          alloc: 'unicorn', scar: 'single barrel', obsc: 'cult' }])
+      .map(x => x.name), ['Allocated', 'Everyday']);
+  // A MIS-FILED DISTILLERY MUST NOT HIDE THE HOUSE. The library files
+  // Woodford Reserve Distiller's Select under Brown-Forman; every other
+  // Woodford is under Woodford Reserve, and the house rung vanished.
+  eq('a name that opens with a house is that house, whatever the field says',
+    L.pourAtRung({ name: 'Woodford Reserve Distiller\u2019s Select',
+      dist: 'Brown-Forman', sub: 'bourbon', proof: 90.4 }, 'house', shelf)
+      .map(x => x.name).sort(),
+    ['Woodford Reserve Batch Proof', 'Woodford Reserve Double Oaked']);
+  // ACROSS THE POND, THE CATEGORIES TAKE TURNS. Ranked strictly, five
+  // slots never reached the second one (BZ: stuck in Ireland).
+  eq('the pond goes round the categories rather than emptying one',
+    L.pourAtRung({ name: 'Seed', dist: 'S', sub: 'bourbon', proof: 90 },
+      'pond', [
+        { name: 'I1', dist: 'a', sub: 'irish', proof: 90 },
+        { name: 'I2', dist: 'b', sub: 'irish', proof: 90 },
+        { name: 'I3', dist: 'c', sub: 'irish', proof: 90 },
+        { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
+        { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
+      .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // THE LEVEL ITSELF. Everyday is nothing; each way of being harder to get
+  // adds one, and a bottle that says nothing about itself is not assumed
+  // to be on every back bar.
+  eq('the everyday bottling stands at nothing',
+    L.standingOf({ alloc: 'common', scar: 'standard', obsc: 'known' }), 0);
+  eq('an allocated single barrel nobody knows stands furthest',
+    L.standingOf({ alloc: 'unicorn', scar: 'single barrel', obsc: 'cult' }), 5);
+  eq('and a bottle that says nothing is not assumed to be common',
+    L.standingOf({}) > L.standingOf({ alloc: 'common', scar: 'standard',
+      obsc: 'known' }), true);
+  // THE ROUND ROBIN, on whatever key it is handed.
+  eq('spreadBy goes round the groups, keeping each one in order',
+    L.spreadBy([{ n: 'a1', g: 'a' }, { n: 'a2', g: 'a' }, { n: 'b1', g: 'b' },
+      { n: 'a3', g: 'a' }, { n: 'b2', g: 'b' }], x => x.g).map(x => x.n),
+    ['a1', 'b1', 'a2', 'b2', 'a3']);
+  eq('and an empty list is an empty list', L.spreadBy([], x => x), []);
   eq('the makers are spread rather than clustered',
     L.spreadHouses([
       { name: 'A1', dist: 'A' }, { name: 'A2', dist: 'A' },

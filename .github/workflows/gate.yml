@@ -160,7 +160,9 @@ jobs:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-${{ hashFiles('package-lock.json') }}
 
-      - name: The gate - all thirteen checks
+      # No number in this label. It said thirteen while gate.py ran
+      # fifteen, and a count written in two places only ever drifts.
+      - name: The gate - every check
         run: python3 gate.py
 
       # NO SCREENSHOTS LEAVE THE RUNNER. shots.js photographs every screen

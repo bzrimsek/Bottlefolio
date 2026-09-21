@@ -168,6 +168,37 @@ function faultsOf() {
     found.forEach(f => failures.push(one + ' twice: ' + f));
   }
 
+  /* AND GOING BACK. Home has no header of its own and no way back, so a
+     back button anywhere on it is a button pointing at a screen you have
+     already left. */
+  const trailFaults = await (async () => {
+    const out = [];
+    await p.evaluate(() => { goTo('home'); renderHome(); });
+    await p.evaluate(() => { goTo('settings'); renderSettings(); });
+    await p.evaluate(() => { goTo('library'); });
+    await p.goBack(); await p.waitForTimeout(150);
+    await p.goBack(); await p.waitForTimeout(300);
+    const seen = await p.evaluate(() => ({
+      screen: (document.querySelector('.screen.on') || {}).id,
+      showing: [...document.querySelectorAll('#scr-home .backbtn')]
+        .filter(x => !x.hidden).map(x => x.textContent.trim()),
+      trail: _from.slice()
+    }));
+    if (seen.screen !== 'scr-home') {
+      out.push('two backs from the library should land on home, not '
+        + seen.screen);
+    }
+    if (seen.showing.length) {
+      out.push('home is showing a back button: ' + seen.showing.join(', '));
+    }
+    if (seen.trail.length) {
+      out.push('the trail still holds ' + JSON.stringify(seen.trail)
+        + ' after going back to home');
+    }
+    return out;
+  })();
+  trailFaults.forEach(f => failures.push('back to home: ' + f));
+
   await b.close();
 
   if (threw.length) {
