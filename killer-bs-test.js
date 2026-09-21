@@ -17215,6 +17215,14 @@ sec('a typed name is enough');
   const lay = L.ringLayout();
   eq('every place is drawn exactly once',
     lay.map(n => n.at), [1, 2, 3, 4, 5, 6, 7, 8]);
+  // THE LABELS ARE THE APP'S OWN. Title Case for a data value shown as a
+  // label (L.CASE_FIXED), and no second spelling of a category name kept
+  // here - "American Malt" is what L.titleCase makes of it.
+  eq('a category node takes the app\u2019s label for that category',
+    lay.filter(n => L.RING_SUB[n.at])
+      .filter(n => n.label !== L.titleCase(L.RING_SUB[n.at])), []);
+  eq('so the malt bridge is Title Cased',
+    lay.filter(n => n.at === 2)[0].label, 'American Malt');
   eq('and every one of them is named',
     lay.filter(n => !n.label).map(n => n.at), []);
   eq('two of them hang off the ring',

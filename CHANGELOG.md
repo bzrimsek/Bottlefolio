@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.10  ·  2026-09-20 11:29 PM ET
+
+The flavor ring asks the app how to spell a category. BZ, 2026-09-20: should we capitalize Malt in American Malt for consistency? Yes, and the app had already answered it - the house rule is sentence case for prose and Title Case for a data value shown as a label or a chip, and L.titleCase maps american single malt to American Malt on purpose. The ring was keeping its own list of category names, which is a second spelling waiting to drift, so the five nodes that ARE a category now take the app's label for it. The other three are written out because they are not categories anybody files a bottle under: unpeated and peated Scotch are one category split by peat level, and the far node holds world and Japanese together.
+
 ## v2.5.9  ·  2026-09-20 11:24 PM ET
 
 Japanese whisky joins world on the secondary node. It had been standing on the unpeated Scotch node because it is made in the Scotch image, which is true of how it is made and wrong about what it costs to reach - BZ, 2026-09-20: I don't think I reach for japanese if starting with bourbon, the most common american thing. From a bourbon it was three steps, level with Speyside; it is four now, level with world whisky, which is where a man holding a Woodford would actually find it. The same node as world rather than one of its own, because a third pendant would say these two are further apart than they are.
