@@ -100,6 +100,9 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'rules.js',
            # 2026-09-16: one engine loader for every tool, and the nightly
            # popular count that uses it.
+           # 2026-09-20: BZ's flight-cards document, read back into the
+           # app. He hands over the same file again and is told what is new.
+           'cards.js',
            'engine.js', 'popular.js', '.github/workflows/popular.yml',
            # 2026-09-16: loads public reference data into shared/ref (run by hand).
            'refdata.js', '.github/workflows/refdata.yml',
