@@ -17097,6 +17097,26 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // THE WORD ORIGINAL MARKS A BASELINE, which is the only thing that
+  // separates Blanton’s Original from five other allocated Blanton’s.
+  eq('Original names the baseline of a family',
+    L.baselineOf([
+      { name: "B Green Label", dist: 'BT', scar: 'standard', msrp: 64 },
+      { name: "B Original Single Barrel", dist: 'BT', scar: 'limited', msrp: 79 },
+      { name: "B Gold", dist: 'BT', scar: 'standard', msrp: 149 }]).name,
+    "B Original Single Barrel");
+  // But a bottling named after nothing but its house needs no such word.
+  eq('and a house-named bottling still wins without it',
+    L.baselineOf([
+      { name: 'H Original Reserve', dist: 'H', msrp: 40 },
+      { name: 'H', dist: 'H', msrp: 90 }]).name, 'H');
+  // FLAVOURED WHISKEY IS INVENTORY, NOT AN ANSWER.
+  eq('the ladder never offers a flavoured bottle',
+    L.pourAtRung({ name: 'Seed', dist: 'S', sub: 'bourbon', proof: 90 },
+      'pond', [{ name: 'Cinnamon', dist: 'c', sub: 'flavored', proof: 70 },
+               { name: 'Irish One', dist: 'i', sub: 'irish', proof: 90 }])
+      .map(x => x.name), ['Irish One']);
+
   // THE LEVEL ITSELF. Everyday is nothing; each way of being harder to get
   // adds one, and a bottle that says nothing about itself is not assumed
   // to be on every back bar.
