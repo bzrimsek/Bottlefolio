@@ -5443,7 +5443,9 @@ const runGaps = L.shelfGaps(data.catalog, data.bottles, data.flights, [],
   Array.from({ length: 6 }, (_, i) => ({ kind: 'flight', flight: 'F' + i })));
 eq('once flights are run, the bottle that unlocks one leads',
   /Longrow 18/.test(runGaps[0].name), true);
-eq('and it names the flight', runGaps[0].flight, 'PEAT IS A POSTCODE');
+// By subject again: this one is now WHERE DOES PEAT LIVE?.
+eq('and it names the flight that bottle would complete',
+  /peat/i.test(String(runGaps[0].flight)), true);
 // Buffalo Trace is 24 bottles with no finished bottling — a real
 // observation about the shelf that has nothing to do with flights.
 // This test pinned the bug. It required the finding to NAME Buffalo Trace
@@ -5492,7 +5494,12 @@ eq('nothing suggested is already pourable',
 
 // Re-casting a real flight: same question, different whisky, and the
 // flight's own constraints survive.
-const sherry = data.flights.find(f => f.title === 'SHERRY IS NOT ONE THING');
+// FOUND BY WHAT IT IS ABOUT, not by its name. BZ renames his flights -
+// SHERRY IS NOT ONE THING is now WHAT DOES SHERRY HAVE GOING ON? - and a
+// test pinned to a title fails on a rename rather than on a fault.
+const sherry = data.flights.find(f => /sherry/i.test(String(f.title) + ' '
+  + String(f.tag || '') + ' ' + String(f.premise || '')));
+eq('the shelf still has a sherry flight to re-cast', !!sherry, true);
 const sherryHist = [{ kind: 'flight', flight: sherry.title, at: '2026-01-15',
                       pours: sherry.core.map(p => p.k) }];
 const recast = L.recastFlight(sherry, data.catalog, data.bottles, sherryHist);

@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.5  ·  2026-09-20 10:27 PM ET
+
+The flights the checks run against are BZ's actual flights again. bz-flights.json is the local snapshot that seq.js, answers.js, shots.js, papers.js and render.js all draw on, and it had fallen a whole generation behind: twenty-eight of its thirty-six titles were ones he had renamed in the app, so PEAT IS A POSTCODE was being tested while WHERE DOES PEAT LIVE? was being used. Every flight check was passing against flights that no longer exist. Refreshed from the live customFlights - the same thirty-six flights, 414 pours to 425, including the ten bench pours added on 2026-09-20 - and all seventy-two papers still print on one landscape page against the real set. Two tests were pinned to titles rather than to what the flights are about, which is how a rename reads as a failure; they now find the sherry flight and the peat flight by subject.
+
 ## v2.5.4  ·  2026-09-20 10:10 PM ET
 
 The guest ladder asks the house question through the house door. L.houseSame is this app's one answer to whether two bottles come from the same place, and it knows the company words - Michter's and Michter's Distillery are one house - but rungOf compared the two distillery fields itself, which was a second answer to a settled question and a worse one: it put a Michter's beside a Michter's on the kind rung rather than the house rung. Found while correcting the shared library, where eight products are filed under a wordier form of their own house and the data is not wrong. Also in this build, the library itself: nine products carried a city, a country, a region, a style or a bottle size in the distillery field rather than a maker - Maker's Mark under Loretto Kentucky, The Macallan 30 Fine Oak under 750ml, The Glenlivet 14 under single malt Scotch whisky - and Woodford Reserve Distiller's Select, filed under the parent company Brown-Forman, was a duplicate of the same whiskey under its full name and referenced by no account, so it was removed.
