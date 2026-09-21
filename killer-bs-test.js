@@ -5398,7 +5398,7 @@ eq('every subcategory in the data has a reel face',
 // Thirty-nine since 2026-09-20: Where's Scotty?, Well Well Well What Do
 // We Have Here? and Can You Close The Ring? came in from his cards
 // document through cards.js.
-eq('39 flights', data.flights.length, 39);
+eq('40 flights', data.flights.length, 40);
 // Every duplicated product has exactly one open bottle -- BZ's stocking rule.
 const byKey = {};
 data.bottles.forEach(b => { (byKey[b.k] = byKey[b.k] || []).push(b); });

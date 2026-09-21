@@ -182,24 +182,34 @@ if (require.main === module) {
       if (exact.length === 1) return exact[0];
       const part = names.filter(n => norm(n).indexOf(w) === 0);
       if (part.length === 1) return part[0];
-      /* THE CARD WRITES SHORT NAMES. "Sazerac Rye" is "Sazerac 100 Proof
-         Straight Rye Whiskey" on the shelf: every word of the short name,
-         in order, somewhere in the long one. Only ever accepted when one
-         product fits - this tool does not pick a bottle for him. */
-      const words = String(nm).toLowerCase().match(/[a-z0-9]+/g) || [];
-      if (words.length < 2) return null;
-      const inOrder = n => {
-        const hay = String(n).toLowerCase();
+      /* THE CARD AND THE SHELF WRITE THE SAME BOTTLE DIFFERENTLY. The card
+         is shorter - "Sazerac Rye" for "Sazerac 100 Proof Straight Rye
+         Whiskey" - or longer, "Redbreast PX Edition" for "Redbreast Px".
+         So try it both ways round, and only ever take a single winner:
+         this tool does not pick a bottle for him. */
+      const short = t => String(t).toLowerCase()
+        /* PX is an abbreviation the app already knows (L.CASE_FIXED), and
+           his library spells it Ximinez. */
+        .replace(/pedro\s*xim[ie]n[ei]z/g, 'px')
+        .match(/[a-z0-9]+/g) || [];
+      const inOrder = (needles, hay) => {
         let at = 0;
-        return words.every(word => {
+        return needles.every(word => {
           const i = hay.indexOf(word, at);
           if (i < 0) return false;
           at = i + word.length;
           return true;
         });
       };
-      const loose = names.filter(inOrder);
-      return loose.length === 1 ? loose[0] : null;
+      const cardWords = short(nm);
+      if (cardWords.length < 2) return null;
+      const cardText = cardWords.join(' ');
+      const fits = names.filter(n => {
+        const prodWords = short(n);
+        return inOrder(cardWords, prodWords.join(' '))
+          || (prodWords.length > 1 && inOrder(prodWords, cardText));
+      });
+      return fits.length === 1 ? fits[0] : null;
     };
 
     const add = [];
