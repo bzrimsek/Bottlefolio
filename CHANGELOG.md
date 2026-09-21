@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.4  ·  2026-09-20 10:10 PM ET
+
+The guest ladder asks the house question through the house door. L.houseSame is this app's one answer to whether two bottles come from the same place, and it knows the company words - Michter's and Michter's Distillery are one house - but rungOf compared the two distillery fields itself, which was a second answer to a settled question and a worse one: it put a Michter's beside a Michter's on the kind rung rather than the house rung. Found while correcting the shared library, where eight products are filed under a wordier form of their own house and the data is not wrong. Also in this build, the library itself: nine products carried a city, a country, a region, a style or a bottle size in the distillery field rather than a maker - Maker's Mark under Loretto Kentucky, The Macallan 30 Fine Oak under 750ml, The Glenlivet 14 under single malt Scotch whisky - and Woodford Reserve Distiller's Select, filed under the parent company Brown-Forman, was a duplicate of the same whiskey under its full name and referenced by no account, so it was removed.
+
 ## v2.5.3  ·  2026-09-20 09:54 PM ET
 
 Flavored whiskey leaves the guest ladder. It is whiskey by the law and inventory on the shelf, so L.isWhisky still counts it, but a cinnamon whiskey is not an answer to somebody who named a bourbon - L.POUR_NEVER holds the rule and pourAtRung asks it. And the word ORIGINAL now marks the baseline of a family, which is the simple name method BZ asked for: every Blanton's is allocated, so none of them reads as the everyday bottle on availability and the cheapest is the Green Label, but the Original says what it is in its own name. It ranks under the house-named test, so Woodford Reserve Kentucky Straight Bourbon Whiskey still wins without needing the word. Typing Blanton now answers Blanton's Original Single Barrel.

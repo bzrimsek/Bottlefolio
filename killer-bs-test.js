@@ -17061,6 +17061,16 @@ sec('a typed name is enough');
   eq('a house seed puts the rest of that house on the first rung',
     L.pourAtRung(L.seedFromText('Woodford Reserve', shelf), 'house', shelf)
       .map(x => x.name), ['Woodford Reserve Batch Proof']);
+  // ONE HOUSE, HOWEVER IT IS WRITTEN. Eight library products are filed
+  // under a wordier form of their own house, and the ladder used to compare
+  // the two fields itself rather than asking L.houseSame.
+  eq('a house written two ways is still one house',
+    L.pourAtRung({ name: "Michter's US-1 Rye", dist: "Michter's",
+      sub: 'rye', proof: 84 }, 'house',
+      [{ name: "Michter's US-1 Bourbon", dist: "Michter's Distillery",
+         sub: 'bourbon', proof: 91 }]).map(x => x.name),
+    ["Michter's US-1 Bourbon"]);
+
   // TRAVEL AT THE LEVEL YOU STARTED FROM.
   eq('a core seed is answered with core bottles first',
     L.pourAtRung({ name: 'Seed', dist: 'S', sub: 'bourbon', proof: 90,
