@@ -57,9 +57,10 @@ const SCREENS = [
   });
   await p.goto('http://app.local/index.html');
   await p.waitForTimeout(1200);
-  const bots = JSON.parse(fs.readFileSync(path.join(dir, 'bz-bottles.json'),
-    'utf8'));
-  await p.evaluate(bs => { S.bottles = bs; save_(); rebuildCatalog(); }, bots);
+  const { bottles: bots, custom } = require('./engine.js').shelf(dir);
+  await p.evaluate(([bs, cu]) => {
+    S.bottles = bs; S.custom = cu; save_(); rebuildCatalog();
+  }, [bots, custom]);
 
   /* WHAT A PHONE ACTUALLY SHOWS. Measured per screen, because a page that
      scrolls sideways does it on one screen and not the others. */

@@ -91,17 +91,18 @@ function faultsOf() {
   await p.waitForTimeout(1300);
 
   /* BZ's shelf and flights, because the faults live on full screens. */
-  const bots = JSON.parse(fs.readFileSync(path.join(dir, 'bz-bottles.json'), 'utf8'));
-  const flts = fs.existsSync(path.join(dir, 'bz-flights.json'))
-    ? JSON.parse(fs.readFileSync(path.join(dir, 'bz-flights.json'), 'utf8')) : [];
-  await p.evaluate(([bs, fl]) => {
+  const { bottles: bots, flights: flts, custom } = require('./engine.js').shelf(dir);
+  await p.evaluate(([bs, fl, cu]) => {
     S.bottles = bs;
+    /* AND THE PRODUCTS ONLY HIS ACCOUNT KNOWS, or 34 of his bottles have
+       no product and the screens draw a poorer shelf than he has. */
+    S.custom = cu;
     if (fl && fl.length) S.flights = fl;
     /* The fill rail is what turns the detail body into a row, so it is ON:
        a check that cannot reproduce the fault is not a check. */
     S.showFill = true;
     save_(); rebuildCatalog();
-  }, [bots, flts]);
+  }, [bots, flts, custom]);
 
   const names = Object.keys(SCREENS);
   const failures = [];

@@ -41,8 +41,8 @@ const failures = [];
   await page.goto('http://app.local/' + path.basename(file));
   await page.waitForTimeout(1200);
 
-  const papers = await page.evaluate(([b, fl]) => {
-    S.bottles = b; S.customFlights = fl;
+  const papers = await page.evaluate(([b, fl, cu]) => {
+    S.bottles = b; S.customFlights = fl; S.custom = cu;
     save_(); rebuildCatalog();
     const out = {};
     allFlights().forEach(f => {
@@ -51,8 +51,8 @@ const failures = [];
                        sheet: tastingPapers(f, 'sheet') };
     });
     return out;
-  }, [JSON.parse(fs.readFileSync(path.join(dir, 'bz-bottles.json'), 'utf8')),
-      JSON.parse(fs.readFileSync(path.join(dir, 'bz-flights.json'), 'utf8'))]);
+  }, (sh => [sh.bottles, sh.flights, sh.custom])(
+       require('./engine.js').shelf(dir)));
 
   /* A SAMPLE by default. Printing all 72 took a minute and a half of every
      gate to re-prove something that only moves when the print CSS does:

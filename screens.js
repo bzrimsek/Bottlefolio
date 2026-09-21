@@ -37,10 +37,10 @@ const dir = __dirname;
     r.fulfill({status:200,contentType:t,body:fs.readFileSync(f)});
   });
   await p.goto('http://app.local/index.html'); await p.waitForTimeout(1200);
-  const bots=JSON.parse(fs.readFileSync(path.join(dir,'bz-bottles.json'),'utf8'));
+  const { bottles: bots, custom } = require('./engine.js').shelf(dir);
   // drive the screen directly: no clicking, no waiting on selectors
-  const out = await p.evaluate(b=>{
-    S.bottles=b; save_(); rebuildCatalog();
+  const out = await p.evaluate(([b, cu])=>{
+    S.bottles=b; S.custom=cu; save_(); rebuildCatalog();
     const r={};
     ['store','plan','offer','online'].forEach(m=>{
       S.shopMode=m; S.shop={}; S.shopFound=null;
@@ -144,7 +144,7 @@ const dir = __dirname;
       r.backs=document.querySelectorAll('#shopBack').length;
     } catch(e){ r.named='THREW '+e.message; r.where=(e.stack||'').split('\n')[1]; }
     return r;
-  },bots);
+  },[bots, custom]);
   const bad = Object.keys(out).filter(k => /THREW/.test(String(out[k])));
   if (bad.length || threw.length) {
     bad.forEach(k => console.log('  \u2716 ' + k + ': ' + out[k]));

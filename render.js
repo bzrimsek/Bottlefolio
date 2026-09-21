@@ -51,11 +51,14 @@ function check(name, got, want) {
 
   // BZ's real shelf and his real flights, because a fixture of three
   // bottles cannot disagree with itself.
-  await page.evaluate(([b, f]) => {
+  await page.evaluate(([b, f, cu]) => {
     /* global S, save_, rebuildCatalog, renderShelf, renderShelfFilters,
               renderHome, renderFlights, renderPayline */
     S.bottles = b;
     S.customFlights = f;
+    /* And the products only his account knows, or 34 of his bottles have
+       no product to compare the screen against. */
+    S.custom = cu;
     S.filters.status = 'all';
     // The shelf opens on the type tiles, which are a way IN rather than a
     // list; there is nothing to compare until it is listing.
@@ -63,8 +66,8 @@ function check(name, got, want) {
     save_(); rebuildCatalog();
     renderShelf(); renderShelfFilters(); renderHome();
     renderFlights(); renderPayline();
-  }, [JSON.parse(fs.readFileSync(path.join(dir, 'bz-bottles.json'), 'utf8')),
-      JSON.parse(fs.readFileSync(path.join(dir, 'bz-flights.json'), 'utf8'))]);
+  }, (sh => [sh.bottles, sh.flights, sh.custom])(
+       require('./engine.js').shelf(dir)));
   await page.waitForTimeout(500);
 
   /* 1. THE SHELF ROW against the engine.

@@ -13,7 +13,25 @@ const path = require('path');
 
 const BANNER = '/* =====================================================================\n   STATE + RENDER';
 
-module.exports = function loadEngine(file) {
+/* AND BZ'S SHELF, WHICH IS THREE FILES AND NOT ONE. The harnesses drive
+   the app with his bottles; the app's catalog is data.json merged with what
+   only his account knows, which is what rebuildCatalog() does at runtime.
+   A harness that sets S.bottles and not S.custom is testing a shelf 34
+   products poorer than his, quietly.
+
+     const { bottles, custom, flights } = require('./engine.js').shelf();
+*/
+module.exports.shelf = function (dir) {
+  const here = dir || __dirname;
+  const read = n => JSON.parse(fs.readFileSync(path.join(here, n), 'utf8'));
+  const shelf = { bottles: read('bz-bottles.json'), custom: read('bz-custom.json') };
+  /* Flights are optional: two harnesses do not draw one. */
+  const f = path.join(here, 'bz-flights.json');
+  shelf.flights = fs.existsSync(f) ? read('bz-flights.json') : [];
+  return shelf;
+};
+
+module.exports = Object.assign(function loadEngine(file) {
   const html = fs.readFileSync(file || path.join(__dirname, 'index.html'), 'utf8');
   const start = html.indexOf('const L = {};');
   const end = html.indexOf(BANNER);
@@ -21,4 +39,4 @@ module.exports = function loadEngine(file) {
   const m = { exports: {} };
   new Function('module', html.slice(start, end) + '\nmodule.exports = L;')(m);
   return { L: m.exports, source: html };
-};
+}, module.exports);

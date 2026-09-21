@@ -116,13 +116,16 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
 SERVICE = ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs',
            'recap-handler.gs', 'apps-script/appsscript.json',
            'firebase-rules.json']
-SHELF = ['bz-bottles.json', 'bz-flights.json']      # sealed, never plain
+# bz-custom.json joined on 2026-09-20: the products only BZ's account knows,
+# which the harnesses need to make sense of his shelf. His data, so sealed.
+SHELF = ['bz-bottles.json', 'bz-flights.json',
+         'bz-custom.json']                          # sealed, never plain
 
 # NEVER, whatever the lists above say. The repo is public and main is a
 # website: BZ's shelf, his exports and the database dump are his, and the
 # key would unlock the sealed copies. A name matching any of these stops
 # the push before anything leaves.
-NEVER = [r'^bz-(bottles|flights)\.json$', r'\.csv$', r'\.xlsx$',
+NEVER = [r'^bz-(bottles|flights|custom)\.json$', r'\.csv$', r'\.xlsx$',
          r'rtdb-export', r'shelf\.key$', r'^_superseded/', r'\.sealstate',
          # A Firebase admin key can rewrite the whole database. One landed in
          # this folder on 2026-09-15 on its way to ~/.bottlefolio.

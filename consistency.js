@@ -1341,6 +1341,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     'intakeBudget',
     /* Whether this person's shelf counts toward what's popular. */
     'popularOn',
+    /* Whether a sealed bottle may be poured for a guest: one answer, so
+       the newer one wins like every other switch. */
+    'guestSealed',
     /* The Google Sheet copy of the shelf: a switch, and its address. */
     'sheetOn', 'sheetUrl',
     /* The Lately paragraph and the recap's, whole: the newer one is kept. */
@@ -1440,6 +1443,24 @@ check('no fixed svg id is emitted by a repeated drawing',
   const pushes = src.match(/items: [a-zA-Z]+\.map\(p => p\.name\)/g) || [];
   check('no finding lists bare names instead of keyed items',
     pushes.map(x => x + ' — items need { key, text }'));
+}
+
+/* EVERY SEALED FILE IS UNSEALED BY THE GATE. push.py seals BZ's shelf
+   files and sends only the .gpg; the workflow decrypts them by name into a
+   shell loop. Add one to push.py and not to the loop - which is what
+   happened to bz-custom.json on 2026-09-20 - and the build passes here and
+   dies in the cloud on a missing file. */
+{
+  const push = fs.existsSync('push.py') ? fs.readFileSync('push.py', 'utf8') : '';
+  const yml = fs.existsSync('.github/workflows/gate.yml')
+    ? fs.readFileSync('.github/workflows/gate.yml', 'utf8') : '';
+  const sealed = ((push.match(/SHELF = \[([\s\S]*?)\]/) || [])[1] || '')
+    .match(/'([^']+\.json)'/g) || [];
+  const names = sealed.map(x => x.replace(/'/g, ''));
+  check('every sealed shelf file is unsealed by the gate',
+    names.length ? names.filter(n => yml.indexOf(n) < 0)
+      .map(n => n + ' is sealed by push.py but the workflow never '
+        + 'decrypts it') : ['push.py declares no shelf files at all']);
 }
 
 /* ONE NOTICE. It appears in Settings, at the foot of both printed papers

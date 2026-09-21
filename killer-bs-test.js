@@ -5320,11 +5320,26 @@ data.bottles = JSON.parse(
 // still run against a real one.
 data.flights = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'bz-flights.json'), 'utf8'));
+/* TWO CATALOGS, BECAUSE THERE ARE TWO QUESTIONS. data.catalog is what the
+   app ships - 325 products, every one priced, reel-reachable and described,
+   which is what most of the assertions below are about. His shelf reaches
+   358: the bar shelf, Longrow 18 and two he typed in, which are his and
+   meet no such standard. Ownership asks shelfCat, the merge the app's
+   rebuildCatalog() makes; catalogue quality goes on asking data.catalog. */
+const shelfCat = Object.assign({}, data.catalog, JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'bz-custom.json'), 'utf8')));
 // The map geometry was never loaded here, which is why the map assertions
 // could be dropped without anything failing.
 const mapData = JSON.parse(fs.readFileSync(path.join(__dirname, 'map.json'), 'utf8'));
-eq('344 bottles', data.bottles.length, 344);
-eq('325 products', Object.keys(data.catalog).length, 325);
+eq('380 bottles', data.bottles.length, 380);
+eq('325 shipped products', Object.keys(data.catalog).length, 325);
+eq('and 34 more that only his account knows',
+  Object.keys(shelfCat).length - Object.keys(data.catalog).length, 34);
+/* THE INVARIANT THAT WAS QUIETLY FALSE: a bottle whose product nothing
+   knows is a bottle the app cannot describe, price or place on a map. */
+eq('every bottle on the shelf has a product',
+  [...new Set(data.bottles.map(b => b.k))]
+    .filter(k => !shelfCat[k]), []);
 // Macaloney's is in Victoria BC and Crown Royal in Gimli, Manitoba: both were
 // filed elsewhere until the taxonomy pass.
 eq('macaloney is canadian', Object.values(data.catalog)
@@ -5384,9 +5399,14 @@ eq('36 flights', data.flights.length, 36);
 // Every duplicated product has exactly one open bottle -- BZ's stocking rule.
 const byKey = {};
 data.bottles.forEach(b => { (byKey[b.k] = byKey[b.k] || []).push(b); });
-const violations = Object.keys(byKey).filter(k =>
-  byKey[k].filter(b => b.status === 'open').length !== 1);
-eq('every product has exactly one open bottle', violations.length, 0);
+/* NEVER TWO OPEN AT ONCE - that is the rule. Having NONE open is not a
+   breach of it, it is a bottle he finished: fourteen have been drunk since
+   the last snapshot, and the old assertion could not tell the two apart. */
+eq('no product has two bottles open at once', Object.keys(byKey).filter(k =>
+  byKey[k].filter(b => b.status === 'open').length > 1), []);
+eq('and a product with none open has been finished',
+  Object.keys(byKey).filter(k => !byKey[k].some(b => b.status === 'open'))
+    .filter(k => !byKey[k].every(b => b.status === 'gone')), []);
 // The control set: finished, but no wine cask.
 // Every bottle with a known finish must have a wine verdict. A finish and
 // a null verdict was a 44-bottle gap the QA pass found.
@@ -5431,7 +5451,7 @@ const iePins = L.mapPins(data.catalog, mapData.ieDistilleries, data.bottles, ['i
 // The gap analysis against the real shelf.
 // No flights have been run, so the list is led by what the shelf says on
 // its own merits rather than by a flight nobody has poured.
-const realGaps = L.shelfGaps(data.catalog, data.bottles, data.flights, [], []);
+const realGaps = L.shelfGaps(shelfCat, data.bottles, data.flights, [], []);
 eq('the shelf produces findings', realGaps.length > 0, true);
 eq('with no flights run, a shelf observation leads',
   ['contrast', 'extend'].indexOf(realGaps[0].kind) >= 0, true);
@@ -5439,13 +5459,19 @@ eq('with no flights run, a shelf observation leads',
 eq('the lopsided cask split is the top finding',
   /wood-only/.test(realGaps[0].name), true);
 // Once flights get run, the bottle that completes one takes the lead.
-const runGaps = L.shelfGaps(data.catalog, data.bottles, data.flights, [],
+const runGaps = L.shelfGaps(shelfCat, data.bottles, data.flights, [],
   Array.from({ length: 6 }, (_, i) => ({ kind: 'flight', flight: 'F' + i })));
+/* THE SHAPE, NOT THE BOTTLE. This was pinned to Longrow 18, which BZ has
+   since bought - so it failed on a purchase rather than on a fault. What
+   the test is about is that once flights have been run, the finding that
+   leads is one that would let another flight run, and that it says which. */
 eq('once flights are run, the bottle that unlocks one leads',
-  /Longrow 18/.test(runGaps[0].name), true);
-// By subject again: this one is now WHERE DOES PEAT LIVE?.
+  runGaps[0].kind, 'flight');
 eq('and it names the flight that bottle would complete',
-  /peat/i.test(String(runGaps[0].flight)), true);
+  data.flights.some(f => f.title === runGaps[0].flight), true);
+// It is a bottle he does not have open: either never bought, or drunk.
+eq('and it is not something already pourable',
+  L.pourable(runGaps[0].name, data.bottles), false);
 // Buffalo Trace is 24 bottles with no finished bottling — a real
 // observation about the shelf that has nothing to do with flights.
 // This test pinned the bug. It required the finding to NAME Buffalo Trace
@@ -5641,15 +5667,15 @@ eq('nor past Malin Head', Math.max(...lats) < 55.6, true);
 eq('nor south of Mizen', Math.min(...lats) > 51.2, true);
 eq('nor east into Wales', Math.max(...lons) < -5.2, true);
 
-eq('56 US distilleries plotted', usPins.length, 56);
-eq('185 US bottles sit on a pin', usPins.reduce((n, p) => n + p.total, 0), 185);
+eq('53 US distilleries plotted', usPins.length, 53);
+eq('180 US bottles sit on a pin', usPins.reduce((n, p) => n + p.total, 0), 180);
 eq('47 irish bottles sit on a pin', iePins.reduce((n, p) => n + p.total, 0), 47);
 // 76 of 80: the other four are blends and independent bottlings whose
 // "distillery" is a blender with no single place -- Dewar's, Johnnie Walker,
 // Orphan Barrel and Ian Macleod. A blend has no dot on a map, and inventing
 // one would be worse than leaving it off.
-eq('76 of 80 scotch bottles sit on a pin',
-  scPins.reduce((n, p) => n + p.total, 0), 76);
+eq('75 scotch bottles sit on a pin',
+  scPins.reduce((n, p) => n + p.total, 0), 75);
 
 // Nothing may appear in a count and be absent from the map.
 const unplaced = (subs, coords) => [...new Set(Object.values(data.catalog)
@@ -5665,10 +5691,10 @@ eq('every scotch DISTILLERY is placed',
 eq('the four unplaced scotch names are all blenders',
   unplaced(['scotch'], mapData.distilleries).sort(), BLENDERS.slice().sort());
 
-// 308 of 325: the remainder are Canadian, Japanese, world and tequila, which
-// have no coordinate set of their own.
-eq('308 bottles are placeable',
-  usPins.concat(scPins, iePins).reduce((n, p) => n + p.total, 0), 308);
+// The remainder are Canadian, Japanese, world and tequila, which have no
+// coordinate set of their own - and, since 2026-09-20, the bar shelf.
+eq('302 bottles are placeable',
+  usPins.concat(scPins, iePins).reduce((n, p) => n + p.total, 0), 302);
 
 // Pins must come apart at the ceiling, or a cluster can never be read.
 const worldSpan = L.mapExtent(mapData.world, 3).w;
@@ -16307,7 +16333,7 @@ sec('\u00a7347 one number for one question, and a claim the count supports');
   const t = L.tasteProfile(data.catalog, data.bottles, {});
   const set = L.PORTRAIT_TITLES.filter(c => c.id === 'house')[0];
   const got = set.test(t, {});
-  eq('BZ\u2019s biggest house still earns it', got.n, 26);
+  eq('BZ\u2019s biggest house still earns it', got.n, 28);
   eq('and the reason carries the share of the shelf',
     /% of the shelf/.test(got.why), true);
   eq('naming the house', /Buffalo Trace/.test(got.why), true);
@@ -17114,6 +17140,109 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // THE SPECTRUM IS A RING WITH ONE THING HANGING OFF IT (BZ, 2026-09-20).
+  const of = sub => ({ sub: sub });
+  const peated = { sub: 'scotch', name: 'Ardbeg 10', dist: 'Ardbeg' };
+  eq('a peated malt is read as peated', L.flavorPlace(peated), L.FLAVOR_SMOKE);
+  // The loop closes: the two ends of the written list are neighbours.
+  eq('Irish and unpeated malt are one step apart',
+    L.flavorGap(of('irish'), of('scotch')), 1);
+  // EVERY EDGE IS ONE STEP, and the ring closes. Each edge shares
+  // something and moves one thing - the grain or the wood, never both.
+  const RING = ['irish', 'american single malt', 'bourbon', 'rye',
+                'canadian', 'scotch'];
+  eq('every edge of the ring is a single step',
+    RING.filter((n, i) =>
+      L.flavorGap(of(n), of(RING[(i + 1) % RING.length])) !== 1), []);
+  eq('bourbon sits between American malt and rye',
+    [L.flavorGap(of('bourbon'), of('american single malt')),
+     L.flavorGap(of('bourbon'), of('rye'))], [1, 1]);
+  // CANADA IS THE HANDOFF. Rye to malt direct is the jarring leap BZ
+  // named; through Canada it is two ordinary steps.
+  eq('rye does not reach malt in one step',
+    L.flavorGap(of('rye'), of('scotch')), 2);
+  eq('and Canada is one step from each of them',
+    [L.flavorGap(of('canadian'), of('rye')),
+     L.flavorGap(of('canadian'), of('scotch'))], [1, 1]);
+  // THE PENDANT: smoke is reached only through unpeated malt, so its
+  // distance from anywhere is the distance to malt plus that one edge.
+  eq('smoke hangs off the malt node by a single edge',
+    L.flavorGap(of('scotch'), peated), 1);
+  eq('and every other style reaches it through malt',
+    ['irish', 'bourbon', 'canadian', 'rye', 'scotch']
+      .filter(k => L.flavorGap(of(k), peated)
+        !== L.flavorGap(of(k), of('scotch')) + 1), []);
+  eq('so a bourbon is as far from smoke as this app goes',
+    L.flavorGap(of('bourbon'), peated), 4);
+  eq('and nothing is further than that',
+    Object.keys(L.FLAVOR_ORDER).filter(k =>
+      L.flavorGap(of(k), peated) > 4), []);
+  eq('and smoke is no distance from itself', L.flavorGap(peated, peated), 0);
+  // WHICH IS WHY ARDBEG NO LONGER GREETS A WOODFORD DRINKER. Proof alone
+  // used to decide it - Ardbeg 10 is 92 against Woodford's 90.4.
+  eq('Speyside before smoke',
+    L.pourAtRung({ name: 'Woodford Reserve', dist: 'Woodford Reserve',
+      sub: 'bourbon', proof: 90.4 }, 'pond', [
+        peated,
+        { name: 'Aberlour 12', dist: 'Aberlour', sub: 'scotch',
+          region: 'Speyside', proof: 86 }])
+      .map(x => x.name), ['Aberlour 12', 'Ardbeg 10']);
+  // AND THE LADDER ONLY OFFERS WHAT IT CAN PLACE: the bar shelf carries an
+  // empty category, and L.isWhisky says yes to anything it does not know.
+  eq('a bottle with no category is never offered',
+    L.pourAtRung(of('bourbon'), 'pond',
+      [{ name: 'Bacardi Gold', dist: 'Bacardi', sub: '' },
+       { name: 'Redbreast 12', dist: 'Midleton', sub: 'irish', proof: 80 }])
+      .map(x => x.name), ['Redbreast 12']);
+
+  // WORLD IS THE SECOND PENDANT, on the same node as smoke.
+  eq('world hangs off unpeated malt too',
+    L.flavorGap(of('scotch'), of('world')), 1);
+  eq('so a bourbon is four steps from it, like the smoke',
+    L.flavorGap(of('bourbon'), of('world')), 4);
+  eq('and between the two pendants it is out and back',
+    L.flavorGap(of('world'), peated), 2);
+
+  // THE DRAWING IS THE TABLE. Every place is on it, once, and the two
+  // pendants sit further out than the ring and not on top of each other.
+  const lay = L.ringLayout();
+  eq('every place is drawn exactly once',
+    lay.map(n => n.at), [1, 2, 3, 4, 5, 6, 7, 8]);
+  eq('and every one of them is named',
+    lay.filter(n => !n.label).map(n => n.at), []);
+  eq('two of them hang off the ring',
+    lay.filter(n => n.pendant).map(n => n.label), ['Peated Scotch', 'World']);
+  eq('the pendants sit further out', lay.filter(n => n.pendant)
+    .every(n => n.out > lay.filter(r => !r.pendant)[0].out), true);
+  eq('and not on top of each other',
+    lay.filter(n => n.pendant).map(n => n.spread), [-1, 1]);
+  // The bourbon-rye edge is the top line (BZ), so those two straddle it.
+  const deg = at => Math.round(
+    (lay.filter(n => n.at === at)[0].angle * 180 / Math.PI) % 360);
+  eq('bourbon and rye straddle the top', [deg(3), deg(4)], [330, 30]);
+
+  // A SECTION IS A STORY OR A GLOSSARY.
+  eq('a glossary is sorted A to Z',
+    L.refItems({ sort: 'alpha', items: [{ term: 'Zed' }, { term: 'Alpha' }] })
+      .map(i => i.term), ['Alpha', 'Zed']);
+  eq('and a story is left exactly as it was written',
+    L.refItems({ items: [{ term: 'Zed' }, { term: 'Alpha' }] })
+      .map(i => i.term), ['Zed', 'Alpha']);
+  eq('sorting never changes how many there are',
+    L.WHISKEY.filter(sec => L.refItems(sec).length !== sec.items.length), []);
+  eq('and the one BZ named is a glossary',
+    L.WHISKEY.filter(sec => sec.section === 'In the bottle')[0].sort, 'alpha');
+
+  // THE CHIPS THAT NARROW A WIDE RUNG.
+  eq('the categories come back biggest first, with their counts',
+    L.pourTypes([of('irish'), of('scotch'), of('irish'), of('japanese'),
+      of('irish'), of('scotch')]),
+    [{ sub: 'irish', n: 3 }, { sub: 'scotch', n: 2 },
+     { sub: 'japanese', n: 1 }]);
+  eq('and only the wide rungs get them',
+    [L.POUR_WIDE.indexOf('road') >= 0, L.POUR_WIDE.indexOf('pond') >= 0,
+     L.POUR_WIDE.indexOf('house') >= 0], [true, true, false]);
+
   // THE WORD ORIGINAL MARKS A BASELINE, which is the only thing that
   // separates Blanton’s Original from five other allocated Blanton’s.
   eq('Original names the baseline of a family',

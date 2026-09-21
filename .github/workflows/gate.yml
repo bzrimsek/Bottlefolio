@@ -125,7 +125,7 @@ jobs:
         env:
           SHELF_KEY: ${{ secrets.SHELF_KEY }}
         run: |
-          for f in bz-bottles.json bz-flights.json; do
+          for f in bz-bottles.json bz-flights.json bz-custom.json; do
             printf '%s' "$SHELF_KEY" | gpg --quiet --batch --yes \
               --pinentry-mode loopback --passphrase-fd 0 \
               --output "$f" --decrypt "$f.gpg"
