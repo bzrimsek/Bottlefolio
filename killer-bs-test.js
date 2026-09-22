@@ -17143,6 +17143,13 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // HOW LONG A LOOKUP WAITS. Two patiences, two reasons: a person is
+  // standing there, and the library intake is not.
+  eq('a person\u2019s lookup waits the longer of the two',
+    L.LOOKUP_MS > L.INTAKE_LOOKUP_MS, true);
+  eq('and the numbers are what the log was measured against',
+    [L.LOOKUP_MS, L.INTAKE_LOOKUP_MS], [45000, 30000]);
+
   // THE SPECTRUM IS A RING WITH ONE THING HANGING OFF IT (BZ, 2026-09-20).
   const of = sub => ({ sub: sub });
   const peated = { sub: 'scotch', name: 'Ardbeg 10', dist: 'Ardbeg' };

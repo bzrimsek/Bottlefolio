@@ -1445,6 +1445,29 @@ check('no fixed svg id is emitted by a repeated drawing',
     pushes.map(x => x + ' — items need { key, text }'));
 }
 
+/* HOW LONG A LOOKUP WAITS IS A NAMED THING. Four call sites typed 30000
+   and askLookup defaulted to it, while L.LOOKUP_MS said 45000 - so the
+   label fill and the library intake asked the same question with less
+   patience than the screens, and a buddy's label fill gave up at 30s on an
+   answer the service takes longer than that to give 4% of the time
+   (2026-09-22). A literal is invisible to the copy checks, which compare
+   the shapes of functions. */
+{
+  const bare = (src.match(/askLookup\([^)]*?,\s*\d{3,}/g) || [])
+    .map(m => m.replace(/\s+/g, ' ').slice(0, 60));
+  check('no lookup is given a bare number of milliseconds',
+    bare.map(b => b + ' \u2014 name it, like L.LOOKUP_MS and '
+      + 'L.INTAKE_LOOKUP_MS'));
+  /* And the unattended one stays the shorter of the two, or its name is a
+     lie about why it exists. */
+  const ms = n => Number((src.match(new RegExp('L\\.' + n + ' = (\\d+)')) || [])[1]);
+  check('the unattended lookup waits less than a person does',
+    ms('INTAKE_LOOKUP_MS') && ms('LOOKUP_MS')
+      && ms('INTAKE_LOOKUP_MS') < ms('LOOKUP_MS') ? []
+      : ['L.INTAKE_LOOKUP_MS is ' + ms('INTAKE_LOOKUP_MS') + ' against '
+         + 'L.LOOKUP_MS ' + ms('LOOKUP_MS')]);
+}
+
 /* EVERY SEALED FILE IS UNSEALED BY THE GATE. push.py seals BZ's shelf
    files and sends only the .gpg; the workflow decrypts them by name into a
    shell loop. Add one to push.py and not to the loop - which is what
