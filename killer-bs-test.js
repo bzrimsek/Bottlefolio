@@ -17143,6 +17143,19 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // A LOST ANSWER IS NOT A MISSING MODE. Apps Script redirects to a
+  // single-use URL; a 404 there with a Google page in the body means the
+  // script ran and the answer was lost coming back (BZ logs, 2026-09-23).
+  const GOOG = 'https://script.googleusercontent.com/macros/echo?user_content_key=A';
+  eq('a redirected 404 carrying a page is a lost answer',
+    L.lostAnswer(GOOG, '<!DOCTYPE html><html lang="en">'), true);
+  eq('a 404 from the exec address is not',
+    L.lostAnswer('https://script.google.com/macros/s/AKf/exec', 'Not Found'), false);
+  eq('nor is an answer that came back as data',
+    L.lostAnswer(GOOG, '{"error":"no such mode"}'), false);
+  eq('and nothing is not a lost answer',
+    [L.lostAnswer(null, null), L.lostAnswer('', '')], [false, false]);
+
   // WHAT A QUESTION IS ABOUT, which is what Read it in Learn searches for.
   // It used to search for the ANSWER, so a true or false question sent the
   // word FALSE to the search box (BZ, 2026-09-24).

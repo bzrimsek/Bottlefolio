@@ -1445,6 +1445,22 @@ check('no fixed svg id is emitted by a repeated drawing',
     pushes.map(x => x + ' — items need { key, text }'));
 }
 
+/* A LOST ANSWER NEVER COUNTS AS A MISSING MODE. Apps Script redirects to a
+   single-use URL, and a 404 there with a Google page in the body means the
+   script RAN and its answer was lost coming back - which says nothing about
+   whether the mode exists. Counted, two of them switch the mode off until
+   reload, so a flaky phone takes away a feature that works (2026-09-24).
+   Every place that tells the memory about a 404 must ask first. */
+{
+  const calls = src.match(/rememberMiss\(/g) || [];
+  const guarded = src.match(/!\w+\.lostAnswer\)\s*rememberMiss\(/g) || [];
+  check('a lost answer is never counted as a missing mode',
+    calls.length && guarded.length === calls.length - 1 ? []
+      : [guarded.length + ' of ' + (calls.length - 1) + ' rememberMiss calls '
+         + 'ask L.lostAnswer first \u2014 an unguarded one switches a working '
+         + 'mode off when a redirect is lost']);
+}
+
 /* HOW LONG A LOOKUP WAITS IS A NAMED THING. Four call sites typed 30000
    and askLookup defaulted to it, while L.LOOKUP_MS said 45000 - so the
    label fill and the library intake asked the same question with less
@@ -2296,7 +2312,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     flightEditor: 153,
     editLibraryEntry: 152,
     showCandidates: 147,
-    postWithRetry: 142,
+    postWithRetry: 128,
     showEnhance: 142,
     renderLibrary: 138,
     fbLoadAfterWipeCheck: 130,
