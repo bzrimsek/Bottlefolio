@@ -17143,6 +17143,23 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // WHAT A QUESTION IS ABOUT, which is what Read it in Learn searches for.
+  // It used to search for the ANSWER, so a true or false question sent the
+  // word FALSE to the search box (BZ, 2026-09-24).
+  eq('a term answer is its own subject',
+    L.quizTopic({ answer: 'Wort', ask: 'x' }), 'Wort');
+  eq('and a true or false answer never is',
+    L.QUIZ_TRICKS.map(t => L.quizTopic(t))
+      .filter(x => /^(true|false)$/i.test(x)), []);
+  eq('a written question lands on what it names',
+    L.quizTopic(L.QUIZ_TRICKS.filter(t =>
+      /^Tennessee whiskey is charcoal/.test(t.ask))[0]), 'Tennessee whiskey');
+  // Whatever it returns is a real Learn entry, or nothing at all.
+  eq('it never invents a term',
+    (() => { const terms = L.quizBank().map(b => b.term);
+      return L.QUIZ_TRICKS.map(t => L.quizTopic(t))
+        .filter(x => x && terms.indexOf(x) < 0); })(), []);
+
   // HOW LONG A LOOKUP WAITS. Two patiences, two reasons: a person is
   // standing there, and the library intake is not.
   eq('a person\u2019s lookup waits the longer of the two',
