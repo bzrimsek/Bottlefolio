@@ -4206,6 +4206,23 @@ function step(n) {
           } else if (venn.querySelectorAll('circle').length < 3) {
             out.push('buddies: a group of three draws '
               + venn.querySelectorAll('circle').length + ' circles');
+          } else {
+            /* AND IT ANSWERS A PRESS, like the pair Venn does (BZ,
+               2026-09-25). Its targets stand on the numbers: three circles
+               make seven regions and the crescents either side of a lens
+               are not shapes a thumb can find. */
+            const hits = venn.querySelectorAll('.vhit');
+            if (!hits.length) {
+              out.push('buddies: the group Venn cannot be pressed');
+            } else {
+              hits[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              const sh = document.getElementById('scr-theirs');
+              if (!sh || !sh.classList.contains('on')) {
+                out.push('buddies: pressing the group Venn opens nothing');
+              } else {
+                show('buddies');
+              }
+            }
           }
           /* And switching them off leaves nothing behind. */
           [...b4.querySelectorAll('.sheet .swrow')]

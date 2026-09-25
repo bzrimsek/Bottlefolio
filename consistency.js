@@ -2333,7 +2333,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     tastingPapers: 43,
     renderDiag: 105,
     renderFromUrl: 103,
-    vennSvg: 103,
+    vennSvg: 97,
     exploreAxis: 102,
     receiptsDialog: 101,
     renderRecap: 101

@@ -2,11 +2,21 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.37  ·  2026-09-25 09:43 AM ET
+
+The three-circle Venn answers a press, like the pair ones do. BZ, 2026-09-25: can the combined venn be clickable like the pair venns? It could not: the hit shapes were built only for two circles, and the note above them said why - when they were written the only three-circle diagram was the room the app assembled, which was counted rather than intersected and led nowhere. A group he picks is not that, and every region in it is a real list of whiskies. The targets stand ON THE NUMBERS rather than on the true regions: three circles make seven of those, and the crescents either side of a lens are not shapes a thumb can find, while the number is where the eye already is. A region holding nothing gets no target, so a press always opens something. Doing it took vennSvg ten lines over its ceiling, which does not go up, and what came out was the right thing anyway - two hand-written tables of label positions, keyed two different ways so the same lookup was written once per shape. One table now, L.vennSpots, asked once by the drawing and standing under the targets. Being a table rather than drawing it can be asserted, so it is: a spot for every region, and no two closer than two targets wide, which is the property a press landing on the right list depends on.
+
 ## v2.5.36  ·  2026-09-25 09:34 AM ET
 
 A group you pick, with the same switches as everything else. BZ, 2026-09-25: one group section where you can click your buddies on and off and then see the resulting venn. What sat here before was a room the app assembled out of everyone who had ever shared with him; this is the room he chose, drawn for exactly the people switched on. Two or three circles is what a Venn draws honestly - it is the reason the old cells existed at all - so past three it says the two numbers that need none: what the group could pour between them, and what every one of them holds. Both are about the WHOLE group, so neither can be read as belonging to a pair, which is the fault that took the cells out. The list went through gold pills and a tick list before landing on switchRow, the component Settings already uses, where the whole row is the control: both earlier shapes were invented for a job the app had a shape for, and the pills read as a filter besides. Somebody who stops sharing cannot stay in a group. The diagram is the same vennSvg a buddy's own tab draws, called as it stands. The walk switches two people on, checks three circles come back, switches them off and checks nothing is left behind - and renderBuddiesTab went a line over its allowance, which does not go up, so what Everyone shows is one call now and the tab decides only which panel to draw.
 
 ## v2.5.35  ·  2026-09-25 09:22 AM ET
+
+NEVER SHIPPED. The version was written and the push was stopped before it
+left: BZ read the screen and the buddy list was gold pills, which he had not
+asked for. What this entry describes went out as v2.5.36 with a checklist of
+switches instead. Kept rather than deleted, because a number that was taken
+is taken.
 
 A group you pick, and the Venn for it. BZ, 2026-09-25: one group section where you can click your buddies on and off and then see the resulting venn. What sat here before was a room the app assembled out of everyone who had ever shared with him; this is the room he chose, drawn for exactly the people switched on. Two or three circles is what a Venn draws honestly - it is the reason the old cells existed at all - so past three it says the two numbers that need no circles: what the group could pour between them, and what every one of them holds. Both are about the WHOLE group, so neither can be read as belonging to a pair, which is the fault that took the cells out. Somebody who stops sharing cannot stay in a group. The diagram is the same vennSvg a buddy's own tab draws, called as it stands. The walk switches two people on, checks three circles come back, switches them off and checks nothing is left behind - and renderBuddiesTab went a line over its allowance, which does not go up, so what Everyone shows is one call now and the tab decides only which panel to draw.
 

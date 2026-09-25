@@ -3779,6 +3779,41 @@ eq('a flag with no start behind it is stuck, not new',
 eq('and the window is long enough for a slow phone',
   L.SHARED_STALE_MS >= 15000, true);
 
+sec('where a Venn puts its numbers');
+/* The positions are hand-written, and since 2026-09-25 they are also where
+   the press targets stand - so the table has to hold two properties, not
+   one: a spot for every region, and no two close enough for 21-across
+   targets to overlap. */
+{
+const two = L.vennSpots(['me', 'u1']);
+eq('two circles have three regions', Object.keys(two).length, 3);
+eq('and yours is on the left', two.me[0] < two.u1[0], true);
+eq('with the overlap between them',
+  two['me+u1'][0] > two.me[0] && two['me+u1'][0] < two.u1[0], true);
+
+const three = L.vennSpots(['me', 'u1', 'u2']);
+eq('three circles have seven regions', Object.keys(three).length, 7);
+/* Every combination, so no region can draw without a place to sit. */
+['me', 'u1', 'u2', 'me+u1', 'me+u2', 'u1+u2', 'me+u1+u2'].forEach(k => {
+  eq('there is a spot for ' + k, !!three[k], true);
+});
+/* AND NO TWO TARGETS CAN OVERLAP. 21 across each, so 42 apart at the
+   closest, or a press opens the list next to the one aimed at. */
+const pts = Object.keys(three).map(k => three[k]);
+let closest = Infinity;
+pts.forEach((a, i) => pts.slice(i + 1).forEach(b => {
+  const d = Math.sqrt((a[0] - b[0]) * (a[0] - b[0])
+    + (a[1] - b[1]) * (a[1] - b[1]));
+  if (d < closest) closest = d;
+}));
+eq('no two numbers sit closer than two targets wide', closest >= 42, true);
+/* A room the diagram cannot draw gets no positions rather than half of a
+   set: four circles is not a Venn anybody can read. */
+eq('four people get no diagram',
+  Object.keys(L.vennSpots(['me', 'a', 'b', 'c'])).length, 0);
+eq('and nobody gets none', Object.keys(L.vennSpots([])).length, 0);
+}
+
 sec('what a group has in common');
 /* BZ, 2026-09-25: a group he picks, rather than a room the app assembled.
    Past three people a Venn stops being honest, so it says these two - and
