@@ -216,9 +216,43 @@ const dir = __dirname;
         }
         closeModal();
       }
+      /* ONE TILE PER BUDDY, including one who never shared back. The tiles
+         are the only way to a person's tab now and the ask lives there, so
+         a tile that does not draw is an ask nobody can reach (BZ,
+         2026-09-25). */
+      SHARED.names.bud2 = 'Nobody Back';
+      SHARED.outList = [{ uid: 'bud1', name: 'Dale' },
+        { uid: 'bud2', name: 'Nobody Back' }];
+      const tiles = el('div');
+      document.body.appendChild(tiles);
+      const rws = L.buddyRows(SHARED.shelves, SHARED.outList, SHARED.names,
+        SHARED.granted);
+      buddyTiles(tiles, rws, SHARED.names,
+        { id: 'me', name: 'You',
+          map: L.shelfSet({ catalog: S.catalog, bottles: S.bottles }) });
+      const drawn = tiles.querySelectorAll('.roomcell').length;
+      const numbers = Array.prototype.slice
+        .call(tiles.querySelectorAll('.rc-n'))
+        .filter(x => /^[0-9]+$/.test(x.textContent.trim())).length;
+      r.budTiles = drawn !== rws.length
+        ? 'THREW ' + drawn + ' tiles for ' + rws.length + ' buddies'
+        : numbers ? 'ok(' + drawn + ' tiles, ' + numbers + ' counted)'
+        : 'THREW no tile carries a number';
+      /* And the one who never shared back still gets a panel that says so
+         rather than the wait notice for a shelf that is coming. */
+      const back = el('div');
+      document.body.appendChild(back);
+      buddiesOnePanel(back, 'bud2', SHARED.names,
+        { id: 'me', name: 'You', map: {} },
+        rws.filter(x => x.uid === 'bud2')[0]);
+      r.budNoShare = /has not shared back/.test(back.textContent)
+        ? 'ok' : 'THREW the panel does not say they never shared';
+      tiles.remove();
+      back.remove();
       pane.remove();
       delete SHARED.shelves.bud1;
       delete SHARED.names.bud1;
+      delete SHARED.names.bud2;
     } catch (e) { r.pairPool = 'THREW ' + e.message; }
 
     // and a named bottle, which is the half being extracted

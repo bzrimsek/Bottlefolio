@@ -3779,6 +3779,30 @@ eq('a flag with no start behind it is stuck, not new',
 eq('and the window is long enough for a slow phone',
   L.SHARED_STALE_MS >= 15000, true);
 
+sec('the two numbers on a buddy tile');
+/* BZ, 2026-09-25: tiles instead of rows, with the you-and-them number on
+   the tile. Both sides of it come from L.vennRegions, so the tile and the
+   diagram under it cannot disagree about the same fact. */
+{
+const mineSet = { id: 'me', name: 'You',
+  map: { a: { k: 'a' }, b: { k: 'b' }, c: { k: 'c' } } };
+const themSet = { id: 'u1', name: 'Nik',
+  map: { b: { k: 'b' }, c: { k: 'c' }, d: { k: 'd' }, e: { k: 'e' } } };
+const n = L.pairCounts(mineSet, themSet);
+eq('what the two of them share', n.both, 2);
+eq('what only they have \u2014 what they could bring', n.theirs, 2);
+eq('and what only he has', n.mine, 1);
+/* The three add up to the whole of both shelves, which is what makes them
+   safe to print beside each other. */
+eq('and the three cover both shelves', n.both + n.theirs + n.mine, 5);
+/* A buddy with nothing is a zero, not a gap: a tile that vanishes is worse
+   than one that says nothing is shared. */
+eq('an empty shelf counts as none, not as missing',
+  L.pairCounts(mineSet, { id: 'u2', name: 'Nobody', map: {} }).both, 0);
+eq('and everything is then his own',
+  L.pairCounts(mineSet, { id: 'u2', name: 'Nobody', map: {} }).mine, 3);
+}
+
 sec('what a buddy can see');
 // Letting somebody see your shelf used to hand them the whole node: every
 // pour with its date, the wishlist, the lookup endpoint. "See my shelf"

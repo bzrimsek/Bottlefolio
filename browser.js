@@ -4053,50 +4053,48 @@ function step(n) {
       const strip = document.getElementById('buddyStrip');
       if (!strip) { out.push('buddies: no panel strip'); return out; }
       const chips = [...strip.querySelectorAll('button')].map(b => b.textContent.trim());
-      // Everyone plus one per buddy. THREE buddies, not two.
-      if (chips.length !== 5) {
-        out.push('buddies: ' + chips.length + ' chips, expected 4 (' + chips.join(',') + ')');
+      /* Everyone plus one per PERSON. Every buddy has a tab since
+         2026-09-25, not only the ones who shared back: the switch and the
+         ask live on that tab, so a tab only the sharers had would have put
+         the ask behind a door with no handle. Five people here. */
+      if (chips.length !== 6) {
+        out.push('buddies: ' + chips.length + ' chips, expected 6 ('
+          + chips.join(',') + ')');
       }
-      ['Everyone', 'Tyson', 'Dave', 'Eli'].forEach(n => {
+      ['Everyone', 'Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         if (chips.indexOf(n) < 0) out.push('buddies: no chip for ' + n);
       });
 
-      /* THE GRID CARRIES EVERYBODY, BOTH WAYS. Four people: three whose
-         shelves I can see and one who can only see mine. A tab needs a
-         shelf to draw, so u4 is a row and not a tab — and it must be a row
-         somewhere, or she is invisible again. */
-      const grid = document.querySelector('.budgrid');
-      if (!grid) { out.push('buddies: no grid of people'); return out; }
-      const lines = [...grid.querySelectorAll('.budline')];
+      /* THE TILES CARRY EVERYBODY, BOTH WAYS. Five people: three whose
+         shelves I can see, one who granted a shelf that has not landed, and
+         one who can only see mine. Each is a tile, and each must be there
+         or she is invisible again. */
+      const grid = document.querySelector('.roomgrid');
+      if (!grid) { out.push('buddies: no tiles of people'); return out; }
+      const lines = [...grid.querySelectorAll('.roomcell')];
       if (lines.length !== 5) {
-        out.push('buddies: ' + lines.length + ' grid rows, expected 5');
+        out.push('buddies: ' + lines.length + ' tiles, expected 5');
       }
-      /* THE GRANT WITHOUT A SHELF. It had no row at all before, because it
-         was in neither the loaded shelves nor the outbound list. */
-      /* u5 granted and has no snapshot: it is a row like any other now. */
-      /* u5 granted and has no snapshot. It is a row like any other now -
-         green, and it opens - which is BZ's rule: if visible = yes, then
-         share. Matched by its name so the filter cannot drift on to
-         somebody else's row. */
+      /* A GRANT WHOSE SNAPSHOT HAS NOT BEEN WRITTEN. It had no place at all
+         before it was given one; it must not read as "not sharing", and it
+         must open - BZ's rule: if visible = yes, then share. */
       const noShelf = lines.filter(l => /u5/.test(l.textContent));
       if (noShelf.length !== 1) {
         out.push('buddies: a grant with no shelf yet draws '
-          + noShelf.length + ' rows, expected 1');
+          + noShelf.length + ' tiles, expected 1');
       }
-      /* GREEN, AND IT OPENS. BZ: if visible = yes, then share. A grant is
-         a grant, so the row does not carry a third state - the panel says
-         it, which is where somebody went expecting bottles. */
-      if (noShelf[0] && !noShelf[0].querySelector('.budlamp.on')) {
+      const lamp = (tile, which) => tile
+        && tile.querySelector('.rc-d i[title="' + which + '"]');
+      if (noShelf[0] && !(lamp(noShelf[0], 'You see theirs') || {}).className) {
+        out.push('buddies: a grant has no direction drawn');
+      }
+      if (noShelf[0] && lamp(noShelf[0], 'You see theirs').className !== 'on') {
         out.push('buddies: a grant does not read as sharing');
       }
-      if (noShelf[0] && !noShelf[0].querySelector('button.budwho')) {
-        out.push('buddies: a green row does not open anything');
-      }
-      /* AND WHAT IS BEHIND IT SAYS SO. The panel is where somebody went
-         expecting bottles, so the wait is explained there rather than as a
-         third color on the row. */
+      /* AND WHAT IS BEHIND IT SAYS SO. The tile is the only way in now, so
+         the wait is explained on the panel it opens. */
       if (noShelf[0]) {
-        noShelf[0].querySelector('button.budwho').click();
+        noShelf[0].querySelector('.rc-open').click();
         const b3 = document.getElementById('buddiesBody');
         if (!/has not reached you yet/.test(b3.textContent)) {
           out.push('buddies: a shelf that has not arrived is not explained '
@@ -4108,32 +4106,57 @@ function step(n) {
       /* It DOES offer a panel now, and must: a grant is a grant. */
       ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         if (!new RegExp(n).test(grid.textContent)) {
-          out.push('buddies: ' + n + ' is on neither side of the grid');
+          out.push('buddies: ' + n + ' is on no tile');
         }
       });
       /* Nobody is listed twice, which is the fault itself. */
       ['Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         const hits = lines.filter(l => new RegExp(n).test(l.textContent));
         if (hits.length !== 1) {
-          out.push('buddies: ' + n + ' appears on ' + hits.length + ' rows');
+          out.push('buddies: ' + n + ' appears on ' + hits.length + ' tiles');
         }
       });
-      /* The lights say which direction is missing. u2 is mutual so its
-         switch is on and its lamp green; u1 shares with me and cannot see
-         mine, so its switch is off. */
-      const rowOf = n => lines.filter(l => new RegExp(n).test(l.textContent))[0];
+      /* The dots say which direction is missing. u2 is mutual, so both are
+         lit; u1 shares with me and cannot see mine; u4 sees mine and has
+         never shared back. */
+      const tiles2 = [...document.querySelectorAll('.roomgrid .roomcell')];
+      const rowOf = n => tiles2.filter(l => new RegExp(n).test(l.textContent))[0];
       const rDave = rowOf('Dave'), rTyson = rowOf('Tyson'), rNina = rowOf('Nina');
-      if (rDave && rDave.querySelector('.swtog').getAttribute('aria-checked') !== 'true') {
+      const lit = (tile, which) => {
+        const d = lamp(tile, which);
+        return d && d.className === 'on';
+      };
+      /* HIS OWN SIDE IS A SWITCH, not a light: one of each per buddy, and
+         both of them on the tile (BZ, 2026-09-25). */
+      const shares = tile => tile && tile.querySelector('.swtog')
+        && tile.querySelector('.swtog').getAttribute('aria-checked') === 'true';
+      if (rDave && !shares(rDave)) {
         out.push('buddies: the mutual buddy is not shown as sharing');
       }
-      if (rDave && !rDave.querySelector('.budlamp.on')) {
+      if (rDave && !lit(rDave, 'You see theirs')) {
         out.push('buddies: the mutual buddy has no green light');
       }
-      if (rTyson && rTyson.querySelector('.swtog').getAttribute('aria-checked') !== 'false') {
+      if (rTyson && shares(rTyson)) {
         out.push('buddies: somebody who cannot see my shelf shows as sharing');
       }
-      if (rNina && !rNina.querySelector('.budlamp.off')) {
+      /* AND ONLY ONE OF EACH. Two lights and a switch said the same two
+         things twice, in two shapes. */
+      if (rDave && rDave.querySelectorAll('.swtog').length !== 1) {
+        out.push('buddies: a tile carries '
+          + rDave.querySelectorAll('.swtog').length + ' switches, expected 1');
+      }
+      if (rDave && rDave.querySelectorAll('.rc-d i').length !== 1) {
+        out.push('buddies: a tile carries '
+          + rDave.querySelectorAll('.rc-d i').length + ' lights, expected 1');
+      }
+      if (rNina && lit(rNina, 'You see theirs')) {
         out.push('buddies: somebody who has not shared back has no red light');
+      }
+      /* AND THE NUMBER THE TILE EXISTS FOR. A tile with a name and no count
+         is the row it replaced (BZ, 2026-09-25). */
+      if (rDave && !/^[0-9]+$/.test(
+          (rDave.querySelector('.rc-n') || {}).textContent.trim())) {
+        out.push('buddies: a shared shelf draws no overlap number');
       }
       /* And the open/all toggle is gone: it read a field the other person
          does not keep, so a whole shelf came back as nothing open. */
@@ -4203,9 +4226,14 @@ function step(n) {
         }
       }
       show('buddies');
-      /* Where you stand with THIS person is on their own panel too. */
-      if (!b2.querySelector('.budline')) {
-        out.push('buddies: the buddy panel does not say where you stand');
+      /* WHERE YOU STAND IS ON THE TILE NOW - one switch and one dot, and
+         only one of each (BZ, 2026-09-25) - so the panel carries no copy of
+         it. What it must do is say whose panel it is. */
+      if (b2.querySelector('.swtog')) {
+        out.push('buddies: the panel carries a second copy of the switch');
+      }
+      if (!/Dave/.test(b2.textContent)) {
+        out.push('buddies: the buddy panel does not say who it is about');
       }
       // And the strip survives its own click, or there is no way back.
       if (!document.getElementById('buddyStrip')) {
@@ -4227,8 +4255,8 @@ function step(n) {
       }
       {
         const b3 = document.getElementById('buddiesBody');
-        if (!b3.querySelector('.budgrid')) {
-          out.push('buddies: somebody who can see your shelf draws no grid');
+        if (!b3.querySelector('.roomgrid')) {
+          out.push('buddies: somebody who can see your shelf draws no tile');
         }
         if (!/Nina/.test(b3.textContent)) {
           out.push('buddies: the one-way person is not named anywhere');
