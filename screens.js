@@ -192,10 +192,15 @@ const dir = __dirname;
           row.click();
           const m4 = document.getElementById('modal');
           const asks = m4 ? m4.querySelectorAll('select').length : 0;
-          const has = m4 ? m4.querySelectorAll('button').length : 0;
+          /* THE BOTTLES. A proposal with none of them still draws its
+             question, what it holds still and its warnings, which is what
+             the pooled sheet was showing: the pours are keyed on the POOL
+             and were being looked up on the host's own shelf, so every row
+             was skipped. */
+          const pours = m4 ? m4.querySelectorAll('.recent .item').length : 0;
           r.pairRow = asks ? 'THREW the row opened a form, not a flight'
-            : has ? 'ok(' + has + ')'
-            : 'THREW the row opened nothing';
+            : pours >= 4 ? 'ok(' + pours + ' pours)'
+            : 'THREW the flight drew ' + pours + ' bottles';
         }
         closeModal();
       }
