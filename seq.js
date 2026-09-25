@@ -169,6 +169,51 @@ function faultsOf() {
     found.forEach(f => failures.push(one + ' twice: ' + f));
   }
 
+  /* A BUTTON THAT DOES NOTHING. Both faults in the suggestions modal were
+     of this kind (BZ, 2026-09-24): More ideas redrew the screen BEHIND the
+     modal, and choosing a flight opened it behind the modal too, which on a
+     phone reads as a dead button. Nothing threw and nothing drew wrong. */
+  const modalFaults = await (async () => {
+    const out = [];
+    await p.evaluate(() => { show('flights'); renderFlights(); showLessons(); });
+    await p.waitForTimeout(250);
+    const look = () => p.evaluate(() => ({
+      open: document.getElementById('overlay').classList.contains('on'),
+      rows: document.querySelectorAll('#overlay .portstep').length,
+      screen: (document.querySelector('.screen.on') || {}).id
+    }));
+    const first = await look();
+    if (!first.open || !first.rows) {
+      out.push('the suggestions modal did not open with anything to pour');
+      return out;
+    }
+    const more = () => p.evaluate(() => {
+      const c = [...document.querySelectorAll('#overlay .chip')]
+        .filter(x => /More ideas/.test(x.textContent))[0];
+      if (c) c.click();
+      return !!c;
+    });
+    if (await more()) {
+      await p.waitForTimeout(250);
+      const after = await look();
+      if (after.rows <= first.rows) {
+        out.push('More ideas changed nothing: still ' + after.rows + ' rows');
+      }
+      if (!after.open) out.push('More ideas closed the modal');
+    }
+    await p.evaluate(() => document.querySelectorAll('#overlay .portstep')[0].click());
+    await p.waitForTimeout(300);
+    const chosen = await look();
+    if (chosen.open) {
+      out.push('choosing a flight left the modal up, with the flight behind it');
+    }
+    if (chosen.screen !== 'scr-detail') {
+      out.push('choosing a flight landed on ' + chosen.screen);
+    }
+    return out;
+  })();
+  modalFaults.forEach(f => failures.push('suggestions: ' + f));
+
   /* AND GOING BACK. Home has no header of its own and no way back, so a
      back button anywhere on it is a button pointing at a screen you have
      already left. */

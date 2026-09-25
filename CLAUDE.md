@@ -195,8 +195,13 @@ re-checked against the file that day rather than copied forward.
   lives beside the app in `bz-bottles.json` / `bz-flights.json` and is
   never shipped.
 - **The bar shelf is inventory, and `L.isWhisky` / `L.NOT_WHISKY` are the
-  one place that says which is which.** Rum, vodka, gin, mezcal, tequila
-  and liqueur count as bottles and are excluded from every analysis.
+  one place that says which is which.** Rum, vodka, gin, mezcal, tequila,
+  liqueur and FLAVORED count as bottles and are excluded from every
+  analysis. Flavored joined on 2026-09-24, on the law: 27 CFR 5.151 makes
+  flavored spirits a class of their own and 5.155 redesignates the class
+  once more than 2.5% is added, so a flavoured whiskey is a flavored spirit
+  whose base was whisky. It is stock on the shelf; it is not whiskey, and it
+  is never recommended (BZ: NEVER RECOMMEND FLAVORED).
 - **The guest rules are BZ's, not derivable.** `L.ROAD_TO`,
   `L.ROAD_NEIGHBOURS` and `L.POND_ORDER` hold them. He corrected them five
   times in one sitting; three of five attempts to reason them out from

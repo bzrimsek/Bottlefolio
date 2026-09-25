@@ -16911,9 +16911,13 @@ sec('\u00a7355 what the library contradicts');
      have been asserting my assumption. These are the KNOWN ones, named, so
      anything new fails the build:
 
-       proof   Southern Comfort at 70 - correct, and it is a liqueur rather
-               than whisky, which is the check doing its job on a row that
-               does not belong to the category
+       proof   WAS Southern Comfort at 70. The comment here already said
+               the check was doing its job on a row that does not belong to
+               the category - and since 2026-09-24 it does not belong: it
+               is filed flavored, flavored spirits are their own class
+               under 27 CFR 5.151, and no whisky question is asked of it.
+               Nothing is left to flag, which is the right answer and not
+               a lost check.
        style   Macaloney's Searaidh Braiche, name says single malt and the
                row says new make. Deliberate: the stored value is right and
                the NAME misleads, which is recorded beside L.STYLE_FROM_NAME
@@ -16921,7 +16925,7 @@ sec('\u00a7355 what the library contradicts');
        name    six bottles carrying their proof in the name
 
      Every one is a decision for BZ rather than something to fix here. */
-  eq('one known bad proof, and it is the liqueur', cnt('proof'), 1);
+  eq('no bad proof left: the one it flagged is not whisky', cnt('proof'), 0);
   eq('no region on a non-Scotch', cnt('region'), 0);
   eq('one known style clash, the deliberate one', cnt('style'), 1);
   eq('and it is the entry the comment names',
@@ -17694,8 +17698,12 @@ sec('\u00a7360 inventory without the bells and whistles');
      in this app asks a whisky question. */
   eq('a bourbon is whisky', L.isWhisky({ sub: 'bourbon' }), true);
   eq('so is a world whisky', L.isWhisky({ sub: 'world' }), true);
-  eq('and a flavored whiskey still is',
-    L.isWhisky({ sub: 'flavored' }), true);
+  /* NOT a flavoured one, since 2026-09-24. 27 CFR 5.151 makes flavored
+     spirits a class of their own and 5.155 redesignates the class once
+     more than 2.5% is added: the base was whisky, the bottle is not. It is
+     still stock on the shelf, which is the other half of the sentence
+     above and still true. */
+  eq('but a flavored whiskey is not', L.isWhisky({ sub: 'flavored' }), false);
   ['rum', 'vodka', 'gin', 'mezcal', 'tequila', 'liqueur', 'brandy']
     .forEach(s => eq('a ' + s + ' is not', L.isWhisky({ sub: s }), false));
   eq('and something with no category is not excluded on a guess',
