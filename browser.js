@@ -4183,9 +4183,38 @@ function step(n) {
       if (/Where the shelves meet/.test(body.textContent)) {
         out.push('buddies: the assembled room panel is back');
       }
-      // A Venn belongs on a BUDDY panel, never on the room panel.
+      /* A VENN IS NEVER DRAWN FOR A ROOM THE APP ASSEMBLED. It is drawn for
+         a buddy's own panel, and for a group he switched on himself - and
+         with nobody switched on there is nothing to draw. */
       if (body.querySelector('svg.venn')) {
         out.push('buddies: a Venn is drawn for a room of four');
+      }
+      /* AND THE GROUP HE PICKS DRAWS ONE (BZ, 2026-09-25). Switch two on:
+         three circles, which is the most a Venn draws honestly. */
+      {
+        const chips = [...body.querySelectorAll('.chiprow .chip')];
+        if (chips.length < 3) {
+          out.push('buddies: the group section offers ' + chips.length
+            + ' people, expected one per shared shelf');
+        } else {
+          chips[0].click();
+          chips[1].click();
+          const b4 = document.getElementById('buddiesBody');
+          const venn = b4.querySelector('svg.venn');
+          if (!venn) {
+            out.push('buddies: switching two buddies on draws no Venn');
+          } else if (venn.querySelectorAll('circle').length < 3) {
+            out.push('buddies: a group of three draws '
+              + venn.querySelectorAll('circle').length + ' circles');
+          }
+          /* And switching them off leaves nothing behind. */
+          [...b4.querySelectorAll('.chiprow .chip')]
+            .filter(c => c.dataset.on === 'true').forEach(c => c.click());
+          if (document.getElementById('buddiesBody')
+              .querySelector('svg.venn')) {
+            out.push('buddies: the group Venn stays after everyone is off');
+          }
+        }
       }
 
       const dave = [...strip.querySelectorAll('button')]

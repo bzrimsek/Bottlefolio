@@ -3779,6 +3779,38 @@ eq('a flag with no start behind it is stuck, not new',
 eq('and the window is long enough for a slow phone',
   L.SHARED_STALE_MS >= 15000, true);
 
+sec('what a group has in common');
+/* BZ, 2026-09-25: a group he picks, rather than a room the app assembled.
+   Past three people a Venn stops being honest, so it says these two - and
+   both are about the WHOLE group, so neither can be read as belonging to a
+   pair, which is how the cells this replaces came to contradict the tiles
+   above them. */
+{
+const g = id => ({ id: id, name: id, map: {} });
+const with_ = (id, keys) => {
+  const s2 = g(id);
+  keys.forEach(k => { s2.map[k] = { k: k }; });
+  return s2;
+};
+const three = [with_('me', ['a', 'b', 'c']), with_('u1', ['b', 'c', 'd']),
+               with_('u2', ['c', 'd', 'e'])];
+const n3 = L.groupCounts(three);
+eq('everything the group could pour between them', n3.together, 5);
+eq('and what every one of them holds', n3.all, 1);
+/* One person is a group of one: everything they have, all of it shared. */
+const one = L.groupCounts([with_('me', ['a', 'b'])]);
+eq('a group of one holds all of its own', one.together, 2);
+eq('and shares all of it with itself', one.all, 2);
+/* Nobody is nothing, and does not divide by a room of zero. */
+eq('an empty room counts nothing', L.groupCounts([]).together, 0);
+eq('and claims nothing in common', L.groupCounts([]).all, 0);
+/* A person with an empty shelf takes the common count to nothing without
+   taking the together count with it. */
+const withEmpty = L.groupCounts(three.concat([g('u3')]));
+eq('somebody with nothing open still leaves the pool', withEmpty.together, 5);
+eq('but there is then nothing all of them hold', withEmpty.all, 0);
+}
+
 sec('the two numbers on a buddy tile');
 /* BZ, 2026-09-25: tiles instead of rows, with the you-and-them number on
    the tile. Both sides of it come from L.vennRegions, so the tile and the
