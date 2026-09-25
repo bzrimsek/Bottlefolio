@@ -3619,52 +3619,81 @@ eq('a lesson that needs them survives with its cast',
 {
 sec('one cask, several houses');
 /* BZ's own "TAKE YOUR PX?" (2026-09-24), which the engine could not express:
-   every other flight holds a FIELD still, and a cask family is a judgement
-   rather than a field. Four sherry casks spelled four ways, in four houses. */
+   every other flight holds a FIELD still, and a cask is a judgement rather
+   than a field.
+
+   And there are TWO levels of it, which is his correction the same evening:
+   "sherry broadly; inside sherry, px is a subset". A flight that holds the
+   cask still and pours a PX against a fino holds nothing still - but on a
+   shelf with two PX open, sherry broadly is the only one that can be
+   filled. So a bottle sits in its own cask AND in the family, and both
+   flights are offered. */
 {
+/* Four PX in four houses, named four ways, and two oloroso in two more. */
 const caskCat = {};
-[['pedro ximenez', 'Alpha'], ['PX', 'Beta'], ['Oloroso sherry', 'Gamma'],
- ['sherry butt', 'Delta']].forEach((x, i) => {
+[['Pedro Ximenez', 'Alpha'], ['PX', 'Beta'], ['PX Cask', 'Gamma'],
+ ['Ex-PX Hogshead', 'Delta'], ['Oloroso', 'Epsilon'],
+ ['Oloroso Sherry Casks', 'Zeta']].forEach((x, i) => {
   caskCat['c' + i] = { k: 'c' + i, name: 'Cask ' + i, sub: 'scotch',
     dist: x[1], fin: x[0], proof: 92 + i, obsc: 'known', msrp: 70 };
 });
-/* And one with no cask to hold, which must not take part. */
-caskCat.bare = { k: 'bare', name: 'Bare', sub: 'scotch', dist: 'Epsilon',
+/* And one with no cask to hold, which must not take part at either level. */
+caskCat.bare = { k: 'bare', name: 'Bare', sub: 'scotch', dist: 'Eta',
   proof: 94, obsc: 'known', msrp: 70 };
 const caskBot = Object.keys(caskCat)
   .map((k, i) => ({ id: 'cb' + i, k: k, status: 'open' }));
 
-eq('four spellings of sherry are one cask',
-  new Set(['c0', 'c1', 'c2', 'c3'].map(k => L.holdKey('cask', caskCat[k])))
-    .size, 1);
-eq('and that one cask is sherry', L.holdKey('cask', caskCat.c0), 'sherry');
+/* THE EXACT CASK, which the app did not have: the ladder compares raw text,
+   so Oloroso and "Oloroso Sherry Casks" were not the same cask even there. */
+eq('four ways of writing PX are one cask',
+  new Set(['c0', 'c1', 'c2', 'c3'].map(k => L.caskKind(caskCat[k]))).size, 1);
+eq('and that cask is px', L.caskKind(caskCat.c0), 'px');
+eq('a dressed-up oloroso is still oloroso',
+  L.caskKind(caskCat.c5), 'oloroso');
+eq('px and oloroso are NOT the same cask',
+  L.caskKind(caskCat.c0) === L.caskKind(caskCat.c4), false);
+eq('though they are the same family',
+  L.caskFamily(caskCat.c0), L.caskFamily(caskCat.c4));
+/* A label naming two casks is neither of them. */
+eq('a double maturation is its own cask',
+  L.caskKind({ fin: 'Oloroso+Pedro Ximenez' }), 'oloroso+px');
+eq('and a bare sherry label stays sherry',
+  L.caskKind({ fin: 'Sherry' }), 'sherry');
+eq('no cask recorded is no cask', L.caskKind({}), null);
+
+/* THE TWO LEVELS, off one bottle. */
+eq('a PX sits in its own cask and in sherry',
+  L.holdKey('cask', caskCat.c0), ['px', 'sherry']);
+eq('and an unspecified sherry sits in one place only',
+  L.holdKey('cask', { fin: 'Sherry' }), ['sherry']);
 eq('a bottle with no cask cannot take part',
   L.holdKey('cask', caskCat.bare), null);
-/* Every other flight still holds what it always held. */
+/* Every other flight still holds exactly what it always held. */
 eq('the door leaves the other flights alone',
   L.holdKey('proof', { dist: 'Alpha' }), 'Alpha');
 eq('and takes the caller\u2019s own list when it has one',
   L.holdKey('proof', { sub: 'scotch', dist: 'Alpha' }, ['sub']), 'scotch');
 
 const caskCands = L.flightCandidates('cask', caskCat, caskBot);
-eq('the cask flight is castable', caskCands.length, 1);
-eq('and it pours the four that share a cask', caskCands[0].pours.length, 4);
+const tight = caskCands.filter(c => c.key === 'px')[0];
+const broad = caskCands.filter(c => c.key === 'sherry')[0];
+eq('the tight flight is cast', !!tight, true);
+eq('and it is the four PX', tight.pours.length, 4);
+eq('the broad flight is cast too', !!broad, true);
+eq('and it is all six sherries', broad.pours.length, 6);
 eq('the house is what moves',
-  new Set(caskCands[0].pours.map(x => L.axisOf('cask', x))).size, 4);
-eq('the bottle with no cask is not in it',
-  caskCands[0].pours.some(x => x.k === 'bare'), false);
-/* IT IS THE INVERSE OF THE FINISH FLIGHT, and here is the difference in one
-   line: the finish flight holds the type still and reads the cask TEXT as
-   its axis, so these four read as four different finishes. They are one
-   cask in four houses, and only the new flight can say so. */
-eq('the finish flight sees four finishes here',
+  new Set(tight.pours.map(x => L.axisOf('cask', x))).size, 4);
+eq('the bottle with no cask is in neither',
+  caskCands.some(c => c.pours.some(x => x.k === 'bare')), false);
+/* THE DIFFERENCE FROM THE FINISH FLIGHT, in one line: it holds the TYPE
+   still and reads the cask text as its axis, so the four PX read as four
+   different finishes there and as one cask here. */
+eq('the finish flight sees six finishes here',
   new Set(L.flightCandidates('finish', caskCat, caskBot)[0].pours
-    .map(x => L.axisOf('finish', x))).size, 4);
-eq('the cask flight sees one cask',
-  new Set(caskCands[0].pours.map(x => L.holdKey('cask', x))).size, 1);
+    .map(x => L.axisOf('finish', x))).size, 6);
 /* And it is offered wherever lessons are - the Flights screen and the
-   pooled sheet both read L.LESSONS (BZ, 2026-09-24: normal flights and
-   buddies alike). */
+   pooled buddy sheet both read L.LESSONS (BZ: normal flights and buddies
+   alike). */
 eq('the lesson is in the list',
   L.LESSONS.some(l => l.id === 'cask'), true);
 eq('and the designer offers it too',
