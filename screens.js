@@ -136,6 +136,50 @@ const dir = __dirname;
     r.blankButtons = blind.length ? 'THREW ' + blind.slice(0, 4).join(', ')
       : 'ok';
 
+    /* THE BUDDY TAB, WITH A SHELF ON IT.
+
+       Half of that tab only exists once a buddy's copy has landed - the
+       Venn, the write-up, the pooled flight - and every check here left
+       SHARED.shelves empty, so the panel returned at its wait notice and
+       none of it was ever drawn. The pooled flight moved onto this tab on
+       2026-09-24, which moved it into code nothing ran.
+
+       One buddy holding twelve bottles the host does not own, which is also
+       the only case where pooling can gain anything. */
+    try {
+      const have = {};
+      (S.bottles || []).forEach(b2 => { have[b2.k] = 1; });
+      const their = { catalog: {}, bottles: [] };
+      Object.keys(S.catalog).filter(k2 => !have[k2]).slice(0, 12)
+        .forEach(k2 => {
+          their.catalog[k2] = S.catalog[k2];
+          their.bottles.push({ id: 'b-' + k2, k: k2, status: 'open' });
+        });
+      SHARED.names.bud1 = 'Dale';
+      SHARED.shelves.bud1 = their;
+      const pane = el('div');
+      document.body.appendChild(pane);
+      buddiesOnePanel(pane, 'bud1', SHARED.names,
+        { id: 'me', name: 'You',
+          map: L.shelfSet({ catalog: S.catalog, bottles: S.bottles }) },
+        null);
+      const btn = Array.prototype.slice.call(pane.querySelectorAll('button'))
+        .filter(x => /both shelves/.test(x.textContent))[0];
+      if (!btn) {
+        r.pairPool = 'THREW no pooled-flight button on the buddy tab';
+      } else {
+        btn.click();
+        const m3 = document.getElementById('modal');
+        const rows = m3 ? m3.querySelectorAll('button').length : 0;
+        r.pairPool = rows > 1 ? 'ok(' + rows + ')'
+          : 'THREW the pooled sheet drew ' + rows + ' buttons';
+        closeModal();
+      }
+      pane.remove();
+      delete SHARED.shelves.bud1;
+      delete SHARED.names.bud1;
+    } catch (e) { r.pairPool = 'THREW ' + e.message; }
+
     // and a named bottle, which is the half being extracted
     try {
       S.shopMode='store'; document.getElementById('shopQ').value='Ardbeg Ten';

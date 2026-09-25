@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.20  ·  2026-09-24 09:27 PM ET
+
+Pooling a flight moved off the Flights screen and onto a buddy's own tab. It used to cast from every shelf shared with BZ and call that the room, which is a guess about who has turned up; on a buddy's tab the room is the two of them, and the Venn above the button already shows what that is. Two people and no more. The sheet it opens names that one person instead of saying the room, and its list of flights scrolls rather than running off the bottom. screens.js now draws a buddy tab that has a shelf on it: every check left the shared shelves empty, so the Venn, the write-up and the pooled flight were drawn by nothing at all.
+
 ## v2.5.19  ·  2026-09-24 09:12 PM ET
 
 The same simplification, where it was hiding more. BZ, 2026-09-24, asked whether the pattern just run on Flights exists elsewhere. It does, and the guest ladder was the worse case: Flights showed three of thirty-three behind a chip that had to be pressed ten times, and the guest ladder showed twelve with no chip at all. Seeded on Woodford against his own shelf the kind rung holds 128 pours, down the road 52 and across the pond 143 - so 287 bottles he owns were unreachable, with nothing on screen admitting they were there. Both lists now show everything in a box that scrolls, and the held-flavour list with them, which ran to the same lengths. One class for all three rather than a second copy of the idea: .tonightroll became .scrollbox the moment it had a second caller, which is when to rename a thing rather than when to copy it. L.GUEST_SHOW is deleted - a cap with nothing behind it to reveal was the whole fault - and the phrase answer moved into guestTasteBox of its own, which took renderGuest from 191 lines to 157.
