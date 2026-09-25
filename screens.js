@@ -144,13 +144,18 @@ const dir = __dirname;
        none of it was ever drawn. The pooled flight moved onto this tab on
        2026-09-24, which moved it into code nothing ran.
 
-       One buddy holding twelve bottles the host does not own, which is also
-       the only case where pooling can gain anything. */
+       One buddy holding eighty bottles the host has not got open, which is
+       what it takes for pooling to gain a flight: with twelve the sheet came
+       up empty and this check passed anyway, on a button count that was
+       really the two ways out of an empty sheet. */
     try {
-      const have = {};
-      (S.bottles || []).forEach(b2 => { have[b2.k] = 1; });
+      /* What the host cannot pour, which is what a buddy is for: bottles
+         he owns but has not opened count, because a sealed bottle is not in
+         the pool and the buddy's copy is then the only pourable one. On his
+         shelf the ones he does not own at all come to two. */
+      const have = L.openKeys(S.bottles);
       const their = { catalog: {}, bottles: [] };
-      Object.keys(S.catalog).filter(k2 => !have[k2]).slice(0, 12)
+      Object.keys(S.catalog).filter(k2 => !have[k2]).slice(0, 80)
         .forEach(k2 => {
           their.catalog[k2] = S.catalog[k2];
           their.bottles.push({ id: 'b-' + k2, k: k2, status: 'open' });
@@ -164,15 +169,34 @@ const dir = __dirname;
           map: L.shelfSet({ catalog: S.catalog, bottles: S.bottles }) },
         null);
       const btn = Array.prototype.slice.call(pane.querySelectorAll('button'))
-        .filter(x => /both shelves/.test(x.textContent))[0];
+        .filter(x => /both shelves|cannot pour alone/.test(x.textContent))[0];
       if (!btn) {
         r.pairPool = 'THREW no pooled-flight button on the buddy tab';
       } else {
         btn.click();
         const m3 = document.getElementById('modal');
-        const rows = m3 ? m3.querySelectorAll('button').length : 0;
-        r.pairPool = rows > 1 ? 'ok(' + rows + ')'
-          : 'THREW the pooled sheet drew ' + rows + ' buttons';
+        /* A FLIGHT TO PRESS, not a button count: the count was satisfied by
+           the corner cross and the Close button of an empty sheet. */
+        const found = m3 ? m3.querySelectorAll('.find').length : 0;
+        r.pairPool = found ? 'ok(' + found + ')'
+          : 'THREW the pooled sheet offered no flights';
+        /* AND THE ROW LEADS TO THE FLIGHT, not to a form. Every row led to
+           the designer, which asked again for the variable the row had
+           already named and cast it afresh from a different group - so the
+           cast the row was judged on never reached the screen (BZ,
+           2026-09-24). A form has a variable picker; a flight does not. */
+        const row = m3 && m3.querySelector('.find');
+        if (!row) {
+          r.pairRow = 'THREW the pooled sheet has no flight to press';
+        } else {
+          row.click();
+          const m4 = document.getElementById('modal');
+          const asks = m4 ? m4.querySelectorAll('select').length : 0;
+          const has = m4 ? m4.querySelectorAll('button').length : 0;
+          r.pairRow = asks ? 'THREW the row opened a form, not a flight'
+            : has ? 'ok(' + has + ')'
+            : 'THREW the row opened nothing';
+        }
         closeModal();
       }
       pane.remove();
