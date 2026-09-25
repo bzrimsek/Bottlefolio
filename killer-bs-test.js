@@ -17143,6 +17143,67 @@ sec('a typed name is enough');
         { name: 'S1', dist: 'd', sub: 'scotch', proof: 90 },
         { name: 'S2', dist: 'e', sub: 'scotch', proof: 90 }])
       .map(x => x.sub), ['irish', 'scotch', 'irish', 'scotch', 'irish']);
+  // NEVER RECOMMEND FLAVORED (BZ, 2026-09-24, on a photograph of his club's
+  // back bar that answered CROWN ROYAL APPLE). The catalog had never heard
+  // of that bottle, so a rule reading `sub` could not refuse it - a back
+  // bar is full of bottles the app has not got, which is what it is for.
+  eq('a flavoured name is caught even when the app never met the bottle',
+    ['Crown Royal Apple', 'Crown Royal Blackberry',
+     "Jack Daniel's Tennessee Honey", 'Fireball Cinnamon',
+     'Skrewball Peanut Butter'].filter(n => !L.looksFlavored(n)), []);
+  // AND THE TWO REAL BOTTLES THE WORDS WOULD OTHERWISE CATCH. Milk & Honey
+  // is a distillery in Tel Aviv; cherry wood is a cask.
+  eq('a distillery is not a flavour',
+    ['Milk & Honey Classic', 'Milk and Honey Elements Peated',
+     'Bardstown Origin Series Finished in Toasted Cherry Wood and Oak Barrels',
+     'The Glenlivet 18', 'Woodford Reserve Double Oaked']
+      .filter(n => L.looksFlavored(n)), []);
+  eq('and nothing at all is not flavoured',
+    [L.looksFlavored(''), L.looksFlavored(null)], [false, false]);
+  // ONE QUESTION, whatever the bottle says about itself.
+  eq('never offered: by its category, by its name, or by being no whiskey',
+    [L.neverOffer({ sub: 'flavored', name: 'X' }),
+     L.neverOffer({ sub: 'rum', name: 'X' }),
+     L.neverOffer({ sub: 'bourbon', name: 'Crown Royal Apple' }),
+     L.neverOffer({ sub: 'bourbon', name: 'Buffalo Trace' })],
+    [true, true, true, false]);
+  // Nothing BZ owns is refused by it except the ones that should be.
+  eq('the rule does not touch the whiskey on his shelf',
+    Object.values(shelfCat)
+      .filter(p => L.neverOffer(p) && L.isWhisky(p)
+        && String(p.sub || '').toLowerCase() !== 'flavored')
+      .map(p => p.name).sort(),
+    ['Baileys Salted Caramel', 'Baileys The Original Irish Cream']);
+
+  // THE AGE IN A NAME, which on a back bar is all the app has: the catalog
+  // returns nothing at all for a bottle it has never met.
+  eq('an age statement is read out of a name',
+    ['The Glenlivet 18', 'Lagavulin 16', 'Redbreast 12 Year Old',
+     'Aberlour 18 Year'].map(L.ageFromName), [18, 16, 12, 18]);
+  eq('a number that is not an age is not read as one',
+    ["Jack Daniel’s Old No. 7", 'Old Grand Dad 114', 'Wild Turkey 101',
+     'Barrell Cask Strength Batch 32', 'Crown Royal Apple']
+      .map(L.ageFromName), [0, 0, 0, 0, 0]);
+  eq('and a year is four digits, never an age',
+    L.ageFromName('Woodford Reserve 1924 10 Year'), 10);
+
+  // AND THE CARD AGREES WITH THE PROSE ABOVE IT. Two answers to one
+  // question, printed one above the other, is what put CROWN ROYAL APPLE
+  // over the take's Glenlivet 18.
+  const READ = [{ name: 'Crown Royal Apple' }, { name: 'The Glenlivet 18' },
+                { name: 'Jameson' }];
+  eq('the pick is whichever bottle the prose names',
+    (L.proseNames('The one worth your attention is The Glenlivet 18.', READ)
+      || {}).name, 'The Glenlivet 18');
+  eq('the longer name wins, not a shorter one inside it',
+    (L.proseNames('Go for The Glenlivet 18 tonight.',
+      [{ name: 'The Glenlivet' }, { name: 'The Glenlivet 18' }]) || {}).name,
+    'The Glenlivet 18');
+  eq('prose that names nothing it read picks nothing',
+    L.proseNames('A fine bar, nothing remarkable.', READ), null);
+  eq('and neither does prose that is not there',
+    [L.proseNames('', READ), L.proseNames(null, READ)], [null, null]);
+
   // A LOST ANSWER IS NOT A MISSING MODE. Apps Script redirects to a
   // single-use URL; a 404 there with a Google page in the body means the
   // script ran and the answer was lost coming back (BZ logs, 2026-09-23).
