@@ -3542,6 +3542,22 @@ eq('one is yours', plan.mine, 1);
 eq('two are borrowed', plan.borrowed, 2);
 eq('and it says who', plan.people, ['Marcus']);
 eq('in a sentence a host can act on', plan.summary, 'Marcus brings 2.');
+/* WHOSE BOTTLE IS THIS. The rows on the pooled sheet ask it per pour, the
+   summary counts it, and one answer serves both (BZ, 2026-09-24: "for
+   buddies we don't know who brings each bottle"). */
+eq('a bottle they both have open is the host\u2019s',
+  L.pourFrom(L.shopNorm('Mine A'), pool, 'You'), 'You');
+eq('a bottle only theirs names them',
+  L.pourFrom(L.shopNorm('Yours A'), pool, 'Marcus'), 'Marcus');
+eq('and it names them whoever is asking',
+  L.pourFrom(L.shopNorm('Yours A'), pool, 'You'), 'Marcus');
+eq('a pour nobody in the room has is somebody',
+  L.pourFrom('nothing-here', pool, 'You'), 'somebody');
+/* The summary is the same answer counted, so it cannot disagree. */
+eq('the summary counts what the rows say',
+  pours.filter(x => L.pourFrom(x.k, pool, 'You') !== 'You').length,
+  plan.borrowed);
+
 // A flight you can pour alone should say so rather than listing yourself.
 eq('nothing borrowed reads plainly',
   L.poolPlan([{ k: L.shopNorm('Mine A') }], pool, 'You').summary,

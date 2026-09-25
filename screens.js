@@ -198,9 +198,15 @@ const dir = __dirname;
              and were being looked up on the host's own shelf, so every row
              was skipped. */
           const pours = m4 ? m4.querySelectorAll('.recent .item').length : 0;
+          /* AND WHOSE THEY ARE. The sheet says how many the buddy brings;
+             the pours have to say WHICH, or the host cannot act on it. */
+          const said = m4 ? Array.prototype.slice
+            .call(m4.querySelectorAll('.pourtag'))
+            .filter(t => /brings this/.test(t.textContent)).length : 0;
           r.pairRow = asks ? 'THREW the row opened a form, not a flight'
-            : pours >= 4 ? 'ok(' + pours + ' pours)'
-            : 'THREW the flight drew ' + pours + ' bottles';
+            : pours < 4 ? 'THREW the flight drew ' + pours + ' bottles'
+            : said ? 'ok(' + pours + ' pours, ' + said + ' borrowed)'
+            : 'THREW no pour says who brings it';
         }
         closeModal();
       }

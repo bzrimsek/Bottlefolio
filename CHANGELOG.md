@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.28  ·  2026-09-24 11:21 PM ET
+
+Every pour on a pooled flight says who brings it. BZ, 2026-09-24: for buddies we don't know who brings each bottle. The sheet said Nik brings four and then listed six bottles carrying nothing, so which four are not his - the one thing a host has to act on - was the one thing missing. Who brings a pour was already decided inside L.poolPlan, in two lines nothing else could reach; it is L.pourFrom now, so the summary that counts them and the rows that show them cannot disagree about whose bottle it is. A bottle both of them have open is the host's, because whoever is nearest pours it. The host's own pours carry no tag: he is the default and six labels saying You is noise. The screens check reads the tag rather than trusting the row to be able to draw one.
+
 ## v2.5.27  ·  2026-09-24 11:12 PM ET
 
 A pooled flight draws its bottles, because it is looked up in the pool it was cast from. BZ, 2026-09-24: 'why am I landing here and not on the bottle list' - the proposal drew its question, what it holds still and its two warnings, and no bottles at all. L.poolShelves re-keys every product on L.shopNorm of its name, because two shelves have to agree that one bottle is one bottle; the proposal then looked each pour up with prod(), which reads the host's own catalogue keyed the host's own way, found nothing, and the row loop skips a pour it cannot name. Six skips is an empty list. The lookup now goes through the pool wherever there is one, in the two places that do it: the rows, and the cards a kept flight carries - where the same fault would have written six blank bottle names. The screens check asks for the pours rather than for a modal without a variable picker, which an empty proposal satisfied perfectly, and it was watched reporting zero bottles with the old lookup back in.
