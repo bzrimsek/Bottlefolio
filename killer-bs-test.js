@@ -3562,6 +3562,55 @@ eq('an empty buddy adds nothing',
   L.poolGain({ catalog: mineCat, bottles: mineBot },
     L.poolShelves({ catalog: mineCat, bottles: mineBot }, {}, {}, 'You'),
     []).length, 0);
+
+/* AND EVERY ROW HAS TO POUR THEIR BOTTLES.
+
+   BZ, 2026-09-24, reading his sheet with Nik: half the rows said "You can
+   pour all of this yourself" underneath. "Seems like an insult to the other
+   guy - need to focus on the unique combos."
+
+   This is the shape that did it. Two houses: his own five, deep and wide,
+   and the buddy's four. On the proof lesson HIS OWN GROUP SCORES HIGHER -
+   30 against 29 - so the best cast is five of his own bottles, and the
+   screen, which took the best cast, invited a man over to watch. The engine
+   now looks past the top cast for the one that borrows most.
+
+   Written after a first version of this check that could not fail: it gave
+   the buddy one bottle inside the host's range and asserted no row appeared,
+   which is true of the old code too. */
+const deepCat = {}, deepBot = [], budCat = [], budBot = [];
+const budCatalog = {};
+const put = (cat, bot, k, nm, dist, pf, age) => {
+  cat[k] = { k: k, name: nm, sub: 'bourbon', dist: dist, proof: pf, age: age,
+    obsc: 'known', msrp: 45 };
+  bot.push({ id: 'b-' + k, k: k, status: 'open' });
+};
+[[8, 80], [12, 95], [15, 107], [18, 120], [21, 131]].forEach((a, i) =>
+  put(deepCat, deepBot, 'd' + i, 'Deep ' + i, 'His House', a[1], a[0]));
+[[6, 88], [9, 92], [11, 96], [13, 100]].forEach((a, i) =>
+  put(budCatalog, budBot, 'q' + i, 'Theirs ' + i, 'Their House', a[1], a[0]));
+const deep = { catalog: deepCat, bottles: deepBot };
+const deepPool = L.poolShelves(deep,
+  { u2: { catalog: budCatalog, bottles: budBot } }, { u2: 'Nik' }, 'You');
+
+/* The setup is only interesting if the best cast really is all his. */
+const topCast = L.flightCandidates('proof', deepPool.catalog, deepPool.bottles);
+eq('the strongest proof cast is his own shelf',
+  L.poolPlan(topCast[0].pours, deepPool, 'You').borrowed, 0);
+eq('and a weaker one is the buddy\u2019s',
+  L.poolPlan(topCast[1].pours, deepPool, 'You').borrowed, 4);
+
+const deepGain = L.poolGain(deep, deepPool, []);
+const proofRow = deepGain.find(g => g.id === 'proof');
+eq('the row carries the cast that needs him, not the best one',
+  proofRow.plan.borrowed, 4);
+eq('so it never says the host can pour it alone',
+  proofRow.plan.summary, 'Nik brings 4.');
+eq('and no row anywhere pours nothing of theirs',
+  deepGain.filter(g => !g.plan || !g.plan.borrowed).length, 0);
+/* The one it exists for still comes through, and says who brings what. */
+eq('a lesson that needs them survives with its cast',
+  gain.find(g => g.id === 'proof').plan.borrowed > 0, true);
 }
 
 {

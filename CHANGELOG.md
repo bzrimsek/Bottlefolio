@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.21  ·  2026-09-24 09:42 PM ET
+
+A pooled flight now pours the other man's bottles. Half the rows on the sheet with Nik said 'You can pour all of this yourself' underneath, because pooling had given the lesson more ways to be cast while its best cast was still six of BZ's own bottles - more options is not the same as needing the man, and it read as an insult to the guest. Each row now carries the cast that borrows most, ties going to the better flight, and a lesson with no borrowing cast at all is not listed; the rows are ordered by how much of the evening is theirs. The sheet shows the cast the engine judged rather than casting a second time and printing a different answer, and it no longer falls back to listing flights the host could hold on his own. The assertions reproduce the screenshot - two houses where his own scores higher than the buddy's - and were watched going red with the rule broken.
+
 ## v2.5.20  ·  2026-09-24 09:27 PM ET
 
 Pooling a flight moved off the Flights screen and onto a buddy's own tab. It used to cast from every shelf shared with BZ and call that the room, which is a guess about who has turned up; on a buddy's tab the room is the two of them, and the Venn above the button already shows what that is. Two people and no more. The sheet it opens names that one person instead of saying the room, and its list of flights scrolls rather than running off the bottom. screens.js now draws a buddy tab that has a shelf on it: every check left the shared shelves empty, so the Venn, the write-up and the pooled flight were drawn by nothing at all.
