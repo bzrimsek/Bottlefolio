@@ -17191,6 +17191,30 @@ sec('a typed name is enough');
   eq('and a year is four digits, never an age',
     L.ageFromName('Woodford Reserve 1924 10 Year'), 10);
 
+  // OFF HIS OWN SHELF IT MUST BE WHISKEY (BZ, 2026-09-24). A blank
+  // category there is bar stock - Bacardi Gold carries none, which is how
+  // it reached a flavour flight - and a blank category on a PHOTOGRAPH is
+  // normal, which is why the strict form is asked only of the shelf.
+  eq('a blank category is refused off the shelf',
+    L.neverOffer({ name: 'Bacardi Gold', sub: '' }, true), true);
+  eq('but not off a photograph, where the app knows nothing',
+    L.neverOffer({ name: 'Kavalan Solist', sub: '' }), false);
+  eq('and a whiskey is offered either way',
+    [L.neverOffer({ name: 'Redbreast 12 Year Old', sub: 'irish' }, true),
+     L.neverOffer({ name: 'Redbreast 12 Year Old', sub: 'irish' })],
+    [false, false]);
+  // A FLIGHT IS A WHISKEY TASTING. axisPourable is the one door every cast
+  // passes; it asked whether the bottle was open and on the axis, never
+  // what it was.
+  eq('a flight will not cast a rum, however it is filed',
+    [L.axisPourable('proof', { k: 'B', name: 'Bacardi Gold', sub: '',
+       proof: 80 }, { B: 1 }),
+     L.axisPourable('proof', { k: 'C', name: 'Baileys The Original Irish '
+       + 'Cream', sub: 'irish', proof: 34 }, { C: 1 }),
+     L.axisPourable('proof', { k: 'D', name: 'Redbreast 12 Year Old',
+       sub: 'irish', proof: 80 }, { D: 1 })],
+    [false, false, true]);
+
   // AND THE CARD AGREES WITH THE PROSE ABOVE IT. Two answers to one
   // question, printed one above the other, is what put CROWN ROYAL APPLE
   // over the take's Glenlivet 18.
