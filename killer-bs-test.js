@@ -3792,6 +3792,11 @@ const n = L.pairCounts(mineSet, themSet);
 eq('what the two of them share', n.both, 2);
 eq('what only they have \u2014 what they could bring', n.theirs, 2);
 eq('and what only he has', n.mine, 1);
+/* THE TWO NUMBERS THE TILE PRINTS (BZ, 2026-09-25: what they have and what
+   we share). Their whole shelf is not a fourth fact - it is the two halves
+   of their side added up - so it cannot drift away from them. */
+eq('their whole shelf is what they have', n.shelf, 4);
+eq('and it is the two halves of their side', n.shelf, n.theirs + n.both);
 /* The three add up to the whole of both shelves, which is what makes them
    safe to print beside each other. */
 eq('and the three cover both shelves', n.both + n.theirs + n.mine, 5);
