@@ -200,13 +200,19 @@ const dir = __dirname;
           const pours = m4 ? m4.querySelectorAll('.recent .item').length : 0;
           /* AND WHOSE THEY ARE. The sheet says how many the buddy brings;
              the pours have to say WHICH, or the host cannot act on it. */
-          const said = m4 ? Array.prototype.slice
-            .call(m4.querySelectorAll('.pourtag'))
-            .filter(t => /brings this/.test(t.textContent)).length : 0;
+          const marks = m4 ? Array.prototype.slice
+            .call(m4.querySelectorAll('.recent .item *'))
+            .filter(t => /brings this/.test(t.textContent)
+              && !t.querySelector('*')) : [];
+          /* AND NOT INSIDE THE NAME, which is clamped to two lines: the
+             longest names ate both and the label was clipped away, so a
+             borrowed bottle read as the host's own (BZ, 2026-09-25). */
+          const clipped = marks.filter(t => t.closest('.nm')).length;
           r.pairRow = asks ? 'THREW the row opened a form, not a flight'
             : pours < 4 ? 'THREW the flight drew ' + pours + ' bottles'
-            : said ? 'ok(' + pours + ' pours, ' + said + ' borrowed)'
-            : 'THREW no pour says who brings it';
+            : !marks.length ? 'THREW no pour says who brings it'
+            : clipped ? 'THREW who brings it sits inside the clamped name'
+            : 'ok(' + pours + ' pours, ' + marks.length + ' borrowed)';
         }
         closeModal();
       }

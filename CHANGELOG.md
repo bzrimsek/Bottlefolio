@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.29  ·  2026-09-25 07:50 AM ET
+
+Who brings a pour gets its own line, and the bottle to open is asked of BZ's own shelf. Two photographs, 2026-09-25. The flight did not think he had three Heaven's Door - his live shelf holds exactly two and the app knew it - but the chip saying whose bottle it is was put inside the pour's NAME, and .item .nm is clamped to two lines on a phone: the Decade Series name filled both, ended in an ellipsis, and the chip was clipped out of sight. A label that disappears on the longest names is worse than none, because those are the rows being read hardest. And Open This named a bottle he does not own, because the suggestion was asked of the POOL, whose bottles are synthetic records that are all open, so ownedCount said yes to everything; it is asked of his own shelf now, which is the only shelf that can answer you already own this. It also compares on the normalised name rather than the key, so a bottle already in the flight is no longer offered as the one to buy. Who brings a pour was written out a third time inside makeProposal, which is the copy L.pourFrom exists to stop. The screens check reads the line and fails if it moves back inside the name.
+
 ## v2.5.28  ·  2026-09-24 11:21 PM ET
 
 Every pour on a pooled flight says who brings it. BZ, 2026-09-24: for buddies we don't know who brings each bottle. The sheet said Nik brings four and then listed six bottles carrying nothing, so which four are not his - the one thing a host has to act on - was the one thing missing. Who brings a pour was already decided inside L.poolPlan, in two lines nothing else could reach; it is L.pourFrom now, so the summary that counts them and the rows that show them cannot disagree about whose bottle it is. A bottle both of them have open is the host's, because whoever is nearest pours it. The host's own pours carry no tag: he is the default and six labels saying You is noise. The screens check reads the tag rather than trusting the row to be able to draw one.
