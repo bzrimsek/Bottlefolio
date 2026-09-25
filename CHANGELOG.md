@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.33  ·  2026-09-25 08:55 AM ET
+
+The light on a buddy tile is the size of the slider beside it. BZ has now said this twice and it was right both times: at 8px it read as an afterthought next to a 48 by 28 control, and the two are equally important, which is the entire point of showing both. Back to 28px with the hairline border it carried on the row, and the note saying why is back with it - it was written the first time he asked and went out with the row's other rules, which is how the same fault came back.
+
 ## v2.5.32  ·  2026-09-25 08:51 AM ET
 
 A buddy tile carries two numbers and says what each one counts. BZ, 2026-09-25: there should be two numbers on a tile, what they have and what we share - after a bare 12 above Nik's name read as a contradiction of the 6 in the panel below. Both figures were right and that is what made it a lie: the regions under it are EXCLUSIVE, so a bottle all three of them own sits in you-Nik-and-1-other and not in you-and-Nik, while the tile counts it because Bill is not part of that question. Six and six is the twelve. The tile now leads with the name and prints their whole shelf beside what the two of them share, each under its own word, and neither number depends on who else is in the room - which is what makes it safe to print above a panel that does. Their whole shelf is not a fourth fact but the two halves of their side added up, asserted as such so it cannot drift. Where the shelves meet is untouched: it is bounded by the whiskies rather than by 2 to the N, but it will still sprawl past a few buddies, and grouping them is its own build.
