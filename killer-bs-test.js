@@ -3691,6 +3691,48 @@ eq('the bottle with no cask is in neither',
 eq('the finish flight sees six finishes here',
   new Set(L.flightCandidates('finish', caskCat, caskBot)[0].pours
     .map(x => L.axisOf('finish', x))).size, 6);
+/* THE BENCH. BZ, 2026-09-24: "dual and more finishes, like the cigar
+   blends, could play in any connected flight. Maybe as an extension if not
+   needed for the core 6." A bottle finished in two casks changes two things
+   at once, so it cannot be in the six of either - but it is connected to
+   both, and a blend naming four is connected to four. */
+eq('a single cask has no bench claim', L.caskBench(caskCat.c0), []);
+eq('a double names both its casks, and the family they share',
+  L.caskBench({ fin: 'Oloroso+Pedro Ximenez' }), ['oloroso', 'px', 'sherry']);
+eq('and four casks name all four',
+  ['madeira', 'port', 'px', 'rum']
+    .every(k => L.caskBench({ fin: 'PX+Port+Madeira+Rum' }).indexOf(k) >= 0),
+  true);
+/* AND IT IS CORE NOWHERE. The family used to hold it, which walked a
+   PX-and-port bottle into the sherry six with the port still on it. */
+eq('a combined cask stands in its own group only',
+  L.holdKey('cask', { fin: 'Pedro Ximenez+Port' }), ['port+px']);
+
+{
+  /* The same six, plus one bottle finished in PX and port. */
+  const withDual = Object.assign({}, caskCat);
+  withDual.dual = { k: 'dual', name: 'Both', sub: 'scotch', dist: 'Theta',
+    fin: 'Pedro Ximenez+Port', proof: 99, obsc: 'known', msrp: 80 };
+  const dualBot = Object.keys(withDual)
+    .map((k, i) => ({ id: 'db' + i, k: k, status: 'open' }));
+  const cs = L.flightCandidates('cask', withDual, dualBot);
+  const px = cs.filter(c => c.key === 'px')[0];
+  eq('the double is not in the PX six',
+    px.pours.some(x => x.k === 'dual'), false);
+  eq('but it is on the PX bench',
+    px.bench.some(x => x.k === 'dual'), true);
+  /* It names port too, but nothing here can cast a port flight, so there is
+     no bench to sit on. */
+  eq('a bench only exists where a flight does',
+    cs.some(c => c.key === 'port'), false);
+  /* And the proposal carries it, so a kept flight arrives with its bench
+     filled rather than empty. */
+  const built = L.buildFlight('cask', '', withDual, dualBot);
+  eq('the proposal carries a bench', built.bench.length > 0, true);
+  eq('and nothing on it is already poured',
+    built.bench.some(b => built.pours.some(x => x.k === b.k)), false);
+}
+
 /* And it is offered wherever lessons are - the Flights screen and the
    pooled buddy sheet both read L.LESSONS (BZ: normal flights and buddies
    alike). */
