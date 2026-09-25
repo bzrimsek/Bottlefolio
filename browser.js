@@ -4192,7 +4192,7 @@ function step(n) {
       /* AND THE GROUP HE PICKS DRAWS ONE (BZ, 2026-09-25). Switch two on:
          three circles, which is the most a Venn draws honestly. */
       {
-        const chips = [...body.querySelectorAll('.chiprow .chip')];
+        const chips = [...body.querySelectorAll('.sheet .swrow')];
         if (chips.length < 3) {
           out.push('buddies: the group section offers ' + chips.length
             + ' people, expected one per shared shelf');
@@ -4208,8 +4208,9 @@ function step(n) {
               + venn.querySelectorAll('circle').length + ' circles');
           }
           /* And switching them off leaves nothing behind. */
-          [...b4.querySelectorAll('.chiprow .chip')]
-            .filter(c => c.dataset.on === 'true').forEach(c => c.click());
+          [...b4.querySelectorAll('.sheet .swrow')]
+            .filter(c => c.getAttribute('aria-checked') === 'true')
+            .forEach(c => c.click());
           if (document.getElementById('buddiesBody')
               .querySelector('svg.venn')) {
             out.push('buddies: the group Venn stays after everyone is off');
