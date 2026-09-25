@@ -4174,9 +4174,14 @@ function step(n) {
          the panel, not the order they are listed in. The order is now the
          grid's (mutual first), and an assertion on the exact wording was
          testing copy rather than behavior (rule 30c). */
-      if (!/(Tyson|Dave|Eli), (Tyson|Dave|Eli) and 1 other/.test(body.textContent)) {
-        out.push('buddies: the room panel does not name all three buddies ('
-          + body.textContent.slice(0, 120) + ')');
+      /* THE THIRD BUDDY IS STILL THE POINT - it is now asserted on the
+         TILES above, one per person and each exactly once, because the
+         region cells that used to name a group of three are gone (BZ,
+         2026-09-25) and an assertion on their wording would be testing
+         copy that no longer exists. What must not come back is the panel
+         listing a room the app assembled rather than one he picked. */
+      if (/Where the shelves meet/.test(body.textContent)) {
+        out.push('buddies: the assembled room panel is back');
       }
       // A Venn belongs on a BUDDY panel, never on the room panel.
       if (body.querySelector('svg.venn')) {

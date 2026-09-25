@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.34  ·  2026-09-25 09:07 AM ET
+
+Where the shelves meet comes out. BZ, 2026-09-25: the buddy pairs look good but this needs work, You and Nik 6 does not match the above. The cells were not wrong - they are EXCLUSIVE regions, so a bottle all three of them own sat under you-Nik-and-1-other and not under you-and-Nik, and six and six is the twelve on the tile - but a screen where two true numbers read as a contradiction is a screen that lies, and the reader is right every time: it is the screen's job to be unambiguous rather than his to hold a Venn in his head while he reads it. They did not scale either, one cell per holder-set that actually occurs. What replaces them is a group he picks, which is a different thing from a room the app assembled out of everyone who ever shared with him. Everything the panel did that was not the cells stays: what people want, what they have proposed, and the pour anyone can join. L.roomLabel went with them rather than being kept in case, and the lesson its assertions carried - two pairs of two people are two groups and not one row - is now asserted on the holder sets themselves, where it always belonged, because a lesson asserted through wording goes quiet the day the wording changes.
+
 ## v2.5.33  ·  2026-09-25 08:55 AM ET
 
 The light on a buddy tile is the size of the slider beside it. BZ has now said this twice and it was right both times: at 8px it read as an afterthought next to a 48 by 28 control, and the two are equally important, which is the entire point of showing both. Back to 28px with the hairline border it carried on the row, and the note saying why is back with it - it was written the first time he asked and went out with the row's other rules, which is how the same fault came back.

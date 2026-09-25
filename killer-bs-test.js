@@ -15584,24 +15584,16 @@ sec('\u00a7326 the room, counted rather than intersected');
      separate groups, and their names say so. */
   const twos = b.filter(x => x.n === 2);
   eq('two pairs are two groups, not one', twos.length, 2);
-  eq('and each names only its own pair',
-    twos.map(x => L.roomLabel(x, names, 'me')).sort(),
-    ['Dave and Eli', 'You and Tyson']);
-
-  eq('the whole room is said as a count',
-    L.roomLabel(all, names, 'me'), 'All 4 of you');
-  eq('one person reads as only', L.roomLabel(mine, names, 'me'), 'You only');
-
-  /* Past two names it stops listing and counts, because nine names is not
-     a label. */
-  eq('three names become two and a count',
-    L.roomLabel({ who: ['me', 't', 'd'], all: false }, names, 'me'),
-    'You, Tyson and 1 other');
-  eq('and four become two and two',
-    L.roomLabel({ who: ['me', 't', 'd', 'e'], all: false }, names, 'me'),
-    'You, Tyson and 2 others');
-  eq('a buddy with no name is still a person',
-    L.roomLabel({ who: ['zz'], all: false }, names, 'me'), 'A buddy only');
+  /* ON THE HOLDER SETS THEMSELVES, which is where this always belonged: the
+     label that used to carry it is gone with the cells it named (BZ,
+     2026-09-25), and a lesson asserted through wording goes quiet the day
+     the wording changes. */
+  eq('and each holds only its own pair',
+    twos.map(x => x.who.slice().sort().join('+')).sort(),
+    ['d+e', 'me+t']);
+  eq('and the pairs hold different whiskies',
+    twos.map(x => x.bottles.map(p => p.name).join(',')).sort(),
+    ['B', 'D']);
 
   /* AND IT DOES NOT EXPLODE. Nine people is 511 combinations to vennRegions
      and, here, only as many groups as there are distinct holder sets. */
