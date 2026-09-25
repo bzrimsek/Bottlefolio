@@ -3553,9 +3553,12 @@ sec('what pooling is worth');
 const gain = L.poolGain({ catalog: mineCat, bottles: mineBot }, pool, []);
 eq('a lesson you could not build alone is flagged new',
   gain.some(g => g.id === 'proof' && g.gain === 'new'), true);
-eq('and says so plainly',
-  /cannot build this on your own/.test(
-    gain.find(g => g.id === 'proof').note), true);
+eq('and says so plainly, in the together half only',
+  gain.find(g => g.id === 'proof').note, 'Only possible together.');
+/* AND NO ROW COUNTS WHAT HE CAN DO WITHOUT THEM. BZ, 2026-09-24: "don't
+   need alone - just together". */
+eq('no row talks about pouring it alone',
+  gain.some(g => /alone/i.test(String(g.note || ''))), false);
 // Pooling with somebody who adds nothing must report nothing rather than
 // inventing a benefit.
 eq('an empty buddy adds nothing',
@@ -3614,6 +3617,27 @@ eq('a lesson that needs them survives with its cast',
 }
 
 {
+sec('a read that never answers');
+/* BZ, 2026-09-24: every buddy went red and the tabs vanished. The data was
+   intact and the rules matched the file; a reload brought them all back.
+   loadSharedShelves clears its in-progress flag when the chain settles, and
+   a read that FAILS settles - but one that hangs, which is what a phone
+   losing its network does, never settles. The flag stayed true, every later
+   call returned at once, and the tab had no grants to draw for the rest of
+   the session. */
+eq('a read that has just started is left alone',
+  L.loadStuck(1000000, 1000000 + 500), false);
+eq('and one still inside the window is left alone',
+  L.loadStuck(1000000, 1000000 + L.SHARED_STALE_MS - 1), false);
+eq('past the window it counts as gone, and is asked again',
+  L.loadStuck(1000000, 1000000 + L.SHARED_STALE_MS + 1), true);
+/* A flag set with no stamp behind it is the wedged case itself: it must not
+   read as freshly started. */
+eq('a flag with no start behind it is stuck, not new',
+  L.loadStuck(0, Date.now()), true);
+eq('and the window is long enough for a slow phone',
+  L.SHARED_STALE_MS >= 15000, true);
+
 sec('what a buddy can see');
 // Letting somebody see your shelf used to hand them the whole node: every
 // pour with its date, the wishlist, the lookup endpoint. "See my shelf"

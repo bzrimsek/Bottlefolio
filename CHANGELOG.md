@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.22  ·  2026-09-24 10:13 PM ET
+
+A shared-shelf read that never answers no longer wedges the Buddies tab. Every buddy went red and the per-person tabs vanished; the data was intact, the live rules matched the file, and a reload brought them all back. loadSharedShelves marks itself as running and clears that on the way out, so a read that FAILS is covered - but one that HANGS, which is what a phone losing its network does, never settles, and the flag stayed true for the rest of the session while every later call returned at once. A load still marked as running after twenty seconds is now treated as gone and asked again, and the log says it happened. The pooled sheet answers one question instead of reciting counts: what the two of you can pour that BZ cannot alone. The ways-alone and ways-together numbers are gone - they counted groupings, not flights - and each row now shows what the flight asks with who brings what underneath.
+
 ## v2.5.21  ·  2026-09-24 09:42 PM ET
 
 A pooled flight now pours the other man's bottles. Half the rows on the sheet with Nik said 'You can pour all of this yourself' underneath, because pooling had given the lesson more ways to be cast while its best cast was still six of BZ's own bottles - more options is not the same as needing the man, and it read as an insult to the guest. Each row now carries the cast that borrows most, ties going to the better flight, and a lesson with no borrowing cast at all is not listed; the rows are ordered by how much of the evening is theirs. The sheet shows the cast the engine judged rather than casting a second time and printing a different answer, and it no longer falls back to listing flights the host could hold on his own. The assertions reproduce the screenshot - two houses where his own scores higher than the buddy's - and were watched going red with the rule broken.
