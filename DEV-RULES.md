@@ -47,6 +47,8 @@ DIAGNOSIS BEFORE FIXING
 16 When a Python edit script hits an AssertionError on any step, the file is in a partial state. Stop, re-read the file, confirm what was and wasn't applied, then fix cleanly. Never assume subsequent steps ran.
 16a An edit script that asserts on several patterns writes NOTHING if a later assert fails. After any failed edit, verify the change is actually in the file before reporting it. A change reported and not applied has cost a whole round more than once.
 
+16aa A SCRIPT THAT BREAKS SOMETHING ON PURPOSE MUST PUT BACK THE LINE IT TOOK, NOT THE FIRST ONE THAT MATCHES. Proving a check can fail means swapping a line for a broken one and running the suite; restoring by replacing the first occurrence of the broken line puts it wherever that text happens to appear first. On 2026-09-24 `return false;` went back into `L.historyRows` eight hundred lines above the function it was taken from, and the rule under test kept the log filter's default. The suite caught it. Match on the surrounding lines, not the line alone, and re-run every check after restoring.
+
 16b A BLANKET FIND-AND-REPLACE ACROSS THIS PROJECT WILL BREAK THE CHECKERS AND THE DATA. Carried from HANDOFF.md, 2026-09-10, when it was retired. A US-spelling pass Americanised consistency.js's OWN British word list, so the checker began hunting for `judgment` and flagged every correct word on screen; there is a check for that now. The same trap in the data: `colour` is a KEY inside the tasting note — 268 of the 325 catalogue entries shipped in `data.json` carry `tn.colour` — and renaming it orphans every one of them. A replacement runs per file, with the hits read before they are written.
 
 LAYOUT & SCREEN PATTERNS

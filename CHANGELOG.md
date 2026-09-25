@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.23  ·  2026-09-24 10:26 PM ET
+
+One cask, many houses - the shape BZ's own TAKE YOUR PX flight uses and the engine could not express. Every other flight holds a FIELD still; a cask family is a judgement rather than a field, which is why this one needed a door. L.holdKey is now the single place that says what two bottles must share to sit in one flight, and the candidate finder and the blocker both ask it - they each carried their own copy and would have disagreed the moment one learned something the other had not. The new flight holds the cask family still, through L.caskFamily, so twenty spellings of sherry across the catalogue are one cask, and varies the house through the one house key. A bottle with no cask recorded cannot take part. It is offered wherever lessons are, which is the Flights screen and the pooled buddy sheet alike, and the designer lists it. Eleven assertions, including the line that says what it does that the finish flight cannot: those spellings read as four finishes there and one cask here.
+
 ## v2.5.22  ·  2026-09-24 10:13 PM ET
 
 A shared-shelf read that never answers no longer wedges the Buddies tab. Every buddy went red and the per-person tabs vanished; the data was intact, the live rules matched the file, and a reload brought them all back. loadSharedShelves marks itself as running and clears that on the way out, so a read that FAILS is covered - but one that HANGS, which is what a phone losing its network does, never settles, and the flag stayed true for the rest of the session while every later call returned at once. A load still marked as running after twenty seconds is now treated as gone and asked again, and the log says it happened. The pooled sheet answers one question instead of reciting counts: what the two of you can pour that BZ cannot alone. The ways-alone and ways-together numbers are gone - they counted groupings, not flights - and each row now shows what the flight asks with who brings what underneath.

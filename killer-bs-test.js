@@ -3617,6 +3617,60 @@ eq('a lesson that needs them survives with its cast',
 }
 
 {
+sec('one cask, several houses');
+/* BZ's own "TAKE YOUR PX?" (2026-09-24), which the engine could not express:
+   every other flight holds a FIELD still, and a cask family is a judgement
+   rather than a field. Four sherry casks spelled four ways, in four houses. */
+{
+const caskCat = {};
+[['pedro ximenez', 'Alpha'], ['PX', 'Beta'], ['Oloroso sherry', 'Gamma'],
+ ['sherry butt', 'Delta']].forEach((x, i) => {
+  caskCat['c' + i] = { k: 'c' + i, name: 'Cask ' + i, sub: 'scotch',
+    dist: x[1], fin: x[0], proof: 92 + i, obsc: 'known', msrp: 70 };
+});
+/* And one with no cask to hold, which must not take part. */
+caskCat.bare = { k: 'bare', name: 'Bare', sub: 'scotch', dist: 'Epsilon',
+  proof: 94, obsc: 'known', msrp: 70 };
+const caskBot = Object.keys(caskCat)
+  .map((k, i) => ({ id: 'cb' + i, k: k, status: 'open' }));
+
+eq('four spellings of sherry are one cask',
+  new Set(['c0', 'c1', 'c2', 'c3'].map(k => L.holdKey('cask', caskCat[k])))
+    .size, 1);
+eq('and that one cask is sherry', L.holdKey('cask', caskCat.c0), 'sherry');
+eq('a bottle with no cask cannot take part',
+  L.holdKey('cask', caskCat.bare), null);
+/* Every other flight still holds what it always held. */
+eq('the door leaves the other flights alone',
+  L.holdKey('proof', { dist: 'Alpha' }), 'Alpha');
+eq('and takes the caller\u2019s own list when it has one',
+  L.holdKey('proof', { sub: 'scotch', dist: 'Alpha' }, ['sub']), 'scotch');
+
+const caskCands = L.flightCandidates('cask', caskCat, caskBot);
+eq('the cask flight is castable', caskCands.length, 1);
+eq('and it pours the four that share a cask', caskCands[0].pours.length, 4);
+eq('the house is what moves',
+  new Set(caskCands[0].pours.map(x => L.axisOf('cask', x))).size, 4);
+eq('the bottle with no cask is not in it',
+  caskCands[0].pours.some(x => x.k === 'bare'), false);
+/* IT IS THE INVERSE OF THE FINISH FLIGHT, and here is the difference in one
+   line: the finish flight holds the type still and reads the cask TEXT as
+   its axis, so these four read as four different finishes. They are one
+   cask in four houses, and only the new flight can say so. */
+eq('the finish flight sees four finishes here',
+  new Set(L.flightCandidates('finish', caskCat, caskBot)[0].pours
+    .map(x => L.axisOf('finish', x))).size, 4);
+eq('the cask flight sees one cask',
+  new Set(caskCands[0].pours.map(x => L.holdKey('cask', x))).size, 1);
+/* And it is offered wherever lessons are - the Flights screen and the
+   pooled sheet both read L.LESSONS (BZ, 2026-09-24: normal flights and
+   buddies alike). */
+eq('the lesson is in the list',
+  L.LESSONS.some(l => l.id === 'cask'), true);
+eq('and the designer offers it too',
+  L.VARIABLES.some(v => v.id === 'cask'), true);
+}
+
 sec('a read that never answers');
 /* BZ, 2026-09-24: every buddy went red and the tabs vanished. The data was
    intact and the rules matched the file; a reload brought them all back.
