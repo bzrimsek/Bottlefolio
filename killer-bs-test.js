@@ -17564,6 +17564,43 @@ sec('a typed name is enough');
       return L.QUIZ_TRICKS.map(t => L.quizTopic(t))
         .filter(x => x && terms.indexOf(x) < 0); })(), []);
 
+  /* AN ODD-ONE-OUT LANDS ON ONE THAT BELONGS (BZ, 2026-09-26: "which is not
+     a scotch region... I expect it to take me to the related details and
+     not the top of the Learn tab"). Its answer is a name this app invented
+     so the question could not be argued with, so it is in no entry and the
+     search came up empty. Asserted on every odd-one-out the app can ask,
+     not on a fixture: this was a whole SHAPE of question opening Learn at
+     its top, and only the real ones prove it is not. */
+  {
+    const bank = L.quizBank();
+    const terms = bank.map(b => b.term);
+    /* EVERY SECTION THAT CAN CARRY ONE. quizOdd serves the first section
+       not yet done, so marking each one off as it comes walks the lot -
+       asking it five times without that returns the same question five
+       times, which is one question wearing a crowd's clothes. */
+    const odds = [];
+    const done = {};
+    for (let i = 0; i < Object.keys(L.QUIZ_NOUNS || {}).length + 2; i++) {
+      const q = L.quizOdd({ done: done }, bank);
+      if (!q || done[q.key]) break;
+      odds.push(q);
+      done[q.key] = 1;
+    }
+    eq('there are odd-one-out questions to check', odds.length > 0, true);
+    eq('every one of them lands on a real entry',
+      odds.map(q => L.quizTopic(q, bank))
+        .filter(x => !x || terms.indexOf(x) < 0), []);
+    eq('and never on the one that does not belong',
+      odds.filter(q => L.quizTopic(q, bank) === q.answer), []);
+    /* The Scotch regions one by name, because it is the one he hit. */
+    const reg = odds.filter(q => q.section === 'Scotch regions')[0];
+    if (reg) {
+      eq('the Scotch regions question lands in Scotch regions',
+        (bank.filter(b => b.term === L.quizTopic(reg, bank))[0] || {}).section,
+        'Scotch regions');
+    }
+  }
+
   // HOW LONG A LOOKUP WAITS. Two patiences, two reasons: a person is
   // standing there, and the library intake is not.
   eq('a person\u2019s lookup waits the longer of the two',
