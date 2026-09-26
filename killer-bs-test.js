@@ -3758,6 +3758,45 @@ eq('and the designer offers it too',
   L.VARIABLES.some(v => v.id === 'cask'), true);
 }
 
+sec('who shares with you, remembered');
+/* The list under sharedWith enumerates short - one of four on BZ's account,
+   every boot of both devices - and the app's answer is a second pass that
+   probes candidates by name. That pass is only as good as its candidates,
+   and they were assembled fresh every boot from things that are empty on a
+   cold start. The night they came up empty, every buddy read as not
+   sharing. So the list is kept (BZ, 2026-09-26: fix it). */
+{
+const names = { u1: 'Nik', u2: 'Bill' };
+const first = L.rememberBuddies({}, ['u1', 'u2'], names);
+eq('a good read is remembered', Object.keys(first).sort(), ['u1', 'u2']);
+eq('with the names it knew', first.u1, 'Nik');
+/* A name not read yet must not blank the one already held: the directory is
+   fetched after this, so the second pass often has no names at all. */
+const later = L.rememberBuddies(first, ['u1', 'u2'], {});
+eq('a read with no names keeps the ones remembered', later.u1, 'Nik');
+/* Somebody who stopped sharing goes, which is the other half of keeping a
+   list: one that only grows is a list of people who used to share. */
+const fewer = L.rememberBuddies(first, ['u1'], names);
+eq('and somebody who stopped is dropped', Object.keys(fewer), ['u1']);
+/* THE NIGHT IT FAILED. An empty answer is the failure this exists to
+   survive, so the caller does not prune on one - asserted here as the rule
+   it is, because remembering nothing is the bug it was built for. */
+eq('an empty read would remember nobody',
+  Object.keys(L.rememberBuddies(first, [], names)).length, 0);
+
+eq('nothing to save when nothing moved',
+  L.buddiesChanged(first, L.rememberBuddies(first, ['u1', 'u2'], names)),
+  false);
+eq('a new buddy is worth saving',
+  L.buddiesChanged(first, L.rememberBuddies(first, ['u1', 'u2', 'u3'],
+    names)), true);
+eq('and so is a name arriving late',
+  L.buddiesChanged({ u1: '' }, { u1: 'Nik' }), true);
+eq('order is not a change',
+  L.buddiesChanged({ u1: 'Nik', u2: 'Bill' }, { u2: 'Bill', u1: 'Nik' }),
+  false);
+}
+
 sec('a read that never answers');
 /* BZ, 2026-09-24: every buddy went red and the tabs vanished. The data was
    intact and the rules matched the file; a reload brought them all back.
