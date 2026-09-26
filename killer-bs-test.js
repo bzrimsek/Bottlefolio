@@ -17544,6 +17544,40 @@ sec('a typed name is enough');
     L.lostAnswer('https://script.google.com/macros/s/AKf/exec', 'Not Found'), false);
   eq('nor is an answer that came back as data',
     L.lostAnswer(GOOG, '{"error":"no such mode"}'), false);
+
+  /* THE SAME LOSS WEARING A 200. Apps Script answers a POST with a 302, and
+     a 302 turns a POST into a GET with no body - so when the one-time answer
+     is not there to serve, the call lands back on doGet, which says this
+     because no name came with it. It reached BZ as "the deployment is
+     usually the cause" and sent him to redeploy a service that was fine
+     (his log, 2026-09-24: the two calls that lost their answer took 22 and
+     35 seconds, and every call that worked took under four). */
+  eq('doGet’s answer to a body-less POST is a lost answer',
+    L.lostPost('{"error":"name required"}'), true);
+  eq('and spacing does not hide it',
+    L.lostPost('{ "error" : "name required" }'), true);
+  eq('a real answer is not one',
+    L.lostPost('{"name":"Ardbeg 10","proof":92}'), false);
+  eq('nor is another error',
+    L.lostPost('{"error":"no such mode"}'), false);
+  eq('and nothing is not one', [L.lostPost(null), L.lostPost('')],
+    [false, false]);
+  /* AND ONE SENTENCE FOR IT, wherever it surfaces: the retry throws these
+     words when the second go loses the answer too, and readService throws
+     them when it reads the answer itself. Written twice they would be two
+     sentences the day one was corrected. */
+  eq('it names what was being asked', /shelf/.test(L.lostPostSay('shelf')),
+    true);
+  eq('it leads with what happened',
+    /^The answer came back without its body/.test(L.lostPostSay('shelf')),
+    true);
+  /* The deployment stays in it, because it HAS been the cause (rule 25e) -
+     just not first, and not as the only explanation. */
+  eq('and the deployment is named, second',
+    L.lostPostSay('shelf').indexOf('deployment')
+      > L.lostPostSay('shelf').indexOf('try again'), true);
+  eq('a call with no mode still gets a sentence',
+    L.lostPostSay('').length > 40, true);
   eq('and nothing is not a lost answer',
     [L.lostAnswer(null, null), L.lostAnswer('', '')], [false, false]);
 
