@@ -3829,6 +3829,63 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
     String(L.judgeListing({}, 'C', cat, bots, [], full).why)
       .indexOf('tastes of'), -1);
 })();
+/* SHAPE YOUR TASTE RECOMMENDATIONS (v2.5.56): this or that, on flavours. */
+(function () {
+  const prof = { flavour: [
+    { value: 'dark fruit', n: 40 }, { value: 'peat', n: 36 },
+    { value: 'honey', n: 30 }, { value: 'pepper', n: 26 },
+    { value: 'oak', n: 100 },      // too common to ask about
+    { value: 'cola', n: 2 }        // too rare
+  ] };
+  eq('it asks about the flavours the shelf leans on, commonest first',
+    L.tasteCandidates(prof), ['dark fruit', 'peat', 'honey', 'pepper']);
+  eq('a pair is named the same way whichever order it is given',
+    L.tastePairKey('peat', 'honey'), L.tastePairKey('honey', 'peat'));
+  /* An answer is APPENDED, because asking twice is the whole instrument. */
+  let ans = L.tasteSaid({}, 'peat', 'honey', 'peat');
+  eq('an answer is recorded', L.tasteWinner(ans[L.tastePairKey('peat', 'honey')]),
+    'peat');
+  ans = L.tasteSaid(ans, 'peat', 'honey', 'honey');
+  eq('asking again keeps both, latest last',
+    [L.tasteTimes(ans[L.tastePairKey('peat', 'honey')]),
+     L.tasteWinner(ans[L.tastePairKey('peat', 'honey')])], [2, 'honey']);
+  eq('and the order follows the latest',
+    L.tasteOrder(ans)[0].term, 'honey');
+  eq('neither counts for nobody and against nobody',
+    L.tasteOrder(L.tasteSaid({}, 'peat', 'honey', null))
+      .map(x => x.score), [0, 0]);
+  eq('how often each flavour has been asked about',
+    [L.tasteSeen(ans).peat, L.tasteSeen(ans).honey], [1, 1]);
+  /* THE BAR. A coin agrees with itself half the time; the bar is two and a
+     half standard deviations above that, so it tightens as answers pile up
+     rather than loosening. */
+  eq('nothing repeated, nothing claimed',
+    L.tasteHoldout({ 'a|b': 'a', 'c|d': 'c' }).passed, false);
+  const agree = {};
+  for (let i = 0; i < 12; i++) agree['x' + i + '|y' + i] = 'x' + i + '>x' + i;
+  eq('twelve repeats that all agree is enough',
+    L.tasteHoldout(agree).passed, true);
+  const half = {};
+  for (let i = 0; i < 12; i++) {
+    half['x' + i + '|y' + i] = 'x' + i + '>' + (i % 2 ? 'x' + i : 'y' + i);
+  }
+  eq('agreeing half the time is a coin, and claims nothing',
+    L.tasteHoldout(half).passed, false);
+  /* The card asks one function for all of it. */
+  const asked = L.tasteAsk(prof, {});
+  eq('the door hands back a pair to ask',
+    [!!asked.pair, asked.settled, asked.order.length], [true, false, 0]);
+  eq('and a shelf with nothing worth asking about settles at once',
+    L.tasteAsk({ flavour: [] }, {}).settled, true);
+  /* Every fifth question is one asked before. */
+  let five = {};
+  ['dark fruit|peat', 'dark fruit|honey', 'dark fruit|pepper',
+   'honey|peat', 'honey|pepper'].forEach((k, i) => {
+    five[k] = k.split('|')[0];
+  });
+  eq('after five answers it asks one of them again',
+    !!(L.tastePair(prof, five) || {}).again, true);
+})();
 /* Evenness, lifted out of the radar so the radar could grow an axis. */
 eq('one bucket alone is perfectly even', L.axisEvenness([7]), 1);
 eq('two equal buckets are too', L.axisEvenness([5, 5]), 1);

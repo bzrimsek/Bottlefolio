@@ -1230,7 +1230,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.5.46: the palate vocabulary's credit and its one visible line. */
     'Where the flavor words come from', 'Tastes of',
     /* v2.5.51: the sixth view on the guest ladder. */
-    'Tastes like it'];
+    'Tastes like it',
+    /* v2.5.56 */
+    'Shape your taste recommendations'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',

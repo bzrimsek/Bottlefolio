@@ -233,6 +233,34 @@ const dir = __dirname;
           : 'ok(' + once[0] + ')';
     } catch (e) { r.tasteLine = 'THREW ' + e.message; }
 
+    /* THE TASTE PAIR CARD: TWICE, AND IN SEQUENCE (rule 30e, v2.5.56).
+       It redraws itself after every answer, into a container it empties
+       first - which is the arrangement an appended card gets wrong. */
+    try {
+      S.tasteAB = {};
+      show('pour');
+      renderPourWhere();
+      const cards = () => document.querySelectorAll('#tasteShapeBody .sheet').length;
+      const chips = () => document.querySelectorAll('#tasteShape .chip').length;
+      const first = cards();
+      renderPourWhere();
+      const twice = cards();
+      const before = document.getElementById('tasteShape')
+        ? document.getElementById('tasteShape').textContent : '';
+      const chip = document.querySelector('#tasteShape .chip');
+      if (chip) chip.click();
+      const after = document.getElementById('tasteShape')
+        ? document.getElementById('tasteShape').textContent : '';
+      r.tastePair =
+        first !== 1 ? 'THREW the card is not drawn once: ' + first
+        : twice !== 1 ? 'THREW it doubled on a second render: ' + twice
+        : chips() < 3 ? 'THREW it offers fewer than two flavours and neither'
+        : cards() !== 1 ? 'THREW answering it stacked a second card'
+        : !Object.keys(S.tasteAB).length ? 'THREW the answer was not kept'
+        : before === after ? 'THREW it asked the same thing again'
+        : 'ok';
+    } catch (e) { r.tastePair = 'THREW ' + e.message; }
+
     /* ICONS THAT ARE ACTUALLY VISIBLE.
 
        A touch-target fix gave the masthead buttons a ::before carrying the
