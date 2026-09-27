@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 778 |
+| functions | 780 |
 | tables | 186 |
 | carrying a stated purpose | 595 |
 
@@ -900,10 +900,11 @@ QUESTION, not the name you were going to use.
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — WHAT THE SHELF TASTES OF, BY THE WHEEL'S GROUPS (BZ, 2026-09-27).
 - **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE (BZ, 2026-09-27).
+- **`L.tasteBetween`** — _no comment above it_
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
-- **`L.tasteLead`** — THE SHAPE IN A SENTENCE, because a radar is a picture and a person wants to
+- **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
 - **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.
 - **`L.tasteOrder`** — THE ORDER THE ANSWERS ARGUE FOR
@@ -915,6 +916,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteScore`** — A BOTTLE AGAINST THOSE WEIGHTS, nought to one.
 - **`L.tasteSeen`** — How many times each flavour has been asked about.
 - **`L.tasteSettled`** — _no comment above it_
+- **`L.tasteShare`** — WHAT A SHELF TASTES OF, TERM BY TERM, as a share of its described bottles.
 - **`L.tastesLike`** — Coverage is worked out here rather than in a door of its own because `shared`
 - **`L.tasteTimes`** — _no comment above it_
 - **`L.tasteWants`** — _no comment above it_

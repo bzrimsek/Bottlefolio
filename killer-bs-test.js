@@ -2493,6 +2493,61 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('what two shelves both taste of');
+{
+  /* BZ, 2026-09-27: "can we use the new vocab and pallet on the buddy
+     intersection to say what we both like and then outside that intersection,
+     where we both lean?" The Venn above it answers this for BOTTLES; two
+     people can own four in common and both be sherry drinkers, and circles
+     cannot say so. */
+  const mk = (k, nose, palate) => ({ k: k, name: k, sub: 'scotch',
+    tn: { nose: nose, palate: palate } });
+  const cat = {};
+  const mineB = [];
+  const theirB = [];
+  /* Sixteen each, over the floor of twelve described. Both shelves taste of
+     oak; only his of raisin, only theirs of peat. */
+  for (let i = 0; i < 16; i++) {
+    const a = 'm' + i, b = 't' + i;
+    cat[a] = mk(a, 'oak, raisin', 'vanilla');
+    cat[b] = mk(b, 'oak, peat', 'vanilla');
+    mineB.push({ id: 'a' + i, k: a, status: 'open' });
+    theirB.push({ id: 'b' + i, k: b, status: 'open' });
+  }
+  const mine = L.tasteShare(cat, mineB);
+  const theirs = L.tasteShare(cat, theirB);
+  eq('a share is of the DESCRIBED bottles, not all of them',
+    [mine.n, Math.round(mine.of.oak * 100)], [16, 100]);
+  eq('the bare words nobody says are left out of it',
+    [mine.of.fruit, mine.of.sweet], [undefined, undefined]);
+  const b = L.tasteBetween(mine, theirs);
+  eq('what both shelves carry is common ground',
+    b.both.map(r => r.term).sort(), ['oak', 'vanilla']);
+  eq('what only yours carries is your lean',
+    b.yours.map(r => r.term), ['raisin']);
+  eq('and what only theirs carries is theirs',
+    b.theirs.map(r => r.term), ['peat']);
+  /* IT REFUSES TO SPEAK OFF TOO LITTLE. Five bottles' notes will produce a
+     confident sentence about two people's taste and it will be worthless. */
+  const thin = L.tasteShare(cat, mineB.slice(0, 4));
+  eq('too little described on either side and it says nothing',
+    [L.tasteBetween(thin, theirs), L.tasteBetween(mine, thin)], [null, null]);
+  eq('and nothing at all is not a comparison either',
+    L.tasteBetween(null, null), null);
+  /* A lean has to be a real difference: twice as much, not a few points. */
+  /* Raisin clears the floor on yours and not on theirs, so it reaches the lean
+     test - the first writing of this had it clearing on both, which sent it to
+     `both` and made the assertion unable to fail. */
+  const close = { n: 20, of: { oak: 0.5, raisin: 0.30 } };
+  const alsoClose = { n: 20, of: { oak: 0.5, raisin: 0.20 } };
+  eq('a few points apart is not a lean, it is noise with a number on it',
+    L.tasteBetween(close, alsoClose).yours, []);
+  eq('but twice as much is', L.tasteBetween(
+    { n: 20, of: { oak: 0.5, raisin: 0.50 } },
+    { n: 20, of: { oak: 0.5, raisin: 0.20 } }).yours.map(r => r.term),
+    ['raisin']);
+}
+
 sec('forty questions, and never one already answered');
 {
   /* BZ, 2026-09-27: "If the system already knows you prefer Caramel over
