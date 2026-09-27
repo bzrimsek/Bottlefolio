@@ -2267,10 +2267,10 @@ sec('tastes like: flavors from the notes');
     [L.TASTE_VIEW.id, typeof L.TASTE_VIEW.label], ['taste', 'string']);
 })();
   const cat = {
-    a: { k: 'a', name: 'Sherry Bomb', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon', finish: 'oak, vanilla' } },
-    b: { k: 'b', name: 'Other Sherry Bomb', tn: { nose: 'dates and sherry', palate: 'chocolate, clove', finish: 'oak' } },
-    c: { k: 'c', name: 'Peat Monster', tn: { nose: 'peat smoke, iodine', palate: 'sea salt, vanilla', finish: 'oak, ash' } },
-    d: { k: 'd', name: 'Unowned Sherry', tn: { nose: 'raisin, sherry', palate: 'cocoa', finish: 'oak' } }
+    a: { k: 'a', name: 'Sherry Bomb', sub: 'scotch', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon', finish: 'oak, vanilla' } },
+    b: { k: 'b', name: 'Other Sherry Bomb', sub: 'scotch', tn: { nose: 'dates and sherry', palate: 'chocolate, clove', finish: 'oak' } },
+    c: { k: 'c', name: 'Peat Monster', sub: 'scotch', tn: { nose: 'peat smoke, iodine', palate: 'sea salt, vanilla', finish: 'oak, ash' } },
+    d: { k: 'd', name: 'Unowned Sherry', sub: 'scotch', tn: { nose: 'raisin, sherry', palate: 'cocoa', finish: 'oak' } }
   };
   const owned = [{ id: 'B1', k: 'b', status: 'open' }, { id: 'B2', k: 'c', status: 'open' }];
   const like = L.tastesLike(cat.a, cat, owned, 5);
@@ -2278,6 +2278,23 @@ sec('tastes like: flavors from the notes');
     like.map(r => r.k), ['b']);
   eq('the shared flavors are named, the rarest first, oak last',
     like[0].shared[like[0].shared.length - 1], 'oak');
+  /* WHISKEY ONLY (BZ, 2026-09-27: "You cant have Baileys salted caramel in as
+     a tastes like for Woodford bourbon"). The trap is that L.isWhisky says YES
+     to a bottle with no category - generous on purpose, because one added a
+     minute ago has none - and Baileys Salted Caramel has none. Off his own
+     shelf the burden goes the other way: L.neverOffer. */
+  const bar = {
+    w: { k: 'w', name: 'A Bourbon', sub: 'bourbon', tn: { nose: 'caramel, vanilla, oak', palate: 'cherry' } },
+    cream: { k: 'cream', name: 'Baileys Salted Caramel', tn: { nose: 'caramel, vanilla, oak', palate: 'cherry' } },
+    fl: { k: 'fl', name: 'A Spiced Thing', sub: 'flavored', tn: { nose: 'caramel, vanilla, oak', palate: 'cherry' } },
+    ok: { k: 'ok', name: 'Another Bourbon', sub: 'bourbon', tn: { nose: 'caramel, vanilla, oak', palate: 'cherry' } }
+  };
+  const barOwned = ['cream', 'fl', 'ok']
+    .map((k, i) => ({ id: 'W' + i, k: k, status: 'open' }));
+  eq('nothing off the bar shelf is ever offered as a tastes like',
+    L.tastesLike(bar.w, bar, barOwned, 5).map(r => r.k), ['ok']);
+  eq('and the uncategorised one is refused by name, not by category',
+    [L.isWhisky(bar.cream), L.neverOffer(bar.cream, true)], [true, true]);
   eq('a bottle is never like itself',
     L.tastesLike(cat.b, cat, owned, 5).map(r => r.k).indexOf('b'), -1);
   eq('two flavors are not enough to say anything',
@@ -2288,10 +2305,10 @@ sec('tastes like: flavors from the notes');
      Alpha are exactly as alike as each other, and Far fits his taste better
      than either but shares less. */
   const tl = {
-    s: { k: 's', name: 'Seed', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon' } },
-    z: { k: 'z', name: 'Zeta', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee' } },
-    a: { k: 'a', name: 'Alpha', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, honey' } },
-    f: { k: 'f', name: 'Far', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee, honey, oak, vanilla, peat smoke' } }
+    s: { k: 's', name: 'Seed', sub: 'scotch', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon' } },
+    z: { k: 'z', name: 'Zeta', sub: 'scotch', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee' } },
+    a: { k: 'a', name: 'Alpha', sub: 'scotch', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, honey' } },
+    f: { k: 'f', name: 'Far', sub: 'scotch', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee, honey, oak, vanilla, peat smoke' } }
   };
   const tlOwned = ['z', 'a', 'f'].map((k, i) => ({ id: 'T' + i, k: k, status: 'open' }));
   const tlW = { toffee: 1, oak: 1, vanilla: 1, peat: 1, smoke: 1, honey: 0.05,
@@ -2411,11 +2428,11 @@ sec('tastes like: flavors from the notes');
      Part tastes of three of the seed's four and nothing else. */
   const gs = {
     s: { k: 'Seed', name: 'Seed', tn: { nose: 'lemon, floral', palate: 'herbal, honey' } },
-    part: { k: 'Part', name: 'Part', tn: { nose: 'lemon', palate: 'herbal, honey' } },
-    whole: { k: 'Whole', name: 'Whole', tn: { nose: 'lemon, floral', palate: 'herbal, honey, oak, vanilla, toffee, pepper' } },
-    f1: { k: 'F1', name: 'F1', tn: { nose: 'oak', palate: 'vanilla, pepper' } },
-    f2: { k: 'F2', name: 'F2', tn: { nose: 'oak', palate: 'toffee, pepper' } },
-    f3: { k: 'F3', name: 'F3', tn: { nose: 'oak', palate: 'vanilla, toffee' } }
+    part: { k: 'Part', name: 'Part', sub: 'scotch', tn: { nose: 'lemon', palate: 'herbal, honey' } },
+    whole: { k: 'Whole', name: 'Whole', sub: 'scotch', tn: { nose: 'lemon, floral', palate: 'herbal, honey, oak, vanilla, toffee, pepper' } },
+    f1: { k: 'F1', name: 'F1', sub: 'scotch', tn: { nose: 'oak', palate: 'vanilla, pepper' } },
+    f2: { k: 'F2', name: 'F2', sub: 'scotch', tn: { nose: 'oak', palate: 'toffee, pepper' } },
+    f3: { k: 'F3', name: 'F3', sub: 'scotch', tn: { nose: 'oak', palate: 'vanilla, toffee' } }
   };
   const gOwned = ['part', 'whole', 'f1', 'f2', 'f3']
     .map((k, i) => ({ id: 'G' + i, k: gs[k].k, status: 'open' }));
