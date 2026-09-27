@@ -2155,6 +2155,52 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('App use counts the axes the engine has', bad);
 }
 
+/* THE GUEST POUR IS NOT ORDERED BY THE HOST'S TASTE (v2.5.65).
+ *
+ * L.tastesLike takes optional weights and breaks ties toward the person whose
+ * weights they are. On the bottle page and in Shop that is the point. Pouring
+ * for a guest the seed is THEIR taste, so the host's weights there would order
+ * the guest's answer by the host's palate and nobody would see it happen - the
+ * list would still look like a list of similar whiskies.
+ *
+ * So the screens that mean YOUR taste must pass weights and the guest view must
+ * not, and BOTH halves are checked: a guard that only forbids is satisfied by
+ * deleting the feature.
+ */
+{
+  const bad = [];
+  /* true: this caller is about the owner's own taste. */
+  const MEANS_YOU = { tastesLikeCard: true, 'L.pourView': false };
+  Object.keys(MEANS_YOU).forEach(name => {
+    const at = src.indexOf((name.indexOf('L.') === 0 ? name + ' = function'
+      : 'function ' + name + '('));
+    if (at < 0) {
+      bad.push(name + ' has gone - it asked L.tastesLike, and whether it '
+        + 'passes the owner\'s weights is the thing being checked');
+      return;
+    }
+    const body = src.slice(at, at + 3000);
+    const m = /L\.tastesLike\(([^)]*)\)/.exec(body);
+    if (!m) {
+      bad.push(name + ' no longer asks L.tastesLike');
+      return;
+    }
+    const line = src.slice(0, at + m.index).split('\n').length;
+    const args = m[1].split(',').length;
+    if (MEANS_YOU[name] && args < 5) {
+      bad.push('index.html:' + line + '  ' + name + ' asks L.tastesLike with '
+        + 'no weights - this screen is about the owner\'s own taste, so two '
+        + 'equally alike bottles come back in no meaningful order');
+    }
+    if (!MEANS_YOU[name] && args >= 5) {
+      bad.push('index.html:' + line + '  ' + name + ' passes weights to '
+        + 'L.tastesLike - the seed there is the GUEST\'S taste and the weights '
+        + 'are the host\'s, so it pours for the wrong person');
+    }
+  });
+  check('the guest pour is not ordered by the host\'s taste', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve

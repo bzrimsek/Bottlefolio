@@ -2282,6 +2282,33 @@ sec('tastes like: flavors from the notes');
     L.tastesLike(cat.b, cat, owned, 5).map(r => r.k).indexOf('b'), -1);
   eq('two flavors are not enough to say anything',
     L.tastesLike({ name: 'Thin', tn: { nose: 'oak', palate: 'vanilla' } }, cat, owned, 5), []);
+
+  /* LIKENESS LEADS AND FIT BREAKS THE TIE (v2.5.65). One fixture proves both,
+     because either property alone is easy to satisfy by accident: Zeta and
+     Alpha are exactly as alike as each other, and Far fits his taste better
+     than either but shares less. */
+  const tl = {
+    s: { k: 's', name: 'Seed', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon' } },
+    z: { k: 'z', name: 'Zeta', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee' } },
+    a: { k: 'a', name: 'Alpha', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, honey' } },
+    f: { k: 'f', name: 'Far', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon, toffee, honey, oak, vanilla, peat smoke' } }
+  };
+  const tlOwned = ['z', 'a', 'f'].map((k, i) => ({ id: 'T' + i, k: k, status: 'open' }));
+  const tlW = { toffee: 1, oak: 1, vanilla: 1, peat: 1, smoke: 1, honey: 0.05,
+    chocolate: 0.2, cinnamon: 0.2, 'dried fruit': 0.2, sherry: 0.2 };
+  const tlPlain = L.tastesLike(tl.s, tl, tlOwned, 5);
+  eq('two bottles can be exactly as alike as each other',
+    tlPlain[0].like.toFixed(3) === tlPlain[1].like.toFixed(3), true);
+  eq('with no weights the tie falls to the name',
+    tlPlain.slice(0, 2).map(r => r.name), ['Alpha', 'Zeta']);
+  const tlFit = L.tastesLike(tl.s, tl, tlOwned, 5, tlW);
+  eq('his taste breaks the tie, and only the tie',
+    tlFit.slice(0, 2).map(r => r.name), ['Zeta', 'Alpha']);
+  eq('the bottle that fits him best does not jump the queue on that alone',
+    [L.tasteScore(tl.f, tlW) > L.tasteScore(tl.z, tlW),
+      tlFit[tlFit.length - 1].name], [true, 'Far']);
+  eq('likeness is reported whether or not fit was asked for',
+    typeof tlFit[0].like, 'number');
 }
 
 sec('a barcode named by Open Food Facts');
