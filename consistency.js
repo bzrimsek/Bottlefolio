@@ -980,10 +980,19 @@ check('no two L helpers share a name', lDupes);
 const svgIds = (src.match(/<(?:clipPath|linearGradient|mask|filter) id="([^"]+)"/g) || [])
   .map(m => m.match(/id="([^"]+)"/)[1])
   .filter(id => !/'\s*\+|\+\s*/.test(id));   // built ids are fine
+/* A DECLARATION, NOT THE WORD. This looked backwards for the string
+   'function ' and found it in the changelog header at the top of the file -
+   "readable by the one function that reads them" - so an id in static markup
+   2,600 lines below was reported as emitted by a repeated drawing, and the
+   audit failed on a sentence. A check that fires on prose is a check nobody
+   trusts (v2.5.47). */
 check('no fixed svg id is emitted by a repeated drawing',
   svgIds.filter(id => {
     const i = src.indexOf('id="' + id + '"');
-    const fn = src.lastIndexOf('function ', i);
+    const before = src.slice(0, i);
+    let fn = -1, m;
+    const DECL = /function\s+\w+\s*\(|function\s*\(/g;
+    while ((m = DECL.exec(before))) fn = m.index;
     // inside a function that returns markup: it will run more than once
     return fn > 0 && src.slice(fn, i).indexOf('return') >= 0;
   }));

@@ -5869,6 +5869,35 @@ const shelfCat = Object.assign({}, data.catalog, JSON.parse(
 const mapData = JSON.parse(fs.readFileSync(path.join(__dirname, 'map.json'), 'utf8'));
 eq('380 bottles', data.bottles.length, 380);
 eq('325 shipped products', Object.keys(data.catalog).length, 325);
+/* PROVENANCE THAT THE READER CAN ACTUALLY READ (v2.5.47).
+   Thirty-six stamps were filed as 'tn_nose', 'tn_palate' and 'tn_finish' in
+   the group slot, which is neither a group nor a field, so L.stateOf answered
+   null for every one and the stamps were decoration. catFault had the check
+   and nothing pointed it at this file. Now something does. */
+eq('every stamp in the shipped catalogue is readable',
+  Object.values(data.catalog)
+    .map(e => (L.stampFault(e).length ? e.name + ': '
+      + L.stampFault(e).join('; ') : null)).filter(Boolean), []);
+eq('and none of them reads back as no state',
+  Object.values(data.catalog).reduce((bad, e) => bad.concat(
+    Object.keys(e.srcOf || {}).filter(f => !L.stateOf(e, f))
+      .map(f => e.name + ': ' + f)), []), []);
+eq('129 entries carry provenance, all of it claimed',
+  (function () {
+    const withIt = Object.values(data.catalog)
+      .filter(e => Object.keys(e.srcOf || {}).length);
+    const states = new Set();
+    withIt.forEach(e => Object.keys(e.srcOf).forEach(f =>
+      states.add(L.stateOf(e, f))));
+    return [withIt.length, [...states]];
+  })(), [129, ['claimed']]);
+/* THE EXACT FAULT THAT HAPPENED, and the flag that is not one. */
+eq('a field stamped in the group slot is a fault',
+  L.stampFault({ tn: { nose: 'x' },
+    src: { nose: { by: 'x', state: 'claimed', url: null } } }),
+  ['no such group: nose (a field, so it belongs in srcOf)']);
+eq('the lookup flag is not provenance and not a fault',
+  L.stampFault({ src: { lookup: true } }), []);
 eq('and 34 more that only his account knows',
   Object.keys(shelfCat).length - Object.keys(data.catalog).length, 34);
 /* THE INVARIANT THAT WAS QUIETLY FALSE: a bottle whose product nothing
