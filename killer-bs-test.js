@@ -2501,19 +2501,66 @@ sec('a shared trait has to be a habit, not an inventory');
      a floor of six bottles. Six is nothing on a shelf of 351, and proof at or
      under 90 is ordinary bottling strength: having some takes no decision. */
   const gentle = L.ROOM_AXES.filter(a2 => a2.id === 'gentle')[0];
-  eq('a quarter of a shelf is not a habit', [
+  const strong = L.ROOM_AXES.filter(a2 => a2.id === 'strong')[0];
+  const peat = L.ROOM_AXES.filter(a2 => a2.id === 'peat')[0];
+  /* WHAT THE WORLD MOSTLY BOTTLES IS NEVER A FINDING. BZ supplied the
+     baseline: 80-90 proof dominates global volume at around 85%, and cask
+     strength is a niche premium tier. Owning some of what the world mostly
+     makes is not a decision anybody took, however much of it there is. */
+  eq('gentler bottlings are never something two people share', [
     L.roomHabit(gentle, { proof: { gentle: 85 }, owned: 351 }),
-    L.roomHabit(gentle, { proof: { gentle: 25 }, owned: 106 })],
+    L.roomHabit(gentle, { proof: { gentle: 300 }, owned: 351 })],
     [false, false]);
-  eq('well over a third of it is',
-    L.roomHabit(gentle, { proof: { gentle: 60 }, owned: 100 }), true);
-  /* The absolute floor still stands underneath: a third of nine bottles is
-     three, and three of anything is not a statement about anybody. */
-  eq('and a tiny shelf cannot reach it on a share alone',
-    L.roomHabit(gentle, { proof: { gentle: 4 }, owned: 9 }), false);
-  eq('every axis is judged the same way',
-    L.ROOM_AXES.filter(a2 => typeof a2.get !== 'function'
-      || typeof a2.floor !== 'number'), []);
+  /* THE SCARCE ONES ARE, at a fifth: the market baseline is low enough that a
+     fifth of a shelf at cask strength is a lean. BZ: "We both actually have
+     high proof." */
+  eq('a quarter of a shelf at cask strength is',
+    L.roomHabit(strong, { proof: { strong: 82 }, owned: 351 }), true);
+  eq('and a twelfth of one is not',
+    L.roomHabit(peat, { peat: { heavy: 28 }, owned: 351 }), false);
+  /* The absolute floor still stands underneath: a fifth of nine bottles is
+     two, and two of anything is not a statement about anybody. */
+  eq('a tiny shelf cannot reach it on a share alone',
+    L.roomHabit(strong, { proof: { strong: 4 }, owned: 9 }), false);
+  eq('every axis says which way the market runs',
+    L.ROOM_AXES.filter(a2 => typeof a2.scarce !== 'boolean'), []);
+  /* AND EACH SCARCE ONE CARRIES THE SHARE THAT MAKES IT A LEAN. A flat
+     threshold buried the age finding: eight per cent of a shelf is ordinary
+     against most things and nearly three times the market against
+     fifteen-year-olds, which BZ put at under 3% of volume. */
+  const old = L.ROOM_AXES.filter(a2 => a2.id === 'old')[0];
+  eq('a scarce axis states its own share',
+    L.ROOM_AXES.filter(a2 => a2.scarce && !(a2.need > 0)), []);
+  eq('eight per cent of a shelf is a lean toward fifteen-year-olds',
+    L.roomHabit(old, { age: { old: 27 }, owned: 338 }), true);
+  eq('but the same eight per cent is not a lean toward peat',
+    L.roomHabit(peat, { peat: { heavy: 27 }, owned: 338 }), false);
+  /* The baseline is his and is recorded as his, because nothing here can
+     measure it: the only catalogue was drawn from his own shelf. */
+  eq('the market baseline says whose it is and covers proof, age and cask',
+    [!!L.MARKET.said, !!L.MARKET.proof, !!L.MARKET.age, !!L.MARKET.cask],
+    [true, true, true, true]);
+  /* IT SAYS IT IS NOT SOURCED. BZ: "I got this data from Gemini so you may
+     want to research and source on your own." Directions are acted on, numbers
+     are not, and nothing divides by any of them. */
+  eq('and admits it is unverified', L.MARKET.sourced, false);
+  eq('nothing divides a shelf by a market number',
+    L.ROOM_AXES.filter(a2 => a2.need && a2.need > 1), []);
+  /* Two category figures are recorded and NOTHING USES THEM. BZ's rule is that
+     a shelf read against a standard distribution should have its
+     concentrations pop, and that needs the whole distribution: with two
+     categories in hand a lift would fire on Canadian and Irish and stay silent
+     on Scotch and bourbon, and the silence would read as a finding about the
+     shelf rather than a hole in the table. */
+  eq('the country shares it does have are recorded, and add to one',
+    Math.round((L.MARKET.country.scotland + L.MARKET.country.unitedStates
+      + L.MARKET.country.canada + L.MARKET.country.ireland
+      + L.MARKET.country.rest) * 100), 100);
+  eq('and the figure that was revised is kept, so nobody reconciles it again',
+    [L.MARKET.country.canada, L.MARKET.country.wasCanada], [0.14, 0.065]);
+  eq('and nothing is judged by them, nor by a region figure it has not got',
+    [L.ROOM_AXES.filter(a2 => /categor|region/i.test(a2.id)).length,
+      L.MARKET.region], [0, null]);
 }
 
 sec('the bar shelf never reaches a whiskey answer');

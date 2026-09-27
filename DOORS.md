@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 783 |
-| tables | 186 |
-| carrying a stated purpose | 598 |
+| tables | 187 |
+| carrying a stated purpose | 600 |
 
 ## Tables
 
@@ -89,6 +89,7 @@ QUESTION, not the name you were going to use.
 - **`L.MAP_KEYS`** — A map key writes only the entries that changed
 - **`L.MAP_PLACES`** — Places to fly to
 - **`L.MAP_ZOOM`** — by the tightest cluster
+- **`L.MARKET`** — WHAT THE MARKET MOSTLY MAKES - UNSOURCED, AND MARKED AS SUCH.
 - **`L.MASH_BY_LAW`** — A MASH BILL FIXED BY LAW IS STILL A MASH BILL
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
 - **`L.MASH_WORDS`** — _no comment above it_
@@ -150,7 +151,7 @@ QUESTION, not the name you were going to use.
 - **`L.RESETTABLE`** — _no comment above it_
 - **`L.RING_SUB`** — Five of these are a category and take the app's own label for it, Title
 - **`L.RING_WRITTEN`** — _no comment above it_
-- **`L.ROOM_AXES`** — _no comment above it_
+- **`L.ROOM_AXES`** — The axes a pair or a room can have in common
 - **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES (BZ
 - **`L.SAYS_NOT_HERE`** — Said on an ANSWER screen, where the subject is the whisky and never the
 - **`L.SCALE_AXES`** — Which axes are LADDERS (ordered rungs) and which are sets.
