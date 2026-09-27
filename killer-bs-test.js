@@ -23225,7 +23225,7 @@ sec('§441 a lookup asks who is asking');
      by accident, so a service change is a decision somebody wrote down.
      2.4.12: WHISKY:EDITION removed, the service now has one source. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.5.0');
+    L.GS_BUILD, '2.5.1');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

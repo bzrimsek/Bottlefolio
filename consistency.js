@@ -2394,6 +2394,36 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the taste answers reach the profile', bad);
 }
 
+/* A FIXED SENTENCE NEVER CLAIMS A PROPORTION (v2.5.78).
+ *
+ * BZ, 2026-09-27: "Most held sherry is a bit of an overstatement." It was. The
+ * Sherry Cellar opener read "a shelf the casks built, and most of them held
+ * sherry" on a shelf where 67 bottles of 351 are in sherry wood - nineteen per
+ * cent. The set is earned by leaning PX, leaning sherry and going back to the
+ * same houses, and by nothing that counts a majority.
+ *
+ * These strings are written once and shown to every shelf that earns the
+ * title, so they cannot know how much of one anything is. Any sentence that
+ * wants to say a proportion has to be built from a count (rule 13d).
+ */
+{
+  const CLAIMS = /\b(most of them|most of it|majority|nearly all|almost all|all of them|every one of them|half of them)\b/i;
+  const bad = [];
+  ['STORY_OPENERS', 'STORY_CLOSERS', 'SET_LINES'].forEach(name => {
+    const table = ENGINE[name];
+    if (!table) return;
+    Object.keys(table).forEach(k => {
+      const said = String(table[k]);
+      if (CLAIMS.test(said)) {
+        bad.push('L.' + name + '["' + k + '"] says "'
+          + (said.match(CLAIMS) || [''])[0] + '" — a fixed sentence '
+          + 'cannot know how much of a shelf anything is');
+      }
+    });
+  });
+  check('no fixed sentence claims a proportion', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
