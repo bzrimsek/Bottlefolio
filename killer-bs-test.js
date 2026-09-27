@@ -2544,6 +2544,14 @@ sec('a shared trait has to be a habit, not an inventory');
      want to research and source on your own." Directions are acted on, numbers
      are not, and nothing divides by any of them. */
   eq('and admits it is unverified', L.MARKET.sourced, false);
+  /* Researched rather than shrugged at (rule 36, BZ: "Research first"). The
+     canonical bodies publish Scotch export volume and US volumes by category,
+     and no trade body publishes a global share by country or any distribution
+     of proof, age or cask - those live in paid data. */
+  eq('it names the canonical sources and what they do not cover',
+    [/scotch-whisky\.org\.uk/.test(L.MARKET.canon.scotch),
+      /distilledspirits\.org/.test(L.MARKET.canon.american),
+      /global share/.test(L.MARKET.canon.lacks)], [true, true, true]);
   eq('nothing divides a shelf by a market number',
     L.ROOM_AXES.filter(a2 => a2.need && a2.need > 1), []);
   /* Two category figures are recorded and NOTHING USES THEM. BZ's rule is that
