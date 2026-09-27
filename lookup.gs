@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.12';
+var GS_BUILD = '2.5.0';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -509,17 +509,35 @@ function askAbout(name, notesOnly) {
   }
 }
 
+/* THE FLAVOUR WORDS THE APP KNOWS, generated from L.PALATE in
+ * index.html and checked against it by consistency.js. The service
+ * names which of these a note contains so the app does not have to
+ * read the prose back and guess (BZ, 2026-09-27). */
+var WHEEL_TERMS_ = [
+  'peat', 'smoke', 'medicinal', 'corn', 'rye', 'wheat', 'malt', 'grain',
+  'bread', 'honey', 'floral', 'fruit', 'apple', 'pear', 'orange',
+  'lemon', 'grapefruit', 'citrus', 'cherry', 'apricot', 'plum', 'raisin',
+  'fig', 'dried fruit', 'berry', 'red berry', 'banana', 'coconut',
+  'melon', 'grass', 'fresh', 'mint', 'herbal', 'tea', 'dill', 'earthy',
+  'vegetable', 'oak', 'toasted oak', 'cedar', 'pine', 'tobacco',
+  'leather', 'vanilla', 'spice', 'cinnamon', 'clove', 'nutmeg', 'pepper',
+  'ginger', 'baking spice', 'licorice', 'caramel', 'toffee', 'sugar',
+  'maple', 'cola', 'chocolate', 'coffee', 'nutty', 'almond', 'cream',
+  'cake', 'meaty', 'sherry', 'wine', 'grape'
+];
+
 function askAboutOnce_(name, notesOnly) {
 
   var shape = notesOnly
     ? '{"name":string,"colour":string|null,"nose":string|null,' +
-      '"palate":string|null,"finish":string|null,"source":string|null}'
+      '"palate":string|null,"finish":string|null,"source":string|null,' +
+      '"wheel":string[]|null}'
     : '{"name":string,"dist":string|null,"proof":number|null,' +
       '"sub":string|null,"age":number|null,"fin":string|null,' +
       '"msrp":number|null,"scar":string|null,"region":string|null,' +
       '"mash":string|null,' +
       '"colour":string|null,"nose":string|null,"palate":string|null,' +
-      '"finish":string|null,"source":string|null}';
+      '"finish":string|null,"source":string|null,"wheel":string[]|null}';
 
   var rules = [
     'Return ONLY the JSON object. No prose, no markdown fences.',
@@ -563,6 +581,14 @@ function askAboutOnce_(name, notesOnly) {
     'published review, not from your impression of what it probably tastes',
     'like. Keep each under 90 characters.',
     'source names where the tasting notes came from, or null.',
+    'wheel lists which of these flavour words the notes you returned',
+    'actually contain: ' + WHEEL_TERMS_.join(', ') + '.',
+    'Use the exact spellings in that list, lower case. Include a word',
+    'only where the colour, nose, palate or finish you returned supports',
+    'it - a synonym counts, an impression does not. Never a word the',
+    'notes do not carry, and null rather than a guess. This is not a',
+    'second tasting note: it is the same note, said in the words the app',
+    'already uses.',
     'mash is the grain bill EXACTLY as the producer publishes it, e.g.',
     '"75% corn, 21% rye, 4% malted barley". Most bottlings do not publish',
     'one and null is then the correct and common answer. Do NOT derive it',

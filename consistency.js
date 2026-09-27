@@ -2275,6 +2275,39 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('what he says about drinking it is said in one place', bad);
 }
 
+/* THE SERVICE IS OFFERED THE SAME FLAVOUR WORDS THE APP CARRIES (v2.5.70).
+ *
+ * Exactly the fault the category list already has a check for, and for the same
+ * reason: the taxonomy was widened once and the prompt was not, so the model
+ * was asked to file a gin into a whisky taxonomy and nulled what would not fit.
+ * WHEEL_TERMS_ in Code.gs is generated from L.PALATE, and these two files are
+ * edited in different sessions by different hands.
+ */
+{
+  const gs = fs.readFileSync(__dirname + '/lookup.gs', 'utf8');
+  const block = (gs.match(/var WHEEL_TERMS_ = \[([\s\S]*?)\];/) || [])[1];
+  const said = block ? (block.match(/'([^']+)'/g) || [])
+    .map(x => x.slice(1, -1)) : [];
+  const mine = ENGINE.PALATE
+    .filter(r => ENGINE.NOT_A_TASTE.indexOf(r[1]) < 0).map(r => r[0]);
+  const missing = mine.filter(t => said.indexOf(t) < 0);
+  const extra = said.filter(t => mine.indexOf(t) < 0);
+  const bad = [];
+  if (!block) {
+    bad.push('Code.gs carries no WHEEL_TERMS_ \u2014 the service cannot name '
+      + 'what it found and every note goes back to being guessed at');
+  }
+  if (missing.length) {
+    bad.push('the app knows ' + missing.length + ' flavour words the service '
+      + 'is never offered: ' + missing.slice(0, 8).join(', '));
+  }
+  if (extra.length) {
+    bad.push('the service is offered words the app cannot read back: '
+      + extra.slice(0, 8).join(', '));
+  }
+  check('the service is offered the flavour words the app carries', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve

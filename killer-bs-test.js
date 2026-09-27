@@ -2321,6 +2321,28 @@ sec('tastes like: flavors from the notes');
     L.tastesLike(tl.s, tl, tlOwned, 5)
       .reduce((a2, r) => a2.concat(r.words), [])
       .filter(w => madeUp.indexOf(w) >= 0), []);
+  /* THE SERVICE NAMES WHAT IT FOUND (v2.5.70). A lookup returns `wheel`: which
+     of this app's own flavour words the note it sourced actually contains, so
+     the app stops reading the prose back through 278 spellings and guessing.
+     It is a model's answer arriving over the wire, so it is data: a word this
+     app does not know is dropped, never added. */
+  eq('a word the service names is added to what the notes gave',
+    L.palateOf({ tn: { nose: 'Christmas cake' }, wheel: ['cherry'] }).all
+      .indexOf('cherry') >= 0, true);
+  eq('and the notes still speak for themselves',
+    L.palateOf({ tn: { nose: 'Christmas cake' }, wheel: ['cherry'] }).all
+      .indexOf('cake') >= 0, true);
+  eq('a word this app does not know is dropped, not trusted',
+    L.wheelSaid({ wheel: ['cherry', 'unobtanium', '', null, 7] }), ['cherry']);
+  eq('a phrase is understood the same as it would be in a note',
+    L.wheelSaid({ wheel: ['dried fruit'] }).indexOf('dried fruit') >= 0, true);
+  eq('nothing said is nothing added',
+    [L.wheelSaid({}), L.wheelSaid({ wheel: 'cherry' })], [[], []]);
+  /* The memo must know about it, or the second bottle with the same prose
+     would be served the first one's reading. */
+  eq('two bottles with one note and different findings read differently',
+    L.palateOf({ tn: { nose: 'oak' }, wheel: ['peat'] }).all.length
+      !== L.palateOf({ tn: { nose: 'oak' } }).all.length, true);
   /* WHERE A FLAVOUR CAME FROM, IN LAYERS (v2.5.69). BZ's model: "every main
      category as a baseline as driven by grain and wood, then impacted by
      finishes and age" - with the contents off the discs, not off him: "Use
@@ -23115,7 +23137,7 @@ sec('§441 a lookup asks who is asking');
      by accident, so a service change is a decision somebody wrote down.
      2.4.12: WHISKY:EDITION removed, the service now has one source. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.4.12');
+    L.GS_BUILD, '2.5.0');
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

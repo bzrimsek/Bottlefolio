@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 770 |
+| functions | 771 |
 | tables | 185 |
-| carrying a stated purpose | 589 |
+| carrying a stated purpose | 590 |
 
 ## Tables
 
@@ -958,6 +958,7 @@ QUESTION, not the name you were going to use.
 - **`L.waitingOn`** — THE ASKS THAT ARE STILL WAITING and belong to nobody on the list
 - **`L.waitingSay`** — _no comment above it_
 - **`L.waitSay`** — WHAT A WAIT SAYS AS IT GOES ON
+- **`L.wheelSaid`** — WHAT THE SERVICE SAID IT FOUND, kept only where this app knows the word.
 - **`L.whiskyEvidence`** — WHAT MAKES A LINE A WHISKY
 - **`L.wholeValue`** — A LIST TAKEN WHOLE FROM THE OTHER SIDE, or an empty one when the account
 - **`L.whyPt`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
