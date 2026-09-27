@@ -154,7 +154,18 @@ check('no plain function is defined and never called', plainDead);
    It comes out with its tests the next time that file is reorganised on
    purpose. Until then it is a few lines nobody calls, which is cheaper than
    another afternoon of that. */
-const KEPT_UNWIRED = ['parseUpcListing'];
+/* THE CATALOGUE SCHEMA, unwired ON PURPOSE and only for now (BZ,
+   2026-09-26: segregated until proven). The new catalogue is written beside
+   the live library rather than into it, by a tool rather than by the app,
+   so the two leaf functions of that shape - the one that says what state a
+   field is in and the one that refuses a bad record - have no caller in
+   index.html yet. They are tested to the hilt, which is the point of
+   building the shape before the rows.
+
+   They come off this list the day the app reads the new catalogue. If that
+   day does not come, they come out with their tests instead; what must not
+   happen is this line quietly outliving the decision that put it here. */
+const KEPT_UNWIRED = ['parseUpcListing', 'stateOf', 'catFault'];
 check('no L function is tested but never wired into the app',
   unwired.filter(fn => KEPT_UNWIRED.indexOf(fn) < 0));
 

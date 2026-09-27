@@ -3853,6 +3853,86 @@ eq('four people get no diagram',
 eq('and nobody gets none', Object.keys(L.vennSpots([])).length, 0);
 }
 
+sec('the catalogue, and where its facts came from');
+/* Approved 2026-09-26. Nothing reads these yet - the first pass writes
+   beside the live library, not into it - so this is the shape being proved
+   before anything depends on it. */
+{
+/* THE GROUPS ARE ONE MAP READ BOTH WAYS, so a field cannot belong to two. */
+const seen = {};
+let twice = [];
+Object.keys(L.FIELD_GROUPS).forEach(g => {
+  L.FIELD_GROUPS[g].forEach(f => {
+    if (seen[f]) twice.push(f);
+    seen[f] = g;
+  });
+});
+eq('no field is in two groups', twice, []);
+eq('a field finds its group', L.groupOf('mash'), 'composition');
+eq('and one nobody declared finds none', L.groupOf('nonsense'), null);
+
+/* A FIELD CORRECTED ON ITS OWN BEATS ITS GROUP. This is the override the
+   whole per-group compromise depends on: without it, correcting one field
+   would mean restamping five. */
+const b = { kind: 'bottle', name: 'Ardbeg Ten', ring: 1,
+  key: L.catKeyFor('bottle', 'Ardbeg Ten'),
+  src: { composition: { by: 'label', state: 'stated' } },
+  srcOf: { mash: { by: 'category rule', state: 'derived' } } };
+eq('the group answers for a field with no stamp of its own',
+  L.stateOf(b, 'proof'), 'stated');
+eq('and a field with its own stamp answers for itself',
+  L.stateOf(b, 'mash'), 'derived');
+/* NO PROVENANCE IS NOT WEAK PROVENANCE. A field nobody vouched for must not
+   read as claimed, or every empty field becomes somebody's word. */
+eq('a field in no stamped group has no state', L.stateOf(b, 'msrp'), null);
+eq('and asking for its stamp gives nothing', L.provOf(b, 'msrp'), null);
+
+/* THE URL KEY. url:null says nobody has a link; a missing key says nobody
+   thought about it, and Merlin cannot tell those apart unless the key is
+   always written (BZ, 2026-09-26). */
+eq('a claimed fact with url:null is complete',
+  L.srcFault({ by: 'pourpicks', state: 'claimed', url: null }), []);
+eq('a claimed fact with no url KEY is not',
+  L.srcFault({ by: 'pourpicks', state: 'claimed' }),
+  ['claimed with no url key']);
+eq('and a stated fact does not carry url:null',
+  L.srcFault({ by: 'label', state: 'stated', url: null }),
+  ['url:null on a stated fact, which needs no url']);
+eq('a stamp with no state is refused',
+  L.srcFault({ by: 'label' }).indexOf('no state') >= 0, true);
+eq('and so is a fourth state',
+  L.srcFault({ by: 'x', state: 'verified' })[0], 'unknown state verified');
+eq('there are three states and no more', L.SRC_STATES.length, 3);
+
+/* THE KEYS ARE THE ONES ALREADY TRUSTED ELSEWHERE, never a fourth spelling
+   of the same thing (rule 2). */
+eq('a bottle is keyed the way a pooled flight keys one',
+  L.catKeyFor('bottle', 'Ardbeg Ten'), L.shopNorm('Ardbeg Ten'));
+eq('a house the way the house registry keys one',
+  L.catKeyFor('house', 'Jack Daniel Distillery'),
+  L.refHouseKey('Jack Daniel Distillery'));
+eq('and a producer the way the brand table does',
+  L.catKeyFor('producer', 'Barrell Craft Spirits'),
+  L.libKey('Barrell Craft Spirits'));
+eq('an unknown kind is keyed by nothing', L.catKeyFor('cask', 'x'), '');
+
+/* A WHOLE RECORD, read before it is written. */
+eq('a good record has nothing wrong with it', L.catFault(b), []);
+eq('a key that does not match its own name is caught',
+  L.catFault(Object.assign({}, b, { key: 'something else' })),
+  ['key is not what this name makes']);
+eq('a ring outside the four is caught',
+  L.catFault(Object.assign({}, b, { ring: 9 })), ['ring is 9']);
+eq('a group nobody declared is caught',
+  L.catFault(Object.assign({}, b,
+    { src: { vibes: { by: 'x', state: 'stated' } } }))
+    .indexOf('no such group: vibes') >= 0, true);
+/* And the faults are a LIST: a record with two things wrong says two. */
+eq('two faults are two sentences',
+  L.catFault({ kind: 'bottle', name: 'x', key: L.catKeyFor('bottle', 'x') })
+    .length, 1);
+}
+
 sec('what a group has in common');
 /* BZ, 2026-09-25: a group he picks, rather than a room the app assembled.
    Past three people a Venn stops being honest, so it says these two - and
