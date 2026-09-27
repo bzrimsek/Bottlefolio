@@ -3791,6 +3791,44 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
   eq('a bottle with no notes is not counted against the shelf',
     L.flavourSpread([mk('n1', null)], 3).described, 0);
 })();
+/* THE FLAVOURS A SHELF LEANS ON (v2.5.55), which is what a candidate is
+   scored against. A flavour on most of the shelf says nothing about a bottle -
+   oak is on 60% of BZ's - and one on almost none of it is not a habit. */
+(function () {
+  const prof = { flavour: [
+    { value: 'oak', n: 100 },        // 100% - on everything, says nothing
+    { value: 'vanilla', n: 60 },     // 60% - still too common
+    { value: 'dark fruit', n: 40 },  // in the band
+    { value: 'peat', n: 12 },        // in the band
+    { value: 'cola', n: 4 }          // 4% - not a habit
+  ] };
+  const leans = L.shelfLeans(prof);
+  eq('a flavour on everything is not evidence', leans.oak, undefined);
+  eq('nor is one on more than half', leans.vanilla, undefined);
+  eq('what the shelf leans on is what is left',
+    Object.keys(leans).sort(), ['dark fruit', 'peat']);
+  eq('and one bottle is not a habit', leans.cola, undefined);
+  eq('a shelf nobody has described leans on nothing',
+    L.shelfLeans({ flavour: [] }), {});
+  /* And the score: a shared lean counts, a shared commonplace does not. */
+  const cat = { x: { k: 'x', name: 'X', sub: 'scotch', dist: 'H' } };
+  const bots = [{ id: '1', k: 'x', status: 'open' }];
+  /* judgeListing reads a whole profile, so the fixture is one - with only the
+     flavour dimension filled, which is the part under test. */
+  const full = Object.assign({ houses: [], woodFamilies: [], styles: [],
+    peat: { any: 0 }, proof: null, repeats: [], starred: [] }, prof);
+  const withLean = L.judgeListing({ flavours: ['dark fruit', 'peat'] },
+    'A', cat, bots, [], full);
+  const withCommon = L.judgeListing({ flavours: ['oak', 'vanilla'] },
+    'B', cat, bots, [], full);
+  eq('a shared lean is worth saying',
+    /tastes of dark fruit and peat/.test(String(withLean.why)), true);
+  eq('and a shared commonplace earns nothing',
+    String(withCommon.why).indexOf('tastes of'), -1);
+  eq('no notes on the candidate, nothing claimed',
+    String(L.judgeListing({}, 'C', cat, bots, [], full).why)
+      .indexOf('tastes of'), -1);
+})();
 /* Evenness, lifted out of the radar so the radar could grow an axis. */
 eq('one bucket alone is perfectly even', L.axisEvenness([7]), 1);
 eq('two equal buckets are too', L.axisEvenness([5, 5]), 1);
