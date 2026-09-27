@@ -1198,7 +1198,11 @@ check('no fixed svg id is emitted by a repeated drawing',
   'With a guest',
     /* v2.0.9 */
     'Scan the library for inconsistencies', 'Whose shelf counts',
-    'Their shelf'];
+    'Their shelf',
+    /* v2.5.43: the attribution CC BY-SA asks for. The check only guards the
+       controls it is told about (9z), so a credit nobody listed here is a
+       credit that can be deleted without anything noticing. */
+    'Where the reference data comes from'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
