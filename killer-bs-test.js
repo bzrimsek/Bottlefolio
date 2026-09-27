@@ -2493,6 +2493,40 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('two shelves are compared as shares, not as counts');
+{
+  /* BZ, 2026-09-27: "In place of numbers in the buddy text, should we use
+     percentages?" His screen read "bourbon - 145 on yours, 73 on Nik's",
+     which looks like his shelf dominating; as shares it is 41% of his and 69%
+     of Nik's, and Nik is the bourbon drinker. */
+  const side = (id, name, owned, n, strong) => ({ id: id, name: name, map: {},
+    profile: { owned: owned, styles: [{ value: 'bourbon', n: n }],
+      regions: [], houses: [], peat: { heavy: 0 },
+      proof: { strong: strong, gentle: 0, n: owned } } });
+  const notes = L.roomNotes([side('me', 'You', 351, 145, 82),
+    side('nik', 'Nik', 106, 73, 26)], 'me', {});
+  const said = (notes || []).map(n => n.text).join(' ');
+  eq('the shared category is given as a share of each shelf',
+    [/41% of yours/.test(said), /69% of Nik/.test(said)], [true, true]);
+  /* AND THE HARD NUMBER IS KEPT BESIDE IT. BZ: "Hard numbers are ok
+     sometimes." A share on its own flatters a small shelf, where a quarter of
+     it can be four bottles, and sometimes the count is the fact. */
+  eq('the number is still there, after the share',
+    [/41% of yours \(145\)/.test(said), /69% of Nik.s \(73\)/.test(said)],
+    [true, true]);
+  eq('a shared trait reads the same way',
+    /23% \(82\) and 25% \(26\) of the shelf/.test(said), true);
+  /* A COUNT IS STILL RIGHT WHERE THE THING COUNTED IS SHARED: thirteen of the
+     same whiskies is thirteen for both, and two shares would be two numbers
+     for one fact. */
+  eq('a share needs a denominator, and says nothing without one',
+    L.pct(5, 0), '0%');
+  /* One door says a comparison, with or without whose shelf it is. */
+  eq('a comparison is a share and then the number',
+    [L.compSay(145, 351), L.compSay(145, 351, 'yours')],
+    ['41% (145)', '41% of yours (145)']);
+}
+
 sec('a shared trait has to be a habit, not an inventory');
 {
   /* BZ, 2026-09-27: "Everyone has low proof. We both actually have high proof.
@@ -2546,6 +2580,24 @@ sec('a shared trait has to be a habit, not an inventory');
      it. Both are a fifth of the shelf now. */
   eq('a fifth of a shelf is the bar for both verdicts',
     L.CASK_DELIBERATE_SHARE, 0.2);
+  /* AND THE PORTRAIT'S LAST TWO COUNT-BASED VERDICTS. Wood was five bottles,
+     which is one and a half per cent of BZ's shelf; the label verdict hung off
+     ten obscure ones, when what says somebody is not buying labels is that
+     NONE of the shelf is allocated or rare. */
+  eq('not buying labels rests on the rare count being zero',
+    [/not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)),
+      L.labelLine({ obscure: 48, rare: 12 }, 351)], [true, null]);
+  eq('and a shelf too small to judge is not judged',
+    L.labelLine({ obscure: 5, rare: 0 }, 12), null);
+  /* AND THE PORTRAIT'S LAST TWO COUNT-BASED VERDICTS. Wood was five bottles,
+     one and a half per cent of BZ's shelf; the label verdict hung off ten
+     obscure ones, when what says somebody is not buying labels is that NONE of
+     the shelf is allocated or rare. */
+  eq('not buying labels rests on the rare count being zero',
+    [/not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)),
+      L.labelLine({ obscure: 48, rare: 12 }, 351)], [true, null]);
+  eq('and a shelf too small to judge is not judged',
+    L.labelLine({ obscure: 5, rare: 0 }, 12), null);
   eq('and one door answers whether a shelf leans that way',
     [L.leansTo(80, 200), L.leansTo(28, 351), L.leansTo(10, 0),
       L.leansTo(0, 100)], [true, false, false, false]);

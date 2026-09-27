@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 784 |
+| functions | 786 |
 | tables | 187 |
 | carrying a stated purpose | 601 |
 
@@ -289,6 +289,7 @@ QUESTION, not the name you were going to use.
 - **`L.clearFacets`** — IN PLACE, returning the same object
 - **`L.collectorLine`** — _no comment above it_
 - **`L.columnOfSort`** — Which column a sort belongs to, so the header can show where it is.
+- **`L.compSay`** — HOW A SHELF COMPARISON IS SAID (BZ, 2026-09-27
 - **`L.contextLine`** — The same thing as a line somebody would read
 - **`L.contradictions`** — _no comment above it_
 - **`L.contribDelta`** — _no comment above it_
@@ -483,6 +484,7 @@ QUESTION, not the name you were going to use.
 - **`L.labelGaps`** — _no comment above it_
 - **`L.labelGuard`** — THE BARCODE, READ LOCALLY BEFORE ANY PAID CALL (zxing is precached and
 - **`L.labelLabel`** — _no comment above it_
+- **`L.labelLine`** — NOT BUYING LABELS IS ABOUT THE RARE ONES, not the obscure ones
 - **`L.labelSame`** — _no comment above it_
 - **`L.labelShow`** — The value as a person reads it, not as stored
 - **`L.labelTake`** — Step three: the edit, built from what was agreed to. `name` never
@@ -492,7 +494,7 @@ QUESTION, not the name you were going to use.
 - **`L.latelyBottle`** — WHAT A BOTTLE IS, in one line, so the writer can find what joins a
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
-- **`L.leansTo`** — DOES A SHELF LEAN THIS WAY? A share of it, never a count (2026-09-27)
+- **`L.leansTo`** — _no comment above it_
 - **`L.lessonBlocker`** — the shape that is missing is what tells somebody what to buy.
 - **`L.lessonsFor`** — offered only when a real flight could be cast from what is open.
 - **`L.libKey`** — Whiskey" are two bottles a keyed store would silently merge.
@@ -649,7 +651,7 @@ QUESTION, not the name you were going to use.
 - **`L.parsePlace`** — _no comment above it_
 - **`L.parseQuery`** — _no comment above it_
 - **`L.participantCard`** — _no comment above it_
-- **`L.pct`** — A GROUP ONE SHELF HAS DEPTH IN AND THE OTHER HAS NONE OF
+- **`L.pct`** — _no comment above it_
 - **`L.peatFromPpm`** — _no comment above it_
 - **`L.peatLevel`** — How peated, 0 to 4
 - **`L.pendingForLibrary`** — _no comment above it_
