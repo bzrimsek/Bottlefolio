@@ -899,7 +899,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is
 - **`L.tasteScore`** — A BOTTLE AGAINST THOSE WEIGHTS, nought to one.
 - **`L.tasteSeen`** — How many times each flavour has been asked about.
-- **`L.tastesLike`** — `weights` is optional and OFTEN WRONG TO PASS
+- **`L.tastesLike`** — Coverage is worked out here rather than in a door of its own because `shared`
 - **`L.tasteTimes`** — _no comment above it_
 - **`L.tasteWants`** — _no comment above it_
 - **`L.tasteWeights`** — WHAT THIS PERSON'S TASTE WEIGHS, one flavour at a time (BZ, 2026-09-27).

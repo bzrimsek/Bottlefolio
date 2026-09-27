@@ -2309,6 +2309,46 @@ sec('tastes like: flavors from the notes');
       tlFit[tlFit.length - 1].name], [true, 'Far']);
   eq('likeness is reported whether or not fit was asked for',
     typeof tlFit[0].like, 'number');
+  /* HANDED A PRODUCT, IT MEASURES AGAINST THAT BOTTLE'S PROFILE (v2.5.66).
+     The guest view passes the bottle they named, and what is scored is how
+     much of ITS profile each of yours carries - rarest flavors counting for
+     most. Whole tastes of everything the seed does and six things besides;
+     Part tastes of three of the seed's four and nothing else. */
+  const gs = {
+    s: { k: 'Seed', name: 'Seed', tn: { nose: 'lemon, floral', palate: 'herbal, honey' } },
+    part: { k: 'Part', name: 'Part', tn: { nose: 'lemon', palate: 'herbal, honey' } },
+    whole: { k: 'Whole', name: 'Whole', tn: { nose: 'lemon, floral', palate: 'herbal, honey, oak, vanilla, toffee, pepper' } },
+    f1: { k: 'F1', name: 'F1', tn: { nose: 'oak', palate: 'vanilla, pepper' } },
+    f2: { k: 'F2', name: 'F2', tn: { nose: 'oak', palate: 'toffee, pepper' } },
+    f3: { k: 'F3', name: 'F3', tn: { nose: 'oak', palate: 'vanilla, toffee' } }
+  };
+  const gOwned = ['part', 'whole', 'f1', 'f2', 'f3']
+    .map((k, i) => ({ id: 'G' + i, k: gs[k].k, status: 'open' }));
+  const gFor = list => {
+    const out = {};
+    list.forEach(r => { out[r.name] = r; });
+    return out;
+  };
+  const gPlain = gFor(L.tastesLike(gs.s, gs, gOwned, 5));
+  const gTheirs = gFor(L.tastesLike(gs.s, gs, gOwned, 5, gs.s));
+  eq('a bottle carrying ALL of their flavors is charged nothing for its own',
+    gTheirs.Whole.score.toFixed(6), gTheirs.Whole.like.toFixed(6));
+  eq('and six extra notes did not make it a worse answer than it is',
+    gTheirs.Whole.score.toFixed(6), gPlain.Whole.like.toFixed(6));
+  eq('a bottle short of one of their flavors is marked down for the gap',
+    gTheirs.Part.score < gTheirs.Part.like, true);
+  eq('likeness still leads, so the nearer bottle is still named first',
+    Object.keys(gTheirs)[0] !== undefined
+      && L.tastesLike(gs.s, gs, gOwned, 5, gs.s)[0].name, 'Part');
+  /* A PRODUCT AND A PERSON ARE READ DIFFERENTLY, which is the whole point of
+     the argument: the same candidate scores its coverage of their bottle in
+     one case and its fit to a palate in the other. */
+  const gW = { oak: 1, vanilla: 1, toffee: 1, pepper: 1, citrus: 0.05,
+    floral: 0.05, herbal: 0.05, honey: 0.05 };
+  eq('the same bottle scores one thing against their whisky and another '
+    + 'against a palate',
+    L.tastesLike(gs.s, gs, gOwned, 5, gs.s)[0].score
+      !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
 sec('a barcode named by Open Food Facts');

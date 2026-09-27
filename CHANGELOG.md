@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.66  ·  2026-09-27 12:37 PM ET
+
+The guest list is now ranked against the bottle they named, not against you. Ask for something to pour a visitor and Bottlefolio measures each of your bottles by how much of THEIR whisky's flavour profile it actually carries, rarest flavours counting for most, rather than by how near it sits to your own taste. Likeness still leads three to one. The first attempt at this was wrong and was measured before it shipped: scoring a bottle as the average weight of its own flavours rewarded thin tasting notes, so a bottle sharing three of the guest's flavours beat one sharing five for the crime of being described in fewer words. Coverage of their profile fixes it - on the 297 shipped catalogue entries that return two or more of BZ's bottles, 182 lists reorder and 15 name a different bottle first, of which eleven share more of the guest's own flavours and none share fewer. A consistency check now names which profile each screen must weigh, and the first version of that check passed while the guest view weighed the host, because it read the whole argument list and the guest's bottle is the first argument too.
+
 ## v2.5.65  ·  2026-09-27 12:03 PM ET
 
 Tastes like now breaks its ties toward your own taste. The card on a bottle and in Shop ranks your shelf by how much a bottle shares with the one in hand, rarest flavours counting for most; where two bottles are exactly as alike, it now names the one nearer your taste profile first. Likeness still leads three to one, so a bottle that fits you but shares little does not jump the queue. The guest view is deliberately left out: the seed there is the guest's taste, and ordering their answer by yours would pour for the wrong person. A consistency check holds both halves of that, and App use gained an entry for the card and says plainly that your taste is left out when you are pouring for somebody else.

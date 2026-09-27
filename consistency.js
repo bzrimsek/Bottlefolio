@@ -2155,50 +2155,83 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('App use counts the axes the engine has', bad);
 }
 
-/* THE GUEST POUR IS NOT ORDERED BY THE HOST'S TASTE (v2.5.65).
+/* EACH SCREEN WEIGHS THE RIGHT PERSON'S TASTE (v2.5.66).
  *
- * L.tastesLike takes optional weights and breaks ties toward the person whose
- * weights they are. On the bottle page and in Shop that is the point. Pouring
- * for a guest the seed is THEIR taste, so the host's weights there would order
- * the guest's answer by the host's palate and nobody would see it happen - the
- * list would still look like a list of similar whiskies.
+ * L.tastesLike breaks its ties toward whoever's weights it is handed, and the
+ * right answer differs by screen:
  *
- * So the screens that mean YOUR taste must pass weights and the guest view must
- * not, and BOTH halves are checked: a guard that only forbids is satisfied by
- * deleting the feature.
+ *   tastesLikeCard - the bottle page and Shop. YOUR taste, from the profile.
+ *   L.pourView     - a guest. THE BOTTLE THEY NAMED, handed straight in, so the
+ *                    list is ranked by how much of their profile each of yours
+ *                    carries. Never your own weights: the list looks the same
+ *                    either way, so nobody would notice it pouring for you.
+ *
+ * Every screen must pass weights and must pass the right ones, so this checks
+ * both which door they come from and that they come at all - a guard that only
+ * forbids the wrong source is satisfied by passing nothing.
  */
 {
   const bad = [];
-  /* true: this caller is about the owner's own taste. */
-  const MEANS_YOU = { tastesLikeCard: true, 'L.pourView': false };
-  Object.keys(MEANS_YOU).forEach(name => {
-    const at = src.indexOf((name.indexOf('L.') === 0 ? name + ' = function'
-      : 'function ' + name + '('));
+  /* Which door each caller's weights must come from. */
+  const WEIGH = {
+    tastesLikeCard: { from: 'shelfProfileNow', whose: 'the owner\'s own' },
+    'L.pourView': { from: 'seed', whose: 'the bottle the guest named' }
+  };
+  Object.keys(WEIGH).forEach(name => {
+    const want = WEIGH[name];
+    const at = src.indexOf(name.indexOf('L.') === 0 ? name + ' = function'
+      : 'function ' + name + '(');
     if (at < 0) {
-      bad.push(name + ' has gone - it asked L.tastesLike, and whether it '
-        + 'passes the owner\'s weights is the thing being checked');
+      bad.push(name + ' has gone - whose taste it weighs is the thing being '
+        + 'checked here');
       return;
     }
     const body = src.slice(at, at + 3000);
-    const m = /L\.tastesLike\(([^)]*)\)/.exec(body);
-    if (!m) {
+    const call = body.indexOf('L.tastesLike(');
+    if (call < 0) {
       bad.push(name + ' no longer asks L.tastesLike');
       return;
     }
-    const line = src.slice(0, at + m.index).split('\n').length;
-    const args = m[1].split(',').length;
-    if (MEANS_YOU[name] && args < 5) {
-      bad.push('index.html:' + line + '  ' + name + ' asks L.tastesLike with '
-        + 'no weights - this screen is about the owner\'s own taste, so two '
-        + 'equally alike bottles come back in no meaningful order');
+    /* Walked to the MATCHING paren, not to the first `);` on the way - the call
+       is followed by a .map().filter() chain whose own parens closed first, and
+       the arguments came back with half the chain attached. */
+    const open = call + 'L.tastesLike('.length;
+    let end = open, d = 1;
+    while (end < body.length && d) {
+      if ('([{'.indexOf(body[end]) >= 0) d++;
+      if (')]}'.indexOf(body[end]) >= 0) d--;
+      if (d) end++;
     }
-    if (!MEANS_YOU[name] && args >= 5) {
-      bad.push('index.html:' + line + '  ' + name + ' passes weights to '
-        + 'L.tastesLike - the seed there is the GUEST\'S taste and the weights '
-        + 'are the host\'s, so it pours for the wrong person');
+    const m = { index: call, 1: body.slice(open, end) };
+    const line = src.slice(0, at + m.index).split('\n').length;
+    /* THE FIFTH ARGUMENT ALONE, split at the commas between arguments rather
+       than every comma. Reading the whole list made this check vacuous for
+       L.pourView, whose FIRST argument is `seed` too: it passed while the
+       screen weighed the host (2026-09-27). */
+    const args = [];
+    let depth = 0, cur = '';
+    m[1].split('').forEach(ch => {
+      if (ch === '(' || ch === '{' || ch === '[') depth++;
+      if (ch === ')' || ch === '}' || ch === ']') depth--;
+      if (ch === ',' && !depth) { args.push(cur); cur = ''; return; }
+      cur += ch;
+    });
+    args.push(cur);
+    if (args.length < 5) {
+      bad.push('index.html:' + line + '  ' + name + ' asks L.tastesLike with '
+        + 'nothing to break its ties, so two equally alike bottles come back '
+        + 'in no meaningful order - it should be given ' + want.whose + ' ('
+        + want.from + ')');
+      return;
+    }
+    if (args[4].indexOf(want.from) < 0) {
+      bad.push('index.html:' + line + '  ' + name + ' breaks its ties on `'
+        + args[4].trim() + '` rather than ' + want.whose + ' - this screen '
+        + 'must pass ' + want.from + ', and the list looks the same either '
+        + 'way, so nothing else will catch it');
     }
   });
-  check('the guest pour is not ordered by the host\'s taste', bad);
+  check('each screen weighs the right person\'s taste', bad);
 }
 
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
