@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 783 |
+| functions | 784 |
 | tables | 187 |
-| carrying a stated purpose | 600 |
+| carrying a stated purpose | 601 |
 
 ## Tables
 
@@ -492,6 +492,7 @@ QUESTION, not the name you were going to use.
 - **`L.latelyBottle`** — WHAT A BOTTLE IS, in one line, so the writer can find what joins a
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
+- **`L.leansTo`** — DOES A SHELF LEAN THIS WAY? A share of it, never a count (2026-09-27)
 - **`L.lessonBlocker`** — the shape that is missing is what tells somebody what to buy.
 - **`L.lessonsFor`** — offered only when a real flight could be cast from what is open.
 - **`L.libKey`** — Whiskey" are two bottles a keyed store would silently merge.

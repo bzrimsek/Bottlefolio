@@ -2540,6 +2540,15 @@ sec('a shared trait has to be a habit, not an inventory');
   eq('the market baseline says whose it is and covers proof, age and cask',
     [!!L.MARKET.said, !!L.MARKET.proof, !!L.MARKET.age, !!L.MARKET.cask],
     [true, true, true, true]);
+  /* THE PORTRAIT JUDGES SMOKE THE WAY IT JUDGES STRENGTH. The two lines sit
+     beside each other and smoke was a bare count of ten bottles - three per
+     cent of BZ's shelf, and it would have declared smoke was not a phase on
+     it. Both are a fifth of the shelf now. */
+  eq('a fifth of a shelf is the bar for both verdicts',
+    L.CASK_DELIBERATE_SHARE, 0.2);
+  eq('and one door answers whether a shelf leans that way',
+    [L.leansTo(80, 200), L.leansTo(28, 351), L.leansTo(10, 0),
+      L.leansTo(0, 100)], [true, false, false, false]);
   /* IT SAYS IT IS NOT SOURCED. BZ: "I got this data from Gemini so you may
      want to research and source on your own." Directions are acted on, numbers
      are not, and nothing divides by any of them. */
