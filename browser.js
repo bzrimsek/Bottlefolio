@@ -672,6 +672,42 @@ function step(n) {
         });
         if (!n) failures.push('guest: "' + rung + '" suggests nothing');
       }
+      /* THE SIXTH VIEW, which is not a rung. It must offer something, and it
+         must offer something DIFFERENT from the rung before it - a view that
+         reorders the same list is not a view. Driven in sequence, after the
+         four rungs, because the chip carries state the others set. */
+      const tasteChip = page.locator('#guestBody .chip',
+        { hasText: 'Tastes like it' });
+      if (await tasteChip.count()) {
+        const before = await page.evaluate(() => {
+          const cards = [...document.querySelectorAll('#guestBody .sheet')];
+          const last = cards[cards.length - 1];
+          return last ? [...last.querySelectorAll('.item .nm')]
+            .map(n => n.textContent) : [];
+        });
+        await tasteChip.click();
+        await page.waitForTimeout(90);
+        const after = await page.evaluate(() => {
+          const cards = [...document.querySelectorAll('#guestBody .sheet')];
+          const last = cards[cards.length - 1];
+          return last ? [...last.querySelectorAll('.item .nm')]
+            .map(n => n.textContent) : [];
+        });
+        if (!after.length) {
+          failures.push('guest: the taste view suggests nothing');
+        } else if (after.join('|') === before.join('|')) {
+          failures.push('guest: the taste view is the same list as the rung');
+        }
+        const head = await page.evaluate(() => {
+          const cards = [...document.querySelectorAll('#guestBody .sheet')];
+          const last = cards[cards.length - 1];
+          const h = last && last.querySelector('h3');
+          return h ? h.textContent : '';
+        });
+        if (!/tastes like it/i.test(head)) {
+          failures.push('guest: the taste view is headed "' + head + '"');
+        }
+      }
     }
     /* IT FAILS OUTWARD AND SAYS SO. BZ: if I have just one bottle that is
        also their favorite, we can't stay home, we have to go next door.

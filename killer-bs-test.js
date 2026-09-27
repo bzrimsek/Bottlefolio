@@ -2233,6 +2233,39 @@ sec('tastes like: flavors from the notes');
       finish: 'Long, peppery, a season of oak' } }).sort(),
     ['chocolate', 'dried fruit', 'nutmeg', 'oak', 'pepper', 'sea salt', 'sherry'].sort());
   eq('no notes, no flavors', L.flavorsOf({ name: 'X' }), []);
+/* THE SIXTH VIEW ON THE GUEST LADDER (v2.5.51). Five rungs walk outward from
+   the seed; taste cuts across them, so it is a view and not a rung, and one
+   door answers both so the chip and the list cannot disagree. */
+(function () {
+  const seed = { name: 'Seed', tn: { nose: 'peat smoke, sea salt',
+    palate: 'iodine, dried fruit' } };
+  const tc = {
+    p1: { k: 'p1', name: 'Peaty One', sub: 'scotch', dist: 'A',
+          tn: { nose: 'peat, seaweed', palate: 'smoke, raisins' } },
+    p2: { k: 'p2', name: 'Peaty Two', sub: 'scotch', dist: 'B',
+          tn: { nose: 'smoke, brine', palate: 'peat, figs' } },
+    s1: { k: 's1', name: 'Sweet One', sub: 'bourbon', dist: 'C',
+          tn: { nose: 'vanilla, caramel', palate: 'honey, corn' } }
+  };
+  const tb = [{ id: 'g1', k: 'p1', status: 'open' },
+              { id: 'g2', k: 'p2', status: 'open' },
+              { id: 'g3', k: 's1', status: 'open' }];
+  const pourable = [tc.p1, tc.p2, tc.s1];
+  const v = L.pourView(seed, L.TASTE_VIEW.id, pourable, null, null, tc, tb);
+  eq('the taste view answers with what tastes like it',
+    [v.rung, v.list.map(p => p.k)], ['taste', ['p1', 'p2']]);
+  eq('and a bottle nothing is shared with is not offered',
+    v.list.filter(p => p.k === 's1').length, 0);
+  /* A BOTTLE HE CANNOT POUR IS NOT OFFERED, the same as on every rung. */
+  const v2 = L.pourView(seed, L.TASTE_VIEW.id, [tc.p2], null, null, tc, tb);
+  eq('only what is pourable', v2.list.map(p => p.k), ['p2']);
+  /* And the door still walks the rungs when the view is one. */
+  const v3 = L.pourView({ name: 'Peaty One', k: 'p1', sub: 'scotch', dist: 'A' },
+    'house', pourable, null, null, tc, tb);
+  eq('a rung is still a rung', v3.rung !== 'taste', true);
+  eq('the view has a name both the chip and the list use',
+    [L.TASTE_VIEW.id, typeof L.TASTE_VIEW.label], ['taste', 'string']);
+})();
   const cat = {
     a: { k: 'a', name: 'Sherry Bomb', tn: { nose: 'raisin, fig, sherry', palate: 'cocoa, cinnamon', finish: 'oak, vanilla' } },
     b: { k: 'b', name: 'Other Sherry Bomb', tn: { nose: 'dates and sherry', palate: 'chocolate, clove', finish: 'oak' } },
