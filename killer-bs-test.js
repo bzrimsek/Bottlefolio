@@ -2560,12 +2560,20 @@ sec('a shared trait has to be a habit, not an inventory');
      categories in hand a lift would fire on Canadian and Irish and stay silent
      on Scotch and bourbon, and the silence would read as a finding about the
      shelf rather than a hole in the table. */
-  eq('the country shares it does have are recorded, and add to one',
+  eq('the country shares add to one',
     Math.round((L.MARKET.country.scotland + L.MARKET.country.unitedStates
       + L.MARKET.country.canada + L.MARKET.country.ireland
-      + L.MARKET.country.rest) * 100), 100);
-  eq('and the figure that was revised is kept, so nobody reconciles it again',
-    [L.MARKET.country.canada, L.MARKET.country.wasCanada], [0.14, 0.065]);
+      + L.MARKET.country.india + L.MARKET.country.rest) * 100), 100);
+  /* BOTH SETS ARE KEPT. Every country share disagreed with another share in
+     the same conversation - Scotch 20-23 then 34, India 45-50 then 9.5 - and
+     keeping only the winner would hide that this source contradicts itself,
+     which is the whole reason nothing divides by it. BZ picked: "Revised
+     feels right." */
+  eq('and the first set is kept beside it, contradictions and all',
+    [L.MARKET.country.india, L.MARKET.country.alsoSaid.india], [0.095, 0.475]);
+  eq('every country in one is in the other',
+    Object.keys(L.MARKET.country.alsoSaid)
+      .filter(k => L.MARKET.country[k] === undefined), []);
   eq('and nothing is judged by them, nor by a region figure it has not got',
     [L.ROOM_AXES.filter(a2 => /categor|region/i.test(a2.id)).length,
       L.MARKET.region], [0, null]);
