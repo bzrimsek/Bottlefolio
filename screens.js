@@ -108,6 +108,71 @@ const dir = __dirname;
       closeModal();
     } catch (e) { r.fillOffers = 'THREW ' + e.message; }
 
+    /* THE GRAIN BLOCK: TWICE, AND IN SEQUENCE (rule 30e).
+
+       A published bill and a category rule must not read the same, and the
+       second bottle opened must not wear the first one's label. Rendered
+       twice as well, because this block appends into the sheet and a
+       doubled render is how appended blocks fail. */
+    try {
+      const mk = (k, name, extra) => Object.assign(
+        { k: k, name: name, sub: 'scotch', style: 'single malt', proof: 92 },
+        extra || {});
+      /* One with nothing printed - the category rule applies - and one with
+         a bill the producer published. */
+      S.custom = Object.assign({}, S.custom, {
+        zzLaw: mk('zzLaw', 'Rule Only 12'),
+        zzSaid: mk('zzSaid', 'Printed Bill 12',
+          { mash: '80% malted barley, 20% rye' })
+      });
+      S.bottles = (S.bottles || []).concat([
+        { id: 'zb1', k: 'zzLaw', status: 'open' },
+        { id: 'zb2', k: 'zzSaid', status: 'open' }
+      ]);
+      save_(); rebuildCatalog();
+
+      const words = () => {
+        const d = document.getElementById('scr-detail');
+        return d ? d.textContent : '';
+      };
+      const tags = () => {
+        const d = document.getElementById('scr-detail');
+        return d ? d.querySelectorAll('.tag.grain').length : 0;
+      };
+      const SAYS_RULE = /What the category requires/;
+
+      show('detail'); showBottle('zzLaw');
+      const lawOnce = tags();
+      if (!SAYS_RULE.test(words())) {
+        r.mashLabel = 'THREW a by-law bill is not labelled as the rule';
+      } else if (/80% malted barley/.test(words())) {
+        r.mashLabel = 'THREW the rule bottle shows another bottle\u2019s bill';
+      } else {
+        /* SECOND RENDER, same bottle: appended blocks double or they do not. */
+        showBottle('zzLaw');
+        r.mashLabel = tags() === lawOnce
+          ? 'ok(' + lawOnce + ' tags)'
+          : 'THREW the grain tags doubled on a second render: '
+            + lawOnce + ' then ' + tags();
+      }
+
+      /* THE SEQUENCE. Rule bottle, then printed bottle, then back. */
+      showBottle('zzSaid');
+      const saidWords = words();
+      showBottle('zzLaw');
+      const backWords = words();
+      r.mashSeq =
+        SAYS_RULE.test(saidWords)
+          ? 'THREW a published bill is called the category rule'
+        : !/80% malted barley/.test(saidWords)
+          ? 'THREW a published bill is not shown'
+        : !SAYS_RULE.test(backWords)
+          ? 'THREW the rule label is lost after another bottle'
+        : /80% malted barley/.test(backWords)
+          ? 'THREW the previous bottle\u2019s bill survived the next render'
+          : 'ok';
+    } catch (e) { r.mashLabel = 'THREW ' + e.message; }
+
     /* ICONS THAT ARE ACTUALLY VISIBLE.
 
        A touch-target fix gave the masthead buttons a ::before carrying the

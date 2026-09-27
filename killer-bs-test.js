@@ -14070,14 +14070,85 @@ sec('\u00a7295 a mash bill fixed by law, and a ppm that is measured');
   eq('and nothing was written to get there',
     L.mashByLaw({ sub: 'scotch', style: 'single malt' }).mash !== undefined
       && ({ sub: 'scotch', style: 'single malt' }).mash === undefined, true);
-  /* A PRINTED BILL STILL WINS over the one the category implies. */
-  eq('a printed bill beats the law',
+  /* WHAT THE PRODUCER PUBLISHED, AND NOTHING ELSE (BZ, 2026-09-26: a by-law
+     bill is derived and is never promoted to stated). It used to answer with
+     the category's bill when nothing was printed, under the same name, and
+     that is what put "100% malted barley" into an export column headed Mash
+     bill for every single malt on the shelf. */
+  eq('a printed bill is the answer',
     L.mashOf({ sub: 'scotch', style: 'single malt',
                mash: '80% malted barley, 20% rye' }),
     '80% malted barley, 20% rye');
-  eq('and the law answers when nothing is printed',
-    L.mashOf({ sub: 'scotch', style: 'single malt' }), '100% malted barley');
-  eq('and neither is null', L.mashOf({ sub: 'bourbon' }), null);
+  eq('and an unprinted one is NOT answered by the law',
+    L.mashOf({ sub: 'scotch', style: 'single malt' }), null);
+  eq('nor for a category with no rule at all',
+    L.mashOf({ sub: 'bourbon' }), null);
+  /* THE RULE IS NOT GONE, it just answers its own question. Both of these
+     must hold at once, or the change traded one wrong answer for another. */
+  eq('the category rule still knows its bill',
+    L.mashByLaw({ sub: 'scotch', style: 'single malt' }).mash,
+    '100% malted barley');
+  eq('and it still says why it knows',
+    /by definition/.test(
+      L.mashByLaw({ sub: 'scotch', style: 'single malt' }).why), true);
+  /* And the two never answer as one: whatever mashOf returns for a bottle
+     with no printed bill, it is not the rule's sentence. */
+  eq('the two answers cannot be confused',
+    L.mashOf({ sub: 'scotch', style: 'single malt' })
+      === L.mashByLaw({ sub: 'scotch', style: 'single malt' }).mash, false);
+
+  /* WHICH FACT THE SHEET IS LOOKING AT, decided once. The sheet used to work
+     this out itself, which is how it grew past its ceiling and how the two
+     facts came to share a sentence. */
+  {
+    const said = L.mashSay({ sub: 'scotch', style: 'single malt',
+                             mash: '80% malted barley, 20% rye' });
+    eq('a published bill is the bill', said.bill,
+      '80% malted barley, 20% rye');
+    eq('and it is not the rule', said.byLaw, false);
+    eq('and its sentence is the bill itself',
+      /80% malted barley/.test(said.say), true);
+    eq('and never names the category',
+      /category requires/.test(said.say), false);
+
+    const law = L.mashSay({ sub: 'scotch', style: 'single malt' });
+    eq('with nothing printed the rule answers', law.bill,
+      '100% malted barley');
+    eq('and says so', law.byLaw, true);
+    eq('in words that refuse the bottle',
+      /not a bill this producer published/.test(law.say), true);
+    /* The two can never be told apart by their bill alone - both can read
+       "100% malted barley" - so the flag is the thing every caller reads. */
+    eq('a bottle that printed the rule’s own bill is still stated',
+      L.mashSay({ sub: 'scotch', style: 'single malt',
+                  mash: '100% malted barley' }).byLaw, false);
+
+    eq('a bourbon with nothing printed says nothing at all',
+      L.mashSay({ sub: 'bourbon', style: 'bourbon' }), null);
+    eq('and neither does nothing', L.mashSay(null), null);
+  }
+
+  /* THE EXPORT COLUMN, which is where this was worst and where nothing was
+     looking. A spreadsheet headed Mash bill is read as what the producer
+     said; a single malt with nothing printed must leave it empty. */
+  {
+    const malt = { k: 'm1', name: 'Nothing Printed 12',
+                   sub: 'scotch', style: 'single malt', proof: 92 };
+    const told = { k: 'm2', name: 'Printed Bourbon',
+                   sub: 'bourbon', style: 'bourbon', proof: 100,
+                   mash: '75% corn, 21% rye, 4% malted barley' };
+    const rows = L.exportRows({ m1: malt, m2: told },
+      [{ id: 'b1', k: 'm1', status: 'open' },
+       { id: 'b2', k: 'm2', status: 'open' }], {}, {}, {});
+    const at = L.EXPORT_COLS.indexOf('Mash bill');
+    eq('the export has a Mash bill column', at >= 0, true);
+    eq('and it drew both bottles', rows.length, 2);
+    const line = n => (rows.filter(r => r[0] === n)[0] || [])[at];
+    eq('a single malt with nothing printed exports an empty bill',
+      line('Nothing Printed 12'), '');
+    eq('and a printed bill is exported as printed',
+      line('Printed Bourbon'), '75% corn, 21% rye, 4% malted barley');
+  }
 
   /* PHENOL PPM. The only real measure of peat, and the app has been
      guessing it from the distillery for months. */
@@ -14662,11 +14733,20 @@ sec('\u00a7308 the export, and the comma in a whisky name');
   eq('two bottles are two rows', rows.length, 2);
   eq('and every row has every column',
     rows.every(r => r.length === L.EXPORT_COLS.length), true);
-  /* A single malt carries the bill the law fixes, even with none printed —
-     mashOf answers, not the raw field. */
+  /* A SINGLE MALT WITH NOTHING PRINTED EXPORTS NO BILL (BZ, 2026-09-26: a
+     by-law bill is derived and never promoted to stated). It used to carry
+     "100% malted barley" in a column headed Mash bill, which a spreadsheet
+     reads as what the distillery said. The fact is not lost - it moves to
+     the column that was already describing it. */
   const mashCol = L.EXPORT_COLS.indexOf('Mash bill');
-  eq('a single malt exports the bill its category fixes',
-    rows[0][mashCol], '100% malted barley');
+  eq('a single malt with nothing printed exports no bill',
+    rows[0][mashCol], '');
+  eq('and the provenance column says where that stands',
+    rows[0][L.EXPORT_COLS.indexOf('Mash published')], 'by law');
+  /* And the grain percentages go with it: "Malted barley 100%" against every
+     single malt on the shelf is the same untruth in a narrower column. */
+  eq('no percentage is claimed from a bill nobody published',
+    rows[0][L.EXPORT_COLS.indexOf('Malted barley %')], '');
   /* THE SHEET'S EXTRA COLUMNS: only what is stored (BZ, 2026-09-17). */
   const col = name => L.EXPORT_COLS.indexOf(name);
   const cat2 = { r: { k: 'r', name: 'Rye One', sub: 'rye', proof: 100, country: 'United States',

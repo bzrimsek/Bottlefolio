@@ -562,7 +562,7 @@ const TWO_DOORS_OK = [
   'parseDelimited>parseCSV', 'placeLine>titleCase', 'recap>lookupDaysSince',
   'awayPour>logEntry', 'contribSig>syncSig', 'axisLabel>titleCase',
   'addPour>relabel', 'removePour>relabel', 'movePour>relabel',
-  'sortByProof>relabel', 'mashOf>mashByLaw', 'readFailSays>isNetworkFail',
+  'sortByProof>relabel', 'readFailSays>isNetworkFail',
   'shelfTodo>enhanceQueue',
   /* The two note queues ask one builder now; pourable is its to ask. */
   'lookupQueue>pourable', 'typedName>tidyName', 'suggestName>cleanName',
@@ -2291,7 +2291,7 @@ check('no fixed svg id is emitted by a repeated drawing',
      `node consistency.js --sizes` \u2014 never edit a number here by hand, the
      same way a version is never edited by hand. */
   const BIG_TODAY = {
-    showBottle: 513,
+    showBottle: 507,
     likelyToLike: 466,
     openLibraryCleanUp: 380,
     productForm: 360,
