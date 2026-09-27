@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 775 |
+| functions | 778 |
 | tables | 186 |
-| carrying a stated purpose | 594 |
+| carrying a stated purpose | 595 |
 
 ## Tables
 
@@ -897,8 +897,9 @@ QUESTION, not the name you were going to use.
 - **`L.syncDecision`** — _no comment above it_
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — notes never quietly changes the price.
-- **`L.tasteAsk`** — EVERYTHING THE CARD NEEDS, asked once
+- **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — WHAT THE SHELF TASTES OF, BY THE WHEEL'S GROUPS (BZ, 2026-09-27).
+- **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE (BZ, 2026-09-27).
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
@@ -909,9 +910,11 @@ QUESTION, not the name you were going to use.
 - **`L.tastePair`** — _no comment above it_
 - **`L.tastePairKey`** — _no comment above it_
 - **`L.tasteProfile`** — _no comment above it_
+- **`L.tasteProgress`** — HOW FAR ALONG, AND WHEN TO STOP (BZ, 2026-09-27
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is
 - **`L.tasteScore`** — A BOTTLE AGAINST THOSE WEIGHTS, nought to one.
 - **`L.tasteSeen`** — How many times each flavour has been asked about.
+- **`L.tasteSettled`** — _no comment above it_
 - **`L.tastesLike`** — Coverage is worked out here rather than in a door of its own because `shared`
 - **`L.tasteTimes`** — _no comment above it_
 - **`L.tasteWants`** — _no comment above it_

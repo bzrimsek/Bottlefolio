@@ -2493,6 +2493,72 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('forty questions, and never one already answered');
+{
+  /* BZ, 2026-09-27: "If the system already knows you prefer Caramel over
+     Cinnamon, and you later choose Cinnamon over Leather, an intelligent
+     algorithm automatically concludes that you prefer Caramel over Leather."
+     Fourteen words make 91 pairs and almost none of them need asking. */
+  const said = {};
+  said[L.tastePairKey('cherry', 'oak')] = 'cherry';
+  said[L.tastePairKey('oak', 'salt')] = 'oak';
+  const beat = L.tasteBeats(said);
+  eq('what was answered is settled', L.tasteSettled(beat, 'cherry', 'oak'),
+    true);
+  eq('and so is what follows from it',
+    L.tasteSettled(beat, 'cherry', 'salt'), true);
+  eq('but nothing else is', L.tasteSettled(beat, 'cherry', 'mint'), false);
+  /* `neither` settles nothing: it says the two are level, which tells you
+     nothing about either against a third. */
+  const level = {};
+  level[L.tastePairKey('cherry', 'oak')] = '';
+  level[L.tastePairKey('oak', 'salt')] = 'oak';
+  eq('answering neither carries nothing forward',
+    L.tasteSettled(L.tasteBeats(level), 'cherry', 'salt'), false);
+  eq('and a settled pair is never asked as a new question', (function () {
+    const prof = { flavour: [{ value: 'x', n: 1 }] };
+    const ans = {};
+    const rank = {};
+    L.TASTE_TERMS.forEach((w, i) => { rank[w] = i; });
+    let pair, last = null;
+    const bad = [];
+    for (let i = 0; i < 80 && (pair = L.tastePair(prof, ans, last)); i++) {
+      if (!pair.again
+        && L.tasteSettled(L.tasteBeats(ans), pair.a, pair.b)) {
+        bad.push(pair.a + ' v ' + pair.b);
+      }
+      const win = rank[pair.a] < rank[pair.b] ? pair.a : pair.b;
+      ans[pair.key] = (ans[pair.key] ? ans[pair.key] + '>' : '') + win;
+      last = pair.key;
+    }
+    return bad;
+  })(), []);
+  /* THE METER. Forty is not a round number somebody liked: the check needs ten
+     repeats and one question in four is a repeat, so the tenth lands on the
+     fortieth (BZ: "i like 40 as a number that we can track against"). */
+  eq('the target is the repeats times the cadence',
+    L.TASTE_TARGET, L.TASTE_AB_CHECKS * L.TASTE_AB_EVERY);
+  eq('nothing answered is nothing done',
+    [L.tasteProgress({}).pct, L.tasteProgress({}).done], [0, false]);
+  eq('the bar never reads full until the repeats agree', (function () {
+    const prof = { flavour: [{ value: 'x', n: 1 }] };
+    const ans = {};
+    const rank = {};
+    L.TASTE_TERMS.forEach((w, i) => { rank[w] = i; });
+    let pair, last = null, wrong = 0;
+    for (let i = 0; i < 80 && (pair = L.tastePair(prof, ans, last)); i++) {
+      const p2 = L.tasteProgress(ans);
+      if (p2.pct === 100 && !p2.done) wrong++;
+      const win = rank[pair.a] < rank[pair.b] ? pair.a : pair.b;
+      ans[pair.key] = (ans[pair.key] ? ans[pair.key] + '>' : '') + win;
+      last = pair.key;
+    }
+    return wrong;
+  })(), 0);
+  eq('and it says how many of forty have been answered',
+    /\b0 of about 40\b/.test(L.tasteProgress({}).say), true);
+}
+
 sec('your taste, painted');
 {
   /* BZ, 2026-09-27: "can we paint the users taste profile in the settings". On
@@ -4361,11 +4427,13 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
     [!!asked.pair, asked.settled, asked.order.length], [true, false, 0]);
   eq('and a shelf with nothing worth asking about settles at once',
     L.tasteAsk({ flavour: [] }, {}).settled, true);
-  /* Every fifth question is one asked before. */
+  /* One question in L.TASTE_AB_EVERY is one asked before - four since the
+     target became forty, and read off the constant so the two cannot drift. */
   let five = {};
   ['cherry|peat', 'cherry|salt', 'cherry|mint', 'peat|salt', 'peat|mint']
+    .slice(0, L.TASTE_AB_EVERY)
     .forEach(k => { five[k] = k.split('|')[0]; });
-  eq('after five answers it asks one of them again',
+  eq('after a run of answers it asks one of them again',
     !!(L.tastePair(prof, five) || {}).again, true);
   /* And the repeat comes off the POOL: reading the raw store offered BZ
      `grain vs orchard fruit`, a pair that cannot be asked any more. */
