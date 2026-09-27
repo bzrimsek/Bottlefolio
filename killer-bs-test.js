@@ -3822,6 +3822,51 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
   eq('a bottle with no notes is not counted against the shelf',
     L.flavourSpread([mk('n1', null)], 3).described, 0);
 })();
+/* WHAT YOU ARE LIKELY TO LIKE, FROM WHAT THE SHELF TASTES OF (v2.5.62).
+   Every other reason in that list is a fact off a label; this one is read from
+   the notes, and it is the Shop verdict's judgement pointed the other way. */
+(function () {
+  const mk = (k, sub, tn, fin) => ({ k: k, name: k, sub: sub, dist: 'D' + k,
+    fin: fin, tn: tn });
+  const owned = [];
+  for (let i = 0; i < 12; i++) {
+    owned.push(mk('s' + i, 'scotch',
+      { nose: 'peat smoke, figs', palate: 'raisins, oak' }, 'Sherry'));
+  }
+  for (let i = 0; i < 10; i++) {
+    owned.push(mk('b' + i, 'bourbon',
+      { nose: 'vanilla, oak', palate: 'caramel, corn' }, null));
+  }
+  const prof = { flavour: [{ value: 'oak', n: 22 }, { value: 'dried fruit', n: 12 }] };
+  /* Given what sets the shelf apart, it leads with those and not with the
+     commonest word - which is the whole fault it was written to fix: ranking
+     by count offered "more grain and char" on a bourbon shelf. */
+  const withApart = L.likelyByFlavour(owned, prof, ['fig', 'raisin']);
+  eq('it leads with what sets the shelf apart',
+    withApart[0].name, 'More fig and raisin');
+  eq('and counts those at the fine level, where they live',
+    /fig is on 12 of your bottles and raisin on 12/i.test(withApart[0].why),
+    true);
+  eq('the ask is a real search, not a category',
+    withApart[0].ask, 'fig and raisin forward whisky');
+  /* Where a flavour nearly all comes from one kind of whisky, it says so. */
+  const conc = withApart.filter(x => /other than/.test(x.name))[0];
+  eq('and it offers the same flavour from somewhere else',
+    !!conc && /100% of the 12/.test(conc.why), true);
+  /* With nothing to set it apart it falls back to what there is most of,
+     rather than inventing a preference. */
+  eq('fewer than two flavours to name, and it says nothing',
+    L.likelyByFlavour(owned, prof, []), []);
+  eq('a shelf nobody has described suggests no flavour at all',
+    L.likelyByFlavour([mk('x', 'bourbon', null, null)],
+      { flavour: [] }, []), []);
+  /* The age reason, lifted out to make room, still behaves. */
+  eq('nothing older than 21 is worth saying',
+    L.likelyByAge([{ age: 12 }, { age: 18 }])[0].name, 'Something past 21');
+  eq('and a shelf that already has one is left alone',
+    L.likelyByAge([{ age: 25 }]), []);
+  eq('no ages at all, nothing said', L.likelyByAge([{}, {}]), []);
+})();
 /* THE FLAVOURS A SHELF LEANS ON (v2.5.55), which is what a candidate is
    scored against. A flavour on most of the shelf says nothing about a bottle -
    oak is on 60% of BZ's - and one on almost none of it is not a habit. */

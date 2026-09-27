@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 760 |
+| functions | 762 |
 | tables | 182 |
-| carrying a stated purpose | 579 |
+| carrying a stated purpose | 581 |
 
 ## Tables
 
@@ -505,6 +505,8 @@ QUESTION, not the name you were going to use.
 - **`L.libraryProduct`** — _no comment above it_
 - **`L.libraryRename`** — Renaming an entry in the shared library.
 - **`L.libraryShape`** — _no comment above it_
+- **`L.likelyByAge`** — AGE AGAINST NO AGE, for a drinker who runs an AGE IS NOT A FLAVOR flight.
+- **`L.likelyByFlavour`** — MORE OF WHAT THE SHELF ACTUALLY TASTES OF.
 - **`L.likelyToLike`** — The list itself
 - **`L.listLine`** — THE SHELF, AS FILTERED
 - **`L.loadStuck`** — A load still marked as running, long after anything could still be
