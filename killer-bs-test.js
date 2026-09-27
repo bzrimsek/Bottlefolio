@@ -3677,6 +3677,70 @@ eq('and a bare sherry label stays sherry',
   L.caskKind({ fin: 'Sherry' }), 'sherry');
 eq('no cask recorded is no cask', L.caskKind({}), null);
 
+/* THE PALATE VOCABULARY (v2.5.46). Prose cannot be compared, so a note is
+   read into terms. What these guard is the reading, not the words: a term
+   is right or wrong only in so far as the note says it. */
+eq('every spelling of spice is one term',
+  new Set(['spice', 'spices', 'spicy', 'spiced', 'spiciness']
+    .map(w => L.palateTerms(w).join(''))).size, 1);
+eq('and that term is spice', L.palateTerms('spicy').join(''), 'spice');
+/* A phrase is two tokens and one term. */
+eq('pedro ximenez is a sherry', L.palateTerms('aged in Pedro Ximenez casks'),
+  ['sherry']);
+/* THE FAULT A SUBSTRING MATCH WOULD MAKE. rye inside dryer, oil inside
+   boiled: both were the reason tokens are matched and not the string. */
+eq('rye is not found inside dryer',
+  L.palateTerms('a dryer, oaky finish'), ['dry', 'oak']);
+eq('oil is not found inside boiled', L.palateTerms('boiled sweets'), ['sweet']);
+/* A judgement is not a flavour, and an empty note is not a default. */
+eq('how much the writer liked it is not a taste',
+  L.palateTerms('complex, lovely, beautifully balanced'), []);
+eq('no note is no terms', L.palateTerms(''), []);
+eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
+eq('a bottle with no tn is not guessed at',
+  L.palateOf({ name: 'Nothing', proof: 100 }).all, []);
+/* A COLOUR IS NOT A FLAVOUR, both ways round: the fields borrow each
+   other's words and each was reporting the other's. */
+eq('a tawny port colour is not a port cask',
+  L.palateOf({ tn: { colour: 'Tawny port' } }).all, ['amber']);
+eq('dark chocolate on the nose is not a brown colour',
+  L.palateOf({ tn: { nose: 'dark chocolate' } }).all, ['chocolate']);
+/* The grouping a screen shows, and the part a caller asks for. */
+eq('terms are grouped under their family',
+  L.palateOf({ tn: { palate: 'peat, oak, caramel' } }).families
+    .map(f => f.family), ['smoke', 'cask', 'sweet']);
+eq('and a part can be asked on its own',
+  L.palateOf({ tn: { nose: 'peat', finish: 'caramel' } }).nose, ['peat']);
+eq('every term in the table belongs to a declared family',
+  L.PALATE.filter(r => L.PALATE_FAMILIES.indexOf(r[1]) < 0).map(r => r[0]), []);
+eq('no term is written twice',
+  L.PALATE.length, new Set(L.PALATE.map(r => r[0])).size);
+/* The index is the one door to the table, so it is asked directly: a
+   spelling resolves to its term, and the 1994 half stays tellable from the
+   half counted out of the notes. */
+eq('the index maps a spelling to its term',
+  L.palateIndex().word.peaty, 'peat');
+eq('and remembers which half a term came from',
+  [L.palateIndex().ll.peat, L.palateIndex().ll.vanilla], [true, false]);
+eq('the study half is 32 of the terms',
+  Object.values(L.palateIndex().ll).filter(Boolean).length, 32);
+/* THE SENTENCE A SCREEN SHOWS. Colour and body are not tastes, and a bottle
+   whose notes say only those has nothing to show rather than a bare label. */
+eq('the taste line names the flavours',
+  L.tasteLine({ tn: { palate: 'peat, oak, caramel' } }),
+  'Tastes of peat · oak · caramel');
+eq('an amber whisky with a long finish has said nothing about taste',
+  L.tasteLine({ tn: { colour: 'Amber', finish: 'long and smooth' } }), null);
+eq('and no notes is no line', L.tasteLine({}), null);
+eq('no spelling is claimed by two terms', (function () {
+  const seen = {}, dup = [];
+  L.PALATE.forEach(r => r.slice(3).forEach(s => {
+    if (seen[s] && seen[s] !== r[0]) dup.push(s + ': ' + seen[s] + ' and ' + r[0]);
+    seen[s] = r[0];
+  }));
+  return dup;
+})(), []);
+
 /* THE TWO LEVELS, off one bottle. */
 eq('a PX sits in its own cask and in sherry',
   L.holdKey('cask', caskCat.c0), ['px', 'sherry']);

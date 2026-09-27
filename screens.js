@@ -173,6 +173,66 @@ const dir = __dirname;
           : 'ok';
     } catch (e) { r.mashLabel = 'THREW ' + e.message; }
 
+    /* THE TASTE LINE: TWICE, AND IN SEQUENCE (rule 30e, v2.5.46).
+
+       It is appended into the tasting card, which is how a doubled render
+       shows up, and it must not carry the previous bottle's flavours into
+       the next one. A bottle whose notes say only a colour and a finish
+       must show no line at all, because neither is a taste - that is the
+       case a screen gets wrong by showing an empty label. */
+    try {
+      const mk = (k, name, tn) => ({ k: k, name: name, sub: 'bourbon',
+        style: 'straight bourbon', proof: 100, tn: tn });
+      S.custom = Object.assign({}, S.custom, {
+        zzTaste: mk('zzTaste', 'Tastes Of Things',
+          { nose: 'Vanilla and toasted oak', palate: 'Caramel, cinnamon',
+            finish: 'Long, drying' }),
+        zzPeat: mk('zzPeat', 'Peated Thing',
+          { nose: 'Peat smoke and sea salt', palate: 'Iodine' }),
+        zzMute: mk('zzMute', 'Nothing To Say',
+          { colour: 'Deep amber', finish: 'Long and smooth' })
+      });
+      S.bottles = (S.bottles || []).concat([
+        { id: 'zb3', k: 'zzTaste', status: 'open' },
+        { id: 'zb4', k: 'zzPeat', status: 'open' },
+        { id: 'zb5', k: 'zzMute', status: 'open' }
+      ]);
+      save_(); rebuildCatalog();
+
+      const lines = () => Array.prototype.slice.call(
+        document.querySelectorAll('#scr-detail #palateLine, '
+          + '#scr-detail [id="palateLine"]')).map(n => n.textContent);
+
+      show('detail'); showBottle('zzTaste');
+      const once = lines();
+      showBottle('zzTaste');
+      const twice = lines();
+      showBottle('zzPeat');
+      const peat = lines().join(' ');
+      showBottle('zzMute');
+      const mute = lines();
+
+      r.tasteLine =
+        once.length !== 1
+          ? 'THREW the taste line is not on the bottle: ' + once.length
+            + ' found'
+        : !/vanilla/i.test(once[0]) || !/caramel/i.test(once[0])
+          ? 'THREW the line does not name what the notes say: ' + once[0]
+        : /amber|long/i.test(once[0])
+          ? 'THREW a colour or a finish length is offered as a taste: '
+            + once[0]
+        : twice.length !== 1
+          ? 'THREW the line doubled on a second render: ' + twice.length
+        : !/peat/i.test(peat)
+          ? 'THREW the next bottle does not get its own flavours: ' + peat
+        : /vanilla|caramel/i.test(peat)
+          ? 'THREW the previous bottle’s flavours survived: ' + peat
+        : mute.length
+          ? 'THREW a colour and a finish alone produced a taste line: '
+            + mute[0]
+          : 'ok(' + once[0] + ')';
+    } catch (e) { r.tasteLine = 'THREW ' + e.message; }
+
     /* ICONS THAT ARE ACTUALLY VISIBLE.
 
        A touch-target fix gave the masthead buttons a ::before carrying the

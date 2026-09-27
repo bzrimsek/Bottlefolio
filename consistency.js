@@ -1048,6 +1048,10 @@ check('no fixed svg id is emitted by a repeated drawing',
                         /* The pigment is called burnt umber in American
                            English too, the same as burnt sienna. */
                         "'burnt umber'",
+                        /* A SPELLING IN THE PALATE TABLE IS A DATA KEY, not
+                           prose: it exists to match what somebody else wrote
+                           in a tasting note, and notes say burnt sugar. */
+                        "'burnt'",
                         "'centre'", "'litre'", "'favourite'",
                         "'auth/cancelled-popup-request'"]);
   const lines = src.split('\n');
@@ -1213,7 +1217,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.5.43: the attribution CC BY-SA asks for. The check only guards the
        controls it is told about (9z), so a credit nobody listed here is a
        credit that can be deleted without anything noticing. */
-    'Where the reference data comes from'];
+    'Where the reference data comes from',
+    /* v2.5.46: the palate vocabulary's credit and its one visible line. */
+    'Where the flavor words come from', 'Tastes of'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -1961,6 +1967,32 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service call goes through the one door', bad);
 }
 
+/* ONE DOOR TO THE FLAVOUR WORDS (v2.5.46).
+ *
+ * L.PALATE is a table of 80 terms and their spellings. The reason it is a
+ * table and not a pile of regexes spread through the code is the fault this
+ * project keeps making: the lookup limit was checked in seven places with
+ * four wordings, and twenty-one functions each spelled out that two names
+ * are one bottle. A vocabulary is exactly the kind of thing that gets
+ * copied, so only L.palateIndex may read it, and everything else asks
+ * L.palateTerms or L.palateOf.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const bad = [];
+  let inDoor = false;
+  lines.forEach((l, i) => {
+    if (/L\.palateIndex\s*=\s*function/.test(l)) inDoor = true;
+    else if (inDoor && /^\};/.test(l)) inDoor = false;
+    if (inDoor) return;
+    if (/L\.PALATE\s*=/.test(l)) return;               // the table itself
+    if (!/L\.PALATE(?![_A-Za-z])/.test(l)) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 60)
+      + '  — the flavour table read outside L.palateIndex');
+  });
+  check('only one function reads the palate table', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
@@ -2306,7 +2338,7 @@ check('no fixed svg id is emitted by a repeated drawing',
      `node consistency.js --sizes` \u2014 never edit a number here by hand, the
      same way a version is never edited by hand. */
   const BIG_TODAY = {
-    showBottle: 507,
+    showBottle: 496,
     likelyToLike: 466,
     openLibraryCleanUp: 380,
     productForm: 360,
