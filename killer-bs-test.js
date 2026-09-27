@@ -2466,6 +2466,24 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('the grain bill is not printed twice');
+{
+  /* The tags are the app's reading, the sentence is the label's own words, and
+     both are shown because when they disagree the label wins. On a plain bill
+     they cannot disagree and the page stuttered (BZ, 2026-09-27). */
+  eq('a sentence that is only the tags again is an echo',
+    L.mashEcho(L.mashSay({ mash: '72% corn, 18% rye, 10% malted barley' })),
+    true);
+  eq('a partial bill says something the tags cannot',
+    L.mashEcho(L.mashSay({ mash: '51% corn, rest undisclosed' })), false);
+  eq('and so does a bill the app reads a shape from',
+    L.mashEcho(L.mashSay({ mash: '70% corn, 20% rye, 10% malt' })), false);
+  eq('what the category requires is never an echo',
+    L.mashEcho(L.mashSay({ sub: 'scotch', style: 'single malt' })), false);
+  eq('and nothing at all is not one either',
+    [L.mashEcho(null), L.mashEcho({})], [false, false]);
+}
+
 sec('whose notes these are, always answered');
 {
   const tn = { nose: 'Oak', palate: 'Cherry' };

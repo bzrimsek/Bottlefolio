@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 772 |
+| functions | 773 |
 | tables | 186 |
 | carrying a stated purpose | 593 |
 
@@ -545,6 +545,7 @@ QUESTION, not the name you were going to use.
 - **`L.markReset`** — _no comment above it_
 - **`L.mashbill`** — _no comment above it_
 - **`L.mashByLaw`** — _no comment above it_
+- **`L.mashEcho`** — IS THE PRINTED SENTENCE JUST THE TAGS AGAIN? (BZ, 2026-09-27.)
 - **`L.mashFromBill`** — THE RECIPE FROM A REAL GRAIN BILL, in the words the rest of the app uses.
 - **`L.mashNote`** — Null when there is nothing to say — which is the common case, because a
 - **`L.mashOf`** — What the entry's mash bill IS, printed or fixed by law
@@ -552,7 +553,7 @@ QUESTION, not the name you were going to use.
 - **`L.mashPercent`** — One grain's share of a mash bill, or blank when the bill does not say.
 - **`L.mashSay`** — WHICH OF THE TWO GRAIN FACTS APPLIES, and the sentence it deserves
 - **`L.mashSum`** — WHAT THE PERCENTAGES ADD UP TO
-- **`L.mashTags`** — The mash bill as a row of tags, the way a finish is drawn
+- **`L.mashTags`** — _no comment above it_
 - **`L.matchColumns`** — _no comment above it_
 - **`L.matchesQuery`** — _no comment above it_
 - **`L.matchesSearch`** — A WHOLE SEARCH, and every search box asks this

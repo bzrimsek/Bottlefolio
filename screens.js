@@ -145,7 +145,7 @@ const dir = __dirname;
       const lawOnce = tags();
       if (!SAYS_RULE.test(words())) {
         r.mashLabel = 'THREW a by-law bill is not labelled as the rule';
-      } else if (/80% malted barley/.test(words())) {
+      } else if (/80% malted barley/i.test(words())) {
         r.mashLabel = 'THREW the rule bottle shows another bottle\u2019s bill';
       } else {
         /* SECOND RENDER, same bottle: appended blocks double or they do not. */
@@ -156,6 +156,10 @@ const dir = __dirname;
             + lawOnce + ' then ' + tags();
       }
 
+      /* Case-insensitively since v2.5.76: a bill the tags say in full is no
+         longer printed underneath them as well, and the tags capitalise the
+         grain. What is being checked is that the published bill is SHOWN and
+         is not called the category rule, which both still hold. */
       /* THE SEQUENCE. Rule bottle, then printed bottle, then back. */
       showBottle('zzSaid');
       const saidWords = words();
@@ -164,11 +168,11 @@ const dir = __dirname;
       r.mashSeq =
         SAYS_RULE.test(saidWords)
           ? 'THREW a published bill is called the category rule'
-        : !/80% malted barley/.test(saidWords)
+        : !/80% malted barley/i.test(saidWords)
           ? 'THREW a published bill is not shown'
         : !SAYS_RULE.test(backWords)
           ? 'THREW the rule label is lost after another bottle'
-        : /80% malted barley/.test(backWords)
+        : /80% malted barley/i.test(backWords)
           ? 'THREW the previous bottle\u2019s bill survived the next render'
           : 'ok';
     } catch (e) { r.mashLabel = 'THREW ' + e.message; }
