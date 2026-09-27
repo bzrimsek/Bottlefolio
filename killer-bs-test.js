@@ -2493,6 +2493,70 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('the bar shelf never reaches a whiskey answer');
+{
+  /* The rule: rum, vodka, gin, mezcal, tequila, liqueur, brandy and FLAVORED
+     are bottles on the shelf and are excluded from every analysis. They are
+     given the SAME notes as the whiskies here, so nothing passes by having
+     nothing to say. */
+  const notes = { nose: 'vanilla, cherry, oak', palate: 'caramel, pepper' };
+  const cat = {};
+  const bots = [];
+  const put = (k, sub, i) => {
+    cat[k] = { k: k, name: k, sub: sub, tn: notes };
+    bots.push({ id: 'z' + i, k: k, status: 'open' });
+  };
+  for (let i = 0; i < 20; i++) put('w' + i, 'bourbon', i);
+  put('liq', 'liqueur', 90);
+  put('vod', 'vodka', 91);
+  put('fla', 'flavored', 92);
+  const barKeys = ['liq', 'vod', 'fla'];
+  const isBar = k => barKeys.indexOf(k) >= 0;
+
+  eq('every one of them would otherwise have plenty to say',
+    barKeys.filter(k => !L.palateOf(cat[k]).all.length), []);
+  /* COUNTED: what the shelf is said to taste of. */
+  eq('the whiskies you own are the ones that are whiskey',
+    L.ownedWhiskies(cat, bots).map(p => p.k).filter(isBar), []);
+  eq('what the shelf tastes of is counted off whiskey only',
+    [L.tasteShare(cat, bots).n, L.palateShelf(cat, bots).described], [20, 20]);
+  eq('and so is the radar',
+    L.tasteAxes(cat, bots).filter(a => a.pct > 0).length > 0, true);
+  /* OFFERED: anything the app puts in front of somebody. */
+  eq('tastes like offers none of them',
+    L.tastesLike(cat.w0, cat, bots, 10).map(r => r.k).filter(isBar), []);
+  eq('nor does a guest pour, on any of its views', (function () {
+    const products = L.ownedProducts(cat, bots);
+    const bad = [];
+    ['house', 'next', 'road', 'pond', 'taste'].forEach(v => {
+      let r;
+      try { r = L.pourView(cat.w0, v, products, null, null, cat, bots); }
+      catch (e) { return; }
+      (r.list || []).forEach(p => { if (isBar(p.k)) bad.push(p.k); });
+    });
+    return bad;
+  })(), []);
+  /* SAID: a category named as somewhere a friend could take you. BZ read "You
+     take Nik into liqueur - 5 on yours and not one on theirs". */
+  eq('a group worth going to is a whiskey one, named',
+    [L.groupWorthGoing({ value: 'rye', n: 3 }),
+     L.groupWorthGoing({ value: 'liqueur', n: 3 }),
+     L.groupWorthGoing({ value: '?', n: 3 }),
+     L.groupWorthGoing({})], [true, false, false, false]);
+  eq('no bar-shelf category is somewhere to be taken',
+    L.topGap({ styles: [{ value: 'liqueur', n: 5 }] }, { styles: [] },
+      'styles', 3), null);
+  eq('nor common ground with anybody',
+    L.sameGroups({ styles: [{ value: 'liqueur', n: 5 }] },
+      { styles: [{ value: 'liqueur', n: 4 }] }, 'styles', 2), []);
+  eq('while a real whiskey category still passes both',
+    [!!L.topGap({ styles: [{ value: 'rye', n: 5 }] }, { styles: [] },
+      'styles', 3),
+      L.sameGroups({ styles: [{ value: 'rye', n: 5 }] },
+        { styles: [{ value: 'rye', n: 4 }] }, 'styles', 2).length],
+    [true, 1]);
+}
+
 sec('what two shelves both taste of');
 {
   /* BZ, 2026-09-27: "can we use the new vocab and pallet on the buddy

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 780 |
+| functions | 782 |
 | tables | 186 |
-| carrying a stated purpose | 595 |
+| carrying a stated purpose | 597 |
 
 ## Tables
 
@@ -403,6 +403,7 @@ QUESTION, not the name you were going to use.
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
 - **`L.groupCounts`** — WHAT A GROUP HAS, said in the two ways that need no circles
 - **`L.groupOf`** — _no comment above it_
+- **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
@@ -627,6 +628,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCounts`** — _no comment above it_
 - **`L.ownedProductCount`** — How many products you own at least one of
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
+- **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.
 - **`L.ownFindings`** — The findings whose answer is ALREADY YOURS
 - **`L.ownsIt`** — DO YOU OWN IT, answered once for the shop card, offers and bar
 - **`L.paidFor`** — What you paid, averaged when bottles cost different amounts.
