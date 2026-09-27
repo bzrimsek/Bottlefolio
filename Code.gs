@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.4.11';
+var GS_BUILD = '2.4.12';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -788,7 +788,12 @@ function fillMissingNotes() {
 */
 
 var SHELF_URL = 'https://bzrimsek.github.io/Bottlefolio/data.json';
-var WE_BASE = 'https://thewhiskyedition.com/api/whisky-reviews';
+/* WHISKY:EDITION IS GONE (BZ, 2026-09-26). Its endpoint answers 404 and the
+   site says it is closing. It never published terms or a licence - the note
+   above these lines used to call it CC-BY, and no such statement exists on
+   the site, which is the better reason to have stopped. The 37 fields in
+   data.json that came from it are marked rather than deleted: claimed,
+   url:null, defunct. */
 var PP_MCP = 'https://nqnigdqkcvrziwcbgily.supabase.co/functions/v1/mcp';
 var SHEET_NAME = "Killer B's — enrichment review";
 
@@ -970,56 +975,6 @@ function parseBody_(text) {
     try { out = JSON.parse(chunk); } catch (e) { /* keep the last good one */ }
   }
   if (out === null) throw new Error('no JSON in response: ' + t.slice(0, 120));
-  return out;
-}
-
-/** Source 1: WHISKY:EDITION. Free, official, CC-BY. Carries the notes. */
-function weLookup_(name, sub, dist) {
-  var queries = queriesFor_(name, dist);
-  var best = null, bestScore = -1, seen = 0, tried = [];
-
-  for (var q = 0; q < queries.length; q++) {
-    var res;
-    tried.push(queries[q]);
-    try {
-      res = fetchJson_(WE_BASE + '?per_page=25&q=' + encodeURIComponent(queries[q]));
-    } catch (e) { return {miss: 'error: ' + e}; }
-    var items = res.items || [];
-    seen += items.length;
-    for (var i = 0; i < items.length; i++) {
-      var s = nameScore_(name, items[i].name || '');
-      if (s > bestScore) { bestScore = s; best = items[i]; }
-    }
-    // Stop asking once there is a sure match, or once the first query has
-    // returned plenty to score against.
-    if (bestScore >= MATCH_SURE || seen >= ENOUGH) break;
-    Utilities.sleep(DELAY);
-  }
-
-  if (!seen) return {miss: 'no hit for [' + tried.join('] [') + ']'};
-  if (bestScore < MATCH_FLOOR) {
-    return {miss: 'searched [' + tried.join('] [') + '], ' + seen
-      + ' seen, best ' + bestScore.toFixed(2) + ': ' + (best.name || '')};
-  }
-  // The detail response is {ok, lang, item} — the record is one level down.
-  // Reading the top level returned null every time, which is why the ceiling
-  // test found 13 of 14 bottles and not one tasting note.
-  var detail = {};
-  if (best.slug && bestScore >= MATCH_FLOOR) {
-    try {
-      Utilities.sleep(DELAY);
-      var d = fetchJson_(WE_BASE + '/' + encodeURIComponent(best.slug));
-      detail = d.item || d;
-    } catch (e) { detail = {}; }
-  }
-  var meta = detail.metadata || best.metadata || {};
-  var notes = detail.tasting_notes || {};
-  var out = {_source: 'whiskyedition', _match: bestScore, _name: best.name};
-  if (meta.abv) out.proof = Math.round(Number(meta.abv) * 2 * 10) / 10;
-  if (meta.age) out.age = meta.age;
-  if (notes.nose) out.tn_nose = notes.nose;
-  if (notes.palate) out.tn_palate = notes.palate;
-  if (notes.finish) out.tn_finish = notes.finish;
   return out;
 }
 
@@ -1245,7 +1200,8 @@ function runEnrich_(limit, label) {
     var any = false;
     var why = [];
 
-    [['whiskyedition', weLookup_], ['pourpicks', ppLookup_]].forEach(function (pair) {
+    /* ONE SOURCE. It was two until 2026-09-26; the other one died. */
+    [['pourpicks', ppLookup_]].forEach(function (pair) {
       Utilities.sleep(DELAY);
       var found = pair[1](prod.name, prod.sub, prod.dist);
       if (found.miss) { why.push(pair[0] + ': ' + found.miss); return; }
@@ -1318,40 +1274,6 @@ function probeRaw() {
   // not a coverage one.
   var name = 'Buffalo Trace';
 
-  Logger.log('════ WHISKY:EDITION — search ════');
-  var slug = null;
-  try {
-    var we = UrlFetchApp.fetch(
-      WE_BASE + '?per_page=3&q=' + encodeURIComponent(name),
-      {muteHttpExceptions: true, headers: {'Accept': 'application/json'}});
-    Logger.log('HTTP %s', we.getResponseCode());
-    var wj = parseBody_(we.getContentText());
-    var it = (wj.items || [])[0] || {};
-    Logger.log('first item keys: %s', Object.keys(it).join(', '));
-    Logger.log('slug: %s', it.slug);
-    slug = it.slug;
-    Logger.log(JSON.stringify(it).slice(0, 700));
-  } catch (e) { Logger.log('threw: %s', e); }
-
-  // The notes live on the DETAIL record, not the list. If this call is
-  // failing the list still looks fine and the notes silently never arrive,
-  // which is exactly what the ceiling test showed.
-  Logger.log('');
-  Logger.log('════ WHISKY:EDITION — detail (where tasting_notes live) ════');
-  if (!slug) {
-    Logger.log('NO SLUG on the list item — the detail call can never happen.');
-  } else {
-    try {
-      var d = UrlFetchApp.fetch(WE_BASE + '/' + encodeURIComponent(slug),
-        {muteHttpExceptions: true, headers: {'Accept': 'application/json'}});
-      Logger.log('HTTP %s', d.getResponseCode());
-      var dj = parseBody_(d.getContentText());
-      Logger.log('detail keys: %s', Object.keys(dj).join(', '));
-      Logger.log('tasting_notes: %s', JSON.stringify(dj.tasting_notes));
-    } catch (e) { Logger.log('threw: %s', e); }
-  }
-
-  Logger.log('');
   Logger.log('════ POUR PICKS — search ════');
   var id = null;
   try {
@@ -1433,15 +1355,14 @@ function enrichCeiling() {
   for (var j = 0; j < picked.length; j++) {
     var prod = picked[j];
     Utilities.sleep(DELAY);
-    var we = weLookup_(prod.name, prod.sub, prod.dist);
-    Utilities.sleep(DELAY);
     var pp = ppLookup_(prod.name, prod.sub, prod.dist);
-    if (!we.miss || !pp.miss) hits++;
-    var notes = (!we.miss && (we.tn_nose || we.tn_palate))
-             || (!pp.miss && (pp.tn_nose || pp.tn_palate));
+    if (!pp.miss) hits++;
+    /* Pour Picks has no nose or palate and never did - it carries flavour
+       tags and a profile instead - so this count is now always zero and is
+       kept only so the line it prints does not change shape. */
+    var notes = !pp.miss && (pp.tn_nose || pp.tn_palate);
     if (notes) withNotes++;
-    Logger.log('  WE %s   PP %s   %s%s',
-      we.miss ? 'miss' : 'HIT ' + we._match.toFixed(2),
+    Logger.log('  PP %s   %s%s',
       pp.miss ? 'miss' : 'HIT ' + pp._match.toFixed(2),
       prod.name.slice(0, 40), notes ? '   [notes]' : '');
   }
