@@ -2234,6 +2234,44 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('each screen weighs the right person\'s taste', bad);
 }
 
+/* WHAT HE SAYS ABOUT DRINKING IT IS SAID ONCE (v2.5.67).
+ *
+ * Three copies of it before today - the Taste screen, the flight sheets and the
+ * line under Learn and Flights - so when BZ reworded it, two could move and the
+ * third stay old, and the app would tell a person two different things about the
+ * same thing. L.RESP_LINE is the copy; everything else asks for it.
+ *
+ * Prose is the one kind of duplication the shape-reducer cannot catch, which is
+ * why this is spelt out. The words are matched loosely - a few distinctive ones,
+ * and the ones it used to use - so rewording the constant does not mean
+ * rewording the check. What it forbids is a SECOND place saying it.
+ */
+{
+  const WORDS = [/drink\s+responsibly/i, /water\s+and\s+snacks/i,
+    /know how you/i, /nobody\s+drives/i, /taste, do\s?(?:not|n.t)\s+finish/i];
+  const at = src.indexOf('L.RESP_LINE = ');
+  const bad = at < 0
+    ? ['L.RESP_LINE has gone - the line about drinking it is said on several '
+       + 'screens and it needs exactly one copy']
+    : [];
+  /* The declaration itself is the copy, so its own lines are skipped. */
+  const first = at < 0 ? 0 : src.slice(0, at).split('\n').length;
+  const last = at < 0 ? 0
+    : src.slice(0, src.indexOf(';', at)).split('\n').length;
+  src.split('\n').forEach((l, i) => {
+    const n = i + 1;
+    if (n >= first && n <= last) return;
+    if (l.indexOf('RESP_LINE') >= 0) return;         // asking for it is right
+    if (/^\s*(\*|\/\*|\/\/)/.test(l)) return;          // a comment may quote it
+    if (WORDS.some(re => re.test(l))) {
+      bad.push('index.html:' + n + '  ' + l.trim().slice(0, 56)
+        + '  \u2014 a second copy of what he says about drinking it; ask '
+        + 'L.RESP_LINE for the words instead');
+    }
+  });
+  check('what he says about drinking it is said in one place', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve

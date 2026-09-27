@@ -2032,7 +2032,7 @@ function step(n) {
         failures.push('papers: the ' + w + ' sheet is ' + m.h
           + 'px against 950 of a Letter page \u2014 it prints as two');
       }
-      if (!/nobody drives/.test(m.care)) {
+      if (!/get home/.test(m.care)) {
         failures.push('papers: the ' + w + ' sheet lost its drinking line');
       }
       if (w === 'sheet' && /proof|standard drinks|glasses/i.test(m.care)) {

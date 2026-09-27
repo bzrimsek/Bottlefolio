@@ -4028,44 +4028,73 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
 })();
 /* SHAPE YOUR TASTE RECOMMENDATIONS (v2.5.56): this or that, on flavours. */
 (function () {
-  const prof = { flavour: [
-    { value: 'dark fruit', n: 40 }, { value: 'peat', n: 36 },
-    { value: 'honey', n: 30 }, { value: 'pepper', n: 26 },
-    { value: 'oak', n: 100 },      // too common to ask about
-    { value: 'cola', n: 2 }        // too rare
-  ] };
-  eq('it asks about the flavours the shelf leans on, commonest first',
-    L.tasteCandidates(prof), ['dark fruit', 'peat', 'honey', 'pepper']);
+  /* Any described shelf will do: what is ASKED no longer depends on what is
+     on it, which is the change BZ called for on 2026-09-27. */
+  const prof = { flavour: [{ value: 'dark fruit', n: 40 }] };
+  eq('it asks in words a person tastes, the same ones for everybody',
+    L.tasteCandidates(prof), L.TASTE_TERMS);
+  eq('and every one of them is a word the vocabulary knows',
+    L.TASTE_TERMS.filter(t => !L.palateOf({ tn: { nose: t } }).all.length), []);
+  /* EVERY WORD MUST MOVE A DIFFERENT WEIGHT. `rye` and `corn` both rolled up
+     to `grain`, so an answer about the rye note could not be told from one
+     about corn - which was BZ's complaint. */
+  eq('each word lifts a weight of its own',
+    L.TASTE_TERMS.length,
+    new Set(L.TASTE_TERMS.map(t => L.PALATE_LAYER[t] || t)).size);
+  eq('a shelf with no notes on it is asked nothing',
+    L.tasteCandidates({ flavour: [] }), []);
   eq('a pair is named the same way whichever order it is given',
     L.tastePairKey('peat', 'honey'), L.tastePairKey('honey', 'peat'));
   /* An answer is APPENDED, because asking twice is the whole instrument. */
-  let ans = L.tasteSaid({}, 'peat', 'honey', 'peat');
-  eq('an answer is recorded', L.tasteWinner(ans[L.tastePairKey('peat', 'honey')]),
+  let ans = L.tasteSaid({}, 'peat', 'cherry', 'peat');
+  eq('an answer is recorded', L.tasteWinner(ans[L.tastePairKey('peat', 'cherry')]),
     'peat');
-  ans = L.tasteSaid(ans, 'peat', 'honey', 'honey');
+  ans = L.tasteSaid(ans, 'peat', 'cherry', 'cherry');
   eq('asking again keeps both, latest last',
-    [L.tasteTimes(ans[L.tastePairKey('peat', 'honey')]),
-     L.tasteWinner(ans[L.tastePairKey('peat', 'honey')])], [2, 'honey']);
+    [L.tasteTimes(ans[L.tastePairKey('peat', 'cherry')]),
+     L.tasteWinner(ans[L.tastePairKey('peat', 'cherry')])], [2, 'cherry']);
   eq('and the order follows the latest',
-    L.tasteOrder(ans)[0].term, 'honey');
+    L.tasteOrder(ans)[0].term, 'cherry');
   eq('neither counts for nobody and against nobody',
-    L.tasteOrder(L.tasteSaid({}, 'peat', 'honey', null))
+    L.tasteOrder(L.tasteSaid({}, 'peat', 'cherry', null))
       .map(x => x.score), [0, 0]);
   eq('how often each flavour has been asked about',
-    [L.tasteSeen(ans).peat, L.tasteSeen(ans).honey], [1, 1]);
+    [L.tasteSeen(ans).peat, L.tasteSeen(ans).cherry], [1, 1]);
+  /* ANSWERS OFF THE POOL DO NOT COUNT (2026-09-27). BZ had answered ten pairs
+     of the old flavours; left counting, they would have held the card settled
+     for ever and he would never have seen a question again. */
+  eq('a pair that can no longer be asked is not counted',
+    L.tasteOrder({ 'brown sugar|dark fruit': 'dark fruit' }), []);
+  eq('nor does it satisfy the repeat test',
+    L.tasteHoldout({ 'brown sugar|dark fruit': 'dark fruit>dark fruit' })
+      .tested, 0);
   /* THE BAR. A coin agrees with itself half the time; the bar is two and a
      half standard deviations above that, so it tightens as answers pile up
      rather than loosening. */
   eq('nothing repeated, nothing claimed',
     L.tasteHoldout({ 'a|b': 'a', 'c|d': 'c' }).passed, false);
+  /* REAL PAIRS OFF THE POOL. Made-up names would be filtered out before they
+     were counted, which is the point of L.tasteOnPool - and a repeat test fed
+     pairs that cannot be asked would have measured nothing while passing. */
+  const pairsOf = n => {
+    const out = [];
+    for (let i = 0; i < L.TASTE_TERMS.length && out.length < n; i++) {
+      for (let j = i + 1; j < L.TASTE_TERMS.length && out.length < n; j++) {
+        out.push([L.TASTE_TERMS[i], L.TASTE_TERMS[j]]);
+      }
+    }
+    return out;
+  };
   const agree = {};
-  for (let i = 0; i < 12; i++) agree['x' + i + '|y' + i] = 'x' + i + '>x' + i;
+  pairsOf(12).forEach(p2 => {
+    agree[L.tastePairKey(p2[0], p2[1])] = p2[0] + '>' + p2[0];
+  });
   eq('twelve repeats that all agree is enough',
     L.tasteHoldout(agree).passed, true);
   const half = {};
-  for (let i = 0; i < 12; i++) {
-    half['x' + i + '|y' + i] = 'x' + i + '>' + (i % 2 ? 'x' + i : 'y' + i);
-  }
+  pairsOf(12).forEach((p2, i) => {
+    half[L.tastePairKey(p2[0], p2[1])] = p2[0] + '>' + (i % 2 ? p2[0] : p2[1]);
+  });
   eq('agreeing half the time is a coin, and claims nothing',
     L.tasteHoldout(half).passed, false);
   /* The card asks one function for all of it. */
@@ -4076,12 +4105,19 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
     L.tasteAsk({ flavour: [] }, {}).settled, true);
   /* Every fifth question is one asked before. */
   let five = {};
-  ['dark fruit|peat', 'dark fruit|honey', 'dark fruit|pepper',
-   'honey|peat', 'honey|pepper'].forEach((k, i) => {
-    five[k] = k.split('|')[0];
-  });
+  ['cherry|peat', 'cherry|salt', 'cherry|mint', 'peat|salt', 'peat|mint']
+    .forEach(k => { five[k] = k.split('|')[0]; });
   eq('after five answers it asks one of them again',
     !!(L.tastePair(prof, five) || {}).again, true);
+  /* And the repeat comes off the POOL: reading the raw store offered BZ
+     `grain vs orchard fruit`, a pair that cannot be asked any more. */
+  const stale = {};
+  ['brown sugar|dark fruit', 'char|grain', 'char|nutty', 'chocolate|honey',
+   'grain|orchard fruit'].forEach(k => { stale[k] = k.split('|')[0]; });
+  const next = L.tastePair(prof, stale) || {};
+  eq('and never a pair off the old pool',
+    [L.TASTE_TERMS.indexOf(next.a) >= 0, L.TASTE_TERMS.indexOf(next.b) >= 0],
+    [true, true]);
 })();
 /* Evenness, lifted out of the radar so the radar could grow an axis. */
 eq('one bucket alone is perfectly even', L.axisEvenness([7]), 1);
@@ -4178,7 +4214,7 @@ eq('and no notes is no line', L.tasteLine({}), null);
    to carry between them, now derived from the one set of spellings. */
 eq('a term sits under the label a screen would name',
   L.palateLabels(['cherry', 'red berry', 'banana', 'rye']),
-  ['dark fruit', 'grain', 'red fruit', 'tropical fruit']);
+  ['dark fruit', 'red fruit', 'rye', 'tropical fruit']);
 /* palateLabels takes TERMS. A spelling is not one, which is what the layer
    being a map of terms means - raspberry reaches red fruit by being read into
    the term first. */
@@ -4189,8 +4225,10 @@ eq('a term no screen groups carries no label',
   L.palateLabels(['sweet', 'fruit', 'fresh', 'cake', 'dill']), []);
 eq('every label in the layer belongs to a real term',
   Object.keys(L.PALATE_LAYER).filter(t => !L.PALATE.some(r => r[0] === t)), []);
-eq('and the layer still names all forty labels',
-  new Set(Object.values(L.PALATE_LAYER)).size, 40);
+/* FORTY-ONE SINCE 2026-09-27: `rye` was split out of `grain` so an answer
+   about the rye note can be told from one about corn. */
+eq('and the layer still names all forty-one labels',
+  new Set(Object.values(L.PALATE_LAYER)).size, 41);
 eq('what it tastes of, in labels', L.flavorsOf({ tn: { nose: 'cocoa, raisins',
   palate: 'peppercorn' } }), ['chocolate', 'dried fruit', 'pepper']);
 eq('and nothing described is no labels', L.flavorsOf({ name: 'X' }), []);
@@ -22245,7 +22283,8 @@ sec('\u00a7406 the sheets say how to drink it');
     typeof L.sheetCare({ core: [{ k: 'z' }] }, null, true).pour, 'string');
 
   const host = L.hostCard(f, cat);
-  eq('the host sheet carries the line', /nobody drives/.test(host.care.line), true);
+  eq('the host sheet carries his words, and not a second copy of them',
+    host.care.line, L.RESP_LINE);
   eq('and the pour size', /0\.75 oz per glass/.test(host.care.pour), true);
   eq('and the hand-worked total', host.care.drinks, 3.75);
   eq('said on the host sheet itself',

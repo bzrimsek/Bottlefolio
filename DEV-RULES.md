@@ -143,3 +143,34 @@ Measured 2026-09-10: the whole gate is 143 seconds. sync 77, walk 43, and the
 other seven 24 between them. The 4025-assertion suite is half a second - the
 thing that sounds heavy is the cheapest thing in the gate, which is exactly
 why guessing at these numbers was worthless.
+
+## 36. REACH FOR THE CANON BEFORE INVENTING A VOCABULARY
+
+BZ, 2026-09-27: "We should have reached for canon first."
+
+This app built its own flavour vocabulary - 87 terms, 278 spellings, and a
+middle layer of `orchard fruit` / `stone fruit` / `dried fruit` that no person
+has ever tasted. It took four days and produced questions BZ could not answer
+in his own words. The Pentlands wheel has existed since the 1970s, the SWRI
+publishes it, and BZ had one hanging on his wall: ten groups, a middle ring,
+and leaf words people actually say. Measured against it, the invented
+vocabulary knew 48 of its 82 leaves.
+
+An invented vocabulary is not merely extra work. It is wrong in ways that are
+invisible from inside it: the middle ring became what the app SAID out loud,
+so it asked him to choose between `orchard fruit` and `stone fruit`, and the
+questions never mentioned peat.
+
+So, for anything with an established public vocabulary or taxonomy - flavour,
+regions, cask types, categories in law:
+
+1. **Find the canonical one and read it before writing a table.** Name it in
+   the comment, with its source, so the next person can check the app against
+   it rather than against itself.
+2. **Where the app must differ, say why in the comment.** A deliberate
+   departure is fine; an accidental one is how a private language starts.
+3. **A private middle layer may exist for the MATHS and must never be spoken.**
+   Roll-ups are how a score stops punishing a precise note (L.tasteScore). They
+   are not words, and no screen shows one.
+4. **Measure coverage against the canon and keep the number.** "48 of 82" is
+   the kind of fact that ends an argument; "it seems thorough" is not.

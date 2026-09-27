@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 765 |
-| tables | 182 |
-| carrying a stated purpose | 583 |
+| functions | 766 |
+| tables | 183 |
+| carrying a stated purpose | 584 |
 
 ## Tables
 
@@ -184,6 +184,7 @@ QUESTION, not the name you were going to use.
 - **`L.SYNC_KEYS`** — Everything that has to follow an account between devices
 - **`L.SYNC_MERGE`** — _no comment above it_
 - **`L.TASTE_HINTS`** — A NAME, OR SOMETHING THAT IS NOT A NAME AT ALL.
+- **`L.TASTE_TERMS`** — WHAT IS ASKED ABOUT
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
 - **`L.TASTING`** — about his own shelf
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
@@ -889,9 +890,10 @@ QUESTION, not the name you were going to use.
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — notes never quietly changes the price.
 - **`L.tasteAsk`** — EVERYTHING THE CARD NEEDS, asked once
-- **`L.tasteCandidates`** — The flavours worth asking about
+- **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLine`** — _no comment above it_
+- **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.
 - **`L.tasteOrder`** — THE ORDER THE ANSWERS ARGUE FOR
 - **`L.tastePair`** — _no comment above it_
 - **`L.tastePairKey`** — _no comment above it_
