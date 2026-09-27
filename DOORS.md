@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 762 |
+| functions | 765 |
 | tables | 182 |
-| carrying a stated purpose | 581 |
+| carrying a stated purpose | 583 |
 
 ## Tables
 
@@ -626,7 +626,7 @@ QUESTION, not the name you were going to use.
 - **`L.palateIndex`** — _no comment above it_
 - **`L.palateLabels`** — Every label a set of terms carries, in the order the layer declares them.
 - **`L.palateOf`** — _no comment above it_
-- **`L.palateShelf`** — WHAT THE SHELF TASTES OF, counted and not ranked against anything.
+- **`L.palateShelf`** — _no comment above it_
 - **`L.palateTerms`** — The terms a piece of note text uses, canonical and sorted
 - **`L.parseCandidates`** — _no comment above it_
 - **`L.parseCSV`** — doubled quotes, CRLF, and a trailing newline.
@@ -897,10 +897,12 @@ QUESTION, not the name you were going to use.
 - **`L.tastePairKey`** — _no comment above it_
 - **`L.tasteProfile`** — _no comment above it_
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is
+- **`L.tasteScore`** — A BOTTLE AGAINST THOSE WEIGHTS, nought to one.
 - **`L.tasteSeen`** — How many times each flavour has been asked about.
 - **`L.tastesLike`** — WHAT ON YOUR SHELF TASTES LIKE IT
 - **`L.tasteTimes`** — _no comment above it_
 - **`L.tasteWants`** — _no comment above it_
+- **`L.tasteWeights`** — WHAT THIS PERSON'S TASTE WEIGHS, one flavour at a time (BZ, 2026-09-27).
 - **`L.tasteWinner`** — What they said the LAST time they were asked.
 - **`L.tastingForGuest`** — What a guest's device does with one
 - **`L.tastingNotes`** — _no comment above it_
@@ -961,6 +963,7 @@ QUESTION, not the name you were going to use.
 - **`L.withIdToken`** — EVERY PAID CALL CARRIES PROOF OF SIGN-IN (BZ, 2026-09-15)
 - **`L.withOrigin`** — _no comment above it_
 - **`L.woodFamily`** — _no comment above it_
+- **`L.woodLead`** — WHICH WOOD A SET OF BOTTLES MOSTLY SAT IN, as {value, n}.
 - **`L.woodsOf`** — Every wood on a product, and every family it touches
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_

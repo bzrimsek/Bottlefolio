@@ -3822,6 +3822,47 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
   eq('a bottle with no notes is not counted against the shelf',
     L.flavourSpread([mk('n1', null)], 3).described, 0);
 })();
+/* WHICH WOOD A SET OF BOTTLES MOSTLY SAT IN. Its own door because the shelf
+   palate wanted only this and asked for the whole taste profile to get it -
+   which was a ring once the profile started carrying the weights, and it ran
+   until the stack gave out. */
+eq('the wood most of them sat in',
+  L.woodLead([{ fin: 'Sherry' }, { fin: 'Sherry' }, { fin: 'Port' }]),
+  { value: 'sherry', n: 2 });
+eq('a tie is broken by name, so it answers the same way twice',
+  L.woodLead([{ fin: 'Sherry' }, { fin: 'Port' }]).value, 'fortified');
+eq('no wood anywhere is no answer', L.woodLead([{ name: 'X' }]), null);
+eq('and nothing at all does not throw', L.woodLead(null), null);
+/* A PROFILE IS WEIGHTS, A BOTTLE IS TERMS, THE SCORE IS THE TWO MULTIPLIED
+   (BZ, 2026-09-27). One scoring rule where the verdict and the suggestions had
+   one each. */
+(function () {
+  const mk = (k, sub, tn, fin) => ({ k: k, name: k, sub: sub, dist: 'D' + k,
+    fin: fin, tn: tn });
+  const c = {};
+  for (let i = 0; i < 12; i++) {
+    c['s' + i] = mk('s' + i, 'scotch',
+      { nose: 'figs, raisins', palate: 'oak, chocolate' }, 'Sherry');
+  }
+  for (let i = 0; i < 12; i++) {
+    c['b' + i] = mk('b' + i, 'bourbon',
+      { nose: 'oak, vanilla', palate: 'caramel, corn' }, null);
+  }
+  const bots = Object.keys(c).map((k, i) => ({ id: 'w' + i, k: k, status: 'open' }));
+  const w = L.tasteWeights(c, bots, {});
+  eq('a flavour on everything is halved, one that sets the shelf apart is not',
+    w['dried fruit'] > w.oak, true);
+  eq('a bottle that tastes of what the shelf leans on scores higher',
+    L.tasteScore(c.s0, w) > L.tasteScore(c.b0, w), true);
+  eq('no notes, no score - null and never nought, because nought is a verdict',
+    L.tasteScore({ name: 'X' }, w), null);
+  eq('and no weights at all is no score either',
+    L.tasteScore(c.s0, {}), null);
+  /* The answers override, and only once they have passed their bar. */
+  const unsettled = { 'a|b': 'a', 'c|d': 'c' };
+  eq('answers that have not passed weigh nothing',
+    JSON.stringify(L.tasteWeights(c, bots, unsettled)), JSON.stringify(w));
+})();
 /* WHAT YOU ARE LIKELY TO LIKE, FROM WHAT THE SHELF TASTES OF (v2.5.62).
    Every other reason in that list is a fact off a label; this one is read from
    the notes, and it is the Shop verdict's judgement pointed the other way. */
@@ -3897,12 +3938,25 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
     'A', cat, bots, [], full);
   const withCommon = L.judgeListing({ flavours: ['oak', 'vanilla'] },
     'B', cat, bots, [], full);
-  eq('a shared lean is worth saying',
-    /tastes of dark fruit and peat/.test(String(withLean.why)), true);
+  /* v2.5.63: the verdict scores through L.tasteScore and the weights on the
+     profile, so the fixture carries weights rather than a lean band. Only the
+     heavy half counts as reaching, because every label carries some weight and
+     naming whatever a bottle shared had one answer contradicting itself. */
+  const weighted = Object.assign({}, full, { weights: {
+    'dark fruit': 0.9, peat: 0.8, chocolate: 0.7,
+    oak: 0.1, vanilla: 0.05, citrus: 0.04 } });
+  const heavy = L.judgeListing({ flavours: ['dark fruit', 'peat'] },
+    'A', cat, bots, [], weighted);
+  const light = L.judgeListing({ flavours: ['oak', 'vanilla'] },
+    'B', cat, bots, [], weighted);
+  eq('what it reaches for is worth saying',
+    /tastes of dark fruit and peat/.test(String(heavy.why)), true);
   eq('and a shared commonplace earns nothing',
-    String(withCommon.why).indexOf('tastes of'), -1);
+    String(light.why).indexOf('tastes of'), -1);
+  eq('the heavy bottle scores above the light one',
+    heavy.score > light.score, true);
   eq('no notes on the candidate, nothing claimed',
-    String(L.judgeListing({}, 'C', cat, bots, [], full).why)
+    String(L.judgeListing({}, 'C', cat, bots, [], weighted).why)
       .indexOf('tastes of'), -1);
 })();
 /* SHAPE YOUR TASTE RECOMMENDATIONS (v2.5.56): this or that, on flavours. */
