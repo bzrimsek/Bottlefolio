@@ -3755,7 +3755,28 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
   eq('nor is a long finish',
     sh.top.filter(x => x.term === 'long').length, 0);
   eq('the sentence says it is the shelf and not a preference',
-    /rather than what you prefer/.test(sh.say), true);
+    /not what you prefer/.test(sh.say), true);
+  /* THE CONTRAST, when there is a wood worth contrasting. Counting alone said
+     "spice, oak, vanilla" under a title drawn from the casks, which read as an
+     argument; this says what the leading wood tastes of that the rest does
+     not, and drops the wood's own name because that part is not news. */
+  const wc = {};
+  'abcdefghij'.split('').forEach((c, i) => {
+    wc['s' + c] = { k: 's' + c, name: 'Sherried ' + c, sub: 'scotch',
+      dist: 'H' + i, fin: 'Sherry',
+      tn: { nose: 'raisin, fig', palate: 'sherry, oak' } };
+    wc['p' + c] = { k: 'p' + c, name: 'Plain ' + c, sub: 'bourbon',
+      dist: 'P' + i, tn: { nose: 'oak, vanilla', palate: 'caramel' } };
+  });
+  const wb = Object.keys(wc).map((k, i) =>
+    ({ id: 'w' + i, k: k, status: 'open' }));
+  const con = L.palateShelf(wc, wb);
+  eq('the contrast names what the leading wood adds',
+    con.apart.indexOf('raisin') >= 0 && con.apart.indexOf('fig') >= 0, true);
+  eq('and never the wood itself, which is not news',
+    con.apart.indexOf('sherry'), -1);
+  eq('the sentence counts the bottles it is about',
+    /^The 10 in sherry wood taste of /.test(con.say), true);
   eq('an empty shelf says nothing',
     [L.palateShelf({}, []).say, L.palateShelf({}, []).top], ['', []]);
 })();
