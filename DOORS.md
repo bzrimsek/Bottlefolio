@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 766 |
-| tables | 183 |
-| carrying a stated purpose | 584 |
+| functions | 770 |
+| tables | 185 |
+| carrying a stated purpose | 589 |
 
 ## Tables
 
@@ -105,6 +105,8 @@ QUESTION, not the name you were going to use.
 - **`L.NOTE_WORDS_MEMO`** — THE WORDS OF A NOTE, split once
 - **`L.OFFER_GENERIC`** — WHAT EVERY BOTTLE SHARES, and so identifies none
 - **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
+- **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
+- **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
 - **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]
 - **`L.PALATE_FAMILIES`** — A term is DERIVED from note text, never stated
@@ -184,7 +186,7 @@ QUESTION, not the name you were going to use.
 - **`L.SYNC_KEYS`** — Everything that has to follow an account between devices
 - **`L.SYNC_MERGE`** — _no comment above it_
 - **`L.TASTE_HINTS`** — A NAME, OR SOMETHING THAT IS NOT A NAME AT ALL.
-- **`L.TASTE_TERMS`** — WHAT IS ASKED ABOUT
+- **`L.TASTE_TERMS`** — TASTES, NOT CAUSES (BZ, 2026-09-27
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
 - **`L.TASTING`** — about his own shelf
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
@@ -612,6 +614,9 @@ QUESTION, not the name you were going to use.
 - **`L.oneSentence`** — THE FIRST SENTENCE OF SOMETHING, which is as much as a line under a
 - **`L.onWishlist`** — _no comment above it_
 - **`L.openKeys`** — Which whiskies can be poured tonight, in one pass
+- **`L.originBase`** — WHAT A CATEGORY TASTES LIKE BEFORE ANYTHING IS DONE TO IT.
+- **`L.originSays`** — WHAT THIS BOTTLE TASTES OF, IN LAYERS (BZ's model, 2026-09-27).
+- **`L.originSources`** — _no comment above it_
 - **`L.orphanBottles`** — with no product is on no screen at all and the counts do not mention it.
 - **`L.otherAccount`** — A SHELF ON THIS DEVICE THAT BELONGS TO ANOTHER ACCOUNT must not be merged
 - **`L.ownedCatalog`** — _no comment above it_
@@ -891,6 +896,7 @@ QUESTION, not the name you were going to use.
 - **`L.takeFor`** — notes never quietly changes the price.
 - **`L.tasteAsk`** — EVERYTHING THE CARD NEEDS, asked once
 - **`L.tasteCandidates`** — _no comment above it_
+- **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLine`** — _no comment above it_
 - **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.

@@ -2321,6 +2321,64 @@ sec('tastes like: flavors from the notes');
     L.tastesLike(tl.s, tl, tlOwned, 5)
       .reduce((a2, r) => a2.concat(r.words), [])
       .filter(w => madeUp.indexOf(w) >= 0), []);
+  /* WHERE A FLAVOUR CAME FROM, IN LAYERS (v2.5.69). BZ's model: "every main
+     category as a baseline as driven by grain and wood, then impacted by
+     finishes and age" - with the contents off the discs, not off him: "Use
+     canon, not my words." */
+  const ob = { name: 'Mixed', sub: 'bourbon', age: 12, fin: 'Oloroso',
+    tn: { nose: 'caramel, vanilla, oak', palate: 'raisin, fig, leather, mint' } };
+  const o1 = L.originSays(ob);
+  eq('the baseline is the grain ring and the oak ring, not a table',
+    [L.originBase({ sub: 'bourbon' }).indexOf('caramel') >= 0,
+     L.originBase({ sub: 'bourbon' }).indexOf('vanilla') >= 0,
+     L.originBase({ sub: 'nowhere' }).length], [true, true, 0]);
+  eq('what the category gives anyway is said as such',
+    o1.base.slice().sort(), ['caramel', 'oak', 'vanilla']);
+  eq('the finish is credited with what it actually gave',
+    [o1.from[0].source, o1.from[0].terms.slice().sort()],
+    ['sherry', ['fig', 'raisin']]);
+  eq('and the years with the leather', o1.years, ['leather']);
+  eq('what nothing explains is the distillery being itself', o1.own, ['mint']);
+  /* A TERM IS SPENT ONCE, on the first layer that claims it. */
+  eq('nothing is counted in two layers at once',
+    o1.base.concat(o1.years, o1.own, o1.from[0].terms).length,
+    new Set(o1.base.concat(o1.years, o1.own, o1.from[0].terms)).size);
+  /* NOTHING IS CLAIMED FOR A CATEGORY WHOSE GRAIN IS NOT KNOWN: an empty
+     baseline would drop every flavour into `own` and call a plain whiskey
+     singular. */
+  eq('a category with no grain known says nothing at all',
+    L.originSays({ sub: 'world', tn: { nose: 'honey' } }).known, false);
+  /* THE AGE RING IS THE YEARS, not the cask: a young one does not claim
+     leather and tobacco. */
+  eq('a four-year-old does not credit the years in wood',
+    L.originSources({ sub: 'bourbon', age: 4 }).wood.indexOf('age'), -1);
+  eq('and peating is claimed only where the notes say so',
+    [L.originSources({ sub: 'scotch', tn: { nose: 'peat smoke' } })
+      .process.indexOf('peating') >= 0,
+     L.originSources({ sub: 'scotch', tn: { nose: 'honey' } })
+       .process.indexOf('peating') >= 0], [true, false]);
+  /* TWO WORDS THAT ARE ONE QUESTION. BZ: "Rye v Pepper seems the same
+     question." The grain disc puts peppercorn on the rye ring. */
+  eq('a thing and what it gives is not a choice',
+    [L.tasteConfused('rye', 'pepper'), L.tasteConfused('sherry', 'raisin'),
+     L.tasteConfused('oak', 'vanilla')], [true, true, true]);
+  eq('but two unrelated tastes are',
+    [L.tasteConfused('cherry', 'mint'), L.tasteConfused('peat', 'honey')],
+    [false, false]);
+  eq('and no such pair is ever offered', (function () {
+    const prof = { flavour: [{ value: 'x', n: 1 }] };
+    const ans = {};
+    const bad = [];
+    let pair;
+    for (let i = 0; i < 200 && (pair = L.tastePair(prof, ans)); i++) {
+      if (L.tasteConfused(pair.a, pair.b)) bad.push(pair.a + ' v ' + pair.b);
+      ans[pair.key] = (ans[pair.key] ? ans[pair.key] + '>' : '') + pair.a;
+    }
+    return bad;
+  })(), []);
+  eq('every word asked about still lifts a weight of its own',
+    new Set(L.TASTE_TERMS.map(t => L.PALATE_LAYER[t])).size,
+    L.TASTE_TERMS.length);
   eq('what it shows instead is a word out of the notes',
     L.tastesLike(tl.s, tl, tlOwned, 5)[0].words.every(w =>
       L.PALATE.some(r => r[0] === w)), true);
