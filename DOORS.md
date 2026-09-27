@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 758 |
-| tables | 181 |
-| carrying a stated purpose | 577 |
+| functions | 760 |
+| tables | 182 |
+| carrying a stated purpose | 578 |
 
 ## Tables
 
@@ -49,6 +49,7 @@ QUESTION, not the name you were going to use.
 - **`L.FIELD_WORDS`** — A FIELD NAME IS NOT A WORD
 - **`L.FILL_NOTCHES`** — HOW MUCH IS LEFT
 - **`L.FILTERS`** — Every filter is declared here, once
+- **`L.FIN_NOT_CASK`** — WORDS THAT ARE NOT CASKS
 - **`L.FIND_LABEL`** — How widely a bottle is stocked
 - **`L.FIND_RANK`** — Unknown goes LAST.
 - **`L.FINISH_TIERS`** — How far a bottle was finished, which is a different question from WHICH
@@ -294,6 +295,7 @@ QUESTION, not the name you were going to use.
 - **`L.countryCounts`** — _no comment above it_
 - **`L.countryOf`** — _no comment above it_
 - **`L.csvCell`** — A cell a spreadsheet will read back the way it was written.
+- **`L.deaccent`** — ACCENTS OFF BEFORE ANYTHING IS MATCHED
 - **`L.describeCorrection`** — A correction in words
 - **`L.detailAt`** — _no comment above it_
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
@@ -344,6 +346,7 @@ QUESTION, not the name you were going to use.
 - **`L.finishParts`** — _no comment above it_
 - **`L.finIsNote`** — IS THIS A CASK NAME, OR SOMEBODY'S FINISH?
 - **`L.finIsWine`** — _no comment above it_
+- **`L.finNotCask`** — _no comment above it_
 - **`L.fitByGroup`** — Findings by group, in that order, skipping the empty ones.
 - **`L.fitLine`** — _no comment above it_
 - **`L.fitTwoWays`** — _no comment above it_
@@ -955,7 +958,7 @@ QUESTION, not the name you were going to use.
 - **`L.wishRows`** — The wishlist, newest first
 - **`L.withIdToken`** — EVERY PAID CALL CARRIES PROOF OF SIGN-IN (BZ, 2026-09-15)
 - **`L.withOrigin`** — _no comment above it_
-- **`L.woodFamily`** — Which family a single wood belongs to
+- **`L.woodFamily`** — _no comment above it_
 - **`L.woodsOf`** — Every wood on a product, and every family it touches
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_

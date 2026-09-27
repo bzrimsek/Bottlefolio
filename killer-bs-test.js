@@ -3727,6 +3727,29 @@ eq('no cask recorded is no cask', L.caskKind({}), null);
  'Madeira, Armagnac, rum, Hungarian oak'].forEach(v => {
   eq('a real cask is kept: ' + v, L.finIsNote(v), false);
 });
+/* THREE FAULTS FOUND BY ASKING WHAT STILL PLACES NOWHERE (v2.5.60). */
+eq('an accented cask name is the same cask',
+  [L.woodFamily('Pedro Ximénez'), L.woodFamily('Pedro Ximenez')],
+  ['sherry', 'sherry']);
+eq('a wine the table had never been taught',
+  [L.woodFamily('Valpolicella'), L.woodFamily('Loupiac Cask')],
+  ['table', 'table']);
+eq('and oak said another way is still oak',
+  [L.woodFamily('Virgin Portuguese Oak'), L.woodFamily('Double oak finish')],
+  ['oak', 'oak']);
+/* A RELEASE WORD IS NOT A CASK. Eight of BZ's bottles had the app announcing
+   a cask called "limited". */
+['limited', 'Standard', 'batched', 'Non-chill filtered', '80 proof', 'Gbp',
+ 'n/a'].forEach(v => {
+  eq('not a cask: ' + v, L.finNotCask(v), true);
+  eq('...so no family: ' + v, L.woodFamily(v), null);
+  eq('...and not read as one: ' + v, L.caskKind({ fin: v }), null);
+});
+eq('a real cask is not a release word',
+  ['Sherry', 'Oloroso', 'Mizunara', 'first-fill bourbon casks']
+    .filter(v => L.finNotCask(v)), []);
+eq('accents come off without taking the letters',
+  L.deaccent('Château Margaux'), 'Chateau Margaux');
 eq('a wood said at length is still that wood',
   L.woodFamily('Oloroso sherry casks'), 'sherry');
 eq('and the longer name wins over one hiding inside it',
@@ -3734,7 +3757,7 @@ eq('and the longer name wins over one hiding inside it',
 eq('a note names no wood, whatever words are in it',
   L.woodFamily('Long, dry oak'), null);
 eq('and a word the table does not know is still nothing',
-  L.woodFamily('Valpolicella'), null);
+  L.woodFamily('Barolo'), null);   /* Valpolicella was taught in v2.5.60 */
 
 /* THE PALATE VOCABULARY (v2.5.46). Prose cannot be compared, so a note is
    read into terms. What these guard is the reading, not the words: a term
