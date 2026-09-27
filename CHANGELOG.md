@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.49  ·  2026-09-26 11:33 PM ET
+
+Home says what the shelf tastes of, beside what it collects. The portrait has counted casks and called this shelf The Sherry Cellar for a while; L.palateShelf counts flavour words the same way and says the same KIND of thing about taste, which is a description of what is on the shelf and never a claim about what anybody prefers - the sentence says so out loud, because three attempts at the second thing were withdrawn in one day. Colour and body are left out because neither is a taste. Getting it onto the card meant renderHome was at its line ceiling, and the allowance does not go up, so the profile card came out of that screen into portraitCard and its header into portraitHead: renderHome is ninety-three lines where it was a hundred and ninety-nine, and the ratchet moved with it.
+
 ## v2.5.48  ·  2026-09-26 10:58 PM ET
 
 Where a product came from is no longer filed with who vouched for its facts. The boolean marking a product the lookup invented lived inside src beside the provenance stamps, so one word meant two things and the stamp guard had to be told to ignore one of its own keys. It has its own field now, L.fromLookup is the one door that answers the question, and it reads the old shape as well as the new because stored accounts and library rows written before today carry it - nothing breaks for anybody. An offer to the library now hands over the provenance and the flag as two separate things through L.provStamps, so a stamp can never arrive looking like a flag. Four writers and one reader moved over, consistency fails a second reader, and the fence was watched going red before it was trusted.

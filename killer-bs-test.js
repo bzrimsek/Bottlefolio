@@ -3697,6 +3697,35 @@ eq('how much the writer liked it is not a taste',
   L.palateTerms('complex, lovely, beautifully balanced'), []);
 eq('no note is no terms', L.palateTerms(''), []);
 eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
+/* WHAT THE SHELF TASTES OF: a count, at the same level of claim as the
+   portrait's title, and never a statement about what anybody prefers. */
+(function () {
+  const sc = {
+    a: { k: 'a', name: 'A', sub: 'bourbon', dist: 'One',
+         tn: { colour: 'Deep amber', nose: 'oak, vanilla', palate: 'caramel',
+               finish: 'long' } },
+    b: { k: 'b', name: 'B', sub: 'bourbon', dist: 'Two',
+         tn: { nose: 'oak', palate: 'caramel, cherry' } },
+    c: { k: 'c', name: 'C', sub: 'vodka', dist: 'Three',
+         tn: { nose: 'oak, oak, oak' } },
+    d: { k: 'd', name: 'D', sub: 'bourbon', dist: 'Four' }
+  };
+  const sb = [{ id: '1', k: 'a', status: 'open' }, { id: '2', k: 'b', status: 'open' },
+              { id: '3', k: 'c', status: 'open' }, { id: '4', k: 'd', status: 'open' }];
+  const sh = L.palateShelf(sc, sb);
+  eq('the shelf palate counts whisky only, described only',
+    [sh.bottlings, sh.described], [3, 2]);
+  eq('and counts a term once per bottle',
+    sh.top.filter(x => x.term === 'oak')[0].n, 2);
+  eq('a colour is not what a shelf tastes of',
+    sh.top.filter(x => x.term === 'amber').length, 0);
+  eq('nor is a long finish',
+    sh.top.filter(x => x.term === 'long').length, 0);
+  eq('the sentence says it is the shelf and not a preference',
+    /rather than what you prefer/.test(sh.say), true);
+  eq('an empty shelf says nothing',
+    [L.palateShelf({}, []).say, L.palateShelf({}, []).top], ['', []]);
+})();
 eq('a bottle with no tn is not guessed at',
   L.palateOf({ name: 'Nothing', proof: 100 }).all, []);
 /* A COLOUR IS NOT A FLAVOUR, both ways round: the fields borrow each
