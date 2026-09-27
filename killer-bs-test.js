@@ -3761,6 +3761,51 @@ eq('the taste line names the flavours',
 eq('an amber whisky with a long finish has said nothing about taste',
   L.tasteLine({ tn: { colour: 'Amber', finish: 'long and smooth' } }), null);
 eq('and no notes is no line', L.tasteLine({}), null);
+/* THE COARSE LAYER (v2.5.50). Forty labels, the same forty three tables used
+   to carry between them, now derived from the one set of spellings. */
+eq('a term sits under the label a screen would name',
+  L.palateLabels(['cherry', 'red berry', 'banana', 'rye']),
+  ['dark fruit', 'grain', 'red fruit', 'tropical fruit']);
+/* palateLabels takes TERMS. A spelling is not one, which is what the layer
+   being a map of terms means - raspberry reaches red fruit by being read into
+   the term first. */
+eq('a spelling reaches its label through the term, not on its own',
+  [L.palateLabels(['raspberry']), L.flavorsOf({ tn: { nose: 'raspberry' } })],
+  [[], ['red fruit']]);
+eq('a term no screen groups carries no label',
+  L.palateLabels(['sweet', 'fruit', 'fresh', 'cake', 'dill']), []);
+eq('every label in the layer belongs to a real term',
+  Object.keys(L.PALATE_LAYER).filter(t => !L.PALATE.some(r => r[0] === t)), []);
+eq('and the layer still names all forty labels',
+  new Set(Object.values(L.PALATE_LAYER)).size, 40);
+eq('what it tastes of, in labels', L.flavorsOf({ tn: { nose: 'cocoa, raisins',
+  palate: 'peppercorn' } }), ['chocolate', 'dried fruit', 'pepper']);
+eq('and nothing described is no labels', L.flavorsOf({ name: 'X' }), []);
+/* A FLAVOUR WORD MEANS THAT WORD. Four goes at this in one evening and each
+   fault is an assertion, because each one shipped past the last. */
+eq('pineapple is not apple',
+  L.hasFlavour({ tn: { nose: 'mango and pineapple' } }, 'apple'), false);
+eq('but apples are', L.hasFlavour({ tn: { nose: 'baked apples' } }, 'apple'), true);
+eq('peppery is pepper',
+  L.hasFlavour({ tn: { palate: 'peppery' } }, 'pepper'), true);
+eq('peppercorn is pepper too',
+  L.hasFlavour({ tn: { palate: 'black peppercorn' } }, 'pepper'), true);
+eq('butterscotch is not toffee, though a note may mean either',
+  L.hasFlavour({ tn: { nose: 'toffee' } }, 'butterscotch'), false);
+eq('honeycomb is honey',
+  L.hasFlavour({ tn: { nose: 'honeycomb' } }, 'honey'), true);
+eq('honeysuckle is not',
+  L.hasFlavour({ tn: { nose: 'honeysuckle' } }, 'honey'), false);
+eq('gingerbread is ginger',
+  L.hasFlavour({ tn: { finish: 'gingerbread' } }, 'ginger'), true);
+eq('peppermint is mint, not pepper',
+  [L.hasFlavour({ tn: { nose: 'peppermint' } }, 'mint'),
+   L.hasFlavour({ tn: { nose: 'peppermint' } }, 'pepper')], [true, false]);
+eq('every flavour word a flight can offer is a word the table knows',
+  L.FLAVOUR_WORDS.filter(w => {
+    const ix = L.palateIndex();
+    return !ix.word[w] && !L.PALATE.some(r => r[0] === w);
+  }), []);
 eq('no spelling is claimed by two terms', (function () {
   const seen = {}, dup = [];
   L.PALATE.forEach(r => r.slice(3).forEach(s => {

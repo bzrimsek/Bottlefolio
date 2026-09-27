@@ -2026,6 +2026,60 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('only one function reads the lookup flag', bad);
 }
 
+/* NO SECOND VOCABULARY (v2.5.50).
+ *
+ * This is the check that was missing. L.FLAVORS held forty flavour families as
+ * regexes from 2026-09-17; L.PALATE was written on 2026-09-26 without finding
+ * it, and for a day the app carried two tables answering "what does this taste
+ * of" - 28 names in common, different words for the same bottle. The
+ * duplicate-rule check could not see it because a table of regexes and a table
+ * of spellings do not reduce to the same shape.
+ *
+ * So this one counts flavour words instead: any top-level L table that names
+ * six or more of the vocabulary's own terms is a second vocabulary, whatever
+ * shape it is written in. The three that legitimately do are named.
+ */
+{
+  /* The tables that are allowed to name flavours: the vocabulary itself, its
+     coarse layer, its family list, and the curated list of words a flight may
+     be built around. */
+  const ALLOWED = ['L.PALATE', 'L.PALATE_LAYER', 'L.PALATE_FAMILIES',
+    'L.FLAVOUR_WORDS'];
+  /* The vocabulary's own canonical terms, read off its rows. */
+  const terms = [];
+  src.split('\n').forEach(l => {
+    const m = /^  \['([a-z ]+)',\s+'[a-z]+',\s+'(?:ll)?',/.exec(l);
+    if (m) terms.push(m[1]);
+  });
+  /* Tables that open and close on their own lines. A one-line array cannot
+     hold a vocabulary and swallowed the next four tables when this tried to
+     read it as a block. */
+  const lines = src.split('\n');
+  const bad = [];
+  lines.forEach((l, i) => {
+    const m = /^L\.([A-Z_0-9]+) = \[$/.exec(l);
+    if (!m) return;
+    const name = 'L.' + m[1];
+    let j = i + 1;
+    const body = [];
+    while (j < lines.length && lines[j] !== '];') { body.push(lines[j]); j++; }
+    if (j >= lines.length) return;
+    if (ALLOWED.indexOf(name) >= 0) return;
+    const text = body.join('\n');
+    const hits = terms.filter(t => text.indexOf("'" + t + "'") >= 0);
+    /* A LOOKUP TABLE KEYED BY A FLAVOUR IS NOT A VOCABULARY. What makes one is
+       matching: a regex, or rows carrying several spellings of one thing. */
+    const matcher = /\/[^/\n]{3,}\//.test(text)
+      || body.filter(r => (r.match(/'/g) || []).length >= 6).length >= 3;
+    if (hits.length >= 6 && matcher) {
+      bad.push(name + ' names ' + hits.length + ' flavour terms ('
+        + hits.slice(0, 5).join(', ') + '\u2026) and matches text with them'
+        + ' \u2014 a second vocabulary');
+    }
+  });
+  check('no second flavour vocabulary', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
