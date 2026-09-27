@@ -4017,6 +4017,29 @@ eq('gingerbread is ginger',
 eq('peppermint is mint, not pepper',
   [L.hasFlavour({ tn: { nose: 'peppermint' } }, 'mint'),
    L.hasFlavour({ tn: { nose: 'peppermint' } }, 'pepper')], [true, false]);
+eq('text is safe between tags', L.escHtml('<b>&</b>'),
+  '&lt;b&gt;&amp;&lt;/b&gt;');
+eq('and inside a quoted attribute too', L.escHtml('a" onclick="x'),
+  'a&quot; onclick=&quot;x');
+eq('nothing is an empty string, not the word null', L.escHtml(null), '');
+/* THE TWO MEMOS (v2.5.57). Both were written because the flavour-flights
+   screen asked hasFlavour twenty times of every bottle and both halves of it
+   ran on all six thousand calls - 83ms, the slowest thing in the app. The
+   answers must not change, only the speed. */
+eq('a note is split into its words',
+  L.noteWords({ tn: { nose: 'Peat smoke, sea-salt' } }),
+  ['peat', 'smoke', 'sea', 'salt']);
+eq('and the same note twice is the same array',
+  L.noteWords({ tn: { nose: 'oak' } }) === L.noteWords({ tn: { nose: 'oak' } }),
+  true);
+eq('a different note is not', L.noteWords({ tn: { nose: 'oak' } })
+  === L.noteWords({ tn: { nose: 'rye' } }), false);
+eq('the forms of a word reach its own compounds',
+  [L.flavourForms('pepper').peppercorn, L.flavourForms('pepper').peppery],
+  [1, 1]);
+eq('and never another word that contains it',
+  [L.flavourForms('apple').pineapple, L.flavourForms('toffee').butterscotch],
+  [undefined, undefined]);
 eq('every flavour word a flight can offer is a word the table knows',
   L.FLAVOUR_WORDS.filter(w => {
     const ix = L.palateIndex();
