@@ -3756,6 +3756,47 @@ eq('how much the writer liked it is not a taste',
   L.palateTerms('complex, lovely, beautifully balanced'), []);
 eq('no note is no terms', L.palateTerms(''), []);
 eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
+/* FLAVOUR AS A DIMENSION OF THE SHELF (v2.5.54). The taste profile read no
+   tasting notes at all until now - houses, woods, styles, proof, peat, every
+   one a label fact - so the app could say a shelf was sherried and not that it
+   tasted of dried fruit. */
+(function () {
+  const fc = {};
+  const mk = (k, tn) => ({ k: k, name: k, sub: 'bourbon', dist: 'D' + k, tn: tn });
+  'abcdefghijklmnopqrst'.split('').forEach(c => {
+    fc['o' + c] = mk('o' + c, { nose: 'oak, vanilla', palate: 'caramel' });
+  });
+  fc.p1 = mk('p1', { nose: 'peat smoke', palate: 'brine' });
+  const fb = Object.keys(fc).map((k, i) => ({ id: 'f' + i, k: k, status: 'open' }));
+  const prof = L.tasteProfile(fc, fb, null);
+  eq('the profile carries flavour, ranked like every other dimension',
+    prof.flavour.slice(0, 3).map(x => x.value), ['caramel', 'oak', 'vanilla']);
+  eq('and counts a family once per bottling',
+    prof.flavour.filter(x => x.value === 'oak')[0].n, 20);
+  eq('a shelf nobody has described has no flavour to report',
+    L.tasteProfile({ x: { k: 'x', name: 'X', sub: 'bourbon' } },
+      [{ id: '1', k: 'x', status: 'open' }], null).flavour, []);
+  /* THE BAR SCALES. Three bottles is enough to taste a wood against itself
+     and is met by every flavour there is on a shelf of three hundred, which
+     made the axis read 100% and say nothing. */
+  const spread = L.flavourSpread(Object.values(fc), 3);
+  eq('the bar is a twentieth of the described shelf, never below the floor',
+    spread.enough, 3);
+  eq('a big shelf raises it', L.flavourSpread(
+    Array.from({ length: 200 }, (x, i) =>
+      mk('b' + i, { nose: 'oak', palate: 'caramel' })), 3).enough, 10);
+  eq('what it holds and what it is short of are both named',
+    [spread.held.indexOf('oak') >= 0, spread.gaps.some(g => g.name === 'tea')],
+    [true, true]);
+  eq('a bottle with no notes is not counted against the shelf',
+    L.flavourSpread([mk('n1', null)], 3).described, 0);
+})();
+/* Evenness, lifted out of the radar so the radar could grow an axis. */
+eq('one bucket alone is perfectly even', L.axisEvenness([7]), 1);
+eq('two equal buckets are too', L.axisEvenness([5, 5]), 1);
+eq('and a lopsided pair is not', L.axisEvenness([9, 1]) < 0.5, true);
+eq('an absent bucket is not counted twice',
+  L.axisEvenness([5, 5, 0]), L.axisEvenness([5, 5]));
 /* WHAT THE SHELF TASTES OF: a count, at the same level of claim as the
    portrait's title, and never a statement about what anybody prefers. */
 (function () {
