@@ -2375,7 +2375,10 @@ sec('tastes like: flavors from the notes');
     o1.base.slice().sort(), ['caramel', 'oak', 'vanilla']);
   eq('the finish is credited with what it actually gave',
     [o1.from[0].source, o1.from[0].terms.slice().sort()],
-    ['sherry', ['fig', 'raisin']]);
+    ['Oloroso', ['fig', 'raisin']]);
+  eq('and it is named the way the label names it, not by its family',
+    L.originSays({ sub: 'bourbon', fin: 'Bordeaux',
+      tn: { nose: 'berry' } }).from[0].source, 'Bordeaux');
   eq('and the years with the leather', o1.years, ['leather']);
   eq('what nothing explains is the distillery being itself', o1.own, ['mint']);
   /* A TERM IS SPENT ONCE, on the first layer that claims it. */

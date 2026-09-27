@@ -2308,6 +2308,92 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the service is offered the flavour words the app carries', bad);
 }
 
+/* EVERY ORIGIN ENTRY CAN ACTUALLY BE REACHED (v2.5.72).
+ *
+ * Two were not, and neither the tests nor the gate could see it, because an
+ * unreachable entry breaks nothing - it simply never fires:
+ *
+ *   L.ORIGIN.wood.wine was keyed `wine` where L.woodFamily answers `table`, so
+ *     every Bordeaux, Sauternes and Burgundy finish contributed nothing.
+ *   L.ORIGIN_GRAIN had no `wheat`, so a wheat whiskey had no baseline at all
+ *     and every flavour it has came back as the distillery being singular.
+ *
+ * So both directions are checked: a key nothing produces, and a thing produced
+ * that has no key.
+ */
+{
+  const bad = [];
+  const fams = Object.keys(ENGINE.WOOD_FAMILIES);
+  Object.keys(ENGINE.ORIGIN.wood).forEach(w => {
+    if (w === 'age' || fams.indexOf(w) >= 0) return;
+    bad.push('L.ORIGIN.wood.' + w + ' is keyed by something L.woodFamily never '
+      + 'answers, so no cask can ever reach it');
+  });
+  const rings = Object.keys(ENGINE.ORIGIN.grain);
+  Object.keys(ENGINE.ORIGIN_GRAIN).forEach(sub => {
+    const g = ENGINE.ORIGIN_GRAIN[sub];
+    if (rings.indexOf(g) < 0) {
+      bad.push(sub + ' is said to be ' + g + ' and there is no ' + g + ' ring');
+    }
+  });
+  const reached = Object.keys(ENGINE.ORIGIN_GRAIN).map(k => ENGINE.ORIGIN_GRAIN[k]);
+  rings.forEach(g => {
+    if (reached.indexOf(g) < 0) {
+      bad.push('the ' + g + ' ring is written and no category reaches it — '
+        + 'a whiskey made of it would get no baseline');
+    }
+  });
+  /* And every word named in it must be a word the vocabulary has. */
+  Object.keys(ENGINE.ORIGIN).forEach(kind => {
+    Object.keys(ENGINE.ORIGIN[kind]).forEach(srcName => {
+      ENGINE.ORIGIN[kind][srcName].forEach(t => {
+        if (!ENGINE.PALATE.some(r => r[0] === t)) {
+          bad.push('L.ORIGIN.' + kind + '.' + srcName + ' names "' + t
+            + '", which is not a term, so it can never match a note');
+        }
+      });
+    });
+  });
+  check('every origin entry can actually be reached', bad);
+}
+
+/* THE ANSWERS REACH THE PROFILE (v2.5.72).
+ *
+ * L.tasteProfile takes the this-or-that answers as its FOURTH argument, and
+ * shelfProfileNow passed three. So everything BZ answered was recorded, saved
+ * and synced between his devices, and then weighed nothing on any screen -
+ * with every check green, because a missing optional argument is valid
+ * JavaScript and the profile it returns is a perfectly good profile.
+ *
+ * Found by reading, not by a check, which is why there is now a check.
+ */
+{
+  const bad = [];
+  const at = src.indexOf('function shelfProfileNow(');
+  const memoAt = src.indexOf('function shelfMemo(');
+  if (at < 0) {
+    bad.push('shelfProfileNow has gone - it is the one door every screen asks '
+      + 'for the taste profile');
+  } else {
+    const body = src.slice(at, at + 700);
+    const call = /L\.tasteProfile\(([^)]*)\)/.exec(body);
+    if (!call) {
+      bad.push('shelfProfileNow no longer builds a taste profile');
+    } else if (call[1].indexOf('tasteAB') < 0) {
+      bad.push('shelfProfileNow builds the profile without S.tasteAB, so every '
+        + 'answer to Shape your taste recommendations weighs nothing');
+    }
+    /* And the memo must notice a new answer, or the screen keeps the old
+       profile until something else rebuilds the shelf. */
+    const memo = memoAt < 0 ? '' : src.slice(memoAt, memoAt + 900);
+    if (memo.indexOf('tasteAB') < 0) {
+      bad.push('shelfMemo does not key on S.tasteAB, so answering a question '
+        + 'changes nothing on screen until the shelf is rebuilt');
+    }
+  }
+  check('the taste answers reach the profile', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
