@@ -2108,6 +2108,53 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the door index is current', bad);
 }
 
+/* APP USE COUNTS THE AXES CORRECTLY (v2.5.64).
+ *
+ * BZ: "All app use notes need to remain up to date." The radar went from seven
+ * axes to eight and two entries went on saying seven and six - a help page
+ * that miscounts the thing in front of the reader is worse than one that says
+ * nothing.
+ *
+ * SCOPED TO THE ENTRY THAT IS TALKING. The first version allowed any number
+ * matching either axis set, so the radar could go on saying seven because the
+ * Shop pills have seven, and it passed while wrong - a check that cannot tell
+ * which thing is being counted cannot catch a miscount.
+ */
+{
+  const WORDS = { three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
+    nine: 9, ten: 10 };
+  const countIn = (re, lineRe) => {
+    const m = src.match(re);
+    if (!m) return 0;
+    return m[1].split('\n').filter(l => lineRe.test(l)).length;
+  };
+  const shelfAxes = countIn(/^L\.SHELF_AXES = \[([\s\S]*?)^\];/m,
+    /^\s*\{\s*id:/);
+  const nearAxes = countIn(/^L\.NEAR_AXES = \{([\s\S]*?)^\};/m,
+    /^\s*[a-z]+:/);
+  /* Which App use entry counts which set. */
+  const OWNED = [
+    ['The shape of your shelf', shelfAxes],
+    ['Home', shelfAxes],
+    ['The dimension pills', nearAxes]
+  ];
+  const bad = [];
+  OWNED.forEach(pair => {
+    const at = src.indexOf("term: '" + pair[0] + "'");
+    if (at < 0) return;
+    const def = src.slice(at, src.indexOf('},', at));
+    const m = /\b(three|four|five|six|seven|eight|nine|ten)\s+axes\b/i
+      .exec(def);
+    if (!m) return;
+    const said = WORDS[m[1].toLowerCase()];
+    if (said !== pair[1]) {
+      bad.push('"' + pair[0] + '" says ' + m[0] + ' and the engine has '
+        + pair[1]);
+    }
+  });
+  check('App use counts the axes the engine has', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
