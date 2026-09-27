@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.61  ·  2026-09-27 10:44 AM ET
+
+A label naming four casks is four casks. The finish field is split on a plus, which is this app's own separator, so a bottle matured in Madeira, Armagnac, rum and Hungarian oak counted as one cask and belonged to whichever family won the longest name. Commas split it now as well, which is safe because a tasting note that arrived in this field never reaches the splitter - L.finIsNote turns it away first, so Long, dry oak is still not three casks. And the shipped catalogue is guarded: every cask value in it must resolve to a wood family, a tasting note in the wrong field, or a release word, with nothing left sitting unplaced. That is the state all hundred and eleven of them are in, and it is the condition that was quietly false when the app was announcing a cask called limited.
+
 ## v2.5.60  ·  2026-09-27 10:35 AM ET
 
 Every cask value on the shelf now resolves to something, where twenty-six resolved to nothing. Asking what still placed nowhere found three separate faults. Pedro Ximenez written the way the label writes it, with an accent, matched no family at all, because the table spells it without one - and the same would have been true of any cask name somebody typed properly, so accents come off before anything is matched now. Six real casks the table had never been taught: Valpolicella and Loupiac are wines and Silver Oak is a Napa cabernet house, while Virgin Portuguese Oak, Double oak and Twin Oak are oak said in ways the list did not carry. And words that are not casks at all - limited, standard, batched, non-chill filtered, 80 proof, Gbp - which arrive the same way the tasting notes did, through an import column that means something else, and had the app announcing a cask called limited for eight bottles. A release word, a process, a proof and a currency code are none of them wood, and L.finNotCask refuses them on the way in and on the way out. The shelf's oak count moves from twenty-four to thirty-one and its wine casks from twelve to fifteen.

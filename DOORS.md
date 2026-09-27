@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 760 |
 | tables | 182 |
-| carrying a stated purpose | 578 |
+| carrying a stated purpose | 579 |
 
 ## Tables
 
@@ -343,7 +343,7 @@ QUESTION, not the name you were going to use.
 - **`L.findUrl`** — Where a hard bottle can actually be got.
 - **`L.finFromName`** — THE FINISH A NAME STATES
 - **`L.finishDepth`** — _no comment above it_
-- **`L.finishParts`** — _no comment above it_
+- **`L.finishParts`** — A LIST OF CASKS, however it is written
 - **`L.finIsNote`** — IS THIS A CASK NAME, OR SOMEBODY'S FINISH?
 - **`L.finIsWine`** — _no comment above it_
 - **`L.finNotCask`** — _no comment above it_

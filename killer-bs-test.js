@@ -3727,6 +3727,14 @@ eq('no cask recorded is no cask', L.caskKind({}), null);
  'Madeira, Armagnac, rum, Hungarian oak'].forEach(v => {
   eq('a real cask is kept: ' + v, L.finIsNote(v), false);
 });
+eq('a label naming four casks is four casks',
+  L.finishParts('Madeira, Armagnac, rum, Hungarian oak'),
+  ['Madeira', 'Armagnac', 'rum', 'Hungarian oak']);
+eq('and the bottle belongs to all their families',
+  L.woodsOf({ fin: 'Madeira, Armagnac, rum, Hungarian oak' }).families.sort(),
+  ['brandy', 'fortified', 'oak', 'spirit']);
+eq('the plus separator still works',
+  L.finishParts('Oloroso+PX'), ['Oloroso', 'PX']);
 /* THREE FAULTS FOUND BY ASKING WHAT STILL PLACES NOWHERE (v2.5.60). */
 eq('an accented cask name is the same cask',
   [L.woodFamily('Pedro Ximénez'), L.woodFamily('Pedro Ximenez')],
@@ -6205,6 +6213,14 @@ const shelfCat = Object.assign({}, data.catalog, JSON.parse(
 const mapData = JSON.parse(fs.readFileSync(path.join(__dirname, 'map.json'), 'utf8'));
 eq('380 bottles', data.bottles.length, 380);
 eq('325 shipped products', Object.keys(data.catalog).length, 325);
+/* EVERY CASK VALUE IN THE SHIPPED CATALOGUE RESOLVES: a wood family, a
+   tasting note that arrived in the wrong field, or a release word. Nothing
+   sits unplaced, which is how "limited" was being announced as a cask. */
+eq('no shipped cask value places nowhere',
+  Object.values(data.catalog).filter(p => p.fin)
+    .filter(p => !L.woodsOf(p).families.length && !L.finIsNote(p.fin)
+      && !L.finNotCask(p.fin))
+    .map(p => p.name + ': ' + p.fin), []);
 /* PROVENANCE THAT THE READER CAN ACTUALLY READ (v2.5.47).
    Thirty-six stamps were filed as 'tn_nose', 'tn_palate' and 'tn_finish' in
    the group slot, which is neither a group nor a field, so L.stateOf answered
