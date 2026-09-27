@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 773 |
+| functions | 776 |
 | tables | 186 |
-| carrying a stated purpose | 593 |
+| carrying a stated purpose | 594 |
 
 ## Tables
 
@@ -477,6 +477,7 @@ QUESTION, not the name you were going to use.
 - **`L.keepers`** — A second bottle is a stronger statement than a star
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
 - **`L.labelDiff`** — Step two: what it would change, said before anything is written. `fill`
+- **`L.labelFamily`** — WHICH WHEEL GROUP A ROLL-UP LABEL BELONGS TO.
 - **`L.labelFields`** — Step one: the service's answer in the app's own terms.
 - **`L.labelGaps`** — _no comment above it_
 - **`L.labelGuard`** — THE BARCODE, READ LOCALLY BEFORE ANY PAID CALL (zxing is precached and
@@ -898,9 +899,11 @@ QUESTION, not the name you were going to use.
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — notes never quietly changes the price.
 - **`L.tasteAsk`** — EVERYTHING THE CARD NEEDS, asked once
+- **`L.tasteAxes`** — _no comment above it_
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
+- **`L.tasteLead`** — THE SHAPE IN A SENTENCE, because a radar is a picture and a person wants to
 - **`L.tasteLine`** — _no comment above it_
 - **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.
 - **`L.tasteOrder`** — THE ORDER THE ANSWERS ARGUE FOR
@@ -913,7 +916,7 @@ QUESTION, not the name you were going to use.
 - **`L.tastesLike`** — Coverage is worked out here rather than in a door of its own because `shared`
 - **`L.tasteTimes`** — _no comment above it_
 - **`L.tasteWants`** — _no comment above it_
-- **`L.tasteWeights`** — WHAT THIS PERSON'S TASTE WEIGHS, one flavour at a time (BZ, 2026-09-27).
+- **`L.tasteWeights`** — _no comment above it_
 - **`L.tasteWinner`** — What they said the LAST time they were asked.
 - **`L.tastingForGuest`** — What a guest's device does with one
 - **`L.tastingNotes`** — _no comment above it_

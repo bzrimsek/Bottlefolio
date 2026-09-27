@@ -2418,6 +2418,33 @@ sec('tastes like: flavors from the notes');
     }
     return bad;
   })(), []);
+  /* IT MUST EVENTUALLY ASK ABOUT EVERYTHING (BZ, 2026-09-27: "I still dont see
+     wood, smoke, cinnamon, lemon"). The every-fifth repeat fired on the number
+     of PAIRS answered, and answering a repeat writes into a pair that already
+     exists - so once that count hit a multiple of five it stayed there and the
+     instrument asked the same five questions for ever. His log shows those
+     five cycling three times over, with six of his words never put to him
+     once. */
+  eq('answering for long enough puts every word to you', (function () {
+    const prof = { flavour: [{ value: 'x', n: 1 }] };
+    const ans = {};
+    let pair;
+    for (let i = 0; i < 120 && (pair = L.tastePair(prof, ans)); i++) {
+      ans[pair.key] = (ans[pair.key] ? ans[pair.key] + '>' : '') + pair.a;
+    }
+    const seen = L.tasteSeen(ans);
+    return L.TASTE_TERMS.filter(t => !seen[t]);
+  })(), []);
+  eq('and it still comes back to one it has asked before', (function () {
+    const prof = { flavour: [{ value: 'x', n: 1 }] };
+    const ans = {};
+    let pair, again = 0;
+    for (let i = 0; i < 40 && (pair = L.tastePair(prof, ans)); i++) {
+      if (pair.again) again++;
+      ans[pair.key] = (ans[pair.key] ? ans[pair.key] + '>' : '') + pair.a;
+    }
+    return again > 3 && again < 20;
+  })(), true);
   eq('every word asked about still lifts a weight of its own',
     new Set(L.TASTE_TERMS.map(t => L.PALATE_LAYER[t])).size,
     L.TASTE_TERMS.length);
@@ -2464,6 +2491,47 @@ sec('tastes like: flavors from the notes');
     + 'against a palate',
     L.tastesLike(gs.s, gs, gOwned, 5, gs.s)[0].score
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
+}
+
+sec('your taste, painted');
+{
+  /* BZ, 2026-09-27: "can we paint the users taste profile in the settings". On
+     the wheel's groups, because forty-three roll-up labels is a scribble and
+     the groups are canon rather than buckets somebody chose (rule 36). */
+  const cat = {
+    a: { k: 'a', name: 'A', sub: 'scotch', tn: { nose: 'raisin, fig', palate: 'cherry, plum' } },
+    b: { k: 'b', name: 'B', sub: 'scotch', tn: { nose: 'raisin, peat', palate: 'chocolate' } },
+    c: { k: 'c', name: 'C', sub: 'scotch', tn: { nose: 'fig', palate: 'cherry, coffee' } }
+  };
+  const bots = ['a', 'b', 'c'].map((k, i) => ({ id: 'P' + i, k: k, status: 'open' }));
+  const ax = L.tasteAxes(cat, bots, {});
+  eq('a spoke for every group that is a taste, and none that is not',
+    ax.map(a2 => a2.id),
+    L.PALATE_FAMILIES.filter(f => L.NOT_A_TASTE.indexOf(f) < 0));
+  eq('the heaviest group is the full radius',
+    Math.max.apply(null, ax.map(a2 => a2.pct)), 100);
+  eq('a fruit shelf leans fruity', ax.filter(a2 => a2.id === 'fruity')[0].pct
+    > ax.filter(a2 => a2.id === 'floral')[0].pct, true);
+  eq('a roll-up label is placed by the group its terms belong to',
+    [L.labelFamily('dried fruit'), L.labelFamily('peat')],
+    ['fruity', 'smoke']);
+  eq('and a shelf with nothing described has no shape to draw',
+    L.tasteAxes({}, [], {}), null);
+  /* The sentence under it, because a radar is a picture. */
+  eq('it says which way it leans and what it barely touches',
+    L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 },
+      { id: 'roasted', label: 'Roasted', pct: 74 },
+      { id: 'spicy', label: 'Spicy', pct: 51 },
+      { id: 'winey', label: 'Winey', pct: 5 }]),
+    'Mostly fruity and roasted, and hardly winey.');
+  /* Only the thin ones are called thin: spicy at 51 is neither lean nor lead. */
+  eq('a group in the middle is not called hardly anything',
+    /spicy/.test(L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 },
+      { id: 'roasted', label: 'Roasted', pct: 74 },
+      { id: 'spicy', label: 'Spicy', pct: 51 },
+      { id: 'winey', label: 'Winey', pct: 5 }])), false);
+  eq('and says nothing at all off two spokes',
+    L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 }]), null);
 }
 
 sec('the grain bill is not printed twice');
