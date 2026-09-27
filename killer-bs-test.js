@@ -5898,6 +5898,22 @@ eq('a field stamped in the group slot is a fault',
   ['no such group: nose (a field, so it belongs in srcOf)']);
 eq('the lookup flag is not provenance and not a fault',
   L.stampFault({ src: { lookup: true } }), []);
+/* WHERE A PRODUCT CAME FROM, split off from who vouched for its facts. The
+   old shape is still read because stored accounts carry it. */
+eq('a product marked by the new field came from a lookup',
+  L.fromLookup({ fromLookup: true }), true);
+eq('and one marked the old way still does',
+  L.fromLookup({ src: { lookup: true } }), true);
+eq('a provenance stamp is not that flag',
+  L.fromLookup({ src: { tasting: { by: 'x', state: 'claimed', url: null } } }),
+  false);
+eq('nothing at all is not that flag', L.fromLookup(null), false);
+eq('an offer carries the stamps and leaves the flag behind',
+  L.provStamps({ lookup: true,
+    tasting: { by: 'x', state: 'claimed', url: null } }),
+  { tasting: { by: 'x', state: 'claimed', url: null } });
+eq('and a src that was only the flag hands over no key',
+  L.provStamps({ lookup: true }), null);
 eq('and 34 more that only his account knows',
   Object.keys(shelfCat).length - Object.keys(data.catalog).length, 34);
 /* THE INVARIANT THAT WAS QUIETLY FALSE: a bottle whose product nothing

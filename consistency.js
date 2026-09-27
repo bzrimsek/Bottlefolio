@@ -2002,6 +2002,30 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('only one function reads the palate table', bad);
 }
 
+/* ONE DOOR TO "DID THE LOOKUP MAKE THIS?" (v2.5.48).
+ *
+ * The boolean lived inside `src` beside the provenance stamps, so one word
+ * meant two things and the guard over the stamps had to be told to ignore it.
+ * It has its own field now, and L.fromLookup reads both shapes because stored
+ * accounts still carry the old one. Anything else reaching into src.lookup is
+ * a fifth copy of that knowledge.
+ */
+{
+  const lines = codeOnly.split('\n');
+  const bad = [];
+  let inDoor = false;
+  lines.forEach((l, i) => {
+    if (/L\.fromLookup\s*=\s*function/.test(l)) inDoor = true;
+    else if (inDoor && /^\};/.test(l)) inDoor = false;
+    if (inDoor) return;
+    if (!/\.lookup\b/.test(l)) return;
+    if (!/src\s*(?:\.|\[)/.test(l) && !/\{\s*lookup\s*:/.test(l)) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 60)
+      + '  \u2014 the lookup flag read outside L.fromLookup');
+  });
+  check('only one function reads the lookup flag', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
