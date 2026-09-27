@@ -3874,8 +3874,12 @@ eq('and one nobody declared finds none', L.groupOf('nonsense'), null);
 /* A FIELD CORRECTED ON ITS OWN BEATS ITS GROUP. This is the override the
    whole per-group compromise depends on: without it, correcting one field
    would mean restamping five. */
+/* WITH REAL VALUES ON IT. A record of stamps and no facts is the thing
+   hasFact refuses, and this fixture was one until the assertion below
+   caught it. */
 const b = { kind: 'bottle', name: 'Ardbeg Ten', ring: 1,
   key: L.catKeyFor('bottle', 'Ardbeg Ten'),
+  proof: 92, age: 10, mash: '100% malted barley',
   src: { composition: { by: 'label', state: 'stated' } },
   srcOf: { mash: { by: 'category rule', state: 'derived' } } };
 eq('the group answers for a field with no stamp of its own',
@@ -3886,6 +3890,45 @@ eq('and a field with its own stamp answers for itself',
    read as claimed, or every empty field becomes somebody's word. */
 eq('a field in no stamped group has no state', L.stateOf(b, 'msrp'), null);
 eq('and asking for its stamp gives nothing', L.provOf(b, 'msrp'), null);
+
+/* A STAMP VOUCHES FOR A FACT, and a fact that is not there cannot be
+   vouched for. The group stamp used to answer for every field in its group
+   including the ones the record does not carry: on the first twenty off
+   BZ's shelf, seventeen had no age and every one of them reported a state
+   for it (2026-09-26, found before a row was written). */
+eq('a fact the record holds is vouched for',
+  L.stateOf(b, 'proof'), 'stated');
+eq('and one it does not hold is not',
+  L.stateOf(Object.assign({}, b, { proof: undefined }), 'proof'), null);
+eq('an empty string is not a fact either',
+  L.stateOf(Object.assign({}, b, { proof: '' }), 'proof'), null);
+eq('nor is null', L.stateOf(Object.assign({}, b, { proof: null }), 'proof'),
+  null);
+/* Zero is a fact. A bottle at 0ppm is a bottle somebody measured. */
+eq('but zero is',
+  L.stateOf(Object.assign({}, b, { ppm: 0 }), 'ppm'), 'stated');
+/* The tasting fields live inside tn, which is the only reason hasFact is
+   not one line. */
+eq('a tasting note inside tn counts as held',
+  L.hasFact({ tn: { nose: 'apple' } }, 'nose'), true);
+eq('and an absent one does not',
+  L.hasFact({ tn: {} }, 'nose'), false);
+
+/* THE CATEGORY'S BILL IS ITS OWN FACT, not a stamp on an empty mash. It sat
+   in srcOf.mash while mash itself was empty, which is a stamp with nothing
+   under it wearing a hat. */
+eq('mashByLaw is a field of its own', L.groupOf('mashByLaw'), 'composition');
+{
+  const noBill = { kind: 'bottle', name: 'Rule Only', ring: 1,
+    key: L.catKeyFor('bottle', 'Rule Only'),
+    mashByLaw: '100% malted barley',
+    srcOf: { mashByLaw: { by: 'category rule', state: 'derived' } } };
+  eq('the rule bill says derived', L.stateOf(noBill, 'mashByLaw'), 'derived');
+  eq('and the published bill is simply absent',
+    L.stateOf(noBill, 'mash'), null);
+  eq('a record carrying only the rule is still valid',
+    L.catFault(noBill), []);
+}
 
 /* THE URL KEY. url:null says nobody has a link; a missing key says nobody
    thought about it, and Merlin cannot tell those apart unless the key is
