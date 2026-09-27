@@ -1061,6 +1061,9 @@ check('no fixed svg id is emitted by a repeated drawing',
                            prose: it exists to match what somebody else wrote
                            in a tasting note, and notes say burnt sugar. */
                         "'burnt'",
+                        /* The wheel's own wording for the fault, in American
+                           English too: nobody writes "burned rubber". */
+                        "'burnt rubber'",
                         "'centre'", "'litre'", "'favourite'",
                         "'auth/cancelled-popup-request'"]);
   const lines = src.split('\n');

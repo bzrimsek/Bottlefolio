@@ -2309,6 +2309,21 @@ sec('tastes like: flavors from the notes');
       tlFit[tlFit.length - 1].name], [true, 'Far']);
   eq('likeness is reported whether or not fit was asked for',
     typeof tlFit[0].like, 'number');
+  /* WHAT THE CARD SAYS IS WHAT THE NOTES SAY (BZ, 2026-09-27). Seven roll-up
+     labels are not words anybody tastes, and the card was printing them:
+     "I don't taste stone fruit. I taste raisin or plum or green apple." */
+  const madeUp = [...new Set(Object.values(L.PALATE_LAYER))]
+    .filter(l => !L.PALATE.some(r => r[0] === l));
+  eq('the roll-up does carry words nobody says',
+    madeUp.indexOf('orchard fruit') >= 0 && madeUp.indexOf('dark fruit') >= 0,
+    true);
+  eq('and none of them ever reaches the card',
+    L.tastesLike(tl.s, tl, tlOwned, 5)
+      .reduce((a2, r) => a2.concat(r.words), [])
+      .filter(w => madeUp.indexOf(w) >= 0), []);
+  eq('what it shows instead is a word out of the notes',
+    L.tastesLike(tl.s, tl, tlOwned, 5)[0].words.every(w =>
+      L.PALATE.some(r => r[0] === w)), true);
   /* HANDED A PRODUCT, IT MEASURES AGAINST THAT BOTTLE'S PROFILE (v2.5.66).
      The guest view passes the bottle they named, and what is scored is how
      much of ITS profile each of yours carries - rarest flavors counting for
@@ -4184,9 +4199,13 @@ eq('a tawny port colour is not a port cask',
 eq('dark chocolate on the nose is not a brown colour',
   L.palateOf({ tn: { nose: 'dark chocolate' } }).all, ['chocolate']);
 /* The grouping a screen shows, and the part a caller asks for. */
-eq('terms are grouped under their family',
+/* THE WHEEL'S GROUPS SINCE 2026-09-27 (BZ: "Adopt canon"). Oak is woody and
+   caramel is roasted because that is where the Pentlands wheel puts them; peat
+   is smoke, which is this app's one departure from it, argued in _lab/canon.js
+   and in the comment on L.PALATE_FAMILIES. */
+eq('terms are grouped under the wheel group they belong to',
   L.palateOf({ tn: { palate: 'peat, oak, caramel' } }).families
-    .map(f => f.family), ['smoke', 'cask', 'sweet']);
+    .map(f => f.family), ['smoke', 'woody', 'roasted']);
 eq('and a part can be asked on its own',
   L.palateOf({ tn: { nose: 'peat', finish: 'caramel' } }).nose, ['peat']);
 eq('every term in the table belongs to a declared family',
@@ -4200,8 +4219,9 @@ eq('the index maps a spelling to its term',
   L.palateIndex().word.peaty, 'peat');
 eq('and remembers which half a term came from',
   [L.palateIndex().ll.peat, L.palateIndex().ll.vanilla], [true, false]);
-eq('the study half is 32 of the terms',
-  Object.values(L.palateIndex().ll).filter(Boolean).length, 32);
+/* Thirty-one since `sea` was dissolved: BZ, "Coastal is geo, not taste". */
+eq('the study half is 31 of the terms',
+  Object.values(L.palateIndex().ll).filter(Boolean).length, 31);
 /* THE SENTENCE A SCREEN SHOWS. Colour and body are not tastes, and a bottle
    whose notes say only those has nothing to show rather than a bare label. */
 eq('the taste line names the flavours',
@@ -4227,8 +4247,8 @@ eq('every label in the layer belongs to a real term',
   Object.keys(L.PALATE_LAYER).filter(t => !L.PALATE.some(r => r[0] === t)), []);
 /* FORTY-ONE SINCE 2026-09-27: `rye` was split out of `grain` so an answer
    about the rye note can be told from one about corn. */
-eq('and the layer still names all forty-one labels',
-  new Set(Object.values(L.PALATE_LAYER)).size, 41);
+eq('and the layer still names all forty-three labels',
+  new Set(Object.values(L.PALATE_LAYER)).size, 43);
 eq('what it tastes of, in labels', L.flavorsOf({ tn: { nose: 'cocoa, raisins',
   palate: 'peppercorn' } }), ['chocolate', 'dried fruit', 'pepper']);
 eq('and nothing described is no labels', L.flavorsOf({ name: 'X' }), []);
