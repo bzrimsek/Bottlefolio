@@ -86,8 +86,12 @@ APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
 # LICENSE added 2026-09-20. The repo is public and carried none, which
 # reads as help yourself - and the written content is the part worth
 # protecting. A licence that stays on this PC protects nothing.
+# DOORS.md added 2026-09-27 with doors.js. consistency.js fails when it and
+# the engine disagree, so a gate that cannot see the file fails every build:
+# the first push of it stopped the gate at consistency for exactly that
+# reason, with the file sitting green on the PC that made it.
 DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
-        'README.md', 'LICENSE']
+        'README.md', 'LICENSE', 'DOORS.md']
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
@@ -103,6 +107,10 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-20: BZ's flight-cards document, read back into the
            # app. He hands over the same file again and is told what is new.
            'cards.js',
+           # 2026-09-27: the generator behind DOORS.md. consistency.js runs
+           # it with --check, so the gate needs the generator as well as the
+           # file it generates.
+           'doors.js',
            'engine.js', 'popular.js', '.github/workflows/popular.yml',
            # 2026-09-16: loads public reference data into shared/ref (run by hand).
            'refdata.js', '.github/workflows/refdata.yml',

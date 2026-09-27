@@ -2084,6 +2084,30 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('no second flavour vocabulary', bad);
 }
 
+/* THE DOOR INDEX IS CURRENT (v2.5.59).
+ *
+ * DOORS.md lists every L function and table with the headline its author wrote
+ * above it, so somebody about to write a function can search for the QUESTION
+ * rather than guess a name. It exists because twice in two days something was
+ * built that already existed - a flavour vocabulary beside L.FLAVORS, a palate
+ * profile beside L.tasteProfile - and both were missed because the door was
+ * named in a different vocabulary from the thing that duplicated it.
+ *
+ * An index nobody checks is an index nobody trusts, so this fails when the
+ * file and the engine disagree. `node doors.js` writes it.
+ */
+{
+  const { execFileSync } = require('child_process');
+  let bad = [];
+  try {
+    execFileSync(process.execPath, [__dirname + '/doors.js', '--check'],
+      { stdio: 'pipe' });
+  } catch (e) {
+    bad = ['DOORS.md is not what the engine says — run `node doors.js`'];
+  }
+  check('the door index is current', bad);
+}
+
 /* NO LOOKUP IS GIVEN LESS TIME THAN THE SERVICE TAKES.
  *
  * BZ typed Yellowstone and was told the lookup timed out — at twelve
