@@ -6479,7 +6479,10 @@ eq('every note set has at least three columns',
 const sourced = Object.values(data.catalog).filter(p => p.tnSrc === 'review');
 const modelRead = Object.values(data.catalog).filter(p => p.tnSrc === 'model');
 eq('twelve note sets are sourced', sourced.length, 12);
-eq('113 were read by the model', modelRead.length, 113);
+/* 140 since v2.5.58: twenty-seven shipped entries carried flight-card
+   prompts as their notes - "Read the label first", a palate of an em dash -
+   and BZ's own edits held real model-written notes for them. */
+eq('140 were read by the model', modelRead.length, 140);
 eq('a sourced note is never also credited to a card',
   sourced.filter(p => p.tnFrom).length, 0);
 eq('nor is a model-read one', modelRead.filter(p => p.tnFrom).length, 0);
