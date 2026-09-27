@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.5.77  ·  2026-09-27 04:35 PM ET
+
+Delete joins the row of buttons it used to sit beneath. BZ asked to move it up a row and right-justify it in line with the others. It had a dashed rule and a line of its own, which spent a whole row saying what the red outline already says; the gap it is now pushed across is what keeps it from being pressed by accident. Measured in a real browser at both widths rather than assumed, because assumptions about this screen have been wrong twice today: at 900 pixels all four buttons share one line and Delete's right edge is the row's right edge, and at 390 pixels, where the row becomes two columns, it sits beside Edit details at the end of the second line rather than taking a third.
+
 ## v2.5.76  ·  2026-09-27 04:25 PM ET
 
 The grain bill stops being printed twice. On the Woodford, the tags read 72% Corn, 18% Rye, 10% Malted barley and the line underneath read 72% corn, 18% rye, 10% malted barley, which is the same fact twice and reads as a stutter. Both are shown on purpose - the tags are this app's reading of the bill and the sentence is the label's own words, so where they disagree the label wins and a reader should see it - but where they cannot disagree there is nothing to show. The sentence is now hidden only when it is the tags again, compared as words rather than as characters so that punctuation and capitals do not make two identical things look different. A partial bill still prints, because 51% corn, rest undisclosed says something no tag can; so does a bill the app reads a shape from, because High-Rye is the reading and the bill is the fact; and what the category requires is never hidden, because that sentence exists to say it is not a bill anybody published. One screen check was reading for the sentence in lower case and now reads the tags too.
