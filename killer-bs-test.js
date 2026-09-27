@@ -3709,6 +3709,32 @@ eq('a double maturation is its own cask',
 eq('and a bare sherry label stays sherry',
   L.caskKind({ fin: 'Sherry' }), 'sherry');
 eq('no cask recorded is no cask', L.caskKind({}), null);
+/* A TASTING NOTE IN THE CASK FIELD IS NOT A CASK (v2.5.53).
+   `fin` means the finishing cask, and L.IMPORT_ALIASES sends a spreadsheet
+   column headed "finish" here - which on a sheet that also has nose and palate
+   columns is the tasting note. 43 of 153 bottles on BZ's own shelf carried one,
+   40 of them from his own edits; the shipped catalogue was clean. */
+['Long, lingering', 'Lingering spearmint finish', 'Long, pleasant sweetness',
+ 'Lightly spiced, full-bodied', 'Long, dry oak', 'Honey, oak'].forEach(v => {
+  eq('a finish note is not a cask: ' + v, L.finIsNote(v), true);
+  eq('...so it is refused on the way in', L.cleanFinish(v), null);
+  eq('...and not read as one on the way out', L.caskKind({ fin: v }), null);
+});
+/* AND EVERY REAL CASK SURVIVES IT. Maple and Cherry are woods; a list of woods
+   is not a list of flavours; and a wood said at length is still that wood. */
+['Sherry', 'Oloroso', 'Pedro Ximenez', 'first-fill bourbon casks', 'Maple',
+ 'Cherry wood', 'Valpolicella', 'Virgin Oak', 'Mizunara', 'Toasted French oak',
+ 'Madeira, Armagnac, rum, Hungarian oak'].forEach(v => {
+  eq('a real cask is kept: ' + v, L.finIsNote(v), false);
+});
+eq('a wood said at length is still that wood',
+  L.woodFamily('Oloroso sherry casks'), 'sherry');
+eq('and the longer name wins over one hiding inside it',
+  L.woodFamily('Toasted French oak'), 'oak');
+eq('a note names no wood, whatever words are in it',
+  L.woodFamily('Long, dry oak'), null);
+eq('and a word the table does not know is still nothing',
+  L.woodFamily('Valpolicella'), null);
 
 /* THE PALATE VOCABULARY (v2.5.46). Prose cannot be compared, so a note is
    read into terms. What these guard is the reading, not the words: a term
