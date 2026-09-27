@@ -199,9 +199,12 @@ const dir = __dirname;
       ]);
       save_(); rebuildCatalog();
 
+      /* THE ORIGIN LINES since v2.5.73, where the flat taste line used to be:
+         the same duty, which is that a bottle page names what the notes say,
+         once, per bottle, and never the last bottle's. */
       const lines = () => Array.prototype.slice.call(
-        document.querySelectorAll('#scr-detail #palateLine, '
-          + '#scr-detail [id="palateLine"]')).map(n => n.textContent);
+        document.querySelectorAll('#scr-detail #originLines'))
+        .map(n => n.textContent);
 
       show('detail'); showBottle('zzTaste');
       const once = lines();
@@ -217,18 +220,18 @@ const dir = __dirname;
           ? 'THREW the taste line is not on the bottle: ' + once.length
             + ' found'
         : !/vanilla/i.test(once[0]) || !/caramel/i.test(once[0])
-          ? 'THREW the line does not name what the notes say: ' + once[0]
-        : /amber|long/i.test(once[0])
+          ? 'THREW the lines do not name what the notes say: ' + once[0]
+        : /amber|long/i.test(once[0])
           ? 'THREW a colour or a finish length is offered as a taste: '
             + once[0]
         : twice.length !== 1
-          ? 'THREW the line doubled on a second render: ' + twice.length
+          ? 'THREW the lines doubled on a second render: ' + twice.length
         : !/peat/i.test(peat)
           ? 'THREW the next bottle does not get its own flavours: ' + peat
         : /vanilla|caramel/i.test(peat)
           ? 'THREW the previous bottle’s flavours survived: ' + peat
         : mute.length
-          ? 'THREW a colour and a finish alone produced a taste line: '
+          ? 'THREW a colour and a finish alone produced flavour lines: '
             + mute[0]
           : 'ok(' + once[0] + ')';
     } catch (e) { r.tasteLine = 'THREW ' + e.message; }

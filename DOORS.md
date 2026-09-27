@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 771 |
-| tables | 185 |
-| carrying a stated purpose | 590 |
+| functions | 772 |
+| tables | 186 |
+| carrying a stated purpose | 593 |
 
 ## Tables
 
@@ -198,6 +198,7 @@ QUESTION, not the name you were going to use.
 - **`L.UNKNOWN_CASK`** — _no comment above it_
 - **`L.US_PLACES`** — Where a US label says it was made
 - **`L.US_SUBS`** — _no comment above it_
+- **`L.VAGUE_FRUIT`** — THE FRUIT CATEGORIES, which are not fruit anybody tastes
 - **`L.VARIABLES`** — _no comment above it_
 - **`L.VERDICTS`** — What you thought of it.
 - **`L.WHISKEY`** — _no comment above it_
@@ -602,6 +603,7 @@ QUESTION, not the name you were going to use.
 - **`L.noteSearchMiss`** — NAMED FOR SEARCHES
 - **`L.notesFor`** — _no comment above it_
 - **`L.noteText`** — a hypothesis
+- **`L.noteVague`** — A NOTE THAT NAMES A FRUIT CATEGORY AND NEVER SAYS WHICH (BZ, 2026-09-27).
 - **`L.noteWords`** — _no comment above it_
 - **`L.offerAdvice`** — The pair of verdicts as a recommendation
 - **`L.offerFacts`** — _no comment above it_
@@ -920,7 +922,7 @@ QUESTION, not the name you were going to use.
 - **`L.tidyName`** — _no comment above it_
 - **`L.tidyNote`** — The same test for prose
 - **`L.titleCase`** — _no comment above it_
-- **`L.tnSource`** — _no comment above it_
+- **`L.tnSource`** — WHOSE NOTES THESE ARE, always answered (BZ, 2026-09-27)
 - **`L.toCsv`** — _no comment above it_
 - **`L.today`** — _no comment above it_
 - **`L.todayISO`** — _no comment above it_

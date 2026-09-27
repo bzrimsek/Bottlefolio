@@ -2466,6 +2466,56 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('whose notes these are, always answered');
+{
+  const tn = { nose: 'Oak', palate: 'Cherry' };
+  eq('your own words are named as yours',
+    /your own/i.test(L.tnSource({ tnSrc: 'you', tn: tn })), true);
+  eq('a source the lookup recorded is named',
+    L.tnSource({ tn: tn, srcOf: { tn: { by: 'The Whiskey Wash' } } }),
+    'From The Whiskey Wash');
+  eq('and where nothing is known it says so rather than vanishing',
+    L.tnSource({ tn: tn }), 'Source not recorded');
+  eq('a bottle with no note at all still has nothing to say',
+    L.tnSource({}), null);
+}
+
+sec('a note that names a fruit category and never says which');
+{
+  const vague = { tn: { nose: 'Honeyed dark fruits and oak',
+    palate: 'Rich fruit, soft spice' } };
+  const named = { tn: { nose: 'Honeyed raisin and oak',
+    palate: 'Rich fruit, soft spice' } };
+  const mine = { tnSrc: 'you', tn: { nose: 'Honeyed dark fruits and oak',
+    palate: 'Rich fruit, soft spice' } };
+  const none = { tn: { nose: 'Oak, caramel', palate: 'Pepper, long' } };
+  eq('a fruit category with no fruit behind it is a non-answer',
+    L.noteVague(vague), true);
+  eq('naming one fruit is enough to make it a note',
+    L.noteVague(named), false);
+  eq('your own words stand whatever they say', L.noteVague(mine), false);
+  eq('a note that mentions no fruit at all is not this fault',
+    L.noteVague(none), false);
+  eq('and nothing at all is not either',
+    [L.noteVague({}), L.noteVague(null)], [false, false]);
+  /* IT IS THE SAME RULE THE APP ALREADY HAD for a note written on a flight
+     card: something to ask again about, not something to add to. */
+  eq('so the notes gap is open on it', L.slotOpen(vague, 'notes'), true);
+  eq('and closed on the one that names a fruit',
+    L.slotOpen(named, 'notes'), false);
+  /* AND THE NEW NOTE REPLACES IT. Merging into a complete sentence that says
+     nothing would keep the nothing, which is why re-asking these did nothing
+     before (BZ: "Reask the 33"). */
+  const found = { nose: 'Raisin, fig and cocoa', palate: 'Plum, clove' };
+  const took = L.enhanceDiff(vague, found);
+  eq('a vague note is replaced, not added to',
+    [/raisin/i.test(took.tn.nose), /dark fruits/i.test(took.tn.nose)],
+    [true, false]);
+  const kept = L.enhanceDiff(mine, found);
+  eq('and a note you wrote is never replaced',
+    !kept || !kept.tn || /dark fruits/i.test(kept.tn.nose), true);
+}
+
 sec('a barcode named by Open Food Facts');
 {
   eq('a barcode it knows gives its name, size taken off',
