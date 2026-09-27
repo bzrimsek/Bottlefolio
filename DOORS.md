@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 782 |
+| functions | 783 |
 | tables | 186 |
-| carrying a stated purpose | 597 |
+| carrying a stated purpose | 598 |
 
 ## Tables
 
@@ -800,6 +800,7 @@ QUESTION, not the name you were going to use.
 - **`L.restDays`** — _no comment above it_
 - **`L.ringLayout`** — WHERE THE RING STARTS, in sixths of a turn
 - **`L.roomBuckets`** — The one answerer for "how many of us have this" (rule 30d)
+- **`L.roomHabit`** — Whether a trait is enough OF A SHELF to be called a habit on it.
 - **`L.roomNotes`** — _no comment above it_
 - **`L.roomTop`** — _no comment above it_
 - **`L.rotate`** — _no comment above it_

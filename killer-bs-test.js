@@ -2493,6 +2493,29 @@ sec('tastes like: flavors from the notes');
       !== L.tastesLike(gs.s, gs, gOwned, 5, gW)[0].score, true);
 }
 
+sec('a shared trait has to be a habit, not an inventory');
+{
+  /* BZ, 2026-09-27: "Everyone has low proof. We both actually have high proof.
+     Low proof not a finding." It said he and a buddy both reached for gentler
+     bottlings off 85 of his 351 and 25 of their 106 - a quarter each, against
+     a floor of six bottles. Six is nothing on a shelf of 351, and proof at or
+     under 90 is ordinary bottling strength: having some takes no decision. */
+  const gentle = L.ROOM_AXES.filter(a2 => a2.id === 'gentle')[0];
+  eq('a quarter of a shelf is not a habit', [
+    L.roomHabit(gentle, { proof: { gentle: 85 }, owned: 351 }),
+    L.roomHabit(gentle, { proof: { gentle: 25 }, owned: 106 })],
+    [false, false]);
+  eq('well over a third of it is',
+    L.roomHabit(gentle, { proof: { gentle: 60 }, owned: 100 }), true);
+  /* The absolute floor still stands underneath: a third of nine bottles is
+     three, and three of anything is not a statement about anybody. */
+  eq('and a tiny shelf cannot reach it on a share alone',
+    L.roomHabit(gentle, { proof: { gentle: 4 }, owned: 9 }), false);
+  eq('every axis is judged the same way',
+    L.ROOM_AXES.filter(a2 => typeof a2.get !== 'function'
+      || typeof a2.floor !== 'number'), []);
+}
+
 sec('the bar shelf never reaches a whiskey answer');
 {
   /* The rule: rum, vodka, gin, mezcal, tequila, liqueur, brandy and FLAVORED
