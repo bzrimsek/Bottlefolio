@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 776 |
+| functions | 775 |
 | tables | 186 |
 | carrying a stated purpose | 594 |
 
@@ -477,7 +477,6 @@ QUESTION, not the name you were going to use.
 - **`L.keepers`** — A second bottle is a stronger statement than a star
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
 - **`L.labelDiff`** — Step two: what it would change, said before anything is written. `fill`
-- **`L.labelFamily`** — WHICH WHEEL GROUP A ROLL-UP LABEL BELONGS TO.
 - **`L.labelFields`** — Step one: the service's answer in the app's own terms.
 - **`L.labelGaps`** — _no comment above it_
 - **`L.labelGuard`** — THE BARCODE, READ LOCALLY BEFORE ANY PAID CALL (zxing is precached and
@@ -899,7 +898,7 @@ QUESTION, not the name you were going to use.
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — notes never quietly changes the price.
 - **`L.tasteAsk`** — EVERYTHING THE CARD NEEDS, asked once
-- **`L.tasteAxes`** — _no comment above it_
+- **`L.tasteAxes`** — WHAT THE SHELF TASTES OF, BY THE WHEEL'S GROUPS (BZ, 2026-09-27).
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?

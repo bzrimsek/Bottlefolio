@@ -2508,15 +2508,22 @@ sec('your taste, painted');
   eq('a spoke for every group that is a taste, and none that is not',
     ax.map(a2 => a2.id),
     L.PALATE_FAMILIES.filter(f => L.NOT_A_TASTE.indexOf(f) < 0));
-  eq('the heaviest group is the full radius',
-    Math.max.apply(null, ax.map(a2 => a2.pct)), 100);
-  eq('a fruit shelf leans fruity', ax.filter(a2 => a2.id === 'fruity')[0].pct
-    > ax.filter(a2 => a2.id === 'floral')[0].pct, true);
-  eq('a roll-up label is placed by the group its terms belong to',
-    [L.labelFamily('dried fruit'), L.labelFamily('peat')],
-    ['fruity', 'smoke']);
+  /* A COUNT, NOT THE WEIGHTS (BZ, 2026-09-27: "I'm not sure the scale or the
+     normalization is right"). Each spoke is the share of described bottles
+     carrying anything in that group: every one of these three tastes of fruit,
+     so fruity is the whole radius, and only one of them is smoky. */
+  eq('a spoke is the share of your bottles carrying it',
+    [ax.filter(a2 => a2.id === 'fruity')[0].pct,
+     ax.filter(a2 => a2.id === 'smoke')[0].pct], [100, 33]);
+  eq('nothing in a group is nought, not missing',
+    ax.filter(a2 => a2.id === 'winey')[0].pct, 0);
   eq('and a shelf with nothing described has no shape to draw',
-    L.tasteAxes({}, [], {}), null);
+    L.tasteAxes({}, []), null);
+  /* The weights discount a flavour on more than half the shelf, which is right
+     for scoring and was wrong for a picture - that is the whole of this fix. */
+  eq('it is not the weights, which would discount what is everywhere',
+    L.tasteAxes(cat, bots).filter(a2 => a2.id === 'fruity')[0].pct >= 100,
+    true);
   /* The sentence under it, because a radar is a picture. */
   eq('it says which way it leans and what it barely touches',
     L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 },
