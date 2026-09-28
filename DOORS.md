@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 815 |
-| tables | 195 |
-| carrying a stated purpose | 629 |
+| functions | 817 |
+| tables | 196 |
+| carrying a stated purpose | 631 |
 
 ## Tables
 
@@ -23,6 +23,7 @@ QUESTION, not the name you were going to use.
 - **`L.ADJACENT_TYPES`** — Symmetric on purpose
 - **`L.AGE_TIERS`** — single cask somebody happened to fill, not something to go and look for.
 - **`L.ALLOCATED`** — How hard a bottle is to actually buy
+- **`L.ASK_ORDER`** — WHICH GROUP ANSWERS FIRST
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
@@ -304,6 +305,7 @@ QUESTION, not the name you were going to use.
 - **`L.contradictions`** — _no comment above it_
 - **`L.contribDelta`** — _no comment above it_
 - **`L.contribSig`** — What is worth OFFERING, given what has already been offered.
+- **`L.cooperAsk`** — _no comment above it_
 - **`L.correctionFor`** — What somebody's edit says the library has wrong
 - **`L.countBy`** — _no comment above it_
 - **`L.countIntake`** — _no comment above it_
@@ -814,6 +816,7 @@ QUESTION, not the name you were going to use.
 - **`L.refItems`** — A SECTION IS A STORY OR A GLOSSARY (BZ, 2026-09-20)
 - **`L.refKeysFor`** — THE KEYS A NAME COULD BE FILED UNDER, longest first
 - **`L.refMakerName`** — THE NAME A PLANT OPERATES UNDER, without the company around it
+- **`L.refNorm`** — AN APOSTROPHE IS NOT A DIFFERENT WORD
 - **`L.reframeGap`** — _no comment above it_
 - **`L.refRegions`** — A REGION ON EVERY HOUSE THAT HAS ONE
 - **`L.refStyleFor`** — A STYLE FROM THE LABELS

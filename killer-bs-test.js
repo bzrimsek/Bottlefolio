@@ -12483,6 +12483,48 @@ sec('§242 the guided tasting');
       + 'logged either way',
       L.guidePickList(cat, [], [], '').length, 3);
   }
+  /* ASKING HIM (BZ, 2026-09-28: "an all knowing whiskey character"). He knows
+     what Learn knows - 324 entries - and nothing let anybody ask him. Through
+     L.searchReference, the door the Learn tab searches with, so the two cannot
+     come to know different things.
+
+     THE FIRST DRAFT FAILED TWO WAYS and both are asserted here: it handed the
+     raw question to the search, so "what is NAS" matched no entry at all
+     because nobody writes that phrase; and it took whatever came back, so
+     "peat" answered with app-feature entries that merely mention the word
+     before anything about peat. */
+  eq('a question asked in a sentence still finds its entry',
+    (L.cooperAsk('what is NAS?').found[0] || {}).term, 'No age statement');
+  eq('and so does one with a bit of throat-clearing in front',
+    (L.cooperAsk('tell me about the angels share').found[0] || {}).term,
+    'Angel\u2019s share');
+  /* A whisky character asked about whisky answers about whisky. */
+  eq('asked about peat he talks about peat, not about a screen',
+    L.cooperAsk('peat').found[0].where !== 'App use', true);
+  /* THE WHOLE QUESTION BEATS ONE OF ITS WORDS: "sherry cask" was answering
+     Cask size, found by the word `cask`, ahead of Sherry casks. */
+  eq('the whole question outranks its parts',
+    (L.cooperAsk('sherry cask').found[0] || {}).term, 'Sherry casks');
+  /* But the app is still his to explain when that is plainly what was meant. */
+  eq('and he will still tell you how the app works',
+    (L.cooperAsk('how does a flight work').found[0] || {}).where, 'App use');
+  /* A GUIDE WHO BLUFFS IS WORSE THAN NO GUIDE. */
+  eq('what he does not know he does not answer',
+    [L.cooperAsk('zzzzqqq').knows, L.cooperAsk('').knows,
+      L.cooperAsk('a').knows], [false, false, false]);
+  /* AN APOSTROPHE IS NOT A DIFFERENT WORD, which was a fault in the Learn
+     tab's own search all along: nobody types the curly one, so searching
+     "angels share" found nothing. */
+  eq('the search is blind to an apostrophe, curly or straight',
+    [L.refNorm('Angel’s share'), L.refNorm("Angel's share"),
+      L.refNorm('angels share')],
+    ['angels share', 'angels share', 'angels share']);
+  eq('so Learn finds it however somebody types it',
+    ['angels share', "angel's share", 'Angel’s share']
+      .map(q => L.searchReference(q).length > 0), [true, true, true]);
+  eq('and every answer says which entry it came from',
+    L.cooperAsk('peat').found.filter(f => !f.term || !f.def || !f.where), []);
+
   /* THE NAME IS IN ONE PLACE, because BZ has called him two things this week
      and is still deciding how he looks. */
   eq('the guide has one name to change',
