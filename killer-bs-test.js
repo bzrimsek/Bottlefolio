@@ -4832,6 +4832,34 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
   });
   eq('twelve repeats that all agree is enough',
     L.tasteHoldout(agree).passed, true);
+  /* HOW MUCH A RING RESTS ON (BZ, 2026-09-27, off the log: lactic drew 79%
+     from three pairs about one word while fruity drew 68% from nine, at the
+     same weight - "its not that bad - pull the log").
+
+     Four is ceil(log2(15)): the comparisons binary insertion needs to place
+     one word among the pool. Spelled out here rather than recomputed, because
+     a check that restates the formula cannot catch the formula being wrong -
+     if the pool changes, this should be looked at, not silently follow. */
+  eq('four comparisons place a word among fifteen', L.tasteAxisFloor(), 4);
+  eq('and the floor comes off the pool, so it cannot go stale',
+    [L.tasteAxisFloor() >= 2, L.tasteAxisFloor() < L.TASTE_TERMS.length],
+    [true, true]);
+  /* Every drawn ring carries what it rests on, and none is under the floor. */
+  {
+    const drawn = L.tasteWantAxes(agree);
+    eq('every ring drawn says how many pairs are behind it',
+      [drawn.length > 0, drawn.filter(a2 => !(a2.n >= L.tasteAxisFloor()))],
+      [true, []]);
+  }
+  /* A group asked about barely is left off rather than drawn faintly: a mark
+     on a chart reads as a finding whatever it rests on. */
+  {
+    const thin = {};
+    /* One pair, answered the same way twice, is not four. */
+    thin[L.tastePairKey('cream', 'oak')] = 'cream>cream';
+    eq('a group under the floor is not drawn at all',
+      L.tasteWantAxes(thin).filter(a2 => a2.id === 'lactic'), []);
+  }
   const half = {};
   pairsOf(12).forEach((p2, i) => {
     half[L.tastePairKey(p2[0], p2[1])] = p2[0] + '>' + (i % 2 ? p2[0] : p2[1]);
@@ -12190,62 +12218,6 @@ sec('§244 how a bottle helps the chart');
  * every visit is a navigation bar in the wrong place; a row that changes
  * because the shelf changed is the app paying attention. Cheapest first:
  * an evening with what you already own before spending money.
- */
-sec('§245 the actions a shelf earns');
-{
-  const full = L.nextActions({
-    tonight: 4, tonightTitle: 'AGE IS NOT A FLAVOR', trophies: 5,
-    pours: 120, thinnest: { label: 'Origin', pct: 67, gap: 'Lowland' },
-    pick: 'An Amontillado cask', waiting: 3
-  });
-  eq('never more than three', full.length, 3);
-  eq('an evening you already own comes first', full[0].id, 'tonight');
-  eq('and names the flight', /AGE IS NOT A FLAVOR/.test(full[0].why), true);
-  eq('then the bottles you bought twice and never opened',
-    full[1].id, 'trophies');
-  eq('and spending money is below both', full[2].id, 'gap');
-
-  /* A shelf with no log gets told why that matters, because everything in
-     the second half of the app runs on it. */
-  const nolog = L.nextActions({ pours: 0, thinnest: null });
-  eq('an unpoured shelf is asked for a pour', nolog[0].id, 'pour');
-  eq('and told what it unlocks',
-    /what you drink/.test(nolog[0].why), true);
-  eq('a shelf that has been poured is not nagged',
-    L.nextActions({ pours: 3 }).some(a => a.id === 'pour'), false);
-
-  /* An admin with work waiting is the only person who can clear it, and
-     it is the last thing offered rather than the first. */
-  const adm = L.nextActions({ pours: 5, waiting: 2 });
-  eq('an admin is told what is waiting',
-    adm.some(a => a.id === 'library'), true);
-  eq('and somebody who is not an admin is not',
-    L.nextActions({ pours: 5, waiting: 0 })
-      .some(a => a.id === 'library'), false);
-
-  /* Nothing to do is a real state and gets no card. */
-  eq('a shelf with nothing owing offers nothing',
-    L.nextActions({ pours: 9 }).length, 0);
-  eq('and no state at all is not an error', L.nextActions(null).length, 0);
-
-  /* Every action says WHY, or it is a button with no argument behind it. */
-  eq('every action carries its reason',
-    full.every(a => a.why && a.why.length > 8), true);
-  eq('and something to press', full.every(a => a.id && a.label), true);
-}
-
-/* §246  every repeat buy can produce an ask --------------------------
- *
- * Measured on BZ's shelf 2026-09-04, holding one bottle out and asking
- * whether the engine names that house: 5 of 14 found, 0 of 14 for a
- * control of whiskies bought once. Perfect precision, 36% recall.
- *
- * Both halves of the recall problem were here. Only the first six repeats
- * were considered at all, and a house where every obvious move had already
- * been made — owned at strength AND aged AND finished — produced nothing,
- * which is exactly the deepest relationship on a shelf. After the fix,
- * 9 of 14, and the two control hits were bottles from houses BZ does go
- * back to, so naming them is right.
  */
 sec('§246 a repeat buy always has somewhere to go');
 {

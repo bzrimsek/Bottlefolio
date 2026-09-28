@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 795 |
 | tables | 190 |
-| carrying a stated purpose | 606 |
+| carrying a stated purpose | 605 |
 
 ## Tables
 
@@ -192,7 +192,7 @@ QUESTION, not the name you were going to use.
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
 - **`L.TASTING`** — about his own shelf
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
-- **`L.TITLE_LINES`** — A line for the title the shelf just earned, where one exists
+- **`L.TITLE_LINES`** — _no comment above it_
 - **`L.TN_ORDER`** — bottle tastes like, not where it came from.
 - **`L.TN_SOURCES`** — cards as prompts for a taster
 - **`L.TYPE_LABELS`** — One label for a type, everywhere.
@@ -602,7 +602,6 @@ QUESTION, not the name you were going to use.
 - **`L.newFacts`** — WHAT THE FORM SAYS AND THE RECORD DOES NOT
 - **`L.newFlight`** — _no comment above it_
 - **`L.newTypes`** — _no comment above it_
-- **`L.nextActions`** — What to do next, chosen by what the shelf is short of
 - **`L.nextBottleId`** — _no comment above it_
 - **`L.nextSort`** — _no comment above it_
 - **`L.normalizeProduct`** — _no comment above it_
@@ -913,6 +912,7 @@ QUESTION, not the name you were going to use.
 - **`L.takeFor`** — notes never quietly changes the price.
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — _no comment above it_
+- **`L.tasteAxisFloor`** — DERIVED FROM THE POOL, never typed
 - **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE (BZ, 2026-09-27).
 - **`L.tasteBetween`** — _no comment above it_
 - **`L.tasteCandidates`** — _no comment above it_
