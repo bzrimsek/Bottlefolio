@@ -3977,6 +3977,34 @@ function step(n) {
       return out;
     });
     clash.forEach(x => failures.push('phone header ' + x));
+
+    /* AND THE TAB BAR ITSELF, in both of its states. It was wrapped on every
+       phone from the day Cooper shipped and nothing caught it: this file
+       checks whether a HEADER wrapped and shots.js checks whether a screen
+       fits the width, and neither counts the rows the bar sits on.
+
+       Off matters as much as on: a hidden button still held a grid cell,
+       because `nav button{display:flex}` beats [hidden]{display:none}. */
+    for (const on of [false, true]) {
+      const rows = await page.evaluate(guideOn => {
+        S.guideOn = guideOn;
+        try { showGuideTab(); } catch (e) {}
+        const btns = [...document.querySelectorAll('nav button')]
+          .filter(b => getComputedStyle(b).display !== 'none');
+        const tops = [...new Set(btns.map(b =>
+          Math.round(b.getBoundingClientRect().top)))];
+        return { rows: tops.length, tabs: btns.length };
+      }, on);
+      if (rows.rows > 1) {
+        failures.push('the tab bar wraps to ' + rows.rows + ' rows with '
+          + rows.tabs + ' tabs, guide ' + (on ? 'on' : 'off'));
+      }
+    }
+    await page.evaluate(() => {
+      S.guideOn = false;
+      try { showGuideTab(); } catch (e) {}
+    });
+
     await page.setViewportSize({ width: 1000, height: 900 });
     await page.waitForTimeout(80);
   }
