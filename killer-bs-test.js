@@ -2873,6 +2873,48 @@ sec('your taste, painted');
      vocabulary happens to be written in. */
   eq('a spoke for every group that is a taste, and none that is not',
     ax.map(a2 => a2.id), L.tasteFamilies());
+  /* THE BOTTLE COUNTS, NOT ONLY ITS NOTES (BZ, 2026-09-28: "Winey includes
+     Sherry", "my smoky scotch inventory is bigger than this shows"). 96 of his
+     338 carry a wine or spirit finish and 43 said so in their notes, so the
+     radar drew 13% of a shelf whose Home portrait was naming 63 sherried
+     bottles. A cask is a stated fact; L.caskFamily answers it. */
+  eq('a sherry cask is winey with nothing written about it',
+    L.tasteFromFacts({ name: 'X', fin: 'Oloroso Sherry Cask' }), ['winey']);
+  eq('and so is every finish the wheel calls Finished, wine or spirit',
+    ['Pedro Ximenez', 'Tawny Port', 'Madeira', 'Sauternes', 'Rum Cask',
+      'Armagnac'].map(f => L.tasteFromFacts({ name: 'X', fin: f })[0]),
+    ['winey', 'winey', 'winey', 'winey', 'winey', 'winey']);
+  /* Peat through the door that already knows, at the bar the app already uses
+     for a smoky flavour rather than a second one invented here. */
+  eq('a peated whisky is peaty without saying so',
+    L.tasteFromFacts({ name: 'Laphroaig 10', dist: 'Laphroaig' }), ['peaty']);
+  /* Wood is not a finish: oak and mizunara are the cask, not what was in it. */
+  eq('new oak is woody rather than winey',
+    L.tasteFromFacts({ name: 'X', fin: 'Virgin Oak' }), ['woody']);
+  /* AND WHAT IS REFUSED, which is the half worth guarding. A category is not a
+     fact about a bottle: by law a bourbon is mostly corn, and inferring that
+     would put cereal at 95% of his shelf - an axis true of nearly everything
+     tells nobody anything. Irish is often floral and four of his forty-nine
+     say so; the rest would be a stereotype read back as a finding. */
+  eq('a category tells the profile nothing on its own',
+    [L.tasteFromFacts({ name: 'Some Bourbon', sub: 'bourbon' }),
+      L.tasteFromFacts({ name: 'Some Rye', sub: 'rye' }),
+      L.tasteFromFacts({ name: 'Some Irish', sub: 'irish' }),
+      L.tasteFromFacts({ name: 'Plain', sub: 'scotch' })],
+    [[], [], [], []]);
+  /* And a bottle nobody has written about still counts when the label speaks
+     for it, so the population is what the app can say ANYTHING about. */
+  {
+    const one = { q: { k: 'q', name: 'Quiet One', sub: 'scotch',
+      fin: 'Oloroso Sherry' } };
+    const held = [{ id: 'Q1', k: 'q', status: 'open' }];
+    eq('a bottle with a cask and no notes is on the radar',
+      (L.tasteAxes(one, held) || []).filter(a2 => a2.id === 'winey')[0].pct,
+      100);
+    eq('and a bottle with neither is not a shelf the radar can draw',
+      L.tasteAxes({ z: { k: 'z', name: 'Nothing', sub: 'scotch' } },
+        [{ id: 'Z1', k: 'z', status: 'open' }]), null);
+  }
   /* A COUNT, NOT THE WEIGHTS (BZ, 2026-09-27: "I'm not sure the scale or the
      normalization is right"). Each spoke is the share of described bottles
      carrying anything in that group: every one of these three tastes of fruit,

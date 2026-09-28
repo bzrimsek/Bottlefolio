@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 802 |
-| tables | 191 |
-| carrying a stated purpose | 611 |
+| functions | 803 |
+| tables | 193 |
+| carrying a stated purpose | 614 |
 
 ## Tables
 
@@ -29,6 +29,8 @@ QUESTION, not the name you were going to use.
 - **`L.CASE_FIXED`** — casing are spelled out rather than guessed at.
 - **`L.CASK_FAMILY`** — A named trait orders the rung
 - **`L.CASK_KIND`** — THE CASK ITSELF, and the family it lives in
+- **`L.CASK_WINEY`** — THE FINISHES THAT MAKE A WHISKY WINEY, and the woods that do not
+- **`L.CASK_WOODY`** — THE FINISHES THAT MAKE A WHISKY WINEY, and the woods that do not
 - **`L.CAT_KINDS`** — THE THREE KINDS, and the one place each is keyed
 - **`L.CHORO`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.COLOUR_SCALE`** — THE COLOUR SCALE, off BZ's printed sheet (2026-09-20)
@@ -925,6 +927,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteFamilies`** — WHICH GROUPS GET DRAWN, AND IN WHAT ORDER - both out of one list.
+- **`L.tasteFromFacts`** — WHAT THE BOTTLE ITSELF SAYS, beside what its notes say (BZ, 2026-09-28:
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLayer`** — THE LAYER UNDER A SPOKE (BZ, 2026-09-27
 - **`L.tasteLead`** — _no comment above it_
