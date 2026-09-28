@@ -2394,6 +2394,48 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the taste answers reach the profile', bad);
 }
 
+/* THE PROSE RULES AND THE NUMBER THAT REWRITES THE PROSE (v2.5.99).
+ *
+ * BZ, 2026-09-27, on a recap written to rules that had already been replaced:
+ * "seems like a list restatement". It was the same sentence to the character,
+ * because a write-up is kept on the account and only rewritten when its stamp
+ * changes - and L.LATELY_RULES is the part of that stamp which says which
+ * rules it was written to. The rules in recap.gs were rewritten and the number
+ * was not, so every cached paragraph still counted as current and the new
+ * rules were never asked.
+ *
+ * The same shape as GS_BUILD against L.GS_BUILD, and for the same reason: a
+ * thing deployed while the app goes on using what it had. So the rules text is
+ * hashed here, and a change to it without a change to the number fails.
+ *
+ * WHEN THIS FIRES: rewrite the rules, bump L.LATELY_RULES in index.html, and
+ * put the new hash below. All three move together or none of them does.
+ */
+{
+  const crypto = require('crypto');
+  const RULES_AT = { 5: 'bd9b987cd0' };
+  const bad = [];
+  const gs = fs.existsSync(__dirname + '/recap.gs')
+    ? fs.readFileSync(__dirname + '/recap.gs', 'utf8') : '';
+  const m = /var LATELY_RULES_ = \[([\s\S]*?)\]\.join/.exec(gs);
+  const ver = ENGINE.LATELY_RULES;
+  if (!m) {
+    bad.push('LATELY_RULES_ is not in recap.gs — this check is now blind');
+  } else if (!RULES_AT[ver]) {
+    bad.push('L.LATELY_RULES is ' + ver + ' and consistency.js has no hash '
+      + 'recorded for it — record the rules hash beside it');
+  } else {
+    const got = crypto.createHash('sha1').update(m[1]).digest('hex').slice(0, 10);
+    if (got !== RULES_AT[ver]) {
+      bad.push('recap.gs rules hash to ' + got + ', but L.LATELY_RULES is '
+        + ver + ', recorded as ' + RULES_AT[ver] + ' — the rules changed and '
+        + 'every kept write-up still counts as current, so nobody sees them');
+    }
+  }
+  check('the prose rules and the number that rewrites the prose move together',
+    bad);
+}
+
 /* THE ANSWERS DO NOT SPEAK AS THE LOG (v2.5.96).
  *
  * BZ, 2026-09-27: "What you reach for ... - who is reaching?" Nobody. The app
