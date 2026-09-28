@@ -1,0 +1,72 @@
+# THE LIBRARY FILLS ITS OWN GAPS, once a night.
+#
+# BZ, 2026-09-28: "will I need to keep pushing the button or can the library
+# self heal?" It could not. The automatic intake handles OFFERS arriving; an
+# entry already in the library with something missing waited for an admin to
+# press "Look up N due", and 437 of them were waiting.
+#
+# It asks the same questions the button asks, through the same doors
+# (L.libraryLists, L.lookupUrl, L.parseLookup, L.enhanceDiff, L.recordLookup),
+# never overwrites anything an entry already says, and keeps the ledger that
+# stops it asking an unanswerable question for ever.
+#
+# It runs from main, which is what the gate published, so the job always uses
+# the engine the live app uses.
+#
+# It prints counts and field names, never a list of the run: the library is a
+# shared catalogue and a workflow log is public.
+name: Library fill
+
+on:
+  schedule:
+    - cron: '41 8 * * *'     # 08:41 UTC, after Popular and before the day
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: 'Lookups this run may spend'
+        required: false
+        default: '100'
+      dry:
+        description: 'Work out what it would ask and write nothing'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+# Never two at once: both would read the same due list and ask the same
+# questions twice, at twice the cost.
+concurrency:
+  group: libfill
+  cancel-in-progress: false
+
+jobs:
+  fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # Only google-auth-library is needed. --ignore-scripts so nothing
+      # downloads a browser for a job that has no use for one.
+      - name: Install
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Fill what is due
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+          LIBFILL_BUDGET: ${{ github.event.inputs.budget || '100' }}
+          LIBFILL_DRY: ${{ github.event.inputs.dry == 'true' && '1' || '' }}
+        run: node libfill.js

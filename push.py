@@ -126,6 +126,11 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-17: the nightly read of what the app's log says
            # went wrong, on every account.
            'logwatch.js', '.github/workflows/logwatch.yml',
+           # 2026-09-28: the library fills its own gaps once a night, instead
+           # of waiting for an admin to press the button (BZ: "can the library
+           # self heal?"). Same doors as the button, and a ledger that stops
+           # it asking an unanswerable question for ever.
+           'libfill.js', '.github/workflows/libfill.yml',
            # The rules, run in the emulator (cloud gate only).
            'rulestest.js', 'syncemu.js', 'firebase.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']

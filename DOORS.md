@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 805 |
 | tables | 193 |
-| carrying a stated purpose | 617 |
+| carrying a stated purpose | 618 |
 
 ## Tables
 
@@ -86,7 +86,7 @@ QUESTION, not the name you were going to use.
 - **`L.LIB_IMPORT_FIELDS`** — THE EXPORT, READ BACK IN
 - **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT (BZ, 2026-09-19
 - **`L.LIBRARY_COLS`** — THE LIBRARY, AS A SPREADSHEET
-- **`L.LIBRARY_GAPS`** — _no comment above it_
+- **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
 - **`L.LIKELY_SOURCES`** — What each source is, in words, so a row says where it came from.
 - **`L.MAKE_OF`** — _no comment above it_
 - **`L.MAP_KEYS`** — A map key writes only the entries that changed
