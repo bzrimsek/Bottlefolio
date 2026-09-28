@@ -78,7 +78,11 @@ TRANSIENT = re.compile(r'HTTP 5\d\d|timed out|timeout|connection (reset|refused)
 # the repo is the whole project rather than a copy of part of it.
 APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
        'mark.png', 'icon-192.png', 'icon-512.png', 'icon-mask-192.png',
-       'icon-mask-512.png', 'zxing.min.js']
+       'icon-mask-512.png', 'zxing.min.js',
+       # 2026-09-28: Cooper, greeting and offering a glass. 17KB each,
+       # downscaled from the 1024px originals - the guide draws him at 110px.
+       # No hat: "the hat was good for a wizard, no a man" (BZ).
+       'cooper.webp', 'cooper-pour.webp']
 # README.md added 2026-09-15 with review item 39, when HANDOVER/HANDOFF/
 # REVIEW/RECAP-SETUP were retired to _superseded (which NEVER blocks). It is
 # the front door of a public repo, so a repo without it is a repo whose only

@@ -1373,6 +1373,9 @@ check('no fixed svg id is emitted by a repeated drawing',
        drawn. The newer side wins, which is right - somebody turning it on
        at the shelf on their phone means it on, everywhere. */
     'showFill',
+    /* Whether Cooper has a tab. A switch about the person, and the newer side
+       wins: turning him on at one device means on at all of them. */
+    'guideOn',
     /* How many lookups the offered-library queue may spend vetting on its
        own. One number somebody chose, not a collection to merge. */
     'intakeBudget',

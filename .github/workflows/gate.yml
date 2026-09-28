@@ -348,7 +348,8 @@ jobs:
           mkdir -p site
           cp index.html sw.js manifest.json mark.png \
              icon-192.png icon-512.png icon-mask-192.png icon-mask-512.png \
-             zxing.min.js data.json map.json site/
+             zxing.min.js data.json map.json \
+             cooper.webp cooper-pour.webp site/
           touch site/.nojekyll
           echo "the artifact:"
           ls -la site

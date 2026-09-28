@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 805 |
-| tables | 193 |
-| carrying a stated purpose | 618 |
+| functions | 815 |
+| tables | 195 |
+| carrying a stated purpose | 629 |
 
 ## Tables
 
@@ -25,6 +25,7 @@ QUESTION, not the name you were going to use.
 - **`L.ALLOCATED`** — How hard a bottle is to actually buy
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
+- **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CASE_FIXED`** — casing are spelled out rather than guessed at.
 - **`L.CASK_FAMILY`** — A named trait orders the rung
@@ -194,6 +195,7 @@ QUESTION, not the name you were going to use.
 - **`L.TASTE_TERMS`** — `salt` IS GONE, and the merge removed it rather than a patch
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
 - **`L.TASTING`** — about his own shelf
+- **`L.TASTING_STEPS`** — THE STEPS OF A GUIDED TASTING (BZ, 2026-09-19)
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
 - **`L.TITLE_LINES`** — _no comment above it_
 - **`L.TN_ORDER`** — bottle tastes like, not where it came from.
@@ -417,6 +419,14 @@ QUESTION, not the name you were going to use.
 - **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
+- **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
+- **`L.guideNext`** — WHERE A TASTING IS UP TO
+- **`L.guideNote`** — THE NOTE A TASTING WRITES
+- **`L.guidePickList`** — The list was the first twelve alphabetically, which on a shelf of 352 meant
+- **`L.guideProgress`** — _no comment above it_
+- **`L.guideReveal`** — WHAT THE BOTTLE ITSELF SAYS ABOUT A COLUMN, shown only AFTER they answer
+- **`L.guideSay`** — WHAT A TASTING READS AS, in a person's own note
+- **`L.guideTeach`** — WHAT THE GUIDE TEACHES AT A STEP, out of Learn rather than out of itself.
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
@@ -955,7 +965,9 @@ QUESTION, not the name you were going to use.
 - **`L.tastingForGuest`** — What a guest's device does with one
 - **`L.tastingNotes`** — _no comment above it_
 - **`L.tastingRecord`** — _no comment above it_
+- **`L.tastingStep`** — One step by its id, for everything that reads them.
 - **`L.templateCSV`** — _no comment above it_
+- **`L.termsOfFamily`** — THE TERMS OF ONE WHEEL GROUP, which is where the choices come from
 - **`L.thinRegions`** — A SCOTCH REGION TOO THIN TO FLY
 - **`L.tidyName`** — _no comment above it_
 - **`L.tidyNote`** — The same test for prose

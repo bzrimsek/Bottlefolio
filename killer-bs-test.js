@@ -12349,7 +12349,147 @@ sec('§244 how a bottle helps the chart');
  * because the shelf changed is the app paying attention. Cheapest first:
  * an evening with what you already own before spending money.
  */
-sec('§243 absent is not missing, and a collision heals');
+sec('§242 the guided tasting');
+{
+  /* BZ, 2026-09-28: "lets progress merlin", then "work on the capability" -
+     he takes how the guide looks, this is what he does. Decided with him the
+     same day: the mode is always available and off by default, the guide says
+     only what Learn and the bottle's own record support, and what the
+     distillery found is shown AFTER they answer.
+
+     Nothing here marks anybody wrong. "Everyone's palate is different" is the
+     premise (BZ, 2026-09-19), so there is no score and no correction. */
+  const laph = { k: 'l', name: 'Laphroaig 10', sub: 'scotch',
+    tn: { colour: 'Gold', nose: 'peat, iodine, seaweed',
+      palate: 'smoke, oak, salt', finish: 'long, drying' } };
+
+  /* One step by its id, so the screen and the harness ask the same door which
+     step they are on rather than each hunting the list. */
+  eq('a step can be found by its id, and a name nobody uses finds nothing',
+    [(L.tastingStep('nose') || {}).teach, L.tastingStep('nope')],
+    ['Nose', null]);
+  /* The wheel group a choice list is built from, through L.palateIndex - the
+     one door to the table (rule 30d). */
+  eq('a wheel group answers its own terms',
+    [L.termsOfFamily('colour').sort().join(','),
+      L.termsOfFamily('peaty').sort().join(','),
+      L.termsOfFamily('nope')],
+    ['amber,brown,deep,gold,pale,red', 'medicinal,peat,smoke', []]);
+  eq('a tasting runs pour, colour, nose, body, palate, finish',
+    L.TASTING_STEPS.map(x => x.id),
+    ['pour', 'colour', 'nose', 'body', 'palate', 'finish']);
+  /* EVERY STEP TEACHES FROM LEARN rather than carrying its own words, so the
+     guide and the Learn tab cannot come to say different things (rule 30d). */
+  eq('every step that teaches names an entry Learn actually has',
+    L.TASTING_STEPS.filter(x => x.teach && !L.guideTeach(x.teach))
+      .map(x => x.id), []);
+  eq('and the teaching is the entry, not a copy of it',
+    (L.guideTeach('Nose') || {}).term, 'Nose');
+
+  /* THE CHOICES COME FROM THE WHEEL. Colour and body from the two rings it
+     keeps apart from flavour; nose, palate and finish from the bottle's OWN
+     descriptors mixed with neighbours out of the same groups. */
+  eq('colour is offered the wheel-s colour ring',
+    L.guideChoices(laph, 'colour'), ['amber', 'brown', 'deep', 'gold', 'pale',
+      'red']);
+  /* Body is mouthfeel and nothing else: the texture ring also holds length
+     and a word for the smell, and neither answers "how does it feel". */
+  eq('body is offered mouthfeel, not length',
+    ['long', 'short', 'aroma'].filter(w =>
+      L.guideChoices(laph, 'body').indexOf(w) >= 0), []);
+  eq('and body does offer weight and warmth',
+    ['light', 'full', 'oily', 'warm'].filter(w =>
+      L.guideChoices(laph, 'body').indexOf(w) < 0), []);
+
+  /* THE BOTTLE'S OWN WORDS ARE NEVER CUT. Trimming the pool after sorting it
+     dropped whichever of them sorted late, so a Laphroaig could be offered
+     every neighbour of peat and not peat. */
+  {
+    const ix = L.palateIndex();
+    const mine = L.palateOf(laph).all
+      .filter(t => L.NOT_A_TASTE.indexOf(ix.family[t]) < 0);
+    const offered = L.guideChoices(laph, 'nose', 8);
+    eq('a bottle is always offered its own descriptors',
+      mine.filter(t => offered.indexOf(t) < 0), []);
+    /* And alphabetically, so nothing in the order hints at an answer. */
+    eq('in an order that gives nothing away',
+      offered.slice(), offered.slice().sort());
+  }
+  /* A whisky nobody has described yet still gets a list rather than a blank. */
+  eq('an undescribed bottle is offered something to reach for',
+    L.guideChoices({ k: 'x', name: 'Unknown' }, 'nose', 8).length >= 4, true);
+
+  /* WHAT IT FOUND IS SHOWN AFTER, and only from the bottle's own record. */
+  eq('the reveal is the bottle-s own note for that column',
+    [L.guideReveal(laph, 'nose'), L.guideReveal(laph, 'finish')],
+    ['peat, iodine, seaweed', 'long, drying']);
+  eq('and a bottle that says nothing reveals nothing',
+    L.guideReveal({ k: 'x', name: 'X' }, 'nose'), null);
+  eq('the pour step reveals nothing, having no column',
+    L.guideReveal(laph, 'pour'), null);
+
+  /* THE NOTE IT WRITES: four columns, and body folded into the palate because
+     the note has no column for mouthfeel. */
+  const said = { pour: 'done', colour: 'gold', nose: 'peat, smoke',
+    body: 'oily', palate: 'smoke', finish: 'long' };
+  eq('the answers become a note, with body on the palate',
+    L.guideNote(said),
+    { colour: 'gold', nose: 'peat, smoke', palate: 'oily, smoke',
+      finish: 'long' });
+  eq('and answering nothing writes nothing',
+    [L.guideNote({}), L.guideNote(null)], [null, null]);
+  /* AND WHAT IT READS AS IN THEIR OWN NOTE. Driving a whole tasting in a
+     browser found the answers being thrown away: L.noteMerge fills blanks and
+     answers null when it added nothing, so on a shelf where every bottle
+     already has notes a beginner could walk all six steps and keep none of
+     them. Theirs goes to userNote, which is where a person's own writing
+     lives; the bottle's own columns are still only filled where blank. */
+  eq('a tasting reads as a sentence in their own words',
+    L.guideSay(L.guideNote(said)),
+    'color: gold. nose: peat, smoke. palate: oily, smoke. finish: long.');
+  eq('and nothing answered says nothing',
+    [L.guideSay(null), L.guideSay({})], [null, null]);
+
+  /* WHERE IT IS UP TO. */
+  eq('it asks the first step nobody has answered',
+    (L.guideNext({ pour: 'x', colour: 'gold' }) || {}).id, 'nose');
+  eq('and a finished tasting has nothing left to ask',
+    L.guideNext(said), null);
+  eq('the meter counts the steps answered',
+    [L.guideProgress(said).done, L.guideProgress({}).done,
+      L.guideProgress(said).pct], [6, 0, 100]);
+
+  /* WHAT HE OFFERS TO TASTE. The first draft took twelve alphabetically,
+     which on a shelf of 352 was four Aberlours and nothing anybody wanted
+     (2026-09-28). Open first, and within those whatever was poured most
+     recently: what is by your elbow is what you reach for. */
+  {
+    const cat = {
+      a: { k: 'a', name: 'Aberlour 12', sub: 'scotch' },
+      z: { k: 'z', name: 'Zzz Last', sub: 'scotch' },
+      m: { k: 'm', name: 'Middle One', sub: 'scotch' }
+    };
+    const held = ['a', 'z', 'm'].map((k, i) =>
+      ({ id: 'B' + i, k: k, status: 'open' }));
+    /* Newest first in the log, so `z` was the last thing poured. */
+    const log = [{ k: 'z', kind: 'pour' }, { k: 'm', kind: 'pour' }];
+    eq('what you poured last is offered first, then alphabetically',
+      L.guidePickList(cat, held, log, '').map(p => p.k), ['z', 'm', 'a']);
+    eq('and a search finds the rest of a long shelf',
+      [L.guidePickList(cat, held, log, 'aberlour').map(p => p.k),
+        L.guidePickList(cat, held, log, 'zzzz nothing')],
+      [['a'], []]);
+    eq('nothing owned still offers what the app knows, since the pour is '
+      + 'logged either way',
+      L.guidePickList(cat, [], [], '').length, 3);
+  }
+  /* THE NAME IS IN ONE PLACE, because BZ has called him two things this week
+     and is still deciding how he looks. */
+  eq('the guide has one name to change',
+    typeof L.GUIDE_NAME === 'string' && L.GUIDE_NAME.length > 0, true);
+}
+
+sec('\u00a7243 absent is not missing, and a collision heals');
 {
   /* BZ, 2026-09-28: "where did we land on me needing to push an enrichment
      button?" Here: L.factGaps counted an EMPTY field as a gap, so a whisky
