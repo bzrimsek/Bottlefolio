@@ -122,9 +122,11 @@ var LATELY_RULES_ = [
   '   paragraph opening on an older habit reads as though nothing happened:',
   '   one man logged three pours, read the first line, and thought the app',
   '   had missed them. So the newest session is visible in the first clause -',
-  '   as the thing you are making a point ABOUT, never as a list of it. "The',
-  '   1792 is the fourth Barton bottle here" does both jobs; "you worked',
-  '   through A, B and C" does neither. Name AT MOST ONE bottle from it.',
+  '   as the thing you are making a point ABOUT, never as a list of it. Name',
+  '   AT MOST ONE bottle from it, and make the point out of something the',
+  '   lines below actually say about that bottle: the cask it was finished',
+  '   in, its strength, its house, what it tastes of, and how that sits with',
+  '   the sessions under it.',
   '   OPENING: blended - do NOT open on the newest session. Over a stretch',
   '   this long the newest evening is not the story, and opening on it made',
   '   every window read alike, because the newest session is the same one',
@@ -149,9 +151,18 @@ var LATELY_RULES_ = [
   '   treat its bottles as favourites.',
   '7. Name only bottles, places and flights given below, and state nothing',
   '   about a bottle that its line does not say. Never invent.',
-  '8. Write plainly, to "you". No tasting-note flourish, no hedging, no',
+  '8. NEVER COUNT ACROSS SESSIONS, and never place anything in a sequence:',
+  '   no "the fourth Barton bottle", no "your third visit", no "the first',
+  '   time". You are shown at most sixteen sessions and at most twelve pours',
+  '   from each, so the list stops before you can see its end and any total',
+  '   you reach is over a window with no edges. A tally here is a guess',
+  '   wearing a number, and the app rejects a paragraph containing one.',
+  '9. NEVER SAY HOW A BOTTLE CAME TO BE SOMEWHERE. You are told where a pour',
+  '   happened, never who supplied it: a bar is not somewhere anybody',
+  '   brought a bottle. No brought, carried or took.',
+  '10. Write plainly, to "you". No tasting-note flourish, no hedging, no',
   '   heading, no markdown, no sign-off.',
-  '9. If there is too little to find a thread in, say so in one sentence.'
+  '11. If there is too little to find a thread in, say so in one sentence.'
 ].join('\n');
 
 function latelyFacts_(r) {

@@ -23850,6 +23850,54 @@ sec('§441 a lookup asks who is asking');
   eq('the app and the service move together on this',
     L.GS_BUILD, '2.5.2');
 
+/* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
+   is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
+   bad").
+
+   Both halves were invented, and the first was invented because the rules
+   CONTAINED that sentence as an example of a good opener - so the writer
+   copied it, ordinal and all. The example is gone.
+
+   The tally cannot be right except by luck either way: the writer is handed at
+   most sixteen sessions and twelve pours from each, so it is counting over a
+   list with no visible end. Caught on the way in as well as forbidden in the
+   rules, because a rule the service can ignore is not a guarantee. */
+{
+  const said = x => L.recapRefused({ recap: x }, true);
+  eq('the sentence that caused this is refused, and for the right reason',
+    said('The 1792 is the fourth Barton bottle you have brought to Playhouse, '
+      + 'and that is the thread running through all of it here.'),
+    'counted');
+  eq('a tally on its own is enough to refuse it',
+    [said('It is the third dram of Laphroaig in here and it keeps on coming '
+      + 'back round to the same peated corner of your shelf.'),
+      said('That makes your 4th visit to Walden, which is where the sherry '
+        + 'keeps turning up more than anywhere else you drink.')],
+    ['counted', 'counted']);
+  eq('and so is saying who brought it',
+    said('You carried the Knob Creek to Playhouse, which is the same house '
+      + 'the rest of that evening came from as well.'),
+    'supplied');
+  /* NARROW ON PURPOSE. An ordinal about one pour is not a tally across
+     sessions, and refusing it would throw away good writing. */
+  eq('an ordinal that counts nothing goes through',
+    [said('The first sip of anything at cask strength reads hot, and yours '
+      + 'are mostly cask strength now, which is worth knowing.'),
+      said('There is a second wind to the Glen Scotia that the Laphroaig '
+        + 'never finds, and you keep going back to it for that.')],
+    [null, null]);
+  /* And the screen can tell a stale deployment from a refusal, which it could
+     not when every reason came back as a bare null. */
+  eq('every reason has something to say to the reader',
+    Object.keys(L.RECAP_REFUSED_SAY).filter(k => !L.RECAP_REFUSED_SAY[k]), []);
+  eq('and the one door decides both',
+    [L.recapText({ recap: 'The 1792 is the fourth Barton bottle you have '
+      + 'brought to Playhouse, and that is the thread here.' }, true),
+      !!L.recapText({ recap: 'The sherry in both is what you keep going back '
+        + 'to, and the Glen Scotia says the same of itself.' }, true)],
+    [null, true]);
+}
+
 /* HOW A WINDOW OPENS (BZ, 2026-09-27: "all 4 time horizons say the same lame
    thing", then "recency should be a rule for the last month but after that I'd
    expect more of a blended finding").

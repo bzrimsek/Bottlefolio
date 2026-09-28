@@ -13,8 +13,8 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 796 |
-| tables | 190 |
+| functions | 797 |
+| tables | 191 |
 | carrying a stated purpose | 606 |
 
 ## Tables
@@ -140,6 +140,7 @@ QUESTION, not the name you were going to use.
 - **`L.QUIZ_PROMPTS`** — AND A QUESTION IS A QUESTION, not a paragraph with buttons under it
 - **`L.QUIZ_SKIP`** — A CATCH-ALL IS NOT AN ANSWER
 - **`L.QUIZ_TRICKS`** — Every one of these is checkable, and several contradict what a confident
+- **`L.RECAP_REFUSED_SAY`** — _no comment above it_
 - **`L.RECAP_SPANS`** — The recap: reading the log back over a stretch of time, from one pass so
 - **`L.RECEIPT_HEADERS`** — _no comment above it_
 - **`L.REEL_HELP`** — are the two nobody could guess, hence the help.
@@ -768,8 +769,9 @@ QUESTION, not the name you were going to use.
 - **`L.recap`** — _no comment above it_
 - **`L.recapLine`** — _no comment above it_
 - **`L.recapOpening`** — `lately` is the Home block, which is recency by definition.
+- **`L.recapRefused`** — WHY A WRITE-UP MAY NOT BE SHOWN, in one place, named rather than merely
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
-- **`L.recapText`** — What comes back, checked before it is shown
+- **`L.recapText`** — _no comment above it_
 - **`L.recapWriting`** — THE RECAP'S WRITING FOR ONE STRETCH
 - **`L.recastFlight`** — toward the back.
 - **`L.receiptColumns`** — _no comment above it_
