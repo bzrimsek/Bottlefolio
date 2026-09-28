@@ -4036,6 +4036,62 @@ function step(n) {
     await page.waitForTimeout(80);
   }
 
+  /* A TURN MAY NOT TAKE THE BOX AWAY FROM UNDER YOU (BZ, 2026-09-28: "the
+     android keyboard makes the experience jump about"). Everything else here
+     drives the conversation and reads what came back, which stays true however
+     many times the input is destroyed and remade - so nothing could see the
+     one thing a phone cares about. */
+  step('a turn of conversation leaves the box alone');
+  {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const r = await page.evaluate(() => {
+      S.guideOn = true;
+      try { showGuideTab(); } catch (e) {}
+      show('guide');
+      S.guide = null;
+      renderGuide();
+      const before = document.getElementById('guideSay');
+      if (!before) return { missing: true };
+      before.focus();
+      const took = document.activeElement === before;
+      /* One turn, exactly as pressing Say does it. */
+      cooperHears('what is peat?');
+      const after = document.getElementById('guideSay');
+      const ask = document.getElementById('guideAsk');
+      const scr = document.getElementById('scr-guide');
+      const out = {
+        took: took,
+        same: before === after,
+        kept: document.activeElement === after,
+        boxes: document.querySelectorAll('#guideBody input').length,
+        stuck: ask ? getComputedStyle(ask).position : 'none',
+        atFoot: scr
+          ? scr.scrollTop + scr.clientHeight >= scr.scrollHeight - 2 : false
+      };
+      S.guideOn = false;
+      try { showGuideTab(); } catch (e) {}
+      return out;
+    });
+    if (r.missing) {
+      failures.push('guide: there is no box to type into');
+    } else {
+      if (!r.took) failures.push('guide: the box would not take focus');
+      if (!r.same) {
+        failures.push('guide: a turn replaced the box, which drops the '
+          + 'keyboard and raises it again');
+      }
+      if (!r.kept) failures.push('guide: focus was lost when he answered');
+      if (r.boxes !== 1) {
+        failures.push('guide: ' + r.boxes + ' boxes on the screen, not 1');
+      }
+      if (r.stuck !== 'sticky') {
+        failures.push('guide: the box is ' + r.stuck + ', so a growing thread '
+          + 'pushes it off the screen');
+      }
+      if (!r.atFoot) failures.push('guide: the newest line is not in view');
+    }
+  }
+
   step('the header holds together on a phone');
   /* BZ, with two screenshots of his phone: mobile header issues, check
      everything. And then: how are these checks not part of the norm?
