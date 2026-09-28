@@ -2878,6 +2878,18 @@ sec('your taste, painted');
      so fruity is the whole radius, and only one of them is smoky. */
   /* WHAT THE ANSWERS SAY, ON THE SAME AXES (BZ, 2026-09-27: "What is it based
      on, my q&a?" - it was not, and "all axis should be the same"). */
+  /* THE ID IS THE WHEEL'S, THE LABEL IS THE READER'S (BZ, 2026-09-27: "So what
+     is vegetable?"). The group is grass, fresh, mint, herbal, tea, dill and
+     earthy - on his shelf mint 39 and fresh 38 against vegetable 7 - so the
+     word named the smallest thing in it. Green is the wheel's own sub-ring
+     for those leaves, and the id stays `vegetable` because the vocabulary is
+     canon and an id that drifts from its source starts a private language. */
+  eq('vegetable is shown as Green and keeps its id',
+    [L.familyLabel('vegetable'), L.tasteFamilies().indexOf('vegetable') >= 0],
+    ['Green', true]);
+  eq('and every other group is called what the wheel calls it',
+    L.tasteFamilies().filter(f => f !== 'vegetable'
+      && L.familyLabel(f) !== L.titleCase(f)), []);
   eq('the same groups on both, and every one a taste',
     [L.tasteFamilies().length,
       L.tasteFamilies().filter(f => L.NOT_A_TASTE.indexOf(f) >= 0).length],

@@ -13,8 +13,8 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 790 |
-| tables | 187 |
+| functions | 791 |
+| tables | 188 |
 | carrying a stated purpose | 601 |
 
 ## Tables
@@ -42,6 +42,7 @@ QUESTION, not the name you were going to use.
 - **`L.DIMENSIONS`** — _no comment above it_
 - **`L.EXITS`** — leaves the bottle in existence elsewhere
 - **`L.EXPORT_COLS`** — ===================================================================
+- **`L.FAMILY_LABEL`** — VEGETABLE IS SHOWN AS GREEN (BZ, 2026-09-27
 - **`L.FB_ESCAPES`** — Firebase will not accept a key holding 
 - **`L.FB_UNESCAPES`** — _no comment above it_
 - **`L.FEATURES`** — other groups so it searches alongside them.
@@ -331,6 +332,7 @@ QUESTION, not the name you were going to use.
 - **`L.factGaps`** — _no comment above it_
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
+- **`L.familyLabel`** — _no comment above it_
 - **`L.fbDecode`** — _no comment above it_
 - **`L.fbEncode`** — keeps its shape
 - **`L.fbEncodePaths`** — _no comment above it_
@@ -912,7 +914,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteBetween`** — _no comment above it_
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
-- **`L.tasteFamilies`** — THE GROUPS THAT ARE TASTES, in the wheel's order
+- **`L.tasteFamilies`** — _no comment above it_
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
