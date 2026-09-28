@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 817 |
+| functions | 819 |
 | tables | 196 |
-| carrying a stated purpose | 631 |
+| carrying a stated purpose | 633 |
 
 ## Tables
 
@@ -422,13 +422,15 @@ QUESTION, not the name you were going to use.
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
-- **`L.guideNext`** — WHERE A TASTING IS UP TO
+- **`L.guideHeard`** — Everything else depends on where they are
+- **`L.guideNext`** — NO METER. A bar counting six steps is a form's idea of progress; in a
 - **`L.guideNote`** — THE NOTE A TASTING WRITES
 - **`L.guidePickList`** — The list was the first twelve alphabetically, which on a shelf of 352 meant
-- **`L.guideProgress`** — _no comment above it_
 - **`L.guideReveal`** — WHAT THE BOTTLE ITSELF SAYS ABOUT A COLUMN, shown only AFTER they answer
 - **`L.guideSay`** — WHAT A TASTING READS AS, in a person's own note
 - **`L.guideTeach`** — WHAT THE GUIDE TEACHES AT A STEP, out of Learn rather than out of itself.
+- **`L.guideThread`** — _no comment above it_
+- **`L.guideVerdict`** — _no comment above it_
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
@@ -1004,8 +1006,8 @@ QUESTION, not the name you were going to use.
 - **`L.vennLabel`** — A label a person can read, given who is in a region.
 - **`L.vennRegions`** — encode it.
 - **`L.vennSpots`** — WHERE EACH REGION'S NUMBER SITS in the fixed diagram, keyed by the region
-- **`L.verdictOf`** — _no comment above it_
-- **`L.verdicts`** — Everything you have had an opinion about, newest first.
+- **`L.verdictOf`** — What you last thought of one bottle
+- **`L.verdicts`** — Reversed before the sort and not after, because a stable sort keeps the
 - **`L.verdictSplit`** — Split three ways, for anything that wants to reason about it.
 - **`L.verifyProposal`** — _no comment above it_
 - **`L.viewFor`** — narrows by cos(latitude), so an oversized span gets the whole map.

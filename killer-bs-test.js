@@ -12455,9 +12455,7 @@ sec('§242 the guided tasting');
     (L.guideNext({ pour: 'x', colour: 'gold' }) || {}).id, 'nose');
   eq('and a finished tasting has nothing left to ask',
     L.guideNext(said), null);
-  eq('the meter counts the steps answered',
-    [L.guideProgress(said).done, L.guideProgress({}).done,
-      L.guideProgress(said).pct], [6, 0, 100]);
+
 
   /* WHAT HE OFFERS TO TASTE. The first draft took twelve alphabetically,
      which on a shelf of 352 was four Aberlours and nothing anybody wanted
@@ -12483,6 +12481,79 @@ sec('§242 the guided tasting');
       + 'logged either way',
       L.guidePickList(cat, [], [], '').length, 3);
   }
+  /* WHAT A TYPED LINE IS (BZ, 2026-09-28: "coopers experience should basically
+     be a chat bot"). One thread and one box, so the engine has to say which of
+     three things somebody meant.
+
+     A QUESTION IS A QUESTION WHEREVER IT IS ASKED - halfway through nosing a
+     whisky, "what is peat?" wants an answer, not to be written down as what
+     they smelled. */
+  eq('a question mid-tasting is heard as a question, not as the answer',
+    [L.guideHeard('what is peat?', 'tasting').kind,
+      L.guideHeard('how does a cask work', 'tasting').kind],
+    ['ask', 'ask']);
+  eq('and anything else answers the step in front of them',
+    [L.guideHeard('peat and smoke', 'tasting').kind,
+      L.guideHeard('gold', 'tasting').kind], ['answer', 'answer']);
+  eq('choosing a bottle, a line is a search',
+    L.guideHeard('laphroaig', 'picking').kind, 'pick');
+  /* With nothing running there is nothing left for it to be. */
+  eq('and with neither running it can only be a question',
+    L.guideHeard('rye', 'chat').kind, 'ask');
+  eq('an empty line is nothing at all',
+    [L.guideHeard('', 'tasting').kind, L.guideHeard('   ', 'chat').kind],
+    ['nothing', 'nothing']);
+  /* WAITING ON A VERDICT is answering, not asking: "no" is a verdict and
+     "what is peat?" is still a question. */
+  eq('a verdict answers, and a question still asks',
+    [L.guideHeard('no', 'verdict').kind,
+      L.guideHeard('what is peat?', 'verdict').kind], ['answer', 'ask']);
+
+  /* WOULD YOU POUR IT AGAIN, in English. He asks it in the thread rather than
+     the app throwing its modal over the conversation (BZ, 2026-09-28), so a
+     typed line has to become one of the three the shelf stores.
+
+     REFUSALS ARE READ FIRST, because "not again" contains the word that means
+     the opposite of it. */
+  eq('yes, in the words people use',
+    ['again', 'aye', 'yes please', 'loved it', 'cracking stuff']
+      .map(L.guideVerdict),
+    ['again', 'again', 'again', 'again', 'again']);
+  eq('no, in the words people use',
+    ['not for me', 'no', 'nope', 'never again', 'not again', 'dreadful']
+      .map(L.guideVerdict),
+    ['not for me', 'not for me', 'not for me', 'not for me', 'not for me',
+      'not for me']);
+  eq('and the shrug in the middle',
+    ['fine', 'it was ok', 'decent enough'].map(L.guideVerdict),
+    ['fine', 'fine', 'fine']);
+  /* A WORD INSIDE A WORD IS NOT AN ANSWER: "nose" is not "no". */
+  eq('a verdict he cannot read is not guessed at',
+    [L.guideVerdict('the nose was the best of it'), L.guideVerdict('hmm'),
+      L.guideVerdict('')], [null, null, null]);
+  eq('and every answer he gives is one the shelf stores',
+    ['again', 'no', 'fine'].map(L.guideVerdict)
+      .filter(v => L.VERDICTS.indexOf(v) < 0).length, 0);
+  eq('he has one wording for the question',
+    /\?$/.test(L.GUIDE_VERDICT_ASK), true);
+
+  /* THE THREAD IS KEPT AND CAPPED: it is somebody's own conversation, so it
+     survives a redraw - but a transcript nobody trims grows for ever. */
+  {
+    let th = [];
+    for (let i = 0; i < L.GUIDE_THREAD_MAX + 8; i++) {
+      th = L.guideThread(th, i % 2 ? 'you' : 'cooper', 'line ' + i);
+    }
+    eq('the thread keeps the last of it and no more',
+      [th.length, th[th.length - 1].text],
+      [L.GUIDE_THREAD_MAX, 'line ' + (L.GUIDE_THREAD_MAX + 7)]);
+    eq('and an empty line is never added to it',
+      [L.guideThread([], 'you', '').length,
+        L.guideThread([], 'you', '   ').length], [0, 0]);
+    eq('who said it travels with what was said',
+      L.guideThread([], 'cooper', 'aye')[0], { who: 'cooper', text: 'aye' });
+  }
+
   /* ASKING HIM (BZ, 2026-09-28: "an all knowing whiskey character"). He knows
      what Learn knows - 324 entries - and nothing let anybody ask him. Through
      L.searchReference, the door the Learn tab searches with, so the two cannot
@@ -14782,18 +14853,37 @@ sec('§275 poured at a buddy\u2019s');
  */
 sec('§276 worth it, and one to keep');
 {
+  /* OLDEST FIRST, which is the order the log is actually in - pourNow
+     appends to it. This fixture was written newest-first until 2026-09-28,
+     and that is the whole reason a walk that took the FIRST verdict it found
+     looked like it was taking the newest one. */
   const hist = [
-    { kind: 'pour', k: 'a', verdict: 'again', at: '2026-09-05' },
     { kind: 'pour', k: 'a', verdict: 'fine', at: '2026-08-01' },
-    { kind: 'pour', k: 'b', verdict: 'not for me', at: '2026-09-04' },
-    { kind: 'pour', k: 'c', at: '2026-09-03' },
     { kind: 'pour', k: null, away: 'Yamazaki 18', verdict: 'again',
-      at: '2026-09-02' }
+      at: '2026-09-02' },
+    { kind: 'pour', k: 'c', at: '2026-09-03' },
+    { kind: 'pour', k: 'b', verdict: 'not for me', at: '2026-09-04' },
+    { kind: 'pour', k: 'a', verdict: 'again', at: '2026-09-05' }
   ];
 
   eq('three answers, not a hundred-point score', L.VERDICTS.length, 3);
   /* The most recent wins: tastes change and a shelf should follow. */
   eq('the newest opinion stands', L.verdictOf('a', hist), 'again');
+  eq('and the list leads with it', L.verdicts(hist)[0].at, '2026-09-05');
+  /* TWO ON ONE DAY: the one poured later is the one they meant, and a stable
+     sort cannot tell them apart by date alone. */
+  eq('a mind changed the same day still changes',
+    L.verdictOf('d', [
+      { kind: 'pour', k: 'd', verdict: 'again', at: '2026-09-05' },
+      { kind: 'pour', k: 'd', verdict: 'not for me', at: '2026-09-05' }
+    ]), 'not for me');
+  /* AND A LOG OUT OF DATE ORDER, which is what a merge from another device
+     leaves behind: the date decides, never the position. */
+  eq('an older pour merged in after a newer one does not overrule it',
+    L.verdictOf('e', [
+      { kind: 'pour', k: 'e', verdict: 'again', at: '2026-09-20' },
+      { kind: 'pour', k: 'e', verdict: 'fine', at: '2026-09-02' }
+    ]), 'again');
   eq('a pour with no opinion has none', L.verdictOf('c', hist), null);
   eq('and a bottle never poured has none', L.verdictOf('zz', hist), null);
 

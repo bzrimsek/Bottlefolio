@@ -2766,6 +2766,40 @@ check('no fixed svg id is emitted by a repeated drawing',
   });
 }
 
+/* THE CONVERSATION IS NEVER COVERED OVER (BZ's screenshot, 2026-09-28: the
+   "Worth it?" modal on top of the thread). A chat bot whose last act is to
+   throw a dialog over itself is not a conversation, and the route in was
+   pourNow, which asks for the verdict in a modal unless it is told not to.
+
+   Cooper asks it as another turn instead. Two ways to lose that again, both
+   checked: opening a modal from his half of the screen, and logging a pour
+   without the quiet flag. */
+{
+  const ls = src.split('\n');
+  const HIS = ['renderGuide', 'cooperOpens', 'guideTranscript', 'guideReplies',
+    'guideInput', 'cooperHears', 'cooperAnswers', 'cooperPicks', 'cooperChose',
+    'cooperStarts', 'cooperTakes', 'cooperFinishes', 'cooperVerdict',
+    'cooperDone'];
+  const found = [];
+  HIS.forEach(name => {
+    /* Column 0 to the column-0 closing brace, the same way the size ratchet
+       below reads a function. */
+    const at = ls.findIndex(l => l.startsWith('function ' + name + '('));
+    if (at < 0) { found.push(name + ' is gone \u2014 was the guide renamed?'); return; }
+    let body = '';
+    for (let j = at + 1; j < ls.length && !/^\}/.test(ls[j]); j++) {
+      body += ls[j] + '\n';
+    }
+    if (/\bopenModal\s*\(/.test(body)) {
+      found.push(name + ' opens a modal over the thread');
+    }
+    if (/\bpourNow\s*\(/.test(body) && !/quiet:\s*true/.test(body)) {
+      found.push(name + ' logs a pour that will ask for a verdict in a modal');
+    }
+  });
+  check('nothing Cooper does covers the conversation', found);
+}
+
 /* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
  *
  * Review item 35, 2026-09-15. The architecture pass measured 19 top-level
