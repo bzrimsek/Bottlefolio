@@ -2394,6 +2394,45 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the taste answers reach the profile', bad);
 }
 
+/* THE ANSWERS DO NOT SPEAK AS THE LOG (v2.5.96).
+ *
+ * BZ, 2026-09-27: "What you reach for ... - who is reaching?" Nobody. The app
+ * names the three sources itself and they are not interchangeable:
+ *
+ *   the shelf     what you have collected    L.tasteAxes, L.shelfAxes
+ *   the answers   what you SAY you prefer    L.tasteWantAxes, L.tasteWeights
+ *   the log       what you reach for         L.pourVsStock, and only there
+ *
+ * L.pourVsStock puts it plainly - "The shelf says what was bought; the log
+ * says what gets reached for" - and the taste profile still told somebody it
+ * knew what they reached for, on a card that has never read a pour.
+ *
+ * A COMMENT WAS NOT ENOUGH. One sat directly above the line, forbidding the
+ * exact phrase, and the line said it regardless. So: the screens that draw the
+ * profile are read with their comments STRIPPED - codeOnly, not src, because a
+ * check that can be satisfied by the sentence forbidding the thing is the fault
+ * this project keeps finding in its own guards.
+ */
+{
+  const POUR_VERB = /reach(es|ed)? for|what you pour|you poured|go(es)? for/i;
+  const SCREENS = ['tasteSection', 'renderTasteShape', 'tasteLayerPanel'];
+  const bad = [];
+  SCREENS.forEach(name => {
+    const at = codeOnly.indexOf('function ' + name + '(');
+    if (at < 0) { bad.push(name + ' is gone — this check is now blind'); return; }
+    const end = codeOnly.indexOf('\n}', at);
+    const body = codeOnly.slice(at, end < 0 ? at + 4000 : end);
+    /* The strings a person actually reads, not the identifiers around them. */
+    (body.match(/'(?:[^'\\]|\\.)*'/g) || []).forEach(lit => {
+      if (POUR_VERB.test(lit)) {
+        bad.push(name + ' says ' + lit.slice(0, 62)
+          + ' — that is the pour log talking, and this card reads the answers');
+      }
+    });
+  });
+  check('the taste profile does not claim to have read the log', bad);
+}
+
 /* A FIXED SENTENCE NEVER CLAIMS A PROPORTION (v2.5.78).
  *
  * BZ, 2026-09-27: "Most held sherry is a bit of an overstatement." It was. The

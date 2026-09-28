@@ -2939,6 +2939,47 @@ sec('your taste, painted');
       return !g.rings.length
         && !(raw.length === 1 && raw[0] === g.label);
     }).map(g => g.id), []);
+  /* THE LAYER UNDER A SPOKE (BZ, 2026-09-27: "when you click on a word, you
+     get the next layer of info/notes"). It composes and counts nothing: the
+     wheel's half comes from L.wheelTeach, the shelf's half from L.palateShelf,
+     which is the one thing that counts described bottles. */
+  {
+    const lay = L.tasteLayer(cat, bots, 'fruity');
+    eq('a spoke opens the wheel half and the shelf half',
+      [lay.label, lay.rings.indexOf('Stone') >= 0,
+        lay.described, lay.mine.every(t => t.family === 'fruity')],
+      ['Fruity', true, 3, true]);
+    /* The population travels with the count so no screen has to guess the
+       denominator (rule 13d). */
+    eq('and the population comes with it',
+      lay.described, L.palateShelf(cat, bots).described);
+    eq('its words come from the shelf door, in the shelf door order',
+      lay.mine.map(t => t.term),
+      L.palateShelf(cat, bots).top.filter(t => t.family === 'fruity')
+        .map(t => t.term));
+    eq('a group nobody draws opens nothing',
+      [L.tasteLayer(cat, bots, 'tastes'), L.tasteLayer(cat, bots, 'nope')],
+      [null, null]);
+  }
+  /* AND THE LEARN TAB'S OWN SHAPE (BZ, 2026-09-27: "Should augment Learn with
+     this content too"). It goes in as {term, def} so the tab's search reaches
+     it - somebody searching `stone` or `rancio` should land on the group that
+     owns it, which a hand-built card could never answer. */
+  eq('the wheel is a section of the Learn tab, one entry per drawn group',
+    [(L.TASTING.filter(x => x.section === 'The flavor wheel')[0] || {})
+      .items.length,
+      L.wheelItems().filter(i => !i.term || !i.def).length],
+    [L.tasteFamilies().length, 0]);
+  eq('an entry names its wheel, its parts and the words behind it',
+    [/Scotch wheel/.test(L.wheelItems().filter(i => i.term === 'Peaty')[0].def),
+      /Medicinal/.test(L.wheelItems().filter(i => i.term === 'Peaty')[0].def),
+      /peat/.test(L.wheelItems().filter(i => i.term === 'Peaty')[0].def)],
+    [true, true, true]);
+  /* Dairy is the group whose only part is its own name, so it says nothing
+     about parts rather than dividing itself into an empty list. */
+  eq('and a group with no parts to name does not say it divides into nothing',
+    /divides it into\s*\./.test(L.wheelItems().map(i => i.def).join(' ')),
+    false);
   eq('and nothing is taught that is not drawn',
     Object.keys(L.WHEEL_RINGS).filter(f => L.tasteFamilies().indexOf(f) < 0),
     []);
@@ -23757,7 +23798,23 @@ sec('§441 a lookup asks who is asking');
      by accident, so a service change is a decision somebody wrote down.
      2.4.12: WHISKY:EDITION removed, the service now has one source. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.5.1');
+    L.GS_BUILD, '2.5.2');
+
+/* THE FOLD NAMES ITS OWN STRETCH (BZ, 2026-09-27: "regardless of time slice
+   selected, the fold says Rest of Month"). It did - the words were typed into
+   the screen and the four chips changed everything except them. Built from
+   L.RECAP_SPANS now, so a fifth window could not arrive without one. */
+eq('the fold is named after the window it holds',
+  L.RECAP_SPANS.map(sp => L.recapFold(sp.id)),
+  ['The rest of the last month', 'The rest of the last three months',
+   'The rest of the last year', 'The rest of it']);
+/* "the rest of all of it" is not English, so that one takes the app's general
+   fold label - the same words every other paragraph folds under. */
+eq('and a window with no sensible phrasing falls back rather than reads badly',
+  [L.recapFold('all'), L.recapFold('nope'), L.recapFold()],
+  ['The rest of it', 'The rest of it', 'The rest of it']);
+eq('every window can name its fold',
+  L.RECAP_SPANS.filter(sp => !L.recapFold(sp.id)).map(sp => sp.id), []);
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',

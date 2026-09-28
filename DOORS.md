@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 792 |
+| functions | 795 |
 | tables | 190 |
-| carrying a stated purpose | 604 |
+| carrying a stated purpose | 606 |
 
 ## Tables
 
@@ -767,6 +767,7 @@ QUESTION, not the name you were going to use.
 - **`L.readShopText`** — usually gives one of them.
 - **`L.readSub`** — _no comment above it_
 - **`L.recap`** — _no comment above it_
+- **`L.recapFold`** — `all of it` is the one that will not take the pattern - "the rest of all of
 - **`L.recapLine`** — _no comment above it_
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
 - **`L.recapText`** — What comes back, checked before it is shown
@@ -918,6 +919,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
 - **`L.tasteFamilies`** — WHICH GROUPS GET DRAWN, AND IN WHAT ORDER - both out of one list.
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
+- **`L.tasteLayer`** — THE LAYER UNDER A SPOKE (BZ, 2026-09-27
 - **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
 - **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.
@@ -983,8 +985,9 @@ QUESTION, not the name you were going to use.
 - **`L.waitingOn`** — THE ASKS THAT ARE STILL WAITING and belong to nobody on the list
 - **`L.waitingSay`** — _no comment above it_
 - **`L.waitSay`** — WHAT A WAIT SAYS AS IT GOES ON
+- **`L.wheelItems`** — THE WHEEL AS A READING LIST, in the Learn tab's own shape so its search
 - **`L.wheelSaid`** — WHAT THE SERVICE SAID IT FOUND, kept only where this app knows the word.
-- **`L.wheelTeach`** — THE TWELVE GROUPS AS SOMETHING TO READ
+- **`L.wheelTeach`** — _no comment above it_
 - **`L.whiskyEvidence`** — WHAT MAKES A LINE A WHISKY
 - **`L.wholeValue`** — A LIST TAKEN WHOLE FROM THE OTHER SIDE, or an empty one when the account
 - **`L.whyPt`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
