@@ -23982,15 +23982,21 @@ sec('§441 a lookup asks who is asking');
    The newest session is the SAME session in every window, so a rule that opens
    every paragraph on it makes all four start identically - which is what he
    read. Recency is worth having over a month and is noise over a year. */
-eq('the month opens on the newest session and the longer windows do not',
-  L.RECAP_SPANS.map(sp => L.recapOpening(sp.id)),
-  ['newest', 'blended', 'blended', 'arc']);
+/* THREE WINDOWS, THREE JOBS. `all of it` is gone (BZ, 2026-09-27: "i don't
+   think all of it makes sense as a choice - at the extreme we are summarizing
+   infinity") - it was the only unbounded one and the only one that got worse
+   at its job the longer the app was used. */
+eq('each window opens the way its length earns',
+  L.RECAP_SPANS.map(sp => sp.id + ':' + L.recapOpening(sp.id)),
+  ['month:newest', 'quarter:blended', 'year:arc']);
+eq('and nothing unbounded is offered',
+  L.RECAP_SPANS.filter(sp => !sp.days).map(sp => sp.id), []);
 /* THE WIDEST WINDOW LOOKS FOR A TURN, not a thread (BZ, 2026-09-27: "the 4th
    bucket, all of it - over time becomes a shapeless blob - no real finding").
    Across the whole of somebody's drinking, a thread is a horoscope; what only
    that stretch can show is what changed. */
-eq('and all of it looks for what changed rather than what is constant',
-  L.recapOpening('all'), 'arc');
+eq('the year looks for what changed rather than what is constant',
+  L.recapOpening('year'), 'arc');
 
 /* A WINDOW EARNS ITS CHIP (BZ, 2026-09-27: "all 4 time horizons say the same
    lame thing"). They did, and no wording could have fixed it: his log ran
@@ -24009,7 +24015,7 @@ eq('and all of it looks for what changed rather than what is constant',
     '2026-09-20'].map(pour);
   eq('and a longer log offers only the windows that hold more than the last',
     L.recapWindows(wide, cat, '2026-09-27').map(w => w.id + ':' + w.sessions),
-    ['month:2', 'year:3', 'all:5']);
+    ['month:2', 'year:3']);
   eq('nothing logged offers nothing',
     L.recapWindows([], cat, '2026-09-27'), []);
   /* Every window offered is a real one, and they come widest last so the
@@ -24036,9 +24042,9 @@ eq('every window says how it opens',
   L.RECAP_SPANS.filter(sp => !L.recapOpening(sp.id)).map(sp => sp.id), []);
 /* And the writing carries it to the screen that asks. */
 eq('the write-up knows which opening its window takes',
-  ['month', 'year'].map(id =>
+  ['month', 'quarter', 'year'].map(id =>
     L.recapWriting([], {}, id, '2026-09-27', {}).opening),
-  ['newest', 'blended']);
+  ['newest', 'blended', 'arc']);
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',
