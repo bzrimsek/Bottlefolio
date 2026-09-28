@@ -4059,14 +4059,40 @@ function step(n) {
       const after = document.getElementById('guideSay');
       const ask = document.getElementById('guideAsk');
       const scr = document.getElementById('scr-guide');
+      /* AND WHERE THE BOX ENDS UP, with a short thread and a long one. Both
+         of BZ's screenshots were of a box in the wrong place and each looked
+         reasonable on its own terms: adrift in the middle of an empty screen
+         with two bubbles, and lying across the words with twenty. */
+      const th = document.getElementById('guideThread');
+      const nav = document.querySelector('nav');
+      const place = () => {
+        const a = ask.getBoundingClientRect();
+        const n = nav.getBoundingClientRect();
+        return {
+          gap: Math.round(n.top - a.bottom),
+          over: [...document.querySelectorAll('.bubble')].filter(x => {
+            const r2 = x.getBoundingClientRect();
+            return r2.bottom > a.top + 1 && r2.top < a.bottom - 1;
+          }).length
+        };
+      };
+      const short = place();
+      for (let i = 0; i < 16; i++) {
+        cooperSay('A long line about casks and what the wood gives back to a '
+          + 'spirit over a dozen years, number ' + i + '.');
+      }
+      renderGuide();
+      const long = place();
       const out = {
         took: took,
         same: before === after,
         kept: document.activeElement === after,
         boxes: document.querySelectorAll('#guideBody input').length,
-        stuck: ask ? getComputedStyle(ask).position : 'none',
-        atFoot: scr
-          ? scr.scrollTop + scr.clientHeight >= scr.scrollHeight - 2 : false
+        short: short,
+        long: long,
+        atFoot: th
+          ? th.scrollTop + th.clientHeight >= th.scrollHeight - 2 : false,
+        threadScrolls: th ? th.scrollHeight > th.clientHeight + 1 : false
       };
       S.guideOn = false;
       try { showGuideTab(); } catch (e) {}
@@ -4084,9 +4110,27 @@ function step(n) {
       if (r.boxes !== 1) {
         failures.push('guide: ' + r.boxes + ' boxes on the screen, not 1');
       }
-      if (r.stuck !== 'sticky') {
-        failures.push('guide: the box is ' + r.stuck + ', so a growing thread '
-          + 'pushes it off the screen');
+      [['a short thread', r.short], ['a long thread', r.long]]
+        .forEach(([what, p]) => {
+          if (!p) return;
+          /* Above the bar with nothing between them. A few pixels of rounding
+             either way is a layout, not a fault; sixteen is a gap. */
+          if (p.gap > 16) {
+            failures.push('guide: with ' + what + ' the box floats ' + p.gap
+              + 'px above the bar, leaving dead screen under it');
+          }
+          if (p.gap < -2) {
+            failures.push('guide: with ' + what + ' the box is ' + (-p.gap)
+              + 'px under the bar');
+          }
+          if (p.over) {
+            failures.push('guide: with ' + what + ' the box lies across '
+              + p.over + ' of the words');
+          }
+        });
+      if (!r.threadScrolls) {
+        failures.push('guide: a thread of eighteen lines does not scroll, so '
+          + 'the screen must be scrolling instead');
       }
       if (!r.atFoot) failures.push('guide: the newest line is not in view');
     }

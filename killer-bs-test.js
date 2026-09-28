@@ -12583,6 +12583,31 @@ sec('§242 the guided tasting');
   eq('what he does not know he does not answer',
     [L.cooperAsk('zzzzqqq').knows, L.cooperAsk('').knows,
       L.cooperAsk('a').knows], [false, false, false]);
+
+  /* THE TWO QUESTIONS BZ ASKED IT ON HIS PHONE (2026-09-28), both answered
+     with something else entirely. "Tell me how whiskey is made" came back
+     with the entry on what a shelf TELLS you, and "what makes scotch smoky"
+     with Legs - whose definition contains the words "makes thicker legs".
+     Every word over two letters was a search term, so the filler the question
+     was wrapped in beat the subject it was about. */
+  eq('a question about smoke is answered with peat, not with legs',
+    /peat/i.test(L.cooperAsk('what makes scotch smoky').found[0].term), true);
+  eq('and the filler is not what he looks up',
+    L.cooperAsk('tell me how whiskey is made').found
+      .filter(f => /shelf tells/i.test(f.term)).length, 0);
+  /* SMOKY REACHES SMOKE. The reference is searched by substring and the two
+     words share no run long enough, so the stem is what finds it. */
+  eq('a word is stemmed to what the entry spells it',
+    [L.askStem('smoky'), L.askStem('casks'), L.askStem('charring')],
+    ['smok', 'cask', 'charr']);
+  eq('and never down to something that matches everything',
+    [L.askStem('the'), L.askStem('is'), L.askStem('oak')], ['', '', '']);
+  /* THE STOP LIST HOLDS NO WHISKY. Every one of these is a subject somebody
+     may ask about, and stripping one would make that question unanswerable. */
+  eq('no whisky word is treated as filler',
+    ['peat', 'cask', 'nose', 'body', 'finish', 'proof', 'malt', 'grain',
+      'rye', 'oak', 'wood', 'sherry', 'age', 'smoke', 'mash']
+      .filter(w => L.ASK_STOP.indexOf(w) >= 0), []);
   /* AN APOSTROPHE IS NOT A DIFFERENT WORD, which was a fault in the Learn
      tab's own search all along: nobody types the curly one, so searching
      "angels share" found nothing. */

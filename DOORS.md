@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 819 |
-| tables | 196 |
-| carrying a stated purpose | 633 |
+| functions | 820 |
+| tables | 197 |
+| carrying a stated purpose | 635 |
 
 ## Tables
 
@@ -24,6 +24,7 @@ QUESTION, not the name you were going to use.
 - **`L.AGE_TIERS`** — single cask somebody happened to fill, not something to go and look for.
 - **`L.ALLOCATED`** — How hard a bottle is to actually buy
 - **`L.ASK_ORDER`** — WHICH GROUP ANSWERS FIRST
+- **`L.ASK_STOP`** — Function words and the generic verbs questions are built out of
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
@@ -237,6 +238,7 @@ QUESTION, not the name you were going to use.
 - **`L.askLabel`** — _no comment above it_
 - **`L.askScore`** — What each ask has actually produced.
 - **`L.askState`** — _no comment above it_
+- **`L.askStem`** — THE STEM OF A WORD, roughly, because the reference is searched by substring
 - **`L.asUids`** — WHO IS WORTH READING BY NAME (probeCandidates), bounded in two tiers.
 - **`L.auditFix`** — WHAT A FINDING WOULD CHANGE
 - **`L.auditSuggestion`** — WHAT TO DO ABOUT A FINDING, said on the row.
