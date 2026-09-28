@@ -2556,8 +2556,22 @@ sec('a shared trait has to be a habit, not an inventory');
      two, and two of anything is not a statement about anybody. */
   eq('a tiny shelf cannot reach it on a share alone',
     L.roomHabit(strong, { proof: { strong: 4 }, owned: 9 }), false);
-  eq('every axis says which way the market runs',
-    L.ROOM_AXES.filter(a2 => typeof a2.scarce !== 'boolean'), []);
+  eq('every axis says whether owning a lot of it means anything',
+    L.ROOM_AXES.filter(a2 => typeof a2.chosen !== 'boolean'), []);
+  /* AVAILABILITY IS THE ONE REAL SCARCITY, and it is about the bottle. BZ:
+     "Scarcity of age and proof are not one we chase. We chase bottles." and
+     "This scarcity is about the shelf itself and the buddy." */
+  eq('and availability has an axis of its own',
+    L.ROOM_AXES.filter(a2 => a2.id === 'hard').length, 1);
+  eq('which two people can be compared on',
+    /both reach for bottles that are hard to get/.test((L.roomNotes([
+      { id: 'me', name: 'You', map: {}, profile: { owned: 351, hardToGet: 105,
+        styles: [], regions: [], houses: [], peat: { heavy: 0 },
+        proof: { strong: 0, gentle: 0, n: 351 }, age: { old: 0, mid: 0 } } },
+      { id: 'nik', name: 'Nik', map: {}, profile: { owned: 106, hardToGet: 30,
+        styles: [], regions: [], houses: [], peat: { heavy: 0 },
+        proof: { strong: 0, gentle: 0, n: 106 }, age: { old: 0, mid: 0 } } }
+    ], 'me', {}) || []).map(n => n.text).join(' ')), true);
   /* AND EACH SCARCE ONE CARRIES THE SHARE THAT MAKES IT A LEAN. A flat
      threshold buried the age finding: eight per cent of a shelf is ordinary
      against most things and nearly three times the market against
@@ -2580,23 +2594,26 @@ sec('a shared trait has to be a habit, not an inventory');
      it. Both are a fifth of the shelf now. */
   eq('a fifth of a shelf is the bar for both verdicts',
     L.CASK_DELIBERATE_SHARE, 0.2);
-  /* AND THE PORTRAIT'S LAST TWO COUNT-BASED VERDICTS. Wood was five bottles,
-     which is one and a half per cent of BZ's shelf; the label verdict hung off
-     ten obscure ones, when what says somebody is not buying labels is that
-     NONE of the shelf is allocated or rare. */
-  eq('not buying labels rests on the rare count being zero',
-    [/not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)),
-      L.labelLine({ obscure: 48, rare: 12 }, 351)], [true, null]);
-  eq('and a shelf too small to judge is not judged',
-    L.labelLine({ obscure: 5, rare: 0 }, 12), null);
-  /* AND THE PORTRAIT'S LAST TWO COUNT-BASED VERDICTS. Wood was five bottles,
-     one and a half per cent of BZ's shelf; the label verdict hung off ten
-     obscure ones, when what says somebody is not buying labels is that NONE of
-     the shelf is allocated or rare. */
-  eq('not buying labels rests on the rare count being zero',
-    [/not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)),
-      L.labelLine({ obscure: 48, rare: 12 }, 351)], [true, null]);
-  eq('and a shelf too small to judge is not judged',
+  /* SCARCITY BELONGS TO BOTTLES (BZ, 2026-09-27: "Scarcity of age and proof
+     are not one we chase. We chase bottles. Age and proof are attributes of
+     bottles."). So the portrait's hard-to-get count reads both fields that
+     describe a BOTTLE: `alloc`, how hard it is to buy where you are, and
+     `scar`, how few were made. One that is both is counted once. */
+  eq('hard to get by either route, and once if both',
+    [L.hardToGet({ alloc: 'unicorn' }), L.hardToGet({ scar: 'limited' }),
+      L.hardToGet({ alloc: 'rare', scar: 'exclusive' }),
+      L.hardToGet({ alloc: 'common', scar: 'standard' }), L.hardToGet({})],
+    [true, true, true, false, false]);
+  /* The counts always, the verdict only when it is true: suppressing the whole
+     line threw away two real numbers to avoid one false sentence. */
+  eq('the numbers are said whether or not the verdict is',
+    [/48 bottles filed obscure and 105 hard to get/
+      .test(L.labelLine({ obscure: 48, rare: 105 }, 351)),
+      /not buying labels/.test(L.labelLine({ obscure: 48, rare: 105 }, 351))],
+    [true, false]);
+  eq('and the verdict comes back when nothing is hard to get',
+    /not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)), true);
+  eq('a shelf too small to judge is not judged',
     L.labelLine({ obscure: 5, rare: 0 }, 12), null);
   eq('and one door answers whether a shelf leans that way',
     [L.leansTo(80, 200), L.leansTo(28, 351), L.leansTo(10, 0),

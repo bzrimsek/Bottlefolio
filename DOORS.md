@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 786 |
+| functions | 787 |
 | tables | 187 |
 | carrying a stated purpose | 601 |
 
@@ -151,7 +151,7 @@ QUESTION, not the name you were going to use.
 - **`L.RESETTABLE`** — _no comment above it_
 - **`L.RING_SUB`** — Five of these are a category and take the app's own label for it, Title
 - **`L.RING_WRITTEN`** — _no comment above it_
-- **`L.ROOM_AXES`** — The axes a pair or a room can have in common
+- **`L.ROOM_AXES`** — IT USED TO BE CALLED `scarce`, which was the wrong word
 - **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES (BZ
 - **`L.SAYS_NOT_HERE`** — Said on an ANSWER screen, where the subject is the whisky and never the
 - **`L.SCALE_AXES`** — Which axes are LADDERS (ordered rungs) and which are sets.
@@ -408,6 +408,7 @@ QUESTION, not the name you were going to use.
 - **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
+- **`L.hardToGet`** — HARD TO GET, BY EITHER ROUTE (BZ, 2026-09-27
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
@@ -484,7 +485,7 @@ QUESTION, not the name you were going to use.
 - **`L.labelGaps`** — _no comment above it_
 - **`L.labelGuard`** — THE BARCODE, READ LOCALLY BEFORE ANY PAID CALL (zxing is precached and
 - **`L.labelLabel`** — _no comment above it_
-- **`L.labelLine`** — NOT BUYING LABELS IS ABOUT THE RARE ONES, not the obscure ones
+- **`L.labelLine`** — _no comment above it_
 - **`L.labelSame`** — _no comment above it_
 - **`L.labelShow`** — The value as a person reads it, not as stored
 - **`L.labelTake`** — Step three: the edit, built from what was agreed to. `name` never
