@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 801 |
+| functions | 802 |
 | tables | 191 |
-| carrying a stated purpose | 610 |
+| carrying a stated purpose | 611 |
 
 ## Tables
 
@@ -486,6 +486,7 @@ QUESTION, not the name you were going to use.
 - **`L.joinMeText`** — and what to look for.
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
+- **`L.keyForName`** — THE KEY A NAME ALREADY HAS, when the key you built from it does not exist.
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
 - **`L.labelDiff`** — Step two: what it would change, said before anything is written. `fill`
 - **`L.labelFields`** — Step one: the service's answer in the app's own terms.
@@ -915,7 +916,7 @@ QUESTION, not the name you were going to use.
 - **`L.suggestPurchase`** — further than anything open can — the gap the collection cannot fill.
 - **`L.syncDecision`** — _no comment above it_
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
-- **`L.takeFor`** — notes never quietly changes the price.
+- **`L.takeFor`** — `which` is 'all' for a bottle somebody is looking at
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — _no comment above it_
 - **`L.tasteAxisFloor`** — DERIVED FROM THE POOL, never typed

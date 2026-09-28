@@ -12297,6 +12297,38 @@ sec('§244 how a bottle helps the chart');
  * because the shelf changed is the app paying attention. Cheapest first:
  * an evening with what you already own before spending money.
  */
+sec('§244 a typed name finds the bottle the app already has');
+{
+  /* BZ, 2026-09-28: "how can i have a bottle not in the library?", then "i
+     think those were dupes". 349 of his 352 bottles were in the live library;
+     the three that were not were his own spellings of bottles it already
+     held, filed as separate private products.
+
+     putOnShelf asked S.catalog[np.k], an exact key lookup, and a catalogue's
+     keys are its own short ids rather than the name - so a name typed by hand
+     missed the entry the app already had. L.sameName always answered this,
+     because shopNorm strips apostrophes and case; the screen was walking past
+     it. */
+  const cat = {
+    'ae-cellar': { k: 'ae-cellar', name: "Angel's Envy Cellar Collection" },
+    pw: { k: 'pw', name: 'Penelope Wheated' }
+  };
+  eq('an apostrophe is not a different whisky',
+    L.keyForName('Angels Envy Cellar Collection', cat), 'ae-cellar');
+  eq('nor is a lower-case one',
+    L.keyForName('penelope wheated', cat), 'pw');
+  /* The key is the catalogue's own and has nothing to do with the name, which
+     is the whole reason building one from the name missed. */
+  eq('and the key it answers is the catalogue-s own, not one built from words',
+    [L.keyForName("Angel's Envy Cellar Collection", cat),
+      Object.keys(cat).indexOf(L.keyForName('Penelope Wheated', cat)) >= 0],
+    ['ae-cellar', true]);
+  eq('a whisky it does not hold is not matched to something near it',
+    [L.keyForName('Something Else Entirely', cat),
+      L.keyForName('', cat), L.keyForName('Penelope Wheated', {})],
+    [null, null, null]);
+}
+
 sec('§245 a bar offers what your own shelf does not');
 {
   /* BZ, 2026-09-27, on "Close behind: Blanton's" from a back-bar photograph:
