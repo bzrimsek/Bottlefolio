@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 791 |
-| tables | 189 |
-| carrying a stated purpose | 602 |
+| functions | 792 |
+| tables | 190 |
+| carrying a stated purpose | 604 |
 
 ## Tables
 
@@ -42,7 +42,7 @@ QUESTION, not the name you were going to use.
 - **`L.DIMENSIONS`** — _no comment above it_
 - **`L.EXITS`** — leaves the bottle in existence elsewhere
 - **`L.EXPORT_COLS`** — ===================================================================
-- **`L.FAMILY_LABEL`** — VEGETABLE IS SHOWN AS GREEN (BZ, 2026-09-27
+- **`L.FAMILY_LABEL`** — `vegetable` shown as `Green` was the entry here until the two official
 - **`L.FB_ESCAPES`** — Firebase will not accept a key holding 
 - **`L.FB_UNESCAPES`** — _no comment above it_
 - **`L.FEATURES`** — other groups so it searches alongside them.
@@ -111,7 +111,7 @@ QUESTION, not the name you were going to use.
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
 - **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]
-- **`L.PALATE_FAMILIES`** — A term is DERIVED from note text, never stated
+- **`L.PALATE_FAMILIES`** — _lab/cwm.js is the record
 - **`L.PALATE_LAYER`** — THE COARSE LAYER, in the words this app already shows a person.
 - **`L.PALATE_MEMO`** — READ ONCE PER SET OF NOTES
 - **`L.PEAT_EXTREME`** — Bottlings past heavy
@@ -188,9 +188,8 @@ QUESTION, not the name you were going to use.
 - **`L.SYNC_KEYS`** — Everything that has to follow an account between devices
 - **`L.SYNC_MERGE`** — _no comment above it_
 - **`L.TASTE_HINTS`** — A NAME, OR SOMETHING THAT IS NOT A NAME AT ALL.
-- **`L.TASTE_TERMS`** — FIFTEEN, SO EVERY GROUP HAS ONE (BZ, 2026-09-27
+- **`L.TASTE_TERMS`** — `salt` IS GONE, and the merge removed it rather than a patch
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
-- **`L.TASTE_WHEEL_ORDER`** — Adjacency is the whole point of the order
 - **`L.TASTING`** — about his own shelf
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
 - **`L.TITLE_LINES`** — A line for the title the shelf just earned, where one exists
@@ -204,6 +203,8 @@ QUESTION, not the name you were going to use.
 - **`L.VAGUE_FRUIT`** — THE FRUIT CATEGORIES, which are not fruit anybody tastes
 - **`L.VARIABLES`** — _no comment above it_
 - **`L.VERDICTS`** — What you thought of it.
+- **`L.WHEEL_OF`** — _no comment above it_
+- **`L.WHEEL_RINGS`** — WHAT IS NOT HERE is which words belong to which group
 - **`L.WHISKEY`** — _no comment above it_
 - **`L.WHY_PT`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.WOOD_FAMILIES`** — _no comment above it_
@@ -915,7 +916,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteBetween`** — _no comment above it_
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
-- **`L.tasteFamilies`** — _no comment above it_
+- **`L.tasteFamilies`** — WHICH GROUPS GET DRAWN, AND IN WHAT ORDER - both out of one list.
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
@@ -983,6 +984,7 @@ QUESTION, not the name you were going to use.
 - **`L.waitingSay`** — _no comment above it_
 - **`L.waitSay`** — WHAT A WAIT SAYS AS IT GOES ON
 - **`L.wheelSaid`** — WHAT THE SERVICE SAID IT FOUND, kept only where this app knows the word.
+- **`L.wheelTeach`** — THE TWELVE GROUPS AS SOMETHING TO READ
 - **`L.whiskyEvidence`** — WHAT MAKES A LINE A WHISKY
 - **`L.wholeValue`** — A LIST TAKEN WHOLE FROM THE OTHER SIDE, or an empty one when the account
 - **`L.whyPt`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page

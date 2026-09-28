@@ -2796,23 +2796,23 @@ sec('forty questions, and never one already answered');
   /* BZ, 2026-09-27: "If the system already knows you prefer Caramel over
      Cinnamon, and you later choose Cinnamon over Leather, an intelligent
      algorithm automatically concludes that you prefer Caramel over Leather."
-     Fourteen words make 91 pairs and almost none of them need asking. */
+     Fifteen words make 105 pairs and almost none of them need asking. */
   const said = {};
   said[L.tastePairKey('cherry', 'oak')] = 'cherry';
-  said[L.tastePairKey('oak', 'salt')] = 'oak';
+  said[L.tastePairKey('oak', 'wine')] = 'oak';
   const beat = L.tasteBeats(said);
   eq('what was answered is settled', L.tasteSettled(beat, 'cherry', 'oak'),
     true);
   eq('and so is what follows from it',
-    L.tasteSettled(beat, 'cherry', 'salt'), true);
+    L.tasteSettled(beat, 'cherry', 'wine'), true);
   eq('but nothing else is', L.tasteSettled(beat, 'cherry', 'mint'), false);
   /* `neither` settles nothing: it says the two are level, which tells you
      nothing about either against a third. */
   const level = {};
   level[L.tastePairKey('cherry', 'oak')] = '';
-  level[L.tastePairKey('oak', 'salt')] = 'oak';
+  level[L.tastePairKey('oak', 'wine')] = 'oak';
   eq('answering neither carries nothing forward',
-    L.tasteSettled(L.tasteBeats(level), 'cherry', 'salt'), false);
+    L.tasteSettled(L.tasteBeats(level), 'cherry', 'wine'), false);
   eq('and a settled pair is never asked as a new question', (function () {
     const prof = { flavour: [{ value: 'x', n: 1 }] };
     const ans = {};
@@ -2879,37 +2879,76 @@ sec('your taste, painted');
      so fruity is the whole radius, and only one of them is smoky. */
   /* WHAT THE ANSWERS SAY, ON THE SAME AXES (BZ, 2026-09-27: "What is it based
      on, my q&a?" - it was not, and "all axis should be the same"). */
-  /* THE ID IS THE WHEEL'S, THE LABEL IS THE READER'S (BZ, 2026-09-27: "So what
-     is vegetable?"). The group is grass, fresh, mint, herbal, tea, dill and
-     earthy - on his shelf mint 39 and fresh 38 against vegetable 7 - so the
-     word named the smallest thing in it. Green is the wheel's own sub-ring
-     for those leaves, and the id stays `vegetable` because the vocabulary is
-     canon and an id that drifts from its source starts a private language. */
-  /* THE AXES GO ROUND THE WHEEL IN THE WHEEL'S ORDER (BZ, 2026-09-27: "do they
-     go in a specific sequence around the clock?"). They do, and the list used
-     to be whatever order the vocabulary was written in, which put Fruity
-     beside Green and split the sweet end. Adjacency is the point: neighbours
-     are related, so a shape reads as a region rather than scatter. */
+  /* TWELVE GROUPS, AND EVERY NAME IS ONE OF THE TWO OFFICIAL WHEELS' OWN
+     (BZ, 2026-09-27: "We could try to put the two official wheels together").
+     The Council of Whiskey Masters publishes one wheel per style and calls
+     both the official vocabulary for its candidates, so the app carries the
+     union: the Whisky Magazine wheel's Cereal, Fruity, Floral, Peaty, Woody
+     and Winey, and the bourbon wheel's Nutty, Herbal, Earthy, Spicy, Sweet
+     and Lactic. _lab/cwm.js records which leaf sent each term where.
+
+     THE ORDER IS THE SCOTCH WHEEL'S SPINE, each bourbon-only group set beside
+     its nearest relative on it, because adjacency is what a wheel is for: a
+     shape reads as a region rather than as scatter. This list is the
+     independent statement of it - L.tasteFamilies now derives both the
+     membership AND the order from L.PALATE_FAMILIES, so nothing but a
+     spelled-out expectation can catch it drifting. */
   eq('clockwise, as the wheel runs',
     L.tasteFamilies(),
-    ['cereal', 'vegetable', 'woody', 'spicy', 'roasted', 'smoke', 'winey',
-      'floral', 'fruity']);
-  eq('and no group is lost or invented on the way round',
-    [L.tasteFamilies().length,
-      L.PALATE_FAMILIES.filter(f => L.NOT_A_TASTE.indexOf(f) < 0)
-        .filter(f => L.tasteFamilies().indexOf(f) < 0).length,
-      L.tasteFamilies().filter(f => L.PALATE_FAMILIES.indexOf(f) < 0).length],
-    [9, 0, 0]);
-  eq('vegetable is shown as Green and keeps its id',
-    [L.familyLabel('vegetable'), L.tasteFamilies().indexOf('vegetable') >= 0],
-    ['Green', true]);
+    ['cereal', 'nutty', 'fruity', 'floral', 'herbal', 'peaty', 'earthy',
+      'woody', 'spicy', 'sweet', 'lactic', 'winey']);
+  /* THE FOUR THAT ARE READ AND NEVER DRAWN, named. All three canons keep them
+     apart from the aroma vocabulary - the bourbon wheel as its own categories,
+     the Vocal Goat sheet as the whole of its palate section - which is what BZ
+     saw first: "off flavors and taste seem wrong". */
+  eq('the primary tastes, the texture, the faults and the colour are read only',
+    [L.NOT_A_TASTE.slice().sort(),
+      L.NOT_A_TASTE.filter(f => L.PALATE_FAMILIES.indexOf(f) < 0),
+      L.NOT_A_TASTE.filter(f => L.tasteFamilies().indexOf(f) >= 0)],
+    [['colour', 'flawed', 'tastes', 'texture'], [], []]);
+  /* THE THREE NAMES THE MERGE RETIRED, which is the part that would rot
+     quietly: `smoke` was ours and is the wheel's own Peaty, `vegetable` was
+     shown as Green and is the wheel's own Herbal, and `roasted` was a group no
+     wheel has - it held coffee beside caramel beside almond beside cream. */
+  eq('no term is still filed under a group the merge retired',
+    L.PALATE.filter(r => ['smoke', 'vegetable', 'roasted', 'off-flavor',
+      'structure', 'taste'].indexOf(r[1]) >= 0).map(r => r[0]), []);
+  eq('lactic is shown as Dairy and keeps its id',
+    [L.familyLabel('lactic'), L.tasteFamilies().indexOf('lactic') >= 0],
+    ['Dairy', true]);
+  /* ONE DEPARTURE, AND IT IS WRITTEN DOWN. A second appearing without a reason
+     beside it is how a private language starts (rule 36). */
   eq('and every other group is called what the wheel calls it',
-    L.tasteFamilies().filter(f => f !== 'vegetable'
-      && L.familyLabel(f) !== L.titleCase(f)), []);
+    [Object.keys(L.FAMILY_LABEL).length,
+      L.tasteFamilies().filter(f => f !== 'lactic'
+        && L.familyLabel(f) !== L.titleCase(f))],
+    [1, []]);
   eq('the same groups on both, and every one a taste',
     [L.tasteFamilies().length,
       L.tasteFamilies().filter(f => L.NOT_A_TASTE.indexOf(f) >= 0).length],
-    [9, 0]);
+    [12, 0]);
+  /* THE READING LIST IN LEARN IS GENERATED (BZ, 2026-09-27: "Should augment
+     Learn with this content too"), so a group with no sub-rings would come out
+     as a bare heading and nothing would have said so. Every drawn group has
+     its parts named, and every group named has a source. */
+  eq('every group in Learn names which wheel carries it',
+    L.wheelTeach().filter(g => !g.of).map(g => g.id), []);
+  eq('and names its parts, unless its one part is its own name',
+    L.wheelTeach().filter(g => {
+      const raw = (L.WHEEL_RINGS[g.id] || { rings: [] }).rings;
+      return !g.rings.length
+        && !(raw.length === 1 && raw[0] === g.label);
+    }).map(g => g.id), []);
+  eq('and nothing is taught that is not drawn',
+    Object.keys(L.WHEEL_RINGS).filter(f => L.tasteFamilies().indexOf(f) < 0),
+    []);
+  /* The words come off L.PALATE, not a second list, so the two cannot drift
+     (rule 30d). Dairy is the group whose only sub-ring IS its label, and it
+     is dropped rather than printed twice. */
+  eq('the words are the table\u0027s own and a ring never repeats the heading',
+    [L.wheelTeach().filter(g => g.id === 'sweet')[0].words.indexOf('caramel') >= 0,
+      L.wheelTeach().filter(g => g.id === 'lactic')[0].rings],
+    [true, []]);
   eq('every group has a word in the pool, so none is left blank',
     L.tasteFamilies().filter(f => !L.TASTE_TERMS
       .some(t => L.palateIndex().family[t] === f)), []);
@@ -2917,7 +2956,7 @@ sec('your taste, painted');
     L.tasteWantAxes({ 'cherry|peat': 'cherry' }), []);
   eq('a spoke is the share of your bottles carrying it',
     [ax.filter(a2 => a2.id === 'fruity')[0].pct,
-     ax.filter(a2 => a2.id === 'smoke')[0].pct], [100, 33]);
+     ax.filter(a2 => a2.id === 'peaty')[0].pct], [100, 33]);
   eq('nothing in a group is nought, not missing',
     ax.filter(a2 => a2.id === 'winey')[0].pct, 0);
   eq('and a shelf with nothing described has no shape to draw',
@@ -2930,14 +2969,14 @@ sec('your taste, painted');
   /* The sentence under it, because a radar is a picture. */
   eq('it says which way it leans and what it barely touches',
     L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 },
-      { id: 'roasted', label: 'Roasted', pct: 74 },
+      { id: 'sweet', label: 'Sweet', pct: 74 },
       { id: 'spicy', label: 'Spicy', pct: 51 },
       { id: 'winey', label: 'Winey', pct: 5 }]),
-    'Mostly fruity and roasted, and hardly winey.');
+    'Mostly fruity and sweet, and hardly winey.');
   /* Only the thin ones are called thin: spicy at 51 is neither lean nor lead. */
   eq('a group in the middle is not called hardly anything',
     /spicy/.test(L.tasteLead([{ id: 'fruity', label: 'Fruity', pct: 100 },
-      { id: 'roasted', label: 'Roasted', pct: 74 },
+      { id: 'sweet', label: 'Sweet', pct: 74 },
       { id: 'spicy', label: 'Spicy', pct: 51 },
       { id: 'winey', label: 'Winey', pct: 5 }])), false);
   eq('and says nothing at all off two spokes',
@@ -4767,7 +4806,7 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
   /* One question in L.TASTE_AB_EVERY is one asked before - four since the
      target became forty, and read off the constant so the two cannot drift. */
   let five = {};
-  ['cherry|peat', 'cherry|salt', 'cherry|mint', 'peat|salt', 'peat|mint']
+  ['cherry|peat', 'cherry|wine', 'cherry|mint', 'peat|wine', 'peat|mint']
     .slice(0, L.TASTE_AB_EVERY)
     .forEach(k => { five[k] = k.split('|')[0]; });
   eq('after a run of answers it asks one of them again',
@@ -4847,13 +4886,15 @@ eq('a tawny port colour is not a port cask',
 eq('dark chocolate on the nose is not a brown colour',
   L.palateOf({ tn: { nose: 'dark chocolate' } }).all, ['chocolate']);
 /* The grouping a screen shows, and the part a caller asks for. */
-/* THE WHEEL'S GROUPS SINCE 2026-09-27 (BZ: "Adopt canon"). Oak is woody and
-   caramel is roasted because that is where the Pentlands wheel puts them; peat
-   is smoke, which is this app's one departure from it, argued in _lab/canon.js
-   and in the comment on L.PALATE_FAMILIES. */
+/* THE TWO OFFICIAL WHEELS' GROUPS SINCE 2026-09-27 (BZ: "We could try to put
+   the two official wheels together"). Oak is woody on both wheels; caramel is
+   the bourbon wheel's Sweet/Confectionary, where it used to be `roasted`, a
+   group neither wheel has; and peat is PEATY, a top-level category on the
+   Whisky Magazine wheel, where it used to be `smoke`, which was ours. The
+   merge retired both of the app's departures - _lab/cwm.js is the record. */
 eq('terms are grouped under the wheel group they belong to',
   L.palateOf({ tn: { palate: 'peat, oak, caramel' } }).families
-    .map(f => f.family), ['smoke', 'woody', 'roasted']);
+    .map(f => f.family), ['peaty', 'woody', 'sweet']);
 eq('and a part can be asked on its own',
   L.palateOf({ tn: { nose: 'peat', finish: 'caramel' } }).nose, ['peat']);
 eq('every term in the table belongs to a declared family',
@@ -18578,7 +18619,13 @@ sec('\u00a7351 the library, as a spreadsheet');
   const lib = {
     b: { name: 'Bravo', dist: 'B House', proof: 100, region: 'Islay',
          sub: 'scotch', fin: 'sherry', tn: { nose: 'oak', palate: 'fruit' },
-         by: 'Tyson', at: Date.UTC(2026, 0, 15) },
+         /* NOON LOCAL, NOT MIDNIGHT UTC. L.todayISO answers the LOCAL
+            calendar day on purpose - a pour logged at 9pm is dated that day -
+            so midnight UTC is the one instant that falls on a different day in
+            every zone west of Greenwich, and this assertion used to fail on
+            BZ.s PC and pass in the cloud only because the gate pins the clock.
+            Noon is the same date in every real offset. */
+         by: 'Tyson', at: new Date(2026, 0, 15, 12).getTime() },
     a: { name: 'Alpha', dist: 'A House', proof: 90 }
   };
   const rows = L.libraryExportRows(lib);

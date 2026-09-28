@@ -111,6 +111,15 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # it with --check, so the gate needs the generator as well as the
            # file it generates.
            'doors.js',
+           # 2026-09-27: the record of the merged flavour wheel - which of the
+           # two official wheels each group came from, every term that moved
+           # and the canon leaf that sent it there, and the five places the
+           # wheels disagree. index.html's comments cite it by name, so a
+           # public repo without it is a repo whose vocabulary cannot be
+           # checked against its source (rule 36). No shelf data, no keys, and
+           # none of either publisher's prose - only the vocabulary and the
+           # attribution. The rest of _lab/ stays on this PC.
+           '_lab/cwm.js',
            'engine.js', 'popular.js', '.github/workflows/popular.yml',
            # 2026-09-16: loads public reference data into shared/ref (run by hand).
            'refdata.js', '.github/workflows/refdata.yml',

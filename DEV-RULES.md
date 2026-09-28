@@ -174,3 +174,18 @@ regions, cask types, categories in law:
    are not words, and no screen shows one.
 4. **Measure coverage against the canon and keep the number.** "48 of 82" is
    the kind of fact that ends an argument; "it seems thorough" is not.
+5. **Ask who publishes it, and for whom.** This rule was written on the
+   Pentlands wheel and the wheel was replaced the same day, which is the
+   cheapest possible demonstration of the point. Pentlands is a PRODUCTION
+   wheel: the SWRI made it for people judging new-make spirit, so it has rings
+   for Structure and Off-flavours and no group for peat, and the app had to
+   invent `smoke` to say the most obvious thing a whisky can be. The Council of
+   Whiskey Masters publishes vocabulary for people describing a poured dram,
+   which is what this app does — so its words fit without departures. Prefer
+   the canon written for your reader's task over the one written for a
+   laboratory, and prefer a body that certifies practitioners.
+6. **A canon may be more than one document.** The Council does not publish one
+   wheel; it publishes one per style, because a bourbon and an Islay malt do
+   not share a vocabulary. An app whose shelf holds both carries the union and
+   records which wheel each group came from (`_lab/cwm.js`). Do not flatten two
+   canons into one to make the code tidier — that is inventing again.

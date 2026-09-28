@@ -71,7 +71,12 @@ and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
 plain shelf file, a CSV, the database export or `_superseded/`.
 
 The gate, all fifteen, in this order — `gate.py` runs them in the cloud
-with the clock pinned to UTC (test §351 expects it):
+with the clock pinned to UTC. Nothing depends on that any more: §351 used to
+fail on BZ's PC and pass in the cloud, because it stamped a date at midnight
+UTC and `L.todayISO` answers the LOCAL calendar day on purpose — so the one
+instant that lands on a different day everywhere west of Greenwich. It stamps
+noon now and passes in Ohio, UTC and Tokyo alike (2026-09-27). A standing red
+check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
