@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 791 |
-| tables | 188 |
-| carrying a stated purpose | 601 |
+| tables | 189 |
+| carrying a stated purpose | 602 |
 
 ## Tables
 
@@ -190,6 +190,7 @@ QUESTION, not the name you were going to use.
 - **`L.TASTE_HINTS`** — A NAME, OR SOMETHING THAT IS NOT A NAME AT ALL.
 - **`L.TASTE_TERMS`** — FIFTEEN, SO EVERY GROUP HAS ONE (BZ, 2026-09-27
 - **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
+- **`L.TASTE_WHEEL_ORDER`** — Adjacency is the whole point of the order
 - **`L.TASTING`** — about his own shelf
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
 - **`L.TITLE_LINES`** — A line for the title the shelf just earned, where one exists

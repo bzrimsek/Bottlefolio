@@ -2869,9 +2869,10 @@ sec('your taste, painted');
   };
   const bots = ['a', 'b', 'c'].map((k, i) => ({ id: 'P' + i, k: k, status: 'open' }));
   const ax = L.tasteAxes(cat, bots, {});
+  /* In the wheel's order, which is L.tasteFamilies' - not the order the
+     vocabulary happens to be written in. */
   eq('a spoke for every group that is a taste, and none that is not',
-    ax.map(a2 => a2.id),
-    L.PALATE_FAMILIES.filter(f => L.NOT_A_TASTE.indexOf(f) < 0));
+    ax.map(a2 => a2.id), L.tasteFamilies());
   /* A COUNT, NOT THE WEIGHTS (BZ, 2026-09-27: "I'm not sure the scale or the
      normalization is right"). Each spoke is the share of described bottles
      carrying anything in that group: every one of these three tastes of fruit,
@@ -2884,6 +2885,21 @@ sec('your taste, painted');
      word named the smallest thing in it. Green is the wheel's own sub-ring
      for those leaves, and the id stays `vegetable` because the vocabulary is
      canon and an id that drifts from its source starts a private language. */
+  /* THE AXES GO ROUND THE WHEEL IN THE WHEEL'S ORDER (BZ, 2026-09-27: "do they
+     go in a specific sequence around the clock?"). They do, and the list used
+     to be whatever order the vocabulary was written in, which put Fruity
+     beside Green and split the sweet end. Adjacency is the point: neighbours
+     are related, so a shape reads as a region rather than scatter. */
+  eq('clockwise, as the wheel runs',
+    L.tasteFamilies(),
+    ['cereal', 'vegetable', 'woody', 'spicy', 'roasted', 'smoke', 'winey',
+      'floral', 'fruity']);
+  eq('and no group is lost or invented on the way round',
+    [L.tasteFamilies().length,
+      L.PALATE_FAMILIES.filter(f => L.NOT_A_TASTE.indexOf(f) < 0)
+        .filter(f => L.tasteFamilies().indexOf(f) < 0).length,
+      L.tasteFamilies().filter(f => L.PALATE_FAMILIES.indexOf(f) < 0).length],
+    [9, 0, 0]);
   eq('vegetable is shown as Green and keeps its id',
     [L.familyLabel('vegetable'), L.tasteFamilies().indexOf('vegetable') >= 0],
     ['Green', true]);
