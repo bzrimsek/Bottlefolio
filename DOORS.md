@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 787 |
+| functions | 788 |
 | tables | 187 |
 | carrying a stated purpose | 601 |
 
@@ -289,6 +289,7 @@ QUESTION, not the name you were going to use.
 - **`L.clearFacets`** — IN PLACE, returning the same object
 - **`L.collectorLine`** — _no comment above it_
 - **`L.columnOfSort`** — Which column a sort belongs to, so the header can show where it is.
+- **`L.commonPour`** — WHICH OF THE ONES YOU BOTH OWN IS WORTH OPENING (BZ, 2026-09-27
 - **`L.compSay`** — HOW A SHELF COMPARISON IS SAID (BZ, 2026-09-27
 - **`L.contextLine`** — The same thing as a line somebody would read
 - **`L.contradictions`** — _no comment above it_
@@ -408,7 +409,7 @@ QUESTION, not the name you were going to use.
 - **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
-- **`L.hardToGet`** — HARD TO GET, BY EITHER ROUTE (BZ, 2026-09-27
+- **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged

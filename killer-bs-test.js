@@ -2599,6 +2599,21 @@ sec('a shared trait has to be a habit, not an inventory');
      bottles."). So the portrait's hard-to-get count reads both fields that
      describe a BOTTLE: `alloc`, how hard it is to buy where you are, and
      `scar`, how few were made. One that is both is counted once. */
+  /* COMMON GROUND IS THE ONE WORTH OPENING (BZ, 2026-09-27: "Much improved
+     but not the Buffalo Trace recommendation"). It took the first of the
+     thirteen shared bottles, which is catalogue order, and named the most
+     ordinary whisky on two shelves. */
+  const both = [
+    { k: 'bt', name: 'Buffalo Trace', obsc: 'known', alloc: 'uncommon' },
+    { k: 'er', name: 'Eagle Rare 10', obsc: 'known', alloc: 'rare' },
+    { k: 'nat', name: 'Natterjack', obsc: 'obscure', alloc: 'common' }
+  ];
+  eq('the least ordinary of them is what gets opened',
+    L.commonPour(both).k, 'nat');
+  eq('and a known bottle that is hard to get beats a known one that is not',
+    L.commonPour([both[0], both[1]]).k, 'er');
+  eq('nothing shared, nothing to open',
+    [L.commonPour([]), L.commonPour(null)], [null, null]);
   eq('hard to get by either route, and once if both',
     [L.hardToGet({ alloc: 'unicorn' }), L.hardToGet({ scar: 'limited' }),
       L.hardToGet({ alloc: 'rare', scar: 'exclusive' }),
@@ -18163,8 +18178,13 @@ sec('\u00a7347 one number for one question, and a claim the count supports');
   const set = L.PORTRAIT_TITLES.filter(c => c.id === 'house')[0];
   const got = set.test(t, {});
   eq('BZ\u2019s biggest house still earns it', got.n, 28);
-  eq('and the reason carries the share of the shelf',
-    /% of the shelf/.test(got.why), true);
+  /* AND NOT THE SHARE (BZ, 2026-09-27: "8% here seems random to call out").
+     The other facts on that line carry none, so one of three having one read
+     as arbitrary - and eight per cent argues against the chip it sits under,
+     because fifteen bottles from one house out of hundreds is depth and eight
+     per cent makes depth sound like nothing. */
+  eq('and the reason is the count, not a share of the shelf',
+    /% of the shelf/.test(got.why), false);
   eq('naming the house', /Buffalo Trace/.test(got.why), true);
   /* Below the floor it says nothing rather than something weak. */
   eq('a shelf with no depth on any house earns nothing here',
