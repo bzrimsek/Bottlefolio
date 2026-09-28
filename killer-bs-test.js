@@ -8638,8 +8638,11 @@ sec('§194 what one bottle is short of');
   eq('a missing proof is named',
     gapsOfBottle({ proof: null, tn: { nose: 'a' }, tnSrc: 'model', age: 1,
       msrp: 1, fin: 'x', dist: 'y' }), ['proof']);
-  eq('an empty bottle is short of everything',
-    gapsOfBottle({}).length, 6);
+  /* SHORT OF WHAT IT MUST HAVE, not of everything (BZ, 2026-09-28). A
+     nameless bottle claims no age and names no cask, so neither is missing
+     from it: notes, proof, price and a distillery are. */
+  eq('an empty bottle is short of what every bottle has',
+    gapsOfBottle({}).length, 4);
   eq('nothing at all is short of nothing', gapsOfBottle(null), []);
 
   // The pairing that matters: the button must not offer to fetch a bottle
@@ -10146,17 +10149,24 @@ sec('§216 a path is not a key');
 sec('§217 the notes lookup and the facts lookup');
 {
   const bare = { k: 'X', name: 'X' };
+  /* A BARE NAME CLAIMS NO AGE AND NAMES NO CASK, so neither is missing from
+     it (BZ, 2026-09-28: absent is not missing). On the live library that took
+     entries with a gap from 514 of 621 to 196, every one of them findable. */
   eq('a bottle with nothing has both kinds of gap',
     [L.noteGaps(bare), L.factGaps(bare)],
-    [['tasting notes'], ['proof', 'age', 'price', 'cask', 'distillery']]);
+    [['tasting notes'], ['proof', 'price', 'distillery']]);
   eq('and bottleGaps still reads as the whole list, notes first',
     gapsOfBottle(bare),
-    ['tasting notes', 'proof', 'age', 'price', 'cask', 'distillery']);
+    ['tasting notes', 'proof', 'price', 'distillery']);
+  /* But a name that STATES an age, with none stored, is a real fault. */
+  eq('a stated age with nothing stored is still missing',
+    L.factGaps({ k: 'X', name: 'Laphroaig 10 Year Old', proof: 96, msrp: 1,
+      dist: 'Laphroaig' }), ['age']);
 
   const noted = { k: 'X', name: 'X', tn: { nose: 'smoke' }, proof: 92 };
   eq('notes present, so no note gap', L.noteGaps(noted), []);
   eq('and the facts it has are not asked for again',
-    L.factGaps(noted), ['age', 'price', 'cask', 'distillery']);
+    L.factGaps(noted), ['price', 'distillery']);
 
   /* A flight-card prompt is not a description of the whisky, so it still
      counts as missing notes — the rule that pulled 185 bottles' prompts
@@ -12339,7 +12349,69 @@ sec('§244 how a bottle helps the chart');
  * because the shelf changed is the app paying attention. Cheapest first:
  * an evening with what you already own before spending money.
  */
-sec('§244 a typed name finds the bottle the app already has');
+sec('§243 absent is not missing, and a collision heals');
+{
+  /* BZ, 2026-09-28: "where did we land on me needing to push an enrichment
+     button?" Here: L.factGaps counted an EMPTY field as a gap, so a whisky
+     with no age statement was missing its age for ever and an unfinished
+     bourbon was missing its cask for ever. Neither can be filled because
+     neither exists, so the button never went away however often it was
+     pressed and the library's daily budget went on unanswerable questions.
+
+     On the live library of 621: 331 carry no age and the name of FIVE states
+     one; 348 carry no cask and 28 name a finish. Entries with a gap fell from
+     514 to 196, all findable, with nothing asked again. */
+  eq('a label that claims an age and has none stored is a gap',
+    L.factGaps({ name: 'Laphroaig 10 Year Old', proof: 96, msrp: 63,
+      dist: 'Laphroaig' }), ['age']);
+  eq('but no age statement is what the bottle IS, not something missing',
+    L.factGaps({ name: "Blanton's Gold", proof: 103, msrp: 150,
+      dist: 'Buffalo Trace' }), []);
+  eq('a name that names a cask and stores none is a gap',
+    L.factGaps({ name: "Angel's Envy Port Barrel Finish", proof: 86, msrp: 70,
+      dist: "Angel's Envy" }), ['cask']);
+  /* Proof, a distillery and a price are true of every bottle ever made, so an
+     empty one is always a gap. */
+  eq('and the three every bottle has are always gaps when empty',
+    L.factGaps({ name: 'Something' }).sort(),
+    ['distillery', 'price', 'proof']);
+
+  /* BZ: "there are no private bottles, that is a symptom of a data collision."
+     A product is keyed by its RAW NAME, so a different apostrophe forks the
+     shelf into two products for one whisky. */
+  const base = { "Angel's Envy Cellar Collection": {
+    k: "Angel's Envy Cellar Collection", name: "Angel's Envy Cellar Collection",
+    proof: 100, dist: "Angel's Envy" } };
+  const custom = { 'Angels Envy Cellar Collection': {
+    k: 'Angels Envy Cellar Collection', name: 'Angels Envy Cellar Collection',
+    msrp: 200 } };
+  const bottles = [{ id: 'B1', k: 'Angels Envy Cellar Collection',
+    status: 'open' }, { id: 'B2', k: 'other', status: 'open' }];
+  eq('an apostrophe apart is one whisky, not two',
+    L.collidedCustom(custom, base).map(m => m.from + ' -> ' + m.to),
+    ["Angels Envy Cellar Collection -> Angel's Envy Cellar Collection"]);
+  /* A key that already matches is not a collision: mergeCatalog fills such a
+     copy's blanks from the library, so there is nothing to heal. */
+  eq('and a custom copy under the library-s own key is not one',
+    L.collidedCustom({ x: { k: 'x', name: 'X' } }, { x: { k: 'x', name: 'X' } }),
+    []);
+  {
+    const h = L.healCollisions(custom, base, bottles, {});
+    eq('the bottles move to the whisky the library knows',
+      [h.moved, h.bottles.map(b => b.k)],
+      [1, ["Angel's Envy Cellar Collection", 'other']]);
+    eq('the duplicate product goes',
+      Object.keys(h.custom), []);
+    /* WHAT THE PRIVATE COPY KNEW IS KEPT. Somebody typed that price and
+       losing it would be the second fault. */
+    eq('and what only the private copy knew survives as an edit',
+      (h.edits["Angel's Envy Cellar Collection"] || {}).msrp, 200);
+    eq('nothing to heal answers nothing rather than an empty shelf',
+      L.healCollisions({}, base, bottles, {}), null);
+  }
+}
+
+sec('\u00a7244 a typed name finds the bottle the app already has');
 {
   /* BZ, 2026-09-28: "how can i have a bottle not in the library?", then "i
      think those were dupes". 349 of his 352 bottles were in the live library;

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 803 |
+| functions | 805 |
 | tables | 193 |
-| carrying a stated purpose | 614 |
+| carrying a stated purpose | 617 |
 
 ## Tables
 
@@ -294,6 +294,7 @@ QUESTION, not the name you were going to use.
 - **`L.cleanName`** — _no comment above it_
 - **`L.clearFacets`** — IN PLACE, returning the same object
 - **`L.collectorLine`** — _no comment above it_
+- **`L.collidedCustom`** — TWO PRODUCTS, ONE WHISKY
 - **`L.columnOfSort`** — Which column a sort belongs to, so the header can show where it is.
 - **`L.commonPour`** — WHICH OF THE ONES YOU BOTH OWN IS WORTH OPENING (BZ, 2026-09-27
 - **`L.compSay`** — HOW A SHELF COMPARISON IS SAID (BZ, 2026-09-27
@@ -334,7 +335,7 @@ QUESTION, not the name you were going to use.
 - **`L.exportRows`** — One row per BOTTLE, not per whisky
 - **`L.faceMatch`** — _no comment above it_
 - **`L.facesOf`** — The reels a bottle would satisfy, one face per reel.
-- **`L.factGaps`** — _no comment above it_
+- **`L.factGaps`** — WHAT IS MISSING, WHICH IS NOT THE SAME AS WHAT IS EMPTY (BZ, 2026-09-28:
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
 - **`L.familyLabel`** — _no comment above it_
@@ -419,6 +420,7 @@ QUESTION, not the name you were going to use.
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
+- **`L.healCollisions`** — AND THE HEALING
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.
 - **`L.histRestore`** — _no comment above it_
