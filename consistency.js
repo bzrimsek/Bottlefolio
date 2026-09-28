@@ -2413,7 +2413,8 @@ check('no fixed svg id is emitted by a repeated drawing',
  */
 {
   const crypto = require('crypto');
-  const RULES_AT = { 5: 'bd9b987cd0', 6: '8ff9e685d7', 7: 'e25dce3285' };
+  const RULES_AT = { 5: 'bd9b987cd0', 6: '8ff9e685d7', 7: 'e25dce3285',
+    8: '300d65683c' };
   const bad = [];
   const gs = fs.existsSync(__dirname + '/recap.gs')
     ? fs.readFileSync(__dirname + '/recap.gs', 'utf8') : '';

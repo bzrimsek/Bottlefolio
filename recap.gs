@@ -132,6 +132,13 @@ var LATELY_RULES_ = [
   '   every window read alike, because the newest session is the same one',
   '   whichever window is chosen. Open on what is true of the WHOLE stretch,',
   '   and mention the newest session only if it is part of that.',
+  '   OPENING: arc - this is everything they have logged, and what only this',
+  '   stretch can show is what CHANGED. Compare the sessions at the end of',
+  '   the list against the ones at the start and say how the drinking moved:',
+  '   a house or a style or a strength arrived, or fell away, or a run of one',
+  '   thing gave way to another. Say plainly if it did not move. A thread',
+  '   across the whole of somebody\'s drinking is a horoscope; a turn in it',
+  '   is the only finding this window has that the narrower ones do not.',
   '3. THE THREAD IS THE PARAGRAPH, and it is not finished without one. What',
   '   runs through the stretch - a house they keep returning to, a cask, a',
   '   strength, a style, a flavor the notes keep reaching for, a place they',
@@ -170,7 +177,8 @@ function latelyFacts_(r) {
   var out = (r.span && r.span !== 'lately') ? ['THE STRETCH: ' + r.span, ''] : [];
   /* Which opening the app asked for. Told rather than inferred from the
      label: the service should not be parsing English to find out. */
-  out.push('OPENING: ' + (r.opening === 'blended' ? 'blended' : 'newest'), '');
+  var OPENINGS = { blended: 1, arc: 1, newest: 1 };
+  out.push('OPENING: ' + (OPENINGS[r.opening] ? r.opening : 'newest'), '');
   (r.sessions || []).forEach(function (s) {
     out.push((s.order || 'a session') + ', ' + s.where + ':');
     (s.flights || []).forEach(function (f) {

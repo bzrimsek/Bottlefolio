@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 799 |
+| functions | 800 |
 | tables | 191 |
-| carrying a stated purpose | 608 |
+| carrying a stated purpose | 609 |
 
 ## Tables
 
@@ -774,6 +774,7 @@ QUESTION, not the name you were going to use.
 - **`L.recapRefused`** — WHY A WRITE-UP MAY NOT BE SHOWN, in one place, named rather than merely
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
 - **`L.recapText`** — _no comment above it_
+- **`L.recapWindows`** — WHICH WINDOWS ARE WORTH OFFERING (BZ, 2026-09-27
 - **`L.recapWriting`** — THE RECAP'S WRITING FOR ONE STRETCH
 - **`L.recastFlight`** — toward the back.
 - **`L.receiptColumns`** — _no comment above it_

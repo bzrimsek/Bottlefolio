@@ -23984,7 +23984,40 @@ sec('§441 a lookup asks who is asking');
    read. Recency is worth having over a month and is noise over a year. */
 eq('the month opens on the newest session and the longer windows do not',
   L.RECAP_SPANS.map(sp => L.recapOpening(sp.id)),
-  ['newest', 'blended', 'blended', 'blended']);
+  ['newest', 'blended', 'blended', 'arc']);
+/* THE WIDEST WINDOW LOOKS FOR A TURN, not a thread (BZ, 2026-09-27: "the 4th
+   bucket, all of it - over time becomes a shapeless blob - no real finding").
+   Across the whole of somebody's drinking, a thread is a horoscope; what only
+   that stretch can show is what changed. */
+eq('and all of it looks for what changed rather than what is constant',
+  L.recapOpening('all'), 'arc');
+
+/* A WINDOW EARNS ITS CHIP (BZ, 2026-09-27: "all 4 time horizons say the same
+   lame thing"). They did, and no wording could have fixed it: his log ran
+   twenty-four days, so all four windows held the SAME eight sessions. Four
+   buttons promising four answers over one set of data. */
+{
+  const cat = { a: { k: 'a', name: 'A' } };
+  const pour = at => ({ kind: 'pour', at: at, k: 'a', where: 'home' });
+  const short = ['2026-09-02', '2026-09-10', '2026-09-25'].map(pour);
+  eq('a log inside one month offers one window, not four',
+    L.recapWindows(short, cat, '2026-09-27').map(w => w.id), ['month']);
+  /* And they arrive on their own as the log grows past each edge. A window
+     holding no more than the one below it is still not offered - the quarter
+     here sees exactly what the month sees. */
+  const wide = ['2024-01-05', '2025-03-02', '2026-02-10', '2026-09-01',
+    '2026-09-20'].map(pour);
+  eq('and a longer log offers only the windows that hold more than the last',
+    L.recapWindows(wide, cat, '2026-09-27').map(w => w.id + ':' + w.sessions),
+    ['month:2', 'year:3', 'all:5']);
+  eq('nothing logged offers nothing',
+    L.recapWindows([], cat, '2026-09-27'), []);
+  /* Every window offered is a real one, and they come widest last so the
+     chips read in order. */
+  eq('every window offered is one the app knows',
+    L.recapWindows(wide, cat, '2026-09-27')
+      .filter(w => !L.RECAP_SPANS.some(sp => sp.id === w.id)), []);
+}
 eq('and Lately is recency by definition',
   L.recapOpening('lately'), 'newest');
 /* The service is TOLD which, rather than left to infer it from the label. */
