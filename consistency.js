@@ -2415,7 +2415,12 @@ check('no fixed svg id is emitted by a repeated drawing',
  */
 {
   const POUR_VERB = /reach(es|ed)? for|what you pour|you poured|go(es)? for/i;
-  const SCREENS = ['tasteSection', 'renderTasteShape', 'tasteLayerPanel'];
+  /* tasteShapeCard JOINED 2026-09-27, having said "You reach for Cherry,
+     Cinnamon and Mint over the rest" right through the build that fixed the
+     phrase everywhere else. A guard watching three of the four screens is a
+     guard that reports success. */
+  const SCREENS = ['tasteSection', 'renderTasteShape', 'tasteLayerPanel',
+    'tasteShapeCard'];
   const bad = [];
   SCREENS.forEach(name => {
     const at = codeOnly.indexOf('function ' + name + '(');

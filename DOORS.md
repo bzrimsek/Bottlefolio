@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 795 |
+| functions | 796 |
 | tables | 190 |
-| carrying a stated purpose | 605 |
+| carrying a stated purpose | 606 |
 
 ## Tables
 
@@ -926,6 +926,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteOrder`** — THE ORDER THE ANSWERS ARGUE FOR
 - **`L.tastePair`** — _no comment above it_
 - **`L.tastePairKey`** — _no comment above it_
+- **`L.tastePlaced`** — A word's position is settled by the answers that decide it, whether he gave
 - **`L.tasteProfile`** — _no comment above it_
 - **`L.tasteProgress`** — HOW FAR ALONG, AND WHEN TO STOP (BZ, 2026-09-27
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is

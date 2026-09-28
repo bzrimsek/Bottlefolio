@@ -4841,6 +4841,84 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
      a check that restates the formula cannot catch the formula being wrong -
      if the pool changes, this should be looked at, not silently follow. */
   eq('four comparisons place a word among fifteen', L.tasteAxisFloor(), 4);
+  /* WHAT PLACES A WORD IS NOT WHAT WAS TYPED AT IT (BZ, 2026-09-27: "BUT the
+     questions disappear"). His ranking was complete - 49 answered pairs settle
+     all 105 - so no further question would ever be offered, and a floor
+     counting DIRECTLY asked pairs left nutty, lactic and earthy permanently
+     below it. A floor nothing can clear is not a floor.
+
+     A word is placed by whatever settles it, answered or implied. */
+  {
+    const three = {};
+    three[L.tastePairKey('cherry', 'oak')] = 'cherry';
+    three[L.tastePairKey('oak', 'mint')] = 'oak';
+    eq('a word is placed by the answers that imply it, not only by its own',
+      [L.tastePlaced(three, 'cherry'), L.tasteSeen(three).cherry],
+      [2, 1]);
+    eq('and a word nobody has been asked about is placed against nothing',
+      L.tastePlaced(three, 'wine'), 0);
+    /* Two answers place cherry against two words, which is under the floor of
+       four, so nothing it belongs to is drawn yet. */
+    eq('under the floor draws nothing, however the answers got there',
+      L.tasteWantAxes(three), []);
+  }
+  {
+    /* A COMPLETE RANKING DRAWS EVERYTHING, AND A CHAIN IS THE PROOF.
+
+       Fourteen answers - each word over the next - order all fifteen by
+       transitivity while leaving every word in only one or two pairs of its
+       own. So placement says fourteen and direct pairs say one or two, and a
+       floor counting the wrong one leaves every group dark for ever, which is
+       the state BZ was in: 49 answers settling all 105 pairs.
+
+       The fixture answered ALL the pairs before, which made the two measures
+       agree and the check unable to fail. */
+    const chain = {};
+    const T = L.TASTE_TERMS;
+    for (let i = 0; i + 1 < T.length; i++) {
+      const k = L.tastePairKey(T[i], T[i + 1]);
+      /* Answered twice, consistently, so the repeats agree and the bar is
+         cleared - below that nothing is drawn at all, which is the bar
+         working rather than the floor. */
+      chain[k] = T[i] + '>' + T[i];
+    }
+    eq('a chain of fourteen places all fifteen against each other',
+      T.filter(w => L.tastePlaced(chain, w) !== T.length - 1), []);
+    /* And the thing that makes this check able to fail: the direct count is
+       nowhere near the floor for any of them. */
+    eq('while no word was asked about more than twice',
+      T.filter(w => (L.tasteSeen(chain)[w] || 0) > 2), []);
+    eq('and every group is drawn, none left permanently dark',
+      L.tasteWantAxes(chain).length, L.tasteFamilies().length);
+  }
+  /* THE METER NEVER REPORTS MORE THAN ITS OWN WHOLE (BZ, 2026-09-27:
+     "reworded"). `given` counts the repeats too, so it runs past forty while
+     the repeats are still disagreeing, and the line read "45 of about 40". */
+  {
+    const many = {};
+    let n = 0;
+    for (let i = 0; i < L.TASTE_TERMS.length && n < 45; i++) {
+      for (let j = i + 1; j < L.TASTE_TERMS.length && n < 45; j++) {
+        many[L.tastePairKey(L.TASTE_TERMS[i], L.TASTE_TERMS[j])]
+          = L.TASTE_TERMS[i];
+        n++;
+      }
+    }
+    const past = L.tasteProgress(many);
+    eq('past the target with the repeats unsettled, it stops counting',
+      [past.given > past.target, past.done,
+        /of about/.test(past.say), /\d+ of /.test(past.say)],
+      [true, false, false, false]);
+    eq('and says what is actually missing instead',
+      /agree with each other/.test(past.say), true);
+  }
+  {
+    const few = {};
+    few[L.tastePairKey('cherry', 'oak')] = 'cherry';
+    const early = L.tasteProgress(few);
+    eq('under the target it counts, because the count is the thing missing',
+      [/of about 40/.test(early.say), early.done], [true, false]);
+  }
   eq('and the floor comes off the pool, so it cannot go stale',
     [L.tasteAxisFloor() >= 2, L.tasteAxisFloor() < L.TASTE_TERMS.length],
     [true, true]);
