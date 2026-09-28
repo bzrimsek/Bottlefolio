@@ -12297,6 +12297,83 @@ sec('§244 how a bottle helps the chart');
  * because the shelf changed is the app paying attention. Cheapest first:
  * an evening with what you already own before spending money.
  */
+sec('§245 a bar offers what your own shelf does not');
+{
+  /* BZ, 2026-09-27, on "Close behind: Blanton's" from a back-bar photograph:
+     "especially if I own 6 blantons already", then "arguable laph 15 is mroe
+     interesting than another 80 proof blantons", then "blanton is not fales,
+     it is just less interesting".
+
+     He owns six Blanton's and thirteen Laphroaigs, so a flat house rule would
+     have dropped both and he would have lost the fifteen he actually wants.
+     What counts is what the bottling ADDS to that house on his shelf. */
+  const cat = {
+    bg: { k: 'bg', name: "Blanton's Gold", dist: 'Buffalo Trace',
+          sub: 'bourbon', proof: 103 },
+    bb: { k: 'bb', name: "Blanton's Black Label Single Barrel Bourbon",
+          dist: 'Buffalo Trace', sub: 'bourbon', proof: 80 },
+    l10: { k: 'l10', name: 'Laphroaig 10 Year Old Single Malt', dist: 'Laphroaig',
+           sub: 'scotch', proof: 80, age: 10 },
+    l13: { k: 'l13', name: 'Laphroaig Williamson 13 Year Old', dist: 'Laphroaig',
+           sub: 'scotch', proof: 108, age: 13 }
+  };
+  const bots = ['bg', 'bb', 'l10', 'l13']
+    .map((k, i) => ({ id: 'B' + i, k: k, status: 'open' }));
+
+  /* A HOUSE HE HOLDS NOTHING OF IS NEW BY DEFINITION. */
+  eq('a house the shelf has never met is the most interesting',
+    L.houseInterest("Stranahan's Mountain Angel", cat, bots), 2);
+  /* AN AGE THAT HOUSE DOES NOT GIVE HIM IS WORTH CROSSING A ROOM FOR. */
+  eq('an age his shelf lacks from a house he holds still adds something',
+    L.houseInterest('Laphroaig 15', cat, bots), 1);
+  /* AND ANOTHER SHAPE OF WHAT HE HAS IS LEAST INTERESTING - not wrong. */
+  eq('a bare house name he already holds adds nothing, and is not an error',
+    L.houseInterest("Blanton's", cat, bots), 0);
+  eq('so the fifteen outranks the bare house, which was the whole complaint',
+    L.houseInterest('Laphroaig 15', cat, bots)
+      > L.houseInterest("Blanton's", cat, bots), true);
+
+  /* THE OWNERSHIP TEST THAT LET IT THROUGH. L.nameOverlap is a ratio and so
+     symmetric: the short read name scored 0.50 against the long owned one,
+     under the 0.8 bar, and a man with six Blanton's was offered a Blanton's. */
+  eq('a short name wholly inside an owned one is already on the shelf',
+    [L.nameInside("Blanton's", "Blanton's Gold"),
+      L.nameOverlap("Blanton's", "Blanton's Gold") >= 0.8],
+    [true, false]);
+  eq('but a different bottling of the same house is not inside it',
+    L.nameInside('Laphroaig 15', 'Laphroaig 10 Year Old Single Malt'), false);
+  eq('and a name is not inside itself, which would swallow an exact match',
+    L.nameInside("Blanton's Gold", "Blanton's Gold"), false);
+
+  /* AND THE WHOLE THING, on the shape of the bar BZ photographed. Asserting
+     the two doors on their own left the suite green when the sort and the
+     ownership test were each reverted: a door that works proves nothing if
+     the screen walks past it. */
+  const seen = { items: [
+    { name: "Stranahan's Mountain Angel", sure: 'high' },
+    { name: "Blanton's", sure: 'high' },
+    { name: 'Laphroaig 15', sure: 'high' },
+    /* A house he holds NOTHING of, and younger. Without interest leading the
+       sort the fifteen wins on age; with it, a house he has never had wins,
+       which is the whole point of a back bar. */
+    { name: 'Peerless Small Batch Bourbon', sure: 'high' }
+  ] };
+  const pick = L.readPick(seen, cat, bots, []);
+  eq('a house he holds six of is not offered back to him at a bar',
+    /Blanton/.test(String((pick || {}).also || '')), false);
+  eq('and the runner-up is whatever adds most, not whatever is oldest',
+    (pick || {}).also, 'Peerless Small Batch Bourbon');
+  /* The fifteen still beats the bare house he owns six of, which is what he
+     actually complained about. */
+  eq('and the fifteen still outranks the house he is already deep in',
+    [L.houseInterest('Laphroaig 15', cat, bots),
+      L.houseInterest("Blanton's", cat, bots)], [1, 0]);
+  /* The bare house name is not merely ranked last - it is already on the
+     shelf, so it is not among the bottles counted as new to him at all. */
+  eq('nor counted among what he does not already own',
+    (pick || {}).outOf, 3);
+}
+
 sec('§246 a repeat buy always has somewhere to go');
 {
   const cat = {}, bs = [];

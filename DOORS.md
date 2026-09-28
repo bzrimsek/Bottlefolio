@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 797 |
+| functions | 799 |
 | tables | 191 |
-| carrying a stated purpose | 606 |
+| carrying a stated purpose | 608 |
 
 ## Tables
 
@@ -426,6 +426,7 @@ QUESTION, not the name you were going to use.
 - **`L.hostCard`** — What the host needs and the participants must not see.
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
+- **`L.houseInterest`** — HOW MUCH A BOTTLING ADDS TO A HOUSE YOU ALREADY HOLD (BZ, 2026-09-27:
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
 - **`L.houseKey`** — _no comment above it_
 - **`L.houseList`** — The houses the catalog knows, longest name first, so a house called
@@ -589,6 +590,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromShopPage`** — the price alongside it.
 - **`L.nameFromShopText`** — _no comment above it_
+- **`L.nameInside`** — IS EVERY WORD OF THE FIRST NAME IN THE SECOND? L.nameOverlap is a ratio and
 - **`L.nameKey`** — mistaken for each other in a picker.
 - **`L.nameOverlap`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
