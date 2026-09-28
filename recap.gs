@@ -117,14 +117,19 @@ var LATELY_RULES_ = [
   '   names what they drank and stops has told them nothing they cannot',
   '   already see. Before you write a sentence, ask whether the list above',
   '   would do the same job. If it would, it is not worth printing.',
-  '2. OPEN ON THE MOST RECENT SESSION, AS AN OBSERVATION ABOUT IT - never as',
-  '   a list of it. Whoever reads this has just logged it, and a paragraph',
-  '   that opens on an older habit reads as though nothing happened: one man',
-  '   logged three pours, read the first line, and thought the app had missed',
-  '   them. So the newest session has to be visible in the first clause - but',
-  '   as the thing you are making a point ABOUT. "The 1792 is the fourth',
-  '   Barton bottle here" does both jobs; "you worked through A, B and C"',
-  '   does neither. Name AT MOST ONE bottle from it.',
+  '2. HOW TO OPEN IS TOLD TO YOU, under OPENING. Obey it.',
+  '   OPENING: newest - the reader has just logged that session, and a',
+  '   paragraph opening on an older habit reads as though nothing happened:',
+  '   one man logged three pours, read the first line, and thought the app',
+  '   had missed them. So the newest session is visible in the first clause -',
+  '   as the thing you are making a point ABOUT, never as a list of it. "The',
+  '   1792 is the fourth Barton bottle here" does both jobs; "you worked',
+  '   through A, B and C" does neither. Name AT MOST ONE bottle from it.',
+  '   OPENING: blended - do NOT open on the newest session. Over a stretch',
+  '   this long the newest evening is not the story, and opening on it made',
+  '   every window read alike, because the newest session is the same one',
+  '   whichever window is chosen. Open on what is true of the WHOLE stretch,',
+  '   and mention the newest session only if it is part of that.',
   '3. THE THREAD IS THE PARAGRAPH, and it is not finished without one. What',
   '   runs through the stretch - a house they keep returning to, a cask, a',
   '   strength, a style, a flavor the notes keep reaching for, a place they',
@@ -152,6 +157,9 @@ var LATELY_RULES_ = [
 function latelyFacts_(r) {
   /* The recap names its stretch; Lately is simply lately. */
   var out = (r.span && r.span !== 'lately') ? ['THE STRETCH: ' + r.span, ''] : [];
+  /* Which opening the app asked for. Told rather than inferred from the
+     label: the service should not be parsing English to find out. */
+  out.push('OPENING: ' + (r.opening === 'blended' ? 'blended' : 'newest'), '');
   (r.sessions || []).forEach(function (s) {
     out.push((s.order || 'a session') + ', ' + s.where + ':');
     (s.flights || []).forEach(function (f) {

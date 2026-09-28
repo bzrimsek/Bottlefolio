@@ -496,7 +496,7 @@ QUESTION, not the name you were going to use.
 - **`L.labelTake`** — Step three: the edit, built from what was agreed to. `name` never
 - **`L.labelWorth`** — True only for fields every label carries - proof, distillery, size.
 - **`L.ladderScore`** — The rungs you hold, discounted by the holes between them.
-- **`L.latelyAsk`** — No dates go out
+- **`L.latelyAsk`** — `opening` tells the service how to start
 - **`L.latelyBottle`** — WHAT A BOTTLE IS, in one line, so the writer can find what joins a
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
@@ -766,8 +766,8 @@ QUESTION, not the name you were going to use.
 - **`L.readShopText`** — usually gives one of them.
 - **`L.readSub`** — _no comment above it_
 - **`L.recap`** — _no comment above it_
-- **`L.recapFold`** — `all of it` is the one that will not take the pattern - "the rest of all of
 - **`L.recapLine`** — _no comment above it_
+- **`L.recapOpening`** — `lately` is the Home block, which is recency by definition.
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
 - **`L.recapText`** — What comes back, checked before it is shown
 - **`L.recapWriting`** — THE RECAP'S WRITING FOR ONE STRETCH

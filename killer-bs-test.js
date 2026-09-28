@@ -23850,21 +23850,37 @@ sec('§441 a lookup asks who is asking');
   eq('the app and the service move together on this',
     L.GS_BUILD, '2.5.2');
 
-/* THE FOLD NAMES ITS OWN STRETCH (BZ, 2026-09-27: "regardless of time slice
-   selected, the fold says Rest of Month"). It did - the words were typed into
-   the screen and the four chips changed everything except them. Built from
-   L.RECAP_SPANS now, so a fifth window could not arrive without one. */
-eq('the fold is named after the window it holds',
-  L.RECAP_SPANS.map(sp => L.recapFold(sp.id)),
-  ['The rest of the last month', 'The rest of the last three months',
-   'The rest of the last year', 'The rest of it']);
-/* "the rest of all of it" is not English, so that one takes the app's general
-   fold label - the same words every other paragraph folds under. */
-eq('and a window with no sensible phrasing falls back rather than reads badly',
-  [L.recapFold('all'), L.recapFold('nope'), L.recapFold()],
-  ['The rest of it', 'The rest of it', 'The rest of it']);
-eq('every window can name its fold',
-  L.RECAP_SPANS.filter(sp => !L.recapFold(sp.id)).map(sp => sp.id), []);
+/* HOW A WINDOW OPENS (BZ, 2026-09-27: "all 4 time horizons say the same lame
+   thing", then "recency should be a rule for the last month but after that I'd
+   expect more of a blended finding").
+
+   The newest session is the SAME session in every window, so a rule that opens
+   every paragraph on it makes all four start identically - which is what he
+   read. Recency is worth having over a month and is noise over a year. */
+eq('the month opens on the newest session and the longer windows do not',
+  L.RECAP_SPANS.map(sp => L.recapOpening(sp.id)),
+  ['newest', 'blended', 'blended', 'blended']);
+eq('and Lately is recency by definition',
+  L.recapOpening('lately'), 'newest');
+/* The service is TOLD which, rather than left to infer it from the label. */
+eq('the ask carries the opening the window asked for',
+  [L.latelyAsk([{ at: '2026-09-01', where: 'home', pours: ['X'], ks: [null],
+    flights: [] }], {}, 'the last year', 'blended').opening,
+    L.latelyAsk([{ at: '2026-09-01', where: 'home', pours: ['X'], ks: [null],
+      flights: [] }], {}, 'the last month').opening],
+  ['blended', 'newest']);
+/* A window that forgot to say gets recency, which is the safe half: a
+   paragraph that mentions the newest session is never wrong, only dull. */
+eq('and an unstated opening is the safe one',
+  L.latelyAsk([{ at: '2026-09-01', where: 'home', pours: ['X'], ks: [null],
+    flights: [] }], {}, 'a month', 'nonsense').opening, 'newest');
+eq('every window says how it opens',
+  L.RECAP_SPANS.filter(sp => !L.recapOpening(sp.id)).map(sp => sp.id), []);
+/* And the writing carries it to the screen that asks. */
+eq('the write-up knows which opening its window takes',
+  ['month', 'year'].map(id =>
+    L.recapWriting([], {}, id, '2026-09-27', {}).opening),
+  ['newest', 'blended']);
   /* Which call has to say who is asking, and where the proof goes. */
   eq('a lookup GET needs it', L.needsToken(null), true);
   eq('a photograph read needs it',
