@@ -3985,19 +3985,46 @@ function step(n) {
 
        Off matters as much as on: a hidden button still held a grid cell,
        because `nav button{display:flex}` beats [hidden]{display:none}. */
-    for (const on of [false, true]) {
-      const rows = await page.evaluate(guideOn => {
-        S.guideOn = guideOn;
-        try { showGuideTab(); } catch (e) {}
-        const btns = [...document.querySelectorAll('nav button')]
-          .filter(b => getComputedStyle(b).display !== 'none');
-        const tops = [...new Set(btns.map(b =>
-          Math.round(b.getBoundingClientRect().top)))];
-        return { rows: tops.length, tabs: btns.length };
-      }, on);
-      if (rows.rows > 1) {
-        failures.push('the tab bar wraps to ' + rows.rows + ' rows with '
-          + rows.tabs + ' tabs, guide ' + (on ? 'on' : 'off'));
+    /* AT THE WIDTHS PHONES ARE, not only the one this file runs at. 320 and
+       360 are both still in use, and eight tabs have the least room there. */
+    for (const w of [320, 360, 390]) {
+      await page.setViewportSize({ width: w, height: 860 });
+      await page.waitForTimeout(80);
+      for (const on of [false, true]) {
+        const rows = await page.evaluate(guideOn => {
+          S.guideOn = guideOn;
+          try { showGuideTab(); } catch (e) {}
+          const btns = [...document.querySelectorAll('nav button')]
+            .filter(b => getComputedStyle(b).display !== 'none');
+          const tops = [...new Set(btns.map(b =>
+            Math.round(b.getBoundingClientRect().top)))];
+          /* AND THE LABEL INSIDE ITS OWN TAB. A label wider than the tab runs
+             over its neighbour without changing the row count, so counting
+             rows cannot see it. Measured with a Range over the rendered text:
+             a stand-in span reports the font it inherits, not the button's. */
+          const over = [];
+          btns.forEach(b => {
+            const tn = [...b.childNodes].find(n => n.nodeType === 3
+              && n.textContent.trim());
+            if (!tn) return;
+            const r = document.createRange();
+            r.selectNodeContents(tn);
+            const need = r.getBoundingClientRect().width;
+            const tab = b.getBoundingClientRect().width;
+            if (need > tab) {
+              over.push(tn.textContent.trim() + ' ' + need.toFixed(1)
+                + 'px in ' + tab.toFixed(1) + 'px');
+            }
+          });
+          return { rows: tops.length, tabs: btns.length, over: over };
+        }, on);
+        const where = ' at ' + w + 'px, guide ' + (on ? 'on' : 'off');
+        if (rows.rows > 1) {
+          failures.push('the tab bar wraps to ' + rows.rows + ' rows with '
+            + rows.tabs + ' tabs' + where);
+        }
+        rows.over.forEach(x => failures.push('a tab label overruns it: '
+          + x + where));
       }
     }
     await page.evaluate(() => {

@@ -2798,6 +2798,21 @@ check('no fixed svg id is emitted by a repeated drawing',
     }
   });
   check('nothing Cooper does covers the conversation', found);
+
+  /* AND HIS SWITCH IS WHERE PEOPLE LOOK (BZ, 2026-09-28: "I don't see the
+     guide", written from Settings). He ships OFF, so the switch is the whole
+     of the feature to anybody who has not found it, and it was appended to
+     nameCard - which nothing draws but the sheet behind the gear on Buddies.
+     Every check was green: the switch worked, it just was not anywhere. */
+  const st = ls.findIndex(l => l.startsWith('function renderSettings('));
+  let screen = '';
+  for (let j = st + 1; j < ls.length && !/^\}/.test(ls[j]); j++) {
+    screen += ls[j] + '\n';
+  }
+  check('the guide can be switched on from Settings',
+    /\bguideSwitch\s*\(/.test(screen) ? []
+      : ['renderSettings never calls guideSwitch \u2014 a feature that ships '
+        + 'off, with no switch on the settings screen, does not exist']);
 }
 
 /* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
@@ -2902,7 +2917,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     showShelfTools: 255,
     shopAnswer: 243,
     renderLookupSetup: 231,
-    renderSettings: 211,
+    renderSettings: 177,
     renderGuest: 157,
     renderHome: 93,
     libraryAudit: 173,
