@@ -24006,22 +24006,41 @@ eq('the year looks for what changed rather than what is constant',
   const cat = { a: { k: 'a', name: 'A' } };
   const pour = at => ({ kind: 'pour', at: at, k: 'a', where: 'home' });
   const short = ['2026-09-02', '2026-09-10', '2026-09-25'].map(pour);
-  eq('a log inside one month offers one window, not four',
-    L.recapWindows(short, cat, '2026-09-27').map(w => w.id), ['month']);
-  /* And they arrive on their own as the log grows past each edge. A window
-     holding no more than the one below it is still not offered - the quarter
-     here sees exactly what the month sees. */
-  const wide = ['2024-01-05', '2025-03-02', '2026-02-10', '2026-09-01',
+  /* VISIBLE BUT DORMANT (BZ, 2026-09-27: "the current month should allow for
+     a few days and always be there, month and year should be visible but
+     dormant until data gets there"). Hiding them fixed four buttons over one
+     answer and created a smaller fault: a single unexplained chip, with no
+     sign the longer reads exist or are coming. */
+  const spans = ['2024-01-05', '2025-03-02', '2026-02-10', '2026-09-01',
     '2026-09-20'].map(pour);
-  eq('and a longer log offers only the windows that hold more than the last',
-    L.recapWindows(wide, cat, '2026-09-27').map(w => w.id + ':' + w.sessions),
-    ['month:2', 'year:3']);
-  eq('nothing logged offers nothing',
-    L.recapWindows([], cat, '2026-09-27'), []);
-  /* Every window offered is a real one, and they come widest last so the
-     chips read in order. */
+  const shape = h => L.recapWindows(h, cat, '2026-09-27')
+    .map(w => w.id + (w.live ? ':live' : ':dormant'));
+  /* A FEW DAYS IS A MONTH IN PROGRESS. Somebody who started logging on
+     Tuesday still has something to read. */
+  eq('two days in, the month is live and the longer windows are waiting',
+    shape(['2026-09-25', '2026-09-26'].map(pour)),
+    ['month:live', 'quarter:dormant', 'year:dormant']);
+  eq('and a log inside one month leaves them waiting, not missing',
+    shape(short), ['month:live', 'quarter:dormant', 'year:dormant']);
+  /* A WINDOW WAKES ON HOLDING SOMETHING THE ONE BELOW DOES NOT. The quarter
+     here sees exactly what the month sees, so it stays asleep while the year
+     does not. */
+  eq('a window holding no more than the one below it stays dormant',
+    shape(spans), ['month:live', 'quarter:dormant', 'year:live']);
+  eq('nothing logged leaves every window dormant, and none of them hidden',
+    [shape([]), L.recapWindows([], cat, '2026-09-27').length],
+    [['month:dormant', 'quarter:dormant', 'year:dormant'], 3]);
+  /* WHICH ONE IS ACTUALLY READ. A span kept from a previous visit can outlive
+     the log that earned it, so it falls back to the widest that is awake. */
+  eq('a chosen window that has gone back to sleep falls to the widest awake',
+    [L.recapLive(L.recapWindows(spans, cat, '2026-09-27'), 'quarter'),
+      L.recapLive(L.recapWindows(short, cat, '2026-09-27'), 'year'),
+      L.recapLive(L.recapWindows(spans, cat, '2026-09-27'), 'year')],
+    ['year', 'month', 'year']);
+  eq('and nothing logged has nothing to read',
+    L.recapLive(L.recapWindows([], cat, '2026-09-27'), 'month'), null);
   eq('every window offered is one the app knows',
-    L.recapWindows(wide, cat, '2026-09-27')
+    L.recapWindows(spans, cat, '2026-09-27')
       .filter(w => !L.RECAP_SPANS.some(sp => sp.id === w.id)), []);
 }
 eq('and Lately is recency by definition',

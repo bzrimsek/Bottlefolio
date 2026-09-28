@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 800 |
+| functions | 801 |
 | tables | 191 |
-| carrying a stated purpose | 609 |
+| carrying a stated purpose | 610 |
 
 ## Tables
 
@@ -770,6 +770,7 @@ QUESTION, not the name you were going to use.
 - **`L.readSub`** — _no comment above it_
 - **`L.recap`** — _no comment above it_
 - **`L.recapLine`** — _no comment above it_
+- **`L.recapLive`** — The window to read when the chosen one is not awake - the widest that is.
 - **`L.recapOpening`** — `lately` is the Home block, which is recency by definition.
 - **`L.recapRefused`** — WHY A WRITE-UP MAY NOT BE SHOWN, in one place, named rather than merely
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
