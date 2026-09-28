@@ -2876,6 +2876,17 @@ sec('your taste, painted');
      normalization is right"). Each spoke is the share of described bottles
      carrying anything in that group: every one of these three tastes of fruit,
      so fruity is the whole radius, and only one of them is smoky. */
+  /* WHAT THE ANSWERS SAY, ON THE SAME AXES (BZ, 2026-09-27: "What is it based
+     on, my q&a?" - it was not, and "all axis should be the same"). */
+  eq('the same groups on both, and every one a taste',
+    [L.tasteFamilies().length,
+      L.tasteFamilies().filter(f => L.NOT_A_TASTE.indexOf(f) >= 0).length],
+    [9, 0]);
+  eq('every group has a word in the pool, so none is left blank',
+    L.tasteFamilies().filter(f => !L.TASTE_TERMS
+      .some(t => L.palateIndex().family[t] === f)), []);
+  eq('and nothing is drawn from answers that have not passed the bar',
+    L.tasteWantAxes({ 'cherry|peat': 'cherry' }), []);
   eq('a spoke is the share of your bottles carrying it',
     [ax.filter(a2 => a2.id === 'fruity')[0].pct,
      ax.filter(a2 => a2.id === 'smoke')[0].pct], [100, 33]);
