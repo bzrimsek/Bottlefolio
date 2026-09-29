@@ -12651,9 +12651,13 @@ sec('§242 the guided tasting');
       L.guideGround('how is whiskey made', base).entries
         .slice(0, 3).map(e => e.term),
       ['Malting', 'Mashing and fermentation', 'Pot still']);
-    eq('and asked something else, he is not',
-      L.guideGround('what is peat', base).entries
-        .filter(e => e.term === 'Malting').length, 0);
+    /* Asked something else, the steps are not PUT FIRST. Malting may well
+       turn up for a question about peat - the kiln is where the smoke comes
+       from - and that is a word matching, not the spine being laid out. */
+    eq('and asked something else, the steps are not laid out in order',
+      L.guideGround('what is peat', base).entries.slice(0, 3)
+        .map(e => e.term).join('|') === L.GUIDE_PROCESS.slice(0, 3).join('|'),
+      false);
 
     /* THE DOORS HE MAY OPEN, and only those. The list is the whole of what
        he can do, so a name he invents opens nothing. */
@@ -12695,6 +12699,42 @@ sec('§242 the guided tasting');
         peat.owned, 2);
       eq('the plain totals are the app\u2019s own',
         L.shelfEnd('count', cat, held).whiskies, 2);
+      /* THE READING, NOT THE COUNT (BZ, 2026-09-28: 'numbers and stats but
+         not the available insight'). Asked to describe a shelf he described
+         its size, because counting was the whole of what this door could do -
+         the app's own portrait of it was unreachable. */
+      {
+        const port = L.shelfEnd('portrait', cat, held, {});
+        eq('the portrait is the app’s own reading and not a tally',
+          [typeof port.title, Array.isArray(port.arguments)],
+          ['string', true]);
+        const taste = L.shelfEnd('taste', cat, held, {});
+        eq('and the taste profile is the axes the radar draws',
+          taste.axes.length === (L.shelfAxes(cat, held) || []).length
+            && taste.axes.every(a => typeof a.out_of_100 === 'number'), true);
+        /* THE WHOLE BOOK, because guessing which part to send is the game
+           that lost every round tonight (BZ: 'id hope the model consumes all
+           of learn for use'). */
+        {
+          const book = L.guideBook();
+          const lines = book.split('\n');
+          let n = 0;
+          L.REF_GROUPS.forEach(g => (L[g.data] || []).forEach(sec =>
+            (sec.items || []).forEach(() => { n++; })));
+          eq('every entry in the reference is in the book',
+            lines.length, n + (L.LESSONS || []).length);
+          eq('and the quiz is in it, which no search could reach',
+            lines.filter(l => l.indexOf('[Quiz]') === 0).length,
+            (L.LESSONS || []).length);
+          eq('it is built from the reference, never a second copy of it',
+            lines.filter(l => l.indexOf('[' + L.REF_GROUPS[0].label + ']') === 0)
+              .length > 0, true);
+        }
+        eq('every quality the tool offers is one the door answers',
+          L.GUIDE_TOOLS.filter(t => t.name === 'read_their_shelf')[0]
+            .input_schema.properties.quality.enum
+            .filter(q => L.shelfEnd(q, cat, held, {}) === null), []);
+      }
       eq('a quality this shelf is not measured by is refused',
         L.shelfEnd('vibes', cat, held), null);
       eq('and never more than a handful travels',

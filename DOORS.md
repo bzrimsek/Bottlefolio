@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 828 |
+| functions | 829 |
 | tables | 201 |
-| carrying a stated purpose | 644 |
+| carrying a stated purpose | 645 |
 
 ## Tables
 
@@ -428,6 +428,7 @@ QUESTION, not the name you were going to use.
 - **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
+- **`L.guideBook`** — BUILT, NOT STORED
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
 - **`L.guideDoor`** — THE DOOR HE ASKED FOR, by name, or nothing
 - **`L.guideGround`** — `base` is S.base - the shipped catalogue and the shared library - and never

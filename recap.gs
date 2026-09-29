@@ -52,8 +52,10 @@ function guideRules_() {
     '   explain the cause; do not read them a definition and stop.',
     '',
     'WHAT YOU MAY SAY:',
-    '4. Everything you say comes from the ENTRIES and BOTTLES below. They',
-    '   are this app\'s own reference and this person\'s own library.',
+    '4. You have been given this app\'s ENTIRE reference below - every',
+    '   definition, every piece of knowledge, the tasting vocabulary, how',
+    '   each screen works, and the eight quiz questions it asks. Answer from',
+    '   it. You do not need to look anything up in it; you have all of it.',
     '5. NEVER a whisky, a distillery, a person, a place, a proof, an age or',
     '   a price that is not in what you were given. Not one. If you want to',
     '   name an example and none was given, name none.',
@@ -148,10 +150,20 @@ function answerGuide_(r) {
     /* No conversation given: the older shape, one question and its facts. */
     msgs = [{ role: 'user', content: guideFacts_(body) }];
   }
+  /* THE BOOK AS ITS OWN BLOCK, MARKED CACHED. It is the whole of the app's
+     reference, identical on every call and a quarter of the cost of the
+     conversation if it were paid for each time: written once per session,
+     read at a tenth after that. The rules stay uncached and first, because a
+     block before a cached one is part of what is cached. */
+  var system = [{ type: 'text', text: guideRules_() }];
+  if (body.book) {
+    system.push({ type: 'text', text: String(body.book),
+      cache_control: { type: 'ephemeral' } });
+  }
   var ask = {
     model: GUIDE_MODEL,
     max_tokens: 700,
-    system: guideRules_(),
+    system: system,
     messages: msgs
   };
   if ((body.tools || []).length) ask.tools = body.tools;

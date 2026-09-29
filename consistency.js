@@ -1608,7 +1608,14 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'to ' + hexes + ' so the ratchet keeps holding']
       : []);
 
-  const bangs = (src.match(/!important/g) || []).length;
+  /* COMMENTS STRIPPED FIRST. A comment explaining why a carve-out exists
+     rather than a second override counted as an override itself, and the
+     ratchet fired on a file that had one fewer than before (2026-09-28).
+     This app has been caught by the same shape before - a check satisfied by
+     a word appearing inside the sentence that forbade it - and a comment
+     cannot override a rule, so it cannot be what this is hunting. */
+  const bangs = (src.replace(/\/\*[\s\S]*?\*\//g, '')
+    .match(/!important/g) || []).length;
   /* THREE, not two: my first baseline counted LINES containing
      !important while the check counts occurrences, and one line carries
      two. A ratchet set from the wrong measurement fires on day one. */
