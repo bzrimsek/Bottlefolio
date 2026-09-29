@@ -2722,6 +2722,22 @@ sec('the bar shelf never reaches a whiskey answer');
      L.groupWorthGoing({ value: 'liqueur', n: 3 }),
      L.groupWorthGoing({ value: '?', n: 3 }),
      L.groupWorthGoing({})], [true, false, false, false]);
+  /* AND A DATA CONDITION IS NOT A PLACE (BZ, 2026-09-29, on a buddy page:
+     'i don't like unknown as a place, that is a data condition'). It read
+     'Smoky Bill takes you into Unknown - 4 on their shelf', which offers a
+     hole in somebody's spreadsheet as a direction to travel in. These arrive
+     from a buddy's shelf, where this app never chose the vocabulary. */
+  eq('a value that says it is not a value is nowhere to be taken',
+    ['Unknown', 'unknown', 'N/A', 'None', 'Other', '  Unknown  ', '-', 'TBD']
+      .filter(v => L.groupWorthGoing({ value: v, n: 4 })), []);
+  /* AND A VALUE THIS APP HAS NOT HEARD OF IS STILL A PLACE: not knowing what
+     something is differs from knowing there is nothing there. */
+  eq('an unfamiliar category is still somewhere to go',
+    ['single malt', 'Islay', 'Speyside', 'kentucky straight']
+      .filter(v => !L.groupWorthGoing({ value: v, n: 4 })), []);
+  eq('and the buddy line refuses it outright',
+    L.topGap({ styles: [{ value: 'Unknown', n: 4 }] }, { styles: [] },
+      'styles', 3), null);
   eq('no bar-shelf category is somewhere to be taken',
     L.topGap({ styles: [{ value: 'liqueur', n: 5 }] }, { styles: [] },
       'styles', 3), null);

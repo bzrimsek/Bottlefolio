@@ -14,7 +14,7 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 837 |
-| tables | 203 |
+| tables | 204 |
 | carrying a stated purpose | 651 |
 
 ## Tables
@@ -111,6 +111,7 @@ QUESTION, not the name you were going to use.
 - **`L.NEAR_AXES`** — Nearest, and on WHICH axis
 - **`L.NO_PLURAL`** — are already mass nouns or end in a sibilant stay as they are.
 - **`L.NOT_A_CASK`** — Words that name a kind of whisky rather than a kind of cask
+- **`L.NOT_A_PLACE`** — Not the same as a value this app has not heard of, which stays a place:
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
 - **`L.NOT_FILTERS`** — Not filters, named so the check can tell "not a filter" from "somebody
 - **`L.NOT_WHISKY`** — 'flavored' joined on 2026-09-24
@@ -427,7 +428,7 @@ QUESTION, not the name you were going to use.
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
 - **`L.groupCounts`** — WHAT A GROUP HAS, said in the two ways that need no circles
 - **`L.groupOf`** — _no comment above it_
-- **`L.groupWorthGoing`** — WHISKEY ONLY, WHEREVER A GROUP IS OFFERED AS SOMEWHERE TO GO (BZ,
+- **`L.groupWorthGoing`** — _no comment above it_
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
 - **`L.guideBook`** — BUILT, NOT STORED
