@@ -1551,6 +1551,45 @@ function step(n) {
     if (r.healed !== r.inner) {
       failures.push('keyboard: the self-heal put it back to ' + r.healed);
     }
+
+    /* AND THE ONE SCREEN THAT IS THE EXCEPTION (BZ, 2026-09-28: "it still
+       seem cut off"). A conversation must FIT above the keyboard, or the
+       phone scrolls the whole app up to reach the box and takes the header
+       and the top of the talk with it. An exception nobody checks is not a
+       rule, so both sides are driven here. */
+    const chat = await page.evaluate(() => {
+      const read = () => getComputedStyle(document.documentElement)
+        .getPropertyValue('--app-h').trim();
+      S.guideOn = true;
+      try { showGuideTab(); } catch (e) {}
+      show('guide');
+      const real = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(window.visualViewport), 'height');
+      const want = Math.round(window.innerHeight * 0.57);
+      Object.defineProperty(window.visualViewport, 'height',
+        { configurable: true, get: () => want });
+      setAppHeight();
+      const onGuide = read();
+      /* And off it again: every other screen keeps the old rule. */
+      show('home');
+      setAppHeight();
+      const offGuide = read();
+      Object.defineProperty(window.visualViewport, 'height', real);
+      setAppHeight();
+      S.guideOn = false;
+      try { showGuideTab(); } catch (e) {}
+      return { onGuide: onGuide, offGuide: offGuide,
+        want: want + 'px', full: window.innerHeight + 'px' };
+    });
+    if (chat.onGuide !== chat.want) {
+      failures.push('keyboard: the guide stayed ' + chat.onGuide
+        + ' instead of fitting into the ' + chat.want + ' a keyboard leaves, '
+        + 'so the talk is scrolled behind it');
+    }
+    if (chat.offGuide !== chat.full) {
+      failures.push('keyboard: a screen that is not the guide shrank to '
+        + chat.offGuide + ' instead of staying ' + chat.full);
+    }
   }
 
   step('spin is centered and its picker holds one line');
