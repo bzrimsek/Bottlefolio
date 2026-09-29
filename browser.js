@@ -4273,6 +4273,37 @@ function step(n) {
       out.doorAnswered = /tool_result/.test(String(sentBack || ''))
         && /whiskies/.test(String(sentBack || ''));
 
+      /* 2c. A DOOR THAT ANSWERS LATER. Two of the five ask the service and
+         hand back a promise rather than a value, which is a different path
+         through guideRound - and one that would otherwise reach the model as
+         "[object Promise]" and be answered from without complaint. */
+      S.guideSaid = {};
+      S.guide = null; renderGuide();
+      let slowCalls = 0, slowBack = null;
+      window.postWithRetry = (url, body) => {
+        slowCalls++;
+        if (slowCalls === 1) {
+          return Promise.resolve(reply({
+            said: '', blocks: [{ type: 'tool_use', id: 't2',
+              name: 'suggest_a_bottle', input: { gap: 'a peated Speyside' } }],
+            tool: { id: 't2', name: 'suggest_a_bottle',
+              input: { gap: 'a peated Speyside' } } }));
+        }
+        /* The door's own call to the service, then his answer. */
+        if (slowCalls === 2) {
+          return new Promise(f => setTimeout(() =>
+            f(reply({ candidates: [{ name: 'Benriach Smoky Ten' }] })), 60));
+        }
+        slowBack = body;
+        return Promise.resolve(reply({ said: 'Try the Benriach.' }));
+      };
+      cooperHears('what should I buy next?');
+      await new Promise(f => setTimeout(f, 700));
+      out.slowRounds = slowCalls;
+      out.slowAnswer = ((S.guide.thread || []).slice(-1)[0] || {}).text || '';
+      out.slowCarried = /Benriach Smoky Ten/.test(String(slowBack || ''))
+        && !/\[object Promise\]/.test(String(slowBack || ''));
+
       /* 2b. AND THE MARK MOVES WHILE HE IS AWAY (BZ, 2026-09-28: "those
          dots need motion"). An answer takes seconds and this is the only
          thing on screen for all of them; a still ellipsis reads as a hang,
@@ -4335,6 +4366,17 @@ function step(n) {
     }
     if (!/fair few/i.test(r.afterDoor || '')) {
       failures.push('guide: after a door was opened his answer did not land');
+    }
+    if (r.slowRounds !== 3) {
+      failures.push('guide: a door that asks the service took ' + r.slowRounds
+        + ' calls, not 3 \u2014 his ask, the door\u2019s own, and his answer');
+    }
+    if (!r.slowCarried) {
+      failures.push('guide: what a slow door answered never reached him, or '
+        + 'reached him as a promise rather than its answer');
+    }
+    if (!/Benriach/.test(r.slowAnswer || '')) {
+      failures.push('guide: after a slow door his answer did not land');
     }
     if (r.dots !== 3) {
       failures.push('guide: the thinking mark is ' + r.dots + ' dots, not 3');
