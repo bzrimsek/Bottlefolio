@@ -2838,6 +2838,35 @@ check('no fixed svg id is emitted by a repeated drawing',
         + 'switch on the settings screen does not exist']);
 }
 
+/* THE BACKGROUND WORK STANDS ASIDE FOR THE GUIDE (BZ's log, 2026-09-29: his
+   second call came back 404 after fifty-one seconds while the Sheet mirror
+   went up twice at 175KB). One Apps Script deployment serves the guide, the
+   mirror and the nightly fill, and Apps Script refuses its own script running
+   many times at once - so anything nobody is waiting on must wait for the one
+   thing somebody IS waiting on.
+
+   READ FROM THE SOURCE, and weaker for it: this proves the guard is written,
+   not that it works. A browser check was tried first and could not be made to
+   fail with the guard deleted, and a check that cannot fail is worse than
+   none. */
+{
+  const ls = src.split('\n');
+  const at = ls.findIndex(l => l.startsWith('function pushShelfSheet('));
+  let body = '';
+  for (let j = at + 1; at >= 0 && j < ls.length && !/^\}/.test(ls[j]); j++) {
+    body += ls[j] + '\n';
+  }
+  const found = [];
+  if (at < 0) {
+    found.push('pushShelfSheet is gone \u2014 was the Sheet mirror renamed?');
+  } else if (!/\bcooperThinking\b/.test(body)) {
+    found.push('the Sheet mirror does not stand aside for the guide: one '
+      + 'deployment serves both, and 175KB going up mid-answer took his call '
+      + 'down with a 404');
+  }
+  check('background work waits for the guide', found);
+}
+
 /* A NEW WHISKY REACHES THE LIBRARY, or says why not (BZ, 2026-09-29: "I add a
    bottle that is in my hand - it must get to the library - still feels like a
    condition of the prior moment"). It was: every path where the app learned of
