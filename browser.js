@@ -4368,6 +4368,35 @@ function step(n) {
       await wait();
       out.markGone = !document.querySelector('#guideBody .thinking');
 
+      /* 2cc. HE IS OFFERED NO DOOR ON HIS LAST TURN, so he cannot spend it
+         asking instead of answering. He cannot know how many turns are left,
+         so a limit alone only moves the cliff: BZ asked what to buy, he
+         opened two doors and asked for a third with none left, and the
+         answer was lost (2026-09-29). */
+      S.guideSaid = {};
+      S.guide = null; renderGuide();
+      const toolsOn = [];
+      window.postWithRetry = (url, body) => {
+        const b = JSON.parse(body);
+        toolsOn.push((b.tools || []).length);
+        /* He asks for a door every single time he is offered one. */
+        if ((b.tools || []).length) {
+          return Promise.resolve(reply({ said: '',
+            blocks: [{ type: 'tool_use', id: 'z', name: 'read_their_shelf',
+              input: { quality: 'count' } }],
+            tool: { id: 'z', name: 'read_their_shelf',
+              input: { quality: 'count' } } }));
+        }
+        return Promise.resolve(reply({ said: 'Ye have a fair few.' }));
+      };
+      cooperHears('how many whiskies do I have on the shelf?');
+      await new Promise(f => setTimeout(f, 900));
+      out.roundsOffered = toolsOn.join(',');
+      out.lastHadNone = toolsOn.length > 1
+        && toolsOn[toolsOn.length - 1] === 0;
+      out.greedyAnswered = /fair few/i.test(
+        ((S.guide.thread || []).slice(-1)[0] || {}).text || '');
+
       /* 2d. A SILENCE WITH A REASON IN IT. The service knew why it could
          not answer and kept it to itself, so every failure reached the log
          as 'the service answered nothing' (BZ's log, 2026-09-29). */
@@ -4451,6 +4480,15 @@ function step(n) {
     }
     if (!r.markGone) {
       failures.push('guide: the thinking mark outlived the answer');
+    }
+    if (!r.lastHadNone) {
+      failures.push('guide: the last round still offered doors ('
+        + r.roundsOffered + '), so a turn can be spent asking rather than '
+        + 'answering');
+    }
+    if (!r.greedyAnswered) {
+      failures.push('guide: he asked for a door every turn and never got to '
+        + 'an answer');
     }
     if (!r.whyLogged) {
       failures.push('guide: the service said why it could not answer and the '
