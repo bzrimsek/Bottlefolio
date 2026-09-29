@@ -12659,6 +12659,51 @@ sec('§242 the guided tasting');
         .map(e => e.term).join('|') === L.GUIDE_PROCESS.slice(0, 3).join('|'),
       false);
 
+    /* AN ANSWER IS PAID FOR ONCE (BZ, 2026-09-28: "can we use answers to
+       avoid more spending?"). Three things are in the key, and any of them
+       moving makes it a different question. */
+    {
+      const k = L.guideKey('What is peat?', 100, '3.1.0');
+      eq('how it was typed buys nothing',
+        k === L.guideKey('  what  is   peat ', 100, '3.1.0'), true);
+      eq('a shelf that moved is a different question',
+        L.guideKey('what is peat', 100, '4.1.0') !== k, true);
+      eq('and so is a reference that changed under him',
+        L.guideKey('what is peat', 101, '3.1.0') !== k, true);
+      /* A follow-up means nothing without the line before it, and would
+         collide with every other short follow-up ever asked. */
+      eq('a question that cannot stand alone is never kept',
+        ['and why?', 'why', 'it', ''].map(q => L.guideKey(q, 1, 'x')),
+        [null, null, null, null]);
+      eq('and one that can is remembered and given back',
+        L.guideRecall(L.guideRemember({}, k, 'Aye, peat.'), k), 'Aye, peat.');
+      eq('nothing is remembered under no key',
+        Object.keys(L.guideRemember({}, null, 'Aye.')).length, 0);
+      /* The shelf's own signature moves when anything about it does. */
+      const sig = L.guideShelfSig([1, 2], [1], { a: 1 });
+      eq('a pour, a bottle or a correction all move the shelf on',
+        [sig === L.guideShelfSig([1, 2, 3], [1], { a: 1 }),
+          sig === L.guideShelfSig([1, 2], [1, 2], { a: 1 }),
+          sig === L.guideShelfSig([1, 2], [1], { a: 1, b: 1 })],
+        [false, false, false]);
+      /* And it cannot grow without end. */
+      let many = {};
+      for (let i = 0; i < L.GUIDE_KEPT + 20; i++) {
+        many = L.guideRemember(many, 'q' + i + '|1|x', 'a' + i);
+      }
+      eq('what is kept is capped', Object.keys(many).length, L.GUIDE_KEPT);
+    }
+
+    /* WHAT A TURN COST, from the counts the service reports, so nobody has to
+       take an estimate on trust. Reading all of Learn every time is a
+       deliberate trade and this is how it is checked. */
+    eq('a cold turn pays to write the book and a warm one reads it',
+      [L.guideCost({ cache_creation_input_tokens: 25000, input_tokens: 400,
+        output_tokens: 200 }) > 5,
+        L.guideCost({ cache_read_input_tokens: 25000, input_tokens: 400,
+          output_tokens: 200 }) < 1.5,
+        L.guideCost(null)], [true, true, 0]);
+
     /* THE DOORS HE MAY OPEN, and only those. The list is the whole of what
        he can do, so a name he invents opens nothing. */
     eq('a door he invents is not a door',

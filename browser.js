@@ -4234,6 +4234,11 @@ function step(n) {
       const wait = () => new Promise(f => setTimeout(f, 350));
 
       /* 1. He answers. */
+      /* AND WHAT HE HAS ALREADY BEEN PAID TO ANSWER, or the next case is
+         answered from the last one: with the cache warm the mark never
+         appears (nothing is thought about) and the fallback case passes on a
+         REMEMBERED answer rather than a fresh reading (2026-09-28). */
+      S.guideSaid = {};
       S.guide = null; renderGuide();
       window.postWithRetry = () => Promise.resolve(reply({ said: 'Aye, peat.' }));
       cooperHears('what is peat?');
@@ -4241,6 +4246,11 @@ function step(n) {
       out.answered = (S.guide.thread || []).slice(-1)[0].text;
 
       /* 2. He asks for a door, and the APP opens it. */
+      /* AND WHAT HE HAS ALREADY BEEN PAID TO ANSWER, or the next case is
+         answered from the last one: with the cache warm the mark never
+         appears (nothing is thought about) and the fallback case passes on a
+         REMEMBERED answer rather than a fresh reading (2026-09-28). */
+      S.guideSaid = {};
       S.guide = null; renderGuide();
       let calls = 0, sentBack = null;
       window.postWithRetry = (url, body) => {
@@ -4267,6 +4277,11 @@ function step(n) {
          dots need motion"). An answer takes seconds and this is the only
          thing on screen for all of them; a still ellipsis reads as a hang,
          and "it rendered" would not have told anybody. */
+      /* AND WHAT HE HAS ALREADY BEEN PAID TO ANSWER, or the next case is
+         answered from the last one: with the cache warm the mark never
+         appears (nothing is thought about) and the fallback case passes on a
+         REMEMBERED answer rather than a fresh reading (2026-09-28). */
+      S.guideSaid = {};
       S.guide = null; renderGuide();
       let holdOff = null;
       window.postWithRetry = () => new Promise(f => { holdOff = f; });
@@ -4284,6 +4299,11 @@ function step(n) {
       out.markGone = !document.querySelector('#guideBody .thinking');
 
       /* 3. It fails, and he reads the entries out without complaining. */
+      /* AND WHAT HE HAS ALREADY BEEN PAID TO ANSWER, or the next case is
+         answered from the last one: with the cache warm the mark never
+         appears (nothing is thought about) and the fallback case passes on a
+         REMEMBERED answer rather than a fresh reading (2026-09-28). */
+      S.guideSaid = {};
       S.guide = null; renderGuide();
       window.postWithRetry = () => Promise.reject(new Error('no signal'));
       cooperHears('what is peat?');

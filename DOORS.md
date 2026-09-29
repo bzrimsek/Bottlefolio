@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 829 |
-| tables | 201 |
-| carrying a stated purpose | 645 |
+| functions | 834 |
+| tables | 202 |
+| carrying a stated purpose | 647 |
 
 ## Tables
 
@@ -75,6 +75,7 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_SAY`** — WHERE A ROW ON THE STILL MISSING LIST STANDS, and what it is short of.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
+- **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens
 - **`L.GUIDE_PROCESS`** — Canon, not invention (rule 36)
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
@@ -430,17 +431,22 @@ QUESTION, not the name you were going to use.
 - **`L.guessSub`** — _no comment above it_
 - **`L.guideBook`** — BUILT, NOT STORED
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
+- **`L.guideCost`** — _no comment above it_
 - **`L.guideDoor`** — THE DOOR HE ASKED FOR, by name, or nothing
 - **`L.guideGround`** — `base` is S.base - the shipped catalogue and the shared library - and never
 - **`L.guideHeard`** — Everything else depends on where they are
+- **`L.guideKey`** — _no comment above it_
 - **`L.guideLessons`** — THE LESSONS, WHICH NOTHING COULD SEE
 - **`L.guideNext`** — NO METER. A bar counting six steps is a form's idea of progress; in a
 - **`L.guideNote`** — THE NOTE A TASTING WRITES
 - **`L.guidePickList`** — The list was the first twelve alphabetically, which on a shelf of 352 meant
+- **`L.guideRecall`** — _no comment above it_
+- **`L.guideRemember`** — _no comment above it_
 - **`L.guideReply`** — AND WHAT CAME BACK
 - **`L.guideReveal`** — WHAT THE BOTTLE ITSELF SAYS ABOUT A COLUMN, shown only AFTER they answer
 - **`L.guideRow`** — _no comment above it_
 - **`L.guideSay`** — WHAT A TASTING READS AS, in a person's own note
+- **`L.guideShelfSig`** — THE STATE OF THE SHELF IN ONE STRING
 - **`L.guideTeach`** — WHAT THE GUIDE TEACHES AT A STEP, out of Learn rather than out of itself.
 - **`L.guideThread`** — _no comment above it_
 - **`L.guideTurn`** — WHAT GOES TO THE MODEL, as the conversation so far

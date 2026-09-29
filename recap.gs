@@ -203,8 +203,11 @@ function answerGuide_(r) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (want) return { tool: want, blocks: blocks, said: said };
-  return { said: said };
+  /* WHAT IT COST, straight from the API, so the app can write it down beside
+     the answer rather than anybody estimating it. */
+  var usage = data.usage || null;
+  if (want) return { tool: want, blocks: blocks, said: said, usage: usage };
+  return { said: said, usage: usage };
 }
 
 function writeRecap_(r) {
