@@ -12802,6 +12802,16 @@ sec('§242 the guided tasting');
             lines.filter(l => l.indexOf('[' + L.REF_GROUPS[0].label + ']') === 0)
               .length > 0, true);
         }
+        /* WHAT IS MISSING IS THE APP'S JUDGEMENT, NOT HIS (BZ, 2026-09-29:
+           'i don't think smoky is a hole'). He read the portrait, took its
+           smallest figure and called smoke the gap; the app ranks a wood-only
+           bottling at the top and does not mention peat. */
+        {
+          const op = L.shelfEnd('openings', cat, held, {});
+          eq('the openings are the app’s own, argued and weighted',
+            op.openings.every(x => x.want && x.why
+              && typeof x.weight === 'number'), true);
+        }
         eq('every quality the tool offers is one the door answers',
           L.GUIDE_TOOLS.filter(t => t.name === 'read_their_shelf')[0]
             .input_schema.properties.quality.enum
@@ -24593,9 +24603,12 @@ sec('§441 a lookup asks who is asking');
      blip is a check somebody switches off.
      2.6.5: when he cannot answer, the reason travels with the silence. The
      service knew and kept it to itself, so a key out of credit, a retired
-     model and a busy minute all arrived as 'the service answered nothing'. */
+     model and a busy minute all arrived as 'the service answered nothing'.
+     2.6.6: he stays an old tradesman rather than reaching for slang, repeats
+     a figure exactly as he was given it, spends in dollars, and asks the app
+     what is missing instead of working it out from the portrait. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.5');
+    L.GS_BUILD, '2.6.6');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

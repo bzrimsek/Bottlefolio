@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.5';
+var GS_BUILD = '2.6.6';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
