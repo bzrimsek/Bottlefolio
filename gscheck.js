@@ -112,6 +112,45 @@ while ((m = re.exec(code))) called.add(m[2]);
     + ' — a ReferenceError the app reports as a broken feature');
 });
 
+/* 2b. A HANDLER THAT ANSWERS AN OBJECT IS NOT WRAPPED IN ANOTHER ONE.
+   BZ, 2026-09-28: every question Cooper was asked came back as the glossary,
+   because answerGuide_ grew from returning a string to returning { said } and
+   the router went on wrapping it - { said: { said: 'Aye...' } }. The app asks
+   whether `said` is a string, found an object, and fell back without a word.
+
+   Nothing could see it: this file knew the mode was wired, and browser.js
+   stubs the service, so it only ever proved the app reads what the STUB sends.
+   Neither compared the shape the service answers with the shape the app reads,
+   which is the seam the fault lived in. */
+{
+  const routes = fs.readFileSync(path.join(HERE, 'lookup.gs'), 'utf8');
+  const bodies = {};
+  FILES.map(f => fs.readFileSync(path.join(HERE, f), 'utf8')).forEach(src => {
+    /* A top-level function and everything up to the next one. */
+    const re = /^function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*\{/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      const from = m.index;
+      const next = src.slice(from + m[0].length).search(/^function\s/m);
+      bodies[m[1]] = next < 0 ? src.slice(from)
+        : src.slice(from, from + m[0].length + next);
+    }
+  });
+  MODES.forEach(([mode, fn]) => {
+    const body = bodies[fn] || '';
+    /* Does it answer an object? */
+    if (!/return\s*\{/.test(body)) return;
+    const route = new RegExp("body\\.mode === '" + mode
+      + "'\\) return json\\(([^;]*)\\);").exec(routes);
+    if (!route) return;
+    if (/^\s*\{/.test(route[1])) {
+      failures.push(fn + ' answers an object and the router wraps it again ('
+        + route[1].trim().slice(0, 48) + ') \u2014 the app reads the fields at '
+        + 'the top level, so every answer arrives as the wrong shape');
+    }
+  });
+}
+
 /* 3. EVERY MODE THE APP ASKS FOR HAS SOMETHING TO ANSWER IT. */
 /* AND THE PROJECT'S OWN LIST SAYS THE SAME. probeWiring reports what is
    wired to whoever is standing in the Apps Script editor, and it reported

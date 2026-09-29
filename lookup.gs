@@ -244,7 +244,11 @@ function doPost(e) {
     if (body.mode === 'candidates') return json(suggestBottles(body));
     if (body.mode === 'recap') return json({ recap: writeRecap_(body) });
     /* Cooper. `said` and not `recap`, because it is a line of talk. */
-    if (body.mode === 'guide') return json({ said: answerGuide_(body) });
+    /* STRAIGHT THROUGH, not wrapped. answerGuide_ answers the whole reply -
+       { said } or { tool, blocks } - and wrapping it in another `said` gave
+       the app an object where it reads a string, so every question fell back
+       to the glossary with nothing to say it had (BZ, 2026-09-28). */
+    if (body.mode === 'guide') return json(answerGuide_(body));
     if (body.mode === 'bottle') return json({ recap: writeBottle_(body) });
     if (body.mode === 'label') return json(readLabel_(body));
     if (body.mode === 'shelf') return json(readShelf_(body));

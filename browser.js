@@ -4263,6 +4263,26 @@ function step(n) {
       out.doorAnswered = /tool_result/.test(String(sentBack || ''))
         && /whiskies/.test(String(sentBack || ''));
 
+      /* 2b. AND THE MARK MOVES WHILE HE IS AWAY (BZ, 2026-09-28: "those
+         dots need motion"). An answer takes seconds and this is the only
+         thing on screen for all of them; a still ellipsis reads as a hang,
+         and "it rendered" would not have told anybody. */
+      S.guide = null; renderGuide();
+      let holdOff = null;
+      window.postWithRetry = () => new Promise(f => { holdOff = f; });
+      cooperHears('what is peat?');
+      await wait();
+      const dots = [...document.querySelectorAll('#guideBody .thinking i')];
+      out.dots = dots.length;
+      out.moving = dots.length
+        ? dots.every(d => getComputedStyle(d).animationName !== 'none')
+        : false;
+      out.staggered = dots.length === 3
+        && new Set(dots.map(d => getComputedStyle(d).animationDelay)).size === 3;
+      if (holdOff) holdOff(reply({ said: 'Aye.' }));
+      await wait();
+      out.markGone = !document.querySelector('#guideBody .thinking');
+
       /* 3. It fails, and he reads the entries out without complaining. */
       S.guide = null; renderGuide();
       window.postWithRetry = () => Promise.reject(new Error('no signal'));
@@ -4295,6 +4315,20 @@ function step(n) {
     }
     if (!/fair few/i.test(r.afterDoor || '')) {
       failures.push('guide: after a door was opened his answer did not land');
+    }
+    if (r.dots !== 3) {
+      failures.push('guide: the thinking mark is ' + r.dots + ' dots, not 3');
+    }
+    if (!r.moving) {
+      failures.push('guide: the thinking dots do not move, so a wait reads '
+        + 'as a hang');
+    }
+    if (!r.staggered) {
+      failures.push('guide: the three dots move as one, which is a blink '
+        + 'rather than a ripple');
+    }
+    if (!r.markGone) {
+      failures.push('guide: the thinking mark outlived the answer');
     }
     if (!r.fellBack) {
       failures.push('guide: with the service down he said nothing useful');
