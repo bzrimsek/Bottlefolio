@@ -12627,16 +12627,26 @@ sec('§242 the guided tasting');
       (g.rows[0] || {}).name, 'Ardbeg Ten');
     eq('and he is given the facts of it, not the whole product',
       Object.keys(g.rows[0]).filter(k => L.GUIDE_FACTS.indexOf(k) < 0
-        && k !== 'tasting'), []);
+        && k !== 'tasting' && k !== 'owned'), []);
     /* THE ROW ITSELF, asked directly: a product carries bookkeeping, a
        person's corrections and what they paid, and only the named facts may
        come out the other side. */
     eq('a bottle he is given is the facts and the library note, nothing else',
       L.guideRow(Object.assign({}, base.a, { userNote: 'mine', paid: 90,
         tnSrc: 'mine', sugg: { at: 1 } })),
-      { name: 'Ardbeg Ten', dist: 'Ardbeg', age: 10, proof: 92,
+      { owned: 0, name: 'Ardbeg Ten', dist: 'Ardbeg', age: 10, proof: 92,
         sub: 'islay single malt', fin: 'bourbon', msrp: 55,
         tasting: 'nose: smoke and tar; palate: peat' });
+    /* WHETHER IT IS ON THE SHELF, ALWAYS (BZ, 2026-09-29: 'he told me i did
+       not have double double oaked when I did'). The bottle was found and
+       handed to him; nothing in the row said he owned one, and a silence is
+       where a model invents. Nought is an answer and is stated. */
+    eq('a bottle he is handed says whether it is owned',
+      [L.guideRow(base.a, { a: 2 }).owned, L.guideRow(base.a, {}).owned,
+        L.guideRow(base.a).owned], [2, 0, 0]);
+    eq('and a search of the library says it too',
+      L.guideGround('ardbeg', base, [{ k: 'a' }]).rows
+        .filter(r => typeof r.owned !== 'number').length, 0);
     eq('and a nameless thing is not a bottle',
       [L.guideRow({}), L.guideRow(null)], [null, null]);
     eq('the steps of a tasting travel with every question',
@@ -12720,6 +12730,25 @@ sec('§242 the guided tasting');
       L.GUIDE_CALLED.filter(x => x.id
         && !L.guideWho('x', x.id).called).length, 0);
     eq('and the default guesses at nobody', L.GUIDE_CALLED[0].id, '');
+
+    /* WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29: 'what woodford do I
+       have?'). He searched the LIBRARY and had to say honestly that he could
+       not answer - he could tell somebody a bottle exists and not whether one
+       was in the house. */
+    {
+      const shelf = { a: base.a, b: base.b,
+        n: { k: 'n', name: 'Ardbeg Uigeadail', dist: 'Ardbeg',
+             sub: 'islay single malt' } };
+      const two = [{ k: 'a' }, { k: 'a' }, { k: 'b' }];
+      const got = L.ownedMatching('ardbeg', shelf, two);
+      eq('only what is owned comes back', got.map(x => x.name),
+        ['Ardbeg Ten']);
+      eq('and it says how many are on the shelf', got[0].owned, 2);
+      eq('an empty search is the whole shelf, not nothing',
+        L.ownedMatching('', shelf, two).length, 2);
+      eq('nothing matching is nothing, not everything',
+        L.ownedMatching('zzzqqq', shelf, two).length, 0);
+    }
 
     /* THE DOORS HE MAY OPEN, and only those. The list is the whole of what
        he can do, so a name he invents opens nothing. */
@@ -12811,6 +12840,34 @@ sec('§242 the guided tasting');
           eq('the openings are the app’s own, argued and weighted',
             op.openings.every(x => x.want && x.why
               && typeof x.weight === 'number'), true);
+          /* AND COUNTED OVER THE SAME SHELF THE SHOP TAB COUNTS. Handed the
+             whole catalogue instead of what somebody owns, this door reported
+             the LIBRARY's wine casks as theirs - a hundred and eighty-seven
+             where the Shop says a hundred and four (BZ, 2026-09-29). The
+             numbers were not invented; they were counted over the wrong
+             population, which looks exactly as trustworthy. */
+          {
+            /* THE LIBRARY IS IN THE CATALOGUE AND NOT ON THE SHELF, which is
+               the whole scenario: a fixture where everything is owned cannot
+               tell a door that filters from one that does not, and the first
+               version of this check could not. */
+            const lib = Object.assign({}, cat);
+            for (let i = 0; i < 40; i++) {
+              lib['lib' + i] = { k: 'lib' + i, name: 'Library Wine Cask ' + i,
+                sub: 'bourbon', fin: 'Sherry', wine: true };
+            }
+            const shopCat = {};
+            const mine = L.ownedCounts(held);
+            Object.keys(lib).forEach(k => {
+              if (mine[k]) shopCat[k] = lib[k];
+            });
+            eq('the guide and the Shop tab cannot disagree about what is '
+              + 'missing',
+              JSON.stringify(L.shelfGaps(shopCat, held, [], [], [], {})
+                .slice(0, 6).map(g => g.name + '|' + g.weight)),
+              JSON.stringify(L.shelfEnd('openings', lib, held, {})
+                .openings.map(g => g.want + '|' + g.weight)));
+          }
         }
         eq('every quality the tool offers is one the door answers',
           L.GUIDE_TOOLS.filter(t => t.name === 'read_their_shelf')[0]

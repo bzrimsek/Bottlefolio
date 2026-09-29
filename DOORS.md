@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 836 |
+| functions | 837 |
 | tables | 203 |
-| carrying a stated purpose | 650 |
+| carrying a stated purpose | 651 |
 
 ## Tables
 
@@ -680,6 +680,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCatalog`** — _no comment above it_
 - **`L.ownedCount`** — _no comment above it_
 - **`L.ownedCounts`** — _no comment above it_
+- **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
 - **`L.ownedProductCount`** — How many products you own at least one of
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
 - **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.

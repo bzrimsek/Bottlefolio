@@ -4397,6 +4397,26 @@ function step(n) {
       out.greedyAnswered = /fair few/i.test(
         ((S.guide.thread || []).slice(-1)[0] || {}).text || '');
 
+      /* 2f. A TURN CAN BE STOPPED (BZ, 2026-09-29: "we need a way to make
+         him stop if you get off track"). Ninety seconds across three calls
+         was a thing you could only watch finish. What arrives afterwards is
+         dropped, or it lands on top of the next question. */
+      S.guideSaid = {};
+      S.guide = null; renderGuide();
+      let release = null;
+      window.postWithRetry = () => new Promise(f => { release = f; });
+      cooperHears('what is peat and how does it get there?');
+      await wait();
+      out.stopShows = (document.getElementById('guideGo') || {}).textContent;
+      const saidBefore = (S.guide.thread || []).length;
+      cooperStop();
+      out.stoppedThinking = !cooperThinking;
+      out.sayBack = (document.getElementById('guideGo') || {}).textContent;
+      /* The answer turns up anyway, as it always would. */
+      if (release) release(reply({ said: 'Aye, the kiln.' }));
+      await wait();
+      out.lateDropped = (S.guide.thread || []).length === saidBefore;
+
       /* 2d. A SILENCE WITH A REASON IN IT. The service knew why it could
          not answer and kept it to itself, so every failure reached the log
          as 'the service answered nothing' (BZ's log, 2026-09-29). */
@@ -4489,6 +4509,17 @@ function step(n) {
     if (!r.greedyAnswered) {
       failures.push('guide: he asked for a door every turn and never got to '
         + 'an answer');
+    }
+    if (r.stopShows !== 'Stop') {
+      failures.push('guide: while he is away the button says "'
+        + r.stopShows + '", so there is no way to call him off');
+    }
+    if (!r.stoppedThinking || r.sayBack !== 'Say') {
+      failures.push('guide: Stop did not end the turn');
+    }
+    if (!r.lateDropped) {
+      failures.push('guide: an answer arrived after Stop and was spoken '
+        + 'anyway, which lands on top of the next question');
     }
     if (!r.whyLogged) {
       failures.push('guide: the service said why it could not answer and the '
