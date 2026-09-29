@@ -253,11 +253,37 @@ jobs:
         run: |
           want=$(grep -m1 -oP "var GS_BUILD\s*=\s*'\K[^']+" Code.gs)
           for i in $(seq 1 12); do
-            got=$(curl -sL -H 'Content-Type: text/plain' -d '{"mode":"version"}' \
-              "https://script.google.com/macros/s/$GAS_DEPLOYMENT_ID/exec" \
-              | grep -oP '"build"\s*:\s*"\K[^"]+' || true)
+            # `models:1` asks it to check every model it names is still real.
+            # Free - naming a model is not using one - and only asked here,
+            # where a model name could have changed.
+            said=$(curl -sL -H 'Content-Type: text/plain' \
+              -d '{"mode":"version","models":1}' \
+              "https://script.google.com/macros/s/$GAS_DEPLOYMENT_ID/exec" || true)
+            got=$(echo "$said" | grep -oP '"build"\s*:\s*"\K[^"]+' || true)
             echo "live service says ${got:-nothing}, this build is $want"
-            if [ "$got" = "$want" ]; then exit 0; fi
+            if [ "$got" = "$want" ]; then
+              # A MODEL THAT NO LONGER EXISTS IS A SILENT FAULT: the service
+              # errors, the app falls back, and nobody is told for weeks. It
+              # is a red build instead (BZ, 2026-09-29: "how do we keep up
+              # with changing models over time?").
+              # GONE, not merely unreachable. The first run of this check
+              # failed the build on HTTP 503 - busy, not retired - and a
+              # check that stops a deploy over a passing blip is one
+              # somebody turns off. Only `"gone":true`, which is a 404.
+              dead=$(echo "$said" \
+                | grep -oP '"[a-z]+"\s*:\s*\{[^}]*"gone"\s*:\s*true[^}]*\}' \
+                || true)
+              if [ -n "$dead" ]; then
+                echo "::error::A model this service names is gone: $dead"
+                echo "::error::Edit MODELS_ in Code.gs. main has NOT moved."
+                exit 1
+              fi
+              # Said out loud, because "could not tell" is worth reading.
+              echo "$said" | grep -oP '"[a-z]+"\s*:\s*\{[^}]*"ok"\s*:\s*false[^}]*\}' \
+                | sed 's/^/could not check: /' || true
+              echo "no model it names has been retired"
+              exit 0
+            fi
             sleep 10
           done
           echo "::error::The service was deployed but did not report build $want. main has NOT moved."

@@ -37,12 +37,50 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.2';
+var GS_BUILD = '2.6.4';
 
-var MODEL = 'claude-haiku-4-5-20251001';
+/* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
+   2026-09-29: "how do we keep up with changing models over time?"). Three
+   names sat in two files, and a retired one would have shown up as Cooper
+   quietly reading the glossary rather than as a build going red.
+
+   modelsAlive_ asks Anthropic whether each still exists - free, no tokens -
+   and the gate asks for that with the build after every deploy, so the day one
+   is retired the build fails with the job and the name in it. Changing a model
+   is one line here, and what it was FOR survives the change. */
+var MODELS_ = {
+  quick: 'claude-haiku-4-5-20251001',   // lookups, labels, reading a shelf
+  flight: 'claude-sonnet-4-6',          // designing a flight
+  guide: 'claude-sonnet-5'              // Cooper, who has a character to hold
+};
+
+/* GONE IS 404, AND ONLY 404. The first run of this check went red on HTTP 503
+   against all three - Anthropic busy, not Anthropic retiring everything at
+   once - and a build stopped by a passing blip is a check somebody switches
+   off within a fortnight. Busy, rate-limited, a network sulk: all of them are
+   "could not tell", said out loud and let through. A model that is really
+   retired answers 404 every time, so a real one still fails tomorrow. */
+function modelsAlive_() {
+  var out = {};
+  Object.keys(MODELS_).forEach(function (job) {
+    var id = MODELS_[job], code = 0, why = '';
+    try {
+      var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/models/' + id,
+        { method: 'get', headers: apiHeaders_(), muteHttpExceptions: true });
+      code = res.getResponseCode();
+      if (code !== 200) why = 'HTTP ' + code;
+    } catch (e) {
+      why = String(e).slice(0, 80);
+    }
+    out[job] = { id: id, ok: code === 200, gone: code === 404, why: why };
+  });
+  return out;
+}
+
+var MODEL = MODELS_.quick;
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
 // it gets the larger model. It runs once per flight, not once per bottle.
-var FLIGHT_MODEL = 'claude-sonnet-4-6';
+var FLIGHT_MODEL = MODELS_.flight;
 var API = 'https://api.anthropic.com/v1/messages';
 
 /* WHO IS ASKING. This web app is deployed to anyone with the link - it
@@ -239,7 +277,14 @@ function doPost(e) {
     if (body.mode !== 'version' && !signedIn_(body.idToken)) {
       return needSignIn_();
     }
-    if (body.mode === 'version') return json({ build: GS_BUILD });
+    /* THE BUILD, AND ON REQUEST WHETHER THE MODELS ARE STILL REAL. Asked for
+       by the gate after a deploy; a plain version call stays instant, because
+       it is also what the Check the service button presses. */
+    if (body.mode === 'version') {
+      return json(body.models
+        ? { build: GS_BUILD, models: modelsAlive_() }
+        : { build: GS_BUILD });
+    }
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
     if (body.mode === 'recap') return json({ recap: writeRecap_(body) });

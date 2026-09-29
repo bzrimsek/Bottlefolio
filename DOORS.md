@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 835 |
+| functions | 836 |
 | tables | 203 |
-| carrying a stated purpose | 649 |
+| carrying a stated purpose | 650 |
 
 ## Tables
 
@@ -431,6 +431,7 @@ QUESTION, not the name you were going to use.
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
 - **`L.guideBook`** — BUILT, NOT STORED
+- **`L.guideBookRef`** — A NAME FOR THE BOOK, so it can be sent once and referred to after
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
 - **`L.guideCost`** — _no comment above it_
 - **`L.guideDoor`** — THE DOOR HE ASKED FOR, by name, or nothing

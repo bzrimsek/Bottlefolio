@@ -2838,6 +2838,85 @@ check('no fixed svg id is emitted by a repeated drawing',
         + 'switch on the settings screen does not exist']);
 }
 
+/* A NEW WHISKY REACHES THE LIBRARY, or says why not (BZ, 2026-09-29: "I add a
+   bottle that is in my hand - it must get to the library - still feels like a
+   condition of the prior moment"). It was: every path where the app learned of
+   a bottle from somewhere else offered it, and neither of the two where a
+   PERSON was the source did - so the one bottle somebody had held was the one
+   the library never heard of.
+
+   Three sites genuinely do not offer, and each is named with its reason. A gap
+   named here is a sentence somebody wrote; an unnamed one is a bottle quietly
+   kept to oneself. */
+{
+  const ls = src.split('\n');
+  const WHY_NOT = {
+    'snap.custom': 'restoring a snapshot is not a new whisky',
+    'S.custom[p.k] = p': 'the library fill, which is the library\u2019s own '
+      + 'writer and must not offer its work back to itself',
+    'x.proof': 'an away pour carries a name and a proof, which the bar '
+      + 'refuses anyway'
+  };
+  const found = [];
+  ls.forEach((line, i) => {
+    if (!/\bS\.custom\[[^\]]+\]\s*=\s*[A-Za-z]/.test(line)) return;
+    const near = ls.slice(Math.max(0, i - 6), i + 9).join('\n');
+    if (/offerToLibrary\s*\(/.test(near)) return;
+    const excused = Object.keys(WHY_NOT).filter(k => near.indexOf(k) >= 0)[0];
+    if (excused) return;
+    found.push('index.html:' + (i + 1) + '  ' + line.trim().slice(0, 44)
+      + ' \u2014 a new whisky nobody offers to the library, and no reason '
+      + 'given');
+  });
+  check('a new whisky reaches the library, or says why not', found);
+}
+
+/* ONE ANSWER, READ ONE WAY (BZ, 2026-09-29: "That door came back empty").
+   Cooper's new suggest door read the candidates reply itself rather than
+   through L.parseCandidates, which is what the Shop tab reads it through -
+   the thing that drops names too long to be real, refuses bottles already on
+   the shelf, throws out any suggestion with nothing behind it and sorts the
+   rest. Read raw, the field it looked for did not exist, so every ask came
+   back empty and Cooper said so politely.
+
+   The two-doors check finds one RULE written twice; this finds one ANSWER
+   read two ways. Nothing is listed here: the readers are learnt from the
+   sites themselves, so a new mode needs no entry and a second reader on an
+   old one is noticed the day it turns up. */
+{
+  const ls = src.split('\n');
+  const seen = {};
+  ls.forEach((line, i) => {
+    const m = /readService\([^,]+,\s*'([a-z]+)'\)/.exec(line);
+    if (!m) return;
+    const mode = m[1];
+    /* What is applied to the answer, within a few lines of reading it. */
+    const after = ls.slice(i, i + 8).join('\n');
+    const readers = (after.match(/\bL\.(parse|verify)[A-Za-z]*\(/g) || [])
+      .map(x => x.replace(/\($/, ''));
+    (seen[mode] = seen[mode] || []).push(
+      { line: i + 1, readers: readers.join(',') });
+  });
+  const found = [];
+  Object.keys(seen).forEach(mode => {
+    const sites = seen[mode];
+    if (sites.length < 2) return;
+    /* What the others do with it. A mode nobody passes through a reader is
+       not one this is about. */
+    const used = sites.map(x => x.readers).filter(Boolean);
+    if (!used.length) return;
+    const want = used.sort((a, b) =>
+      used.filter(v => v === b).length - used.filter(v => v === a).length)[0];
+    sites.forEach(x => {
+      if (x.readers === want) return;
+      found.push('index.html:' + x.line + '  a ' + mode + ' reply is read '
+        + (x.readers ? 'through ' + x.readers : 'raw')
+        + ' where every other site reads it through ' + want);
+    });
+  });
+  check('a service reply is read the same way everywhere', found);
+}
+
 /* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
  *
  * Review item 35, 2026-09-15. The architecture pass measured 19 top-level

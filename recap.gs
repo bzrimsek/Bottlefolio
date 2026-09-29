@@ -33,8 +33,6 @@
 
 /* WHO HE IS, AND WHAT HE MAY SAY. The voice is BZ's brief; every rule under it
    is one this app already lived by, said to a model rather than to a person. */
-var GUIDE_MODEL = 'claude-sonnet-5';
-
 function guideRules_() {
   return [
     'You are Cooper: a Scottish cooper and blender, an old hand who has been',
@@ -171,6 +169,52 @@ function guideFacts_(r) {
  * Returns { said } when he has answered, { tool } when he wants a door, or
  * { said: '' } on any failure - which the app reads as "answer it yourself".
  */
+/* THE BOOK, KEPT BETWEEN CALLS. A hundred kilobytes that never changes, so it
+   travels once and is named after that. Chunked because one cache entry holds
+   a hundred kilobytes and the book is a hundred and three; the count is stored
+   beside the chunks so a half-expired set reads as nothing rather than as a
+   truncated reference he would cheerfully answer from. */
+var BOOK_CHUNK_ = 20000;
+var BOOK_HOURS_ = 21600;
+
+function bookKeep_(ref, text) {
+  try {
+    var c = CacheService.getScriptCache();
+    var n = Math.ceil(text.length / BOOK_CHUNK_);
+    var put = {};
+    for (var i = 0; i < n; i++) {
+      put['gb_' + ref + '_' + i] = text.substr(i * BOOK_CHUNK_, BOOK_CHUNK_);
+    }
+    put['gb_' + ref + '_n'] = String(n);
+    c.putAll(put, BOOK_HOURS_);
+  } catch (e) {
+    Logger.log('guide: could not keep the book \u2014 %s', e);
+  }
+}
+
+function bookGet_(ref) {
+  try {
+    var c = CacheService.getScriptCache();
+    var n = parseInt(c.get('gb_' + ref + '_n'), 10);
+    if (!n) return null;
+    var keys = [];
+    for (var i = 0; i < n; i++) keys.push('gb_' + ref + '_' + i);
+    var got = c.getAll(keys);
+    var out = '';
+    for (var j = 0; j < n; j++) {
+      var part = got['gb_' + ref + '_' + j];
+      /* A MISSING CHUNK IS NOT A SHORTER BOOK. Half a reference read as a
+         whole one is a man answering confidently out of the part he was
+         handed. */
+      if (part === undefined || part === null) return null;
+      out += part;
+    }
+    return out;
+  } catch (e) {
+    return null;
+  }
+}
+
 function answerGuide_(r) {
   var body = r || {};
   var msgs = body.messages;
@@ -183,13 +227,26 @@ function answerGuide_(r) {
      conversation if it were paid for each time: written once per session,
      read at a tenth after that. The rules stay uncached and first, because a
      block before a cached one is part of what is cached. */
-  var system = [{ type: 'text', text: guideRules_() }];
+  /* THE BOOK, sent or remembered. If it came with this call it is kept under
+     its own name; if only the name came, it is fetched. Neither, and we say
+     so rather than answering out of half a reference. */
+  var book = '';
   if (body.book) {
-    system.push({ type: 'text', text: String(body.book),
+    book = String(body.book);
+    if (body.bookRef) bookKeep_(body.bookRef, book);
+  } else if (body.bookRef) {
+    book = bookGet_(body.bookRef) || '';
+    if (!book) return { needBook: true };
+  }
+  var system = [{ type: 'text', text: guideRules_() }];
+  if (book) {
+    system.push({ type: 'text', text: book,
       cache_control: { type: 'ephemeral' } });
   }
   var ask = {
-    model: GUIDE_MODEL,
+    /* Read from the table when the request runs, not at load: Apps Script
+       does not promise which file is evaluated first. */
+    model: MODELS_.guide,
     max_tokens: 700,
     system: system,
     messages: msgs

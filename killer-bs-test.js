@@ -12788,6 +12788,16 @@ sec('§242 the guided tasting');
           eq('and the quiz is in it, which no search could reach',
             lines.filter(l => l.indexOf('[Quiz]') === 0).length,
             (L.LESSONS || []).length);
+          /* A NAME FOR IT, so it can be sent once and referred to after -
+             a turn that opens a door made three calls and pushed three
+             hundred kilobytes off a phone (BZ, 2026-09-29). */
+          eq('the same book has the same name',
+            L.guideBookRef(book), L.guideBookRef(L.guideBook()));
+          eq('and a different book has a different one',
+            L.guideBookRef(book) === L.guideBookRef(book + ' one more entry'),
+            false);
+          eq('the name carries the length, so a truncated book is a new one',
+            L.guideBookRef(book).indexOf('-' + book.length) > 0, true);
           eq('it is built from the reference, never a second copy of it',
             lines.filter(l => l.indexOf('[' + L.REF_GROUPS[0].label + ']') === 0)
               .length > 0, true);
@@ -24574,9 +24584,15 @@ sec('§441 a lookup asks who is asking');
      not be handed back in the new one (BZ, 2026-09-29).
      2.6.2: he stops calling everybody lad. BZ: 'are we inferring gender from
      the user name?' - not from the name, which he is never told, but from
-     nothing at all, which is worse. */
+     nothing at all, which is worse.
+     2.6.3: the book is sent once and named after that, every model lives in
+     one table by job, and the service can be asked whether they still exist
+     (BZ, 2026-09-29: 'how do we keep up with changing models over time?').
+     2.6.4: gone is 404 and only 404. The check's first run failed the build
+     on HTTP 503 - busy, not retired - and a deploy stopped by a passing
+     blip is a check somebody switches off. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.2');
+    L.GS_BUILD, '2.6.4');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

@@ -4273,6 +4273,38 @@ function step(n) {
       out.doorAnswered = /tool_result/.test(String(sentBack || ''))
         && /whiskies/.test(String(sentBack || ''));
 
+      /* 2bb. THE BOOK GOES UP ONCE. It is a hundred kilobytes and it never
+         changes, so the second call of a turn carries its name instead -
+         and a service that has lost it must be able to ask for it back, or
+         the conversation simply stops working one day. */
+      S.guideSaid = {};
+      S.guide = null; renderGuide();
+      const sent = [];
+      let asked = 0;
+      window.postWithRetry = (url, body) => {
+        sent.push(String(body || '').length);
+        asked++;
+        /* The first time, pretend the service has lost it. */
+        if (asked === 1) return Promise.resolve(reply({ needBook: true }));
+        return Promise.resolve(reply({ said: 'Aye.' }));
+      };
+      cooperHears('what is peat and why does it matter?');
+      await wait();
+      out.bookCalls = sent.length;
+      out.bookBig = sent.filter(n => n > 50000).length;
+      out.bookSmall = sent.filter(n => n < 50000).length;
+
+      /* And now it is known to be there: the next question sends the name. */
+      asked = 0;
+      const after = [];
+      window.postWithRetry = (url, body) => {
+        after.push(String(body || '').length);
+        return Promise.resolve(reply({ said: 'Aye, again.' }));
+      };
+      cooperHears('and what about sherry casks in particular?');
+      await wait();
+      out.nextSend = after[0] || 0;
+
       /* 2c. A DOOR THAT ANSWERS LATER. Two of the five ask the service and
          hand back a promise rather than a value, which is a different path
          through guideRound - and one that would otherwise reach the model as
@@ -4292,7 +4324,14 @@ function step(n) {
         /* The door's own call to the service, then his answer. */
         if (slowCalls === 2) {
           return new Promise(f => setTimeout(() =>
-            f(reply({ candidates: [{ name: 'Benriach Smoky Ten' }] })), 60));
+            /* THE SHAPE THE SERVICE REALLY ANSWERS, which is what the
+               Shop tab's reader expects: a name alone is not a suggestion,
+               it needs somewhere it came from. Stubbing the old shape is
+               how a door came back empty for BZ on 2026-09-29. */
+            f(reply({ bottles: [{ name: 'Benriach Smoky Ten',
+              distillery: 'Benriach', proof: 92, price_usd: 55,
+              source: 'benriach.com', confident: true, find: 'shelf',
+              why: 'a peated Speyside' }] })), 60));
         }
         slowBack = body;
         return Promise.resolve(reply({ said: 'Try the Benriach.' }));
@@ -4366,6 +4405,15 @@ function step(n) {
     }
     if (!/fair few/i.test(r.afterDoor || '')) {
       failures.push('guide: after a door was opened his answer did not land');
+    }
+    /* A service that lost the book asks for it, and gets it. */
+    if (r.bookCalls !== 2 || r.bookBig !== 1) {
+      failures.push('guide: a service asking for the book got ' + r.bookBig
+        + ' copies of it over ' + r.bookCalls + ' calls, wanted 1 over 2');
+    }
+    if (r.nextSend > 50000) {
+      failures.push('guide: the next question sent the whole book again ('
+        + Math.round(r.nextSend / 1024) + 'KB) instead of its name');
     }
     if (r.slowRounds !== 3) {
       failures.push('guide: a door that asks the service took ' + r.slowRounds
