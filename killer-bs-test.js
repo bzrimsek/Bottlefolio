@@ -24551,9 +24551,12 @@ sec('§441 a lookup asks who is asking');
      by accident, so a service change is a decision somebody wrote down.
      2.4.12: WHISKY:EDITION removed, the service now has one source.
      2.6.0: the guide mode, so Cooper answers in sentences rather than
-     reading entries out (BZ, 2026-09-28). */
+     reading entries out (BZ, 2026-09-28).
+     2.6.1: his character brief, which lives in the service - so this number
+     is also what tells the app an answer was given in the old voice and must
+     not be handed back in the new one (BZ, 2026-09-29). */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.0');
+    L.GS_BUILD, '2.6.1');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
