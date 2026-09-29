@@ -262,9 +262,17 @@ function answerGuide_(r) {
   });
 
   if (res.getResponseCode() !== 200) {
+    var body200 = res.getContentText();
     Logger.log('guide: API %s \u2014 %s', res.getResponseCode(),
-      res.getContentText().slice(0, 300));
-    return { said: '' };
+      body200.slice(0, 300));
+    /* THE REASON TRAVELS. It was written into this script's own log, which
+       nobody reads, and the app was handed an empty string - so a key out of
+       credit, a model that is gone and a busy minute all arrived as "the
+       service answered nothing" (BZ's log, 2026-09-29). */
+    var kind = '';
+    try { kind = (JSON.parse(body200).error || {}).type || ''; } catch (e) {}
+    return { said: '', why: 'API ' + res.getResponseCode()
+      + (kind ? ' ' + kind : '') };
   }
 
   var data = JSON.parse(res.getContentText());
@@ -292,7 +300,11 @@ function answerGuide_(r) {
      the answer rather than anybody estimating it. */
   var usage = data.usage || null;
   if (want) return { tool: want, blocks: blocks, said: said, usage: usage };
-  return { said: said, usage: usage };
+  /* Nothing said and no door asked for is also a failure, and a quiet one:
+     it means the model answered with neither, which is worth telling apart
+     from a refusal. */
+  return { said: said, usage: usage,
+    why: said ? '' : 'the model said nothing and asked for nothing' };
 }
 
 function writeRecap_(r) {

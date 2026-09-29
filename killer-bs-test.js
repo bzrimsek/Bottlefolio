@@ -24590,9 +24590,12 @@ sec('§441 a lookup asks who is asking');
      (BZ, 2026-09-29: 'how do we keep up with changing models over time?').
      2.6.4: gone is 404 and only 404. The check's first run failed the build
      on HTTP 503 - busy, not retired - and a deploy stopped by a passing
-     blip is a check somebody switches off. */
+     blip is a check somebody switches off.
+     2.6.5: when he cannot answer, the reason travels with the silence. The
+     service knew and kept it to itself, so a key out of credit, a retired
+     model and a busy minute all arrived as 'the service answered nothing'. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.4');
+    L.GS_BUILD, '2.6.5');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

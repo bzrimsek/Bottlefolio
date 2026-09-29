@@ -4368,6 +4368,18 @@ function step(n) {
       await wait();
       out.markGone = !document.querySelector('#guideBody .thinking');
 
+      /* 2d. A SILENCE WITH A REASON IN IT. The service knew why it could
+         not answer and kept it to itself, so every failure reached the log
+         as 'the service answered nothing' (BZ's log, 2026-09-29). */
+      S.guideSaid = {};
+      S.guide = null; renderGuide();
+      window.postWithRetry = () => Promise.resolve(
+        reply({ said: '', why: 'API 503 overloaded_error' }));
+      cooperHears('why is some scotch smoky?');
+      await wait();
+      out.whyLogged = (S.log || []).slice(0, 4)
+        .some(l => /API 503/.test(String(l)));
+
       /* 3. It fails, and he reads the entries out without complaining. */
       /* AND WHAT HE HAS ALREADY BEEN PAID TO ANSWER, or the next case is
          answered from the last one: with the cache warm the mark never
@@ -4439,6 +4451,10 @@ function step(n) {
     }
     if (!r.markGone) {
       failures.push('guide: the thinking mark outlived the answer');
+    }
+    if (!r.whyLogged) {
+      failures.push('guide: the service said why it could not answer and the '
+        + 'log did not keep it');
     }
     if (!r.fellBack) {
       failures.push('guide: with the service down he said nothing useful');
