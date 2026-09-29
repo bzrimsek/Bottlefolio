@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 820 |
-| tables | 197 |
-| carrying a stated purpose | 635 |
+| functions | 828 |
+| tables | 201 |
+| carrying a stated purpose | 644 |
 
 ## Tables
 
@@ -74,6 +74,9 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_KINDS`** — _no comment above it_
 - **`L.GAP_SAY`** — WHERE A ROW ON THE STILL MISSING LIST STANDS, and what it is short of.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
+- **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
+- **`L.GUIDE_PROCESS`** — Canon, not invention (rule 36)
+- **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
@@ -174,6 +177,7 @@ QUESTION, not the name you were going to use.
 - **`L.SHEET_ROW_MM`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
 - **`L.SHEET_SAFE`** — every sheet's prompts, and a check that cries wolf gets switched off.
 - **`L.SHELF_AXES`** — The shape of a shelf, on six axes, each measuring something the others
+- **`L.SHELF_ENDS`** — _no comment above it_
 - **`L.SHELF_LEAN_BAND`** — THE FLAVOURS THAT SEPARATE THIS SHELF FROM ITSELF.
 - **`L.SHOP_JUNK`** — A pasted page is not a title, and was being read as one.
 - **`L.SLOT_FOR`** — ONE rule for what a library entry is short of, and whether a value may
@@ -239,6 +243,7 @@ QUESTION, not the name you were going to use.
 - **`L.askScore`** — What each ask has actually produced.
 - **`L.askState`** — _no comment above it_
 - **`L.askStem`** — THE STEM OF A WORD, roughly, because the reference is searched by substring
+- **`L.askWords`** — Lowercased here, which the stop list and every later `includes` both need
 - **`L.asUids`** — WHO IS WORTH READING BY NAME (probeCandidates), bounded in two tiers.
 - **`L.auditFix`** — WHAT A FINDING WOULD CHANGE
 - **`L.auditSuggestion`** — WHAT TO DO ABOUT A FINDING, said on the row.
@@ -424,14 +429,20 @@ QUESTION, not the name you were going to use.
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
+- **`L.guideDoor`** — THE DOOR HE ASKED FOR, by name, or nothing
+- **`L.guideGround`** — `base` is S.base - the shipped catalogue and the shared library - and never
 - **`L.guideHeard`** — Everything else depends on where they are
+- **`L.guideLessons`** — THE LESSONS, WHICH NOTHING COULD SEE
 - **`L.guideNext`** — NO METER. A bar counting six steps is a form's idea of progress; in a
 - **`L.guideNote`** — THE NOTE A TASTING WRITES
 - **`L.guidePickList`** — The list was the first twelve alphabetically, which on a shelf of 352 meant
+- **`L.guideReply`** — AND WHAT CAME BACK
 - **`L.guideReveal`** — WHAT THE BOTTLE ITSELF SAYS ABOUT A COLUMN, shown only AFTER they answer
+- **`L.guideRow`** — _no comment above it_
 - **`L.guideSay`** — WHAT A TASTING READS AS, in a person's own note
 - **`L.guideTeach`** — WHAT THE GUIDE TEACHES AT A STEP, out of Learn rather than out of itself.
 - **`L.guideThread`** — _no comment above it_
+- **`L.guideTurn`** — WHAT GOES TO THE MODEL, as the conversation so far
 - **`L.guideVerdict`** — _no comment above it_
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
@@ -874,6 +885,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfAxes`** — _no comment above it_
 - **`L.shelfBuild`** — _no comment above it_
 - **`L.shelfCountLine`** — How many whiskies are listed, against how many are owned.
+- **`L.shelfEnd`** — _no comment above it_
 - **`L.shelfFilter`** — _no comment above it_
 - **`L.shelfFit`** — _no comment above it_
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can

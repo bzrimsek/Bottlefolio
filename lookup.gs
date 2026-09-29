@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.5.2';
+var GS_BUILD = '2.6.0';
 
 var MODEL = 'claude-haiku-4-5-20251001';
 // Designing a flight is judgement across 300 bottles, not a fact lookup, so
@@ -170,6 +170,7 @@ var MODES_ = [
   ['flight', 'designFlight', 'Code.gs (this file)'],
   ['candidates', 'suggestBottles', 'Code.gs (this file)'],
   ['recap', 'writeRecap_', 'recap.gs'],
+  ['guide', 'answerGuide_', 'recap.gs'],
   ['bottle', 'writeBottle_', 'recap.gs'],
   ['label', 'readLabel_', 'label.gs'],
   ['shelf', 'readShelf_', 'shelf.gs'],
@@ -242,6 +243,8 @@ function doPost(e) {
     if (body.mode === 'flight') return json(designFlight(body));
     if (body.mode === 'candidates') return json(suggestBottles(body));
     if (body.mode === 'recap') return json({ recap: writeRecap_(body) });
+    /* Cooper. `said` and not `recap`, because it is a line of talk. */
+    if (body.mode === 'guide') return json({ said: answerGuide_(body) });
     if (body.mode === 'bottle') return json({ recap: writeBottle_(body) });
     if (body.mode === 'label') return json(readLabel_(body));
     if (body.mode === 'shelf') return json(readShelf_(body));

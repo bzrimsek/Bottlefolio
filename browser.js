@@ -4216,6 +4216,95 @@ function step(n) {
     }
   }
 
+  /* ASKING HIM SOMETHING, three ways, with the service stubbed. It is never
+     called for real: there is no key in the gate, a check that spends money
+     every run gets switched off, and prose cannot be asserted. The wiring
+     round it can, and that is where the faults live. */
+  step('Cooper answers, opens a door, or falls back');
+  {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const r = await page.evaluate(async () => {
+      S.guideOn = true;
+      try { showGuideTab(); } catch (e) {}
+      show('guide');
+      const out = {};
+      const real = window.postWithRetry;
+      const reply = o => new Response(JSON.stringify(o),
+        { status: 200, headers: { 'content-type': 'application/json' } });
+      const wait = () => new Promise(f => setTimeout(f, 350));
+
+      /* 1. He answers. */
+      S.guide = null; renderGuide();
+      window.postWithRetry = () => Promise.resolve(reply({ said: 'Aye, peat.' }));
+      cooperHears('what is peat?');
+      await wait();
+      out.answered = (S.guide.thread || []).slice(-1)[0].text;
+
+      /* 2. He asks for a door, and the APP opens it. */
+      S.guide = null; renderGuide();
+      let calls = 0, sentBack = null;
+      window.postWithRetry = (url, body) => {
+        calls++;
+        if (calls === 1) {
+          return Promise.resolve(reply({
+            said: '', blocks: [{ type: 'tool_use', id: 't1',
+              name: 'read_their_shelf', input: { quality: 'count' } }],
+            tool: { id: 't1', name: 'read_their_shelf',
+              input: { quality: 'count' } } }));
+        }
+        sentBack = body;
+        return Promise.resolve(reply({ said: 'You have a fair few.' }));
+      };
+      cooperHears('how many do I have?');
+      await wait();
+      out.rounds = calls;
+      out.afterDoor = (S.guide.thread || []).slice(-1)[0].text;
+      /* The door's answer went back, and it is the APP's own count. */
+      out.doorAnswered = /tool_result/.test(String(sentBack || ''))
+        && /whiskies/.test(String(sentBack || ''));
+
+      /* 3. It fails, and he reads the entries out without complaining. */
+      S.guide = null; renderGuide();
+      window.postWithRetry = () => Promise.reject(new Error('no signal'));
+      cooperHears('what is peat?');
+      await wait();
+      /* HIS last line, not the last line. The person's own question
+         contains the word being looked for, so testing the end of the thread
+         passed with the fallback deleted (2026-09-28). */
+      const mine = (S.guide.thread || []).filter(m => m.who === 'cooper');
+      const last = (mine.slice(-1)[0] || {}).text || '';
+      out.fellBack = /peat/i.test(last);
+      out.complained = /error|failed|sorry|could not reach/i.test(last);
+
+      window.postWithRetry = real;
+      S.guideOn = false;
+      try { showGuideTab(); } catch (e) {}
+      return out;
+    });
+    if (!/peat/i.test(r.answered || '')) {
+      failures.push('guide: what he said did not reach the thread \u2014 got "'
+        + (r.answered || '') + '"');
+    }
+    if (r.rounds !== 2) {
+      failures.push('guide: a door he asked for took ' + r.rounds
+        + ' calls, not 2 \u2014 the app did not open it and answer him');
+    }
+    if (!r.doorAnswered) {
+      failures.push('guide: the door was opened but its answer never went '
+        + 'back to him');
+    }
+    if (!/fair few/i.test(r.afterDoor || '')) {
+      failures.push('guide: after a door was opened his answer did not land');
+    }
+    if (!r.fellBack) {
+      failures.push('guide: with the service down he said nothing useful');
+    }
+    if (r.complained) {
+      failures.push('guide: with the service down he complained about the '
+        + 'plumbing instead of just answering');
+    }
+  }
+
   step('the header holds together on a phone');
   await page.setViewportSize({ width: 390, height: 844 });
   /* BZ, with two screenshots of his phone: mobile header issues, check

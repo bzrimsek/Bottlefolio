@@ -12608,6 +12608,104 @@ sec('§242 the guided tasting');
     ['peat', 'cask', 'nose', 'body', 'finish', 'proof', 'malt', 'grain',
       'rye', 'oak', 'wood', 'sherry', 'age', 'smoke', 'mash']
       .filter(w => L.ASK_STOP.indexOf(w) >= 0), []);
+  eq('the words of a question are read the same way wherever they are read',
+    L.askWords('What makes SCOTCH smoky?'),
+    { words: ['scotch', 'smoky'], stems: ['smok'] });
+
+  /* WHAT HE IS GIVEN TO READ (BZ, 2026-09-28: "well versed in the learn
+     facts and the bottle details in the library"). */
+  {
+    const base = {
+      a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', age: 10, proof: 92,
+           sub: 'islay single malt', fin: 'bourbon', msrp: 55,
+           tn: { nose: 'smoke and tar', palate: 'peat' } },
+      b: { k: 'b', name: 'Buffalo Trace', dist: 'Buffalo Trace', proof: 90,
+           sub: 'bourbon' }
+    };
+    const g = L.guideGround('tell me about ardbeg', base);
+    eq('the bottle he is asked about is one of the ones he is given',
+      (g.rows[0] || {}).name, 'Ardbeg Ten');
+    eq('and he is given the facts of it, not the whole product',
+      Object.keys(g.rows[0]).filter(k => L.GUIDE_FACTS.indexOf(k) < 0
+        && k !== 'tasting'), []);
+    /* THE ROW ITSELF, asked directly: a product carries bookkeeping, a
+       person's corrections and what they paid, and only the named facts may
+       come out the other side. */
+    eq('a bottle he is given is the facts and the library note, nothing else',
+      L.guideRow(Object.assign({}, base.a, { userNote: 'mine', paid: 90,
+        tnSrc: 'mine', sugg: { at: 1 } })),
+      { name: 'Ardbeg Ten', dist: 'Ardbeg', age: 10, proof: 92,
+        sub: 'islay single malt', fin: 'bourbon', msrp: 55,
+        tasting: 'nose: smoke and tar; palate: peat' });
+    eq('and a nameless thing is not a bottle',
+      [L.guideRow({}), L.guideRow(null)], [null, null]);
+    eq('the steps of a tasting travel with every question',
+      g.steps, L.TASTING_STEPS.map(x => x.id));
+
+    /* THE QUIZ, which nothing in this app could see until today: L.LESSONS
+       is not one of L.REF_GROUPS, so no search has ever reached a lesson. */
+    eq('a lesson is something he can be given',
+      L.guideLessons('does more strength mean more whisky')
+        .filter(x => x.where === 'Quiz').length > 0, true);
+    eq('asked how it is made, he is handed the steps of making it',
+      L.guideGround('how is whiskey made', base).entries
+        .slice(0, 3).map(e => e.term),
+      ['Malting', 'Mashing and fermentation', 'Pot still']);
+    eq('and asked something else, he is not',
+      L.guideGround('what is peat', base).entries
+        .filter(e => e.term === 'Malting').length, 0);
+
+    /* THE DOORS HE MAY OPEN, and only those. The list is the whole of what
+       he can do, so a name he invents opens nothing. */
+    eq('a door he invents is not a door',
+      [L.guideDoor('judge_a_bottle') === null,
+        L.guideDoor('empty_their_shelf'), L.guideDoor('')],
+      [false, null, null]);
+    eq('every door he is offered goes through one this app already has',
+      L.GUIDE_TOOLS.filter(x => typeof L[x.door] !== 'function'), []);
+    eq('and every one of them says what it is for',
+      L.GUIDE_TOOLS.filter(x => !x.description || !x.input_schema), []);
+
+    /* THE CONVERSATION HE IS SENT. Nothing about the person is in it - what
+       travels about somebody is what a DOOR returned, when they asked a
+       question that needed it. */
+    {
+      const turn = L.guideTurn([{ who: 'cooper', text: 'Come away in.' },
+        { who: 'you', text: 'hello' }, { who: 'cooper', text: 'aye' }],
+        'what is peat');
+      eq('a conversation given to him opens with the person speaking',
+        turn[0], { role: 'user', content: 'hello' });
+      eq('and ends with what they just asked',
+        turn[turn.length - 1],
+        { role: 'user', content: 'what is peat' });
+      eq('nothing of theirs rides along in it',
+        ['userNote', 'paid', 'favs', 'lookupTally', 'email', 'displayName']
+          .filter(k => JSON.stringify(turn).indexOf(k) >= 0), []);
+    }
+
+    /* THE FAR END OF A SHELF: owned whiskies, in one quality at a time. */
+    {
+      const cat = { a: base.a, b: base.b,
+        r: { k: 'r', name: 'Some Rum', sub: 'rum', proof: 80 } };
+      const held = [{ k: 'a' }, { k: 'b' }, { k: 'r' }];
+      const peat = L.shelfEnd('peat', cat, held);
+      eq('the peatiest is a whisky they own', peat.bottles[0].name,
+        'Ardbeg Ten');
+      eq('and the rum on the bar shelf is not counted among them',
+        peat.owned, 2);
+      eq('the plain totals are the app\u2019s own',
+        L.shelfEnd('count', cat, held).whiskies, 2);
+      eq('a quality this shelf is not measured by is refused',
+        L.shelfEnd('vibes', cat, held), null);
+      eq('and never more than a handful travels',
+        L.shelfEnd('proof', cat, held).bottles.length <= L.GUIDE_END_N, true);
+    }
+
+    eq('a reply that is not a sentence is not an answer',
+      [L.guideReply({ said: 'Aye.' }), L.guideReply({ said: '  ' }),
+        L.guideReply({}), L.guideReply(null)],
+      ['Aye.', null, null, null]);
+  }
   /* AN APOSTROPHE IS NOT A DIFFERENT WORD, which was a fault in the Learn
      tab's own search all along: nobody types the curly one, so searching
      "angels share" found nothing. */
@@ -24366,9 +24464,11 @@ sec('§441 a lookup asks who is asking');
   /* PINNED TO A LITERAL ON PURPOSE. consistency.js already checks that
      Code.gs and index.html agree; this makes the number impossible to move
      by accident, so a service change is a decision somebody wrote down.
-     2.4.12: WHISKY:EDITION removed, the service now has one source. */
+     2.4.12: WHISKY:EDITION removed, the service now has one source.
+     2.6.0: the guide mode, so Cooper answers in sentences rather than
+     reading entries out (BZ, 2026-09-28). */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.5.2');
+    L.GS_BUILD, '2.6.0');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

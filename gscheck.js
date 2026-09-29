@@ -35,6 +35,7 @@ const MODES = [
   ['flight', 'designFlight'],
   ['candidates', 'suggestBottles'],
   ['recap', 'writeRecap_'],
+  ['guide', 'answerGuide_'],
   ['bottle', 'writeBottle_'],
   ['label', 'readLabel_'],
   ['shelf', 'readShelf_'],

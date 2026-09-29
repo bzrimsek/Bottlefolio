@@ -31,6 +31,170 @@
  * were a recap.
  */
 
+/* WHO HE IS, AND WHAT HE MAY SAY. The voice is BZ's brief; every rule under it
+   is one this app already lived by, said to a model rather than to a person. */
+var GUIDE_MODEL = 'claude-sonnet-5';
+
+function guideRules_() {
+  return [
+    'You are Cooper: a Scottish cooper and blender, an old hand who has been',
+    'making barrels and filling them for forty years. You are talking to one',
+    'person about whisky, in a whisky app they own.',
+    '',
+    'VOICE:',
+    '1. Scottish and plain-spoken, not a pantomime. The rhythm and the',
+    '   vocabulary of a tradesman who knows his trade — "aye", "a dram",',
+    '   "the wood gives that back" — never phonetic spelling, never "och",',
+    '   never dialect written out as an accent.',
+    '2. Short. Two to five sentences. You are talking, not writing an',
+    '   article: no headings, no bullets, no markdown, no sign-off.',
+    '3. Answer the question that was asked. If they ask WHY something is so,',
+    '   explain the cause; do not read them a definition and stop.',
+    '',
+    'WHAT YOU MAY SAY:',
+    '4. Everything you say comes from the ENTRIES and BOTTLES below. They',
+    '   are this app\'s own reference and this person\'s own library.',
+    '5. NEVER a whisky, a distillery, a person, a place, a proof, an age or',
+    '   a price that is not in what you were given. Not one. If you want to',
+    '   name an example and none was given, name none.',
+    '6. If what you were given does not answer it, say so in a sentence and',
+    '   stop. "I have nothing on that one, and I would rather say so than',
+    '   guess" is a good answer. A guide who bluffs is worse than no guide.',
+    '7. Never recommend a flavored whiskey. It is stock on a shelf; it is',
+    '   not whisky.',
+    '',
+    'THE THINGS YOU ARE FOR:',
+    '8. THE QUIZ. Entries marked [Quiz] are questions this app asks its own',
+    '   user. Answer them properly, and say what makes the question',
+    '   interesting rather than just settling it.',
+    '9. HOW IT IS MADE. When you are given the steps, walk them in the order',
+    '   they are given — that order is the process.',
+    '10. TASTING. STEPS is the walk this app runs: pour, colour, nose, body,',
+    '    palate, finish. Describe it in that order when asked, and offer to',
+    '    walk it with them by saying they can tell you "taste one with me".',
+    '11. WHETHER THEY WILL LIKE IT. If a VERDICT line is given, it is this',
+    '    app\'s own judgement of their shelf, already made. Say it in your',
+    '    own words and do not argue with it or add to it. If there is no',
+    '    VERDICT line, you do not know their shelf — say so.'
+  ].join('\n');
+}
+
+/* What he was handed, laid out for reading. */
+function guideFacts_(r) {
+  var out = [];
+  if (r.verdict) out.push('VERDICT (this app\'s own, already decided): '
+    + r.verdict, '');
+  var entries = r.entries || [];
+  if (entries.length) {
+    out.push('ENTRIES:');
+    entries.forEach(function (e) {
+      out.push('- ' + e.term + ' [' + (e.where || '') + '] — ' + e.def);
+    });
+    out.push('');
+  }
+  var rows = r.rows || [];
+  if (rows.length) {
+    out.push('BOTTLES in their library that match:');
+    rows.forEach(function (b) {
+      var bits = [b.name];
+      if (b.dist) bits.push('by ' + b.dist);
+      if (b.age) bits.push(b.age + ' years');
+      if (b.proof) bits.push(b.proof + ' proof');
+      if (b.sub) bits.push(b.sub);
+      if (b.fin) bits.push('cask: ' + b.fin);
+      if (b.msrp) bits.push('$' + b.msrp);
+      if (b.tasting) bits.push('(' + b.tasting + ')');
+      out.push('- ' + bits.join(', '));
+    });
+    out.push('');
+  }
+  if ((r.steps || []).length) {
+    out.push('STEPS of a tasting, in order: ' + r.steps.join(', '), '');
+  }
+  var said = r.said || [];
+  if (said.length > 1) {
+    out.push('WHAT HAS BEEN SAID so far, oldest first:');
+    said.forEach(function (m) {
+      out.push((m.who === 'you' ? 'THEM: ' : 'YOU: ') + m.text);
+    });
+    out.push('');
+  }
+  out.push('THEY ASK: ' + (r.asked || ''));
+  return out.join('\n');
+}
+
+/**
+ * Carry one turn of Cooper's conversation to the model and back.
+ *
+ * A RELAY AND NOT A BRAIN. The app sends the conversation so far and the list
+ * of doors it is willing to open; this forwards both and returns either what
+ * he said or which door he wants opened with what. Nothing is remembered here
+ * between calls - the app carries the thread - so a dropped request costs one
+ * turn and never a conversation, and two devices cannot get different ideas
+ * about what was said.
+ *
+ * The doors run on the device, because that is where somebody's shelf is and
+ * where it stays. What a door returns comes back through here on the next
+ * call, and that is the whole of what travels about a person: what it took to
+ * answer what they asked.
+ *
+ * Returns { said } when he has answered, { tool } when he wants a door, or
+ * { said: '' } on any failure - which the app reads as "answer it yourself".
+ */
+function answerGuide_(r) {
+  var body = r || {};
+  var msgs = body.messages;
+  if (!msgs || !msgs.length) {
+    /* No conversation given: the older shape, one question and its facts. */
+    msgs = [{ role: 'user', content: guideFacts_(body) }];
+  }
+  var ask = {
+    model: GUIDE_MODEL,
+    max_tokens: 700,
+    system: guideRules_(),
+    messages: msgs
+  };
+  if ((body.tools || []).length) ask.tools = body.tools;
+
+  var res = UrlFetchApp.fetch(API, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: apiHeaders_(),
+    muteHttpExceptions: true,
+    payload: JSON.stringify(ask)
+  });
+
+  if (res.getResponseCode() !== 200) {
+    Logger.log('guide: API %s \u2014 %s', res.getResponseCode(),
+      res.getContentText().slice(0, 300));
+    return { said: '' };
+  }
+
+  var data = JSON.parse(res.getContentText());
+  var blocks = data.content || [];
+
+  /* A DOOR HE WANTS OPENED. Everything he said alongside it travels too, so
+     the app can put the whole assistant turn back into the conversation -
+     a tool_result that does not answer a tool_use is refused by the API. */
+  var want = null;
+  blocks.forEach(function (b) {
+    if (b.type === 'tool_use' && !want) {
+      want = { id: b.id, name: b.name, input: b.input || {} };
+    }
+  });
+
+  var said = blocks
+    .filter(function (b) { return b.type === 'text'; })
+    .map(function (b) { return b.text; })
+    .join(' ')
+    .replace(/<\/?cite[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (want) return { tool: want, blocks: blocks, said: said };
+  return { said: said };
+}
+
 function writeRecap_(r) {
   /* LATELY (BZ, 2026-09-19): the same door, given sessions instead of counts,
      for the paragraph under Recent pours on Home. */
