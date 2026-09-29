@@ -4043,17 +4043,34 @@ function step(n) {
      one thing a phone cares about. */
   step('a turn of conversation leaves the box alone');
   {
+    /* FULL HEIGHT, which is the condition the fault needs. The app holds its
+       own height against a keyboard on purpose, so the thread box stays as
+       tall as the phone while what you can SEE is the bottom half of it - and
+       a short thread sitting at the top of that box is a screen of nothing.
+       Shrinking the viewport to emulate the keyboard was tried first and
+       hid the fault, because it shrinks the box along with the screen. */
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(80);
     const r = await page.evaluate(() => {
       S.guideOn = true;
       try { showGuideTab(); } catch (e) {}
       show('guide');
       S.guide = null;
+      try { setAppHeight(); } catch (e) {}
       renderGuide();
       const before = document.getElementById('guideSay');
       if (!before) return { missing: true };
       before.focus();
       const took = document.activeElement === before;
+      /* BEFORE ANYTHING IS ASKED: two bubbles in half a phone is the case
+         that strands. */
+      const bare = (() => {
+        const bs = [...document.querySelectorAll('.bubble')];
+        const chips = document.getElementById('guideChips');
+        if (!bs.length || !chips) return 9999;
+        return Math.round(chips.getBoundingClientRect().top
+          - bs[bs.length - 1].getBoundingClientRect().bottom);
+      })();
       /* One turn, exactly as pressing Say does it. */
       cooperHears('what is peat?');
       const after = document.getElementById('guideSay');
@@ -4077,13 +4094,27 @@ function step(n) {
         };
       };
       const short = place();
+      /* AND WHERE THE WORDS ARE, not only the box. The newest line belongs
+         against what comes under it, whether two things have been said or two
+         hundred - a chat hugs the bottom. */
+      const hug = () => {
+        const bs = [...document.querySelectorAll('.bubble')];
+        const chips = document.getElementById('guideChips');
+        if (!bs.length || !chips) return 9999;
+        return Math.round(chips.getBoundingClientRect().top
+          - bs[bs.length - 1].getBoundingClientRect().bottom);
+      };
+
       for (let i = 0; i < 16; i++) {
         cooperSay('A long line about casks and what the wood gives back to a '
           + 'spirit over a dozen years, number ' + i + '.');
       }
       renderGuide();
       const long = place();
+      const longHug = hug();
       const out = {
+        shortHug: bare,
+        longHug: longHug,
         took: took,
         same: before === after,
         kept: document.activeElement === after,
@@ -4128,6 +4159,16 @@ function step(n) {
               + p.over + ' of the words');
           }
         });
+      /* Eight or ten pixels is a gap between bubbles; a hundred is a screen
+         of nothing, which is what BZ was sent a picture of. */
+      [['a bare thread', r.shortHug], ['a long thread', r.longHug]]
+        .forEach(([what, h]) => {
+          if (h > 40) {
+            failures.push('guide: with ' + what + ' the newest line is ' + h
+              + 'px above what comes under it, so the talk is stranded at the '
+              + 'top of the screen');
+          }
+        });
       if (!r.threadScrolls) {
         failures.push('guide: a thread of eighteen lines does not scroll, so '
           + 'the screen must be scrolling instead');
@@ -4137,6 +4178,7 @@ function step(n) {
   }
 
   step('the header holds together on a phone');
+  await page.setViewportSize({ width: 390, height: 844 });
   /* BZ, with two screenshots of his phone: mobile header issues, check
      everything. And then: how are these checks not part of the norm?
 
