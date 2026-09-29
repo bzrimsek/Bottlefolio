@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 834 |
-| tables | 202 |
-| carrying a stated purpose | 647 |
+| functions | 835 |
+| tables | 203 |
+| carrying a stated purpose | 649 |
 
 ## Tables
 
@@ -74,6 +74,7 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_KINDS`** — _no comment above it_
 - **`L.GAP_SAY`** — WHERE A ROW ON THE STILL MISSING LIST STANDS, and what it is short of.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
+- **`L.GUIDE_CALLED`** — WHAT HE IS TOLD TO CALL SOMEBODY
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
 - **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens
 - **`L.GUIDE_PROCESS`** — Canon, not invention (rule 36)
@@ -451,6 +452,7 @@ QUESTION, not the name you were going to use.
 - **`L.guideThread`** — _no comment above it_
 - **`L.guideTurn`** — WHAT GOES TO THE MODEL, as the conversation so far
 - **`L.guideVerdict`** — _no comment above it_
+- **`L.guideWho`** — WHO HE IS TALKING TO, as it travels
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_

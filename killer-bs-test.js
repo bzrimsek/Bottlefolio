@@ -12704,6 +12704,23 @@ sec('§242 the guided tasting');
           output_tokens: 200 }) < 1.5,
         L.guideCost(null)], [true, true, 0]);
 
+    /* WHO HE IS TALKING TO, told and never guessed (BZ, 2026-09-29: "are we
+       inferring gender from the user name?"). He called everybody "lad" on no
+       evidence at all, so the form of address is a choice from a list and an
+       invented one is dropped rather than passed along. */
+    eq('a name and a chosen form both travel',
+      L.guideWho('Brian', 'lad'), { name: 'Brian', called: 'lad' });
+    eq('a name alone travels alone',
+      L.guideWho('Brian', ''), { name: 'Brian' });
+    eq('and with neither there is nothing to say about them',
+      [L.guideWho('', ''), L.guideWho(null, null)], [null, null]);
+    eq('a form he was not offered is not one he is given',
+      L.guideWho('Brian', 'captain'), { name: 'Brian' });
+    eq('every form offered is one he can be told',
+      L.GUIDE_CALLED.filter(x => x.id
+        && !L.guideWho('x', x.id).called).length, 0);
+    eq('and the default guesses at nobody', L.GUIDE_CALLED[0].id, '');
+
     /* THE DOORS HE MAY OPEN, and only those. The list is the whole of what
        he can do, so a name he invents opens nothing. */
     eq('a door he invents is not a door',
@@ -24554,9 +24571,12 @@ sec('§441 a lookup asks who is asking');
      reading entries out (BZ, 2026-09-28).
      2.6.1: his character brief, which lives in the service - so this number
      is also what tells the app an answer was given in the old voice and must
-     not be handed back in the new one (BZ, 2026-09-29). */
+     not be handed back in the new one (BZ, 2026-09-29).
+     2.6.2: he stops calling everybody lad. BZ: 'are we inferring gender from
+     the user name?' - not from the name, which he is never told, but from
+     nothing at all, which is worse. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.1');
+    L.GS_BUILD, '2.6.2');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

@@ -1376,6 +1376,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* Whether Cooper has a tab. A switch about the person, and the newer side
        wins: turning him on at one device means on at all of them. */
     'guideOn',
+    /* And what he calls them: one word somebody chose about themselves, so
+       the newer answer wins rather than two devices merging a preference. */
+    'guideCalled',
     /* How many lookups the offered-library queue may spend vetting on its
        own. One number somebody chose, not a collection to merge. */
     'intakeBudget',
@@ -2811,15 +2814,28 @@ check('no fixed svg id is emitted by a repeated drawing',
      of the feature to anybody who has not found it, and it was appended to
      nameCard - which nothing draws but the sheet behind the gear on Buddies.
      Every check was green: the switch worked, it just was not anywhere. */
-  const st = ls.findIndex(l => l.startsWith('function renderSettings('));
-  let screen = '';
-  for (let j = st + 1; j < ls.length && !/^\}/.test(ls[j]); j++) {
-    screen += ls[j] + '\n';
-  }
+  /* REACHABLE FROM SETTINGS, not literally inside renderSettings. The first
+     version asked whether that function contained the word, which was true
+     while the card was built inline and false the moment the card became its
+     own function - with the switch in exactly the same place on the screen.
+     A check that fails when code is tidied teaches people not to tidy code.
+     So it follows one call: the screen, and what the screen names. */
+  const bodyOf = name => {
+    const at = ls.findIndex(l => l.startsWith('function ' + name + '('));
+    if (at < 0) return '';
+    let out = '';
+    for (let j = at + 1; j < ls.length && !/^\}/.test(ls[j]); j++) {
+      out += ls[j] + '\n';
+    }
+    return out;
+  };
+  const screen = bodyOf('renderSettings');
+  const reach = screen + (screen.match(/\b([a-zA-Z_][\w$]*)\s*\(/g) || [])
+    .map(c => bodyOf(c.replace(/\s*\($/, ''))).join('\n');
   check('the guide can be switched on from Settings',
-    /\bguideSwitch\s*\(/.test(screen) ? []
-      : ['renderSettings never calls guideSwitch \u2014 a feature that ships '
-        + 'off, with no switch on the settings screen, does not exist']);
+    /\bguideSwitch\s*\(/.test(reach) ? []
+      : ['nothing Settings draws calls guideSwitch \u2014 a feature with no '
+        + 'switch on the settings screen does not exist']);
 }
 
 /* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
@@ -2924,7 +2940,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     showShelfTools: 255,
     shopAnswer: 243,
     renderLookupSetup: 231,
-    renderSettings: 177,
+    renderSettings: 165,
     renderGuest: 157,
     renderHome: 93,
     libraryAudit: 173,
