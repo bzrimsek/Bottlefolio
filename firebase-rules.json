@@ -49,7 +49,7 @@
           "$ownerUid": {
             ".read": "auth != null && ($ownerUid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
             "$withUid": {
-              ".write": "auth != null && ($ownerUid === auth.uid || (!newData.exists() && root.child('bz-apps/whisky/admins').child(auth.uid).exists()))",
+              ".write": "auth != null && ($ownerUid === auth.uid || (!newData.exists() && ($withUid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())))",
               ".validate": "newData.hasChildren(['at'])",
               "at": {
                 ".validate": "newData.isNumber()"
@@ -67,7 +67,7 @@
           "$viewerUid": {
             ".read": "auth != null && ($viewerUid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
             "$ownerUid": {
-              ".write": "auth != null && ($ownerUid === auth.uid || (!newData.exists() && root.child('bz-apps/whisky/admins').child(auth.uid).exists()))",
+              ".write": "auth != null && ($ownerUid === auth.uid || (!newData.exists() && ($viewerUid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())))",
               ".validate": "newData.hasChildren(['at'])",
               "at": {
                 ".validate": "newData.isNumber()"

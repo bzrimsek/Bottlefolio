@@ -149,6 +149,33 @@ async function suite(env) {
   await check('you can revoke it', 'ok', () => remove(r('alice', 'shares/alice/bob')));
   await check('and then the buddy cannot read it', 'refused', () => get(r('bob', 'view/alice')));
 
+  /* LEAVING A SHARE SOMEBODY GAVE YOU (2026-09-29). A pairing has two ends and
+     the far one lives under the GIVER, so a person closing their own account
+     could not clear it and the record outlived the account - which is how
+     BZ's buddy list went on naming a man with no shelf.
+
+     The clause is deletion only, by the person named only. These cases matter
+     less for what they allow than for what they still refuse: the checks below
+     are the ones that would catch it if the amendment were ever loosened into
+     a general write. */
+  await check('a share can be given again', 'ok', () => set(r('alice', 'shares/alice/bob'), { at: at() }));
+  await check('the buddy named in it can leave it', 'ok', () => remove(r('bob', 'shares/alice/bob')));
+  await check('and then cannot read the shelf', 'refused', () => get(r('bob', 'view/alice')));
+  await check('somebody not named in it still cannot remove it', 'refused', () => {
+    return set(r('alice', 'shares/alice/bob'), { at: at() })
+      .then(() => remove(r('carol', 'shares/alice/bob')));
+  });
+  await check('leaving is not a licence to create one', 'refused', () => set(r('bob', 'shares/alice/carol'), { at: at() }));
+  await check('nor to rewrite the one that names you', 'refused', () => update(r('bob', 'shares/alice/bob'), { at: at() }));
+  await check('nor to read who else the owner shares with', 'refused', () => get(r('bob', 'shares/alice')));
+  /* THE VIEWER'S OWN SUBTREE, which the viewer could not delete out of. */
+  await check('the owner records the other end', 'ok', () => set(r('alice', 'sharedWith/bob/alice'), { at: at() }));
+  await check('the viewer can clear their own end', 'ok', () => remove(r('bob', 'sharedWith/bob/alice')));
+  await check('but not somebody else\u2019s', 'refused', () => {
+    return set(r('alice', 'sharedWith/carol/alice'), { at: at() })
+      .then(() => remove(r('bob', 'sharedWith/carol/alice')));
+  });
+
   /* ASKING TO SHARE. */
   await check('you can ask somebody', 'ok', () => set(r('bob', 'requests/alice/bob'), { from: 'bob', name: 'Bob', at: at() }));
   await check('you cannot ask in somebody else’s name', 'refused', () => set(r('bob', 'requests/alice/carol'), { from: 'carol', name: 'Carol', at: at() }));

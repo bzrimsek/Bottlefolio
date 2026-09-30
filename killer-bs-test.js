@@ -17579,7 +17579,7 @@ sec('\u00a7319 a miss that survives the night');
     'b');
 }
 
-sec('\u00a7319 the same file twice adds nothing');
+sec('\u00a7285 the same file twice adds nothing');
 {
   /* BZ: if someone uploads their data 2x, will it only take changes and
      adds — it needs to avoid duplication. Measured rather than assumed,
@@ -17676,7 +17676,7 @@ sec('\u00a7320 an import is judged against what you own');
   eq('and the one you do not is added', t2.add, 1);
 }
 
-sec('\u00a7320 an import is judged against what you own');
+sec('\u00a7286 an import is judged against what you own, keyed by name');
 {
   /* BZ made a second account, imported a friend's export, and it told him
      89 bottles were already on his shelf — on an account with an EMPTY
@@ -17726,7 +17726,7 @@ sec('\u00a7320 an import is judged against what you own');
   eq('and the one you do not is added', t2.add, 1);
 }
 
-sec('\u00a7320 an import is judged against your shelf, not the catalog');
+sec('\u00a7287 an import is judged against your shelf, not the catalog');
 {
   /* BZ made a second account, imported a friend's Only Drams export, and
      the sheet said 89 were ALREADY ON HIS SHELF — on an account whose
@@ -17774,7 +17774,7 @@ sec('\u00a7320 an import is judged against your shelf, not the catalog');
   eq('and the one you do not is added', t2.add, 1);
 }
 
-sec('\u00a7320 an import compares against what you own');
+sec('\u00a7288 an import compares against what you own');
 {
   /* BZ made a second account, imported a friend's Only Drams export, and
      the first page said 89 were already on his shelf — on an account with
@@ -17819,7 +17819,7 @@ sec('\u00a7320 an import compares against what you own');
   eq('and the other still arrives', t2.add, 1);
 }
 
-sec('\u00a7320 a new account has an empty shelf');
+sec('\u00a7289 a new account has an empty shelf');
 {
   /* BZ made a second account, imported a friend's Only Drams export, and
      was told 89 of 206 were ALREADY ON HIS SHELF — on an account with no
@@ -17882,7 +17882,7 @@ sec('\u00a7321 a shelf that has just started is not judged');
   eq('a dozen is enough to be read', mk(12).title, 'The Generalist');
 }
 
-sec('\u00a7320 the map shows your shelf, not the catalog');
+sec('\u00a7302 the map shows your shelf, not the catalog');
 {
   /* BZ's test account held ONE bottle of Jack Daniel's and the map drew
      filled dots on eight countries — the shipped catalog's spread, the
