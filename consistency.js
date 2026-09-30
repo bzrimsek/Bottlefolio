@@ -2005,6 +2005,38 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service call goes through the one door', bad);
 }
 
+/* A SNAPSHOT WALK MAY NOT RETURN A VALUE (2026-09-30).
+ *
+ * A Firebase DataSnapshot's forEach cancels the walk when the callback returns
+ * true. An arrow with an EXPRESSION body returns that expression, and what
+ * gets written there is almost always truthy: push() returns the new length,
+ * an assignment returns the value, a counter returns the count.
+ *
+ * `snap.forEach(c => uids.push(c.key))` therefore stopped after ONE child, on
+ * every node it read, for days - the buddy list came back "1 of 3" on every
+ * boot and the app papered over it with three extra reads off the directory.
+ * When the directory was slow the compensation had nothing to work with and
+ * every buddy read as not sharing (BZ, 2026-09-30: "You broke all sharing").
+ *
+ * So: a callback on a snapshot walk takes a block body. It may still return
+ * early with a bare `return`, which is undefined and does not cancel; what it
+ * may not do is hand back a value by accident.
+ */
+{
+  const bad = [];
+  /* The snapshot names this app uses. A plain Array.forEach is unaffected -
+     it ignores what the callback returns - so this is deliberately narrow. */
+  const SNAP = /\b(snap|snapshot|sn|dir|who)\.forEach\(\s*(?:\(\s*[\w,\s]*\)|[\w$]+)\s*=>\s*([^{\s])/;
+  blankComments(src).split('\n').forEach((l, i) => {
+    const m = l.match(SNAP);
+    if (!m) return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 52)
+      + '  \u2014 an expression body returns a value, and a truthy one '
+      + 'cancels the walk');
+  });
+  check('a snapshot walk cannot cancel itself by accident', bad);
+}
+
 /* AN ASK IS WITHDRAWN WHERE IT LIVES (2026-09-30).
  *
  * A request lives under the account being asked - requests/<them>/<me> - so

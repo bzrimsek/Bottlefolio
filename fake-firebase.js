@@ -124,11 +124,24 @@
         exists: () => val !== null && val !== undefined,
         // forEach walks CHILDREN, and only object children — the app uses
         // it to collect keys off a node.
+        //
+        // AND IT CANCELS WHEN THE CALLBACK RETURNS TRUE, as the real
+        // DataSnapshot does. This used to ignore what the callback returned,
+        // which made the fake KINDER than the thing it stands for: the app
+        // walked a node with `c => uids.push(c.key)`, push returned 1, the
+        // real SDK stopped after one child and the fake walked them all. So
+        // the buddy list came back with one of three on every real device for
+        // days while every harness here passed (2026-09-30). A fake that
+        // cannot fail the way production fails is not a test of anything.
         forEach: fn => {
           if (!val || typeof val !== 'object' || Array.isArray(val)) return;
-          Object.keys(val).forEach(k => {
-            fn(snapshot(parts(path).concat([k]).join('/')));
-          });
+          const keys = Object.keys(val);
+          for (let i = 0; i < keys.length; i++) {
+            if (fn(snapshot(parts(path).concat([keys[i]]).join('/'))) === true) {
+              return true;               // cancelled, as the real one reports
+            }
+          }
+          return false;
         },
         numChildren: () => (val && typeof val === 'object' && !Array.isArray(val))
           ? Object.keys(val).length : 0
