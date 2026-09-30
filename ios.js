@@ -154,6 +154,40 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
   if (blocked.length) bad('nothing invisible is covering the screen', blocked.join('\n'));
   else ok('nothing invisible is covering the screen');
 
+  /* ---- THE BOOT LINE REPORTS WHAT IT SAYS IT REPORTS.
+   *
+   * It read "safe-area 58px" and that number was --nav-h, the height of the
+   * bar. So every log ever written answered "is the bottom inset the problem"
+   * with something else, and looked like an answer - it misled me while I was
+   * hunting the scrolling reports (2026-09-30). The nav carries
+   * padding-bottom: env(safe-area-inset-bottom), so its computed padding is
+   * the real inset and the two numbers must not be confused again. */
+  const boot = await p.evaluate(() => {
+    const n = document.querySelector('nav');
+    return {
+      line: ((typeof S !== 'undefined' && S.log) || [])
+        .find(l => /boot[^:]*: nav /.test(l)) || '',
+      inset: getComputedStyle(n).paddingBottom,
+      navH: getComputedStyle(document.documentElement)
+        .getPropertyValue('--nav-h').trim()
+    };
+  });
+  const said = k => (boot.line.match(new RegExp(k + ' (\\S+)')) || [])[1];
+  if (!boot.line) {
+    bad('the boot line records the bar and the inset', 'no boot line was written');
+  } else if (said('safe-area') !== boot.inset) {
+    bad('the boot line records the bar and the inset',
+      'it says safe-area ' + said('safe-area') + ' and the inset is '
+      + boot.inset + (said('safe-area') === boot.navH
+        ? ' — it is printing the bar height under that name' : ''));
+  } else if (said('bar') !== boot.navH) {
+    bad('the boot line records the bar and the inset',
+      'it says bar ' + said('bar') + ' and the bar is ' + boot.navH);
+  } else {
+    ok('the boot line records the bar (' + boot.navH + ') and the inset ('
+      + boot.inset + ') as two different things');
+  }
+
   /* ---- A MEASUREMENT THAT WAS NEVER TAKEN IS NOT A FAULT TO CORRECT.
    *
    * navSelfHeal rewrites --app-h and lays the whole app out again when the bar
