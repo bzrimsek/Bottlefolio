@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 840 |
+| functions | 842 |
 | tables | 204 |
-| carrying a stated purpose | 653 |
+| carrying a stated purpose | 654 |
 
 ## Tables
 
@@ -335,6 +335,7 @@ QUESTION, not the name you were going to use.
 - **`L.distinctiveWords`** — The words in a line that could name something
 - **`L.drinkingFinding`** — The sentence worth saying, or none
 - **`L.drinkingVsShelf`** — _no comment above it_
+- **`L.editsApart`** — HOW FAR APART TWO SPELLINGS ARE, in single-character edits, and never more
 - **`L.emptyFindSay`** — THE THREE EMPTY ANSWERS, which must not read alike
 - **`L.emptyOf`** — _no comment above it_
 - **`L.enhanceDiff`** — _no comment above it_
@@ -473,6 +474,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
 - **`L.houseKey`** — _no comment above it_
 - **`L.houseList`** — The houses the catalog knows, longest name first, so a house called
+- **`L.houseMeant`** — _no comment above it_
 - **`L.houseMergePlan`** — _no comment above it_
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases

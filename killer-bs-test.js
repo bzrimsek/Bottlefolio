@@ -25586,6 +25586,66 @@ sec('\u00a7448 a buddy the directory has forgotten still has a name');
   eq('a known name always beats the stub', r.name, 'Not Smoky Bill');
 }
 
+sec('\u00a7449 a house the search could not confirm is usually a typo');
+{
+  /* BZ, 2026-09-30, over three offers: "who makes it was provided but not
+     used". Each read "<house> - the search could not confirm who makes this",
+     printing the house the person GAVE in the sentence that said nothing was
+     known about it. Two of the three were misspellings of houses the library
+     already holds. */
+  const houses = ['Laphroaig', 'Redbreast', "Jack Daniel's", 'Kilchoman'];
+
+  eq('a letter missing is one edit', L.editsApart('laphroig', 'laphroaig', 2), 1);
+  eq('and the cap is not exceeded quietly',
+    L.editsApart('ardbeg', 'laphroaig', 2) > 2, true);
+  eq('the same string is no edits at all', L.editsApart('ardbeg', 'ardbeg', 2), 0);
+
+  eq('a typo finds the house it meant', L.houseMeant('Laphroig', houses), 'Laphroaig');
+  eq('and a space in the wrong place too',
+    L.houseMeant('Red breast', houses), 'Redbreast');
+
+  /* NOT OUR QUESTION when the house is already known: intakeHouse answers
+     that one, exactly, and answering it twice would be two doors. */
+  eq('a house spelled right proposes nothing',
+    L.houseMeant('Laphroaig', houses), null);
+  eq('nor does one that only differs by a possessive',
+    L.houseMeant('Jack Daniels', houses), null);
+
+  /* A HOUSE GENUINELY NEW stays genuinely new - the whole point of asking. */
+  eq('a house nobody has heard of proposes nothing',
+    L.houseMeant('Skrewball', houses), null);
+  eq('and neither does a name too short to risk it',
+    L.houseMeant('Kil', houses), null);
+  eq('nor anything at all against an empty library',
+    L.houseMeant('Laphroig', []), null);
+
+  /* A TIE IS REFUSED. Guessing between two is the one thing a machine must
+     not do with who made a whisky. */
+  eq('two houses equally close propose nothing',
+    L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
+
+  /* AND WHAT THE OFFER THEN SAYS. */
+  const lib = { a: { name: 'Laphroaig 10', dist: 'Laphroaig' } };
+  const mk = dist => L.intakeFilled(
+    { verdict: 'fill', rule: 'a house this app has not seen',
+      product: { name: 'Lore', dist: dist } },
+    null, { library: lib });
+
+  const near = mk('Laphroig');
+  eq('an unconfirmed house is still a question', near.verdict, 'ask');
+  eq('and it proposes the spelling the library uses', near.meant, 'Laphroaig');
+  eq('in words a person can act on',
+    /did you mean Laphroaig\?/.test(near.why), true);
+  eq('and it no longer claims nothing is known',
+    /could not confirm/.test(near.why), false);
+
+  const novel = mk('Skrewball');
+  eq('a genuinely new house is still asked about', novel.verdict, 'ask');
+  eq('with nothing proposed', novel.meant, undefined);
+  eq('and the plain wording kept',
+    /could not confirm who makes this/.test(novel.why), true);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '
