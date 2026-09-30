@@ -19,7 +19,18 @@ name: Library fill
 
 on:
   schedule:
-    - cron: '41 8 * * *'     # 08:41 UTC, after Popular and before the day
+    # MIDNIGHT IN OHIO (BZ, 2026-09-29: "Rerun at midnight"), and a slot chosen
+    # for how late GitHub runs a schedule rather than for the hour itself. The
+    # 08:41 UTC slot was meant to sit after Popular and before the day; on
+    # 2026-09-29 that run actually started at 15:05 UTC - six hours and
+    # twenty-four minutes late - which is 11:05 in the morning here, with BZ in
+    # the app. A hundred lookups go through the same Apps Script deployment
+    # Cooper answers from, so a late fill starves the guide.
+    #
+    # From midnight ET even a delay of that size lands before seven in the
+    # morning. 04:00 UTC is midnight while the clocks are on daylight time and
+    # eleven at night once they go back, and either is the small hours.
+    - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
       budget:
