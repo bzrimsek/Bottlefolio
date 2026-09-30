@@ -3497,6 +3497,67 @@ function step(n) {
       }
     }
 
+    /* THE DISTILLERY IS A PICKER, AND IT FOLLOWS WHAT FILLS IT.
+       Free text here is how "Laphroig" and "Red breast" became houses in the
+       shared library (BZ, 2026-09-30). The value lives in a hidden input so
+       everything that writes the form still writes one field under one name -
+       which means the select can be left behind showing "Pick the
+       distillery" over a filled value, and only the DOM can say. */
+    {
+      const pick = await page.evaluate(() => {
+        const f = document.querySelector('.modal .form');
+        const sel = f.querySelector('[name="distPick"]');
+        const hid = f.querySelector('[name="dist"]');
+        return {
+          isSelect: !!sel && sel.tagName === 'SELECT',
+          hiddenField: !!hid && hid.type === 'hidden',
+          options: sel ? sel.options.length : 0,
+          selected: sel ? sel.value : null,
+          value: hid ? hid.value : null
+        };
+      });
+      if (!pick.isSelect) {
+        failures.push('add form: the distillery is not a picker');
+      } else if (!pick.hiddenField) {
+        failures.push('add form: the distillery value is not a single hidden '
+          + 'field, so two controls can answer one question');
+      } else if (pick.options < 3) {
+        failures.push('add form: the distillery picker offers only '
+          + pick.options + ' option(s) - it is not reading the houses');
+      } else if (pick.value && pick.selected !== pick.value) {
+        failures.push('add form: filled the distillery with '
+          + JSON.stringify(pick.value) + ' and the picker still shows '
+          + JSON.stringify(pick.selected));
+      }
+
+      /* AND A HOUSE NOBODY MAKES YET IS STILL ADDABLE, deliberately. */
+      const escape = await page.evaluate(() => {
+        const f = document.querySelector('.modal .form');
+        const sel = f.querySelector('[name="distPick"]');
+        const other = [...sel.options].map(o => o.value)
+          .filter(v => /not on this list/.test(v))[0];
+        if (!other) return { other: false };
+        sel.value = other;
+        sel.dispatchEvent(new Event('change'));
+        const box = f.querySelector('[name="distTyped"]');
+        if (box) {
+          box.value = 'Somewhere Brand New';
+          box.dispatchEvent(new Event('input'));
+        }
+        return { other: true,
+          shown: box ? box.closest('label').style.display !== 'none' : false,
+          value: (f.querySelector('[name="dist"]') || {}).value };
+      });
+      if (!escape.other) {
+        failures.push('add form: no way to name a house that is not listed');
+      } else if (!escape.shown) {
+        failures.push('add form: chose "not on this list" and no box appeared');
+      } else if (escape.value !== 'Somewhere Brand New') {
+        failures.push('add form: typed a new house and the field holds '
+          + JSON.stringify(escape.value));
+      }
+    }
+
     /* A NAME NOTHING KNOWS OFFERS THE CALL RATHER THAN MAKING IT. */
     await page.evaluate(() => { S.lookupUrl = 'https://example.invalid/x'; });
     const offered = await page.evaluate(() => {

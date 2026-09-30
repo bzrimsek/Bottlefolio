@@ -18830,7 +18830,14 @@ sec('\u00a7341 a claim about your shelf is counted from your shelf');
 
   /* Known, deliberate and explained. Nothing may be added here without a
      reason written beside it. */
-  const ALLOWED = {};
+  const ALLOWED = {
+    /* A VOCABULARY, NOT A CLAIM. houseChoices is the list of distilleries the
+       add form offers so that a house cannot be created by typo, and it is
+       MEANT to widen with the library: a picker holding only the houses you
+       already own could not be used to add your first Laphroaig. It answers
+       "which houses exist", never "which are yours" (2026-09-30). */
+    houseChoices: 1
+  };
 
   const differ = [], unjudged = [];
   handed.forEach(name => {
@@ -25623,6 +25630,28 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
      not do with who made a whisky. */
   eq('two houses equally close propose nothing',
     L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
+
+  /* THE LIST THE ADD FORM OFFERS. A vocabulary: every house the app has
+     heard of, in order, so a picker can replace free text on the one field
+     that was creating houses by typo. Deliberately wider than the shelf -
+     you must be able to add your first Laphroaig. */
+  const cat = {
+    a: { name: 'Laphroaig 10', dist: 'Laphroaig' },
+    b: { name: 'Laphroaig Lore', dist: 'Laphroaig' },
+    c: { name: 'Ardbeg Ten', dist: 'Ardbeg' },
+    d: { name: 'A custom one', dist: 'Zzz Distillery' },
+    e: { name: 'No house here' }
+  };
+  const choices = L.houseChoices(cat);
+  eq('a house appears once however many bottles it has',
+    choices.filter(h => h === 'Laphroaig').length, 1);
+  eq('every house the app knows is offered', choices.length, 3);
+  eq('in an order somebody can scan', choices[0], 'Ardbeg');
+  eq('and the last is the last alphabetically',
+    choices[choices.length - 1], 'Zzz Distillery');
+  eq('a product with no house adds none',
+    choices.indexOf(undefined) < 0 && choices.indexOf('') < 0, true);
+  eq('and nothing at all is an empty list', L.houseChoices({}).length, 0);
 
   /* AND WHAT THE OFFER THEN SAYS. */
   const lib = { a: { name: 'Laphroaig 10', dist: 'Laphroaig' } };

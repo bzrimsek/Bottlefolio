@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 842 |
+| functions | 843 |
 | tables | 204 |
-| carrying a stated purpose | 654 |
+| carrying a stated purpose | 655 |
 
 ## Tables
 
@@ -468,6 +468,7 @@ QUESTION, not the name you were going to use.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdsFor`** — flight answers neither.
 - **`L.hostCard`** — What the host needs and the participants must not see.
+- **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
 - **`L.houseInterest`** — HOW MUCH A BOTTLING ADDS TO A HOUSE YOU ALREADY HOLD (BZ, 2026-09-27:
