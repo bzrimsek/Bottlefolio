@@ -98,6 +98,15 @@ const defined = (src.match(/^L\.([a-zA-Z_][a-zA-Z0-9_]*) = function/gm) || [])
 const codeOnly = src
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '');
+/* THE SAME, BUT KEEPING THE LINE NUMBERS. codeOnly deletes comments, which
+   moves every line after them: a check that reports "index.html:10005" needs
+   the comment blanked in place instead. Comments are where a check goes
+   vacuous - twice now a guard has been satisfied by the very sentence
+   forbidding the thing - so any check that reads lines reads these. */
+const blankComments = text => text
+  .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+  .replace(/^(\s*)\/\/.*$/gm, '$1');
+
 /* THE ENGINE ITSELF, so the inventory check below reads the app's own
    declaration rather than a copy of it kept in this file. A contract
    restated in two places is the very fault these checks exist to find. */
@@ -1994,6 +2003,57 @@ check('no fixed svg id is emitted by a repeated drawing',
     }
   });
   check('every service call goes through the one door', bad);
+}
+
+/* A KEY PUT FIRST IS ONLY A SUGGESTION (2026-09-29).
+ *
+ * `Object.assign({ k: key }, record)` assigns the record second, so a record
+ * carrying its own `k` wins and the row is keyed by whatever the record says.
+ * 150 of 759 live library entries carry a `k` from before the keys were slugs,
+ * and four engine sites read the library that way: for a fifth of the library
+ * `row.k` was a display name. libfill built its ledger under those and Firebase
+ * refused the write for the full stop in "James E. Pepper Barrel Proof".
+ *
+ * The map is read in ONE place now, L.libraryRows. This forbids the shape
+ * itself rather than that one function, because the trap is the argument order
+ * and it is just as wrong on any other record. No exceptions: a check with a
+ * carve-out is how two of this project's guards turned into decoration.
+ */
+{
+  const bad = [];
+  [['index.html', src], ['libfill.js', fs.readFileSync(
+    __dirname + '/libfill.js', 'utf8')]].forEach(([file, text]) => {
+    blankComments(text).split('\n').forEach((l, i) => {
+      if (!/Object\.assign\(\s*\{\s*k\s*:/.test(l)) return;
+      bad.push(file + ':' + (i + 1) + '  ' + l.trim().slice(0, 56)
+        + '  \u2014 the key is assigned first, so the record overrides it');
+    });
+  });
+  check('a key is never assigned before the record that could overrule it',
+    bad);
+}
+
+/* THE LIBRARY IS READ AS ROWS IN ONE PLACE (2026-09-29).
+ *
+ * The screens half had `libraryRows` and it was right; the engine typed the
+ * three lines out four times and got them backwards every time, where no
+ * harness could see them. Turning the keyed map into rows is one question.
+ */
+{
+  const bad = [];
+  [['index.html', src], ['libfill.js', fs.readFileSync(
+    __dirname + '/libfill.js', 'utf8')]].forEach(([file, text]) => {
+    const lines = blankComments(text).split('\n');
+    lines.forEach((l, i) => {
+      /* Object.keys(x).map(k => ... ) building a row out of x[k]. */
+      if (!/Object\.keys\([^)]*\)[\s\S]{0,40}\.map\(k =>/.test(l)) return;
+      if (!/Object\.assign|\{\s*k\s*:/.test(l)) return;
+      if (/L\.libraryRows = /.test(lines[i - 1] || '')) return;
+      bad.push(file + ':' + (i + 1) + '  ' + l.trim().slice(0, 56)
+        + '  \u2014 reads a keyed map as rows; L.libraryRows does that');
+    });
+  });
+  check('the keyed library is turned into rows in one place', bad);
 }
 
 /* ONE DOOR TO THE FLAVOUR WORDS (v2.5.46).

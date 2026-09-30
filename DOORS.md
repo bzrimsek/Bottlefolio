@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 837 |
+| functions | 838 |
 | tables | 204 |
 | carrying a stated purpose | 651 |
 
@@ -555,7 +555,7 @@ QUESTION, not the name you were going to use.
 - **`L.libraryEntry`** — open — those are facts about your shelf, not about the whisky.
 - **`L.libraryExportRows`** — _no comment above it_
 - **`L.libraryFillWrite`** — What a fill writes
-- **`L.libraryFromValue`** — exactDupes: duplicates that need no decision - identical after
+- **`L.libraryFromValue`** — _no comment above it_
 - **`L.libraryGaps`** — _no comment above it_
 - **`L.libraryHouses`** — HOW THE LIBRARY SPELLS EACH HOUSE, most-used wins
 - **`L.libraryImportPlan`** — _no comment above it_
@@ -564,6 +564,7 @@ QUESTION, not the name you were going to use.
 - **`L.libraryMissing`** — WHAT YOU ARE MISSING, FROM THE LIBRARY
 - **`L.libraryProduct`** — _no comment above it_
 - **`L.libraryRename`** — Renaming an entry in the shared library.
+- **`L.libraryRows`** — A row's `k` is where it was found
 - **`L.libraryShape`** — _no comment above it_
 - **`L.likelyByAge`** — AGE AGAINST NO AGE, for a drinker who runs an AGE IS NOT A FLAVOR flight.
 - **`L.likelyByFlavour`** — MORE OF WHAT THE SHELF ACTUALLY TASTES OF.

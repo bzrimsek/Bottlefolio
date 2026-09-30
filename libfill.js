@@ -124,8 +124,7 @@ async function main() {
   const products = L.libraryFromValue(await (await fetch(at(PRODUCTS))).json())
     || {};
   const ledger = (await (await fetch(at(LEDGER))).json()) || {};
-  const rows = Object.keys(products)
-    .map(k => Object.assign({ k: k }, products[k]));
+  const rows = L.libraryRows(products);
   const today = L.todayISO();
   const lists = L.libraryLists(rows, ledger, today);
 

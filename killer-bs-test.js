@@ -11976,7 +11976,7 @@ sec('§239 a fill writes named fields, name and at');
 sec('§240 what deleting an account clears');
 {
   const paths = L.accountPaths('me', ['friend1', 'friend2'], ['alice'],
-    ['bob', 'carol']);
+    ['bob', 'carol'], ['dave']);
 
   eq('the shelf itself goes', paths.indexOf('me') >= 0, true);
   eq('and the directory entry', paths.indexOf('directory/me') >= 0, true);
@@ -11995,6 +11995,17 @@ sec('§240 what deleting an account clears');
     && paths.indexOf('requests/me/carol') >= 0, true);
   eq('and an ask this account SENT still goes, under its recipient',
     paths.indexOf('requests/alice/me') >= 0, true);
+  /* A PAIRING HAS TWO ENDS, and this knew only one (BZ, 2026-09-29: 'i
+     removed notsmoky bill from an admin side but he is still in buddies').
+     A share given TO this account lives under the GIVER, keyed by the
+     receiver, so nothing under this account points at it and the wipe walked
+     straight past - leaving the giver's own buddy list naming a man with no
+     shelf. Confirmed in the live database before it was fixed:
+     shares/cv2EMNKs/P3bIGpkT survived its subject. */
+  eq('a share given TO this account goes, from under the giver',
+    paths.indexOf('shares/dave/me') >= 0, true);
+  eq('and the other half of that pairing with it',
+    paths.indexOf('sharedWith/me/dave') >= 0, true);
   eq('and the view record', paths.indexOf('view/me') >= 0, true);
   eq('and the stats', paths.indexOf('stats/me') >= 0, true);
 
@@ -17302,10 +17313,12 @@ sec('\u00a7311 a merged house stays merged');
 
   /* And a merge applied to the library ALONE leaves the disagreement that
      started this — the assertion that would have caught it. */
-  const lib2 = { x: { k: 'x', dist: 'The Glendronach' },
-                 y: { k: 'y', dist: 'The Glendronach' },
-                 z: { k: 'z', dist: 'Glendronach' } };
-  const shelf2 = { z: { k: 'z', dist: 'Glendronach' } };
+  /* Named, because the rules require a name on every product and
+     L.libraryRows will not treat a nameless record as an entry. */
+  const lib2 = { x: { k: 'x', name: 'Glendronach 8', dist: 'The Glendronach' },
+                 y: { k: 'y', name: 'Glendronach 12', dist: 'The Glendronach' },
+                 z: { k: 'z', name: 'Glendronach 21', dist: 'Glendronach' } };
+  const shelf2 = { z: { k: 'z', name: 'Glendronach 21', dist: 'Glendronach' } };
   L.houseMergePlan(lib2, L.houseVariants(lib2)[0]).rows
     .forEach(r => { lib2[r.k].dist = r.to; });
   eq('library alone leaves the shelf disagreeing',
@@ -25530,6 +25543,58 @@ const near = L.intakeVerdict({
    the run the moment the synchronous tests finished - so the queue
    section printed its heading and then the process was gone, which reads
    exactly like a hang. */
+sec('\u00a7445 a row is keyed by where it was found');
+{
+  /* 150 of 759 live library entries carry their own `k`, written when the keys
+     were still display names. Four engine sites read the map as
+     `Object.assign({ k: k }, map[k])` - the record SECOND - so for a fifth of
+     the library `row.k` was "Angel's Envy Cask Strength Rye", not
+     angel_s_envy_cask_strength_rye.
+
+     libfill then built its ledger under those names and Firebase refused the
+     whole write, naming the full stop in "James E. Pepper Barrel Proof
+     Kentucky Straight Bourbon Whiskey" (2026-09-29): 72 bottles were filled
+     and the record of having asked was lost. The screens half had the rule
+     right all along and no harness loaded it. */
+  const lib = {
+    james_e_pepper_barrel_proof: {
+      k: 'James E. Pepper Barrel Proof Kentucky Straight Bourbon Whiskey',
+      name: 'James E. Pepper Barrel Proof Kentucky Straight Bourbon Whiskey' },
+    plain: { name: 'Something Ordinary' }
+  };
+  const rows = L.libraryRows(lib);
+  eq('every entry comes back', rows.length, 2);
+  eq('the key it lives under wins over the one it carries',
+    rows[0].k, 'james_e_pepper_barrel_proof');
+  eq('and the display name is still there to look up',
+    rows[0].name,
+    'James E. Pepper Barrel Proof Kentucky Straight Bourbon Whiskey');
+  eq('an entry carrying no k of its own gets one', rows[1].k, 'plain');
+
+  /* NOT A KEY FIREBASE WOULD REFUSE, which is the failure itself. */
+  const refused = /[.#$/[\]]/;
+  eq('no row is keyed by something the database would reject',
+    rows.filter(r => !r.k || refused.test(r.k)).length, 0);
+
+  /* THE MAP IS NOT COPIED INTO. A row is a copy, so writing to one must not
+     reach back into the library. */
+  rows[0].name = 'edited';
+  eq('a row is a copy, not the entry itself',
+    lib.james_e_pepper_barrel_proof.name,
+    'James E. Pepper Barrel Proof Kentucky Straight Bourbon Whiskey');
+
+  /* EITHER SHAPE, because callers hold rows as often as the map, and passing
+     the map where rows were expected once hid the Publish button. */
+  const arr = [{ k: 'a', name: 'A' }];
+  eq('an array passes straight through', L.libraryRows(arr), arr);
+  eq('nothing at all is no rows', L.libraryRows(null).length, 0);
+
+  /* AN ENTRY WITH NO NAME IS NOT AN ENTRY. The rules require one, and
+     libraryLists would otherwise queue it and libfill look up `undefined`. */
+  eq('a record with no name is not a row',
+    L.libraryRows({ a: { name: 'A' }, b: { dist: 'No Name' } }).length, 1);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '
