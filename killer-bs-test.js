@@ -17629,162 +17629,24 @@ sec('\u00a7285 the same file twice adds nothing');
 
 sec('\u00a7320 an import is judged against what you own');
 {
-  /* BZ made a second account, imported a friend's Only Drams export, and
-     the first page said 89 were already on his shelf — on an account with
-     an EMPTY shelf. The import was handed S.catalog, which is the merged
-     catalog: the shipped seed, plus the shared library everybody adds
-     to, plus your own bottles. That answers "has anybody heard of this
-     whisky", and the question is "do you have one".
-
-     A new user importing 206 bottles was told 87 were already his and got
-     them as sealed spares rather than bottles, and every count under it
-     was wrong as well. */
-  const rows = [['Name', 'Distillery', 'Proof'],
-                ['Ardbeg Ten', 'Ardbeg', '92'],
-                ['Lagavulin 16', 'Lagavulin', '86']];
-  const tally = plan => {
-    const t = {};
-    plan.rows.forEach(r => { t[r.action] = (t[r.action] || 0) + 1; });
-    return t;
-  };
-
-  /* The library knows both bottles; this account owns neither. */
-  const known = {
-    a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92 },
-    b: { k: 'b', name: 'Lagavulin 16', dist: 'Lagavulin', proof: 86 }
-  };
-  const noBottles = [];
-  const ownKeys = L.ownedCounts(noBottles);
-  const mine = {};
-  Object.keys(known).forEach(k => { if (ownKeys[k]) mine[k] = known[k]; });
-
-  eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
-  eq('so every row is new', tally(L.prepareImport(rows, mine, false)).add, 2);
-  /* THE BUG, kept as an assertion so the difference is visible: judged
-     against everything the app knows, both are wrongly already yours. */
-  eq('judged against the catalog they would be refused',
-    matched(tally(L.prepareImport(rows, known, false))), 2);
-
-  /* AND OWNING ONE STILL WORKS, which is the half that must not break: a
-     bottle you really do have is not imported twice. */
-  const oneOwned = [{ id: 'x', k: 'a', status: 'open' }];
-  const k2 = L.ownedCounts(oneOwned);
-  const mine2 = {};
-  Object.keys(known).forEach(k => { if (k2[k]) mine2[k] = known[k]; });
-  const t2 = tally(L.prepareImport(rows, mine2, false));
-  eq('the one you own is recognized', matched(t2), 1);
-  eq('and the one you do not is added', t2.add, 1);
-}
-
-sec('\u00a7286 an import is judged against what you own, keyed by name');
-{
-  /* BZ made a second account, imported a friend's export, and it told him
-     89 bottles were already on his shelf — on an account with an EMPTY
-     shelf. The comparison was against S.catalog, which is everything the
-     app KNOWS: the shipped seed, the shared library everybody adds to, and
-     your own bottles. That asks "has anybody heard of this whisky" when
-     the question is "do you have one".
-
-     A new user importing 206 bottles was told 87 of them were already his
-     and got them as sealed spares rather than bottles, and every number
-     under that was wrong too. */
-  const rows = [['Name', 'Distillery', 'Proof'],
-                ['Ardbeg Ten', 'Ardbeg', '92'],
-                ['Lagavulin 16', 'Lagavulin', '86']];
-  const tally = plan => {
-    const t = {};
-    plan.rows.forEach(r => { t[r.action] = (t[r.action] || 0) + 1; });
-    return t;
-  };
-
-  /* The catalog knows both bottles; the shelf owns neither. */
-  const known = {};
-  ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
-    const k = L.libKey(n);
-    known[k] = { k: k, name: n, dist: 'X', proof: 90 };
-  });
-
-  /* THE FAULT, kept as an assertion so the shape cannot come back: judged
-     against everything known, a new shelf is told it already has them. */
-  eq('against the whole catalog they look owned',
-    matched(tally(L.prepareImport(rows, known, false))), 2);
-
-  /* THE FIX: only entries somebody actually owns are handed over. */
-  const owned = L.ownedCounts([]);
-  const mine = {};
-  Object.keys(known).forEach(k => { if (owned[k]) mine[k] = known[k]; });
-  eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
-  eq('so every bottle in the file is new', tally(L.prepareImport(rows, mine, false)).add, 2);
-
-  /* And a shelf that DOES own one still recognises it, or the dedupe has
-     been thrown away along with the bug. */
-  const oneOwned = L.ownedCounts([{ id: 'b1', k: L.libKey('Ardbeg Ten'), status: 'open' }]);
-  const half = {};
-  Object.keys(known).forEach(k => { if (oneOwned[k]) half[k] = known[k]; });
-  const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognized', matched(t2), 1);
-  eq('and the one you do not is added', t2.add, 1);
-}
-
-sec('\u00a7287 an import is judged against your shelf, not the catalog');
-{
-  /* BZ made a second account, imported a friend's Only Drams export, and
-     the sheet said 89 were ALREADY ON HIS SHELF — on an account whose
-     shelf was empty. S.catalog is the merged catalog: the shipped seed,
-     plus the shared library everybody adds to, plus your own bottles. So
-     the import was asking "has anybody heard of this whisky" when the
-     question is "do you have one", and a new user importing 206 bottles
-     would have had 87 of them quietly turned into sealed spares.
+  /* BZ made a second account, imported a friend's Only Drams export, and the
+     first page said 89 were already on his shelf - on an account whose shelf
+     was EMPTY. He read it right: the import was being compared against
+     S.catalog, the MERGED catalog - the shipped seed, plus the shared library
+     everybody adds to, plus your own bottles. That asks "has anybody heard of
+     this whisky" when the question is "do you have one", and a new user
+     importing 206 bottles would have had 87 of them quietly turned into
+     sealed spares, with every count under that wrong as well.
 
      Measured on the friend's real file: against an empty shelf 199 add;
-     against the whole catalog only 119, with 87 wrongly claimed. */
-  const rows = [['Name', 'Distillery', 'Proof'],
-                ['Ardbeg Ten', 'Ardbeg', '92'],
-                ['Lagavulin 16', 'Lagavulin', '86']];
-  const tally = plan => {
-    const t = {};
-    plan.rows.forEach(r => { t[r.action] = (t[r.action] || 0) + 1; });
-    return t;
-  };
-  /* The catalog knows both bottles; the shelf owns neither. */
-  const known = {};
-  ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
-    const k = L.libKey(n);
-    known[k] = { k: k, name: n, dist: 'X', proof: 90 };
-  });
-  const bottles = [];                       // nothing owned
-  const ownKeys = L.ownedCounts(bottles);
-  const mine = {};
-  Object.keys(known).forEach(k => { if (ownKeys[k]) mine[k] = known[k]; });
+     against the whole catalog only 119, with 87 wrongly claimed.
 
-  eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
-  eq('so every row is new to it', tally(L.prepareImport(rows, mine, false)).add, 2);
-  /* And the bug it replaces, asserted so it cannot come back: judged
-     against the CATALOG, the same rows read as already owned. */
-  eq('judged against the catalog they would read as owned',
-    matched(tally(L.prepareImport(rows, known, false))), 2);
-
-  /* A shelf that really owns one gets the honest answer for that one. */
-  const oneOwned = [{ id: 'b1', k: L.libKey('Ardbeg Ten'), status: 'open' }];
-  const ok2 = L.ownedCounts(oneOwned);
-  const half = {};
-  Object.keys(known).forEach(k => { if (ok2[k]) half[k] = known[k]; });
-  const t2 = tally(L.prepareImport(rows, half, false));
-  eq('the one you own is recognized', matched(t2), 1);
-  eq('and the one you do not is added', t2.add, 1);
-}
-
-sec('\u00a7288 an import compares against what you own');
-{
-  /* BZ made a second account, imported a friend's Only Drams export, and
-     the first page said 89 were already on his shelf — on an account with
-     an EMPTY shelf. He read it right: the import is comparing to my shelf
-     and that is muddying everything else.
-
-     S.catalog is the MERGED catalog — the shipped seed, plus the shared
-     library everybody adds to, plus your own bottles. Comparing an import
-     against that asks "has anybody ever heard of this whisky" when the
-     question is "do you have one". */
+     FOUR SECTIONS ASSERTED THIS, in different words, over two fixtures - two
+     copies of each (merged 2026-09-30). Both fixtures are kept, because the
+     difference between them is the only real coverage in the set: one files
+     entries under plain keys whose distillery and proof agree with the row,
+     the other under L.libKey with a distillery and a proof that do not. Only
+     the duplicated wording went. */
   const rows = [['Name', 'Distillery', 'Proof'],
                 ['Ardbeg Ten', 'Ardbeg', '92'],
                 ['Lagavulin 16', 'Lagavulin', '86']];
@@ -17794,29 +17656,47 @@ sec('\u00a7288 an import compares against what you own');
     return t;
   };
 
-  /* The catalog knows both bottles; the shelf owns neither. */
-  const known = {
+  /* The catalog knows both bottles. The shelf owns neither. */
+  const plain = {
     a: { k: 'a', name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92 },
     b: { k: 'b', name: 'Lagavulin 16', dist: 'Lagavulin', proof: 86 }
   };
-  const owned = L.ownedCounts([]);
-  const mine = {};
-  Object.keys(known).forEach(k => { if (owned[k]) mine[k] = known[k]; });
+  const byName = {};
+  ['Ardbeg Ten', 'Lagavulin 16'].forEach(n => {
+    const k = L.libKey(n);
+    byName[k] = { k: k, name: n, dist: 'X', proof: 90 };
+  });
 
-  eq('an empty shelf owns nothing', Object.keys(mine).length, 0);
-  eq('so every row is new', tally(L.prepareImport(rows, mine, false)).add, 2);
-  /* THE BUG, kept as an assertion so it cannot come back: handed the whole
-     catalog, the same import claims both are already his. */
-  eq('against the catalog they would look owned',
-    matched(tally(L.prepareImport(rows, known, false))), 2);
+  [{ how: 'plain keys, the row agreeing with the entry',
+     known: plain, own: 'a' },
+   { how: 'libKey keys, neither distillery nor proof agreeing',
+     known: byName, own: L.libKey('Ardbeg Ten') }].forEach(f => {
+    const say = t => f.how + ' \u2014 ' + t;
+    /* WHAT THE IMPORT IS HANDED, which is the whole fix: only the entries
+       this shelf actually owns. */
+    const only = bottles => {
+      const owned = L.ownedCounts(bottles);
+      const out = {};
+      Object.keys(f.known).forEach(k => { if (owned[k]) out[k] = f.known[k]; });
+      return out;
+    };
 
-  /* And once one IS owned, it is correctly recognized. */
-  const oneOwned = L.ownedCounts([{ id: 'x', k: 'a', status: 'open' }]);
-  const mine2 = {};
-  Object.keys(known).forEach(k => { if (oneOwned[k]) mine2[k] = known[k]; });
-  const t2 = tally(L.prepareImport(rows, mine2, false));
-  eq('a bottle you own is already on the shelf', matched(t2), 1);
-  eq('and the other still arrives', t2.add, 1);
+    const mine = only([]);
+    eq(say('an empty shelf owns nothing'), Object.keys(mine).length, 0);
+    eq(say('so every row in the file is new'),
+      tally(L.prepareImport(rows, mine, false)).add, 2);
+    /* THE BUG, kept as an assertion so the shape cannot come back: handed
+       the whole catalog, the same import claims both are already yours. */
+    eq(say('against the whole catalog they would read as owned'),
+      matched(tally(L.prepareImport(rows, f.known, false))), 2);
+
+    /* AND OWNING ONE STILL WORKS, the half that must not break with the bug:
+       a bottle you really do have is not imported a second time. */
+    const half = only([{ id: 'x', k: f.own, status: 'open' }]);
+    const t2 = tally(L.prepareImport(rows, half, false));
+    eq(say('the one you own is recognised'), matched(t2), 1);
+    eq(say('and the one you do not is added'), t2.add, 1);
+  });
 }
 
 sec('\u00a7289 a new account has an empty shelf');
