@@ -68,6 +68,7 @@ node twotab.js               # two devices, merge holds
 node gscheck.js              # Apps Script wiring
 node browser.js              # the walk, in a real browser   (~45s)
 node sync.js                 # push, load, reload, refuse    (~78s)
+node ios.js                  # the app in WebKit, at iPhone size (~25s)
 ```
 
 Report each one as it lands, and read the whole output of each rather than

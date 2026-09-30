@@ -65,6 +65,11 @@ FAST = [
 SLOW = [
     ('walk',  ['node', 'browser.js']),
     ('sync',  ['node', 'sync.js']),
+    # THE APP IN WEBKIT, which is the engine iOS ships (2026-09-29). Every
+    # other browser check here drives Chromium, so a WebKit-only fault could
+    # not be seen at all - which is how iOS users came to report scrolling
+    # trouble and no way to save a file against fifteen green checks.
+    ('ios',   ['node', 'ios.js']),
     # The Firebase rules, run in Google's emulator rather than read
     # (2026-09-16). Needs Java, which the cloud runner has.
     ('rules', ['node', 'rulestest.js']),

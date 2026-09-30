@@ -25595,6 +25595,51 @@ sec('\u00a7445 a row is keyed by where it was found');
     L.libraryRows({ a: { name: 'A' }, b: { dist: 'No Name' } }).length, 1);
 }
 
+sec('\u00a7447 an iPhone is handed a file, not a download');
+{
+  /* iOS users, 2026-09-29: there is no download option. There was one - it
+     just had nowhere to put a file. A home-screen iOS app presents no file
+     download at all, and the share sheet is the route the platform gives. */
+  const iPhone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) '
+    + 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 '
+    + 'Safari/604.1';
+  /* iPadOS 13 onwards says Macintosh. No Mac has a touch screen, so touch is
+     what separates them - and this test has to come before the iPhone one. */
+  const iPad = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+    + 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15';
+  const mac = iPad;
+  const win = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    + '(KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+  const android = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) '
+    + 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
+
+  eq('an iPhone is an iPhone', L.appleDevice(iPhone, true), 'iPhone');
+  eq('a touch Macintosh is an iPad', L.appleDevice(iPad, true), 'iPad');
+  eq('and a Mac without touch is not', L.appleDevice(mac, false), null);
+  eq('Windows is not an Apple handheld', L.appleDevice(win, false), null);
+  eq('nor is Android', L.appleDevice(android, true), null);
+
+  eq('an iPhone that can share files gets the sheet',
+    L.saveByShare(iPhone, true, true), true);
+  eq('an iPad that can share files gets the sheet',
+    L.saveByShare(iPad, true, true), true);
+  /* ASKED OF THE PLATFORM, not assumed: a browser may have navigator.share
+     and refuse files, and then the sheet is not an option at all. */
+  eq('an iPhone that cannot share files gets a download',
+    L.saveByShare(iPhone, true, false), false);
+  eq('a desktop gets a download even where sharing works',
+    L.saveByShare(win, false, true), false);
+  eq('and so does Android, which downloads properly',
+    L.saveByShare(android, true, true), false);
+
+  /* THE LABEL AND THE DECISION AGREE, because both ask appleDevice. A device
+     named an iPhone in the log that is not offered the sheet would be two
+     answers to one question. */
+  eq('the name and the rule cannot disagree',
+    /iPhone/.test(L.deviceName(iPhone, false, true, 390)),
+    !!L.appleDevice(iPhone, true));
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

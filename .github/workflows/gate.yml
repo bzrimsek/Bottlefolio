@@ -99,23 +99,32 @@ jobs:
         id: pw
         run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Chromium from the cache
+      # AND WEBKIT, for ios.js. Every other browser check drives Chromium, so
+      # until 2026-09-29 nothing here could see a WebKit-only fault. The cache
+      # key carries -webkit: a hit on the old key would restore a cache with no
+      # WebKit in it and then skip the install, which is a green gate for a
+      # browser that is not there.
+      - name: Chromium and WebKit from the cache
         id: pwcache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell
+          key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell-webkit
 
-      - name: Install Chromium for the browser checks (headless shell, with its system packages)
+      - name: Install the browsers for the browser checks
         if: steps.pwcache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps --only-shell chromium
+        run: |
+          npx playwright install --with-deps --only-shell chromium
+          npx playwright install --with-deps webkit
 
-      # The cache holds the browser, not the system packages it needs, and
+      # The cache holds the browsers, not the system packages they need, and
       # every run starts on a fresh machine. So a cache hit still installs
       # them, which is the half of --with-deps the cache cannot supply.
-      - name: Chromium's system packages (the browser came from the cache)
+      - name: Their system packages (the browsers came from the cache)
         if: steps.pwcache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium-headless-shell
+        run: |
+          npx playwright install-deps chromium-headless-shell
+          npx playwright install-deps webkit
 
       # BZ's real shelf. The suite will not start without it, and the repo is
       # public, so only the encrypted copies are committed. The key is the

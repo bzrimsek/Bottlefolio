@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 838 |
+| functions | 840 |
 | tables | 204 |
-| carrying a stated purpose | 651 |
+| carrying a stated purpose | 653 |
 
 ## Tables
 
@@ -238,6 +238,7 @@ QUESTION, not the name you were going to use.
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
+- **`L.appleDevice`** — AN APPLE HANDHELD, WHICH TWO QUESTIONS NEED
 - **`L.applyLibraryMoves`** — Removals and renames must travel
 - **`L.article`** — "A Amontillado" is what happens when a reason is assembled from parts.
 - **`L.askableHouse`** — Whether this entry is worth asking about, given what its house has
@@ -876,6 +877,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
+- **`L.saveByShare`** — Asked of the platform, not guessed
 - **`L.saysBanned`** — One sentence against one list
 - **`L.scotchRegions`** — _no comment above it_
 - **`L.sealedKeys`** — The whiskies you hold a SEALED bottle of.

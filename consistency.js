@@ -2005,6 +2005,36 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service call goes through the one door', bad);
 }
 
+/* ONE WAY OUT OF THE APP WITH A FILE (2026-09-29).
+ *
+ * iOS users reported having no download option, and six buttons each built
+ * their own anchor - while downloadCsv sat there labelled "ONE DOWNLOAD, THREE
+ * CALLERS" and three of the six ignored it, copying its BOM comment across
+ * instead. A comment claiming a door is not a door.
+ *
+ * So: the object URL and the download attribute are both named here, because
+ * either one outside saveFile is a second way out, and a second way out is how
+ * one platform fault reached six buttons.
+ */
+{
+  const bad = [];
+  const lines = blankComments(src).split('\n');
+  /* The function each line is inside, by the last one declared above it. Only
+     a declaration in column ONE counts: saveFile's own inner `anchor` arrow is
+     indented, and reading that as the enclosing function reported the door as
+     its own offender. */
+  let inside = '(top level)';
+  lines.forEach((l, i) => {
+    const d = l.match(/^(?:function\s+([A-Za-z_$][\w$]*)|const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function|\())/);
+    if (d) inside = d[1] || d[2];
+    if (!/\.download\s*=|URL\.createObjectURL/.test(l)) return;
+    if (inside === 'saveFile') return;
+    bad.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 50)
+      + '  \u2014 in ' + inside + ', not saveFile: a second way out with a file');
+  });
+  check('a file leaves the app through one door', bad);
+}
+
 /* A KEY PUT FIRST IS ONLY A SUGGESTION (2026-09-29).
  *
  * `Object.assign({ k: key }, record)` assigns the record second, so a record
@@ -3108,7 +3138,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     showShelfTools: 255,
     shopAnswer: 243,
     renderLookupSetup: 231,
-    renderSettings: 165,
+    renderSettings: 150,
     renderGuest: 157,
     renderHome: 93,
     libraryAudit: 173,

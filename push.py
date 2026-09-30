@@ -135,6 +135,12 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # self heal?"). Same doors as the button, and a ledger that stops
            # it asking an unanswerable question for ever.
            'libfill.js', '.github/workflows/libfill.yml',
+           # 2026-09-29: the app in WebKit, the engine iOS ships. Every other
+           # browser check here drives Chromium, which is how iOS users came to
+           # report two faults against fifteen green checks. gate.py runs it,
+           # so a gate that cannot see the file fails every build - the same way
+           # DOORS.md did above.
+           'ios.js',
            # The rules, run in the emulator (cloud gate only).
            'rulestest.js', 'syncemu.js', 'firebase.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
