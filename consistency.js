@@ -2005,6 +2005,35 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service call goes through the one door', bad);
 }
 
+/* ONE PLACE MAY INVENT A NAME (2026-09-30).
+ *
+ * BZ, reading his own Buddies tab: "who is Somebody . P3bIGp". It was a test
+ * account he had removed, and the app knew its name - a share is written
+ * {at, name} so that a buddy who stops being findable is still nameable.
+ *
+ * Two fallbacks is what broke it. fbSharesMine looked only in the directory,
+ * found nothing because the account was gone, invented "Somebody . <uid>" and
+ * passed it along AS A NAME; L.buddyRows, holding the real fallback, then had
+ * to test for the word to know a name was not one. The record's own name was
+ * never read by either.
+ *
+ * So: exactly one place may build that stub. A second one means two answers to
+ * "what do we call this person", and the one that runs first wins by accident.
+ */
+{
+  const stub = /Somebody\s*(?:\\u00b7|\u00b7)/g;
+  const found = [];
+  blankComments(src).split('\n').forEach((l, i) => {
+    if (stub.test(l)) found.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 54));
+    stub.lastIndex = 0;
+  });
+  check('only one place invents a name for somebody it cannot name',
+    found.length === 1 ? [] : (found.length
+      ? found.map(f => f + '  \u2014 ' + found.length + ' places build the stub')
+      : ['nothing builds it any more \u2014 an account with no name '
+         + 'anywhere now shows blank']));
+}
+
 /* ONE WAY OUT OF THE APP WITH A FILE (2026-09-29).
  *
  * iOS users reported having no download option, and six buttons each built

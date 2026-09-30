@@ -25640,6 +25640,46 @@ sec('\u00a7447 an iPhone is handed a file, not a download');
     !!L.appleDevice(iPhone, true));
 }
 
+sec('\u00a7448 a buddy the directory has forgotten still has a name');
+{
+  /* BZ, 2026-09-30, reading his own Buddies tab: "who is Somebody . P3bIGp".
+     It was Not Smoky Bill, a test account he had removed, and the app knew:
+     a share is written {at, name} and the name is on it precisely so a buddy
+     who stops being findable is still nameable. The name was read from the
+     directory only, and the directory entry had gone with the account. */
+  const gone = 'P3bIGpkTxxxxxxxxxxxxxxxxxxxx';
+
+  /* THE SHARE RECORD'S NAME, when the directory has nothing. */
+  let r = L.buddyRows({}, [{ uid: gone, name: 'Not Smoky Bill' }], {}, {})[0];
+  eq('the name on the share is used', r.name, 'Not Smoky Bill');
+  eq('and it is not a uid stub', /^Somebody/.test(r.name), false);
+
+  /* THE DIRECTORY WINS while it has one: that is what somebody calls
+     themselves today, and the record is a snapshot from when it was made. */
+  r = L.buddyRows({}, [{ uid: gone, name: 'What They Were Called' }],
+    { [gone]: 'What They Call Themselves Now' }, {})[0];
+  eq('a current name beats the one on the record',
+    r.name, 'What They Call Themselves Now');
+
+  /* A SHELF THEY SHARED carries the name they set, and beats the record too. */
+  r = L.buddyRows({ [gone]: { name: 'From Their Shelf', bottles: [] } },
+    [{ uid: gone, name: 'Older' }], {}, {})[0];
+  eq('a shared shelf names them too', r.name, 'From Their Shelf');
+
+  /* AND THE STUB ONLY WHEN NOTHING KNOWS. One fallback, in one place: a
+     second one in the caller used to invent this string and pass it along as
+     if it were a name, which forced buddyRows to test for the word. */
+  r = L.buddyRows({}, [{ uid: gone, name: '' }], {}, {})[0];
+  eq('with nothing known it falls back to the uid',
+    r.name, 'Somebody \u00b7 P3bIGp');
+
+  /* AND A CALLER THAT SENDS THE STUB AS A NAME IS NOT HUMOURED. Whatever
+     arrives, a row never reads "Somebody" while a real name is known. */
+  r = L.buddyRows({}, [{ uid: gone, name: 'Somebody \u00b7 P3bIGp' }],
+    { [gone]: 'Not Smoky Bill' }, {})[0];
+  eq('a known name always beats the stub', r.name, 'Not Smoky Bill');
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

@@ -21,7 +21,14 @@ const say = s => console.log('  ' + s);
 /* A line worth reading twice. */
 const BAD = [/would not/i, /failed/i, /refused/i, /\berror\b/i, /not written/i,
   /gave up/i, /timed out/i, /\b(404|500|503)\b/i, /unreadable/i, /could not/i,
-  /denied/i, /THERE IS NO/, /is not data/i, /no answer/i];
+  /denied/i, /THERE IS NO/, /is not data/i, /no answer/i,
+  /* THE BAR AGAINST THE VIEWPORT (2026-09-30). navSelfHeal has written this
+     line for weeks - 84 of them - and not one was ever read here, because it
+     says neither "failed" nor "could not". Every one was the no-box case,
+     which is noise below and cannot happen from v2.6.41; a line that gets
+     past that filter now is a REAL mismatch, which is the thing the bar's
+     self-healing exists for and has never yet had to do. */
+  /re-measured/];
 
 /* HOW FAR BACK A FAULT STILL COUNTS. A log holds six hundred lines, which
    on a quiet account reaches back weeks; a stale deployment fixed nine days

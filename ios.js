@@ -154,6 +154,69 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
   if (blocked.length) bad('nothing invisible is covering the screen', blocked.join('\n'));
   else ok('nothing invisible is covering the screen');
 
+  /* ---- A MEASUREMENT THAT WAS NEVER TAKEN IS NOT A FAULT TO CORRECT.
+   *
+   * navSelfHeal rewrites --app-h and lays the whole app out again when the bar
+   * is not where the measured height says it should be. A bar that has not
+   * been laid out yet returns a rect of zeroes, and a bottom of 0 satisfies
+   * that test perfectly: every one of the 84 re-measures in the live logs was
+   * this case, never a real mismatch, and it nearly always ran all three
+   * times - a triple relayout at the moment a phone comes back or a keyboard
+   * moves. */
+  /* COUNTING THE WRITES, not comparing the value: the correction sets --app-h
+     to the height it just measured, which is usually the value already there,
+     so the string does not change and the relayout happens anyway. Comparing
+     before and after saw nothing and passed with the guard removed - which is
+     how this check was vacuous when first written.
+
+     A FRESH PAGE FIRST, because navSelfHeal stops after three corrections and
+     a page that has been driven through eleven screens may have spent them,
+     which would make it return early and pass for the wrong reason. */
+  await p.goto('http://app.local/index.html');
+  await p.waitForTimeout(1200);
+
+  const heal = await p.evaluate(() => {
+    const root = document.documentElement;
+    const nav = document.querySelector('nav');
+    const real = root.style.setProperty.bind(root.style);
+    let writes = 0;
+    root.style.setProperty = function (k, v) {
+      if (k === '--app-h') writes++;
+      return real(k, v);
+    };
+    const count = fn => { writes = 0; fn(); return writes; };
+
+    const was = nav.style.display;
+    nav.style.display = 'none';              // a bar with no box at all
+    const onNoBox = count(() => navSelfHeal());
+    nav.style.display = was;
+
+    /* THE CONTROL. A bar that IS laid out, against a height that is plainly
+       wrong: the correction must still fire, or the guard above has simply
+       switched self-healing off and the check above proves nothing. */
+    const keep = root.style.getPropertyValue('--app-h');
+    real('--app-h', (window.innerHeight + 300) + 'px');
+    const onWrong = count(() => navSelfHeal());
+    real('--app-h', keep);
+    root.style.setProperty = real;
+    return { onNoBox: onNoBox, onWrong: onWrong,
+      navHeight: Math.round(nav.getBoundingClientRect().height) };
+  });
+
+  if (heal.onNoBox === 0) ok('a bar with no box is waited for, not corrected');
+  else bad('a bar with no box is waited for, not corrected',
+    'navSelfHeal wrote --app-h ' + heal.onNoBox + ' time(s) on a measurement '
+    + 'that was never taken - each one lays the whole app out again');
+
+  if (heal.onWrong > 0) {
+    ok('and a bar that really is in the wrong place is still corrected');
+  } else {
+    bad('and a bar that really is in the wrong place is still corrected',
+      'the height was set ' + (heal.navHeight ? '300px' : '?') + ' too tall '
+      + 'and nothing was re-measured, so the no-box guard has switched the '
+      + 'self-healing off altogether');
+  }
+
   /* ---- A FILE REACHES THE PERSON.
    *
    * iOS users reported no download option, and a home-screen iOS app presents
