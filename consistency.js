@@ -2005,6 +2005,38 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service call goes through the one door', bad);
 }
 
+/* AN ASK IS WITHDRAWN WHERE IT LIVES (2026-09-30).
+ *
+ * A request lives under the account being asked - requests/<them>/<me> - so
+ * forgetting it on this device changes nothing for anybody else. "Give up on
+ * it" cleared S.asked and left the record there for ever, which is how an ask
+ * to an account deleted thirty-six minutes earlier was still sitting in the
+ * database, and still on the screen of the person who sent it.
+ *
+ * The third time in two days that something with two ends was cleared at one:
+ * the account wipe, the share record, and now this. So it gets a check rather
+ * than a resolution to be careful.
+ */
+{
+  const bad = [];
+  const lines = blankComments(src).split('\n');
+  lines.forEach((l, i) => {
+    if (!/Give up on it/.test(l)) return;
+    /* The handler is right below the button it belongs to. */
+    const near = lines.slice(i, i + 26).join('\n');
+    if (!/S\.asked/.test(near)) return;          // not the give-up handler
+    if (/fbDropRequest\(/.test(near)) return;
+    bad.push('index.html:' + (i + 1) + '  giving up clears S.asked and leaves '
+      + 'requests/<them>/<me> behind');
+  });
+  /* And the withdrawal exists at all, since a check for a call is worth
+     nothing if the thing it calls has gone. */
+  if (!/function fbDropRequest\s*\(/.test(src)) {
+    bad.push('fbDropRequest has gone - nothing can withdraw an ask');
+  }
+  check('giving up on an ask withdraws it, not just forgets it', bad);
+}
+
 /* ONE PLACE MAY INVENT A NAME (2026-09-30).
  *
  * BZ, reading his own Buddies tab: "who is Somebody . P3bIGp". It was a test
