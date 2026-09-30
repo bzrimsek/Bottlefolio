@@ -25500,17 +25500,43 @@ sec('\u00a7447 an iPhone is handed a file, not a download');
   eq('nor is Android', L.appleDevice(android, true), null);
 
   eq('an iPhone that can share files gets the sheet',
-    L.saveByShare(iPhone, true, true), true);
+    L.saveRoute(iPhone, true, true, false), 'share');
   eq('an iPad that can share files gets the sheet',
-    L.saveByShare(iPad, true, true), true);
-  /* ASKED OF THE PLATFORM, not assumed: a browser may have navigator.share
-     and refuse files, and then the sheet is not an option at all. */
-  eq('an iPhone that cannot share files gets a download',
-    L.saveByShare(iPhone, true, false), false);
+    L.saveRoute(iPad, true, true, true), 'share');
+
+  /* THE ROUTE THAT MATTERS, and the reason a boolean was not enough. iOS is
+     choosy about which file types it will share, and this app hands over
+     application/json and text/csv. In a HOME-SCREEN app a refusal used to
+     fall back to a download, and a home-screen app presents no download at
+     all - so both routes were dead ends and the button did nothing, which is
+     the complaint this all started from. */
+  eq('a home-screen iPhone that cannot share gets a tab, not silence',
+    L.saveRoute(iPhone, true, false, true), 'tab');
+  /* IN SAFARI THE ANCHOR WORKS, and a tab would be worse than a download. */
+  eq('the same iPhone in Safari gets the download, which works there',
+    L.saveRoute(iPhone, true, false, false), 'download');
+
   eq('a desktop gets a download even where sharing works',
-    L.saveByShare(win, false, true), false);
+    L.saveRoute(win, false, true, false), 'download');
   eq('and so does Android, which downloads properly',
-    L.saveByShare(android, true, true), false);
+    L.saveRoute(android, true, true, false), 'download');
+  /* NO ROUTE IS EVER NOTHING. Whatever the four answers, one of the three
+     always comes back - a person is never left with a button that did
+     nothing and said nothing. */
+  const ROUTES = ['share', 'tab', 'download'];
+  let every = true;
+  [iPhone, iPad, win, android, ''].forEach(ua => {
+    [true, false].forEach(touch => {
+      [true, false].forEach(can => {
+        [true, false].forEach(alone => {
+          if (ROUTES.indexOf(L.saveRoute(ua, touch, can, alone)) < 0) {
+            every = false;
+          }
+        });
+      });
+    });
+  });
+  eq('every combination lands on one of the three routes', every, true);
 
   /* THE LABEL AND THE DECISION AGREE, because both ask appleDevice. A device
      named an iPhone in the log that is not offered the sheet would be two

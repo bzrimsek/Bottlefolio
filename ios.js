@@ -275,6 +275,61 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
       JSON.stringify(share));
   }
 
+  /* A HOME-SCREEN iPHONE THAT THE PLATFORM WILL NOT SHARE FOR.
+   *
+   * The route that matters, because both other routes are dead ends there: iOS
+   * is choosy about which file types it will share and this app hands over
+   * application/json and text/csv, while a home-screen app presents no
+   * download at all. A refusal used to fall back to the anchor, so the button
+   * did nothing and said nothing - the complaint this started from. */
+  const tab = await p.evaluate(() => {
+    let opened = null;
+    const realOpen = window.open;
+    let toasted = '';
+    const realToast = window.toast;
+    navigator.canShare = () => false;
+    navigator.share = () => Promise.reject(new Error('should not be called'));
+    try {
+      Object.defineProperty(window.navigator, 'standalone',
+        { value: true, configurable: true });
+    } catch (e) { /* already defined by the engine */ }
+    window.open = u => { opened = String(u); return { closed: false }; };
+    try { window.toast = m => { toasted = String(m); }; } catch (e) {}
+    let clicked = false;
+    const realClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () { clicked = true; };
+    saveFile('bottlefolio-backup-probe.json',
+      new Blob(['{"a":1}'], { type: 'application/json' }));
+    HTMLAnchorElement.prototype.click = realClick;
+    window.open = realOpen;
+    if (realToast) window.toast = realToast;
+    const was = window.navigator.standalone === true;
+    /* PUT IT BACK. Left set, every later check reads as a home-screen app and
+       takes this route instead of its own - which is how the two download
+       checks below failed on a page this test had quietly changed. */
+    try {
+      Object.defineProperty(window.navigator, 'standalone',
+        { value: undefined, configurable: true });
+    } catch (e) { /* nothing to undo */ }
+    return { opened: opened, clicked: clicked, toasted: toasted,
+      standalone: was, restored: window.navigator.standalone !== true };
+  });
+  if (!tab.restored) {
+    bad('the standalone flag is put back after the test',
+      'it stayed set, so every check after this one reads as a home-screen app');
+  }
+  if (!tab.standalone) {
+    bad('a home-screen iPhone that cannot share still gets the file',
+      'the standalone flag could not be set, so this proved nothing');
+  } else if (tab.opened && /^blob:/.test(tab.opened)) {
+    ok('a home-screen iPhone that cannot share gets the file in a tab');
+  } else {
+    bad('a home-screen iPhone that cannot share still gets the file',
+      'nothing opened' + (tab.clicked
+        ? ' — it fell back to a download, which a home-screen app '
+          + 'does not present' : ' and nothing was said'));
+  }
+
   /* CLOSING THE SHEET IS NOT A FAILURE. Falling back would save a second copy
      behind the back of somebody who just said no. */
   const cancelled = await p.evaluate(() => {

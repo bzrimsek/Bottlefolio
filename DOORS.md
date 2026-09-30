@@ -877,7 +877,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
-- **`L.saveByShare`** — Asked of the platform, not guessed
+- **`L.saveRoute`** — Asked of the platform, never guessed
 - **`L.saysBanned`** — One sentence against one list
 - **`L.scotchRegions`** — _no comment above it_
 - **`L.sealedKeys`** — The whiskies you hold a SEALED bottle of.
