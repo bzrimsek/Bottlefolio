@@ -164,7 +164,13 @@ NEVER = [r'^bz-(bottles|flights|custom)\.json$', r'\.csv$', r'\.xlsx$',
          r'rtdb-export', r'shelf\.key$', r'^_superseded/', r'\.sealstate',
          # A Firebase admin key can rewrite the whole database. One landed in
          # this folder on 2026-09-15 on its way to ~/.bottlefolio.
-         r'adminsdk', r'firebase-admin', r'\.clasprc', r'service.?account']
+         r'adminsdk', r'firebase-admin', r'\.clasprc', r'service.?account',
+         # 2026-10-01, from the scan: these sit in the folder and were safe
+         # only by being absent from the lists above. An allow-list is the
+         # real protection and this is the second gate, so the second gate
+         # should cover them too. library-backup.json is a dump of the shared
+         # library; refcache/ is what refdata.js keeps between runs.
+         r'^library-backup\.json$', r'^refcache/', r'-backup\.json$']
 
 
 def gh_path():

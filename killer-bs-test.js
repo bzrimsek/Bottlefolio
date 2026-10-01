@@ -26136,6 +26136,24 @@ sec('§453 the library entry a bottle probably means');
   eq('two bottles of one orphan ask once', L.adoptCandidates(
     [{ k: 'Dalwhinnie Edition', status: 'open' },
      { k: 'Dalwhinnie Edition', status: 'sealed' }], lib, {}).length, 1);
+  /* THE LIBRARY'S NAMES ARE SPLIT ONCE. adoptCandidates normalised and split all
+     714 entries for every single bottle it was asked about, and the read-time
+     resolution asks one per unsettled product (2026-10-01). */
+  const noMerge = {};
+  const words = L.libraryWords(lib, noMerge);
+  eq('every entry is split into its words', words.length, Object.keys(lib).length);
+  eq('the same library and merge record give the same split',
+    L.libraryWords(lib, noMerge) === words, true);
+  /* AND NO MERGE RECORD AT ALL IS ONE SHARED OBJECT, or `graves || {}` builds a
+     fresh one every call and the cache misses in the path it was added for. */
+  eq('asking twice with no merge record hits the cache',
+    L.libraryWords(lib) === L.libraryWords(lib), true);
+  eq('a different merge record is split again',
+    L.libraryWords(lib, { a: 'b' }) === words, false);
+  eq('and the words are the name’s, settled',
+    words.filter(w => w.name === 'Dalwhinnie Distillers Edition')[0].w,
+    L.shopNorm('Dalwhinnie Distillers Edition').split(' '));
+
   /* A MERGE IS FOLLOWED HERE TOO: the entry a bottle means may itself have
      been merged into another, and the offer must name what it BECAME. */
   const moved = Object.assign({}, lib,
@@ -26289,6 +26307,11 @@ sec('§456 what a bottle is, from the canon');
   const brands = {
     high_west: { name: 'High West' },
     angel_s_envy: { name: "Angel's Envy" },
+    /* BOTH SPELLINGS, so longest-first is the only loop that gives the right
+       answer: with only the two-word brand in the table, shortest-first finds
+       nothing at one word and then the same entry, and the check could not
+       fail (caught by breaking it, 2026-10-01). */
+    bruichladdich: { name: 'Bruichladdich' },
     bruichladdich_octomore: { name: 'Bruichladdich Octomore' },
     weller: { name: 'Weller' },
     w_l_weller: { name: 'W.L. Weller' },
@@ -26309,6 +26332,26 @@ sec('§456 what a bottle is, from the canon');
     L.brandOf('33 Barrels Of Something', brands), null);
   eq('a name no brand starts is no brand',
     L.brandOf('Something Nobody Registered', brands), null);
+
+  /* THE REGISTRY IS A LOOKUP, NOT A LIST TO SEARCH. Scanning it per name cost
+     about 11 million shopNorm calls to stamp 714 entries - 13.8 SECONDS on a
+     desktop, inside the housekeeping chain (2026-10-01). The index answers a
+     name by trying its own prefixes longest-first. */
+  const idx = L.brandIndex(brands);
+  eq('the registry is indexed by the brand itself',
+    !!idx.by[L.shopNorm("Angel's Envy")], true);
+  eq('and it remembers the longest brand it holds', idx.longest >= 2, true);
+  eq('the same table gives the same index', L.brandIndex(brands) === idx, true);
+  eq('a different table gives a different one',
+    L.brandIndex({ x: { name: 'Something Else' } }) === idx, false);
+  eq('no table, no index', L.brandIndex(null), null);
+  /* THE ANSWER IS THE ONE THE SCAN GAVE: longest first, which is what made
+     "Angel's Envy Cask Strength" take Angel's Envy over a shorter match. */
+  eq('the longest prefix wins, as the scan did',
+    (L.brandOf('Bruichladdich Octomore 13.4', brands) || {}).key,
+    L.houseKey('Bruichladdich Octomore'));
+  eq('a name shorter than any brand finds none',
+    L.brandOf('Zz', brands), null);
 
   /* A RYE IS NOT A BOURBON, which is the whole of BZ's point. */
   const bbn = { name: 'Bradshaw Bourbon', sub: 'bourbon', proof: 100 };

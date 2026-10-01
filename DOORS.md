@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 873 |
+| functions | 875 |
 | tables | 205 |
-| carrying a stated purpose | 682 |
+| carrying a stated purpose | 683 |
 
 ## Tables
 
@@ -285,7 +285,8 @@ QUESTION, not the name you were going to use.
 - **`L.bottlePick`** — _no comment above it_
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
-- **`L.brandOf`** — _no comment above it_
+- **`L.brandIndex`** — _no comment above it_
+- **`L.brandOf`** — THE BRAND THE REGISTRY KNOWS A NAME BY
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
@@ -586,6 +587,7 @@ QUESTION, not the name you were going to use.
 - **`L.libraryRename`** — Renaming an entry in the shared library.
 - **`L.libraryRows`** — A row's `k` is where it was found
 - **`L.libraryShape`** — _no comment above it_
+- **`L.libraryWords`** — _no comment above it_
 - **`L.likelyByAge`** — AGE AGAINST NO AGE, for a drinker who runs an AGE IS NOT A FLAVOR flight.
 - **`L.likelyByFlavour`** — MORE OF WHAT THE SHELF ACTUALLY TASTES OF.
 - **`L.likelyToLike`** — The list itself
