@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 870 |
+| functions | 873 |
 | tables | 205 |
-| carrying a stated purpose | 680 |
+| carrying a stated purpose | 682 |
 
 ## Tables
 
@@ -351,6 +351,7 @@ QUESTION, not the name you were going to use.
 - **`L.enhanceDiff`** — _no comment above it_
 - **`L.enhanceQueue`** — Bottles with NO real note
 - **`L.enrichContribution`** — mergeContribution, below, cannot overwrite
+- **`L.entryFor`** — WHERE resolveLibKey CANNOT SETTLE A NAME, containment is asked
 - **`L.entryScore`** — _no comment above it_
 - **`L.escHtml`** — TEXT INTO HTML, safe between tags AND inside a quoted attribute
 - **`L.exactDupes`** — _no comment above it_
@@ -497,7 +498,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseTakeBack`** — PUTTING ONE BACK
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
-- **`L.identOf`** — A BOTTLE WITH NO LIBRARY ENTRY still gets one, worked out from itself, so a
+- **`L.identOf`** — _no comment above it_
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
 - **`L.importChanges`** — _no comment above it_
 - **`L.importKey`** — THE NAME, FOR DECIDING WHETHER IT IS THE SAME BOTTLE
@@ -653,6 +654,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameAgrees`** — bottling, whatever else agrees
 - **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
 - **`L.nameError`** — _no comment above it_
+- **`L.nameFromKey`** — THE WORDS BEHIND A KEY
 - **`L.nameFromShopPage`** — the price alongside it.
 - **`L.nameFromShopText`** — _no comment above it_
 - **`L.nameInside`** — IS EVERY WORD OF THE FIRST NAME IN THE SECOND? L.nameOverlap is a ratio and
@@ -935,6 +937,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfKeyOf`** — A BOTTLE THE LIBRARY HAS NEVER HEARD OF keeps its normalised name, exactly
 - **`L.shelfLeans`** — _no comment above it_
 - **`L.shelfLevels`** — WHAT THE PHOTOGRAPH SAID ABOUT BOTTLES YOU ALREADY HAVE
+- **`L.shelfName`** — WHAT TO CALL A BOTTLE
 - **`L.shelfNextSteps`** — _no comment above it_
 - **`L.shelfPlace`** — _no comment above it_
 - **`L.shelfPortrait`** — _no comment above it_

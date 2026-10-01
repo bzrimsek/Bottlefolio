@@ -26662,6 +26662,36 @@ sec('§460 a comparison does not wait on somebody else’s device');
     L.shelfKeyOf({ k: 'Nobody Has Heard Of This', name: 'Nobody Has Heard Of This' },
       px, {}), L.shopNorm('Nobody Has Heard Of This'));
 
+  /* A BOTTLE IS SHOWN BY ITS NAME, never by the key it was filed under. v2.6.63
+     put owned bottles with no product into the comparison, which was right, and
+     showed each under its raw key - so a buddy panel read
+     angels_envy_bottled_in_bond off a shelf (BZ, 2026-10-01). */
+  eq('the words behind a key', L.nameFromKey('angels_envy_bottled_in_bond'),
+    'Angels Envy Bottled In Bond');
+  eq('a name that is already a name is left alone',
+    L.nameFromKey('Ardbeg Ten'), 'Ardbeg Ten');
+  eq('nothing is nothing', L.nameFromKey(''), '');
+  /* THE LIBRARY'S NAME WHERE IT KNOWS ONE, because that is what subscribing to
+     an entry is for. */
+  eq('a bottle the library knows is shown by the library’s name',
+    L.shelfName({ k: 'Redbreast Px', name: 'Redbreast Px' }, px, {}),
+    'Redbreast PX Edition');
+  eq('and one it does not keeps its own words',
+    L.shelfName({ k: 'no_such_whisky_here', name: 'no_such_whisky_here' },
+      px, {}), 'No Such Whisky Here');
+  eq('with no library at all it still reads as words',
+    L.shelfName({ k: 'a_b_c', name: 'a_b_c' }, null, {}), 'A B C');
+  /* THE ENTRY A RECORD MEANS, asked by the key and the label alike so what a
+     bottle IS and what it is CALLED cannot come apart. */
+  eq('the entry a record means',
+    (L.entryFor({ k: 'Redbreast Px', name: 'Redbreast Px' }, px, {}) || {}).name,
+    'Redbreast PX Edition');
+  eq('nothing when the library has never heard of it',
+    L.entryFor({ k: 'Nobody Knows This', name: 'Nobody Knows This' }, px, {}),
+    null);
+  eq('and nothing without a library',
+    L.entryFor({ k: 'Redbreast Px' }, null, {}), null);
+
   /* A BOTTLE YOU OWN IS ON YOUR SHELF, product record or not. shelfSet walked
      the CATALOG and asked which products were owned, so BZ's two bottles of
      "Redbreast Px" - naming a product that is not there - were in no comparison
