@@ -27057,6 +27057,42 @@ sec('§461 a fact in the wrong field');
   eq('two that nothing separates say so',
     L.tellApart([{ name: 'A' }, { name: 'B' }])[0],
     'nothing here tells these apart');
+
+  /* A MERGE LEAVES A FORWARDING ADDRESS AND SOMETHING HAS TO READ IT. The live
+     database, 2026-10-01: a shelf's bottle forwarded to a real entry and
+     entryFor answered NOTHING, because resolveLibKey looks in the products and a
+     merged key is deleted from them. Every shelf still filed under a merged key
+     was orphaned by the merge meant to join it.
+
+     THE CHAIN IS REAL TOO: small_batch -> jr_small_batch -> the long title, two
+     merges deep. */
+  const LONG = 'colonel_e_h_taylor_small_batch_bottled_in_bond_straight_'
+    + 'kentucky_bourbon_whiskey';
+  const merged = {};
+  merged[LONG] = { name: 'Colonel E.H. Taylor Small Batch Bottled In Bond '
+    + 'Straight Kentucky Bourbon Whiskey', proof: 100, sub: 'bourbon' };
+  const buried = { colonel_e_h_taylor_jr_small_batch: LONG,
+    colonel_e_h_taylor_small_batch: 'colonel_e_h_taylor_jr_small_batch' };
+  const reaches = p => (L.entryFor(p, merged, buried) || {}).name || 'NOTHING';
+  eq('a bottle filed under a merged key finds the entry',
+    reaches({ k: 'colonel_e_h_taylor_jr_small_batch',
+      name: 'Colonel E.H. Taylor, Jr. Small Batch' }), merged[LONG].name);
+  /* TWO MERGES DEEP, which is what the live data holds. */
+  eq('and so does one two merges back',
+    reaches({ k: 'colonel_e_h_taylor_small_batch',
+      name: 'Colonel E.H. Taylor Small Batch' }), merged[LONG].name);
+  /* AND FILED UNDER ITS DISPLAY NAME, which is how some shelves hold it. */
+  eq('and one filed under its name',
+    reaches({ k: 'Colonel E.H. Taylor Small Batch',
+      name: 'Colonel E.H. Taylor Small Batch' }), merged[LONG].name);
+  /* AN ADDRESS POINTING NOWHERE IS NOT AN ENTRY. A chain whose end was itself
+     removed must answer nothing rather than a key with no record behind it. */
+  eq('a forwarding address to nothing is not an entry',
+    reaches({ k: 'gone_and_forwarded_nowhere',
+      name: 'Gone And Forwarded Nowhere' }), 'NOTHING');
+  /* AND AN ENTRY THAT IS STILL THERE answers for itself, not through a grave. */
+  eq('an entry still in the library answers for itself',
+    reaches({ k: LONG, name: merged[LONG].name }), merged[LONG].name);
   eq('nothing to clear is nothing done',
     L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
   eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);

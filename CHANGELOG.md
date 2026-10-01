@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.74  ·  2026-10-01 07:30 PM ET
+
+A merge leaves a forwarding address and nothing read it. entryFor asks resolveLibKey, which looks in the products and nowhere else, and a merged key is deleted from the products - so the address every merge has ever written was never consulted, and every shelf still filed under a merged key was orphaned by the merge meant to join it. Read off the live database: one shelf's bottle forwarded to a real entry while entryFor answered nothing, and the data holds a two-merge chain from before today. The address is now followed for the bottle's key and for its display name, because shelves hold both, and a chain whose end was itself removed still answers nothing rather than a key with no record behind it.
+
 ## v2.6.73  ·  2026-10-01 04:13 PM ET
 
 Bottled in Bond is not a finish: a special class in the cask field is a finding with a repair, asked of L.bottleMarks so it cannot drift from what a class is, and it catches single barrel and cask strength there too. The library picker says what separates the candidates rather than what each one is - a field every candidate answers the same way is dropped, so searching a bottled-in-bond line no longer shows the one field bond law guarantees is identical, and says single barrel or bottled in bond instead. Small batch was proposed as a special class and refused: a mark is a legal designation or a fact about the liquid, and small batch is defined by nobody (BZ: house marketing and not bottle specific), which is the test the other three pass and is now written beside them. The cask-field faults are one function, under the line ceiling. Two more guards that could not fail now can: the row-fault words check read one function and called three live faults words for a fault nothing emits.
