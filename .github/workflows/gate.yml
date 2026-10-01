@@ -111,48 +111,57 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell-webkit
 
-      # THE PACKAGES THEMSELVES, CACHED. The browsers were cached and the system
-      # packages they need were not, so every run downloaded a hundred and fifty
-      # .debs from azure.archive.ubuntu.com - which sat for 21 minutes on one
-      # run, 9 on the next and timed out at 12 on the third, with the download
-      # still at package 153. Three builds blocked by fetching the same files
-      # every time. apt is told below to keep what it downloads, so a hit here
-      # makes the install a local one.
-      - name: Their .debs from the cache
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives/*.deb
-          key: apt-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-webkit
-
-      # KEEP THE DOWNLOADS. The runner image sets Binary::apt::APT::Keep-Downloaded
-      # -Packages "false", which deletes every .deb the moment it is installed -
-      # so there would be nothing for the cache above to save.
-      - name: Keep what apt downloads, so the cache has something to hold
-        run: |
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
-            | sudo tee /etc/apt/apt.conf.d/99keep-debs > /dev/null
-
       - name: Install the browsers for the browser checks
         if: steps.pwcache.outputs.cache-hit != 'true'
-        # APT CAN HANG, and a step with no ceiling takes the job's whole budget
-        # with it: on 2026-10-01 install-deps sat for 21 minutes on one run and
-        # was still going at 9 on the next, with every check still pending. A
-        # gate that hangs is worse than one that fails - nobody can tell the
-        # difference between a stuck machine and a slow build.
-        timeout-minutes: 12
+        # A STEP THAT ONLY PREPARES SOMETHING CANNOT STOP A GREEN BUILD; the
+        # check that USES it should. Four runs on 2026-10-01 were lost to this
+        # one apt step - 21 minutes, 9, and two 12-minute timeouts - downloading
+        # the same hundred and fifty .debs from a slow mirror every time, while
+        # the runner image already carries most of what these browsers need.
+        # What it does not carry, ios.js and browser.js prove loudly: a browser
+        # that cannot launch fails them by name.
+        continue-on-error: true
+        timeout-minutes: 6
         run: |
           npx playwright install --with-deps --only-shell chromium
           npx playwright install --with-deps webkit
 
+      # WEBKIT'S OWN LIBRARIES, BY NAME. `playwright install-deps` fetches what
+      # BOTH browsers want - a hundred and fifty .debs including libavcodec60 at
+      # 5.8MB - and five runs on 2026-10-01 were lost waiting for it on a slow
+      # mirror. Headless Chromium has never needed it here: the runner image
+      # carries what it uses. Only WebKit was missing anything, and when the
+      # step was finally allowed to time out, the failure named exactly what:
+      # libevent-2.1.so.7.
+      #
+      # So this installs WebKit's list directly. apt skips every one the image
+      # already has, which is most of them, and it is a fraction of the
+      # download. It cannot fail the build either - ios.js is what proves
+      # WebKit can launch, and it does so by name.
+      # WEBKIT'S LIBRARIES, AND ONLY WEBKIT'S. install-deps takes the browser's
+      # name, and running it for both browsers fetches a hundred and fifty .debs
+      # including libavcodec60 at 5.8MB - five runs on 2026-10-01 were lost
+      # waiting for that on a slow mirror. Headless Chromium has never needed
+      # its half here: every Chromium check passed on the days this timed out.
+      # WebKit does, and Playwright's own table lists fifty-one packages for it.
+      #
+      # IT CANNOT FAIL THE BUILD. A step that only prepares something should not
+      # be what stops a green one; ios.js proves WebKit can launch and names the
+      # missing library when it cannot, which is how libevent and then
+      # libgstcodecparsers were found.
+      - name: WebKit's system libraries
+        continue-on-error: true
+        timeout-minutes: 8
+        run: npx playwright install-deps webkit
+
       # The cache holds the browsers, not the system packages they need, and
       # every run starts on a fresh machine. So a cache hit still installs
       # them, which is the half of --with-deps the cache cannot supply.
-      - name: Their system packages (the browsers came from the cache)
+      - name: Chromium's, if it wants any
         if: steps.pwcache.outputs.cache-hit == 'true'
-        timeout-minutes: 12
-        run: |
-          npx playwright install-deps chromium-headless-shell
-          npx playwright install-deps webkit
+        continue-on-error: true
+        timeout-minutes: 6
+        run: npx playwright install-deps chromium-headless-shell
 
       # BZ's real shelf. The suite will not start without it, and the repo is
       # public, so only the encrypted copies are committed. The key is the
