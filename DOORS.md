@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 843 |
+| functions | 847 |
 | tables | 204 |
-| carrying a stated purpose | 655 |
+| carrying a stated purpose | 659 |
 
 ## Tables
 
@@ -254,6 +254,7 @@ QUESTION, not the name you were going to use.
 - **`L.auditText`** — THE WHOLE LIST, AS TEXT, to copy or print (BZ)
 - **`L.auditVerdict`** — _no comment above it_
 - **`L.autoAddedRecently`** — WHAT WENT IN ON ITS OWN, and can still be taken back
+- **`L.autoSpelledRecently`** — WHAT THE APP RESPELLED ON ITS OWN, and can still be put back - the same
 - **`L.awayPour`** — _no comment above it_
 - **`L.awayWishable`** — _no comment above it_
 - **`L.axisAsk`** — _no comment above it_
@@ -480,8 +481,11 @@ QUESTION, not the name you were going to use.
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases
 - **`L.houseSame`** — THROUGH houseKey, the house's one key, so the registry and everything
+- **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
 - **`L.houseSplit`** — _no comment above it_
+- **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
 - **`L.housesThatDoNotPublish`** — _no comment above it_
+- **`L.houseTakeBack`** — PUTTING ONE BACK
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
 - **`L.importChanges`** — _no comment above it_

@@ -25675,6 +25675,77 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     /could not confirm who makes this/.test(novel.why), true);
 }
 
+sec('\u00a7450 a house is spelled the way most of its own bottles spell it');
+{
+  /* BZ, 2026-09-30, after reading the log: "I think I accepted all renames and
+     house merged and that tells me we can write a rule." He had - 98 lines
+     across five accounts about merging and respelling, and not one refusal,
+     undo or revert among them. */
+  const jd = [
+    { _key: 'a', name: 'JD 10', dist: "Jack Daniel's" },
+    { _key: 'b', name: 'JD 12', dist: "Jack Daniel's" },
+    { _key: 'c', name: 'JD Heroes', dist: 'Jack Daniels' }
+  ];
+
+  /* THE DECISION, IN ONE PLACE. The audit asks this and so does the rule; it
+     used to be a paragraph inside the audit, which a rule could only have
+     copied. */
+  const split = L.houseSplits(jd);
+  eq('only the odd one out is named', split.length, 1);
+  eq('and it is the entry with the minority spelling', split[0].key, 'c');
+  eq('kept: the spelling most of the house uses', split[0].keep, "Jack Daniel's");
+  eq('and it says how many already agree', split[0].others, 2);
+  eq('a house nobody disagrees about is not mentioned',
+    L.houseSplits([{ _key: 'x', name: 'A', dist: 'Ardbeg' },
+                   { _key: 'y', name: 'B', dist: 'Ardbeg' }]).length, 0);
+
+  /* THE RULE. It only ever makes a house agree with itself. */
+  const plan = L.houseSettlePlan(jd, 1000);
+  eq('the rule respells the odd one out', plan.length, 1);
+  eq('to the spelling the rest use', plan[0].set.dist, "Jack Daniel's");
+  eq('remembering what it was', plan[0].set.autoSpell.was, 'Jack Daniels');
+  eq('and when, so it can be taken back', plan[0].set.autoSpell.at, 1000);
+
+  /* A TIE IS NOT A MAJORITY. houseSplits breaks one-against-one by alphabet,
+     which is honest for a proposal somebody reads and not honest for
+     something that happens by itself. */
+  /* Angel's Envy and Angels Envy really are one house - houseKey is blind to
+     the possessive - where "Foo Distillery" and "Foo Distilery" are not, the
+     suffix being stripped from one and not the typo in the other. */
+  const tie = [{ _key: 'x', name: 'AE A', dist: "Angel's Envy" },
+               { _key: 'y', name: 'AE B', dist: 'Angels Envy' }];
+  eq('one against one is still worth proposing', L.houseSplits(tie).length, 1);
+  eq('and is never applied on its own', L.houseSettlePlan(tie, 1000).length, 0);
+
+  /* AND IT NEVER INVENTS OR MERGES A HOUSE: every key it touches was already
+     in the rows, and every spelling it writes was already one of theirs. */
+  const keys = {};
+  jd.forEach(r => { keys[r._key] = r.dist; });
+  eq('it touches only entries it was given',
+    plan.every(p => keys[p.key] !== undefined), true);
+  eq('and writes only a spelling the house already had',
+    plan.every(p => Object.values(keys).indexOf(p.set.dist) >= 0), true);
+
+  /* TAKEN BACK THE SAME WAY EVERYTHING ELSE IS. */
+  const now = Date.now();
+  const prods = {
+    c: { name: 'JD Heroes', dist: "Jack Daniel's",
+         autoSpell: { at: now, was: 'Jack Daniels' } },
+    d: { name: 'Untouched', dist: 'Ardbeg' },
+    e: { name: 'Long ago', dist: 'X',
+         autoSpell: { at: now - (L.INTAKE_HOLD_DAYS + 1) * 864e5, was: 'Y' } }
+  };
+  const recent = L.autoSpelledRecently(prods, now);
+  eq('what was respelled lately is listed', recent.length, 1);
+  eq('and it is the right one', recent[0]._key, 'c');
+  eq('putting it back restores the spelling it had',
+    L.houseTakeBack(prods.c).dist, 'Jack Daniels');
+  eq('and clears the stamp with null, not undefined',
+    L.houseTakeBack(prods.c).autoSpell, null);
+  eq('nothing to put back on an entry nobody touched',
+    L.houseTakeBack(prods.d), null);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '
