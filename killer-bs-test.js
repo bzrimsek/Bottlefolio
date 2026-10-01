@@ -26990,6 +26990,73 @@ sec('§461 a fact in the wrong field');
   eq('an unknown bottle is still named, not keyed',
     L.shelfProduct('some_private_barrel_nobody_has', {}, {}).name,
     'Some Private Barrel Nobody Has');
+
+  /* WHAT CAN BE IN THE CASK FIELD WRONGLY. The class one came off the live
+     library: "Colonel E.H. Taylor Single Barrel Straight Kentucky Bourbon
+     Whiskey" carried fin: "Bottled in Bond", which says it was finished in a
+     law (2026-10-01). */
+  const finOf = (fin, extra) => L.finFaults(Object.assign(
+    { name: 'A Bourbon', sub: 'bourbon', fin: fin }, extra || {}))
+    .map(f => f.id).join(',');
+  eq('a class is not a cask', finOf('Bottled in Bond'), 'finclass');
+  eq('nor is single barrel', finOf('Single Barrel'), 'finclass');
+  eq('nor cask strength', finOf('Cask Strength'), 'finclass');
+  /* AND A REAL CASK IS LEFT ALONE, which is the half that makes it a check. */
+  eq('a sherry butt is a cask', finOf('Oloroso Sherry'), '');
+  eq('and so is a rum cask', finOf('Caribbean Rum Cask'), '');
+  /* THE OTHER TWO STILL FIRE from the same door. */
+  eq('a scarcity is still caught', finOf('limited'), 'finscar');
+  eq('and a pasted note',
+    finOf('dark chocolate, hot tar, smoked bacon and black pepper'),
+    'finnote');
+  /* AND THE BAR SHELF IS NOT JUDGED (BZ: "should not care about vodka"). */
+  eq('a vodka is not asked about its cask',
+    finOf('Bottled in Bond', { sub: 'vodka' }), '');
+  /* THE REPAIR IS THE ONE THAT ALREADY EXISTED, so both Mend buttons work. */
+  eq('clearing the cask is the offered repair',
+    (L.faultFix('finclass') || {}).clears, 'fin');
+
+  /* WHAT TELLS A LIST APART. The picker drew "Buffalo Trace - 100 proof" under
+     five of six E.H. Taylor entries, which is not chance: the line is bottled in
+     bond and bond law fixes the proof at 100 (BZ, 2026-10-01: "hard to sort this
+     out given names and proofs"). */
+  const taylor = [
+    { name: 'Barrel Proof', proof: 127.3, sub: 'bourbon', dist: 'Buffalo Trace' },
+    { name: 'Single Barrel', proof: 100, sub: 'bourbon', dist: 'Buffalo Trace' },
+    { name: 'Small Batch Bottled In Bond', proof: 100, sub: 'bourbon',
+      dist: 'Buffalo Trace' },
+    { name: 'Straight Rye', proof: 100, sub: 'rye', dist: 'Buffalo Trace' }
+  ];
+  const apart = L.tellApart(taylor);
+  /* THE HOUSE IS THE SAME ON EVERY ONE, so it says nothing and is dropped. */
+  eq('a house they all share is not said',
+    apart.filter(t => /Buffalo Trace/.test(t)).length, 0);
+  eq('the class is said instead', apart[1].indexOf('single barrel') >= 0, true);
+  eq('and the bond', apart[2].indexOf('bottled in bond') >= 0, true);
+  eq('and the type where it differs', apart[3].indexOf('Rye') >= 0, true);
+  /* THE PROOF STAYS where they do NOT all share it, which is the other half. */
+  eq('a proof that differs is still said',
+    apart[0].indexOf('127.3 proof') >= 0, true);
+  /* AND A BONDED LINE AT ONE STRENGTH drops the proof entirely. */
+  const bonded = L.tellApart([
+    { name: 'A', proof: 100, sub: 'bourbon', dist: 'X', fin: 'Oloroso' },
+    { name: 'B', proof: 100, sub: 'bourbon', dist: 'X', fin: 'Sauternes' }
+  ]);
+  eq('a proof they all share is dropped',
+    bonded.filter(t => /proof/.test(t)).length, 0);
+  eq('and the cask that differs is kept', bonded[0], 'Oloroso');
+  /* A PROOF CODE IS NOT WORDS. bottleMarks carries the proof as p1000, which is
+     for comparing and not for reading. */
+  eq('no proof code reaches the page',
+    apart.filter(t => /\bp\d/.test(t)).length, 0);
+  /* ONE CANDIDATE SEPARATES ITSELF, so it says what it is rather than nothing. */
+  eq('one candidate still says what it is',
+    L.tellApart([{ name: 'A', proof: 100, sub: 'bourbon', dist: 'X' }])[0],
+    'Bourbon \u00b7 X \u00b7 100 proof');
+  /* AND TWO THE LIST CANNOT TELL APART say so, rather than drawing blank. */
+  eq('two that nothing separates say so',
+    L.tellApart([{ name: 'A' }, { name: 'B' }])[0],
+    'nothing here tells these apart');
   eq('nothing to clear is nothing done',
     L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
   eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);

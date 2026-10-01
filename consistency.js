@@ -2140,7 +2140,14 @@ check('no fixed svg id is emitted by a repeated drawing',
   };
   const idsIn = (text) => [...new Set((text.match(/id: '([a-z]+)'/g) || [])
     .map(m => m.slice(5, -1)))].sort();
-  const emits = idsIn(body('rowFaults', '};'));
+  /* ROW FAULTS, WHEREVER THEY ARE RAISED. They were all in rowFaults until the
+     cask-field three moved into L.finFaults to stay under the line ceiling, and
+     this then called all three words for a fault nothing emits. Where a fault is
+     raised is not this check's business: the question is whether every id has
+     words and every set of words has an id. */
+  const faultSrc = body('rowFaults', '};');
+  const emits = idsIn(faultSrc + (faultSrc.match(/L\.(\w+)\(p\)/g) || [])
+    .map(c => body(c.slice(2, -3), '};')).join('\n'));
   const said = idsIn(body('ROW_FAULT_SAYS', '];'));
   const bad = [];
   emits.forEach(id => {

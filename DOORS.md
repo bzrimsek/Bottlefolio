@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 880 |
-| tables | 208 |
-| carrying a stated purpose | 690 |
+| functions | 882 |
+| tables | 210 |
+| carrying a stated purpose | 692 |
 
 ## Tables
 
@@ -28,8 +28,9 @@ QUESTION, not the name you were going to use.
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
-- **`L.BOTTLE_MARKS`** — WHAT MAKES TWO BOTTLES OF ONE BRAND DIFFERENT BOTTLES (BZ, 2026-09-30
+- **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
+- **`L.CANDIDATE_FIELDS`** — BZ'S EIGHT in his order, less brand and name, which are the row's title.
 - **`L.CASE_FIXED`** — casing are spelled out rather than guessed at.
 - **`L.CASK_FAMILY`** — A named trait orders the rung
 - **`L.CASK_KIND`** — THE CASK ITSELF, and the family it lives in
@@ -101,6 +102,7 @@ QUESTION, not the name you were going to use.
 - **`L.MAP_KEYS`** — A map key writes only the entries that changed
 - **`L.MAP_PLACES`** — Places to fly to
 - **`L.MAP_ZOOM`** — by the tightest cluster
+- **`L.MARK_SAYS`** — WHAT A SPECIAL CLASS IS CALLED
 - **`L.MARKET`** — WHAT THE MARKET MOSTLY MAKES - UNSOURCED, AND MARKED AS SUCH.
 - **`L.MASH_BY_LAW`** — A MASH BILL FIXED BY LAW IS STILL A MASH BILL
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
@@ -390,6 +392,7 @@ QUESTION, not the name you were going to use.
 - **`L.findability`** — _no comment above it_
 - **`L.findRank`** — Unknown goes LAST.
 - **`L.findUrl`** — Where a hard bottle can actually be got.
+- **`L.finFaults`** — EVERYTHING THAT CAN BE IN THE CASK FIELD WRONGLY, which is one subject
 - **`L.finFromName`** — THE FINISH A NAME STATES
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
@@ -902,7 +905,7 @@ QUESTION, not the name you were going to use.
 - **`L.roomTop`** — _no comment above it_
 - **`L.rotate`** — _no comment above it_
 - **`L.rowCost`** — What the money column says on a shelf row
-- **`L.rowFaults`** — DEFAULTS ARE STRIPPED BEFORE THIS IS ASKED AT THE DOOR (L.intakeProduct),
+- **`L.rowFaults`** — _no comment above it_
 - **`L.rowHave`** — How many you have and how they stand
 - **`L.rowType`** — THE SHELF'S TYPE COLUMN says the type (BZ, 2026-09-16
 - **`L.rungOf`** — _no comment above it_
@@ -1041,6 +1044,7 @@ QUESTION, not the name you were going to use.
 - **`L.tastingNotes`** — _no comment above it_
 - **`L.tastingRecord`** — _no comment above it_
 - **`L.tastingStep`** — One step by its id, for everything that reads them.
+- **`L.tellApart`** — _no comment above it_
 - **`L.templateCSV`** — _no comment above it_
 - **`L.termsOfFamily`** — THE TERMS OF ONE WHEEL GROUP, which is where the choices come from
 - **`L.thinRegions`** — A SCOTCH REGION TOO THIN TO FLY
