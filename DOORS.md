@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 848 |
+| functions | 850 |
 | tables | 204 |
-| carrying a stated purpose | 660 |
+| carrying a stated purpose | 662 |
 
 ## Tables
 
@@ -637,6 +637,7 @@ QUESTION, not the name you were going to use.
 - **`L.missingSay`** — _no comment above it_
 - **`L.missList`** — Busiest first, because that is the order worth reading.
 - **`L.modeOf`** — _no comment above it_
+- **`L.moreDescriptive`** — IT DECIDES NOTHING
 - **`L.movePour`** — _no comment above it_
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
@@ -647,6 +648,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameKey`** — mistaken for each other in a picker.
 - **`L.nameOverlap`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
+- **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
 - **`L.nearestBy`** — _no comment above it_
 - **`L.nearlyNamed`** — THE SAME BOTTLE BY NAME, allowing the small differences a shop page and a
 - **`L.needsEnhancing`** — DOES THIS BOTTLE STILL NEED NOTES? L.slotOpen holds the whole rule,

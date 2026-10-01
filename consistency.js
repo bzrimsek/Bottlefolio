@@ -3233,7 +3233,7 @@ check('no fixed svg id is emitted by a repeated drawing',
   const BIG_TODAY = {
     showBottle: 496,
     likelyToLike: 455,
-    openLibraryCleanUp: 380,
+    openLibraryCleanUp: 337,
     productForm: 347,
     renderShelf: 325,
     renderAway: 306,

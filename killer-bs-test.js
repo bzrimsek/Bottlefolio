@@ -25637,6 +25637,33 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
   eq('two houses equally close propose nothing',
     L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
 
+  /* WHICH NAME SAYS MORE. BZ kept the fuller title 28 times out of 28, and
+     the merge dialog offers both sides and asks, so that was his judgement
+     every time rather than a direction baked into the code. He then corrected
+     the rule himself - "More descriptive happens to be longer" - and the
+     first pair below is why it matters: the winner DROPS a word, so a length
+     rule gets it backwards. What the winners do is name the class. */
+  eq('the name that states the class wins, even having lost a word',
+    L.moreDescriptive('Redbreast 21 Year Old',
+      'Redbreast 21 Year Irish Whiskey'), 'Redbreast 21 Year Irish Whiskey');
+  eq('and the class outweighs the words around it',
+    L.moreDescriptive('Laphroaig 10 Year Old Cask Strength Batch 16',
+      'Laphroaig 10 Year Cask Strength Single Malt Scotch Whisky'),
+    'Laphroaig 10 Year Cask Strength Single Malt Scotch Whisky');
+  eq('with nothing to choose on class, more words wins',
+    L.moreDescriptive('Laphroaig 15 Year', 'Laphroaig 15 Year Old'),
+    'Laphroaig 15 Year Old');
+  eq('a bare batch number states nothing', L.nameStates('Batch 16'), 0);
+  eq('and a full class statement states several',
+    L.nameStates('Single Malt Scotch Whisky') >= 2, true);
+  /* A PHRASE IS COUNTED ONCE: "single malt" must not also count "malt", or a
+     long class phrase would outscore two real ones. */
+  eq('a phrase counts once, not once per word',
+    L.nameStates('Single Malt') < L.nameStates('Single Malt Bourbon'), true);
+  eq('the same name twice is no answer',
+    L.moreDescriptive('Ardbeg Ten', 'Ardbeg Ten'), null);
+  eq('and neither is nothing at all', L.moreDescriptive('', 'Ardbeg'), null);
+
   /* WHAT THE ADD FORM OFFERS AS YOU TYPE. The same matcher as the shelf's
      own box - a second one would be two answers to one search - ranked for
      somebody mid-word rather than alphabetically. */
