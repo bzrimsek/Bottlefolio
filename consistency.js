@@ -2116,6 +2116,47 @@ check('no fixed svg id is emitted by a repeated drawing',
          + 'anywhere now shows blank']));
 }
 
+/* A FAULT THE AUDIT HAS NO WORDS FOR IS COMPUTED AND NEVER SHOWN (2026-10-01).
+ *
+ * L.rowFaults decides that a row contradicts itself and names the fault; the
+ * intake refuses the row on that, and L.ROW_FAULT_SAYS carries the words that
+ * put it on the Clean up screen. Five ids added in v2.6.63 had no words, so
+ * sixty-four contradicting rows sat in the library while the screen said
+ * "Nothing contradicts itself". A check that computes a fault and cannot show
+ * it reads as a clean library, which is worse than no check.
+ *
+ * Both directions: an id with no words is invisible, and words for an id
+ * nothing emits is a line nobody will ever delete.
+ */
+{
+  /* A FUNCTION ENDS AT `};` AND A TABLE AT `];`, and reading for the wrong one
+     returns nothing - which made this check report every id as missing the
+     first time it ran, red for the right reason by accident. */
+  const body = (name, close) => {
+    const at = src.indexOf('L.' + name + ' =');
+    if (at < 0) return '';
+    const end = src.indexOf('\n' + close, at);
+    return end < 0 ? '' : src.slice(at, end);
+  };
+  const idsIn = (text) => [...new Set((text.match(/id: '([a-z]+)'/g) || [])
+    .map(m => m.slice(5, -1)))].sort();
+  const emits = idsIn(body('rowFaults', '};'));
+  const said = idsIn(body('ROW_FAULT_SAYS', '];'));
+  const bad = [];
+  emits.forEach(id => {
+    if (said.indexOf(id) < 0) {
+      bad.push(id + ' \u2014 rowFaults emits it and nothing shows it');
+    }
+  });
+  said.forEach(id => {
+    if (emits.indexOf(id) < 0) {
+      bad.push(id + ' \u2014 the audit has words for a fault nothing emits');
+    }
+  });
+  if (!emits.length) bad.push('rowFaults names no fault at all \u2014 read it');
+  check('every row fault has words that show it', bad);
+}
+
 /* ONE WAY OUT OF THE APP WITH A FILE (2026-09-29).
  *
  * iOS users reported having no download option, and six buttons each built
@@ -3252,7 +3293,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderSettings: 150,
     renderGuest: 157,
     renderHome: 93,
-    libraryAudit: 148,
+    libraryAudit: 131,
     renderGaps: 170,
     renderShelfCharts: 165,
     shelfPortrait: 165,

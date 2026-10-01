@@ -62,6 +62,21 @@ FAST = [
     # reads index.html.
     ('appsscript',  ['node', 'gscheck.js']),
 ]
+
+# WHAT THE ENGINE COSTS, against a budget that ratchets down (2026-10-01).
+# Every other check here proves the code RUNS or that a screen SAYS the right
+# thing, and gatetime.py times this gate's own steps rather than the app's - so
+# a 13.8-SECOND library backfill shipped and sat for two builds until BZ asked
+# for a scan. "Too slow" is a red gate now.
+#
+# IT RUNS ALONE, like the suite and for the same reason. Put in a group of
+# eleven it measured shelfSet at 377ms against 41 here and failed its own first
+# run in the cloud - the runner's line said "20.8s for these 11 at once". A
+# timing check cannot share a machine, and the comment forty lines above saying
+# exactly that about §385 was already there when I added it to the eleven.
+COST = [
+    ('cost',        ['node', 'cost.js']),
+]
 SLOW = [
     ('walk',  ['node', 'browser.js']),
     ('sync',  ['node', 'sync.js']),
@@ -110,7 +125,7 @@ SLOW = [
 # other (medians of nine and five). If the walk ever starts failing on a
 # timing alone, this is the first thing to split back: [FAST[:2], FAST[2:],
 # SLOW[:1], SLOW[1:]] runs them one after the other again.
-GROUPS = [FAST[:2], FAST[2:], SLOW]
+GROUPS = [FAST[:2], FAST[2:], COST, SLOW]
 
 # The audit runs consistency.js and screens.js itself, for push.py's local
 # audit. Here both are steps of their own, so the audit's copies ran the

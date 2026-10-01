@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 875 |
-| tables | 205 |
-| carrying a stated purpose | 683 |
+| tables | 206 |
+| carrying a stated purpose | 684 |
 
 ## Tables
 
@@ -166,6 +166,7 @@ QUESTION, not the name you were going to use.
 - **`L.RING_SUB`** — Five of these are a category and take the app's own label for it, Title
 - **`L.RING_WRITTEN`** — _no comment above it_
 - **`L.ROOM_AXES`** — IT USED TO BE CALLED `scarce`, which was the wrong word
+- **`L.ROW_FAULT_SAYS`** — THE WORDS FOR EVERY ROW FAULT
 - **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES (BZ
 - **`L.SAYS_NOT_HERE`** — Said on an ANSWER screen, where the subject is the whisky and never the
 - **`L.SCALE_AXES`** — Which axes are LADDERS (ordered rungs) and which are sets.

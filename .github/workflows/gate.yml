@@ -113,6 +113,12 @@ jobs:
 
       - name: Install the browsers for the browser checks
         if: steps.pwcache.outputs.cache-hit != 'true'
+        # APT CAN HANG, and a step with no ceiling takes the job's whole budget
+        # with it: on 2026-10-01 install-deps sat for 21 minutes on one run and
+        # was still going at 9 on the next, with every check still pending. A
+        # gate that hangs is worse than one that fails - nobody can tell the
+        # difference between a stuck machine and a slow build.
+        timeout-minutes: 12
         run: |
           npx playwright install --with-deps --only-shell chromium
           npx playwright install --with-deps webkit
@@ -122,6 +128,7 @@ jobs:
       # them, which is the half of --with-deps the cache cannot supply.
       - name: Their system packages (the browsers came from the cache)
         if: steps.pwcache.outputs.cache-hit == 'true'
+        timeout-minutes: 12
         run: |
           npx playwright install-deps chromium-headless-shell
           npx playwright install-deps webkit

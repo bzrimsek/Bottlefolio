@@ -141,6 +141,10 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # so a gate that cannot see the file fails every build - the same way
            # DOORS.md did above.
            'ios.js',
+           # 2026-10-01: what the engine COSTS, against a budget that ratchets
+           # down. gate.py runs it, so a gate that cannot see the file fails
+           # every build.
+           'cost.js',
            # The rules, run in the emulator (cloud gate only).
            'rulestest.js', 'syncemu.js', 'firebase.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
