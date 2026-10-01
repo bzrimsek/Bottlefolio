@@ -26855,6 +26855,40 @@ sec('§461 a fact in the wrong field');
   eq('a row with no key is skipped',
     Object.keys(L.clearFieldPlan([{ text: 'no key here' }], 'fin')).length, 0);
 
+  /* A REPAIR HAS TO REACH THE COPY THAT WOULD UNDO IT. BZ pressed Fix twice and
+     watched the same seven findings come back: the library's field was cleared
+     and his own edits still held fin: "limited" for the same bottles, so the
+     next publish wrote it straight back (2026-10-01: "something is not
+     sticking"). */
+  const mineEdits = {
+    'Barrell Craft Spirits Private Release Whiskey': { fin: 'limited', msrp: 90 },
+    'J. Mattingly Private Barrel Select Bourbon': { fin: 'limited' },
+    'Ardbeg Ten': { fin: 'Oloroso' }
+  };
+  const cleared = L.clearFieldLocally(mineEdits,
+    ['barrell_craft_spirits_private_release_whiskey',
+     'j_mattingly_private_barrel_select_bourbon'], 'fin');
+  eq('both of mine are cleared', cleared.cleared, 2);
+  /* MATCHED THROUGH libKey, because an edit is filed under the NAME and the
+     library under its key - comparing those as strings is how a repair comes to
+     look like it worked. */
+  eq('an edit keyed by name matches a library key',
+    (cleared.edits['Barrell Craft Spirits Private Release Whiskey'] || {}).fin,
+    undefined);
+  eq('and what else it said is kept',
+    cleared.edits['Barrell Craft Spirits Private Release Whiskey'].msrp, 90);
+  /* AN EDIT WITH NOTHING LEFT IS DROPPED, not kept as an empty shell that still
+     counts as an opinion. */
+  eq('an edit that held only that is gone',
+    'J. Mattingly Private Barrel Select Bourbon' in cleared.edits, false);
+  eq('a bottle nobody named is untouched',
+    cleared.edits['Ardbeg Ten'].fin, 'Oloroso');
+  eq('nothing to clear is nothing done',
+    L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
+  eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);
+  eq('no edits at all is not an error',
+    L.clearFieldLocally(null, ['x'], 'fin'), null);
+
   /* BOTTLED IN BOND IS A LAW (BZ, 2026-10-01: "bottled in bond is a law so cask
      strength bib is an error"). Exactly 100 proof, so it cannot be cask
      strength and cannot be bottled at anything else. One library entry carries

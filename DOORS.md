@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 877 |
+| functions | 878 |
 | tables | 206 |
-| carrying a stated purpose | 686 |
+| carrying a stated purpose | 687 |
 
 ## Tables
 
@@ -317,6 +317,7 @@ QUESTION, not the name you were going to use.
 - **`L.cleanFinish`** — _no comment above it_
 - **`L.cleanName`** — _no comment above it_
 - **`L.clearFacets`** — IN PLACE, returning the same object
+- **`L.clearFieldLocally`** — MATCHED THROUGH libKey, because an edit is filed under the bottle's NAME and
 - **`L.clearFieldPlan`** — NULL, not an empty string
 - **`L.collectorLine`** — _no comment above it_
 - **`L.collidedCustom`** — TWO PRODUCTS, ONE WHISKY
