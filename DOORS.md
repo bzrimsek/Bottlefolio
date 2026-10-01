@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 863 |
+| functions | 870 |
 | tables | 205 |
-| carrying a stated purpose | 675 |
+| carrying a stated purpose | 680 |
 
 ## Tables
 
@@ -278,12 +278,14 @@ QUESTION, not the name you were going to use.
 - **`L.bottleContext`** — ONLY FOR A WHISKEY YOU OWN
 - **`L.bottleFacts`** — THE SHELF THE PROSE WAS WRITTEN ABOUT
 - **`L.bottleFrom`** — _no comment above it_
+- **`L.bottleIdentity`** — IT IS RESOLVED ON THE LIBRARY ENTRY, never on each person's copy - ask
 - **`L.bottleLabel`** — How a bottle is named to the person who owns it.
 - **`L.bottleMarks`** — THE MARKS THIS BOTTLE CARRIES, from its fields first and its name second
 - **`L.bottleOrigin`** — HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED
 - **`L.bottlePick`** — _no comment above it_
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
+- **`L.brandOf`** — _no comment above it_
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
@@ -468,7 +470,7 @@ QUESTION, not the name you were going to use.
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
-- **`L.healCollisions`** — AND THE HEALING
+- **`L.healCollisions`** — _no comment above it_
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.
 - **`L.histRestore`** — _no comment above it_
@@ -494,6 +496,8 @@ QUESTION, not the name you were going to use.
 - **`L.housesThatDoNotPublish`** — _no comment above it_
 - **`L.houseTakeBack`** — PUTTING ONE BACK
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
+- **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
+- **`L.identOf`** — A BOTTLE WITH NO LIBRARY ENTRY still gets one, worked out from itself, so a
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
 - **`L.importChanges`** — _no comment above it_
 - **`L.importKey`** — THE NAME, FOR DECIDING WHETHER IT IS THE SAME BOTTLE
@@ -540,6 +544,7 @@ QUESTION, not the name you were going to use.
 - **`L.isProductCode`** — A QR CODE IS NOT A BARCODE, and a whisky label often carries both.
 - **`L.isSealed`** — What a bottle's status MEANS, in one place
 - **`L.isWhisky`** — _no comment above it_
+- **`L.joinDropped`** — IT ACTS ONLY ON WHAT THE LIBRARY DECIDED
 - **`L.joinMeText`** — and what to look for.
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
@@ -876,6 +881,7 @@ QUESTION, not the name you were going to use.
 - **`L.rememberBuddies`** — PRUNED ONLY ON A GOOD READ, which is the caller's business
 - **`L.rememberRead`** — _no comment above it_
 - **`L.removePour`** — _no comment above it_
+- **`L.repoint`** — POINTING BOTTLES AT ANOTHER PRODUCT
 - **`L.resetSide`** — WHO HAS THE LAST WORD ON ONE KEY AFTER A REPLACEMENT.
 - **`L.resolveLibKey`** — _no comment above it_
 - **`L.resolveUpc`** — cannot be searched by name, so the barcode store comes first.
@@ -1042,6 +1048,7 @@ QUESTION, not the name you were going to use.
 - **`L.ttbInUS`** — _no comment above it_
 - **`L.ttbSub`** — The category an approval's class states
 - **`L.typedName`** — A name as somebody typed it, tidied only where they said nothing:
+- **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_
 - **`L.upcKey`** — 12-digit code is compared on its last 12.

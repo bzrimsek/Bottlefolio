@@ -26224,9 +26224,287 @@ sec('§455 the marks that tell two bottlings apart');
   eq('marks come back sorted, so order in the title does not matter',
     marks({ name: "Angel's Envy Cask Strength Rye 2023", proof: 119.2 }),
     marks({ name: "Angel's Envy 2023 Cask Strength Rye", proof: 119.2 }));
+  /* NEW CHARRED OAK IS THE LAW, NOT A FINISH: 27 CFR 5.143 requires straight
+     whiskey to be stored in charred new oak, so a bourbon finished in charred
+     oak is only a bourbon. One record carrying it and another leaving it blank
+     gave one whisky two identities (Rowan's Creek, 2026-10-01). */
+  eq('charred new oak is not a cask worth marking',
+    marks({ name: 'Rowan\u2019s Creek', fin: 'charred new oak' }), []);
+  eq('nor charred oak, nor virgin oak',
+    marks({ name: 'X', fin: 'charred oak' }).concat(
+      marks({ name: 'X', fin: 'virgin oak' })), []);
+  eq('but a real cask is still a mark',
+    marks({ name: 'X', fin: 'Oloroso' }).length, 1);
   eq('a bottle with nothing to say carries no marks',
     marks({ name: 'Something Plain' }), []);
   eq('and nothing at all does not throw', marks(null), []);
+}
+
+sec('§456 what a bottle is, from the canon');
+{
+  /* BZ, 2026-10-01: "I don't understand not using canonical data as the
+     standard. Clearly a rye is not a bourbon and high West makes many types."
+     The version measured before carried the brand and the marks and NO TYPE,
+     which is exactly why Bradshaw Bourbon collided with Bradshaw Rye. With the
+     type and the expression in it: one false join across five live shelves. */
+  const brands = {
+    high_west: { name: 'High West' },
+    angel_s_envy: { name: "Angel's Envy" },
+    bruichladdich_octomore: { name: 'Bruichladdich Octomore' },
+    weller: { name: 'Weller' },
+    w_l_weller: { name: 'W.L. Weller' },
+    laphroaig: { name: 'Laphroaig' },
+    bradshaw: { name: 'Bradshaw' },
+    '33': { name: '33' }
+  };
+  const id = (p) => L.bottleIdentity(p, brands);
+
+  /* THE BRAND, longest first. */
+  eq('the longest registered brand wins',
+    (L.brandOf("Angel's Envy Cask Strength Bourbon", brands) || {}).key,
+    L.houseKey("Angel's Envy"));
+  eq('a two-word brand beats the one-word one it contains',
+    (L.brandOf('Bruichladdich Octomore 13.4', brands) || {}).key,
+    L.houseKey('Bruichladdich Octomore'));
+  eq('a brand under four characters never brands anything',
+    L.brandOf('33 Barrels Of Something', brands), null);
+  eq('a name no brand starts is no brand',
+    L.brandOf('Something Nobody Registered', brands), null);
+
+  /* A RYE IS NOT A BOURBON, which is the whole of BZ's point. */
+  const bbn = { name: 'Bradshaw Bourbon', sub: 'bourbon', proof: 100 };
+  const rye = { name: 'Bradshaw Kentucky Straight Rye', sub: 'rye', proof: 100 };
+  eq('one brand, two types, two bottles', id(bbn) === id(rye), false);
+  /* AND HIGH WEST MAKES MANY TYPES. */
+  eq('a brand making several things does not collapse into one',
+    id({ name: 'High West Bourbon', sub: 'bourbon', proof: 92 })
+      === id({ name: 'High West Campfire', sub: 'other', proof: 92 }), false);
+
+  /* THE EXPRESSION, which is what tells two bottles of one brand apart - and
+     dropping it was the whole of the over-merging. */
+  eq('two expressions of one brand are two bottles',
+    id({ name: 'Laphroaig Four Oak Single Malt', sub: 'scotch', proof: 96 })
+      === id({ name: 'Laphroaig Select Single Malt', sub: 'scotch', proof: 96 }),
+    false);
+  /* AND WORD ORDER IS NOT PART OF IT, which is what a name comparison cannot do. */
+  eq('the same words in another order are one bottle',
+    id({ name: "Angel's Envy Cask Strength Rye 2023", sub: 'rye', proof: 119.2 }),
+    id({ name: "Angel's Envy 2023 Cask Strength Rye", sub: 'rye', proof: 119.2 }));
+  /* WHAT THE REGISTRY CANNOT DO, asserted so nobody expects it: it carries
+     Octomore and Bruichladdich as SEPARATE brands, so a name that omits the
+     house resolves to a different brand from one that states it. Two groups in
+     a 726-entry library, and nameContains surfaces both on the duplicate list
+     where a person decides. */
+  eq('a name omitting the house is NOT joined to one stating it',
+    id({ name: 'Octomore 13.4', sub: 'scotch', proof: 121 })
+      === id({ name: 'Bruichladdich Octomore 13.4', sub: 'scotch', proof: 121 }),
+    false);
+  /* WHAT IT DOES DO, and it is the common case. */
+  eq('a category word written out does not make a second bottle',
+    id({ name: 'Weller Antique 107', sub: 'bourbon', proof: 107 }),
+    id({ name: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
+         sub: 'bourbon', proof: 107 }));
+  /* A SERIES NUMBER TELLS TWO RELEASES APART - the one false join it made. */
+  eq('two releases of one series are two bottles',
+    id({ name: 'Bruichladdich Octomore 13.4', sub: 'scotch', proof: 121 })
+      === id({ name: 'Bruichladdich Octomore 16.3 Edition', sub: 'scotch',
+               proof: 121 }), false);
+  /* A BOTTLE THE REGISTRY DOES NOT KNOW still gets a stable identity. */
+  const own = { name: 'My Own Single Cask Pick', sub: 'bourbon', proof: 115 };
+  eq('a bottle no registry knows still has an identity', !!id(own), true);
+  eq('and it is the same one every time', id(own),
+    id({ name: 'my own single cask pick', sub: 'bourbon', proof: 115 }));
+  eq('a bottle with no name at all has none', id({ name: '' }), '');
+  eq('and nothing at all does not throw', id(null), '');
+}
+
+sec('§457 the identity is the library’s, not the holder’s');
+{
+  /* Nik's record of Rowan's Creek carries a cask finish and BZ's leaves it
+     blank, and that one blank field gave one whisky two identities. People fill
+     in different fields, so the entry carries the identity and every shelf
+     pointing at it inherits the same one (BZ: "if that library is the macro
+     inventory and we each link to it with what we own, this should be easy"). */
+  const brands = { rowan_s_creek: { name: "Rowan's Creek" } };
+  const lib = {
+    rowan_s_creek_bourbon: { name: "Rowan's Creek Bourbon", sub: 'bourbon',
+      proof: 100.1, ident: 'rowans creek|bourbon||p1001|creek|rowans' }
+  };
+  /* A FIELD THAT WOULD REALLY CHANGE THE ANSWER. The first fixture gave him
+     fin: 'charred oak', which is ruled out as a finish anyway, so reading his
+     record instead of the entry's changed nothing and the check could not fail
+     (caught by breaking it on purpose, 2026-10-01). Oloroso is a real cask. */
+  const his = { k: "Rowan's Creek Bourbon", name: "Rowan's Creek Bourbon",
+    sub: 'bourbon', proof: 100.1, fin: 'Oloroso' };
+  const mine = { k: "Rowan's Creek Bourbon", name: "Rowan's Creek Bourbon",
+    sub: 'bourbon', proof: 100.1 };
+  eq('one filled-in field cannot split one whisky',
+    L.identOf(his, lib, {}, brands), L.identOf(mine, lib, {}, brands));
+  eq('and the answer is the one the entry carries',
+    L.identOf(mine, lib, {}, brands), lib.rowan_s_creek_bourbon.ident);
+  /* AN ENTRY WITH NO STORED IDENTITY is worked out, so a library that has not
+     been stamped yet still compares. */
+  const bare = { rowan_s_creek_bourbon: { name: "Rowan's Creek Bourbon",
+    sub: 'bourbon', proof: 100.1 } };
+  eq('an unstamped entry is worked out from the canon',
+    L.identOf(mine, bare, {}, brands),
+    L.bottleIdentity(bare.rowan_s_creek_bourbon, brands));
+  eq('and the holder’s own fields are still not consulted',
+    L.identOf(his, bare, {}, brands), L.identOf(mine, bare, {}, brands));
+  /* A MERGE IS FOLLOWED, so merging still fixes the comparison for everybody. */
+  const moved = Object.assign({}, lib,
+    { the_real_one: { name: "Rowan's Creek", ident: 'settled' } });
+  eq('an entry merged away hands over what it became',
+    L.identOf(mine, moved, { rowan_s_creek_bourbon: 'the_real_one' }, brands),
+    'settled');
+  /* A BOTTLE THE LIBRARY HAS NEVER HEARD OF gets one from itself, so a custom
+     bottling on two shelves under one name still matches. */
+  const custom = { k: 'My Own Pick', name: 'My Own Pick', sub: 'bourbon',
+    proof: 110 };
+  eq('a bottle outside the library still has an identity',
+    L.identOf(custom, lib, {}, brands), L.bottleIdentity(custom, brands));
+  /* AND WITHOUT THE REGISTRY IT SAYS NOTHING rather than guessing: the Venn
+     never loads the few megabytes, which is why the entry stores the answer. */
+  eq('no registry and no stored identity is no answer',
+    L.identOf(custom, lib, {}, null), '');
+  eq('but a stored identity needs no registry',
+    L.identOf(mine, lib, {}, null), lib.rowan_s_creek_bourbon.ident);
+  /* THE COMPARISON KEY ASKS IT FIRST, then falls back the way it always did. */
+  eq('two shelves are compared on what the bottles are',
+    L.shelfKeyOf(mine, lib, {}, brands), 'id:' + lib.rowan_s_creek_bourbon.ident);
+  eq('and a shelf with no library and no registry still keys by name',
+    L.shelfKeyOf({ k: 'x', name: 'Ardbeg Ten' }, null, null, null),
+    L.shopNorm('Ardbeg Ten'));
+}
+
+sec('§458 the library stamps what each entry is');
+{
+  /* Every comparison screen reads the stored identity because it cannot load the
+     registry - a few megabytes - so the entries already in the library are
+     stamped by the housekeeping chain that already writes to the library. All
+     726 of BZ's took a stamp and none came back blank (2026-10-01). */
+  const brands = { ardbeg: { name: 'Ardbeg' }, weller: { name: 'Weller' } };
+  const rows = [
+    { _key: 'ardbeg_ten', name: 'Ardbeg Ten', sub: 'scotch', proof: 92 },
+    { _key: 'weller_antique_107', name: 'Weller Antique 107', sub: 'bourbon',
+      proof: 107 }
+  ];
+  const got = L.identBackfill(rows, brands);
+  eq('an entry with no identity is stamped', Object.keys(got).length, 2);
+  eq('and the field written is the identity itself', got.ardbeg_ten,
+    { ident: L.bottleIdentity(rows[0], brands) });
+  /* ONLY WHAT CHANGED: the library is read by everybody and rewriting all 726
+     every pass would be traffic for nothing. */
+  const stamped = rows.map(r => Object.assign({}, r,
+    { ident: L.bottleIdentity(r, brands) }));
+  eq('an entry that already agrees is not rewritten',
+    Object.keys(L.identBackfill(stamped, brands)).length, 0);
+  const stale = [Object.assign({}, stamped[0], { ident: 'something else' })];
+  eq('an entry carrying the wrong one is corrected',
+    Object.keys(L.identBackfill(stale, brands)).length, 1);
+  /* AND NOTHING AT ALL WITHOUT THE REGISTRY: a blank costs the work of redoing
+     it, a wrong one is read by everybody as the truth. */
+  eq('no registry, no stamp', Object.keys(L.identBackfill(rows, null)).length, 0);
+  eq('nothing to stamp is not an error', L.identBackfill([], brands), {});
+  eq('and a nameless row is skipped',
+    Object.keys(L.identBackfill([{ _key: 'x', name: '' }], brands)).length, 0);
+
+  /* A TYPE IS NORMALISED BY A FUNCTION THAT KEEPS TYPES. shopNorm strips
+     category words out of a NAME, so it deleted "bourbon" and kept "rye", and
+     two bourbons of one brand carried no type at all while the assertion that a
+     rye is not a bourbon passed on the accident (2026-10-01). */
+  eq('a type survives being settled', L.typeKey('Bourbon'), 'bourbon');
+  eq('and so does every other one', L.typeKey('Scotch'), 'scotch');
+  eq('punctuation and spacing settle', L.typeKey('American  Single-Malt'),
+    'american single malt');
+  eq('nothing is nothing', L.typeKey(null), '');
+  /* AND THE IDENTITY REALLY CARRIES IT, which is the whole of BZ's point. */
+  const bbn = { name: 'Bradshaw Reserve', sub: 'bourbon', proof: 100 };
+  const rye = { name: 'Bradshaw Reserve', sub: 'rye', proof: 100 };
+  eq('one name, two types, two identities',
+    L.bottleIdentity(bbn, {}) === L.bottleIdentity(rye, {}), false);
+  eq('and the type is in the string itself',
+    L.bottleIdentity(bbn, {}).indexOf('bourbon') >= 0, true);
+}
+
+sec('§459 your offer was already in, so your bottle joins that entry');
+{
+  /* The intake has judged this correctly all along and said so in words:
+     "already in as Weller Antique 107 Kentucky Straight Wheated Bourbon
+     Whiskey". Kevrin's offer was dropped three times over two months and nothing
+     ever pointed his bottle at that entry, so his own product stayed private and
+     every comparison read a whisky nobody else owned (BZ, 2026-10-01: "I own
+     weller antique 107 ... Hence it must be in the library"). */
+  const lib = {
+    weller_antique_107_kentucky_straight_wheated_bourbon_whiskey: {
+      name: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
+      sub: 'bourbon', proof: 107, dist: 'Buffalo Trace' }
+  };
+  const custom = {
+    'Weller Antique 107': { k: 'Weller Antique 107', name: 'Weller Antique 107',
+      proof: 107, size: 750, obsc: 'known' },
+    'My Own Pick': { k: 'My Own Pick', name: 'My Own Pick', proof: 110 }
+  };
+  const bottles = [
+    { id: 'B1', k: 'Weller Antique 107', status: 'sealed' },
+    { id: 'B2', k: 'Weller Antique 107', status: 'open' },
+    { id: 'B3', k: 'My Own Pick', status: 'open' }
+  ];
+  const dropped = {
+    weller_antique_107: { why: 'already in as Weller Antique 107 Kentucky '
+      + 'Straight Wheated Bourbon Whiskey', at: 1790727545614,
+      into: 'weller_antique_107_kentucky_straight_wheated_bourbon_whiskey' }
+  };
+  const got = L.joinDropped(dropped, custom, bottles, {}, lib);
+  eq('the bottle joins the entry the library named', got.moved, 1);
+  eq('and every bottle of it moves, not just the first',
+    got.bottles.filter(b => b.k === lib
+      .weller_antique_107_kentucky_straight_wheated_bourbon_whiskey.name).length, 2);
+  eq('it lands on the NAME, because the catalog is keyed by name',
+    got.moves['Weller Antique 107'],
+    'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey');
+  eq('the private product is gone', !!got.custom['Weller Antique 107'], false);
+  eq('and a product nobody judged is left alone',
+    !!got.custom['My Own Pick'], true);
+  eq('a bottle of it is untouched',
+    got.bottles.filter(b => b.id === 'B3')[0].k, 'My Own Pick');
+  /* A FACT THE LIBRARY HAS NOT GOT IS KEPT, so nothing a person typed is lost. */
+  eq('a size the library does not carry is kept as an edit',
+    (got.edits['Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey']
+      || {}).size, 750);
+
+  /* IT ACTS ONLY ON WHAT THE LIBRARY DECIDED, and never guesses. */
+  eq('a drop with no entry named does nothing',
+    L.joinDropped({ weller_antique_107: { why: 'nothing to add', at: 1 } },
+      custom, bottles, {}, lib), null);
+  eq('a drop naming an entry that is not there does nothing',
+    L.joinDropped({ weller_antique_107: { into: 'no_such_entry', at: 1 } },
+      custom, bottles, {}, lib), null);
+  eq('nothing dropped, nothing done',
+    L.joinDropped({}, custom, bottles, {}, lib), null);
+  eq('and an offer for something not in this custom list does nothing',
+    L.joinDropped({ something_else: { into: 'weller_antique_107_kentucky_'
+      + 'straight_wheated_bourbon_whiskey', at: 1 } }, custom, bottles, {}, lib),
+    null);
+  /* POINTING BOTTLES AT ANOTHER PRODUCT IS ONE FUNCTION, because three wrote it
+     out: healCollisions for a name collision, adoptOrphans for a bottle whose
+     product is gone, and joinDropped here. */
+  eq('a bottle on the map is re-pointed',
+    L.repoint([{ id: 'B1', k: 'old' }], { old: 'new' })[0].k, 'new');
+  eq('every bottle of it, not just the first',
+    L.repoint([{ id: 'B1', k: 'old' }, { id: 'B2', k: 'old' }],
+      { old: 'new' }).filter(b => b.k === 'new').length, 2);
+  eq('one off the map is left exactly as it was',
+    L.repoint([{ id: 'B9', k: 'mine' }], { old: 'new' })[0].k, 'mine');
+  eq('the record is copied, never written through',
+    (() => { const b = { id: 'B1', k: 'old' };
+      L.repoint([b], { old: 'new' }); return b.k; })(), 'old');
+  eq('no map, no change', L.repoint([{ id: 'B1', k: 'old' }], null)[0].k, 'old');
+  eq('no bottles is not an error', L.repoint(null, { old: 'new' }), []);
+
+  /* AND IT IS IDEMPOTENT: run twice, the second changes nothing. */
+  const again = L.joinDropped(dropped, got.custom, got.bottles, got.edits, lib);
+  eq('joining twice is joining once', again, null);
 }
 
 queueSection()
