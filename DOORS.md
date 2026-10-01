@@ -544,7 +544,6 @@ QUESTION, not the name you were going to use.
 - **`L.isProductCode`** — A QR CODE IS NOT A BARCODE, and a whisky label often carries both.
 - **`L.isSealed`** — What a bottle's status MEANS, in one place
 - **`L.isWhisky`** — _no comment above it_
-- **`L.joinDropped`** — IT ACTS ONLY ON WHAT THE LIBRARY DECIDED
 - **`L.joinMeText`** — and what to look for.
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
@@ -984,6 +983,7 @@ QUESTION, not the name you were going to use.
 - **`L.styleFromName`** — _no comment above it_
 - **`L.subFamily`** — _no comment above it_
 - **`L.subFromHouse`** — A CATEGORY FROM A STYLE PLUS A HOUSE
+- **`L.subscribeToLibrary`** — IT NEVER INVENTS AN ENTRY
 - **`L.suggestionFor`** — _no comment above it_
 - **`L.suggestionResults`** — WHAT THE SUGGESTIONS YOU BOUGHT CAME TO, one row per whisky, judged by the
 - **`L.suggestionSay`** — _no comment above it_

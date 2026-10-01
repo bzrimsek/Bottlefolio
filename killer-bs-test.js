@@ -26027,6 +26027,37 @@ sec('§452 having a bottle subscribes you to a library entry');
     got.bottles.filter(b => b.id === 'B1')[0].k, 'Ardbeg Ten');
   eq('and the one nobody has heard of is left, not guessed at',
     got.left.map(b => b.id), ['B4']);
+  /* AND A NAME WRITTEN A SECOND WAY, which resolveLibKey cannot settle: BZ's two
+     bottles of "Redbreast Px" sat pointed at nothing while the library carried
+     "Redbreast PX Edition" and a buddy's PX subscribed to it, so the overlap
+     called it his alone (BZ, 2026-10-01: "I have red breast px"). A bottle with
+     no product asks the same question as any other unsubscribed bottle. */
+  const px = { redbreast_px_edition: { name: 'Redbreast PX Edition',
+    sub: 'irish', proof: 92 } };
+  const pxCat = { 'Redbreast PX Edition': { k: 'Redbreast PX Edition',
+    name: 'Redbreast PX Edition' } };
+  const pxGot = L.adoptOrphans([{ id: 'B1', k: 'Redbreast Px', status: 'open' },
+    { id: 'B2', k: 'Redbreast Px', status: 'sealed' }], pxCat, px, {});
+  eq('a name written a second way still finds its entry', pxGot.moved, 1);
+  eq('and both bottles of it move',
+    pxGot.bottles.filter(b => b.k === 'Redbreast PX Edition').length, 2);
+  /* BUT NOT A DIFFERENT BOTTLE. The library also carries Kentucky Oak, and the
+     intake once judged PX to BE it; the names refuse that. */
+  const oak = { redbreast_kentucky_oak: {
+    name: 'Redbreast Kentucky Oak Edition Irish Whiskey', sub: 'irish',
+    proof: 101 } };
+  eq('a different expression is not adopted',
+    L.adoptOrphans([{ id: 'B1', k: 'Redbreast Px', status: 'open' }],
+      { 'Redbreast Kentucky Oak Edition Irish Whiskey': { k: 'x' } }, oak, {}),
+    null);
+  /* AND A CANDIDATE THAT ADDS A MARK IS REFUSED HERE TOO: the entry says more
+     than the bottle because it is ANOTHER BOTTLING, not the same one written
+     out. This is the only guard on the adoption side, so it is asserted. */
+  eq('an entry adding an age is not adopted',
+    L.adoptOrphans([{ id: 'B1', k: 'Barrell Craft Spirits Seagrass',
+      status: 'open' }], { x: { k: 'x' } },
+      { seagrass16: { name: 'Barrell Craft Spirits Seagrass 16 Year Old' } },
+      {}), null);
   eq('a shelf with nothing lost is not rewritten',
     L.adoptOrphans([{ id: 'B1', k: 'Ardbeg Ten', status: 'open' }], cat, lib, {}),
     null);
@@ -26201,8 +26232,16 @@ sec('§455 the marks that tell two bottlings apart');
     marks({ name: 'Old Fitzgerald Bonded' }), ['bib']);
   eq('a single barrel is a mark',
     marks({ name: 'Elmer T. Lee Single Barrel' }), ['sb']);
-  eq('cask strength is NOT a mark, because the proof already is',
-    marks({ name: "Angel's Envy Cask Strength" }), []);
+  /* CASK STRENGTH IS A MARK. It was taken out because it split "Angels Envy
+     Bottled in Bond" from "Angel's Envy Bottled-in-Bond Cask Strength Bourbon",
+     a pair BZ had merged - but bottled in bond is fixed at 100 proof by law, so
+     that entry's NAME is the fault and the evidence was rotten (BZ, 2026-10-01:
+     "bottled in bond is a law so cask strength bib is an error"). */
+  eq('cask strength is a mark', marks({ name: "Angel's Envy Cask Strength" }),
+    ['cs']);
+  eq('and so is barrel proof, full proof and uncut',
+    marks({ name: 'X Barrel Proof' }).concat(marks({ name: 'X Full Proof' }))
+      .concat(marks({ name: 'X Uncut' })), ['cs', 'cs', 'cs']);
   eq('nor is finished, toasted, reserve, limited or small batch',
     marks({ name: 'Penelope Toasted Small Batch Reserve Limited Finished' }), []);
   eq('an age is read out of the field',
@@ -26427,68 +26466,148 @@ sec('§458 the library stamps what each entry is');
     L.bottleIdentity(bbn, {}).indexOf('bourbon') >= 0, true);
 }
 
-sec('§459 your offer was already in, so your bottle joins that entry');
+sec('§459 which library entry a bottle belongs to');
 {
-  /* The intake has judged this correctly all along and said so in words:
-     "already in as Weller Antique 107 Kentucky Straight Wheated Bourbon
-     Whiskey". Kevrin's offer was dropped three times over two months and nothing
-     ever pointed his bottle at that entry, so his own product stayed private and
-     every comparison read a whisky nobody else owned (BZ, 2026-10-01: "I own
-     weller antique 107 ... Hence it must be in the library"). */
+  /* BZ, 2026-10-01: "if we have built the library subscription model correctly,
+     the venn is easy." A bottle has two states and no third - it names a library
+     entry, or it owes one. 632 of 696 bottles across five real shelves named
+     one; of the 64 left, 28 could join an entry the library already had and 36
+     had to be added. Every wrong row in a buddy's overlap was the second state,
+     and the comparison was being taught to work around it. */
+  const WELLER = 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey';
   const lib = {
     weller_antique_107_kentucky_straight_wheated_bourbon_whiskey: {
-      name: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
-      sub: 'bourbon', proof: 107, dist: 'Buffalo Trace' }
+      name: WELLER, sub: 'bourbon', proof: 107, dist: 'Buffalo Trace' },
+    redbreast_px_edition: { name: 'Redbreast PX Edition', sub: 'irish',
+      proof: 92 },
+    redbreast_kentucky_oak_edition: {
+      name: 'Redbreast Kentucky Oak Edition Irish Whiskey', sub: 'irish',
+      proof: 101 },
+    oban_little_bay_small_cask: { name: 'Oban Little Bay Small Cask',
+      sub: 'scotch', proof: 86 },
+    ardbeg_wee_beastie: { name: 'Ardbeg Wee Beastie', sub: 'scotch', proof: 94 }
   };
   const custom = {
     'Weller Antique 107': { k: 'Weller Antique 107', name: 'Weller Antique 107',
-      proof: 107, size: 750, obsc: 'known' },
+      proof: 107, size: 750 },
+    'Redbreast PX Edition': { k: 'Redbreast PX Edition',
+      name: 'Redbreast PX Edition', proof: 92 },
+    'Oban Little Bay': { k: 'Oban Little Bay', name: 'Oban Little Bay' },
+    'Ardbeg Wee Beastie 5': { k: 'Ardbeg Wee Beastie 5',
+      name: 'Ardbeg Wee Beastie 5', age: 5 },
     'My Own Pick': { k: 'My Own Pick', name: 'My Own Pick', proof: 110 }
   };
   const bottles = [
     { id: 'B1', k: 'Weller Antique 107', status: 'sealed' },
     { id: 'B2', k: 'Weller Antique 107', status: 'open' },
-    { id: 'B3', k: 'My Own Pick', status: 'open' }
+    { id: 'B3', k: 'Redbreast PX Edition', status: 'sealed' },
+    { id: 'B4', k: 'Oban Little Bay', status: 'sealed' },
+    { id: 'B5', k: 'Ardbeg Wee Beastie 5', status: 'open' },
+    { id: 'B6', k: 'My Own Pick', status: 'open' }
   ];
-  const dropped = {
-    weller_antique_107: { why: 'already in as Weller Antique 107 Kentucky '
-      + 'Straight Wheated Bourbon Whiskey', at: 1790727545614,
-      into: 'weller_antique_107_kentucky_straight_wheated_bourbon_whiskey' }
+  /* THE INTAKE'S JUDGEMENT, in both shapes: with the key (from v2.6.61) and as
+     the sentence alone (the 38 judged before it). */
+  const drops = {
+    weller_antique_107: { at: 1, why: 'already in as ' + WELLER,
+      into: 'weller_antique_107_kentucky_straight_wheated_bourbon_whiskey' },
+    oban_little_bay: { at: 1, why: 'already in as Oban Little Bay Small Cask' },
+    redbreast_px_edition: { at: 1,
+      why: 'already in as Redbreast Kentucky Oak Edition Irish Whiskey' },
+    ardbeg_wee_beastie_5: { at: 1, why: 'already in as Ardbeg Wee Beastie' }
   };
-  const got = L.joinDropped(dropped, custom, bottles, {}, lib);
-  eq('the bottle joins the entry the library named', got.moved, 1);
-  eq('and every bottle of it moves, not just the first',
-    got.bottles.filter(b => b.k === lib
-      .weller_antique_107_kentucky_straight_wheated_bourbon_whiskey.name).length, 2);
-  eq('it lands on the NAME, because the catalog is keyed by name',
-    got.moves['Weller Antique 107'],
-    'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey');
-  eq('the private product is gone', !!got.custom['Weller Antique 107'], false);
-  eq('and a product nobody judged is left alone',
-    !!got.custom['My Own Pick'], true);
-  eq('a bottle of it is untouched',
-    got.bottles.filter(b => b.id === 'B3')[0].k, 'My Own Pick');
-  /* A FACT THE LIBRARY HAS NOT GOT IS KEPT, so nothing a person typed is lost. */
-  eq('a size the library does not carry is kept as an edit',
-    (got.edits['Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey']
-      || {}).size, 750);
 
-  /* IT ACTS ONLY ON WHAT THE LIBRARY DECIDED, and never guesses. */
-  eq('a drop with no entry named does nothing',
-    L.joinDropped({ weller_antique_107: { why: 'nothing to add', at: 1 } },
-      custom, bottles, {}, lib), null);
-  eq('a drop naming an entry that is not there does nothing',
-    L.joinDropped({ weller_antique_107: { into: 'no_such_entry', at: 1 } },
-      custom, bottles, {}, lib), null);
-  eq('nothing dropped, nothing done',
-    L.joinDropped({}, custom, bottles, {}, lib), null);
-  eq('and an offer for something not in this custom list does nothing',
-    L.joinDropped({ something_else: { into: 'weller_antique_107_kentucky_'
-      + 'straight_wheated_bourbon_whiskey', at: 1 } }, custom, bottles, {}, lib),
-    null);
+  const got = L.subscribeToLibrary(custom, bottles, {}, lib, {}, drops);
+
+  /* THE KEY IS BELIEVED. */
+  eq('a drop carrying the key subscribes the bottle',
+    got.moves['Weller Antique 107'], WELLER);
+  eq('and every bottle of it moves, not just the first',
+    got.bottles.filter(b => b.k === WELLER).length, 2);
+  /* THE SENTENCE IS READ BACK, so the 38 older drops are not lost. */
+  eq('a drop carrying only the sentence still subscribes the bottle',
+    got.moves['Oban Little Bay'], 'Oban Little Bay Small Cask');
+  /* BUT CONTAINMENT DECIDES. Kevrin's PX really was dropped as already in as
+     the Kentucky Oak, which is a different whisky. */
+  eq('a judgement the names contradict is refused',
+    got.moves['Redbreast PX Edition'], undefined);
+  eq('and the bottle lands on the right entry instead, by its own name',
+    got.bottles.filter(b => b.id === 'B3')[0].k, 'Redbreast PX Edition');
+  /* NOR WILL IT TAKE A LESS DESCRIPTIVE ENTRY (BZ: "I always took the longer
+     title"). The library's "Ardbeg Wee Beastie" says less than the bottle does,
+     so the entry is what wants correcting, not the bottle. */
+  eq('an entry that says less than the bottle is refused',
+    got.moves['Ardbeg Wee Beastie 5'], undefined);
+  eq('and it is reported as owing an addition',
+    got.left.indexOf('Ardbeg Wee Beastie 5') >= 0, true);
+  /* A BOTTLE NOTHING CONTAINS OWES AN ADDITION, and is never invented. */
+  eq('a bottle the library has never heard of owes an addition',
+    got.left.indexOf('My Own Pick') >= 0, true);
+  eq('its bottle is untouched',
+    got.bottles.filter(b => b.id === 'B6')[0].k, 'My Own Pick');
+  eq('and its product is kept', !!got.custom['My Own Pick'], true);
+  /* THE SUBSCRIBED PRODUCTS ARE GONE FROM THE PRIVATE LIST. */
+  eq('a subscribed product is no longer private',
+    !!got.custom['Weller Antique 107'], false);
+  /* A FACT THE LIBRARY HAS NOT GOT IS KEPT. */
+  eq('a size the library does not carry survives',
+    (got.edits[WELLER] || {}).size, 750);
+
+  /* THE JUDGEMENT IS WORTH MORE THAN A GUESS, and this is where that shows: two
+     entries both say everything the bottle's name says, a guess takes the one
+     adding fewest words, and an admin judged the other. Without the sentence
+     being read back the guess wins and the bottle lands on the wrong entry. */
+  const twoWays = {
+    weller_antique_107_gold: { name: 'Weller Antique 107 Gold',
+      sub: 'bourbon', proof: 107 },
+    weller_antique_107_blue_label: { name: 'Weller Antique 107 Blue Label',
+      sub: 'bourbon', proof: 107 }
+  };
+  const judged = L.subscribeToLibrary(
+    { 'Weller Antique 107': { k: 'Weller Antique 107',
+        name: 'Weller Antique 107' } },
+    [{ id: 'B1', k: 'Weller Antique 107', status: 'open' }], {}, twoWays, {},
+    { weller_antique_107: { at: 1,
+        why: 'already in as Weller Antique 107 Blue Label' } });
+  eq('the entry an admin named beats the one a guess would pick',
+    judged.moves['Weller Antique 107'], 'Weller Antique 107 Blue Label');
+
+  /* A WEAK CANDIDATE IS NOT AN ANSWER. The only entry containing this name adds
+     an age, which names another bottling. */
+  const aged = { barrell_seagrass_16: {
+    name: 'Barrell Craft Spirits Seagrass 16 Year Old', sub: 'bourbon',
+    proof: 118 } };
+  const weak = L.subscribeToLibrary(
+    { 'Barrell Craft Spirits Seagrass': { k: 'Barrell Craft Spirits Seagrass',
+        name: 'Barrell Craft Spirits Seagrass', proof: 118 } },
+    [{ id: 'B1', k: 'Barrell Craft Spirits Seagrass', status: 'open' }], {},
+    aged, {}, {});
+  eq('a candidate that adds a mark is no answer', (weak || {}).moved, 0);
+  eq('and the bottle is reported as owing an addition',
+    (weak || { left: [] }).left.indexOf('Barrell Craft Spirits Seagrass') >= 0,
+    true);
+
+  /* ALREADY SUBSCRIBED: a product filed under the library's own name needs
+     nothing doing. */
+  const done = L.subscribeToLibrary({ [WELLER]: { k: WELLER, name: WELLER } },
+    [{ id: 'B9', k: WELLER, status: 'open' }], {}, lib, {}, {});
+  eq('a product already filed as the library files it is left alone',
+    done, null);
+  /* AND IT IS IDEMPOTENT. */
+  const again = L.subscribeToLibrary(got.custom, got.bottles, got.edits, lib,
+    {}, drops);
+  eq('subscribing twice moves nothing the second time',
+    (again || { moved: 0 }).moved, 0);
+  /* A MERGE IS FOLLOWED, so merging still fixes it for everybody. */
+  const moved = L.subscribeToLibrary(
+    { 'Oban Little Bay': { k: 'Oban Little Bay', name: 'Oban Little Bay' } },
+    [{ id: 'B4', k: 'Oban Little Bay', status: 'open' }], {}, lib,
+    { oban_little_bay_small_cask: 'ardbeg_wee_beastie' }, drops);
+  eq('a bottle never lands on a key that has since become another',
+    (moved || { moves: {} }).moves['Oban Little Bay'], undefined);
+
   /* POINTING BOTTLES AT ANOTHER PRODUCT IS ONE FUNCTION, because three wrote it
      out: healCollisions for a name collision, adoptOrphans for a bottle whose
-     product is gone, and joinDropped here. */
+     product is gone, and the subscription here. */
   eq('a bottle on the map is re-pointed',
     L.repoint([{ id: 'B1', k: 'old' }], { old: 'new' })[0].k, 'new');
   eq('every bottle of it, not just the first',
@@ -26501,10 +26620,6 @@ sec('§459 your offer was already in, so your bottle joins that entry');
       L.repoint([b], { old: 'new' }); return b.k; })(), 'old');
   eq('no map, no change', L.repoint([{ id: 'B1', k: 'old' }], null)[0].k, 'old');
   eq('no bottles is not an error', L.repoint(null, { old: 'new' }), []);
-
-  /* AND IT IS IDEMPOTENT: run twice, the second changes nothing. */
-  const again = L.joinDropped(dropped, got.custom, got.bottles, got.edits, lib);
-  eq('joining twice is joining once', again, null);
 }
 
 queueSection()
