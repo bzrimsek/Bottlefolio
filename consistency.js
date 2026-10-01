@@ -2066,14 +2066,23 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* The handler is right below the button it belongs to. */
     const near = lines.slice(i, i + 26).join('\n');
     if (!/S\.asked/.test(near)) return;          // not the give-up handler
-    if (/fbDropRequest\(/.test(near)) return;
-    bad.push('index.html:' + (i + 1) + '  giving up clears S.asked and leaves '
-      + 'requests/<them>/<me> behind');
+    const req = /fbDropRequest\(/.test(near);
+    const mine = /fbForgetAsked\(/.test(near);
+    if (req && mine) return;
+    bad.push('index.html:' + (i + 1) + '  giving up '
+      + (req ? '' : 'leaves requests/<them>/<me> behind')
+      + (req || mine ? '' : ', and ')
+      + (mine ? '' : 'leaves this account’s own asked/<them>, which is '
+        + 'merged on load and hands the ask straight back'));
   });
   /* And the withdrawal exists at all, since a check for a call is worth
      nothing if the thing it calls has gone. */
   if (!/function fbDropRequest\s*\(/.test(src)) {
     bad.push('fbDropRequest has gone - nothing can withdraw an ask');
+  }
+  if (!/function fbForgetAsked\s*\(/.test(src)) {
+    bad.push('fbForgetAsked has gone - the merge will restore every ask '
+      + 'anybody gives up on');
   }
   check('giving up on an ask withdraws it, not just forgets it', bad);
 }
