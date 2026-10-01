@@ -25668,6 +25668,36 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.namePrefixPairs([{ k: 'x', name: 'Oban Little Bay' },
       { k: 'y', name: 'Oban Little Bay Small Cask' }]).length, 1);
 
+  /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
+     and before it, "if the library is the macro inventory and we each link to
+     it with what we own, this should be easy". It was the normalised NAME, so
+     two shelves holding one whisky under a short and a full title were two
+     bottles whatever the library said - and merging them would not have
+     helped the comparison at all. */
+  const lib2 = { weller_antique_107_kentucky_straight_bourbon_whiskey:
+    { name: 'Weller Antique 107 Kentucky Straight Bourbon Whiskey' },
+    weller_antique_107: { name: 'Weller Antique 107' } };
+  const short = { k: 'weller_antique_107', name: 'Weller Antique 107' };
+  const full = { k: 'weller_antique_107_kentucky_straight_bourbon_whiskey',
+    name: 'Weller Antique 107 Kentucky Straight Bourbon Whiskey' };
+
+  eq('two entries, two keys, while the library holds both',
+    L.shelfKeyOf(short, lib2, {}) === L.shelfKeyOf(full, lib2, {}), false);
+  /* AND A MERGE IS FOLLOWED, which is the whole point: once the library says
+     they are one entry, both shelves land on it. */
+  const merged = { weller_antique_107:
+    'weller_antique_107_kentucky_straight_bourbon_whiskey' };
+  eq('once merged, both shelves land on one bottle',
+    L.shelfKeyOf(short, lib2, merged) === L.shelfKeyOf(full, lib2, merged), true);
+  /* A BOTTLE THE LIBRARY HAS NEVER HEARD OF keeps its normalised name, so a
+     custom bottling on two shelves under one name still matches. */
+  eq('an unknown bottle still matches itself by name',
+    L.shelfKeyOf({ k: 'x', name: 'My Own Cask' }, lib2, {}),
+    L.shelfKeyOf({ k: 'y', name: 'my own cask' }, lib2, {}));
+  eq('and with no library at all it is the name, as before',
+    L.shelfKeyOf({ k: 'x', name: 'Ardbeg Ten' }, null, null),
+    L.shopNorm('Ardbeg Ten'));
+
   /* ONE STRENGTH, allowing for rounding, and silence contradicting nothing. */
   eq('a tenth apart is one strength', L.sameStrength(107, 107.4), true);
   eq('a point apart is two', L.sameStrength(107, 114), false);
