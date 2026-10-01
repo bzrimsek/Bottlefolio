@@ -111,6 +111,27 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell-webkit
 
+      # THE PACKAGES THEMSELVES, CACHED. The browsers were cached and the system
+      # packages they need were not, so every run downloaded a hundred and fifty
+      # .debs from azure.archive.ubuntu.com - which sat for 21 minutes on one
+      # run, 9 on the next and timed out at 12 on the third, with the download
+      # still at package 153. Three builds blocked by fetching the same files
+      # every time. apt is told below to keep what it downloads, so a hit here
+      # makes the install a local one.
+      - name: Their .debs from the cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives/*.deb
+          key: apt-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-webkit
+
+      # KEEP THE DOWNLOADS. The runner image sets Binary::apt::APT::Keep-Downloaded
+      # -Packages "false", which deletes every .deb the moment it is installed -
+      # so there would be nothing for the cache above to save.
+      - name: Keep what apt downloads, so the cache has something to hold
+        run: |
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' \
+            | sudo tee /etc/apt/apt.conf.d/99keep-debs > /dev/null
+
       - name: Install the browsers for the browser checks
         if: steps.pwcache.outputs.cache-hit != 'true'
         # APT CAN HANG, and a step with no ceiling takes the job's whole budget

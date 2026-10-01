@@ -25981,11 +25981,23 @@ sec('§451 a different year is a different bottle');
   ];
   eq('two annual releases are not one bottle on the facts',
     L.sameFactsPairs(annual).length, 0);
-  const same = annual.map((r, i) => Object.assign({}, r,
+  /* A NUMBERED BATCH IS A DIFFERENT BOTTLING, so this pair does not reach the
+     list either - and that is the taxonomy answering, not the facts rule. The
+     assertion used to expect it, from before a bottle had an identity (BZ,
+     2026-10-01: "none of these 12 are a match it should be clear from the
+     taxonomy"). */
+  const batched = annual.map((r, i) => Object.assign({}, r,
     { name: i ? "Angel's Envy Cask Strength Rye Batch 2"
               : "Angel's Envy Cask Strength Rye" }));
-  eq('and two bottlings with no year still reach the list',
-    L.sameFactsPairs(same).length, 1);
+  eq('a numbered batch is a different bottling',
+    L.sameFactsPairs(batched).length, 0);
+  /* TWO ROWS THE TAXONOMY CANNOT SEPARATE DO reach it: same type, same marks,
+     one name written two ways. That is what the list is for. */
+  const twice = annual.map((r, i) => Object.assign({}, r,
+    { name: i ? "Angel's Envy Cask Strength Rye Whiskey"
+              : "Angel's Envy Cask Strength Rye" }));
+  eq('one whisky written two ways still reaches the list',
+    L.sameFactsPairs(twice).length, 1);
 }
 
 sec('§452 having a bottle subscribes you to a library entry');
