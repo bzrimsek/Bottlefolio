@@ -26622,6 +26622,144 @@ sec('§459 which library entry a bottle belongs to');
   eq('no bottles is not an error', L.repoint(null, { old: 'new' }), []);
 }
 
+sec('§460 a comparison does not wait on somebody else’s device');
+{
+  /* The subscription runs on the OWNER's device: Kevrin's records change when
+     Kevrin opens the app and nobody else can write them. So BZ went on being
+     shown bottles as Kevrin's alone that both of them own, and would have until
+     Kevrin next opened it - possibly never (BZ, 2026-10-01, with the screen in
+     front of him: "still not correct - 6 of these are actually shared").
+
+     So the key resolves to the library AS IT READS, with the same evidence the
+     subscription uses and writing nothing. */
+  const lib = {
+    weller_antique_107_kentucky_straight_wheated_bourbon_whiskey: {
+      name: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
+      sub: 'bourbon', proof: 107, ident: 'bourbon|buffalo trace|weller|antique' }
+  };
+  /* HIS RECORD, UNHEALED: a private product under a shorter name. */
+  const his = { k: 'Weller Antique 107', name: 'Weller Antique 107',
+    proof: 107 };
+  /* AND MINE, subscribed, because my own device has run. */
+  const mine = { k: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
+    name: 'Weller Antique 107 Kentucky Straight Wheated Bourbon Whiskey',
+    sub: 'bourbon', proof: 107 };
+  eq('an unhealed shelf still lands on the library entry',
+    L.shelfKeyOf(his, lib, {}), L.shelfKeyOf(mine, lib, {}));
+  eq('and it is the entry’s own identity',
+    L.shelfKeyOf(his, lib, {}), 'id:bourbon|buffalo trace|weller|antique');
+  /* IT STILL REFUSES WHAT THE NAMES CONTRADICT. */
+  const px = {
+    redbreast_px_edition: { name: 'Redbreast PX Edition', sub: 'irish',
+      proof: 92, ident: 'px' },
+    redbreast_kentucky_oak: {
+      name: 'Redbreast Kentucky Oak Edition Irish Whiskey', sub: 'irish',
+      proof: 101, ident: 'oak' }
+  };
+  eq('a different expression is not resolved into',
+    L.shelfKeyOf({ k: 'Redbreast Px', name: 'Redbreast Px' }, px, {}), 'id:px');
+  eq('and a name nothing contains keeps its own',
+    L.shelfKeyOf({ k: 'Nobody Has Heard Of This', name: 'Nobody Has Heard Of This' },
+      px, {}), L.shopNorm('Nobody Has Heard Of This'));
+
+  /* A BOTTLE YOU OWN IS ON YOUR SHELF, product record or not. shelfSet walked
+     the CATALOG and asked which products were owned, so BZ's two bottles of
+     "Redbreast Px" - naming a product that is not there - were in no comparison
+     at all, and a buddy's PX read as theirs alone whatever either side did. */
+  const shelf = {
+    catalog: { 'Ardbeg Ten': { k: 'Ardbeg Ten', name: 'Ardbeg Ten' } },
+    bottles: [{ id: 'B1', k: 'Ardbeg Ten', status: 'open' },
+              { id: 'B2', k: 'Redbreast Px', status: 'open' },
+              { id: 'B3', k: 'Redbreast Px', status: 'sealed' }]
+  };
+  const set = L.shelfSet(shelf, false, px, {});
+  eq('a bottle whose product is missing is still on the shelf',
+    Object.keys(set).length, 2);
+  eq('and it lands on the library entry it means', !!set['id:px'], true);
+  eq('two bottles of it are still one whisky',
+    Object.keys(set).filter(k => k === 'id:px').length, 1);
+  /* OPEN ONLY STILL MEANS OPEN ONLY. */
+  const open = L.shelfSet(shelf, true, px, {});
+  eq('a sealed orphan is not pourable', Object.keys(open).length, 2);
+  const sealedOnly = L.shelfSet({ catalog: {},
+    bottles: [{ id: 'B9', k: 'Redbreast Px', status: 'sealed' }] }, true, px, {});
+  eq('and a shelf of nothing but sealed orphans pours nothing',
+    Object.keys(sealedOnly).length, 0);
+  /* WHAT IS GONE IS NOT OWNED. */
+  eq('a bottle that is gone is on nobody’s shelf',
+    Object.keys(L.shelfSet({ catalog: {},
+      bottles: [{ id: 'B9', k: 'Redbreast Px', status: 'gone' }] },
+      false, px, {})).length, 0);
+}
+
+sec('§461 a fact in the wrong field');
+{
+  /* Of 315 bottle facts typed by hand across five shelves, 60% were already in
+     the library word for word, about 1% were new, and most of the rest landed in
+     the wrong box. That is the measured case for the library filling bottle
+     facts rather than a person (BZ, 2026-10-01: "bottle facts clearly"), and
+     these are the three shapes the typing takes when it goes wrong. All three
+     are live: 20 finishes saying "limited", 22 styles saying a special class,
+     one finish holding a tasting note. */
+  const faults = p => L.rowFaults(p).map(f => f.id);
+  const ok = { name: 'A Whisky', sub: 'bourbon', proof: 100, style: 'bourbon',
+    fin: 'Oloroso' };
+  eq('a row with everything in its box has nothing wrong', faults(ok), []);
+
+  /* A SCARCITY IS NOT A CASK. "limited" says how hard it is to buy. */
+  eq('a finish saying limited is a fault',
+    faults(Object.assign({}, ok, { fin: 'limited' })), ['finscar']);
+  eq('whatever case it is written in',
+    faults(Object.assign({}, ok, { fin: 'Limited' })), ['finscar']);
+  eq('and the other scarcities too',
+    faults(Object.assign({}, ok, { fin: 'exclusive' })), ['finscar']);
+  /* "standard" and "batched" are already ruled out as finishes, so they never
+     reach this: FINISH_NOT answers them first and the row carries no finish. */
+  eq('a finish of standard is not a fault, it is no finish',
+    faults(Object.assign({}, ok, { fin: 'standard' })), []);
+  eq('a real cask is not a fault',
+    faults(Object.assign({}, ok, { fin: 'Pedro Ximenez hogshead' })), []);
+
+  /* NOR IS A TASTING NOTE. A cask is named in a word or three. */
+  eq('a sentence where the cask goes is a fault',
+    faults(Object.assign({}, ok,
+      { fin: 'Clean and polished aged oak warmth gently trailing off' })),
+    ['finnote']);
+  eq('a cask named in five words is not',
+    faults(Object.assign({}, ok, { fin: 'first fill Oloroso sherry butt' })), []);
+
+  /* AND A SPECIAL CLASS IS NOT A STYLE. L.STYLES is the vocabulary. */
+  eq('a style of cask strength is a fault',
+    faults(Object.assign({}, ok, { style: 'cask strength' })), ['styleclass']);
+  eq('so is small batch',
+    faults(Object.assign({}, ok, { style: 'Small Batch' })), ['styleclass']);
+  eq('so is bottled-in-bond',
+    faults(Object.assign({}, ok, { style: 'bottled-in-bond' })), ['styleclass']);
+  L.STYLES.forEach(st => {
+    eq('a real style is never a fault: ' + st,
+      faults(Object.assign({}, ok, { style: st })).indexOf('styleclass'), -1);
+  });
+  eq('and a style nobody recognises is left alone, not called a class',
+    faults(Object.assign({}, ok, { style: 'something else entirely' })), []);
+
+  /* BOTTLED IN BOND IS A LAW (BZ, 2026-10-01: "bottled in bond is a law so cask
+     strength bib is an error"). Exactly 100 proof, so it cannot be cask
+     strength and cannot be bottled at anything else. One library entry carries
+     it, and it cost a rule: cask strength was taken out of the marks because
+     that entry and "Angels Envy Bottled in Bond" came back as two bottles. */
+  eq('bonded and cask strength is a fault',
+    faults({ name: "Angel's Envy Bottled-in-Bond Cask Strength Bourbon",
+      sub: 'bourbon', proof: 100 }), ['bondcs']);
+  eq('bonded at anything but 100 proof is a fault',
+    faults({ name: 'Old Fitzgerald Bottled-in-Bond', sub: 'bourbon',
+      proof: 114 }), ['bondproof']);
+  eq('and bonded at 100 is right',
+    faults({ name: 'Old Fitzgerald Bottled-in-Bond', sub: 'bourbon',
+      proof: 100 }), []);
+  eq('a bottle that says nothing about bonding is not asked',
+    faults({ name: 'Ardbeg Ten', sub: 'scotch', proof: 114 }), []);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '
