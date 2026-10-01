@@ -26815,6 +26815,34 @@ sec('§461 a fact in the wrong field');
   eq('and a style nobody recognises is left alone, not called a class',
     faults(Object.assign({}, ok, { style: 'something else entirely' })), []);
 
+  /* A FINDING THAT CANNOT BE ACTED ON IS A LIST OF COMPLAINTS (BZ, 2026-10-01:
+     "unclear on what to do and not row by row edit/ask"). Where the repair is
+     mechanical and the same on every row it is declared beside the words, and
+     anything needing a judgement deliberately has none. */
+  eq('a finish holding a scarcity has a repair',
+    (L.faultFix('finscar') || {}).clears, 'fin');
+  eq('so does a tasting note in the cask field',
+    (L.faultFix('finnote') || {}).clears, 'fin');
+  eq('and a special class in the style field',
+    (L.faultFix('styleclass') || {}).clears, 'style');
+  eq('a bonded cask strength has none, because which word is wrong is a '
+    + 'judgement', L.faultFix('bondcs'), null);
+  eq('nor does a mash bill that does not add up', L.faultFix('mashsum'), null);
+  eq('nor a fault nobody has heard of', L.faultFix('nosuchfault'), null);
+  /* THE WRITE ITSELF: one field, nulled on every row the finding names. */
+  const plan = L.clearFieldPlan([{ key: 'a' }, { key: 'b' }], 'fin');
+  eq('every row named is cleared',
+    [plan['catalog/products/a/fin'], plan['catalog/products/b/fin']],
+    [null, null]);
+  eq('and the library is stamped so other devices re-read it',
+    typeof plan.stamp, 'number');
+  eq('null, not an empty string, so the key is removed',
+    plan['catalog/products/a/fin'] === null, true);
+  eq('nothing named, nothing written', L.clearFieldPlan([], 'fin'), {});
+  eq('no field, nothing written', L.clearFieldPlan([{ key: 'a' }], ''), {});
+  eq('a row with no key is skipped',
+    Object.keys(L.clearFieldPlan([{ text: 'no key here' }], 'fin')).length, 0);
+
   /* BOTTLED IN BOND IS A LAW (BZ, 2026-10-01: "bottled in bond is a law so cask
      strength bib is an error"). Exactly 100 proof, so it cannot be cask
      strength and cannot be bottled at anything else. One library entry carries

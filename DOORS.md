@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 875 |
+| functions | 877 |
 | tables | 206 |
-| carrying a stated purpose | 684 |
+| carrying a stated purpose | 686 |
 
 ## Tables
 
@@ -317,6 +317,7 @@ QUESTION, not the name you were going to use.
 - **`L.cleanFinish`** — _no comment above it_
 - **`L.cleanName`** — _no comment above it_
 - **`L.clearFacets`** — IN PLACE, returning the same object
+- **`L.clearFieldPlan`** — NULL, not an empty string
 - **`L.collectorLine`** — _no comment above it_
 - **`L.collidedCustom`** — TWO PRODUCTS, ONE WHISKY
 - **`L.columnOfSort`** — Which column a sort belongs to, so the header can show where it is.
@@ -368,6 +369,7 @@ QUESTION, not the name you were going to use.
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
 - **`L.familyLabel`** — _no comment above it_
+- **`L.faultFix`** — WHETHER A FAULT HAS A MECHANICAL REPAIR, asked of the table rather than of a
 - **`L.fbDecode`** — _no comment above it_
 - **`L.fbEncode`** — keeps its shape
 - **`L.fbEncodePaths`** — _no comment above it_
