@@ -506,15 +506,33 @@ function step(n) {
     if (await gear.count()) {
       await gear.click();
       await page.waitForTimeout(120);
-      const on = await page.evaluate(() => {
-        const o = document.getElementById('overlay');
-        return o && o.classList.contains('on') ? 1 : 0;
+      /* THE TOOLS ARE A TAB OF SETTINGS NOW, not a sheet, so the gear
+         navigates and this asks where it landed. The overlay test it used to
+         make reported "the gear opened nothing", which was true and no longer
+         a fault (BZ, 2026-10-01: one place for settings). */
+      const where = await page.evaluate(() => {
+        const scr = document.querySelector('.screen.on');
+        const body = document.getElementById('settingsBody');
+        const lbl = body ? [...body.querySelectorAll('.portlabel')]
+          .map(e => e.textContent.trim()) : [];
+        return { on: (scr && scr.id) || '?', tab: S.settingsTab,
+                 manage: lbl.indexOf('Manage') };
       });
-      if (!on) failures.push('shelf: the gear opened nothing');
+      if (where.on !== 'scr-settings') {
+        failures.push('shelf: the gear landed on ' + where.on
+          + ', not the settings screen');
+      }
+      if (where.tab !== 'shelf') {
+        failures.push('shelf: the gear opened the ' + where.tab
+          + ' tab, not Shelf');
+      }
+      if (where.manage < 0) {
+        failures.push('shelf: the Shelf tab drew no Manage section, so the '
+          + 'gear reached the page and not the tools');
+      }
       const threw = await page.evaluate(() =>
         (window.APPLOG || []).filter(l => /threw on/.test(l)).length);
       if (threw) failures.push('shelf: opening the tools threw');
-      await page.evaluate(() => closeModal());
     }
     /* The invite branch: it read a variable that does not exist in its
        scope, so a user who followed a link never loaded their shelf. */
@@ -1229,17 +1247,33 @@ function step(n) {
        With a shelf it is the last section, a once-only job; with none it is
        the first, because then it is the way in. Both are opened here. */
     const r = await page.evaluate(() => {
+      /* A DETACHED BOX, not the page. The tools are the Shelf tab of Settings
+         now (BZ, 2026-10-01: one place for settings), and shelfToolsInto is what
+         both the tab and showShelfTools go through - so this reads the builder
+         without navigating the walk off the screen it is on.
+
+         offsetParent IS NULL IN A DETACHED BOX, so visibility is asked of the
+         element's own hidden flag and its ancestors' instead: the question is
+         whether Import is behind a fold, and a box nobody attached would
+         otherwise answer "everything is invisible" and pass by accident. */
       const read = () => {
-        showShelfTools();
-        const m = document.getElementById('modalBody')
-          || document.querySelector('.modal');
+        const m = document.createElement('div');
+        document.body.appendChild(m);
+        shelfToolsInto(m);
+        const shown = e => {
+          for (let n = e; n && n !== m; n = n.parentElement) {
+            if (n.hidden) return false;
+            if (n.tagName === 'DETAILS' && !n.open) return false;
+          }
+          return true;
+        };
         const labels = [...m.querySelectorAll('.portlabel')]
           .map(e => e.textContent.trim());
         const buttons = [...m.querySelectorAll('button')]
-          .filter(b => b.offsetParent).map(b => b.textContent.trim());
+          .filter(shown).map(b => b.textContent.trim());
         const folded = [...m.querySelectorAll('details summary')]
           .some(s => /^Import/.test(s.textContent || ''));
-        closeModal();
+        document.body.removeChild(m);
         return { manage: labels.indexOf('Manage'),
                  imp: labels.indexOf('Import a shelf'),
                  visible: buttons.indexOf('Import a collection') >= 0,

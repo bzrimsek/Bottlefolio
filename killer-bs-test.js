@@ -26883,6 +26883,113 @@ sec('§461 a fact in the wrong field');
     'J. Mattingly Private Barrel Select Bourbon' in cleared.edits, false);
   eq('a bottle nobody named is untouched',
     cleared.edits['Ardbeg Ten'].fin, 'Oloroso');
+
+  /* ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01). The strip and which of it
+     is lit are one answer, because drawn from two they can disagree. */
+  const plain = L.settingsView('account', false);
+  eq('six tabs with admin mode off', plain.tabs.map(t => t.id).join(' '),
+    'account shelf buddies guide help about');
+  eq('and the one asked for is open', plain.now, 'account');
+  const adminOn = L.settingsView('shelf', true);
+  eq('admin mode adds the seventh, last',
+    adminOn.tabs.map(t => t.id).join(' '),
+    'account shelf buddies guide help about admin');
+  eq('and it does not move the others', adminOn.now, 'shelf');
+  eq('Admin opens when it is there', L.settingsView('admin', true).now,
+    'admin');
+  /* THE ONE THAT MATTERS: the switch goes off while Admin is the open tab, so
+     the saved tab names something not on the strip. It falls back rather than
+     drawing a strip with nothing lit. */
+  eq('Admin falls back when the switch goes off',
+    L.settingsView('admin', false).now, 'account');
+  eq('and so does a tab from an older build',
+    L.settingsView('notifications', true).now, 'account');
+  eq('and so does nothing at all', L.settingsView(undefined, false).now,
+    'account');
+  /* EVERY TAB HAS WORDS ON IT, because the strip is the only way between them. */
+  eq('every tab is labelled',
+    L.settingsView('account', true).tabs.filter(t => !t.label).length, 0);
+  /* AND ADMIN IS THE ONLY ONE BEHIND THE SWITCH. */
+  eq('one tab is marked admin',
+    L.SETTINGS_TABS.filter(t => t.admin).map(t => t.id).join(' '), 'admin');
+
+  /* FOUR REPAIRS TO WHAT MAKES TWO BOTTLES ONE, every one off a screenshot BZ
+     sent on 2026-10-01 ("its the damn Venn - and bottles not matching"). */
+  const idBrands = {};
+  /* BOTH FORMS, because that is what the registry held: the probe showed it
+     branding one entry colonel_e_h_taylor_jr and the other five
+     colonel_e_h_taylor, which is the fault. */
+  ['Ardbeg', 'Colonel E.H. Taylor', 'Colonel E.H. Taylor, Jr.']
+    .forEach(b => { idBrands[L.libKey(b)] = { name: b }; });
+  const idLib = {
+    ardbeg_wee_beastie: { name: 'Ardbeg Wee Beastie', proof: 94.8,
+      sub: 'scotch', style: 'single malt', dist: 'Ardbeg' }
+  };
+
+  /* A BARE ONE- OR TWO-DIGIT NUMBER IS AN AGE. Kevrin's shelf wrote "Ardbeg Wee
+     Beastie 5"; the library holds one "Ardbeg Wee Beastie" and nothing else, so
+     there was never anything to merge. */
+  eq('an age in the name does not make another bottling',
+    !!L.nameContains('Ardbeg Wee Beastie', 'Ardbeg Wee Beastie 5').marked,
+    false);
+  /* AND THE BOTTLE MAY BE THE ONE THAT STATES IT, which the title rule refused:
+     the entry must not be a vaguer TITLE, and an age kept in a field is not a
+     vaguer title. */
+  eq('the entry is reached from the longer bottle name',
+    (L.entryFor({ k: 'ardbeg_wee_beastie_5',
+      name: 'Ardbeg Wee Beastie 5' }, idLib, {}) || {}).name,
+    'Ardbeg Wee Beastie');
+  eq('so both forms are one bottle',
+    L.shelfKeyOf({ k: 'ardbeg_wee_beastie', name: 'Ardbeg Wee Beastie' },
+      idLib, {}, idBrands)
+    === L.shelfKeyOf({ k: 'ardbeg_wee_beastie_5',
+      name: 'Ardbeg Wee Beastie 5' }, idLib, {}, idBrands), true);
+  /* AND A RELEASE NUMBER IS STILL A RELEASE NUMBER (BZ: "Octomore 14.* makes
+     sense"), because it keeps its point and a proof is three digits. */
+  eq('a release number still tells them apart',
+    !!L.nameContains('Octomore', 'Octomore 14.1').marked, true);
+  eq('and a year still does',
+    !!L.nameContains('Ardbeg Supernova', 'Ardbeg Supernova 2019 Release').marked,
+    true);
+  /* AND TWO NAMES STATING TWO DIFFERENT YEARS never match at all. */
+  eq('two different years are two bottles',
+    L.nameContains('Supernova 2014 Release', 'Supernova 2019 Release'), null);
+
+  /* A GENERATIONAL SUFFIX IS NOT A SECOND BRAND. Buffalo Trace publishes the
+     brand as "E.H. Taylor, Jr."; the library wrote five expressions without the
+     suffix and one with it. */
+  eq('Jr. does not make a second brand',
+    L.houseKey('Colonel E.H. Taylor, Jr.'), L.houseKey('Colonel E.H. Taylor'));
+  eq('and the suffix is not a bottling either',
+    L.bottleIdentity({ name: 'Colonel E.H. Taylor, Jr. Small Batch',
+      dist: 'Buffalo Trace', proof: 100, sub: 'bourbon' }, idBrands),
+    L.bottleIdentity({ name: 'Colonel E.H. Taylor Small Batch',
+      dist: 'Buffalo Trace', proof: 100, sub: 'bourbon' }, idBrands));
+
+  /* A PREPOSITION IS NOT A BOTTLING. "Bottled In Bond" dropped two words and
+     left the one between them standing as the whole expression. */
+  eq('in is not an expression',
+    L.bottleIdentity({ name: 'Colonel E.H. Taylor Small Batch Bottled In Bond '
+      + 'Straight Kentucky Bourbon Whiskey', dist: 'Buffalo Trace',
+      proof: 100, sub: 'bourbon' }, idBrands).indexOf('|in|'), -1);
+
+  /* A SUBSCRIBED BOTTLE CARRIES THE ENTRY'S FACTS, not just its name: six rows
+     of a buddy's shelf drew dashes while the library held the answers. */
+  const subbed = L.shelfProduct('ardbeg_wee_beastie', idLib, {});
+  eq('an orphan takes the entry name', subbed.name, 'Ardbeg Wee Beastie');
+  eq('and its proof', subbed.proof, 94.8);
+  eq('and its style', subbed.style, 'single malt');
+  /* NOT THE BOOKKEEPING. An entry also records who offered it and when. */
+  const keeper = L.shelfProduct('ardbeg_wee_beastie',
+    { ardbeg_wee_beastie: { name: 'Ardbeg Wee Beastie', proof: 94.8,
+      autoIn: true, by: 'someone', at: 12345 } }, {});
+  eq('who offered it is not a fact about the whisky',
+    ['autoIn', 'by', 'at'].filter(f => f in keeper).join(','), '');
+  /* AND A BOTTLE THE LIBRARY NEVER HEARD OF still gets a readable name rather
+     than the key it was filed under. */
+  eq('an unknown bottle is still named, not keyed',
+    L.shelfProduct('some_private_barrel_nobody_has', {}, {}).name,
+    'Some Private Barrel Nobody Has');
   eq('nothing to clear is nothing done',
     L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
   eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);

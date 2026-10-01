@@ -3071,9 +3071,21 @@ check('no fixed svg id is emitted by a repeated drawing',
     }
     return out;
   };
-  const screen = bodyOf('renderSettings');
-  const reach = screen + (screen.match(/\b([a-zA-Z_][\w$]*)\s*\(/g) || [])
-    .map(c => bodyOf(c.replace(/\s*\($/, ''))).join('\n');
+  /* AS DEEP AS THE PAGE IS, AND NO DEEPER. Settings draws a tab strip and one
+     panel, so the switch is renderSettings -> settingsPanel -> guideCard ->
+     guideSwitch: one hop found it when Settings was three cards in a column and
+     found nothing once it was tabs. Capped at three bodies because the question
+     is whether the switch is reachable from the settings SCREEN - follow far
+     enough and a check of this shape always passes. */
+  const seen = {};
+  const walk = (name, left) => {
+    if (left < 0 || seen[name]) return '';
+    seen[name] = 1;
+    const b = bodyOf(name);
+    return b + (b.match(/\b([a-zA-Z_][\w$]*)\s*\(/g) || [])
+      .map(c => walk(c.replace(/\s*\($/, ''), left - 1)).join('\n');
+  };
+  const reach = walk('renderSettings', 2);
   check('the guide can be switched on from Settings',
     /\bguideSwitch\s*\(/.test(reach) ? []
       : ['nothing Settings draws calls guideSwitch \u2014 a feature with no '
@@ -3283,50 +3295,42 @@ check('no fixed svg id is emitted by a repeated drawing',
   const BIG_TODAY = {
     showBottle: 496,
     likelyToLike: 455,
-    openLibraryCleanUp: 292,
     productForm: 324,
-    renderShelf: 325,
+    renderShelf: 323,
     renderAway: 306,
-    showShelfTools: 220,
+    openLibraryCleanUp: 292,
     shopAnswer: 243,
-    renderLookupSetup: 231,
-    renderSettings: 150,
-    renderGuest: 157,
-    renderHome: 93,
-    libraryAudit: 131,
     renderGaps: 170,
     renderShelfCharts: 165,
-    shelfPortrait: 165,
     renderUsers: 163,
-    shelfAxes: 163,
+    shelfPortrait: 163,
+    shelfAxes: 159,
+    renderGuest: 157,
     flightEditor: 153,
-    editLibraryEntry: 100,
     showCandidates: 147,
-    postWithRetry: 120,
     showEnhance: 142,
     renderLibrary: 138,
-    fbLoadAfterWipeCheck: 130,
+    libraryAudit: 131,
     shelfBuildSheet: 131,
+    fbLoadAfterWipeCheck: 130,
     awayLookingCard: 128,
     flightBuilder: 128,
     renderOffer: 128,
-    roomNotes: 120,
     shelfFit: 128,
     renderShop: 126,
     renderBuddies: 125,
-    showFlight: 123,
-    renderFlights: 112,
+    showFlight: 122,
+    postWithRetry: 120,
+    roomNotes: 120,
     renderBuddiesTab: 113,
-    showImportCheck: 101,
-    renderShelfFilters: 100,
+    renderFlights: 111,
     showBulkStatus: 107,
-    tastingPapers: 43,
     renderDiag: 105,
     renderFromUrl: 103,
-    vennSvg: 97,
     exploreAxis: 102,
     receiptsDialog: 101,
-    renderRecap: 101
+    renderRecap: 101,
+    showImportCheck: 101
   };
 
   if (process.argv.indexOf('--sizes') >= 0) {

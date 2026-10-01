@@ -609,8 +609,15 @@ function check(name, got, want) {
             return false;
           }
         };
+        /* THROUGH THE TAB, because Settings is one page in tabs now and the
+           log sits on Help (BZ, 2026-10-01: one place for settings). Pressed
+           by its name in the strip, so this still walks the route a person
+           walks rather than calling the panel directly. */
         const there = await reach('no Settings gear on Home to press',
             page.locator('#settingsBtn'))
+          && await reach('Settings has no Help tab',
+            page.locator('#scr-settings').getByRole('button',
+              { name: 'Help', exact: true }))
           && await reach('Settings has no Show me the log button',
             page.locator('#scr-settings').getByRole('button',
               { name: 'Show me the log' }));

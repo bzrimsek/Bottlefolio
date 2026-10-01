@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 878 |
-| tables | 206 |
-| carrying a stated purpose | 687 |
+| functions | 880 |
+| tables | 208 |
+| carrying a stated purpose | 690 |
 
 ## Tables
 
@@ -177,12 +177,14 @@ QUESTION, not the name you were going to use.
 - **`L.SCOTCH_REGIONS`** — _no comment above it_
 - **`L.SEARCH_COVERS`** — include sherry, so this expands one way only.
 - **`L.SEARCH_EQUAL`** — either must return the same set, in both directions.
+- **`L.SETTINGS_TABS`** — ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01
 - **`L.SHEET_COLUMNS`** — it again, which nobody gets wrong and everybody has an opinion about.
 - **`L.SHEET_PROMPTS`** — _no comment above it_
 - **`L.SHEET_ROW_MM`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
 - **`L.SHEET_SAFE`** — every sheet's prompts, and a check that cries wolf gets switched off.
 - **`L.SHELF_AXES`** — The shape of a shelf, on six axes, each measuring something the others
 - **`L.SHELF_ENDS`** — _no comment above it_
+- **`L.SHELF_FACTS`** — THE HOLDER STILL LEADS, through fillBlanks, so this can fill a gap and never
 - **`L.SHELF_LEAN_BAND`** — THE FLAVOURS THAT SEPARATE THIS SHELF FROM ITSELF.
 - **`L.SHOP_JUNK`** — A pasted page is not a title, and was being read as one.
 - **`L.SLOT_FOR`** — ONE rule for what a library entry is short of, and whether a value may
@@ -925,6 +927,7 @@ QUESTION, not the name you were going to use.
 - **`L.sentenceCase`** — proper nouns and acronyms that carry their own capitals.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
+- **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES
 - **`L.shareRepairOps`** — WHAT TO DO ABOUT A HALF-LANDED SHARE
 - **`L.sheetCare`** — WHAT GOES ON A SHEET ABOUT DRINKING IT.
@@ -947,6 +950,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfNextSteps`** — _no comment above it_
 - **`L.shelfPlace`** — _no comment above it_
 - **`L.shelfPortrait`** — _no comment above it_
+- **`L.shelfProduct`** — _no comment above it_
 - **`L.shelfReadSay`** — _no comment above it_
 - **`L.shelfSeen`** — _no comment above it_
 - **`L.shelfSet`** — what says something about taste.

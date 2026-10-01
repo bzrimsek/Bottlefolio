@@ -66,6 +66,76 @@ const dir = __dirname;
       catch (e) { r[nm] = 'THREW ' + e.message; }
     });
 
+    /* THE SHEET FOR A BOTTLE ON SOMEBODY ELSE'S SHELF, both ways round. It
+       offered "Pour it" for a whisky BZ does not hold while hiding the bottle
+       page for the same reason (2026-10-01: "the options make no sense if I
+       don't have the bottle"), and nothing opened this sheet at all - it is
+       three screens deep, behind a region of the Venn and then a row.
+
+       BOTH WAYS, because the fault was one button asking and the other not: a
+       check that only opened the not-mine sheet would pass a build that never
+       offered a pour to anybody. */
+    try {
+      const sheetSays = p => {
+        showPourChoice(p, ['Kevrin']);
+        const m3 = document.getElementById('modal');
+        const said = m3 ? [...m3.querySelectorAll('button')]
+          .map(b => b.textContent.trim()) : [];
+        closeModal();
+        return said;
+      };
+      const held = Object.keys(S.catalog)[0];
+      const theirs = sheetSays({ k: 'nothing_of_mine_at_all',
+        name: 'A Whisky Of Theirs' });
+      const ours = held ? sheetSays(S.catalog[held]) : ['Pour it'];
+      r.pourSheet = theirs.indexOf('Pour it') >= 0
+        ? 'THREW it offers to pour a bottle you do not hold'
+        : theirs.indexOf('Open its page') >= 0
+          ? 'THREW it offers the bottle page for a bottle you do not hold'
+        : !theirs.some(b => /^Propose this pour/.test(b))
+          ? 'THREW it does not offer to propose the pour'
+        : ours.indexOf('Pour it') < 0
+          ? 'THREW it does not offer to pour a bottle you DO hold'
+        : 'ok(' + theirs.length + ' theirs, ' + ours.length + ' mine)';
+    } catch (e) { r.pourSheet = 'THREW ' + e.message; }
+
+    /* EVERY TAB OF SETTINGS, TWICE EACH (BZ, 2026-10-01: one place for
+       settings, in tabs). renderSettings above proves whichever tab was saved;
+       the other six were new and undrawn, and a panel that throws leaves a
+       working tab strip above a blank page - a fault that photographs fine.
+
+       DRAWN TWICE, AND THE SECOND ONE JUDGED. Not for doubling - renderSettings
+       empties the body and builds a fresh panel div, so an appending panel
+       appends into a new box and nothing can stack. For the other half of rule
+       30e: a panel that consumes a queue, moves finished elements or reads a
+       module-level array is right on the first draw and empty or throwing on the
+       second, which is exactly how the SETTINGS_ONPAGE hoist used to fail. */
+    LIB.admin = true;
+    S.admin = true;
+    L.settingsView('account', true).tabs.forEach(t => {
+      try {
+        S.settingsTab = t.id;
+        renderSettings();
+        /* THE PANEL, NOT THE BODY. Counting the body passed an empty panel,
+           because the tab strip above it is seven buttons of its own - found by
+           making aboutPanel return before drawing and watching this stay
+           green. The panel is the last thing renderSettings appends. */
+        const seen = () => {
+          const b = document.getElementById('settingsBody');
+          const p = b && b.lastElementChild;
+          return p ? p.querySelectorAll('button,input,select,textarea,.sheet')
+            .length : 0;
+        };
+        const once = seen();
+        renderSettings();
+        const twice = seen();
+        r['tab:' + t.id] = !once ? 'EMPTY'
+          : !twice ? 'THREW it drew nothing the second time'
+          : 'ok(' + twice + ')';
+      } catch (e) { r['tab:' + t.id] = 'THREW ' + e.message; }
+    });
+    S.settingsTab = 'account';
+
     /* The MODALS, which nothing else opens.
 
        Every screen check draws a page; none of them opens the sheets that
@@ -424,7 +494,13 @@ const dir = __dirname;
     } catch(e){ r.named='THREW '+e.message; r.where=(e.stack||'').split('\n')[1]; }
     return r;
   },[bots, custom]);
-  const bad = Object.keys(out).filter(k => /THREW/.test(String(out[k])));
+  /* EMPTY FAILS TOO. The verdict asked for THREW alone, so every check here
+     that answers EMPTY - the modal sheets, and the settings tabs - printed a
+     word nobody acted on and passed. A sheet that opens with no controls in it
+     is what those checks are FOR. Found by making a panel draw nothing and
+     watching this stay green. */
+  const bad = Object.keys(out)
+    .filter(k => /THREW|EMPTY/.test(String(out[k])));
   if (bad.length || threw.length) {
     bad.forEach(k => console.log('  \u2716 ' + k + ': ' + out[k]));
     threw.forEach(t => console.log('  \u2716 threw while loading: ' + t));
