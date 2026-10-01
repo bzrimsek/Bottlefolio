@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 851 |
+| functions | 856 |
 | tables | 204 |
-| carrying a stated purpose | 663 |
+| carrying a stated purpose | 667 |
 
 ## Tables
 
@@ -335,8 +335,10 @@ QUESTION, not the name you were going to use.
 - **`L.directoryEntry`** — what everyone can see.
 - **`L.discoveryFor`** — _no comment above it_
 - **`L.distinctiveWords`** — The words in a line that could name something
+- **`L.doubledProofFinding`** — A PROOF THAT IS TWICE THE REAL ONE, as a finding.
 - **`L.drinkingFinding`** — The sentence worth saying, or none
 - **`L.drinkingVsShelf`** — _no comment above it_
+- **`L.dupeFindings`** — EVERY SHAPE OF POTENTIAL DUPLICATE, as findings to review (BZ, 2026-09-30:
 - **`L.editsApart`** — HOW FAR APART TWO SPELLINGS ARE, in single-character edits, and never more
 - **`L.emptyFindSay`** — THE THREE EMPTY ANSWERS, which must not read alike
 - **`L.emptyOf`** — _no comment above it_
@@ -647,6 +649,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameInside`** — IS EVERY WORD OF THE FIRST NAME IN THE SECOND? L.nameOverlap is a ratio and
 - **`L.nameKey`** — mistaken for each other in a picker.
 - **`L.nameOverlap`** — _no comment above it_
+- **`L.namePrefixPairs`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
 - **`L.nearestBy`** — _no comment above it_
@@ -885,8 +888,10 @@ QUESTION, not the name you were going to use.
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
 - **`L.sameBottle`** — _no comment above it_
+- **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
+- **`L.sameStrength`** — ARE THESE ONE STRENGTH? Rounding differs between a label, a listing and a
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
 - **`L.saveRoute`** — Asked of the platform, never guessed
 - **`L.saysBanned`** — One sentence against one list

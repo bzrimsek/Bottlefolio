@@ -25637,6 +25637,103 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
   eq('two houses equally close propose nothing',
     L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
 
+  /* ONE NAME IS THE START OF ANOTHER. BZ: "if we have the same bottles we
+     should match... then we need to clean up the library which I've been
+     doing. But these are not on the list." The cleanup list wants the names
+     IDENTICAL, so a short title beside a fuller one never reached it - and
+     those are the pairs that leave one whisky in the library twice. */
+  const libRows = [
+    { k: 'a', name: 'Weller Antique 107', proof: 107 },
+    { k: 'b', name: 'Weller Antique 107 Kentucky Straight Bourbon', proof: 107 },
+    { k: 'c', name: 'Bradshaw Bourbon', proof: 90 },
+    { k: 'd', name: 'Bradshaw Kentucky Straight Rye', proof: 90 },
+    { k: 'e', name: "Aberlour A'Bunadh", proof: 121.8 },
+    { k: 'f', name: "Aberlour A'Bunadh Alba", proof: 114.2 }
+  ];
+  const starts = L.namePrefixPairs(libRows);
+  eq('a short title beside a fuller one is found', starts.length, 1);
+  eq('the fuller one leads, so the merge offers it first',
+    starts[0].keys[0], 'b');
+  /* THE RAW NAME, NOT shopNorm: it strips category words, so a bourbon and a
+     rye from one distillery both reduce towards the brand and matched. */
+  eq('a bourbon and a rye are not one bottle',
+    starts.filter(x => /Bradshaw/.test(x.short)).length, 0);
+  /* A STATED PROOF THAT DISAGREES ENDS IT, whatever the names share. */
+  eq('two strengths are two bottles',
+    starts.filter(x => /Bunadh/.test(x.short)).length, 0);
+  eq('a single shared word is a brand, not a bottle',
+    L.namePrefixPairs([{ k: 'x', name: 'Ardbeg', proof: 92 },
+      { k: 'y', name: 'Ardbeg Ten Year Old', proof: 92 }]).length, 0);
+  eq('and an unknown proof does not block it',
+    L.namePrefixPairs([{ k: 'x', name: 'Oban Little Bay' },
+      { k: 'y', name: 'Oban Little Bay Small Cask' }]).length, 1);
+
+  /* ONE STRENGTH, allowing for rounding, and silence contradicting nothing. */
+  eq('a tenth apart is one strength', L.sameStrength(107, 107.4), true);
+  eq('a point apart is two', L.sameStrength(107, 114), false);
+  eq('a strength nobody states contradicts nothing',
+    L.sameStrength(107, null), true);
+
+  /* THE SAME FACTS UNDER TWO NAMES. It asks nothing of the names, which is
+     the point: it catches the pairs where punctuation differs and neither
+     name starts the other, without the fuzzy matching that had me calling
+     Redbreast PX Edition the Kentucky Oak Edition. */
+  /* All three facts STATED: letting two entries agree on having no age made
+     this a house-and-strength rule and reported 257 pairs on a 766-entry
+     library, Aberfeldy against a Dewar's blend among them. */
+  const facts = [
+    { k: 'a', name: 'Angels Envy Bottled in Bond', dist: "Angel's Envy",
+      proof: 100, age: 6 },
+    { k: 'b', name: "Angel's Envy Bottled-in-Bond Reserve",
+      dist: 'Angels Envy', proof: 100, age: 6 },
+    { k: 'c', name: "Angel's Envy Cask Strength", dist: "Angel's Envy",
+      proof: 117.8, age: 6 }
+  ];
+  const fp = L.sameFactsPairs(facts);
+  eq('one house, one strength, one age, two names', fp.length, 1);
+  eq('and it is the right pair',
+    fp[0].keys.slice().sort().join('+'), 'a+b');
+
+  /* ALL THREE STATED, AND ALL THREE AGREEING. A house alone is a brand. */
+  eq('a different strength is a different bottle',
+    L.sameFactsPairs(facts.filter(x => x.k !== 'b')).length, 0);
+  eq('an age one states and the other does not is a difference',
+    L.sameFactsPairs([
+      { k: 'x', name: 'Ardbeg Thing', dist: 'Ardbeg', proof: 92, age: 10 },
+      { k: 'y', name: 'Ardbeg Thing Reserve', dist: 'Ardbeg', proof: 92 }])
+      .length, 0);
+  /* AND THE NAMES ARE NOT CONSULTED (BZ: "if they are close and you surface
+     them I'll know"). A bottling renamed outright shares nothing but its
+     facts, so requiring a common word took real pairs out with the noise. */
+  eq('two names with nothing in common are still surfaced',
+    L.sameFactsPairs([
+      { k: 'x', name: 'Curiositas', dist: 'Benriach', proof: 92, age: 10 },
+      { k: 'y', name: 'The Smoky Ten', dist: 'Benriach', proof: 92, age: 10 }])
+      .length, 1);
+  eq('and an entry with no proof at all is not guessed about',
+    L.sameFactsPairs([
+      { k: 'x', name: 'A', dist: 'Ardbeg' },
+      { k: 'y', name: 'B', dist: 'Ardbeg' }]).length, 0);
+
+  /* BOTH SHAPES REACH THE LIST, and a pair is not reported twice. */
+  const both = L.dupeFindings([
+    { k: 'p', name: 'Weller Antique 107', dist: 'Weller', proof: 107 },
+    { k: 'q', name: 'Weller Antique 107 Kentucky Straight', dist: 'Weller',
+      proof: 107 }
+  ]);
+  eq('a prefix pair is found once', both.length, 1);
+  eq('and it is the name-start finding', both[0].id, 'samestart');
+  eq('it renders as a pair, so the merge button appears',
+    both[0].pairs, true);
+  eq('nothing to report is no findings', L.dupeFindings([]).length, 0);
+
+  /* AND THE DOUBLED PROOF ONE, which is a finding too. */
+  eq('a doubled proof becomes a finding',
+    L.doubledProofFinding([{ k: 'z', name: 'A', proof: 192 }])[0].id,
+    'proofdouble');
+  eq('and a sound shelf makes none',
+    L.doubledProofFinding([{ k: 'z', name: 'A', proof: 96 }]).length, 0);
+
   /* A PROOF THAT IS TWICE THE REAL ONE. BZ: "the bottles that were way high
      on proof were doubled. Not sure if we should make that assumption but 2
      for 2." The evidence is gone - nothing in the 762-entry library is over
