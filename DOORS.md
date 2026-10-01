@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 850 |
+| functions | 851 |
 | tables | 204 |
-| carrying a stated purpose | 662 |
+| carrying a stated purpose | 663 |
 
 ## Tables
 
@@ -772,6 +772,7 @@ QUESTION, not the name you were going to use.
 - **`L.promptNotesInLibrary`** — Which library entries are carrying a note we invented for a flight.
 - **`L.proofCell`** — _no comment above it_
 - **`L.proofInTen`** — _no comment above it_
+- **`L.proofLooksDoubled`** — IT ANSWERS WITH THE HALF, NOT WITH A VERDICT
 - **`L.proofOutOfName`** — _no comment above it_
 - **`L.proofProfile`** — _no comment above it_
 - **`L.proofPrompt`** — A LOOKUP THAT FOUND THE BOTTLE AND NOT ITS PROOF

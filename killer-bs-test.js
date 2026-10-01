@@ -25637,6 +25637,32 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
   eq('two houses equally close propose nothing',
     L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
 
+  /* A PROOF THAT IS TWICE THE REAL ONE. BZ: "the bottles that were way high
+     on proof were doubled. Not sure if we should make that assumption but 2
+     for 2." The evidence is gone - nothing in the 762-entry library is over
+     160 now - so this rests on his two and on the mechanism, which is real:
+     proof is twice ABV and the two share one field on every listing. The
+     app's own validator takes 20 to 200, so a doubled 96 arrived at 192 and
+     passed. */
+  eq('a doubled 96 is spotted', L.proofLooksDoubled(192), 96);
+  eq('and a doubled 120', L.proofLooksDoubled(240), 120);
+  eq('a cask-strength bottle is left alone', L.proofLooksDoubled(150), null);
+  eq('and so is an ordinary one', L.proofLooksDoubled(96), null);
+  /* MERELY LARGE PROPOSES NOTHING: halving 400 gives 200, which is not a
+     strength either, so it is a wrong number rather than a doubled one. */
+  eq('a number too large to halve sensibly proposes nothing',
+    L.proofLooksDoubled(400), null);
+  eq('nothing at all proposes nothing', L.proofLooksDoubled(0), null);
+  eq('and neither does a missing one', L.proofLooksDoubled(null), null);
+
+  /* AND IT IS OFFERED, NEVER APPLIED - two cases is enough to suspect and not
+     enough to rewrite somebody's bottle. */
+  const fix = L.auditFix('proofdouble', { name: 'A', proof: 192 }, 'A');
+  eq('the fix sets the halved proof', fix.set.proof, 96);
+  eq('and says which number it would keep', fix.keep, '192');
+  eq('a sound proof offers no fix at all',
+    L.auditFix('proofdouble', { name: 'A', proof: 96 }, 'A'), null);
+
   /* WHICH NAME SAYS MORE. BZ kept the fuller title 28 times out of 28, and
      the merge dialog offers both sides and asks, so that was his judgement
      every time rather than a direction baked into the code. He then corrected
