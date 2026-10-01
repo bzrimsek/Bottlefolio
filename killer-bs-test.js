@@ -25947,6 +25947,288 @@ sec('\u00a7450 a house is spelled the way most of its own bottles spell it');
     L.houseTakeBack(prods.d), null);
 }
 
+sec('§451 a different year is a different bottle');
+{
+  /* BZ, 2026-09-30, flatly: "Diff year is diff bottle". A rule, so it refuses
+     a match rather than weakening one, and one door so the candidate surface
+     and both duplicate finders cannot disagree about it. */
+  eq('a release year is read out of a name',
+    L.yearsIn('New Riff Silver Grove Bourbon 2025'), ['2025']);
+  eq('more than one is kept, in order',
+    L.yearsIn('Bunnahabhain 1998 Fèis Île 2023'), ['1998', '2023']);
+  eq('an age is not a year', L.yearsIn('Redbreast 12 Year Old'), []);
+  eq('a proof is not a year', L.yearsIn('Weller Antique 107'), []);
+  eq('nothing in nothing', L.yearsIn(''), []);
+  eq('two years that differ are two bottles',
+    L.yearsDiffer("Angel's Envy 2023 Cask Strength Rye",
+                  "Angel's Envy 2026 Cask Strength Rye"), true);
+  eq('the same year is not a difference',
+    L.yearsDiffer('New Riff Silver Grove 2025', '2025 New Riff Silver Grove'),
+    false);
+  eq('one silent says nothing either way',
+    L.yearsDiffer("Angel's Envy Cask Strength", "Angel's Envy 2026 Cask Strength"),
+    false);
+  eq('neither stating one says nothing',
+    L.yearsDiffer('Ardbeg Ten', 'Ardbeg 10 Year Old'), false);
+  /* AND THE RULE IS ASKED WHERE IT MATTERS: two releases of one bottling agree
+     on house, strength and age by design, so the facts rule reported every
+     annual pair as a duplicate without it. */
+  const annual = [
+    { k: 'a', name: "Angel's Envy 2023 Cask Strength Rye", dist: "Angel's Envy",
+      proof: 119.2, age: 7 },
+    { k: 'b', name: "Angel's Envy 2026 Cask Strength Rye", dist: "Angel's Envy",
+      proof: 119.2, age: 7 }
+  ];
+  eq('two annual releases are not one bottle on the facts',
+    L.sameFactsPairs(annual).length, 0);
+  const same = annual.map((r, i) => Object.assign({}, r,
+    { name: i ? "Angel's Envy Cask Strength Rye Batch 2"
+              : "Angel's Envy Cask Strength Rye" }));
+  eq('and two bottlings with no year still reach the list',
+    L.sameFactsPairs(same).length, 1);
+}
+
+sec('§452 having a bottle subscribes you to a library entry');
+{
+  /* BZ, 2026-09-30: "having a bottle should sort of subscribe you to it in the
+     library. If it is not in the library it gets added and you get
+     subscribed." L.orphanBottles could count these since it was written and
+     nothing ever fixed one: 34 bottles across five real shelves were on the
+     shelf in the record and on no screen in the app, which is why a Venn read
+     them as somebody else's. */
+  const lib = {
+    knob_creek_single_barrel_select_bourbon:
+      { name: 'Knob Creek Single Barrel Select Bourbon' },
+    jameson_irish_whiskey: { name: 'Jameson Irish Whiskey' },
+    ardbeg_ten: { name: 'Ardbeg Ten' }
+  };
+  /* The catalog is keyed by NAME, which is what fbSyncCatalog files under -
+     so an orphan is a bottle still holding the library's own underscored key,
+     which is what 34 bottles on five real shelves were holding. */
+  const cat = {};
+  Object.keys(lib).forEach(k => {
+    cat[lib[k].name] = { k: lib[k].name, name: lib[k].name };
+  });
+  const bottles = [
+    { id: 'B1', k: 'Ardbeg Ten', status: 'open' },
+    { id: 'B2', k: 'knob_creek_single_barrel_select_bourbon', status: 'sealed' },
+    { id: 'B3', k: 'jameson_irish_whiskey', status: 'open' },
+    { id: 'B4', k: 'Something Nobody Has Heard Of', status: 'open' }
+  ];
+  eq('three bottles have no product', L.orphanBottles(bottles, cat).length, 3);
+  const got = L.adoptOrphans(bottles, cat, lib, {});
+  eq('two of them are pointed at the library', got.moved, 2);
+  eq('the one named the same way lands on the name',
+    got.bottles.filter(b => b.id === 'B2')[0].k,
+    'Knob Creek Single Barrel Select Bourbon');
+  eq('and a bottle holding the library KEY lands on the name too',
+    got.bottles.filter(b => b.id === 'B3')[0].k, 'Jameson Irish Whiskey');
+  eq('the one that already resolved is untouched',
+    got.bottles.filter(b => b.id === 'B1')[0].k, 'Ardbeg Ten');
+  eq('and the one nobody has heard of is left, not guessed at',
+    got.left.map(b => b.id), ['B4']);
+  eq('a shelf with nothing lost is not rewritten',
+    L.adoptOrphans([{ id: 'B1', k: 'Ardbeg Ten', status: 'open' }], cat, lib, {}),
+    null);
+  eq('nor is one where nothing can be pointed anywhere',
+    L.adoptOrphans([{ id: 'B9', k: 'No Such Whisky', status: 'open' }],
+      cat, lib, {}), null);
+  /* A MERGE IS FOLLOWED, so a bottle never lands on a key that has since
+     become another. */
+  const merged = L.adoptOrphans(
+    [{ id: 'B5', k: 'jameson_irish_whiskey', status: 'open' }], cat,
+    Object.assign({}, lib, { jameson_irish_whiskey: { name: 'Jameson Irish Whiskey' } }),
+    { jameson_irish_whiskey: 'ardbeg_ten' });
+  eq('a bottle pointed at a merged-away key follows the merge',
+    merged.bottles[0].k, 'Ardbeg Ten');
+  /* WHAT IS NOT OWNED IS NOT ADOPTED: a bottle that is gone names a product
+     nobody needs back. */
+  eq('a bottle that is gone is not adopted',
+    L.adoptOrphans([{ id: 'B6', k: 'jameson_irish_whiskey', status: 'gone' }],
+      cat, lib, {}), null);
+}
+
+sec('§453 the library entry a bottle probably means');
+{
+  /* BZ, 2026-09-30: "If they are close and you surface them I'll know. Unless
+     you can solve it on your own." These are the ones resolveLibKey cannot
+     settle, and every one is a name written a second way. Offered, never
+     applied. */
+  const lib = {
+    a: { name: 'Dalwhinnie Distillers Edition' },
+    b: { name: 'New Riff Silver Grove Bourbon 2025' },
+    c: { name: 'Redbreast PX Edition' },
+    d: { name: "Angel's Envy Bottled-in-Bond Cask Strength Bourbon" },
+    e: { name: "Angel's Envy" },
+    f: { name: 'Barrell Craft Spirits Gray Label Seagrass 16 Year Old' },
+    g: { name: "Angel's Envy 2026 Cask Strength Bourbon" }
+  };
+  const ask = k => L.adoptCandidates([{ k: k, status: 'open' }], lib, {});
+  eq('a fuller title is the entry it means',
+    (ask('Dalwhinnie Edition')[0] || {}).name, 'Dalwhinnie Distillers Edition');
+  eq('and it is not weak', (ask('Dalwhinnie Edition')[0] || {}).weak, false);
+  /* THE SAME WORDS IN ANOTHER ORDER, which no prefix rule reaches. */
+  eq('word order does not matter',
+    (ask('2025 New Riff Silver Grove Bourbon')[0] || {}).name,
+    'New Riff Silver Grove Bourbon 2025');
+  eq('punctuation and case do not either',
+    (ask('Redbreast Px')[0] || {}).name, 'Redbreast PX Edition');
+  /* THE ENTRY MUST SAY AT LEAST AS MUCH AS THE BOTTLE DOES (BZ: "I always took
+     the longer title"). Matching into a vaguer entry throws away the words
+     that said which bottle it was. */
+  const envy = ask("Angel's Envy Cask Strength Bourbon");
+  eq('a vaguer entry is never the answer',
+    envy.filter(c => c.name === "Angel's Envy").length, 0);
+  eq('and what is left is weak, because the longer titles add a mark',
+    (envy[0] || {}).weak, true);
+  /* A MARK THE BOTTLE DOES NOT CARRY MEANS ANOTHER BOTTLING. */
+  eq('a year added to a yearless name is weak',
+    (ask("Angel's Envy Cask Strength Bourbon").filter(c =>
+      /2026/.test(c.name))[0] || { weak: true }).weak, true);
+  eq('an age added is weak too',
+    (ask('Barrell Craft Spirits Gray Label Seagrass')[0] || {}).weak, true);
+  /* A DIFFERENT YEAR IS REFUSED OUTRIGHT, not weakened. */
+  eq('a bottle stating another year is no candidate at all',
+    ask('2019 New Riff Silver Grove Bourbon').length, 0);
+  /* AND NOTHING IS INVENTED. */
+  eq('a bottle nothing contains has no candidate',
+    ask('Something Nobody Has Heard Of').length, 0);
+  eq('an entry identical to the bottle is not offered to itself',
+    ask('Redbreast PX Edition').length, 0);
+  eq('nothing asked, nothing answered', L.adoptCandidates([], lib, {}).length, 0);
+  /* STRONG BEFORE WEAK, so the plainest answer is the one on top. */
+  const mixed = L.adoptCandidates(
+    [{ k: 'Barrell Craft Spirits Gray Label Seagrass', status: 'open' },
+     { k: 'Dalwhinnie Edition', status: 'open' }], lib, {});
+  eq('the real answer sorts above the weak one', mixed[0].weak, false);
+  /* ONE BOTTLE, ONE ROW, however many bottles of it there are. */
+  eq('two bottles of one orphan ask once', L.adoptCandidates(
+    [{ k: 'Dalwhinnie Edition', status: 'open' },
+     { k: 'Dalwhinnie Edition', status: 'sealed' }], lib, {}).length, 1);
+  /* A MERGE IS FOLLOWED HERE TOO: the entry a bottle means may itself have
+     been merged into another, and the offer must name what it BECAME. */
+  const moved = Object.assign({}, lib,
+    { z: { name: 'Dalwhinnie Distillers Edition Special Release' } });
+  const after = L.adoptCandidates([{ k: 'Dalwhinnie Edition', status: 'open' }],
+    moved, { a: 'z' });
+  eq('a candidate merged away offers what it became',
+    (after[0] || {}).name, 'Dalwhinnie Distillers Edition Special Release');
+  eq('and it points at the key that survived', (after[0] || {}).to, 'z');
+}
+
+sec('§454 one name said more fully than the other');
+{
+  /* THE DOOR BOTH THE DUPLICATE FINDER AND THE ORPHAN SURFACE ASK (rule 30d).
+     A prefix test and an anagram test stood in namePrefixPairs and between them
+     missed a word added in the MIDDLE - which is the commonest shape there is,
+     and three of BZ's live library duplicates. */
+  const got = L.nameContains('Hibiki Harmony', 'Hibiki Japanese Harmony');
+  eq('a word added in the middle is still the same name', !!got, true);
+  eq('and what it adds is reported', got.extra, ['japanese']);
+  eq('a plain word added does not make another bottling', got.marked, false);
+  eq("Blanton's Single Barrel is inside the longer title",
+    !!L.nameContains("Blanton's Single Barrel",
+      "Blanton's Original Single Barrel Kentucky Straight Bourbon"), true);
+  eq('the same words in another order are one name',
+    !!L.nameContains('2025 New Riff Silver Grove Bourbon',
+      'New Riff Silver Grove Bourbon 2025'), true);
+  eq('punctuation and an underscored key settle the same way',
+    !!L.nameContains('angels_envy_bottled_in_bond',
+      "Angel's Envy Bottled-in-Bond"), true);
+  /* AND IT IS DIRECTIONAL: the second name must say at least as much. */
+  eq('a vaguer name does not contain a fuller one',
+    L.nameContains('Dalwhinnie Distillers Edition', 'Dalwhinnie Edition'), null);
+  eq('a word neither shares is not containment',
+    L.nameContains('High West Campfire', 'High West Bourbon'), null);
+  eq('nothing contains nothing', L.nameContains('', 'Ardbeg Ten'), null);
+  eq('nor the other way round', L.nameContains('Ardbeg Ten', ''), null);
+  /* A MARK THE SHORTER NAME DOES NOT CARRY MEANS ANOTHER BOTTLING. */
+  eq('an age added is another bottling',
+    L.nameContains('Barrell Craft Spirits Seagrass',
+      'Barrell Craft Spirits Seagrass 16 Year Old').marked, true);
+  eq('a bond added is another bottling',
+    L.nameContains("Angel's Envy Cask Strength",
+      "Angel's Envy Bottled-in-Bond Cask Strength").marked, true);
+  eq('a single barrel added is another bottling',
+    L.nameContains('Elmer T. Lee Bourbon',
+      'Elmer T. Lee Single Barrel Bourbon').marked, true);
+  /* A DIFFERENT YEAR IS REFUSED OUTRIGHT, through the door that says so. */
+  eq('two different years are never one name',
+    L.nameContains('Star Hill Farm Whisky 2025',
+      'Star Hill Farm American Wheat Whisky 2026'), null);
+  eq('a year added to a yearless name is a maybe, not a refusal',
+    L.nameContains('Star Hill Farm Whisky',
+      'Star Hill Farm American Wheat Whisky 2026').marked, true);
+
+  /* WHAT THE FINDER DOES WITH IT. The type guard and the strength guard are
+     what make containment safe: shopNorm strips category words, so "Bradshaw
+     Bourbon" sits inside "Bradshaw Kentucky Straight Rye". */
+  const mk = (k, name, extra) => Object.assign({ k: k, name: name }, extra);
+  eq('a bourbon and a rye are never one entry, whatever the names do',
+    L.namePrefixPairs([mk('a', 'Bradshaw Bourbon', { sub: 'bourbon', proof: 100 }),
+      mk('b', 'Bradshaw Kentucky Straight Rye', { sub: 'rye', proof: 100 })]
+    ).length, 0);
+  eq('and two strengths apart are not one entry either',
+    L.namePrefixPairs([mk('a', 'Hibiki Harmony', { proof: 86 }),
+      mk('b', 'Hibiki Japanese Harmony', { proof: 120 })]).length, 0);
+  const hib = L.namePrefixPairs([mk('a', 'Hibiki Harmony', { proof: 86 }),
+    mk('b', 'Hibiki Japanese Harmony', { proof: 86 })]);
+  eq('one whisky in the library twice is found', hib.length, 1);
+  eq('and the fuller title is named as the long one', hib[0].long,
+    'Hibiki Japanese Harmony');
+  eq('an age apart is two bottlings, not one entry twice',
+    L.namePrefixPairs([
+      mk('a', 'Barrell Craft Spirits Seagrass', { proof: 118 }),
+      mk('b', 'Barrell Craft Spirits Seagrass 16 Year Old', { proof: 118 })]
+    ).length, 0);
+  eq('one entry is never a duplicate of itself',
+    L.namePrefixPairs([mk('a', 'Ardbeg Ten', { proof: 92 })]).length, 0);
+}
+
+sec('§455 the marks that tell two bottlings apart');
+{
+  /* BZ, 2026-09-30: "a word in the bottle title about age, finish, proof, bib,
+     cash/barrel strength, edition, etc should differentiate bottles easily".
+     The marks that stayed are the ones that answer something the others cannot;
+     cask strength, uncut, finished, toasted, reserve, limited and small batch
+     came out because each split a bottle from ITSELF - "Angels Envy Bottled in
+     Bond" and "Angel's Envy Bottled-in-Bond Cask Strength Bourbon" are one
+     bottle at 100 proof and he had merged them by hand. */
+  const marks = p => L.bottleMarks(p);
+  eq('bottled in bond is a mark, however it is written',
+    marks({ name: 'Old Fitzgerald Bottled-in-Bond' }), ['bib']);
+  eq('and bonded is the same mark',
+    marks({ name: 'Old Fitzgerald Bonded' }), ['bib']);
+  eq('a single barrel is a mark',
+    marks({ name: 'Elmer T. Lee Single Barrel' }), ['sb']);
+  eq('cask strength is NOT a mark, because the proof already is',
+    marks({ name: "Angel's Envy Cask Strength" }), []);
+  eq('nor is finished, toasted, reserve, limited or small batch',
+    marks({ name: 'Penelope Toasted Small Batch Reserve Limited Finished' }), []);
+  eq('an age is read out of the field',
+    marks({ name: 'Ardbeg', age: 10 }), ['age10']);
+  eq('or out of the title when the field is empty',
+    marks({ name: 'Ardbeg 10 Year Old' }), ['age10']);
+  eq('the field wins over the title',
+    marks({ name: 'Ardbeg 10 Year Old', age: 17 }), ['age17']);
+  eq('a proof is kept to a tenth, so 107 and 107.0 are one mark',
+    marks({ name: 'Weller', proof: 107 }), ['p1070']);
+  eq('and 128.4 keeps its tenth', marks({ name: 'Stagg', proof: 128.4 }),
+    ['p1284']);
+  eq('a release year is a mark',
+    marks({ name: 'New Riff Silver Grove Bourbon 2025' }), ['y2025']);
+  eq('an age in the title is not read as a year',
+    marks({ name: 'Redbreast 12 Year Old' }), ['age12']);
+  eq('a numbered edition is a mark',
+    marks({ name: 'Barrell Bourbon Batch 019' }), ['e019']);
+  eq('marks come back sorted, so order in the title does not matter',
+    marks({ name: "Angel's Envy Cask Strength Rye 2023", proof: 119.2 }),
+    marks({ name: "Angel's Envy 2023 Cask Strength Rye", proof: 119.2 }));
+  eq('a bottle with nothing to say carries no marks',
+    marks({ name: 'Something Plain' }), []);
+  eq('and nothing at all does not throw', marks(null), []);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

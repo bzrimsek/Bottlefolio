@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 857 |
-| tables | 204 |
-| carrying a stated purpose | 668 |
+| functions | 863 |
+| tables | 205 |
+| carrying a stated purpose | 675 |
 
 ## Tables
 
@@ -28,6 +28,7 @@ QUESTION, not the name you were going to use.
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
+- **`L.BOTTLE_MARKS`** — WHAT MAKES TWO BOTTLES OF ONE BRAND DIFFERENT BOTTLES (BZ, 2026-09-30
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CASE_FIXED`** — casing are spelled out rather than guessed at.
 - **`L.CASK_FAMILY`** — A named trait orders the rung
@@ -234,6 +235,8 @@ QUESTION, not the name you were going to use.
 - **`L.addPour`** — _no comment above it_
 - **`L.adminPeople`** — _no comment above it_
 - **`L.adminPersonLine`** — An account in one line
+- **`L.adoptCandidates`** — WEAK WHEN THE EXTRA WORDS TELL BOTTLINGS APART
+- **`L.adoptOrphans`** — IT DOES NOT GUESS
 - **`L.ageCell`** — A PROOF IN THE SIDE COLUMN, drawn one way
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
 - **`L.alreadyNamed`** — _no comment above it_
@@ -276,6 +279,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottleFacts`** — THE SHELF THE PROSE WAS WRITTEN ABOUT
 - **`L.bottleFrom`** — _no comment above it_
 - **`L.bottleLabel`** — How a bottle is named to the person who owns it.
+- **`L.bottleMarks`** — THE MARKS THIS BOTTLE CARRIES, from its fields first and its name second
 - **`L.bottleOrigin`** — HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED
 - **`L.bottlePick`** — _no comment above it_
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
@@ -643,6 +647,7 @@ QUESTION, not the name you were going to use.
 - **`L.movePour`** — _no comment above it_
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
+- **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromShopPage`** — the price alongside it.
 - **`L.nameFromShopText`** — _no comment above it_
@@ -1082,4 +1087,6 @@ QUESTION, not the name you were going to use.
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_
 - **`L.wouldILike`** — _no comment above it_
+- **`L.yearsDiffer`** — Where one name is silent there is nothing to contradict and this says nothing:
+- **`L.yearsIn`** — THE RELEASE YEARS A NAME STATES
 - **`L.zoomAbout`** — Zoom about a point so pinching and double-tap keep that point still.
