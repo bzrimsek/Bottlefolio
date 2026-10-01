@@ -18836,7 +18836,13 @@ sec('\u00a7341 a claim about your shelf is counted from your shelf');
        MEANT to widen with the library: a picker holding only the houses you
        already own could not be used to add your first Laphroaig. It answers
        "which houses exist", never "which are yours" (2026-09-30). */
-    houseChoices: 1
+    houseChoices: 1,
+    /* A SEARCH, NOT A CLAIM. addCandidates is what the add form offers when
+       somebody starts typing a bottle name, and it is MEANT to reach past the
+       shelf: searching before typing exists to find the entry you would
+       otherwise create a second copy of. It answers "what does this app know
+       of", never "what do you own" (2026-09-30). */
+    addCandidates: 1
   };
 
   const differ = [], unjudged = [];
@@ -25630,6 +25636,21 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
      not do with who made a whisky. */
   eq('two houses equally close propose nothing',
     L.houseMeant('Bruichladdich', ['Bruichladdic', 'Bruichladdish']), null);
+
+  /* WHAT THE ADD FORM OFFERS AS YOU TYPE. The same matcher as the shelf's
+     own box - a second one would be two answers to one search - ranked for
+     somebody mid-word rather than alphabetically. */
+  const typing = { a: { name: 'Ardbeg Ten' }, b: { name: 'Laphroaig 10' },
+    c: { name: 'Old Laphroaig Cask' }, d: { name: 'Laphroaig Lore' } };
+  const said = L.addCandidates(typing, 'lap', 4).map(x => x.name);
+  eq('a name that starts with what you typed comes first',
+    said[0], 'Laphroaig 10');
+  eq('one that merely contains it comes after',
+    said[said.length - 1], 'Old Laphroaig Cask');
+  eq('and nothing unrelated is offered', said.indexOf('Ardbeg Ten'), -1);
+  eq('the list is capped', L.addCandidates(typing, 'lap', 2).length, 2);
+  eq('and nothing typed offers nothing to pick wrongly',
+    L.addCandidates(typing, 'zzzz', 4).length, 0);
 
   /* THE LIST THE ADD FORM OFFERS. A vocabulary: every house the app has
      heard of, in order, so a picker can replace free text on the one field

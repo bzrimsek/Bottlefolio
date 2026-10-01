@@ -3497,6 +3497,102 @@ function step(n) {
       }
     }
 
+    /* ADDING A BOTTLE STARTS AS A SEARCH (BZ, 2026-09-30: "manual entry
+       should really be last resort"). The candidates, taking one, and the
+       rest of the form staying shut until then - none of which the engine
+       can show. */
+    {
+      await page.evaluate(() => { closeModal(); productForm(null); });
+      await page.waitForTimeout(140);
+
+      const shut = await page.evaluate(() => {
+        const f = document.querySelector('.modal .form');
+        const dist = f.querySelector('[name="distPick"]');
+        return { seeking: f.classList.contains('seeking'),
+          distShown: dist ? dist.offsetParent !== null : null,
+          nameShown: !!f.querySelector('[name="name"]').offsetParent };
+      });
+      if (!shut.seeking) {
+        failures.push('add form: it does not wait for a search at all');
+      } else if (shut.distShown) {
+        failures.push('add form: the whole form is open before anything has '
+          + 'been searched for, so typing is still the first thing offered');
+      } else if (!shut.nameShown) {
+        failures.push('add form: waiting for a search and the name box is '
+          + 'hidden too');
+      }
+
+      /* A NAME THE SHELF KNOWS OFFERS ITSELF. */
+      const want = await page.evaluate(() =>
+        (Object.values(S.catalog).find(x => x.name && x.name.length > 8) || {}).name);
+      const found = await page.evaluate(async nm => {
+        const f = document.querySelector('.modal .form');
+        const n = f.querySelector('[name="name"]');
+        n.value = nm.slice(0, 8);
+        n.dispatchEvent(new Event('input'));
+        await new Promise(r => setTimeout(r, 400));
+        const box = f.querySelector('.candidates');
+        return { shown: !!box && !box.hidden,
+          n: box ? box.querySelectorAll('.candidate').length : 0,
+          first: box && box.querySelector('.candidate .nm')
+            ? box.querySelector('.candidate .nm').textContent : '' };
+      }, want);
+      if (!found.shown || found.n < 2) {
+        failures.push('add form: typing "' + String(want).slice(0, 8)
+          + '" offered ' + found.n + ' candidate(s) and shown=' + found.shown);
+      }
+
+      /* TAKING ONE FILLS THE BOTTLE AND OPENS THE REST. */
+      const took = await page.evaluate(async () => {
+        const f = document.querySelector('.modal .form');
+        f.querySelector('.candidates .candidate').click();
+        await new Promise(r => setTimeout(r, 300));
+        const dist = f.querySelector('[name="distPick"]');
+        return { seeking: f.classList.contains('seeking'),
+          name: f.querySelector('[name="name"]').value,
+          dist: (f.querySelector('[name="dist"]') || {}).value,
+          distShown: dist ? dist.offsetParent !== null : null };
+      });
+      if (took.seeking) {
+        failures.push('add form: took a candidate and it is still searching');
+      } else if (!took.distShown) {
+        failures.push('add form: took a candidate and the form stayed shut');
+      } else if (!took.name) {
+        failures.push('add form: took a candidate and the name is empty');
+      }
+
+      /* AND DECLINING THEM OPENS IT TOO, or there is no way to add a bottle
+         nothing knows about. */
+      const declined = await page.evaluate(async () => {
+        closeModal(); productForm(null);
+        await new Promise(r => setTimeout(r, 140));
+        const f = document.querySelector('.modal .form');
+        const n = f.querySelector('[name="name"]');
+        n.value = 'Zzzqx Nonesuch Whisky';
+        n.dispatchEvent(new Event('input'));
+        await new Promise(r => setTimeout(r, 400));
+        const box = f.querySelector('.candidates');
+        const none = box && box.querySelector('.candidate.quiet');
+        if (none) none.click();
+        await new Promise(r => setTimeout(r, 120));
+        const dist = f.querySelector('[name="distPick"]');
+        return { had: !!none, seeking: f.classList.contains('seeking'),
+          distShown: dist ? dist.offsetParent !== null : null };
+      });
+      if (!declined.had) {
+        failures.push('add form: a name nothing knows offers no way to type it');
+      } else if (declined.seeking || !declined.distShown) {
+        failures.push('add form: declined the candidates and the form stayed shut');
+      }
+      await page.evaluate(() => { closeModal(); productForm(null); });
+      await page.waitForTimeout(140);
+      await page.evaluate(() => {
+        const f = document.querySelector('.modal .form');
+        const q = f.querySelector('.candidates .candidate.quiet');
+        if (q) q.click();
+      });
+    }
+
     /* THE DISTILLERY IS A PICKER, AND IT FOLLOWS WHAT FILLS IT.
        Free text here is how "Laphroig" and "Red breast" became houses in the
        shared library (BZ, 2026-09-30). The value lives in a hidden input so

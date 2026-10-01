@@ -518,6 +518,15 @@ const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* A LAYER, NOT A SECOND ANSWER. searchLibrary stays the one matcher - the
+     shelf's box, the library screen and this all ask it, so none of them can
+     give a different answer to one search. addCandidates asks it for a wider
+     net and then RANKS for somebody halfway through typing a name: what they
+     have typed so far is the strongest thing known about what they mean, so a
+     name that starts with it comes before one that merely contains it.
+     Alphabetical is right for browsing a library and wrong mid-word. A second
+     matcher would still fail this check (2026-09-30). */
+  'addCandidates>searchLibrary',
   /* A CALLER, NOT A SECOND ANSWER. A whisky nobody owns is asked about the
      same way as one on the shelf - L.bottleAsk measures it - and
      L.prospectAsk only hands it the prospect's context and marks the ask as
@@ -3225,7 +3234,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     showBottle: 496,
     likelyToLike: 455,
     openLibraryCleanUp: 380,
-    productForm: 360,
+    productForm: 347,
     renderShelf: 325,
     renderAway: 306,
     showShelfTools: 255,

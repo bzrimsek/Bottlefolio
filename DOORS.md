@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 847 |
+| functions | 848 |
 | tables | 204 |
-| carrying a stated purpose | 659 |
+| carrying a stated purpose | 660 |
 
 ## Tables
 
@@ -230,6 +230,7 @@ QUESTION, not the name you were going to use.
 - **`L.accountWipe`** — _no comment above it_
 - **`L.activeFacets`** — HOW MANY WAYS THIS LIST IS NARROWED, which is also whether the shelf
 - **`L.addBottleSay`** — And the button under it
+- **`L.addCandidates`** — THE BOTTLES SOMEBODY MIGHT MEAN WHEN ADDING ONE
 - **`L.addPour`** — _no comment above it_
 - **`L.adminPeople`** — _no comment above it_
 - **`L.adminPersonLine`** — An account in one line
