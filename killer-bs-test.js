@@ -27757,6 +27757,25 @@ sec('§461 a fact in the wrong field');
   /* A LIVE ADDRESS IS NOT A FINDING, which is the half that makes it a check. */
   eq('an address to a real entry is left alone',
     dead({ old_name: 'real_entry' }), '');
+  /* AND NOTHING IS DEAD AGAINST A LIBRARY NOBODY HAS READ. Behind an empty
+     library there is no entry behind ANY address, so all 115 of BZ's were
+     reported - every one pointing at an entry that exists - under a heading that
+     said "0 entries scanned" (2026-10-02: "What is this"). */
+  eq('an empty library judges no address at all',
+    L.deadForwards({ old_name: 'real_entry', gone_away: 'no_such_entry' },
+      {}).length, 0);
+  eq('nor does a missing one', L.deadForwards({ a: 'b' }, null).length, 0);
+  /* A DESTINATION OF "undefined" is nowhere. One of BZ's graves holds those five
+     letters - a merge stringified a value it did not have - and the row read like
+     a bug in the report rather than a record to remove (2026-10-02). */
+  eq('an address to the word undefined is dead, and says nowhere',
+    (L.deadForwards({ yellowstone_rum_cask: 'undefined' }, dlib)[0] || {}).text,
+    'yellowstone_rum_cask  ==  nothing at all');
+  /* AN EMPTY DESTINATION is already a self-loop by the time it gets here:
+     L.mergedInto treats it as no forward and hands back the key itself. */
+  eq('an empty destination is reported as the self-loop it becomes',
+    (L.deadForwards({ nowhere: '' }, dlib)[0] || {}).text,
+    'nowhere  ==  nowhere');
   /* A CHAIN THAT ENDS SOMEWHERE REAL is live however long it is. */
   eq('and so is a chain that ends somewhere real',
     dead({ oldest: 'older', older: 'real_entry' }), '');
