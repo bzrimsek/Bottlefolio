@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 882 |
+| functions | 883 |
 | tables | 210 |
-| carrying a stated purpose | 692 |
+| carrying a stated purpose | 693 |
 
 ## Tables
 
@@ -946,6 +946,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can
 - **`L.shelfGaps`** — _no comment above it_
 - **`L.shelfIndex`** — Both, together, because every caller that wants one wants the other.
+- **`L.shelfJoins`** — ONE WRITE FIXES EVERY SHELF, because filing the bottle's key at the entry is a
 - **`L.shelfKeyOf`** — A BOTTLE THE LIBRARY HAS NEVER HEARD OF keeps its normalised name, exactly
 - **`L.shelfLeans`** — _no comment above it_
 - **`L.shelfLevels`** — WHAT THE PHOTOGRAPH SAID ABOUT BOTTLES YOU ALREADY HAVE

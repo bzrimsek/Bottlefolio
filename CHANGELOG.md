@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.75  ·  2026-10-01 08:35 PM ET
+
+The shelf scan is a Clean up finding. Two people hold one whisky exactly when their bottles reach the same library entry, so a bottle reaching none reads as one person's alone on every Venn - L.shelfJoins finds those and names the entry each would join, over your own shelf and every shelf shared with you, which is exactly what the Venn compares. One tap files the bottle's key at the entry, which is a forwarding address and therefore fixes it for everybody holding that key rather than for the admin who pressed it. The shortlist refuses a join whose extra words are neither the entry's own house nor an age: a first sweep offered Woodford Reserve Derby as Woodford Reserve and White Dog as bourbon, and a list with a button beside each will be pressed. What repairs a row is one question, asked of mendRowButton, which the size ceiling caught before the page grew a second way to ask it.
+
 ## v2.6.74  ·  2026-10-01 07:30 PM ET
 
 A merge leaves a forwarding address and nothing read it. entryFor asks resolveLibKey, which looks in the products and nowhere else, and a merged key is deleted from the products - so the address every merge has ever written was never consulted, and every shelf still filed under a merged key was orphaned by the merge meant to join it. Read off the live database: one shelf's bottle forwarded to a real entry while entryFor answered nothing, and the data holds a two-merge chain from before today. The address is now followed for the bottle's key and for its display name, because shelves hold both, and a chain whose end was itself removed still answers nothing rather than a key with no record behind it.

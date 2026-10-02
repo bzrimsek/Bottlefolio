@@ -27093,6 +27093,45 @@ sec('§461 a fact in the wrong field');
   /* AND AN ENTRY THAT IS STILL THERE answers for itself, not through a grave. */
   eq('an entry still in the library answers for itself',
     reaches({ k: LONG, name: merged[LONG].name }), merged[LONG].name);
+
+  /* WHAT THE VENN CANNOT JOIN. Two people hold one whisky exactly when their
+     bottles reach the same entry, so a bottle reaching NO entry reads as theirs
+     alone whatever either side does. Swept over the live shelves on 2026-10-01:
+     21 bottles reaching nothing, 10 with an entry already sitting there. */
+  const vlib = {
+    peat_monster: { name: 'Peat Monster', sub: 'scotch', dist: 'Compass Box' },
+    woodford_reserve: { name: 'Woodford Reserve Kentucky Straight Bourbon '
+      + 'Whiskey', sub: 'bourbon' },
+    ardbeg_wee_beastie: { name: 'Ardbeg Wee Beastie', sub: 'scotch', age: 5 }
+  };
+  const shelfOf = names => [{ id: 'x',
+    bottles: names.map(n => ({ k: n })),
+    catalog: names.reduce((o, n) => { o[n] = { k: n, name: n }; return o; }, {}) }];
+  const joins = ns => L.shelfJoins(shelfOf(ns), vlib, {})
+    .map(j => j.to).join(',');
+
+  /* THE ONE THE SWEEP FOUND: a shelf writing the name more fully than the
+     library does. */
+  eq('a longer shelf name reaches the entry',
+    joins(['Compass Box Peat Monster']), 'peat_monster');
+  /* AND THE AGE ONE IS NOT A FINDING AT ALL ANY MORE, because entryFor reaches
+     it on its own since the age rule - which is the better outcome: nobody has
+     to press anything. */
+  eq('an age in the name needs no decision',
+    joins(['Ardbeg Wee Beastie 5']), '');
+  /* A BOTTLE THAT ALREADY REACHES ITS ENTRY IS NOT A FINDING. */
+  eq('a bottle already filed is not offered', joins(['Peat Monster']), '');
+  /* AND THE FOUR THAT MUST NOT JOIN. Derby is its own release; a shortlist
+     that offered these would be pressed and would be wrong. */
+  eq('a named release is not the standard bottling',
+    joins(['Woodford Reserve Derby']), '');
+  eq('and nothing is offered for a bottle the library has never heard of',
+    joins(['Some Private Barrel Nobody Has']), '');
+  /* ONE FINDING PER KEY, however many shelves hold it: the repair is one
+     forwarding address and it fixes every shelf at once. */
+  eq('two shelves holding it is still one finding',
+    L.shelfJoins(shelfOf(['Compass Box Peat Monster'])
+      .concat(shelfOf(['Compass Box Peat Monster'])), vlib, {}).length, 1);
   eq('nothing to clear is nothing done',
     L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
   eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);
