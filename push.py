@@ -436,7 +436,11 @@ def gate_lines(job_id, shown):
     carries on as it did before. A build must never go red because the thing
     watching it had an opinion."""
     try:
-        r = subprocess.run([GH, 'api',
+        # --allow-escape-sequences, because a job log carries the colour
+        # codes the harnesses print and gh refuses to hand it over without
+        # being told that is expected. Without the flag this fetched nothing
+        # and the stream was silent on its first build (2026-10-02).
+        r = subprocess.run([GH, 'api', '--allow-escape-sequences',
                             'repos/%s/actions/jobs/%d/logs' % (REPO, job_id)],
                            capture_output=True, timeout=30)
         if r.returncode:
