@@ -147,6 +147,14 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'cost.js',
            # The rules, run in the emulator (cloud gate only).
            'rulestest.js', 'syncemu.js', 'firebase.json',
+           # WHICH CHECKS A BUILD NEEDS. gate.py asks check.js, which reads
+           # checks.json, so a gate that cannot see either of them crashes
+           # every build - which is exactly what happened on v2.6.88 and
+           # v2.6.89 (2026-10-02): consistency.js read checks.json, the file
+           # had never been sent, and two builds went red with the live site
+           # a version behind. consistency.js now fails if anything this table
+           # names is missing from here.
+           'check.js', 'checks.json',
            'package.json', 'package-lock.json', '.github/workflows/gate.yml']
 # The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
 # apps-script/appsscript.json - the live project's exact file set, checked by

@@ -275,6 +275,43 @@ def run_group(group, hand_over):
         return [f.result() for f in futures]
 
 
+def wanted(args):
+    """Which checks this build needs, asked of check.js so the rule lives in one
+    place (checks.json). None means "could not tell" - and the caller then runs
+    everything, which is the only safe way to be wrong here.
+
+    GATE_ALL=1 forces the whole gate, for a build where that is wanted."""
+    if '--all' in args or os.environ.get('GATE_ALL'):
+        return None
+    base = os.environ.get('GATE_BASE', 'origin/main')
+    try:
+        r = subprocess.run(['node', 'check.js', '--names', '--since', base],
+                           capture_output=True, text=True, cwd=HERE, timeout=120)
+    except Exception as e:
+        print('scope: could not ask check.js (%s) - running everything\n' % e)
+        return None
+    if r.returncode != 0:
+        print('scope: check.js would not answer - running everything\n')
+        return None
+    names = {l.strip() for l in (r.stdout or '').split('\n') if l.strip()}
+    if not names:
+        print('scope: check.js named nothing - running everything\n')
+        return None
+    known = {n for n, _ in FAST + SLOW + COST}
+    unknown = names - known
+    if unknown:
+        print('scope: check.js named %s, which this file does not know - '
+              'running everything\n' % ', '.join(sorted(unknown)))
+        return None
+    # THE ONES THAT ALWAYS RUN. An answer without them is an answer to a
+    # different question, and this does not take it.
+    for must in ('audit', 'lint', 'consistency'):
+        if must in known and must not in names:
+            print('scope: check.js left out %s - running everything\n' % must)
+            return None
+    return names
+
+
 def main():
     args = sys.argv[1:]
     # By what the groups HOLD, never by their position: the fast steps are
@@ -286,6 +323,20 @@ def main():
         groups = [g for g in GROUPS if all(s in FAST for s in g)]
     elif '--slow' in args:
         groups = [g for g in GROUPS if all(s in SLOW for s in g)]
+    # WHAT THIS BUILD ACTUALLY CHANGED (BZ, 2026-10-01). None means the
+    # question could not be answered, and then everything runs.
+    only = wanted(args)
+    if only is not None:
+        left = [n for g in GROUPS for n, _ in g if n not in only]
+        groups = [[s for s in g if s[0] in only] for g in groups]
+        groups = [g for g in groups if g]
+        if left:
+            # NAMED, NOT COUNTED. A check nobody is told was skipped has quietly
+            # stopped existing, which is the fault this project keeps finding in
+            # its own guards.
+            print('scope: not needed by this build - %s\n' % ' '.join(left))
+        else:
+            print('scope: this build reaches every check\n')
     steps = [s for g in groups for s in g]
     names = [n for n, _ in steps]
     # Only when this run includes both steps the audit would leave out.

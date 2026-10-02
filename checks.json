@@ -1,0 +1,76 @@
+{
+  "_why": [
+    "ONE TABLE, TWO READERS. gate.py runs the checks in the cloud and check.js",
+    "runs them here, and both have to agree about which check a change can",
+    "break. Written twice they drift, and the one that drifts is the one that",
+    "stops running - so it is written once, here, and consistency.js fails if",
+    "it stops covering every harness or every gate step.",
+    "",
+    "BZ, 2026-10-01: 'Every cycle all of them have to run even if we only",
+    "changed one page. We need a better, more streamlined method.' Measured",
+    "the same day: the sixteen local checks are 203 seconds and browser.js and",
+    "sync.js are 123 of them, paid on every change including one that moved a",
+    "comment.",
+    "",
+    "`reaches` is what a check can be broken BY. A check appears under every",
+    "kind of change that can break it, never under the one that usually does.",
+    "`secs` was measured on BZ's PC on 2026-10-01 and is here so a change to",
+    "this table is made with its price in view.",
+    "",
+    "ALWAYS means exactly that: run it whatever changed. They are the cheap",
+    "ones that notice structural damage - something undefined, a rule written",
+    "twice, a named lock that no longer matches the file it names."
+  ],
+
+  "kinds": {
+    "engine": "index.html above the STATE + RENDER banner",
+    "screens": "index.html below it",
+    "worker": "sw.js",
+    "script": "the .gs files and apps-script/appsscript.json",
+    "data": "data.json, map.json",
+    "rules": "firebase-rules.json",
+    "harness": "a check's own file - it runs itself"
+  },
+
+  "checks": [
+    { "name": "audit", "harness": "audit.py", "secs": 30, "always": true,
+      "note": "the named lock matches index.html, and it runs consistency and screens itself unless the gate says it has them" },
+    { "name": "lint", "harness": "lint.js", "secs": 1, "always": true },
+    { "name": "consistency", "harness": "consistency.js", "secs": 5, "always": true },
+
+    { "name": "tests", "harness": "killer-bs-test.js", "secs": 20,
+      "reaches": ["engine", "data"] },
+    { "name": "render", "harness": "render.js", "secs": 5,
+      "reaches": ["engine", "screens"] },
+    { "name": "answers", "harness": "answers.js", "secs": 2,
+      "reaches": ["engine", "data"] },
+    { "name": "cost", "harness": "cost.js", "secs": 3,
+      "reaches": ["engine"] },
+    { "name": "twotab", "harness": "twotab.js", "secs": 8,
+      "reaches": ["engine"] },
+
+    { "name": "screens", "harness": "screens.js", "secs": 3,
+      "reaches": ["screens"] },
+    { "name": "sequence", "harness": "seq.js", "secs": 15,
+      "reaches": ["screens"] },
+    { "name": "papers", "harness": "papers.js", "secs": 4,
+      "reaches": ["screens"] },
+    { "name": "shots", "harness": "shots.js", "secs": 4,
+      "reaches": ["screens"] },
+    { "name": "walk", "harness": "browser.js", "secs": 61,
+      "reaches": ["screens"] },
+    { "name": "ios", "harness": "ios.js", "secs": 9,
+      "reaches": ["screens"] },
+
+    { "name": "sync", "harness": "sync.js", "secs": 62,
+      "reaches": ["engine", "screens", "worker"] },
+
+    { "name": "appsscript", "harness": "gscheck.js", "secs": 1,
+      "reaches": ["script", "engine"],
+      "note": "engine too: L.GS_BUILD and the service's build must move together" },
+
+    { "name": "rules", "harness": "rulestest.js", "secs": 40,
+      "reaches": ["rules"],
+      "note": "needs Java, so it runs in the cloud gate only" }
+  ]
+}

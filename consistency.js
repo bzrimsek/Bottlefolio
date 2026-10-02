@@ -3384,5 +3384,58 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the size list has ratcheted down', shrank);
 }
 
+/* THE TABLE THAT DECIDES WHICH CHECKS RUN must cover every check there is.
+   checks.json is read by check.js and by gate.py, and the gate SKIPS what it
+   does not name - so a harness missing from it stops running, silently, on every
+   build. That is worse than a check that cannot fail: it is a check that is
+   never asked. */
+{
+  const table = JSON.parse(fs.readFileSync(
+    __dirname + '/checks.json', 'utf8'));
+  const gate = fs.readFileSync(__dirname + '/gate.py', 'utf8');
+  /* THE GATE'S OWN STEPS, read off its lists rather than typed again here. */
+  const steps = [...new Set((gate.match(/\(\s*'([a-z]+)',\s*\[\s*'(?:node|python3)'/g)
+    || []).map(m => (m.match(/'([a-z]+)'/) || [])[1]).filter(Boolean))];
+  const named = table.checks.map(c => c.name);
+  const found = [];
+  steps.forEach(st => {
+    if (named.indexOf(st) < 0) {
+      found.push(st + ' is a gate step and checks.json does not name it, so the '
+        + 'gate would skip it on every build');
+    }
+  });
+  named.forEach(n => {
+    if (steps.indexOf(n) < 0) {
+      found.push(n + ' is in checks.json and is not a gate step - a row nobody '
+        + 'reads');
+    }
+  });
+  table.checks.forEach(c => {
+    if (!fs.existsSync(__dirname + '/' + c.harness)) {
+      found.push(c.name + ' names ' + c.harness + ', which is not here');
+    }
+    if (!c.always && !(c.reaches || []).length) {
+      found.push(c.name + ' is neither always-run nor reached by any change, so '
+        + 'nothing would ever ask for it');
+    }
+  });
+  /* AND EVERYTHING IT NAMES IS SENT. A harness the gate runs but push.py never
+     uploads is a file the runner cannot see, and the build dies on it - which is
+     what v2.6.88 and v2.6.89 did (2026-10-02): checks.json was added here and
+     never added to push.py's list, so consistency.js crashed in the cloud and
+     the live site sat a version behind while two gates went red. */
+  const push = fs.readFileSync(__dirname + '/push.py', 'utf8');
+  const sends = f => push.indexOf("'" + f + "'") >= 0;
+  ['checks.json', 'check.js'].concat(table.checks.map(c => c.harness))
+    .forEach(f => {
+      if (!sends(f)) {
+        found.push(f + ' is needed by the gate and push.py does not send it, '
+          + 'so every build would die on it');
+      }
+    });
+
+  check('the table that picks the checks covers every check', found);
+}
+
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
