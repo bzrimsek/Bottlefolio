@@ -654,6 +654,44 @@ const TWO_DOORS_OK = [
     return !bodies[ab[0]] || bodies[ab[0]].indexOf('L.' + ab[1] + '(') < 0;
   }).map(p2 => p2 + ' is allowed and no longer happens');
   check('the two-doors allowance has no stale entries', stale);
+
+  /* AND THE FAULT CLASS OF 2026-10-02, on the whole file: nothing may ask
+     what the library does NOT hold without something making sure it has
+     been read. */
+  unreadLibrary(src, check);
+}
+
+/* NOTHING ASKS WHAT THE LIBRARY LACKS WITHOUT READING IT FIRST.
+
+   Four faults in one day had this one shape (2026-10-02), each of them a
+   confidently wrong report BZ had to catch: 115 forwarding addresses called dead
+   against an empty library, duplicate pairs judged before the brand registry
+   arrived, a scan drawn on a cache a merge had just nulled, and - found by
+   sweeping for it - every bottle on the shelf offered for publication and every
+   row of a CSV import written as a new entry.
+
+   THE DANGEROUS QUESTIONS ARE THE ONES WHOSE ANSWER GROWS when the read is
+   missing: what the library does NOT hold. A function that lists or fills
+   shrinks to nothing by itself and needs no guard, which is why this names the
+   askers rather than every reader. */
+function unreadLibrary(src, check) {
+  const ASKS = ['pendingForLibrary', 'notInLibrary', 'strandedBottles',
+    'deadForwards', 'libraryImportPlan'];
+  /* Any of the ways a caller can refuse, or wait, before asking. */
+  const GUARDED = /libraryIsRead|needsLibraryFirst|withLibrary|!LIB\.products|Object\.keys\(LIB\.products\)\.length|is not read yet/;
+  const lines = src.split('\n');
+  const bad = [];
+  lines.forEach((line, i) => {
+    const m = line.match(/L\.([A-Za-z0-9_]+)\(/);
+    if (!m || ASKS.indexOf(m[1]) < 0) return;
+    if (!/LIB\.(products|graves)/.test(line)) return;
+    /* The guard may be anywhere in the ten lines above the call. */
+    const near = lines.slice(Math.max(0, i - 10), i + 1).join('\n');
+    if (GUARDED.test(near)) return;
+    bad.push('line ' + (i + 1) + ': L.' + m[1] + ' is asked what the library '
+      + 'does not hold, without anything making sure it has been read');
+  });
+  check('nothing asks what the library lacks before reading it', bad);
 }
 
 /* NO RULE IS WRITTEN OUT TWICE.
