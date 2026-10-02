@@ -25668,6 +25668,43 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.namePrefixPairs([{ k: 'x', name: 'Oban Little Bay' },
       { k: 'y', name: 'Oban Little Bay Small Cask' }]).length, 1);
 
+  /* AND THE HOUSE MUST AGREE, the third of the three. BZ's report, 2026-10-01:
+     "Bardstown Bourbon Company Origin Series Bottled-in-Bond Kentucky Straight
+     Bourbon Whiskey == Old Bardstown Bottled in Bond Straight Bourbon Whiskey",
+     which is two distilleries. */
+  const bsBrands = {};
+  ['Bardstown', 'Oban'].forEach(b => { bsBrands[L.libKey(b)] = { name: b }; });
+  eq('two houses are two bottles however the names read',
+    L.namePrefixPairs([
+      { k: 'p', name: 'Bardstown Bottled in Bond Straight Bourbon Whiskey',
+        dist: 'Bardstown Bourbon Company', proof: 100 },
+      { k: 'q', name: 'Bardstown Bottled in Bond Straight Bourbon Whiskey Origin',
+        dist: 'Willett', proof: 100 }], bsBrands).length, 0);
+  /* ONE HOUSE STILL PASSES, which is the half that makes it a check. */
+  eq('one house written two ways is still one house',
+    L.namePrefixPairs([
+      { k: 'p', name: 'Oban Little Bay', dist: "Oban Distillery" },
+      { k: 'q', name: 'Oban Little Bay Small Cask', dist: 'Oban' }]).length, 1);
+  /* AND A SIDE THAT NAMES NO HOUSE contradicts nothing, the same way a missing
+     type and a missing proof do not. */
+  eq('a missing house blocks nothing',
+    L.namePrefixPairs([
+      { k: 'p', name: 'Oban Little Bay' },
+      { k: 'q', name: 'Oban Little Bay Small Cask', dist: 'Oban' }]).length, 1);
+
+  /* A PAIR THE EXACT-DUPLICATE LIST TOOK IS NOT REPORTED AGAIN, reversed, two
+     findings down - which is what Angel's Envy Bottled-in-Bond did on BZ's
+     report (2026-10-01: "Outcome choices are confusing"). */
+  const twice = [
+    { k: 'm', name: 'Oban Little Bay', proof: 86 },
+    { k: 'n', name: 'Oban Little Bay Small Cask', proof: 86 }
+  ];
+  eq('it is found when nothing has taken it',
+    L.dupeFindings(twice, null, []).filter(f => f.id === 'samestart').length, 1);
+  eq('and not when the duplicate list already has it',
+    L.dupeFindings(twice, null, ['m+n'])
+      .filter(f => f.id === 'samestart').length, 0);
+
   /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
      and before it, "if the library is the macro inventory and we each link to
      it with what we own, this should be easy". It was the normalised NAME, so
@@ -27132,6 +27169,32 @@ sec('§461 a fact in the wrong field');
   eq('two shelves holding it is still one finding',
     L.shelfJoins(shelfOf(['Compass Box Peat Monster'])
       .concat(shelfOf(['Compass Box Peat Monster'])), vlib, {}).length, 1);
+
+  /* AND AN ADDRESS THAT POINTS AT NOTHING. Two in the live data on 2026-10-01:
+     one a self-loop written when keys were display names, one pointing at a key
+     whose entry was removed afterwards. entryFor reads these now, so a dead one
+     strands every bottle filed under it. */
+  const dlib = { real_entry: { name: 'A Real Entry' } };
+  const dead = g => L.deadForwards(g, dlib).map(d => d.key).join(',');
+  eq('an address to a key with no entry is dead',
+    dead({ gone_away: 'no_such_entry' }), 'gone_away');
+  /* A SELF-LOOP IS DEAD TOO, and it is the one the live data held: libKey of its
+     target NAME was the source key. */
+  eq('and so is one pointing at itself',
+    dead({ glendronach_21_year_old_parliament:
+      'glendronach_21_year_old_parliament' }),
+    'glendronach_21_year_old_parliament');
+  /* A LIVE ADDRESS IS NOT A FINDING, which is the half that makes it a check. */
+  eq('an address to a real entry is left alone',
+    dead({ old_name: 'real_entry' }), '');
+  /* A CHAIN THAT ENDS SOMEWHERE REAL is live however long it is. */
+  eq('and so is a chain that ends somewhere real',
+    dead({ oldest: 'older', older: 'real_entry' }), '');
+  /* A CHAIN THAT ENDS NOWHERE is dead at every step, because every key on it
+     resolves to nothing. */
+  eq('a chain that ends nowhere is dead throughout',
+    dead({ a_one: 'a_two', a_two: 'a_three' }).split(',').length, 2);
+  eq('and nothing is dead when nothing is forwarded', dead({}), '');
   eq('nothing to clear is nothing done',
     L.clearFieldLocally(mineEdits, ['no_such_bottle'], 'fin'), null);
   eq('no field, nothing done', L.clearFieldLocally(mineEdits, ['x'], ''), null);

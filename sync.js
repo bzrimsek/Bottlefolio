@@ -616,7 +616,7 @@ function check(name, got, want) {
         const there = await reach('no Settings gear on Home to press',
             page.locator('#settingsBtn'))
           && await reach('Settings has no Help tab',
-            page.locator('#scr-settings').getByRole('button',
+            page.locator('#scr-settings').getByRole('tab',
               { name: 'Help', exact: true }))
           && await reach('Settings has no Show me the log button',
             page.locator('#scr-settings').getByRole('button',

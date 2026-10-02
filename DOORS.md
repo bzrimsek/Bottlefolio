@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 883 |
+| functions | 884 |
 | tables | 210 |
 | carrying a stated purpose | 693 |
 
@@ -341,6 +341,7 @@ QUESTION, not the name you were going to use.
 - **`L.countryOf`** — _no comment above it_
 - **`L.csvCell`** — A cell a spreadsheet will read back the way it was written.
 - **`L.deaccent`** — ACCENTS OFF BEFORE ANYTHING IS MATCHED
+- **`L.deadForwards`** — REMOVING IT IS SAFE BECAUSE IT POINTS AT NOTHING
 - **`L.describeCorrection`** — A correction in words
 - **`L.detailAt`** — _no comment above it_
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
@@ -946,7 +947,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can
 - **`L.shelfGaps`** — _no comment above it_
 - **`L.shelfIndex`** — Both, together, because every caller that wants one wants the other.
-- **`L.shelfJoins`** — ONE WRITE FIXES EVERY SHELF, because filing the bottle's key at the entry is a
+- **`L.shelfJoins`** — _no comment above it_
 - **`L.shelfKeyOf`** — A BOTTLE THE LIBRARY HAS NEVER HEARD OF keeps its normalised name, exactly
 - **`L.shelfLeans`** — _no comment above it_
 - **`L.shelfLevels`** — WHAT THE PHOTOGRAPH SAID ABOUT BOTTLES YOU ALREADY HAVE
