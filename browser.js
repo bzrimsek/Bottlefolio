@@ -513,10 +513,10 @@ function step(n) {
       const where = await page.evaluate(() => {
         const scr = document.querySelector('.screen.on');
         const body = document.getElementById('settingsBody');
-        const lbl = body ? [...body.querySelectorAll('.portlabel')]
+        const lbl = body ? [...body.querySelectorAll('.portlabel, h3')]
           .map(e => e.textContent.trim()) : [];
         return { on: (scr && scr.id) || '?', tab: S.settingsTab,
-                 manage: lbl.indexOf('Manage') };
+                 manage: lbl.indexOf('The shelf itself') };
       });
       if (where.on !== 'scr-settings') {
         failures.push('shelf: the gear landed on ' + where.on
@@ -527,7 +527,7 @@ function step(n) {
           + ' tab, not Shelf');
       }
       if (where.manage < 0) {
-        failures.push('shelf: the Shelf tab drew no Manage section, so the '
+        failures.push('shelf: the Shelf tab drew no The shelf itself card, so the '
           + 'gear reached the page and not the tools');
       }
       const threw = await page.evaluate(() =>
@@ -1267,14 +1267,20 @@ function step(n) {
           }
           return true;
         };
-        const labels = [...m.querySelectorAll('.portlabel')]
+        /* HEADINGS IN DOCUMENT ORDER, section labels and card headings alike.
+           The Manage section became part of The shelf itself when the tab moved
+           to cards (BZ, 2026-10-02: "the manage stuff should go here"), so the
+           anchor this compares Import against is that card now. The rule being
+           tested has not changed: with a shelf Import is last, with none it is
+           first. */
+        const labels = [...m.querySelectorAll('.portlabel, h3')]
           .map(e => e.textContent.trim());
         const buttons = [...m.querySelectorAll('button')]
           .filter(shown).map(b => b.textContent.trim());
         const folded = [...m.querySelectorAll('details summary')]
           .some(s => /^Import/.test(s.textContent || ''));
         document.body.removeChild(m);
-        return { manage: labels.indexOf('Manage'),
+        return { manage: labels.indexOf('The shelf itself'),
                  imp: labels.indexOf('Import a shelf'),
                  visible: buttons.indexOf('Import a collection') >= 0,
                  folded: folded };
@@ -1290,7 +1296,7 @@ function step(n) {
       return { withShelf: withShelf, empty: empty };
     });
     [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(([when, x]) => {
-      if (x.manage < 0) failures.push('shelf tools ' + when + ': no Manage section');
+      if (x.manage < 0) failures.push('shelf tools ' + when + ': no The shelf itself card');
       if (x.imp < 0) failures.push('shelf tools ' + when + ': no Import a shelf section');
       if (x.folded) failures.push('shelf tools ' + when + ': Import is still behind a fold');
       if (!x.visible) failures.push('shelf tools ' + when + ': Import a collection is not visible');
