@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 889 |
+| functions | 890 |
 | tables | 212 |
-| carrying a stated purpose | 696 |
+| carrying a stated purpose | 697 |
 
 ## Tables
 
@@ -964,6 +964,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfPortrait`** — _no comment above it_
 - **`L.shelfProduct`** — _no comment above it_
 - **`L.shelfReadSay`** — _no comment above it_
+- **`L.shelfScaleLine`** — WHAT THE SHELF SETTINGS ACT ON, in words, because two bare numbers over a
 - **`L.shelfSeen`** — _no comment above it_
 - **`L.shelfSet`** — what says something about taste.
 - **`L.shelfSort`** — _no comment above it_

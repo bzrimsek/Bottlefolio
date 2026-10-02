@@ -10544,6 +10544,33 @@ sec('\u00a7223 what the shelf adds up to');
   eq('everything shown is just the count', L.shelfCountLine(12, 12),
     '12 whiskies');
   eq('a filtered shelf says so', L.shelfCountLine(3, 12), '3 of 12');
+
+  /* THE SHELF SETTINGS LINE, which once took its first number from the
+     catalogue and its second from the shelf and claimed both for the shelf
+     (BZ, 2026-10-02: "704 whiskeys, 380 bottles ... is not my shelf"). The
+     library here is four whiskeys wide and the shelf holds two of them. */
+  const bigLib = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' },
+                   c: { k: 'c', name: 'C' }, d: { k: 'd', name: 'D' } };
+  const mine = [{ k: 'a', status: 'open' }, { k: 'a', status: 'sealed' },
+                { k: 'b', status: 'keep' }];
+  eq('counted from the shelf, not the library it is drawn out of',
+    L.shelfScaleLine(bigLib, mine),
+    '3 bottles of 2 different whiskeys on the shelf. '
+    + 'Everything on this page acts on those.');
+  eq('a bottle that is gone is not on the shelf',
+    L.shelfScaleLine(bigLib, mine.concat([{ k: 'c', status: 'gone',
+      exit: 'drunk' }])),
+    '3 bottles of 2 different whiskeys on the shelf. '
+    + 'Everything on this page acts on those.');
+  eq('one of one reads as one',
+    L.shelfScaleLine(bigLib, [{ k: 'a', status: 'open' }]),
+    '1 bottle of 1 whiskey on the shelf. '
+    + 'Everything on this page acts on those.');
+  eq('an empty shelf says so rather than printing a nought',
+    L.shelfScaleLine(bigLib, [{ k: 'a', status: 'gone', exit: 'drunk' }]),
+    'Nothing on the shelf yet — import one below.');
+  eq('and an absent shelf does not throw', L.shelfScaleLine(null, null),
+    'Nothing on the shelf yet — import one below.');
 }
 
 /* §224  what goes on the wishlist, and why ----------------------------
