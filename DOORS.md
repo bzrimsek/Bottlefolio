@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 895 |
+| functions | 896 |
 | tables | 212 |
-| carrying a stated purpose | 702 |
+| carrying a stated purpose | 703 |
 
 ## Tables
 
@@ -261,6 +261,7 @@ QUESTION, not the name you were going to use.
 - **`L.askWords`** — Lowercased here, which the stop list and every later `includes` both need
 - **`L.asUids`** — WHO IS WORTH READING BY NAME (probeCandidates), bounded in two tiers.
 - **`L.auditFix`** — WHAT A FINDING WOULD CHANGE
+- **`L.auditItemKey`** — HOW A FINDING'S ROW IS IDENTIFIED, so the verdict written for it and the
 - **`L.auditSuggestion`** — WHAT TO DO ABOUT A FINDING, said on the row.
 - **`L.auditText`** — THE WHOLE LIST, AS TEXT, to copy or print (BZ)
 - **`L.auditVerdict`** — _no comment above it_

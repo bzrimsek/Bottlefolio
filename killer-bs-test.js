@@ -19781,6 +19781,40 @@ sec('\u00a7355 what the library contradicts');
   eq('nothing wrong is no findings',
     L.libraryAudit({ a: { name: 'Fine Bourbon', proof: 100, sub: 'bourbon',
       dist: 'Somewhere', style: 'straight' } }).length, 0);
+  /* A PAIR IS JUDGED AS A PAIR. Three entries sharing a house, a strength and
+     an age make three pairs from two first-entries, so a verdict keyed on the
+     first alone had two slots for three judgements: marking Double Cask against
+     Fine Oak also answered Double Cask against Sherry Oak, which nobody had
+     looked at, and the key moved with the order the library came back in (BZ,
+     2026-10-02: "some of these we have seen many times"). */
+  eq('a pair is named by both of its entries, whichever side printed first',
+    L.auditItemKey({ keys: ['b', 'a'], text: 'B  ==  A' }), 'a+b');
+  eq('and the other orientation names it the same',
+    L.auditItemKey({ keys: ['a', 'b'], text: 'A  ==  B' }), 'a+b');
+  eq('a single entry keeps its own key',
+    L.auditItemKey({ keys: ['solo'], text: 'Solo' }), 'solo');
+  eq('and one with no keys is named from its text',
+    L.auditItemKey({ text: 'Weller 12 Year Old' }),
+    L.libKey('Weller 12 Year Old'));
+
+  const mac = n => ({ _key: 'mac_' + n, k: 'mac_' + n, dist: 'Macallan',
+    proof: 86, age: 30, sub: 'bourbon',
+    name: 'The Macallan 30 Year Old ' + n });
+  const macs = { mac_dc: mac('dc'), mac_fo: mac('fo'), mac_so: mac('so') };
+  const macPairs = seen => (L.libraryAudit(macs, seen, Date.now(), null)
+    .filter(x => x.id === 'samefacts')[0] || { items: [] }).items;
+  eq('three entries that match make three pairs',
+    macPairs({}).length, 3);
+  eq('and each pair is keyed by BOTH of its entries, sorted',
+    macPairs({}).map(i => i.key).sort().join(' '),
+    'mac_dc+mac_fo mac_dc+mac_so mac_fo+mac_so');
+  const judged = {};
+  judged[L.fbKey('samefacts:' + macPairs({})[0].key)] = { v: 'ok', at: Date.now() };
+  eq('judging one pair silences that pair and no other',
+    macPairs(judged).length, 2);
+  eq('and the pair left out of the judgement is still asked about',
+    macPairs(judged).some(i => i.key === 'mac_dc+mac_so'), true);
+
   eq('an empty library is not a crash', L.libraryAudit({}).length, 0);
   eq('and neither is nothing at all', L.libraryAudit(null).length, 0);
 
