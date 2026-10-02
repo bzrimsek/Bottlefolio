@@ -451,8 +451,8 @@ QUESTION, not the name you were going to use.
 - **`L.giftList`** — A wishlist somebody could actually buy from
 - **`L.giftText`** — The same list as a message
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
-- **`L.groupCounts`** — WHAT A GROUP HAS, said in the two ways that need no circles
 - **`L.groupOf`** — _no comment above it_
+- **`L.groupShared`** — WHAT A GROUP HAS, said in the two ways that need no circles
 - **`L.groupWorthGoing`** — _no comment above it_
 - **`L.guessScar`** — _no comment above it_
 - **`L.guessSub`** — _no comment above it_

@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.79  ·  2026-10-01 09:45 PM ET
+
+Past three buddies the Venn becomes two numbers, and both of them open the list behind them. A count of what a group shares is not what somebody planning a night wants to read, and with no circles to press those numbers were the end of the road (BZ, 2026-10-01). Both open, not only the intersection: they sit side by side and one being pressable and the other not is a half-live control. L.groupShared answers with the products rather than a count and the tiles count what it hands them, so the number on a tile is the length of the rows behind it by construction - L.groupCounts was a second function answering with a number and is gone. Open and sealed are said only where one answer is true: everybody holds the intersection so it is said against your own shelf, while what is between you spans several shelves and no single answer is, which is the rule the pair diagram already follows for its overlap.
+
 ## v2.6.78  ·  2026-10-01 09:36 PM ET
 
 The duplicate grouping asks the taxonomy, which was the last comparison that did not. shopNorm deletes 100 Proof along with the category words, so Sazerac 100 Proof Straight Rye Whiskey and Sazerac Rye landed in one bucket - two of the three Sazeracs BZ holds, at 100, 125 and 90 proof - and he had said no to the pair more than once. A finding somebody is told to ignore repeatedly is how a report comes to be skimmed. A reserved word in the wrong field is refused by the library editor rather than reported days later by a scan with a Fix beside it, through L.reservedIn, the one door the cask check, the style check and the editor all ask - the style check had a dozen words spelled out as a regex of its own, every one of them already in bottleMarks or SCAR_FIND. Merge is offered only between two library entries: a shelf-join row whose left side is a bottle filed under no entry offered a merge that could only answer that it could not find the entry, and each side of those rows now says which it is. Run against the live library the whole audit is 10 rows where it was 27.

@@ -5517,19 +5517,27 @@ const with_ = (id, keys) => {
 };
 const three = [with_('me', ['a', 'b', 'c']), with_('u1', ['b', 'c', 'd']),
                with_('u2', ['c', 'd', 'e'])];
-const n3 = L.groupCounts(three);
+/* COUNTED OFF THE LIST ITSELF. L.groupCounts was a second function answering
+   with a number and nothing in the app called it any more - the tiles count what
+   groupShared hands them, so the number on a tile is the length of the rows
+   behind it by construction (2026-10-01). */
+const sizes = sets => {
+  const got = L.groupShared(sets);
+  return { together: got.together.length, all: got.all.length };
+};
+const n3 = sizes(three);
 eq('everything the group could pour between them', n3.together, 5);
 eq('and what every one of them holds', n3.all, 1);
 /* One person is a group of one: everything they have, all of it shared. */
-const one = L.groupCounts([with_('me', ['a', 'b'])]);
+const one = sizes([with_('me', ['a', 'b'])]);
 eq('a group of one holds all of its own', one.together, 2);
 eq('and shares all of it with itself', one.all, 2);
 /* Nobody is nothing, and does not divide by a room of zero. */
-eq('an empty room counts nothing', L.groupCounts([]).together, 0);
-eq('and claims nothing in common', L.groupCounts([]).all, 0);
+eq('an empty room counts nothing', sizes([]).together, 0);
+eq('and claims nothing in common', sizes([]).all, 0);
 /* A person with an empty shelf takes the common count to nothing without
    taking the together count with it. */
-const withEmpty = L.groupCounts(three.concat([g('u3')]));
+const withEmpty = sizes(three.concat([g('u3')]));
 eq('somebody with nothing open still leaves the pool', withEmpty.together, 5);
 eq('but there is then nothing all of them hold', withEmpty.all, 0);
 }
@@ -25813,6 +25821,32 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.dupeGroups(bucket, null).length, 1);
   eq('a bucket of one is never a duplicate',
     L.dupeGroups({ x: [sz[0]] }, szBrands).length, 0);
+
+  /* PAST THREE PEOPLE THERE ARE NO CIRCLES, so the two numbers are the only way
+     into the list - and a count of what a group shares is not what somebody
+     planning a night wants to read (BZ, 2026-10-01). */
+  const gs = [
+    { id: 'me', map: { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' },
+      c: { k: 'c', name: 'C' } } },
+    { id: 'x', map: { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' } } },
+    { id: 'y', map: { a: { k: 'a', name: 'A' }, d: { k: 'd', name: 'D' } } },
+    { id: 'z', map: { a: { k: 'a', name: 'A' }, e: { k: 'e', name: 'E' } } }
+  ];
+  const shared = L.groupShared(gs);
+  eq('what every one of them holds', shared.all.map(p => p.k).join(','), 'a');
+  eq('and everything between them',
+    shared.together.map(p => p.k).sort().join(','), 'a,b,c,d,e');
+  /* THE TILE COUNTS THE LIST IT OPENS. There is no second function answering
+     with a number any more - the screen counts what groupShared hands it - so
+     the tile and the rows behind it cannot disagree about one fact, which is
+     what the pair tiles were given vennRegions for (BZ, 2026-09-25).
+  /* THE LIST IS PRODUCTS, not keys, because the rows that open from it are
+     drawn from products. */
+  eq('the shared list carries products', (shared.all[0] || {}).name, 'A');
+  eq('nobody at all shares nothing', L.groupShared([]).all.length, 0);
+  /* AND ONE PERSON SHARES EVERYTHING THEY HAVE WITH THEMSELVES, which is the
+     degenerate case the count has to agree with. */
+  eq('one person alone', L.groupShared([gs[0]]).all.length, 3);
 
   /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
      and before it, "if the library is the macro inventory and we each link to
