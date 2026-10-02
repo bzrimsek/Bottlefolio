@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 894 |
+| functions | 895 |
 | tables | 212 |
-| carrying a stated purpose | 701 |
+| carrying a stated purpose | 702 |
 
 ## Tables
 
@@ -946,6 +946,7 @@ QUESTION, not the name you were going to use.
 - **`L.sheetLeaks`** — _no comment above it_
 - **`L.sheetRowHeight`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
 - **`L.shelfAxes`** — _no comment above it_
+- **`L.shelfBooksLine`** — THE LINE UNDER THE BOOKS
 - **`L.shelfBuild`** — _no comment above it_
 - **`L.shelfCountLine`** — How many whiskies are listed, against how many are owned.
 - **`L.shelfEnd`** — _no comment above it_

@@ -2622,7 +2622,7 @@ sec('a shared trait has to be a habit, not an inventory');
   /* The counts always, the verdict only when it is true: suppressing the whole
      line threw away two real numbers to avoid one false sentence. */
   eq('the numbers are said whether or not the verdict is',
-    [/48 bottles filed obscure and 105 hard to get/
+    [/48 whiskies filed obscure and 105 hard to get/
       .test(L.labelLine({ obscure: 48, rare: 105 }, 351)),
       /not buying labels/.test(L.labelLine({ obscure: 48, rare: 105 }, 351))],
     [true, false]);
@@ -10541,6 +10541,16 @@ sec('\u00a7223 what the shelf adds up to');
     L.shelfSummaryLine({ bottles: 1, open: 1, sealed: 0, worth: 0,
       priced: 0, spent: 0, showSpent: false }), '1 bottle  \u00b7  1 open');
 
+  /* THE LINE UNDER THE BOOKS counts WHISKIES, which is what L.shelfTypeTiles
+     tallies - one per catalogue entry owned. It said bottles, and sat one away
+     from the masthead's open-bottle count, so it read as an off-by-one that was
+     not one (BZ, 2026-10-02: "i don't understand the 1 bottle difference"). */
+  eq('the books line counts whiskies, and says so',
+    L.shelfBooksLine(351), '351 whiskies to search, filter and sort.');
+  eq('and one of them is a whisky', L.shelfBooksLine(1),
+    '1 whisky to search, filter and sort.');
+  eq('it never says bottles', /bottle/.test(L.shelfBooksLine(351)), false);
+
   eq('everything shown is just the count', L.shelfCountLine(12, 12),
     '12 whiskies');
   eq('a filtered shelf says so', L.shelfCountLine(3, 12), '3 of 12');
@@ -11356,7 +11366,7 @@ sec('§232 the portrait a shelf earns');
   const pxP = L.shelfPortrait(px.cat, px.bs, {});
   eq('eight does', pxP.title, 'PX Lover');
   eq('and the number that earned it is shown',
-    /8 bottles finished in Pedro Ximenez/.test(pxP.why), true);
+    /8 whiskies finished in Pedro Ximenez/.test(pxP.why), true);
 
   /* A compound finish still counts toward the wood that is in it — the
      whole reason woods are split (§228). */
