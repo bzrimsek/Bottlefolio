@@ -149,19 +149,33 @@ jobs:
       # be what stops a green one; ios.js proves WebKit can launch and names the
       # missing library when it cannot, which is how libevent and then
       # libgstcodecparsers were found.
-      - name: WebKit's system libraries
-        continue-on-error: true
-        timeout-minutes: 8
-        run: npx playwright install-deps webkit
-
-      # The cache holds the browsers, not the system packages they need, and
-      # every run starts on a fresh machine. So a cache hit still installs
-      # them, which is the half of --with-deps the cache cannot supply.
+      # CHROMIUM'S FIRST, AND SYNCHRONOUSLY. The cache holds the browsers, not
+      # the system packages they need, and every run starts on a fresh machine,
+      # so a cache hit still installs them - the half of --with-deps the cache
+      # cannot supply. It is three seconds, and every check up to the slow group
+      # drives Chromium, so a check starting without these would fail for a
+      # reason that reads like a code fault.
       - name: Chromium's, if it wants any
         if: steps.pwcache.outputs.cache-hit == 'true'
         continue-on-error: true
         timeout-minutes: 6
         run: npx playwright install-deps chromium-headless-shell
+
+      # AND WEBKIT'S IN THE BACKGROUND (2026-10-02). It is 48 seconds - measured
+      # on run 37033570617, the same as all eleven fast checks together - and
+      # nothing before the slow group needs it, because only ios.js drives
+      # WebKit. So apt works while the checks do, and "Wait for WebKit's
+      # libraries" collects it immediately before the group that needs it.
+      #
+      # BELOW CHROMIUM'S ON PURPOSE: apt takes one lock. Started first, this
+      # would have left that three-second step waiting out this forty-eight
+      # second one - the same wall clock, spent waiting rather than installing.
+      - name: WebKit's system libraries, started in the background
+        run: |
+          nohup npx playwright install-deps webkit \
+            > /tmp/webkit-deps.log 2>&1 &
+          echo $! > /tmp/webkit-deps.pid
+          echo "started as pid $(cat /tmp/webkit-deps.pid)"
 
       # BZ's real shelf. The suite will not start without it, and the repo is
       # public, so only the encrypted copies are committed. The key is the
@@ -221,6 +235,23 @@ jobs:
 
       - name: The gate - what the engine costs
         run: python3 gate.py --cost
+
+      # COLLECTED IMMEDIATELY BEFORE THE ONE GROUP THAT NEEDS WEBKIT. On the
+      # measured timing the fast checks outlast apt, so this waits for nothing;
+      # it is here so that a slower mirror cannot let ios.js start against
+      # half-installed libraries.
+      #
+      # IT CANNOT FAIL THE BUILD, as it could not before: ios.js is what proves
+      # WebKit can launch, and it names the missing library when it cannot.
+      - name: Wait for WebKit's libraries
+        continue-on-error: true
+        timeout-minutes: 8
+        run: |
+          if [ -f /tmp/webkit-deps.pid ]; then
+            pid=$(cat /tmp/webkit-deps.pid)
+            while kill -0 "$pid" 2>/dev/null; do sleep 2; done
+          fi
+          tail -5 /tmp/webkit-deps.log || true
 
       - name: The gate - the browsers and the rules
         run: python3 gate.py --slow
