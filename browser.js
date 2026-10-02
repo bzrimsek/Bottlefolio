@@ -4776,6 +4776,31 @@ function step(n) {
               const a = ti.getBoundingClientRect(), m = mk.getBoundingClientRect();
               if (a.left < m.right) out.push(t + ': title runs under the mark');
             }
+            /* AND IT IS CENTRED ON THE PAGE WHERE THERE IS ROOM TO BE. A
+               different question from clearing the controls, which 22px right of
+               centre does - and did, on eleven screens (BZ, 2026-10-02: "all page
+               titles seem slightly off center to the right aside from home").
+
+               WHERE THERE IS ROOM means the wider side fits twice over with the
+               title between: that is what lets the two sides be made equal. On
+               the shelf, driven here, the right group is 154px against a 99px
+               mark and twice 154 plus the title is wider than the screen, so the
+               title centres in what is left instead - the trade-off the
+               stylesheet describes, whose alternative measured 0px wide. */
+            const h1 = ti && ti.querySelector('h1');
+            if (h1 && h1.getBoundingClientRect().width) {
+              const w = e => e ? e.getBoundingClientRect().width : 0;
+              const r1 = h1.getBoundingClientRect();
+              const page = document.documentElement.clientWidth;
+              const room = Math.max(w(mk), w(rg)) * 2 + r1.width <= page;
+              const off = (r1.left + r1.right) / 2 - page / 2;
+              if (room && Math.abs(off) > 2) {
+                out.push(t + ': title is ' + Math.round(off) + 'px off centre'
+                  + ' with room to be centred (mark ' + Math.round(w(mk))
+                  + ', right ' + Math.round(w(rg)) + ', title '
+                  + Math.round(r1.width) + ')');
+              }
+            }
           }
           /* The opening block must be VISIBLE, not merely present — the
              fault was CSS hiding text that was in the DOM all along. */
