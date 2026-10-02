@@ -895,6 +895,7 @@ QUESTION, not the name you were going to use.
 - **`L.regionFault`** — A REGION THAT BELONGS TO ANOTHER COUNTRY'S WHISKY.
 - **`L.regionFaultRow`** — _no comment above it_
 - **`L.regionOf`** — _no comment above it_
+- **`L.rekeyPlan`** — THE NAME COMES FROM THE KEY, because a bottle with no record has nothing else
 - **`L.relabel`** — they are always relabelled from the current order rather than stored.
 - **`L.rememberBuddies`** — PRUNED ONLY ON A GOOD READ, which is the caller's business
 - **`L.rememberRead`** — _no comment above it_
@@ -1005,7 +1006,6 @@ QUESTION, not the name you were going to use.
 - **`L.stateOf`** — _no comment above it_
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
 - **`L.strandedBottles`** — NO ENTRY, AND NOTHING TO JOIN IT TO
-- **`L.strandedSay`** — WHY THIS ONE IS STUCK, because three different things strand a bottle and the
 - **`L.stripMarkup`** — Anything a model returns can carry citation markup ([cite index=...]).
 - **`L.styleBackfill`** — What a pass over the library would change, before it changes anything.
 - **`L.styleFromName`** — _no comment above it_

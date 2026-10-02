@@ -10560,15 +10560,16 @@ sec('\u00a7223 what the shelf adds up to');
                                { k: 'ghost-2', status: 'open' }]);
   eq('a key the catalogue does not hold is unlisted',
     L.unlistedBottles(uCat, uGhost).length, 2);
+  /* IT NO LONGER BLAMES THE LIBRARY: his nineteen are filed under their own
+     display names, so nothing ever asked the library about them (2026-10-02). */
   eq('and is reported as what it is',
     L.unlistedLine(uCat, uGhost),
-    '2 bottles on your shelf are not listed on it: nothing in the library '
-    + 'matches their names, so no cards are drawn for them and no total '
-    + 'counts them.');
+    '2 bottles are on your shelf but not listed on it: no cards are drawn for '
+    + 'them and no total counts them.');
   eq('one of them reads as one',
     L.unlistedLine(uCat, uHave.concat([{ k: 'ghost-1', status: 'open' }])),
-    '1 bottle on your shelf is not listed on it: nothing in the library '
-    + 'matches its name, so no card is drawn for it and no total counts it.');
+    '1 bottle is on your shelf but not listed on it: no card is drawn for it '
+    + 'and no total counts it.');
   /* A BOTTLE THAT IS GONE IS NOT MISSING, it is drunk: it was never going to be
      listed, and reporting it would make the line permanent. */
   eq('a retired bottle with no entry is not reported',
@@ -10620,33 +10621,6 @@ sec('\u00a7223 what the shelf adds up to');
   eq('every stranded bottle is one no join covers',
     sLost.filter(p => sJoin.some(h => h.key === p.key)).length, 0);
 
-  /* WHAT IS STOPPING THAT ONE. The record-less case answers first: every other
-     answer advises a change to a bottle that draws no card to open. */
-  const sKnown = L.knownHere(sLib, {});
-  const noRec = { key: 'willett-family-estate-4yr',
-    name: 'willett-family-estate-4yr' };
-  eq('a bottle with only a key says so, and what to do',
-    /^no record at all/.test(L.strandedSay(noRec, sKnown)), true);
-  eq('a name the library already holds names the entry it clashes with',
-    L.strandedSay({ key: 'x', name: 'Nonesuch Distillery Rye' }, sKnown)
-      .indexOf('Nonesuch Distillery Rye') > 0, true);
-  eq('and the key it reads back as matches the one the app would make',
-    L.libKey(L.keyAsName('willett_family_estate_4yr')),
-    'willett_family_estate_4yr');
-  eq('a publishable stranger says an entry can be made',
-    L.strandedSay({ key: 'y', name: 'Far Hollow Straight Rye',
-      dist: 'Far Hollow', sub: 'rye' }, sKnown),
-    'nothing like it in the library \u2014 an entry can be made for it');
-  /* AND THE JOIN STAYS STRICT. A marked expression is a different bottling, not
-     a fuller spelling, so this pair must NOT be joined - a looser matcher would
-     shorten the stranded list by claiming joins it should refuse. */
-  eq('single barrel is not a fuller way of saying the plain bottling',
-    !!(L.nameContains('Blanton\u2019s', 'Blanton\u2019s Single Barrel') || {}).marked,
-    true);
-  eq('and one with neither a distillery nor a category says which it needs',
-    L.strandedSay({ key: 'z', name: 'Some Barrel Pick' }, sKnown)
-      .indexOf('too thin to publish') === 0, true);
-
   /* THE KEY AS WORDS, which is what draws the card. */
   eq('a key reads back as words', L.keyAsName('willett-family-estate-4yr'),
     'Willett Family Estate 4yr');
@@ -10654,6 +10628,47 @@ sec('\u00a7223 what the shelf adds up to');
     'Old Forester 1920');
   eq('and no key is no name', L.keyAsName(''), '');
   eq('nor does a missing one throw', L.keyAsName(null), '');
+
+  /* PUTTING THEM BACK WHERE THEY BELONG. BZ's nineteen turned out to be filed
+     under their own display names - his screenshot printed a full proper name
+     beside "only the key it was filed under", which is only possible if the key
+     IS that sentence (2026-10-02). */
+  const rkCat = { bruichladdich_octomore_16_1:
+    { k: 'bruichladdich_octomore_16_1', name: 'Bruichladdich Octomore 16.1' } };
+  const rkShelf = [
+    { k: 'bruichladdich_octomore_16_1', status: 'open' },
+    { k: 'Bunnahabhain Toiteach A Dha Single Malt Scotch Whisky', status: 'open' },
+    { k: 'willett_family_estate_4yr', status: 'sealed' }
+  ];
+  const rkPlan = L.rekeyPlan(rkCat, rkShelf);
+  eq('a bottle the catalogue already holds is left alone',
+    rkPlan.filter(p => p.from === 'bruichladdich_octomore_16_1').length, 0);
+  eq('a bottle filed under its own name gets the key the app would have made',
+    (rkPlan.filter(p => /^Bunnahabhain/.test(p.from))[0] || {}).to,
+    L.libKey('Bunnahabhain Toiteach A Dha Single Malt Scotch Whisky'));
+  eq('and keeps the name, not the key, as its name',
+    (rkPlan.filter(p => /^Bunnahabhain/.test(p.from))[0] || {}).name,
+    'Bunnahabhain Toiteach A Dha Single Malt Scotch Whisky');
+  /* A KEY A MERGE LEFT is already the right shape, so re-keying is a no-op and
+     what it needs is the record, which the screen writes under the same key. */
+  eq('a slug with no record keeps its key',
+    (rkPlan.filter(p => p.from === 'willett_family_estate_4yr')[0] || {}).to,
+    'willett_family_estate_4yr');
+  eq('and is named from it', (rkPlan.filter(p =>
+    p.from === 'willett_family_estate_4yr')[0] || {}).name,
+    'Willett Family Estate 4yr');
+  /* EVERY PLANNED KEY IS ONE THE APP WOULD HAVE MADE, which is the whole point:
+     a bottle lands where every other bottle of that whisky already is. */
+  eq('every planned key is a key this app would make',
+    rkPlan.filter(p => L.libKey(p.name) !== p.to).length, 0);
+  eq('one row per key, however many bottles share it',
+    L.rekeyPlan(rkCat, rkShelf.concat([
+      { k: 'willett_family_estate_4yr', status: 'open' }])).length, rkPlan.length);
+  eq('a bottle that is gone is not put back',
+    L.rekeyPlan(rkCat, [{ k: 'some_key_with_no_record', status: 'gone',
+      exit: 'drunk' }]).length, 0);
+  eq('and an absent shelf plans nothing', L.rekeyPlan(null, null).length, 0);
+
 
 }
 
