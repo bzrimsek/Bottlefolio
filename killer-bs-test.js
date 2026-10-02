@@ -19746,7 +19746,12 @@ sec('\u00a7355 what the library contradicts');
     e: { name: 'Buffalo Trace Single Barrel', proof: 90, sub: 'bourbon',
          dist: 'Buffalo  Trace' }
   };
-  const ids = L.libraryAudit(inherited).map(f => f.id);
+  /* WITH THE REGISTRY, because a library scan makes no pair claim without one
+     (2026-10-02). The brands here are the fixture's own. */
+  const inhBrands = { ardbeg: { name: 'Ardbeg' }, old_elk: { name: 'Old Elk' },
+    buffalo_trace: { name: 'Buffalo Trace' } };
+  const ids = L.libraryAudit(inherited, {}, Date.now(), inhBrands)
+    .map(f => f.id);
   eq('the same whisky under two names is found',
     ids.indexOf('dups') >= 0, true);
   /* Stranded means nowhere else, which the fixture no longer is. */
@@ -19797,23 +19802,101 @@ sec('\u00a7355 what the library contradicts');
     L.auditItemKey({ text: 'Weller 12 Year Old' }),
     L.libKey('Weller 12 Year Old'));
 
-  const mac = n => ({ _key: 'mac_' + n, k: 'mac_' + n, dist: 'Macallan',
-    proof: 86, age: 30, sub: 'bourbon',
-    name: 'The Macallan 30 Year Old ' + n });
-  const macs = { mac_dc: mac('dc'), mac_fo: mac('fo'), mac_so: mac('so') };
-  const macPairs = seen => (L.libraryAudit(macs, seen, Date.now(), null)
-    .filter(x => x.id === 'samefacts')[0] || { items: [] }).items;
-  eq('three entries that match make three pairs',
-    macPairs({}).length, 3);
-  eq('and each pair is keyed by BOTH of its entries, sorted',
-    macPairs({}).map(i => i.key).sort().join(' '),
+  /* THREE ENTRIES THAT PAIR WITH EACH OTHER make three pairs out of two first
+     entries, which is how one verdict came to answer for a pair nobody had
+     looked at: keyed on the first alone, (dc,fo) and (dc,so) shared a slot.
+     Asked of the doors rather than of a fixture, because the taxonomy now tells
+     the Macallan 30s apart by expression and they are rightly no longer
+     pairs. */
+  const macRows = [{ keys: ['mac_dc', 'mac_fo'], text: 'Double Cask  ==  Fine Oak' },
+    { keys: ['mac_dc', 'mac_so'], text: 'Double Cask  ==  Sherry Oak' },
+    { keys: ['mac_fo', 'mac_so'], text: 'Fine Oak  ==  Sherry Oak' }];
+  eq('three pairs over three entries get three keys',
+    macRows.map(L.auditItemKey).join(' '),
     'mac_dc+mac_fo mac_dc+mac_so mac_fo+mac_so');
-  const judged = {};
-  judged[L.fbKey('samefacts:' + macPairs({})[0].key)] = { v: 'ok', at: Date.now() };
-  eq('judging one pair silences that pair and no other',
-    macPairs(judged).length, 2);
-  eq('and the pair left out of the judgement is still asked about',
-    macPairs(judged).some(i => i.key === 'mac_dc+mac_so'), true);
+  const macSeen = {};
+  macSeen[L.fbKey('samefacts:' + L.auditItemKey(macRows[0]))] =
+    { v: 'ok', at: Date.now() };
+  const macLeft = macRows.filter(r =>
+    !L.auditVerdict(macSeen, 'samefacts:' + L.auditItemKey(r), Date.now()));
+  eq('judging one pair silences that pair and no other', macLeft.length, 2);
+  eq('and the pair that shares an entry with it is still asked about',
+    macLeft.some(r => L.auditItemKey(r) === 'mac_dc+mac_so'), true);
+
+  /* ONE BRAND, HOWEVER IT WAS FILED. The registry is built from TTB label
+     filings, where a brand is filed "W.L. WELLER" one year and "WELLER" another,
+     so it held two brands for one - and the taxonomy then called W.L. Weller 12
+     and Weller 12 different bottles, which is the pair BZ had merged by hand an
+     hour earlier ("The are the same weller"). A single-letter word at the front
+     is an initial, never the brand. */
+  eq('initials are not the brand', L.brandKey('W.L. Weller'), 'weller');
+  eq('however many of them there are', L.brandKey('J.T.S. Brown'), 'brown');
+  eq('and the rest of the name survives',
+    L.brandKey('A. Smith Bowman'), 'smith bowman');
+  eq('a brand with no initials is untouched',
+    L.brandKey('Buffalo Trace'), 'buffalo trace');
+  /* A BRAND THAT IS ONLY AN INITIAL KEEPS IT, or it would have no name left. */
+  eq('a one-letter brand keeps its letter', L.brandKey('W'), 'w');
+  eq('and nothing is nothing', L.brandKey(''), '');
+
+  /* THE TAXONOMY DECIDES, OR NOTHING DOES (BZ, 2026-10-02: "Use the damn
+     taxonomy for the library operations"). Both of these were in the report he
+     was shown: Sazerac 100 Proof against Sazerac Rye, which is 100 against 90
+     and a bottling he has refused more than once, and a single malt against a
+     blend out of the same distillery. The registry is read asynchronously and
+     nothing waited for it, so the weak fallback ran on every first scan. */
+  const taxRows = {
+    sz100: { _key: 'sz100', k: 'sz100', dist: 'Buffalo Trace', proof: 100,
+      sub: 'rye', name: 'Sazerac 100 Proof Straight Rye Whiskey' },
+    szrye: { _key: 'szrye', k: 'szrye', dist: 'Buffalo Trace', proof: 90,
+      sub: 'rye', name: 'Sazerac Rye' },
+    aberf: { _key: 'aberf', k: 'aberf', dist: 'Aberfeldy', proof: 80, age: 12,
+      sub: 'scotch', name: 'Aberfeldy' },
+    dewar: { _key: 'dewar', k: 'dewar', dist: 'Aberfeldy', proof: 80, age: 12,
+      sub: 'scotch', name: 'Dewar’s 12 Year Old Blended Scotch Whisky' }
+  };
+  const taxBrands = { sazerac: { name: 'Sazerac' },
+    aberfeldy: { name: 'Aberfeldy' }, dewar_s: { name: 'Dewar’s' } };
+  /* THE SHARED LIBRARY'S SCAN, which is L.dropPairClaims over the audit - the
+     door the screen asks. Check the import runs the audit WITHOUT it, over
+     somebody's own bottles, and keeps its duplicate finding. */
+  const taxPairs = brands => L.dropPairClaims(
+    L.libraryAudit(taxRows, {}, Date.now(), brands), brands)
+    .filter(f => L.PAIR_CLAIMS.indexOf(f.id) >= 0)
+    .reduce((n, f) => n + f.items.length, 0);
+  eq('with the taxonomy, neither of his pairs is claimed',
+    taxPairs(taxBrands), 0);
+  eq('and without the taxonomy the scan claims nothing at all',
+    taxPairs(null), 0);
+  eq('because every pair finding is dropped without it',
+    L.dropPairClaims([{ id: 'dups' }, { id: 'samestart' },
+      { id: 'samefacts' }, { id: 'proofname' }], null).map(f => f.id).join(),
+    'proofname');
+  eq('and kept with it',
+    L.dropPairClaims([{ id: 'dups' }, { id: 'proofname' }],
+      taxBrands).length, 2);
+  /* THE IMPORT CHECK KEEPS ITS FALLBACK. It runs the same rules over somebody's
+     own CSV, on their own device, where there is no registry to have - and one
+     bottle entered twice is the whole point of that screen. Asserting it here
+     because the first version of this fix silenced it, and an older assertion
+     was what caught that. */
+  eq('an import still finds one bottle entered twice, with no registry',
+    L.importAudit({ a: { k: 'a', name: 'Barrell Private Release',
+      dist: 'Barrell', proof: 110, sub: 'bourbon' },
+      b: { k: 'b', name: 'Barrell Private Release Whiskey',
+        dist: 'Barrell', proof: 110, sub: 'bourbon' } }, [])
+      .filter(f => f.id === 'dups').length, 1);
+  /* AND THE LIBRARY SCAN STILL FINDS A REAL ONE, or silence would be cheap. */
+  const wel = n => ({ _key: L.libKey(n), k: L.libKey(n), name: n,
+    dist: 'Buffalo Trace', proof: 90, age: 12, sub: 'bourbon' });
+  const welRows = {};
+  ['W.L. Weller 12 Year Old', 'Weller 12 Year Old']
+    .forEach(n => { welRows[L.libKey(n)] = wel(n); });
+  eq('one whisky written two ways is still reported',
+    L.libraryAudit(welRows, {}, Date.now(),
+      { w_l_weller: { name: 'W.L. Weller' }, weller: { name: 'Weller' } })
+      .filter(f => ['dups', 'samestart', 'samefacts'].indexOf(f.id) >= 0)
+      .reduce((n, f) => n + f.items.length, 0) > 0, true);
 
   eq('an empty library is not a crash', L.libraryAudit({}).length, 0);
   eq('and neither is nothing at all', L.libraryAudit(null).length, 0);

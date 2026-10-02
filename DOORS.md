@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 896 |
-| tables | 212 |
-| carrying a stated purpose | 703 |
+| functions | 898 |
+| tables | 213 |
+| carrying a stated purpose | 705 |
 
 ## Tables
 
@@ -125,6 +125,7 @@ QUESTION, not the name you were going to use.
 - **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
 - **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
+- **`L.PAIR_CLAIMS`** — WHICH FINDINGS CLAIM THAT TWO ENTRIES ARE ONE BOTTLE
 - **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]
 - **`L.PALATE_FAMILIES`** — _lab/cwm.js is the record
@@ -294,7 +295,8 @@ QUESTION, not the name you were going to use.
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
-- **`L.brandOf`** — THE BRAND THE REGISTRY KNOWS A NAME BY
+- **`L.brandKey`** — ONE BRAND, HOWEVER IT WAS FILED
+- **`L.brandOf`** — _no comment above it_
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
@@ -356,6 +358,7 @@ QUESTION, not the name you were going to use.
 - **`L.doubledProofFinding`** — A PROOF THAT IS TWICE THE REAL ONE, as a finding.
 - **`L.drinkingFinding`** — The sentence worth saying, or none
 - **`L.drinkingVsShelf`** — _no comment above it_
+- **`L.dropPairClaims`** — ASKED BY THE SHARED LIBRARY'S SCAN AND NOTHING ELSE
 - **`L.dupeFindings`** — _no comment above it_
 - **`L.dupeGroups`** — WITHOUT A REGISTRY the names are all there is, which is where this started.
 - **`L.editsApart`** — HOW FAR APART TWO SPELLINGS ARE, in single-character edits, and never more
