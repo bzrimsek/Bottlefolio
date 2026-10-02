@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 884 |
+| functions | 886 |
 | tables | 210 |
-| carrying a stated purpose | 693 |
+| carrying a stated purpose | 692 |
 
 ## Tables
 
@@ -353,7 +353,8 @@ QUESTION, not the name you were going to use.
 - **`L.doubledProofFinding`** — A PROOF THAT IS TWICE THE REAL ONE, as a finding.
 - **`L.drinkingFinding`** — The sentence worth saying, or none
 - **`L.drinkingVsShelf`** — _no comment above it_
-- **`L.dupeFindings`** — EVERY SHAPE OF POTENTIAL DUPLICATE, as findings to review (BZ, 2026-09-30:
+- **`L.dupeFindings`** — _no comment above it_
+- **`L.dupeGroups`** — WITHOUT A REGISTRY the names are all there is, which is where this started.
 - **`L.editsApart`** — HOW FAR APART TWO SPELLINGS ARE, in single-character edits, and never more
 - **`L.emptyFindSay`** — THE THREE EMPTY ANSWERS, which must not read alike
 - **`L.emptyOf`** — _no comment above it_
@@ -393,7 +394,7 @@ QUESTION, not the name you were going to use.
 - **`L.findability`** — _no comment above it_
 - **`L.findRank`** — Unknown goes LAST.
 - **`L.findUrl`** — Where a hard bottle can actually be got.
-- **`L.finFaults`** — EVERYTHING THAT CAN BE IN THE CASK FIELD WRONGLY, which is one subject
+- **`L.finFaults`** — _no comment above it_
 - **`L.finFromName`** — THE FINISH A NAME STATES
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
@@ -895,6 +896,7 @@ QUESTION, not the name you were going to use.
 - **`L.rememberRead`** — _no comment above it_
 - **`L.removePour`** — _no comment above it_
 - **`L.repoint`** — POINTING BOTTLES AT ANOTHER PRODUCT
+- **`L.reservedIn`** — _no comment above it_
 - **`L.resetSide`** — WHO HAS THE LAST WORD ON ONE KEY AFTER A REPLACEMENT.
 - **`L.resolveLibKey`** — _no comment above it_
 - **`L.resolveUpc`** — cannot be searched by name, so the barcode store comes first.

@@ -25745,6 +25745,75 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.sameBottle({ name: 'X', dist: 'Heaven Hill' },
       { name: 'X', dist: 'Buffalo Trace' }, {}), false);
 
+  /* A RESERVED WORD IN THE WRONG FIELD, refused at the door now rather than
+     reported days later by a scan with a Fix beside it (BZ, 2026-10-01:
+     "reserved words in the wrong field should be obvious"). Every one of these
+     was in the live library. */
+  eq('a law is not a cask',
+    !!L.reservedIn('fin', 'Bottled in Bond'), true);
+  eq('nor is a strength',
+    !!L.reservedIn('fin', 'cask strength'), true);
+  eq('nor a scarcity', !!L.reservedIn('fin', 'limited'), true);
+  /* AND A REAL CASK PASSES, which is the half that makes it a check. */
+  eq('a sherry cask is a cask', L.reservedIn('fin', 'Oloroso Sherry'), null);
+  eq('and a cask named in five words',
+    L.reservedIn('fin', 'first fill Oloroso sherry butt'), null);
+  /* THE WHOLE VALUE DECIDES, never a word inside it: "single cask, single malt"
+     names a real style and a cask, and matching a word within it called a
+     correct entry a fault. */
+  eq('a style that names a cask as well is not a fault',
+    L.reservedIn('style', 'single cask, single malt'), null);
+  eq('but a style that is only a class is',
+    !!L.reservedIn('style', 'cask strength'), true);
+  /* SMALL BATCH IS NOT A SPECIAL CLASS (BZ: house marketing) and is still not a
+     style, which is why the two questions have two lists. */
+  eq('small batch is not a style', !!L.reservedIn('style', 'small batch'), true);
+  eq('and it is not a mark',
+    L.bottleMarks({ name: 'Four Roses Small Batch' }).join(','), '');
+  eq('a real style passes', L.reservedIn('style', 'bourbon'), null);
+  eq('and an empty field says nothing', L.reservedIn('fin', ''), null);
+  /* IT SAYS WHY, so a refusal can tell somebody what is wrong with the value. */
+  eq('it says what is wrong', /not a cask it sat in/
+    .test(L.reservedIn('fin', 'Bottled in Bond')), true);
+
+  /* AND THE DUPLICATE GROUPING ASKS THE TAXONOMY, the last comparison that did
+     not. shopNorm deletes "100 Proof" with the category words, so BZ’s two
+     Sazeracs - 100 proof and 90 - landed in one bucket and he said no to the
+     pair more than once (2026-10-01). */
+  const szBrands = {};
+  szBrands[L.libKey('Sazerac')] = { name: 'Sazerac' };
+  const sz = [
+    { _key: 's1', name: 'Sazerac 100 Proof Straight Rye Whiskey', proof: 100,
+      sub: 'rye', dist: 'Buffalo Trace' },
+    { _key: 's2', name: 'Sazerac Rye', proof: 90, sub: 'rye',
+      dist: 'Buffalo Trace' }
+  ];
+  const dupsOf = (rows, br) => (L.libraryAudit(
+    rows.reduce((o, r) => { o[r._key] = r; return o; }, {}), {}, null, br)
+    .filter(f => f.id === 'dups')[0] || { items: [] }).items.length;
+  eq('two strengths under one normalised name are not one bottle',
+    dupsOf(sz, szBrands), 0);
+  /* AND TWO THAT REALLY ARE one bottle still report, which is the half that
+     makes it a check. */
+  const same = [
+    { _key: 't1', name: "Angel’s Envy Bourbon", proof: 86.6,
+      sub: 'bourbon', dist: "Angel’s Envy" },
+    { _key: 't2', name: "Angels Envy Bourbon", proof: 86.6,
+      sub: 'bourbon', dist: "Angel’s Envy" }
+  ];
+  const aeB = {};
+  aeB[L.libKey("Angel’s Envy")] = { name: "Angel’s Envy" };
+  eq('one bottle written two ways still reports', dupsOf(same, aeB), 1);
+  /* THE GROUPING ITSELF, asked directly: a bucket of names that normalise alike
+     splits by what the bottles ARE. */
+  const bucket = { sazerac_rye: sz };
+  eq('a bucket of two bottlings falls apart',
+    L.dupeGroups(bucket, szBrands).length, 0);
+  eq('and the same bucket holds together without a registry',
+    L.dupeGroups(bucket, null).length, 1);
+  eq('a bucket of one is never a duplicate',
+    L.dupeGroups({ x: [sz[0]] }, szBrands).length, 0);
+
   /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
      and before it, "if the library is the macro inventory and we each link to
      it with what we own, this should be easy". It was the normalised NAME, so

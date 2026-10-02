@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.78  ·  2026-10-01 09:36 PM ET
+
+The duplicate grouping asks the taxonomy, which was the last comparison that did not. shopNorm deletes 100 Proof along with the category words, so Sazerac 100 Proof Straight Rye Whiskey and Sazerac Rye landed in one bucket - two of the three Sazeracs BZ holds, at 100, 125 and 90 proof - and he had said no to the pair more than once. A finding somebody is told to ignore repeatedly is how a report comes to be skimmed. A reserved word in the wrong field is refused by the library editor rather than reported days later by a scan with a Fix beside it, through L.reservedIn, the one door the cask check, the style check and the editor all ask - the style check had a dozen words spelled out as a regex of its own, every one of them already in bottleMarks or SCAR_FIND. Merge is offered only between two library entries: a shelf-join row whose left side is a bottle filed under no entry offered a merge that could only answer that it could not find the entry, and each side of those rows now says which it is. Run against the live library the whole audit is 10 rows where it was 27.
+
 ## v2.6.77  ·  2026-10-01 09:12 PM ET
 
 sameBottle goes deep into the taxonomy. It held five of the eight layers - house, type, age, proof, finish - and never looked at the brand, the expression or the special class, so Angel's Envy Bottled-in-Bond and Angel's Envy Cask Strength agreed on every fact it asked and read as one bottle, which is what ownsIt leans on to tell somebody they already own a whisky. It asks the special class and the release year always, and the brand and the expression whenever a registry is passed. LAYER BY LAYER, NOT STRING BY STRING: this function matches a PARTIAL read - a photograph, a shop listing - against a full entry, so every layer keeps the rule that a value only one side states contradicts nothing, and comparing whole identity strings would have made every blank layer a disagreement. The class marks only, because bottleMarks also carries the proof as a code and that is already its own layer.
