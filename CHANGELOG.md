@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.85  ·  2026-10-01 11:13 PM ET
+
+The Offers card is a sentence and the rows that need a person. L.intakeVerdict settles ninety-five of the ninety-six offers ever filed - already in, the same bottle under another spelling, going in, wanting a lookup - and exactly one needs somebody (BZ, 2026-10-01: the more we leverage canon, the less we should need to approve; canon plus taxonomy). The card already said so and then drew five lists of decisions nobody has to make around the one list that wants a person. What is going in on the next check is the same kind of thing as what went in last week - a record, not a question - so it joins what went in on its own, what was respelled and what is held, inside one fold that says how many settled without you and how they split. Nothing is hidden and nothing is harder to undo: every fold keeps its rows and its own take-back, one level further in.
+
 ## v2.6.84  ·  2026-10-01 11:01 PM ET
 
 One line on the Offers card for everything that decided itself. Run over the ninety-six offers ever filed, L.intakeVerdict settles ninety-five: sixty-two already in the library, twenty-seven the same bottle under another spelling, six that go in or want a lookup, and ONE that needs a person (BZ, 2026-10-01: the more we leverage canon, the less we should need to approve - canon plus taxonomy). The judgement was never the problem; the card was. Five folds stood side by side at the top of it - going in, dropping, went in on their own, respelled, held - every one a record of a decision already made, all competing with the one list that wants somebody. The three that record what already happened move inside a single fold saying how many settled without you and how they split, and each keeps its own take-back: take out, put the old spelling back, put back. What is left at the top of the card is what needs you.
