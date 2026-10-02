@@ -25705,6 +25705,46 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.dupeFindings(twice, null, ['m+n'])
       .filter(f => f.id === 'samestart').length, 0);
 
+  /* SAME BOTTLE, DEEP INTO THE TAXONOMY (BZ, 2026-10-01). It held five of the
+     eight layers and never looked at the brand, the expression or the special
+     class - so two Angel's Envy bottlings agreeing on house, type, age, proof
+     and cask came back as one bottle, which is what ownsIt leans on to tell
+     somebody they already own a whisky. */
+  const ae = n => ({ name: n, dist: "Angel's Envy", sub: 'bourbon' });
+  eq('a bonded and a cask strength are two bottles',
+    L.sameBottle(ae("Angel's Envy Bottled-in-Bond"),
+      ae("Angel's Envy Cask Strength"), {}), false);
+  eq('and a bonded and a single barrel',
+    L.sameBottle(ae("Angel's Envy Bottled in Bond"),
+      ae("Angel's Envy Single Barrel"), {}), false);
+  /* A CLASS ON ONE SIDE ONLY CONTRADICTS NOTHING, which is the rule this whole
+     function rests on: it matches a PARTIAL read against a full entry. */
+  eq('a class only one side states still matches',
+    L.sameBottle(ae("Angel's Envy"),
+      ae("Angel's Envy Bottled-in-Bond"), {}), true);
+  /* AND THE SAME CLASS WRITTEN TWO WAYS is one class. */
+  eq('bottled-in-bond and bonded are one class',
+    L.sameBottle(ae("Angel's Envy Bottled-in-Bond"),
+      ae("Angel's Envy Bonded"), {}), true);
+  /* A DIFFERENT YEAR IS A DIFFERENT BOTTLE, through the door that says so. */
+  eq('two releases are two bottles',
+    L.sameBottle(ae("Angel's Envy 2021 Release"),
+      ae("Angel's Envy 2023 Release"), {}), false);
+  /* AND WITH A REGISTRY, the brand and the expression answer too. */
+  const aeBrands = {};
+  aeBrands[L.libKey("Angel's Envy")] = { name: "Angel's Envy" };
+  eq('two expressions are two bottles when the brand is known',
+    L.sameBottle(ae("Angel's Envy Triple Oak"),
+      ae("Angel's Envy Madeira Finish"), {}, aeBrands), false);
+  eq('and one expression written twice is one bottle',
+    L.sameBottle(ae("Angel's Envy Triple Oak"),
+      ae("Angel's Envy Triple Oak Kentucky Straight Bourbon Whiskey"),
+      {}, aeBrands), true);
+  /* WHAT IT ALWAYS DID still holds: a stated fact that disagrees ends it. */
+  eq('two houses are still two bottles',
+    L.sameBottle({ name: 'X', dist: 'Heaven Hill' },
+      { name: 'X', dist: 'Buffalo Trace' }, {}), false);
+
   /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
      and before it, "if the library is the macro inventory and we each link to
      it with what we own, this should be easy". It was the normalised NAME, so
