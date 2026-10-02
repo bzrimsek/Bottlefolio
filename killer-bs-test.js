@@ -27197,13 +27197,15 @@ sec('§461 a fact in the wrong field');
   /* ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01). The strip and which of it
      is lit are one answer, because drawn from two they can disagree. */
   const plain = L.settingsView('account', false);
-  eq('six tabs with admin mode off', plain.tabs.map(t => t.id).join(' '),
-    'account shelf buddies guide help about');
+  /* FIVE: help and about are one tab (BZ, 2026-10-02), because two tabs holding
+     one card each is more strip than page. */
+  eq('five tabs with admin mode off', plain.tabs.map(t => t.id).join(' '),
+    'account shelf buddies guide help');
   eq('and the one asked for is open', plain.now, 'account');
   const adminOn = L.settingsView('shelf', true);
-  eq('admin mode adds the seventh, last',
+  eq('admin mode adds the sixth, last',
     adminOn.tabs.map(t => t.id).join(' '),
-    'account shelf buddies guide help about admin');
+    'account shelf buddies guide help admin');
   eq('and it does not move the others', adminOn.now, 'shelf');
   eq('Admin opens when it is there', L.settingsView('admin', true).now,
     'admin');

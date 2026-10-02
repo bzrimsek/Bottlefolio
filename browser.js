@@ -1981,7 +1981,11 @@ function step(n) {
          check. */
       const box = document.createElement('div');
       document.body.appendChild(box);
-      const count = () => box.querySelectorAll('details.advanced').length;
+      /* WHAT IT BUILDS, not the fold that used to be around it. The Advanced
+         fold went when Admin became a tab of its own (BZ, 2026-10-02: a tab IS
+         a fold), and the fault it was counting has not gone - this appended a
+         second copy of itself and BZ photographed two of them. */
+      const count = () => box.querySelectorAll('.lookupsetup').length;
       renderLookupSetup(box);
       const once = count();
       box.innerHTML = '';
