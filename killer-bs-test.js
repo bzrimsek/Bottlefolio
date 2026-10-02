@@ -10577,6 +10577,84 @@ sec('\u00a7223 what the shelf adds up to');
   eq('a bottle with no key at all is counted, not crashed on',
     L.unlistedBottles(uCat, uHave.concat([{ status: 'open' }])).length, 1);
   eq('an absent shelf answers empty', L.unlistedBottles(null, null).length, 0);
+
+  /* AND THE ONES NOTHING CAN PLACE. A bottle in no entry that READS as one is
+     the join list's job; what was missing is everything else, which nothing
+     listed at all - so a count of twenty-two stood beside a repair list that
+     offered nothing (BZ, 2026-10-02: "what would I do with bottles the shelf
+     cant show me?"). */
+  /* EVERY KEY BUILT THE WAY THE APP BUILDS ONE. A library key here is
+     underscore_separated, and a hand-typed hyphenated one is not the key this app
+     would have made - so L.entryFor's fallback, which tries L.libKey(name),
+     resolved bottles that were meant to be orphaned and missed ones that were
+     meant to be found. Three attempts behaved three ways before this was spotted.
+     The three cases below were measured first, not assumed. */
+  const sKey = n => L.libKey(n);
+  const sLib = {};
+  ['Bib and Tucker Double Char', 'Nonesuch Distillery Rye'].forEach(n => {
+    sLib[sKey(n)] = { k: sKey(n), name: n, dist: 'Nonesuch', sub: 'bourbon' };
+  });
+  const sCat = {};
+  ['Bib and Tucker', 'Nonesuch Rye'].forEach(n => {
+    sCat[sKey(n)] = { k: sKey(n), name: n };
+  });
+  const sShelf = [{ id: 'me', catalog: sCat, bottles: [
+    /* READS AS THE FULLER ENTRY: the join list takes this one. */
+    { k: sKey('Bib and Tucker'), status: 'open' },
+    /* RESOLVES ALREADY through L.entryFor, so neither list wants it. */
+    { k: sKey('Nonesuch Rye'), status: 'open' },
+    /* NOTHING BUT A KEY, which is what a merge leaves behind. */
+    { k: 'willett_family_estate_4yr', status: 'open' }
+  ] }];
+  const sJoin = L.shelfJoins(sShelf, sLib, {});
+  const sLost = L.strandedBottles(sShelf, sLib, {});
+  eq('the one that reads as a fuller entry is the join list\u2019s',
+    sJoin.map(h => h.key).join(','), sKey('Bib and Tucker'));
+  eq('a bottle the library already answers for needs no repair at all',
+    sJoin.concat(sLost).filter(x => (x.key || '') === sKey('Nonesuch Rye'))
+      .length, 0);
+  eq('a bottle with nothing but a key is always stranded',
+    sLost.map(p => p.key).join(','), 'willett_family_estate_4yr');
+  /* THE TWO LISTS NEVER OVERLAP: one bottle offered two different repairs on two
+     screens is the fault this guards, and the join above gives it teeth. */
+  eq('every stranded bottle is one no join covers',
+    sLost.filter(p => sJoin.some(h => h.key === p.key)).length, 0);
+
+  /* WHAT IS STOPPING THAT ONE. The record-less case answers first: every other
+     answer advises a change to a bottle that draws no card to open. */
+  const sKnown = L.knownHere(sLib, {});
+  const noRec = { key: 'willett-family-estate-4yr',
+    name: 'willett-family-estate-4yr' };
+  eq('a bottle with only a key says so, and what to do',
+    /^no record at all/.test(L.strandedSay(noRec, sKnown)), true);
+  eq('a name the library already holds names the entry it clashes with',
+    L.strandedSay({ key: 'x', name: 'Nonesuch Distillery Rye' }, sKnown)
+      .indexOf('Nonesuch Distillery Rye') > 0, true);
+  eq('and the key it reads back as matches the one the app would make',
+    L.libKey(L.keyAsName('willett_family_estate_4yr')),
+    'willett_family_estate_4yr');
+  eq('a publishable stranger says an entry can be made',
+    L.strandedSay({ key: 'y', name: 'Far Hollow Straight Rye',
+      dist: 'Far Hollow', sub: 'rye' }, sKnown),
+    'nothing like it in the library \u2014 an entry can be made for it');
+  /* AND THE JOIN STAYS STRICT. A marked expression is a different bottling, not
+     a fuller spelling, so this pair must NOT be joined - a looser matcher would
+     shorten the stranded list by claiming joins it should refuse. */
+  eq('single barrel is not a fuller way of saying the plain bottling',
+    !!(L.nameContains('Blanton\u2019s', 'Blanton\u2019s Single Barrel') || {}).marked,
+    true);
+  eq('and one with neither a distillery nor a category says which it needs',
+    L.strandedSay({ key: 'z', name: 'Some Barrel Pick' }, sKnown)
+      .indexOf('too thin to publish') === 0, true);
+
+  /* THE KEY AS WORDS, which is what draws the card. */
+  eq('a key reads back as words', L.keyAsName('willett-family-estate-4yr'),
+    'Willett Family Estate 4yr');
+  eq('an underscore counts as a gap too', L.keyAsName('old_forester_1920'),
+    'Old Forester 1920');
+  eq('and no key is no name', L.keyAsName(''), '');
+  eq('nor does a missing one throw', L.keyAsName(null), '');
+
 }
 
 /* §224  what goes on the wishlist, and why ----------------------------

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 891 |
+| functions | 894 |
 | tables | 212 |
-| carrying a stated purpose | 698 |
+| carrying a stated purpose | 701 |
 
 ## Tables
 
@@ -562,6 +562,7 @@ QUESTION, not the name you were going to use.
 - **`L.joinMeText`** — and what to look for.
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
+- **`L.keyAsName`** — A KEY READ BACK AS WORDS, for a bottle that has no record to take a name from.
 - **`L.keyForName`** — THE KEY A NAME ALREADY HAS, when the key you built from it does not exist.
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
 - **`L.labelDiff`** — Step two: what it would change, said before anything is written. `fill`
@@ -1003,6 +1004,8 @@ QUESTION, not the name you were going to use.
 - **`L.stateCounts`** — _no comment above it_
 - **`L.stateOf`** — _no comment above it_
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
+- **`L.strandedBottles`** — NO ENTRY, AND NOTHING TO JOIN IT TO
+- **`L.strandedSay`** — WHY THIS ONE IS STUCK, because three different things strand a bottle and the
 - **`L.stripMarkup`** — Anything a model returns can carry citation markup ([cite index=...]).
 - **`L.styleBackfill`** — What a pass over the library would change, before it changes anything.
 - **`L.styleFromName`** — _no comment above it_
