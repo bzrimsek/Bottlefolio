@@ -25875,6 +25875,35 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     missing([{ k: 'Nothing The Library Knows', status: 'gone' }]), '');
   /* AND ONE BOTTLE NAMED TWICE IS ONE OFFER, because the offer is about the
      whisky and not about how many of it sit on the shelf. */
+  /* AND A RESERVED WORD NEVER REACHES THE LIBRARY, whoever writes it. Nashville
+     Barrel Company VIP came back with style "single barrel" fourteen minutes
+     after it was cleared with the admin key, and no shelf held a correction to
+     republish - six paths publish an entry plus the fill and the intake, and the
+     editor refusing it is a guard the other seven walk past (BZ, 2026-10-01:
+     "even with manual edits this one keeps coming back"). */
+  const nbBrands = {};
+  nbBrands[L.libKey('Nashville Barrel')] = { name: 'Nashville Barrel' };
+  const nbRow = L.libraryEntry({
+    name: 'Nashville Barrel Company VIP Rare Release Straight Rye Whiskey',
+    sub: 'rye', dist: 'Nashville Barrel Company', proof: 111.6, age: 8,
+    style: 'single barrel' }, nbBrands);
+  eq('a class never reaches the style field', nbRow.style, undefined);
+  /* NOR THE STORED IDENTITY the shelves inherit: the entry this was found on
+     carried "single barrel" in its ident as well. */
+  eq('nor the identity written beside it',
+    nbRow.ident.indexOf('single barrel'), -1);
+  /* DROPPED, NOT REFUSED: the rest of the row is still worth publishing. */
+  eq('the proof survives', nbRow.proof, 111.6);
+  eq('and the age', nbRow.age, 8);
+  /* THE CASK FIELD TOO, by the same door. */
+  eq('a class never reaches the cask field',
+    L.libraryEntry({ name: 'A Rye', sub: 'rye', fin: 'Bottled in Bond' },
+      null).fin, undefined);
+  /* AND A REAL CASK IS PUBLISHED, which is the half that makes it a check. */
+  eq('a real cask is published',
+    L.libraryEntry({ name: 'A Rye', sub: 'rye', fin: 'Oloroso Sherry' },
+      null).fin, 'Oloroso Sherry');
+
   eq('two of the same bottle is one gap',
     missing([{ k: 'Nothing The Library Knows', status: 'open' },
       { k: 'Nothing The Library Knows', status: 'sealed' }]),
