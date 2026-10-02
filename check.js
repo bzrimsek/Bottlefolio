@@ -28,7 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execFileSync } = require('child_process');
+const { execFileSync, execFile } = require('child_process');
 
 const HERE = __dirname;
 const BANNER = '/* =====================================================================\n   STATE + RENDER';
@@ -226,41 +226,73 @@ console.log('  the cloud gate decides for itself, from what differs from main\n'
 
 if (has('--list')) process.exit(0);
 
+/* THE OUTPUT DECIDES, NOT THE EXIT CODE. consistency.js prints its failures and
+   exits 0, so the first version of this said ok on a real one and only audit.py
+   stopped the push.
+
+   AND "0 failed" IS NOT A FAILURE: the version after that matched the word
+   anywhere and called killer-bs-test's own "6529 passed, 0 failed" a red run. A
+   check that cannot pass is as useless as one that cannot fail. */
+const SAYS_BAD = /✖|✗|^\s*FAIL\b|[1-9]\d* fail|Error:/m;
+
+/* HOW MANY AT ONCE. Each lane is a browser, so more lanes than cores makes every
+   lane slower - this is a trade, and the run prints the number it used so it can
+   be argued with from evidence rather than taste. */
+const LANES = Math.max(1, Number(arg('--lanes')) || 4);
+
 let bad = 0;
-for (const c of run) {
+
+/* LONGEST FIRST. Starting the 62-second check last would hold the whole run open
+   behind it, which is the difference between the sum over the lanes and the
+   longest single check. */
+const queue = run.slice().sort((a, b) => (b.secs || 0) - (a.secs || 0));
+
+function oneCheck(c) {
   const t = Date.now();
-  process.stdout.write('  ' + c.name.padEnd(13));
-  let out = '', threw = false;
-  try {
-    out = String(execFileSync('node', [path.join(HERE, c.harness)],
-      { stdio: ['ignore', 'pipe', 'pipe'] }) || '');
-  } catch (e) {
-    threw = true;
-    out = String((e.stdout || '') + (e.stderr || ''));
-  }
-  /* THE OUTPUT DECIDES, NOT THE EXIT CODE. consistency.js prints its failures
-     and exits 0, so the first version of this said ok on a real one and only
-     audit.py stopped the push.
-
-     AND "0 failed" IS NOT A FAILURE: the version after that matched the word
-     anywhere and called killer-bs-test's own "6529 passed, 0 failed" a red run.
-     A check that cannot pass is as useless as one that cannot fail. */
-  const SAYS_BAD = /✖|✗|^\s*FAIL\b|[1-9]\d* fail|Error:/m;
-  if (!threw && !SAYS_BAD.test(out)) {
-    console.log('ok   ' + Math.round((Date.now() - t) / 1000) + 's');
-  } else {
-    bad++;
-    console.log('FAILED');
-    out.split('\n').filter(l => SAYS_BAD.test(l)).slice(0, 12)
-      .forEach(l => console.log('      ' + l.trim()));
-  }
+  return new Promise(done => {
+    execFile('node', [path.join(HERE, c.harness)],
+      { maxBuffer: 1 << 26 }, (err, so, se) => {
+        const out = String((so || '') + (se || ''));
+        const secs = Math.round((Date.now() - t) / 1000);
+        if (!err && !SAYS_BAD.test(out)) {
+          console.log('  ' + c.name.padEnd(13) + 'ok   ' + secs + 's');
+        } else {
+          bad++;
+          console.log('  ' + c.name.padEnd(13) + 'FAILED  ' + secs + 's');
+          out.split('\n').filter(l => SAYS_BAD.test(l)).slice(0, 12)
+            .forEach(l => console.log('      ' + l.trim()));
+        }
+        done();
+      });
+  });
 }
 
-/* THE STAMP ONLY MOVES ON A CLEAN RUN, so a failure cannot teach this that the
-   file is already checked. */
-if (!bad && !changed) {
-  try { fs.writeFileSync(STAMP, JSON.stringify(fresh, null, 1)); } catch (e) {}
+/* ONE LANE TAKES THE NEXT CHECK WHEN ITS LAST ONE LANDS, rather than the whole
+   list being cut into equal piles: a pile holding the walk and sync finishes long
+   after a pile of cheap ones, and the lanes then sit idle. */
+function lane() {
+  const c = queue.shift();
+  if (!c) return Promise.resolve();
+  return oneCheck(c).then(lane);
 }
-console.log('\n  ' + (bad ? '✖ ' + bad + ' failed'
-  : '✓ ' + run.length + ' passed') + '\n');
-process.exit(bad ? 1 : 0);
+
+const started = Date.now();
+Promise.all(Array.from({ length: Math.min(LANES, queue.length) }, lane))
+  .then(() => {
+    const took = Math.round((Date.now() - started) / 1000);
+    console.log('\n  ' + took + 's in ' + Math.min(LANES, run.length)
+      + ' lanes (' + secs(run) + 's if run one after another)');
+    finish();
+  });
+
+function finish() {
+
+  /* THE STAMP ONLY MOVES ON A CLEAN RUN, so a failure cannot teach this that
+     the file is already checked. */
+  if (!bad && !changed) {
+    try { fs.writeFileSync(STAMP, JSON.stringify(fresh, null, 1)); } catch (e) {}
+  }
+  console.log('  ' + (bad ? '✖ ' + bad + ' failed'
+    : '✓ ' + run.length + ' passed') + '\n');
+  process.exit(bad ? 1 : 0);
+}
