@@ -10545,32 +10545,38 @@ sec('\u00a7223 what the shelf adds up to');
     '12 whiskies');
   eq('a filtered shelf says so', L.shelfCountLine(3, 12), '3 of 12');
 
-  /* THE SHELF SETTINGS LINE, which once took its first number from the
-     catalogue and its second from the shelf and claimed both for the shelf
-     (BZ, 2026-10-02: "704 whiskeys, 380 bottles ... is not my shelf"). The
-     library here is four whiskeys wide and the shelf holds two of them. */
-  const bigLib = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' },
-                   c: { k: 'c', name: 'C' }, d: { k: 'd', name: 'D' } };
-  const mine = [{ k: 'a', status: 'open' }, { k: 'a', status: 'sealed' },
-                { k: 'b', status: 'keep' }];
-  eq('counted from the shelf, not the library it is drawn out of',
-    L.shelfScaleLine(bigLib, mine),
-    '3 bottles of 2 different whiskeys on the shelf. '
-    + 'Everything on this page acts on those.');
-  eq('a bottle that is gone is not on the shelf',
-    L.shelfScaleLine(bigLib, mine.concat([{ k: 'c', status: 'gone',
-      exit: 'drunk' }])),
-    '3 bottles of 2 different whiskeys on the shelf. '
-    + 'Everything on this page acts on those.');
-  eq('one of one reads as one',
-    L.shelfScaleLine(bigLib, [{ k: 'a', status: 'open' }]),
-    '1 bottle of 1 whiskey on the shelf. '
-    + 'Everything on this page acts on those.');
-  eq('an empty shelf says so rather than printing a nought',
-    L.shelfScaleLine(bigLib, [{ k: 'a', status: 'gone', exit: 'drunk' }]),
-    'Nothing on the shelf yet — import one below.');
-  eq('and an absent shelf does not throw', L.shelfScaleLine(null, null),
-    'Nothing on the shelf yet — import one below.');
+  /* BOTTLES THE SHELF CANNOT SHOW. Two counts of BZ's one shelf disagreed by
+     twenty-two - 366 bottles in the settings, 344 on the masthead - because one
+     counted bottles and the other counted what the page lists. The gap is
+     bottles whose key the catalogue does not hold: no card, no total, nothing
+     to pour or edit. Proven by planting four on his real shelf (2026-10-02),
+     which moved the owned count and nothing else. */
+  const uCat = { a: { k: 'a', name: 'A' }, b: { k: 'b', name: 'B' } };
+  const uHave = [{ k: 'a', status: 'open' }, { k: 'b', status: 'sealed' }];
+  eq('a shelf the catalogue covers has nothing unlisted',
+    L.unlistedBottles(uCat, uHave).length, 0);
+  eq('and says nothing about it', L.unlistedLine(uCat, uHave), '');
+  const uGhost = uHave.concat([{ k: 'ghost-1', status: 'open' },
+                               { k: 'ghost-2', status: 'open' }]);
+  eq('a key the catalogue does not hold is unlisted',
+    L.unlistedBottles(uCat, uGhost).length, 2);
+  eq('and is reported as what it is',
+    L.unlistedLine(uCat, uGhost),
+    '2 bottles on your shelf are not listed on it: nothing in the library '
+    + 'matches their names, so no cards are drawn for them and no total '
+    + 'counts them.');
+  eq('one of them reads as one',
+    L.unlistedLine(uCat, uHave.concat([{ k: 'ghost-1', status: 'open' }])),
+    '1 bottle on your shelf is not listed on it: nothing in the library '
+    + 'matches its name, so no card is drawn for it and no total counts it.');
+  /* A BOTTLE THAT IS GONE IS NOT MISSING, it is drunk: it was never going to be
+     listed, and reporting it would make the line permanent. */
+  eq('a retired bottle with no entry is not reported',
+    L.unlistedBottles(uCat, uHave.concat([{ k: 'ghost-1', status: 'gone',
+      exit: 'drunk' }])).length, 0);
+  eq('a bottle with no key at all is counted, not crashed on',
+    L.unlistedBottles(uCat, uHave.concat([{ status: 'open' }])).length, 1);
+  eq('an absent shelf answers empty', L.unlistedBottles(null, null).length, 0);
 }
 
 /* §224  what goes on the wishlist, and why ----------------------------

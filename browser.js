@@ -502,10 +502,35 @@ function step(n) {
   await page.locator('nav button[data-scr="shelf"]').click();
   await page.waitForTimeout(80);
   {
-    const gear = page.locator('#scr-shelf .hdr-acts button').first();
+    /* ONE GEAR, ON HOME (BZ, 2026-10-02: "we don't need the gears on multiple
+       pages"). Asserted, because a control removed by hand comes back by hand. */
+    const strays = await page.evaluate(() => {
+      const ids = ['shelfGear', 'buddyGear'];
+      return ids.filter(i => document.getElementById(i));
+    });
+    if (strays.length) {
+      failures.push('shelf: a second gear is back: ' + strays.join(', '));
+    }
+
+    /* AND THE ROUTE A PERSON TAKES to the tools now: the Settings gear, then
+       the Shelf tab. Named rather than positional - this step used to click the
+       first button in the Shelf header, which became the add-bottle button the
+       day the gear went, so it opened the add form and left a modal open that
+       killed the next step. */
+    await page.locator('nav button[data-scr="home"]').click();
+    await page.waitForTimeout(80);
+    const gear = page.locator('#settingsBtn');
     if (await gear.count()) {
       await gear.click();
       await page.waitForTimeout(120);
+      const tab = page.locator('#settingsBody [role="tab"]',
+        { hasText: 'Shelf' }).first();
+      if (await tab.count()) {
+        await tab.click();
+      } else {
+        await page.evaluate(() => goToSettingsTab('shelf'));
+      }
+      await page.waitForTimeout(160);
       /* THE TOOLS ARE A TAB OF SETTINGS NOW, not a sheet, so the gear
          navigates and this asks where it landed. The overlay test it used to
          make reported "the gear opened nothing", which was true and no longer
@@ -519,7 +544,7 @@ function step(n) {
                  manage: lbl.indexOf('The shelf itself') };
       });
       if (where.on !== 'scr-settings') {
-        failures.push('shelf: the gear landed on ' + where.on
+        failures.push('shelf: settings landed on ' + where.on
           + ', not the settings screen');
       }
       if (where.tab !== 'shelf') {

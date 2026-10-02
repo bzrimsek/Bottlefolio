@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 890 |
+| functions | 891 |
 | tables | 212 |
-| carrying a stated purpose | 697 |
+| carrying a stated purpose | 698 |
 
 ## Tables
 
@@ -964,7 +964,6 @@ QUESTION, not the name you were going to use.
 - **`L.shelfPortrait`** — _no comment above it_
 - **`L.shelfProduct`** — _no comment above it_
 - **`L.shelfReadSay`** — _no comment above it_
-- **`L.shelfScaleLine`** — WHAT THE SHELF SETTINGS ACT ON, in words, because two bare numbers over a
 - **`L.shelfSeen`** — _no comment above it_
 - **`L.shelfSet`** — what says something about taste.
 - **`L.shelfSort`** — _no comment above it_
@@ -1078,6 +1077,8 @@ QUESTION, not the name you were going to use.
 - **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_
+- **`L.unlistedBottles`** — BOTTLES THE SHELF CANNOT SHOW YOU
+- **`L.unlistedLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY
 - **`L.upcKey`** — 12-digit code is compared on its last 12.
 - **`L.upcRow`** — something stable to check.
 - **`L.upcWriteTarget`** — Where a learned pairing goes, and what it looks like when it gets there.
