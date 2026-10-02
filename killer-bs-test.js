@@ -19829,15 +19829,37 @@ sec('\u00a7355 what the library contradicts');
      and Weller 12 different bottles, which is the pair BZ had merged by hand an
      hour earlier ("The are the same weller"). A single-letter word at the front
      is an initial, never the brand. */
-  eq('initials are not the brand', L.brandKey('W.L. Weller'), 'weller');
-  eq('however many of them there are', L.brandKey('J.T.S. Brown'), 'brown');
-  eq('and the rest of the name survives',
-    L.brandKey('A. Smith Bowman'), 'smith bowman');
-  eq('a brand with no initials is untouched',
-    L.brandKey('Buffalo Trace'), 'buffalo trace');
-  /* A BRAND THAT IS ONLY AN INITIAL KEEPS IT, or it would have no name left. */
-  eq('a one-letter brand keeps its letter', L.brandKey('W'), 'w');
-  eq('and nothing is nothing', L.brandKey(''), '');
+  const hmBrands = {
+    w_l_weller: { name: 'W.L. Weller', house: 'Buffalo Trace' },
+    weller: { name: 'Weller', house: 'Buffalo Trace' },
+    e_h_taylor: { name: 'E.H. Taylor', house: 'Buffalo Trace' },
+    j_t_s_brown: { name: 'J.T.S. Brown', house: 'Heaven Hill' },
+    /* A TAIL PAIR IN TWO HOUSES, which is the only thing the house scoping can
+       refuse. Chosen after two fixtures that could not fail: Brown-Forman does
+       not END WITH Brown, and "Old Weller" normalises to "weller" because
+       shopNorm drops Old, so it collapsed before any house was consulted. */
+    mckenna: { name: 'McKenna', house: 'Somebody Else' },
+    henry_mckenna: { name: 'Henry McKenna', house: 'Heaven Hill' }
+  };
+  const brandAt = n => (L.brandOf(n, hmBrands) || {}).key || null;
+  eq('the shorter spelling resolves to the fuller, accurate one',
+    brandAt('Weller 12 Year Old'), 'w l weller');
+  eq('and the fuller one is already itself',
+    brandAt('W.L. Weller 12 Year Old'), 'w l weller');
+  /* NOT CUT DOWN. The first attempt stripped initials and made this Taylor,
+     which is not the brand (BZ: "Eh Taylor is EH Taylor"). */
+  eq('initials stay where they belong',
+    brandAt('E.H. Taylor Small Batch'), 'e h taylor');
+  /* AND NOTHING CROSSES A HOUSE. "Henry McKenna" ends with "McKenna" and the two
+     are different distilleries here, so neither may take the other. */
+  eq('a brand is not swallowed by a longer one from another house',
+    brandAt('McKenna Single Barrel'), 'mckenna');
+  eq('and the longer one stays its own brand',
+    brandAt('Henry McKenna 10 Year'), 'henry mckenna');
+  eq('a brand whose house is unknown is left where it is',
+    brandAt('J.T.S. Brown Bottled in Bond'), 'j t s brown');
+  eq('an unknown name has no brand at all',
+    brandAt('Somebody Nobody Filed'), null);
 
   /* THE TAXONOMY DECIDES, OR NOTHING DOES (BZ, 2026-10-02: "Use the damn
      taxonomy for the library operations"). Both of these were in the report he
@@ -19894,7 +19916,10 @@ sec('\u00a7355 what the library contradicts');
     .forEach(n => { welRows[L.libKey(n)] = wel(n); });
   eq('one whisky written two ways is still reported',
     L.libraryAudit(welRows, {}, Date.now(),
-      { w_l_weller: { name: 'W.L. Weller' }, weller: { name: 'Weller' } })
+      /* WITH THE HOUSE, which is what matches the two spellings: the registry
+         carries it, and without it there is nothing to scope the match to. */
+      { w_l_weller: { name: 'W.L. Weller', house: 'Buffalo Trace' },
+        weller: { name: 'Weller', house: 'Buffalo Trace' } })
       .filter(f => ['dups', 'samestart', 'samefacts'].indexOf(f.id) >= 0)
       .reduce((n, f) => n + f.items.length, 0) > 0, true);
 
