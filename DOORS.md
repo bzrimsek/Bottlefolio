@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 887 |
-| tables | 210 |
-| carrying a stated purpose | 693 |
+| functions | 889 |
+| tables | 212 |
+| carrying a stated purpose | 696 |
 
 ## Tables
 
@@ -107,6 +107,7 @@ QUESTION, not the name you were going to use.
 - **`L.MASH_BY_LAW`** — A MASH BILL FIXED BY LAW IS STILL A MASH BILL
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
 - **`L.MASH_WORDS`** — _no comment above it_
+- **`L.MINE_FIELDS`** — `k` is where the row is filed and `src` is where it came from
 - **`L.MISS_REST`** — How long a bottle rests after a lookup came back with nothing.
 - **`L.NAME_SMALL`** — Only ALL CAPS or all lower case are tidied
 - **`L.NAME_TAKEN`** — message in a shared list.
@@ -114,6 +115,7 @@ QUESTION, not the name you were going to use.
 - **`L.NEAR_AXES`** — Nearest, and on WHICH axis
 - **`L.NO_PLURAL`** — are already mass nouns or end in a sibilant stay as they are.
 - **`L.NOT_A_CASK`** — Words that name a kind of whisky rather than a kind of cask
+- **`L.NOT_A_FACT`** — AND WHAT IS NEITHER
 - **`L.NOT_A_PLACE`** — Not the same as a value this app has not heard of, which stays a place:
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
 - **`L.NOT_FILTERS`** — Not filters, named so the check can tell "not a filter" from "somebody
@@ -701,7 +703,7 @@ QUESTION, not the name you were going to use.
 - **`L.noteText`** — a hypothesis
 - **`L.noteVague`** — A NOTE THAT NAMES A FRUIT CATEGORY AND NEVER SAYS WHICH (BZ, 2026-09-27).
 - **`L.noteWords`** — _no comment above it_
-- **`L.notInLibrary`** — OWNED ONLY: a bottle that has gone is not a gap in the library.
+- **`L.notInLibrary`** — _no comment above it_
 - **`L.offerAdvice`** — The pair of verdicts as a recommendation
 - **`L.offerFacts`** — _no comment above it_
 - **`L.offerNames`** — _no comment above it_
@@ -945,6 +947,8 @@ QUESTION, not the name you were going to use.
 - **`L.shelfBuild`** — _no comment above it_
 - **`L.shelfCountLine`** — How many whiskies are listed, against how many are owned.
 - **`L.shelfEnd`** — _no comment above it_
+- **`L.shelfFactsKeep`** — AND WHAT IS LEFT OF A SHELF RECORD once its shared facts have gone
+- **`L.shelfFactsPlan`** — ONLY THE THIRD IS A JUDGEMENT, and the library wins it - so they are named and
 - **`L.shelfFilter`** — _no comment above it_
 - **`L.shelfFit`** — _no comment above it_
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can

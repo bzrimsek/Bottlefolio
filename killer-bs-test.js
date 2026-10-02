@@ -25931,6 +25931,48 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.libraryEntry({ name: 'C', sub: 'scotch', tnFrom: 'a flight',
       tn: { nose: 'N', palate: 'P' } }, null).tn, undefined);
 
+  /* A SHELF KEEPS WHAT IS YOURS; THE LIBRARY KEEPS WHAT THE BOTTLE IS (BZ,
+     2026-10-01). Measured across every live shelf: the bottles were already
+     right, and 489 records of shared bottle details sat in edits and custom -
+     which is what made a repair come back and split one whisky across a Venn. */
+  const sfLib = { oban_little_bay: { name: 'Oban Little Bay', proof: 86,
+    dist: 'Oban' } };
+  const plan = L.shelfFactsPlan(
+    { oban_little_bay: { age: 12, paid: 55, status: 'open', msrp: 70 },
+      a_new_one: { name: 'A New One', sub: 'bourbon', proof: 100 } },
+    {}, sfLib, {}, {});
+  eq('a whisky the library never held is new',
+    plan.fresh.map(p => p.name).join(','), 'A New One');
+  eq('a blank it can fill is a fill',
+    plan.fills.map(f => f.field).sort().join(','), 'age,msrp');
+  /* WHAT IS YOURS IS NOT A LIBRARY FACT and never travels. */
+  eq('what you paid is not offered to everybody',
+    plan.fills.concat(plan.clashes).filter(f => f.field === 'paid').length, 0);
+  /* THE LIBRARY WINS A DISAGREEMENT: the shelf held a fact it should not have,
+     so a clash is the shelf being wrong by construction. */
+  const clash = L.shelfFactsPlan({ oban_little_bay: { proof: 92 } }, {},
+    sfLib, {}, {});
+  eq('a disagreement is named, not applied', clash.fills.length, 0);
+  eq('and says what each side holds',
+    clash.clashes[0].lib + '/' + clash.clashes[0].shelf, '86/92');
+  /* A RESERVED WORD DOES NOT TRAVEL, whatever the shelf says. */
+  eq('a class in the cask field is not moved',
+    L.shelfFactsPlan({ oban_little_bay: { fin: 'Bottled in Bond' } }, {},
+      sfLib, {}, {}).fills.length, 0);
+
+  /* AND WHAT IS LEFT OF A RECORD afterwards is the part that is yours. */
+  const kept = L.shelfFactsKeep({
+    oban_little_bay: { age: 12, paid: 55, status: 'open' },
+    all_shared: { age: 10, proof: 90 },
+    k_only: { k: 'k_only' } });
+  eq('what you paid stays', (kept.oban_little_bay || {}).paid, 55);
+  eq('and the shared facts do not',
+    Object.keys(kept.oban_little_bay || {}).sort().join(','), 'paid,status');
+  /* A RECORD WITH NOTHING OF YOURS LEFT GOES, rather than staying as an empty
+     shell that still counts as an opinion. */
+  eq('a record that was all shared facts is gone', 'all_shared' in kept, false);
+  eq('and so is one that was only where it was filed', 'k_only' in kept, false);
+
   eq('two of the same bottle is one gap',
     missing([{ k: 'Nothing The Library Knows', status: 'open' },
       { k: 'Nothing The Library Knows', status: 'sealed' }]),
