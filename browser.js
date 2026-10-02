@@ -1241,49 +1241,25 @@ function step(n) {
     }
   }
 
-  step('shelf tools holds Import as a section: last with a shelf, first without');
-  {
-    /* NOT A FOLD ANY MORE (BZ, 2026-09-18: the fold was too subtle to find).
-       With a shelf it is the last section, a once-only job; with none it is
-       the first, because then it is the way in. Both are opened here. */
-    const r = await page.evaluate(() => {
-      /* A DETACHED BOX, not the page. The tools are the Shelf tab of Settings
-         now (BZ, 2026-10-01: one place for settings), and shelfToolsInto is what
-         both the tab and showShelfTools go through - so this reads the builder
-         without navigating the walk off the screen it is on.
+  /* THE SHELF TAB IS A NAMED SEQUENCE NOW (BZ, 2026-10-02): the shelf itself,
+     importing, the files, starting over. The step that stood here held the older
+     rule - Import led the page when the shelf was empty and trailed it when it
+     did not (BZ, 2026-09-18, when it was a fold nobody could find) - and that
+     rule is retired along with placeImport, so the check goes with it rather
+     than being weakened into something that cannot fail.
 
-         offsetParent IS NULL IN A DETACHED BOX, so visibility is asked of the
-         element's own hidden flag and its ancestors' instead: the question is
-         whether Import is behind a fold, and a box nobody attached would
-         otherwise answer "everything is invisible" and pass by accident. */
+     WHAT IS STILL WORTH HOLDING is that the tab draws its four cards at all, in
+     order, with a shelf and without one. */
+  step('the shelf tab draws its four cards in order, with a shelf and without');
+  {
+    const r = await page.evaluate(() => {
       const read = () => {
         const m = document.createElement('div');
         document.body.appendChild(m);
         shelfToolsInto(m);
-        const shown = e => {
-          for (let n = e; n && n !== m; n = n.parentElement) {
-            if (n.hidden) return false;
-            if (n.tagName === 'DETAILS' && !n.open) return false;
-          }
-          return true;
-        };
-        /* HEADINGS IN DOCUMENT ORDER, section labels and card headings alike.
-           The Manage section became part of The shelf itself when the tab moved
-           to cards (BZ, 2026-10-02: "the manage stuff should go here"), so the
-           anchor this compares Import against is that card now. The rule being
-           tested has not changed: with a shelf Import is last, with none it is
-           first. */
-        const labels = [...m.querySelectorAll('.portlabel, h3')]
-          .map(e => e.textContent.trim());
-        const buttons = [...m.querySelectorAll('button')]
-          .filter(shown).map(b => b.textContent.trim());
-        const folded = [...m.querySelectorAll('details summary')]
-          .some(s => /^Import/.test(s.textContent || ''));
+        const heads = [...m.querySelectorAll('h3')].map(e => e.textContent.trim());
         document.body.removeChild(m);
-        return { manage: labels.indexOf('The shelf itself'),
-                 imp: labels.indexOf('Import a shelf'),
-                 visible: buttons.indexOf('Import a collection') >= 0,
-                 folded: folded };
+        return heads.join(' | ');
       };
       S.showFill = true;
       const withShelf = read();
@@ -1295,20 +1271,15 @@ function step(n) {
       rebuildCatalog();
       return { withShelf: withShelf, empty: empty };
     });
-    [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(([when, x]) => {
-      if (x.manage < 0) failures.push('shelf tools ' + when + ': no The shelf itself card');
-      if (x.imp < 0) failures.push('shelf tools ' + when + ': no Import a shelf section');
-      if (x.folded) failures.push('shelf tools ' + when + ': Import is still behind a fold');
-      if (!x.visible) failures.push('shelf tools ' + when + ': Import a collection is not visible');
-    });
-    if (r.withShelf.imp >= 0 && r.withShelf.imp < r.withShelf.manage) {
-      failures.push('shelf tools: with a shelf, Import sits above Manage');
-    }
-    if (r.empty.imp >= 0 && r.empty.imp > r.empty.manage) {
-      failures.push('shelf tools: with no shelf, Import sits below Manage');
-    }
+    const want = 'The shelf itself | Import a shelf | Files | Starting over';
+    [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(
+      ([when, got]) => {
+        if (got !== want) {
+          failures.push('shelf tab ' + when + ': cards read "' + got
+            + '", wanted "' + want + '"');
+        }
+      });
   }
-
   step('a shelf photo asks for a shelf, not four bottle faces');
   {
     const sheet = await page.evaluate(() => {
@@ -3935,8 +3906,14 @@ function step(n) {
         const sw = c.querySelector('[role="switch"]');
         out[on ? 'on' : 'off'] = sw ? {
           checked: sw.getAttribute('aria-checked'),
-          hasSub: !!(sw.querySelector('.src')
-            && sw.querySelector('.src').textContent.trim()),
+          /* BESIDE THE SWITCH, NOT INSIDE IT. Every settings control now puts
+             its explanation in the second column (BZ, 2026-10-02: one format
+             across all the tabs), so a check that looks within the control
+             finds nothing and calls a correct page wrong. What it defends is
+             unchanged: an off privacy setting that says nothing reads as "you
+             are unreachable", which is false. */
+          hasSub: !!(sw.nextElementSibling
+            && sw.nextElementSibling.textContent.trim()),
           tall: sw.getBoundingClientRect
         } : null;
       });
