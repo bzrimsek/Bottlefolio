@@ -25904,6 +25904,33 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.libraryEntry({ name: 'A Rye', sub: 'rye', fin: 'Oloroso Sherry' },
       null).fin, 'Oloroso Sherry');
 
+  /* EVERY FIELD THE EDITOR OFFERS SURVIVES THE ROW BUILDER. The editor saves
+     through libraryEntry now, so a field it offers and the builder drops is a
+     box somebody types into to no effect (BZ, 2026-10-01: "that bottle will not
+     publish to the library"). */
+  const edited = L.libraryEntry({ name: 'A Whisky', proof: 95,
+    dist: 'A House', country: 'Scotland', sub: 'scotch', style: 'single malt',
+    age: 12, fin: 'Oloroso Sherry', region: 'Islay', msrp: 60,
+    mash: '80 corn, 20 rye', tn: { nose: 'N', palate: 'P', finish: 'F' } },
+    null);
+  eq('every editable field survives the row builder',
+    ['proof', 'dist', 'country', 'sub', 'style', 'age', 'fin', 'region',
+     'msrp', 'mash'].filter(k => edited[k] === undefined).join(','), '');
+  eq('and all three notes',
+    ['nose', 'palate', 'finish']
+      .filter(k => (edited.tn || {})[k] === undefined).join(','), '');
+  /* A NOTE SHORT OF A PART IS NOT DELETED. One live entry holds a palate and no
+     nose, and a nose used to be required - so correcting that entry's proof
+     would have quietly taken its palate with it. */
+  eq('a palate with no nose survives',
+    (L.libraryEntry({ name: 'B', sub: 'scotch',
+      tn: { palate: 'P' } }, null).tn || {}).palate, 'P');
+  /* AND A FLIGHT-CARD NOTE STILL NEVER LEAVES THE SHELF, which is the part of
+     that condition that always had a reason. */
+  eq('a flight-card note never publishes',
+    L.libraryEntry({ name: 'C', sub: 'scotch', tnFrom: 'a flight',
+      tn: { nose: 'N', palate: 'P' } }, null).tn, undefined);
+
   eq('two of the same bottle is one gap',
     missing([{ k: 'Nothing The Library Knows', status: 'open' },
       { k: 'Nothing The Library Knows', status: 'sealed' }]),
