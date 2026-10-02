@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.6.91  ·  2026-10-02 08:46 AM ET
+
+The gate's own lines arrive while it is running. BZ, 2026-10-02: it would be great if the engine would say how many steps before running, with expected times, and then fire an update between steps. gate.py already did all of that - it prints how many steps it will run and what they are expected to take, then a line per check as each lands with its time against its own history - and nobody ever saw it, because the whole gate is ONE GitHub step and the watch had nothing to report between the setup finishing at eighty seconds and the verdict at nearly two hundred. The longest and most interesting stretch of every build was a silent two minutes. push.py now reads the running job's log while it is still being written and prints gate.py's own lines as they appear: the expectation header, the scope line saying what this build does not need, each check as it lands, and anything that failed. Every part of it is wrapped - no log yet, bytes that will not decode, a shape that has changed - and each of those leaves the watch exactly as it was, because a build must never go red for the thing watching it.
+
 ## v2.6.90  ·  2026-10-02 08:36 AM ET
 
 push.py sends check.js and checks.json, and consistency fails if it ever stops. v2.6.88 added checks.json - the one table saying which check a change can break - and v2.6.89 grouped the shelf's tools; neither shipped, because push.py sends the files it is told about and the new one was never added to that list. So consistency.js read a file the runner did not have, the gate died on it after 37 seconds, and two builds went red with the live site a version behind while this reported the first of them as green by reading an exit code instead of a verdict. consistency.js now fails if anything checks.json names, or check.js or checks.json themselves, is missing from push.py's list: a harness the gate runs and push.py never uploads is a file the runner cannot see, and the build dies on it rather than quietly skipping it.

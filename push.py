@@ -420,6 +420,44 @@ def push(v, subject, dry):
     return commit['sha']
 
 
+# THE GATE'S OWN LINES, picked out of a log that is still being written. Its
+# step results ("lint         ok    1.2s against 1s  ..."), what it expects to
+# run, what it scoped out, and anything that failed.
+GATE_SAYS = re.compile(
+    r'^(?:[a-z][a-z-]{2,13}\s+(?:ok|FAIL)\s|running \d+ steps|scope:|'
+    r'\u2716|\u2717|STOPPED AT)')
+
+
+def gate_lines(job_id, shown):
+    """New lines from a running job's log, as gate.py wrote them.
+
+    Wrapped at every step: GitHub not serving a log yet, bytes that will not
+    decode, a shape that has changed - each answers with nothing, and the watch
+    carries on as it did before. A build must never go red because the thing
+    watching it had an opinion."""
+    try:
+        r = subprocess.run([GH, 'api',
+                            'repos/%s/actions/jobs/%d/logs' % (REPO, job_id)],
+                           capture_output=True, timeout=30)
+        if r.returncode:
+            return []
+        text = (r.stdout or b'').decode('utf-8', errors='replace')
+    except Exception:
+        return []
+    out = []
+    for raw in text.splitlines():
+        # Every log line carries a timestamp GitHub added; gate.py's own line
+        # is what follows it.
+        line = raw.split(' ', 1)[1].strip() if ' ' in raw else raw.strip()
+        if not line or not GATE_SAYS.match(line):
+            continue
+        if line in shown:
+            continue
+        shown.add(line)
+        out.append(line)
+    return out
+
+
 def watch(sha, v):
     """Follow the cloud gate for this commit, a line per finished step.
 
@@ -443,6 +481,7 @@ def watch(sha, v):
     say('Gate started: %s' % run['html_url'])
     t0 = time.time()
     shown = set()
+    said = set()
     while True:
         if time.time() > deadline:
             say('\nStopped watching after %d minutes, with the gate still %s.'
@@ -458,6 +497,13 @@ def watch(sha, v):
             return 1
         jobs = gh('repos/%s/actions/runs/%d/jobs' % (REPO, run['id']), retry=True)
         for job in jobs.get('jobs', []):
+            # WHAT THE GATE IS SAYING WHILE IT SAYS IT. The whole gate is one
+            # GitHub step, so without this there is nothing between the setup
+            # and the verdict - two silent minutes over the part of the build
+            # worth watching (BZ, 2026-10-02).
+            if job.get('status') == 'in_progress':
+                for line in gate_lines(job['id'], said):
+                    say('       |  %s' % line)
             for step in job.get('steps', []):
                 key = (job['id'], step['number'])
                 if step['status'] == 'completed' and key not in shown:
