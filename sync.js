@@ -615,9 +615,9 @@ function check(name, got, want) {
            walks rather than calling the panel directly. */
         const there = await reach('no Settings gear on Home to press',
             page.locator('#settingsBtn'))
-          && await reach('Settings has no Help and about tab',
+          && await reach('Settings has no Help and About tab',
             page.locator('#scr-settings').getByRole('tab',
-              { name: 'Help and about', exact: true }))
+              { name: 'Help and About', exact: true }))
           && await reach('Settings has no Show me the log button',
             page.locator('#scr-settings').getByRole('button',
               { name: 'Show me the log' }));

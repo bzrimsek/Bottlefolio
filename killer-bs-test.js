@@ -25904,6 +25904,23 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.libraryEntry({ name: 'A Rye', sub: 'rye', fin: 'Oloroso Sherry' },
       null).fin, 'Oloroso Sherry');
 
+  /* AND A CORRECTION THE WRITE WOULD DROP IS NOT OFFERED. libraryEntry refuses
+     a reserved word whoever is writing, so a publish list that offered one had
+     a row you could press for ever that never published - BZ, 2026-10-02, with
+     two of them: style nothing to "single barrel", style nothing to "small
+     batch". The list and the write have to agree about what can be written. */
+  const nbLib = { nb: { name: 'Nashville VIP Rare Release Rye', sub: 'rye' } };
+  eq('a reserved style is not offered for publishing',
+    L.pendingForLibrary({ nb: { k: 'nb', name: 'Nashville VIP Rare Release Rye',
+      sub: 'rye', style: 'single barrel' } }, nbLib, {}, {}).length, 0);
+  eq('nor a reserved cask',
+    L.pendingForLibrary({ nb: { k: 'nb', name: 'Nashville VIP Rare Release Rye',
+      sub: 'rye', fin: 'Bottled in Bond' } }, nbLib, {}, {}).length, 0);
+  /* A REAL ONE STILL IS, which is the half that makes it a check. */
+  eq('a real style is still offered',
+    L.pendingForLibrary({ nb: { k: 'nb', name: 'Nashville VIP Rare Release Rye',
+      sub: 'rye', style: 'single malt' } }, nbLib, {}, {}).length, 1);
+
   /* EVERY FIELD THE EDITOR OFFERS SURVIVES THE ROW BUILDER. The editor saves
      through libraryEntry now, so a field it offers and the builder drops is a
      box somebody types into to no effect (BZ, 2026-10-01: "that bottle will not
