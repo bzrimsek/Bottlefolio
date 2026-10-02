@@ -25848,6 +25848,38 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
      degenerate case the count has to agree with. */
   eq('one person alone', L.groupShared([gs[0]]).all.length, 3);
 
+  /* EVERY BOTTLE BELONGS IN THE LIBRARY (BZ, 2026-10-01: "admin owns the
+     library. All bottles should be in the library"). A bottle reaching no entry
+     is invisible to every Venn, and the shelf that holds it is the only thing
+     that can offer it - which is why this needs no admin reading anyone else's
+     shelf. */
+  const nlLib = { peat_monster: { name: 'Peat Monster', sub: 'scotch' } };
+  const shelfOf2 = bs => [{ id: 'me', bottles: bs,
+    catalog: bs.reduce((o, b) => { o[b.k] = { k: b.k, name: b.k }; return o; },
+      {}) }];
+  const missing = bs => L.notInLibrary(shelfOf2(bs), nlLib, {})
+    .map(p => p.name).sort().join(',');
+  eq('a bottle in no entry is found',
+    missing([{ k: 'Nothing The Library Knows', status: 'open' }]),
+    'Nothing The Library Knows');
+  /* ONE THAT REACHES AN ENTRY IS NOT A GAP, which is the half that makes it a
+     check. Note which bottle: "Compass Box Peat Monster" does NOT reach the
+     entry "Peat Monster" - entryFor will not take a bottle that says more than
+     the entry unless what it adds is an age - and that is exactly why it turns
+     up in the join list instead. A first draft of this asserted the opposite and
+     was wrong about the engine rather than about the shelf. */
+  eq('a bottle that reaches its entry is not',
+    missing([{ k: 'Peat Monster', status: 'open' }]), '');
+  /* A BOTTLE THAT HAS GONE IS NOT A GAP IN THE LIBRARY. */
+  eq('a bottle that has left is not offered',
+    missing([{ k: 'Nothing The Library Knows', status: 'gone' }]), '');
+  /* AND ONE BOTTLE NAMED TWICE IS ONE OFFER, because the offer is about the
+     whisky and not about how many of it sit on the shelf. */
+  eq('two of the same bottle is one gap',
+    missing([{ k: 'Nothing The Library Knows', status: 'open' },
+      { k: 'Nothing The Library Knows', status: 'sealed' }]),
+    'Nothing The Library Knows');
+
   /* WHAT TWO SHELVES ARE COMPARED ON. BZ: "the venn with kevrin is unchanged",
      and before it, "if the library is the macro inventory and we each link to
      it with what we own, this should be easy". It was the normalised NAME, so

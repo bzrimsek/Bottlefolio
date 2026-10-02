@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 886 |
+| functions | 887 |
 | tables | 210 |
-| carrying a stated purpose | 692 |
+| carrying a stated purpose | 693 |
 
 ## Tables
 
@@ -701,6 +701,7 @@ QUESTION, not the name you were going to use.
 - **`L.noteText`** — a hypothesis
 - **`L.noteVague`** — A NOTE THAT NAMES A FRUIT CATEGORY AND NEVER SAYS WHICH (BZ, 2026-09-27).
 - **`L.noteWords`** — _no comment above it_
+- **`L.notInLibrary`** — OWNED ONLY: a bottle that has gone is not a gap in the library.
 - **`L.offerAdvice`** — The pair of verdicts as a recommendation
 - **`L.offerFacts`** — _no comment above it_
 - **`L.offerNames`** — _no comment above it_
