@@ -208,8 +208,22 @@ jobs:
 
       # No number in this label. It said thirteen while gate.py ran
       # fifteen, and a count written in two places only ever drifts.
-      - name: The gate - every check
-        run: python3 gate.py
+      # IN THREE PIECES, so there is something to report while it runs. The
+      # whole gate was one step, and push.py had nothing to say between the
+      # setup finishing and the verdict - two silent minutes over the part of a
+      # build worth watching (BZ, 2026-10-02: "no stream - really, no stream").
+      # Reading the running job log was tried first and cannot work: GitHub
+      # does not serve a job log until the job is finished.
+      #
+      # gate.py refuses to start if any step would be skipped by all three.
+      - name: The gate - the fast checks
+        run: python3 gate.py --fast
+
+      - name: The gate - what the engine costs
+        run: python3 gate.py --cost
+
+      - name: The gate - the browsers and the rules
+        run: python3 gate.py --slow
 
       # NO SCREENSHOTS LEAVE THE RUNNER. shots.js photographs every screen
       # with BZ's real shelf loaded, and this repo is PUBLIC - so the

@@ -312,17 +312,50 @@ def wanted(args):
     return names
 
 
+def modes_cover_everything():
+    """The three modes the workflow runs must between them run every step.
+
+    The workflow runs the gate as --fast, --cost and --slow so there is
+    something to report while it runs. A step in none of those three would be
+    skipped on every build and nothing would say so - which is what --fast and
+    --slow alone did to the cost group. Checked here rather than remembered."""
+    every = {n for g in GROUPS for n, _ in g}
+    seen = set()
+    for src in (FAST, SLOW, COST):
+        for g in GROUPS:
+            if all(st in src for st in g):
+                seen |= {n for n, _ in g}
+    return sorted(every - seen)
+
+
 def main():
     args = sys.argv[1:]
+    missed = modes_cover_everything()
+    if missed:
+        sys.exit('gate.py: %s would be skipped by every mode the workflow runs '
+                 '(--fast, --cost, --slow). Put them in a group whose steps are '
+                 'all FAST, all SLOW or all COST.' % ', '.join(missed))
     # By what the groups HOLD, never by their position: the fast steps are
     # two groups, and taking the first group as "fast" ran two of the eight
     # and passed a build with a broken twotab (found by breaking it on
     # purpose, 2026-09-15).
     groups = GROUPS
+    # THE GATE IS RUN IN THREE PIECES BY THE WORKFLOW, so there is something to
+    # report while it runs: the whole gate was ONE GitHub step, and push.py had
+    # nothing to say between the setup and the verdict - two silent minutes over
+    # the part of a build worth watching (BZ, 2026-10-02: "no stream - really,
+    # no stream"). Reading the running job's log was tried first and cannot
+    # work: GitHub does not serve a job log until the job is finished.
+    #
+    # THE THREE COVER EVERY GROUP, and a check below proves it. --fast and
+    # --slow alone did not: the cost group is in neither, so running those two
+    # would have skipped cost.js on every build and said nothing.
     if '--fast' in args:
         groups = [g for g in GROUPS if all(s in FAST for s in g)]
     elif '--slow' in args:
         groups = [g for g in GROUPS if all(s in SLOW for s in g)]
+    elif '--cost' in args:
+        groups = [g for g in GROUPS if all(s in COST for s in g)]
     # WHAT THIS BUILD ACTUALLY CHANGED (BZ, 2026-10-01). None means the
     # question could not be answered, and then everything runs.
     only = wanted(args)
