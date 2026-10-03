@@ -19887,6 +19887,49 @@ sec('\u00a7355 what the library contradicts');
   eq('and the pair that shares an entry with it is still asked about',
     macLeft.some(r => L.auditItemKey(r) === 'mac_dc+mac_so'), true);
 
+  /* A NAME WITH NOTHING TAKEN OUT BUT PUNCTUATION, which is what lets the
+     registry be asked before anything is stripped. */
+  eq('punctuation goes and nothing else',
+    L.rawNorm('Colonel E.H. Taylor, Jr.'), 'colonel e h taylor jr');
+  eq('a category word survives it',
+    L.rawNorm('Kentucky Straight Bourbon'), 'kentucky straight bourbon');
+  eq('and nothing is nothing', L.rawNorm(''), '');
+  /* AND WHAT IS LEFT ONCE THE CATEGORY WORDS GO, which runs on the half of a
+     name that is not the brand. */
+  eq('the category words go', L.normTail(['kentucky', 'straight', 'bourbon',
+    'whiskey', 'confiscated']).join(' '), 'confiscated');
+  eq('an age loses its words and keeps its number',
+    L.normTail(['10', 'year', 'old']).join(' '), '10');
+
+  /* THE CANON DECIDES WHICH WORDS ARE THE NAME (BZ, 2026-10-02: "Maybe we
+     should review the words you've decided to strip", then "we should leverage
+     canon for advice"). The category list exists to reduce "Kentucky Straight
+     Bourbon Whiskey" to nothing and it took ten brands with it - Kentucky Owl to
+     owl, Whiskey Row to row, Bourbon County to county. The registry knows which
+     of those is a filed brand, so the words a name OPENS with that match a
+     filing are kept and the strip runs on what follows. */
+  const canonBrands = {};
+  ['Kentucky Owl', 'Whiskey Row', 'Bourbon County', 'Buffalo Trace']
+    .forEach(b => { canonBrands[L.libKey(b)] = { name: b }; });
+  eq('a filed brand keeps its category word',
+    L.shopNorm('Kentucky Owl Confiscated Kentucky Straight Bourbon Whiskey',
+      canonBrands), 'kentucky owl confiscated');
+  eq('and so does another', L.shopNorm('Whiskey Row Reserve', canonBrands),
+    'whiskey row reserve');
+  eq('a name that is only category words still goes',
+    L.shopNorm('Buffalo Trace Kentucky Straight Bourbon Whiskey', canonBrands),
+    'buffalo trace');
+  eq('an age is still an age', L.shopNorm('Laphroaig 10 Year Old', canonBrands),
+    'laphroaig 10');
+  /* WITHOUT THE REGISTRY, EXACTLY THE OLD ANSWER - which is what makes this safe
+     under the hundred and forty callers that pass no brands. */
+  eq('no registry, no change', L.shopNorm('Whiskey Row Reserve'), 'row reserve');
+  /* AND THE BRAND IS KEYED AS FILED, which the stripped index could not do:
+     reduced to "owl" that brand fell under the minimum and was not held at all. */
+  eq('the registry holds the brand it was given',
+    (L.brandOf('Kentucky Owl Confiscated', canonBrands) || {}).key,
+    'kentucky owl');
+
   /* ONE BRAND, HOWEVER IT WAS FILED. The registry is built from TTB label
      filings, where a brand is filed "W.L. WELLER" one year and "WELLER" another,
      so it held two brands for one - and the taxonomy then called W.L. Weller 12

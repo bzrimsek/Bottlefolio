@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 897 |
+| functions | 899 |
 | tables | 213 |
-| carrying a stated purpose | 704 |
+| carrying a stated purpose | 707 |
 
 ## Tables
 
@@ -696,6 +696,7 @@ QUESTION, not the name you were going to use.
 - **`L.nextBottleId`** — _no comment above it_
 - **`L.nextSort`** — _no comment above it_
 - **`L.normalizeProduct`** — _no comment above it_
+- **`L.normTail`** — WHAT IS LEFT OF A NAME ONCE THE CATEGORY WORDS GO
 - **`L.noteComplete`** — WHAT COUNTS AS HAVING A NOTE
 - **`L.noteFromColumns`** — A NOTE FROM LOOSE COLUMNS
 - **`L.noteGaps`** — Split by the card each gap belongs to
@@ -851,6 +852,7 @@ QUESTION, not the name you were going to use.
 - **`L.radarPoints`** — The radar's geometry, worked out here so the drawing function only
 - **`L.rankAsks`** — _no comment above it_
 - **`L.rankOffer`** — _no comment above it_
+- **`L.rawNorm`** — A NAME WITH NOTHING TAKEN OUT OF IT BUT PUNCTUATION
 - **`L.readBackup`** — rather than half-applied.
 - **`L.readFailSays`** — _no comment above it_
 - **`L.readNumber`** — A number as a person or a spreadsheet actually writes it.
@@ -985,7 +987,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelvesSay`** — WHO SHARES WITH YOU AND WHETHER THEIR SHELF ARRIVED, said per person
 - **`L.shopFieldLooked`** — Does this field read as LOOKED UP? Only when a lookup happened, for THIS
 - **`L.shopIsNewBottle`** — Has the bottle changed under the form? S.shop keeps what was typed
-- **`L.shopNorm`** — _no comment above it_
+- **`L.shopNorm`** — GIVEN THE BRAND REGISTRY it keeps the words the name OPENS with when those
 - **`L.shopSearch`** — _no comment above it_
 - **`L.shopSeed`** — Which value a Shop form field starts with, and where it came from
 - **`L.shortIds`** — A LIST OF ACCOUNTS AS THE LOG SHOWS THEM
