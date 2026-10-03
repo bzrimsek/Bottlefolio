@@ -101,6 +101,69 @@ const failures = [];
     }
   }
 
+  /* AND WHAT THE CARDS SAY. Everything above counts pages; nothing read a word,
+     and all three faults this file has seen were words. A malformed field is the
+     shape they share: [object Object], a field that is only its own separators, a
+     doubled separator where a blank was joined between two values, or one at
+     either end where a blank was joined onto it. None of that depends on what the
+     shelf holds, so the check cannot cry wolf when the data changes. */
+  {
+    const L = require('./engine.js')().L;
+    const { bottles, custom } = require('./engine.js').shelf(dir);
+    const base = JSON.parse(fs.readFileSync(path.join(dir, 'data.json'), 'utf8'))
+      .catalog || {};
+    const cat = L.mergeCatalog(base, {}, custom || {}, {});
+    const flights = (L.FLIGHTS || []).concat(
+      JSON.parse(fs.readFileSync(path.join(dir, 'bz-flights.json'), 'utf8')) || []);
+    let fields = 0;
+    const said = [];
+    /* GENERATED FLIGHTS TOO, and they are the ones that matter here: a STORED
+       flight carries its cards with it, so L.hostCard reads them back rather than
+       building them, and the builder that regressed is never reached. Measured by
+       breaking it: the stored papers passed with the fault put back. */
+    (L.tasteFamilies ? L.tasteFamilies() : []).forEach(w => {
+      let made;
+      try { made = L.flavourFlight(w, cat, bottles, {}); } catch (e) { return; }
+      if (made) flights.push(made);
+    });
+    flights.forEach(f => {
+      let card;
+      try { card = L.hostCard(f, cat); } catch (e) { return; }
+      /* THE CARDS AS BUILT, beside the paper as printed. */
+      (f.cards || []).forEach(c => Object.keys(c).forEach(k => {
+        const v = c[k];
+        if (typeof v !== 'string' || !v) return;
+        fields++;
+        const why = /\[object Object\]/.test(v) ? 'stringified an object'
+          : /^[\s.\u00b7,;:\-]+$/.test(v) ? 'is nothing but separators'
+          : /[.\u00b7]\s*[.\u00b7]/.test(v) ? 'has a doubled separator'
+          : null;
+        if (why) said.push((f.title || w) + ' \u2014 built ' + k + ' ' + why
+          + ': "' + v.slice(0, 60) + '"');
+      }));
+      (card.pours || []).forEach(pour => {
+        Object.keys(pour).forEach(k => {
+          const v = pour[k];
+          if (typeof v !== 'string' || !v) return;
+          fields++;
+          const why = /\[object Object\]/.test(v) ? 'stringified an object'
+            : /^[\s.\u00b7,;:\-]+$/.test(v) ? 'is nothing but separators'
+            : /[.\u00b7]\s*[.\u00b7]/.test(v) ? 'has a doubled separator'
+            : /^\s*[.\u00b7]|[.\u00b7]\s*$/.test(v) && k !== 'note'
+                && !/\.$/.test(v) ? 'opens or closes on a separator'
+            : null;
+          if (why) said.push(card.title + ' \u2014 ' + k + ' ' + why
+            + ': "' + v.slice(0, 60) + '"');
+        });
+      });
+    });
+    if (said.length) {
+      said.slice(0, 6).forEach(x => failures.push('a card field ' + x));
+    } else {
+      console.log('  \u00b7 ' + fields + ' card fields, none built from a blank');
+    }
+  }
+
   await browser.close();
   console.log('  \u00b7 ' + printed + ' papers printed'
     + (everything ? '' : ' (a sample \u2014 --all for every flight)')

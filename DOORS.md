@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 913 |
+| functions | 914 |
 | tables | 218 |
 | carrying a stated purpose | 722 |
 
@@ -508,7 +508,7 @@ QUESTION, not the name you were going to use.
 - **`L.histRestoreRun`** — the whole of what the X did.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdsFor`** — flight answers neither.
-- **`L.hostCard`** — What the host needs and the participants must not see.
+- **`L.hostCard`** — _no comment above it_
 - **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
@@ -576,6 +576,7 @@ QUESTION, not the name you were going to use.
 - **`L.isSealed`** — What a bottle's status MEANS, in one place
 - **`L.isWhisky`** — _no comment above it_
 - **`L.joinMeText`** — and what to look for.
+- **`L.joinParts`** — PARTS JOINED INTO A SENTENCE, without doubling a stop
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
 - **`L.keyAsName`** — A KEY READ BACK AS WORDS, for a bottle that has no record to take a name from.

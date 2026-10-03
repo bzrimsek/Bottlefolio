@@ -28477,6 +28477,20 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
           { k: 'bourbon', status: 'open' }])).map(p => p.k), ['blank']);
   }
 
+  /* PARTS JOINED WITHOUT DOUBLING A STOP. A flight card printed "Tullamore
+     D.E.W.. Irish" because that name ends in a period and the join added another
+     (2026-10-03, the first time anything read what a card says). */
+  eq('a part that already ends in a stop takes a space, not another stop',
+    L.joinParts(['Tullamore D.E.W.', 'Irish']), 'Tullamore D.E.W. Irish');
+  eq('and one that does not takes the stop',
+    L.joinParts(['Buffalo Trace', 'Bourbon']), 'Buffalo Trace. Bourbon');
+  eq('a blank part is dropped rather than joined around',
+    L.joinParts(['Buffalo Trace', null, '']), 'Buffalo Trace');
+  eq('nothing at all is nothing', L.joinParts([]), '');
+  eq('and the name is never shortened to make the join tidy',
+    L.joinParts(['Gortinore Distillers & Co.', 'Irish'])
+      .indexOf('Co.') >= 0, true);
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

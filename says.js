@@ -117,6 +117,10 @@ const SHELVES = [
 
   const { bottles: all, custom, flights } = require('./engine.js').shelf(dir);
 
+  /* WHAT EACH SCREEN SAID, for the App use check after the walk. Declared out
+     here because it outlives the loop; only the real shelf fills it, since the
+     help page describes a working app rather than an empty one. */
+  const screenText = {};
   for (const shelf of SHELVES) {
     const bots = shelf.take(all);
     await p.evaluate(([bs, cu, fl]) => {
@@ -143,6 +147,8 @@ const SHELVES = [
     /* EVERY LABELLED NUMBER ON EVERY SCREEN, gathered across the whole walk so
        one quantity said two ways can be seen. */
     const byLabel = {};
+    /* AND WHAT EACH SCREEN SAID, for App use. The real shelf only: the help
+       page describes a working app, not an empty one. */
 
     for (const [name, js] of STOPS) {
       const where = shelf.say + ', ' + name;
@@ -220,7 +226,10 @@ const SHELVES = [
           nameless.slice(0, 3).map(x => '"' + x.all + '"').join('\n'));
       } else ok(where + ' names every number it draws');
 
-      /* 4. GATHERED, for the one-quantity-two-ways check below. */
+      /* 4. WHAT THIS SCREEN SAYS, kept for the App use check after the walk. */
+      if (shelf === SHELVES[0]) screenText[name] = seen.text;
+
+      /* 5. GATHERED, for the one-quantity-two-ways check below. */
       seen.bars.forEach(x => {
         if (!x.label || !isFinite(x.n)) return;
         (byLabel[x.label] = byLabel[x.label] || []).push({ n: x.n, where: name });
@@ -246,6 +255,55 @@ const SHELVES = [
           + byLabel[k].map(x => x.n + ' on ' + x.where).join(' and ')).join('\n'));
     } else {
       ok(shelf.say + ': one quantity is not said two ways');
+    }
+  }
+
+  /* APP USE NAMES THE SCREEN A THING IS ON, and rule 9z says it is updated with
+     every build - which was skipped for twelve of them because nothing checked it.
+     Two entries sent a reader to Settings for cards drawn on Home.
+
+     ONLY WHERE THE TERM WAS ACTUALLY SEEN. Most terms live behind a fold, a modal
+     or a filter and never appear in a freshly drawn tab, so asking whether each one
+     is on the screen it names would fail constantly - and a check that cries wolf
+     gets switched off. Found somewhere other than it says is a contradiction; not
+     found at all says nothing. */
+  {
+    const SCREENS = { Home: 'Home', Shelf: 'Shelf', Shop: 'Shop', Taste: 'Taste',
+      Flights: 'Flights', Buddies: 'Buddies', Learn: 'Learn', Settings: 'Settings' };
+    const feats = await p.evaluate(() => {
+      const out = [];
+      (L.FEATURES || []).forEach(g => (g.items || []).forEach(i => {
+        if (i.term && i.src) out.push({ term: i.term, src: i.src });
+      }));
+      return out;
+    });
+    const wrong = [];
+    feats.forEach(f => {
+      /* EVERY SCREEN THE ENTRY NAMES, not just the first word of its src: one
+         reads "Home, and the Shop question screen" and is drawn on Shop, which
+         the entry does name and a first-word reading called a contradiction. */
+      /* SPLIT ON WHAT IS NOT A LETTER rather than a word-boundary regex: the
+         escape for one does not survive being written by a script, and it went
+         in as a literal backspace - so nothing ever matched, every entry was
+         skipped, and the check passed without looking at anything. Caught by
+         breaking it on purpose, which is the only way that is ever caught. */
+      const words = String(f.src).split(/[^A-Za-z]+/);
+      const said = Object.keys(SCREENS).filter(k => words.indexOf(k) >= 0);
+      if (!said.length) return;
+      const on = Object.keys(screenText).filter(k =>
+        screenText[k].indexOf(f.term) >= 0);
+      if (!on.length) return;
+      /* A Shop mode is Shop, and both Shelf views are Shelf. */
+      if (on.some(k => said.indexOf(k.split(',')[0].split(':')[0]) >= 0)) return;
+      wrong.push(f.term + ' - App use says "' + f.src + '", drawn on '
+        + on.join(' and '));
+    });
+    if (wrong.length) {
+      bad('App use names the screen each thing is actually on',
+        wrong.slice(0, 5).join('\n'));
+    } else {
+      ok('App use names the screen each thing is actually on ('
+        + feats.length + ' entries)');
     }
   }
 
