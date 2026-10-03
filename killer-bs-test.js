@@ -6680,6 +6680,56 @@ eq('only what the record does not say is kept, and nothing at all is null',
   eq('and a blank is only filled where there is something to fill it with',
     L.fillBlanks({ a: 1 }, { a: 0, b: '' }), { a: 0, b: '' });
 }
+/* A BLANK IN YOUR COPY IS NOT AN OPINION ABOUT THE FACT (BZ, 2026-10-03:
+ * "Distillery and category are in the damn name already", then "110.3 is the
+ * proof btw").
+ *
+ * data.json ships "2025 New Riff Silver Grove Bourbon" carrying New Riff
+ * Distilling, bourbon and 110.3 proof. His shelf showed all three blank for
+ * weeks, and no lookup could ever have filled them: the edit form writes every
+ * field it displays, so the three he never typed in arrived as empty strings,
+ * and mergeCatalog used Object.assign - which copies a key holding '' exactly
+ * as happily as one holding a fact. Five of his bottles were in that state.
+ *
+ * AND THE OTHER HALF, which a blanket fix broke: an edit clears a flight-card
+ * marker by writing tnFrom: '' and it HAS to be an empty string rather than a
+ * deleted key, because edits merge between devices and an absent key says
+ * "I have nothing to say" rather than "I say this is empty". So the fill is
+ * limited to L.FACT_FIELDS, and the two cases are asserted together - the one
+ * that was wrong before and the one that would be wrong after. */
+{
+  const ships = { 'Silver Grove': { k: 'Silver Grove', name: 'Silver Grove',
+    dist: 'New Riff Distilling', sub: 'bourbon', proof: 110.3,
+    tnFrom: 'THE NEW RIFF FLIGHT', tn: { nose: 'prompt' } } };
+  /* What the edit form stored: his age, his price, his notes - and three
+     fields he never touched, written out as blanks. */
+  const mine = { 'Silver Grove': { age: 4, msrp: 55.99, dist: '', sub: '',
+    proof: '', tnFrom: '', tnSrc: 'you',
+    tn: { nose: 'Maple sugar', palate: 'Honeyed dark fruits' } } };
+  const got = L.mergeCatalog(ships, mine, {}, {});
+  const one = got['Silver Grove'];
+  eq('the shipped facts come back through the blanks',
+    [one.dist, one.sub, one.proof], ['New Riff Distilling', 'bourbon', 110.3]);
+  eq('and what he typed still stands', [one.age, one.msrp], [4, 55.99]);
+  eq('his own notes are not replaced by the prompt', one.tn.nose, 'Maple sugar');
+  eq('and the cleared marker stays cleared', one.tnFrom, '');
+  /* A FACT HE TYPED IS HIS, whatever the shipped entry says - the fill is for
+     blanks and nothing else. */
+  const typed = L.mergeCatalog(ships,
+    { 'Silver Grove': { proof: 110, dist: 'New Riff' } }, {}, {});
+  eq('a value he typed beats the shipped one',
+    [typed['Silver Grove'].proof, typed['Silver Grove'].dist],
+    [110, 'New Riff']);
+  /* AND THE FIELDS THE FILL MAY TOUCH ARE DERIVED, not typed out again. */
+  eq('the fact fields come from the gap lists', L.FACT_FIELDS,
+    ['proof', 'dist', 'sub']);
+  /* NOT EVERY FIELD: a zero is a value, and an allow-list must not throw the
+     rest of the base away - an edited proof once left a bottle with no name. */
+  eq('a field outside the list is left as the edit wrote it',
+    L.fillBlanks({ fin: 'Port', name: 'N' }, { fin: '' }, ['proof']),
+    { fin: '', name: 'N' });
+}
+
 eq('edit overrides one field', L.mergeCatalog(base, { A: { proof: 92 } }, {}, {}).A.proof, 92);
 eq('edit keeps other fields', L.mergeCatalog(base, { A: { proof: 92 } }, {}, {}).A.name, 'Alpha');
 eq('base is not mutated', base.A.proof, 90);
@@ -28636,6 +28686,36 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
       L.sameBottle({ name: '2025 New Riff Silver Grove Bourbon' },
         { name: 'New Riff Silver Grove Barrel Proof 6 Year Old Straight Rye',
           dist: 'New Riff Distilling', sub: 'rye', age: 6 }, sgCat, null), false);
+  }
+
+  /* A LOOKUP FILLS THE BLANKS IT ANSWERED (BZ, 2026-10-03: "Still needed to fill
+     one bottle. Guess which one. Check the log."). It is 2025 New Riff Silver
+     Grove Bourbon, and seven more like it: eight of his bottles carry a nose and
+     a palate and no distillery, type or proof, and seven appear in his log by
+     name being asked about, answered with dist, proof and sub, and taking
+     nothing. The diff took tn, age, fin and msrp and threw the rest away. */
+  {
+    const sg = { k: 'sg', name: '2025 New Riff Silver Grove Bourbon', age: 4,
+      msrp: 55.99, tn: { nose: 'Maple sugar, blackberries',
+        palate: 'honeyed dark fruits', finish: 'spicy oak' } };
+    const ans = { name: 'New Riff Silver Grove Bourbon',
+      dist: 'New Riff Distilling', sub: 'bourbon', proof: 100, age: 4 };
+    eq('the blanks a lookup answered are filled',
+      Object.keys(L.enhanceDiff(sg, ans) || {}).sort(),
+      ['dist', 'proof', 'sub']);
+    /* THE RULE THE DIFF ALREADY KEPT: a value you have is yours. */
+    eq('and a value already there is never overwritten',
+      L.enhanceDiff(Object.assign({}, sg, { dist: 'Mine', sub: 'rye',
+        proof: 92 }), ans), null);
+    /* A NUMBER WITH A RANGE, the app's own: the floor under all whiskey and
+       pure alcohol. */
+    eq('a proof outside what a whiskey is bottled at is refused',
+      (L.enhanceDiff({ k: 'x', name: 'X', tn: { nose: 'a', palate: 'b' } },
+        { proof: 400 }) || {}).proof, undefined);
+    /* AND A CATEGORY THE APP CANNOT FILE IS NOT A CATEGORY. */
+    eq('a category outside L.TYPES is refused',
+      L.enhanceDiff({ k: 'y', name: 'Y', tn: { nose: 'a', palate: 'b' } },
+        { sub: 'moonshine' }), null);
   }
 
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this

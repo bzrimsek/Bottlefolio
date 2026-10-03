@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 920 |
-| tables | 218 |
-| carrying a stated purpose | 726 |
+| tables | 219 |
+| carrying a stated purpose | 728 |
 
 ## Tables
 
@@ -79,6 +79,7 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_KINDS`** — _no comment above it_
 - **`L.GAP_SAY`** — WHERE A ROW ON THE STILL MISSING LIST STANDS, and what it is short of.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
+- **`L.GAPS_ON_THE_LABEL`** — This is the list the shelf's fill queue asks about
 - **`L.GUIDE_CALLED`** — WHAT HE IS TOLD TO CALL SOMEBODY
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
 - **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens
@@ -399,7 +400,7 @@ QUESTION, not the name you were going to use.
 - **`L.feedbackLine`** — _no comment above it_
 - **`L.fieldList`** — A list of them, written the way somebody says it out loud.
 - **`L.fieldWords`** — _no comment above it_
-- **`L.fillBlanks`** — _no comment above it_
+- **`L.fillBlanks`** — `only` LIMITS IT TO NAMED FIELDS, because an empty string is not always
 - **`L.fillOf`** — AN UNSET LEVEL MEANS FULL.
 - **`L.fillPlan`** — WHAT THE ADD FORM SHOULD DO WITH THE NAME IT HAS, here so the harness can
 - **`L.fillSay`** — HOW A FILL IS GOING, SAID ONE WAY
