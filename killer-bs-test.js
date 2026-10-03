@@ -28424,6 +28424,36 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     Object.keys(L.ownedCatalog({ a: bcat.a }, bbot)), ['a']);
   eq('and nothing owned is nothing', L.ownedCatalog(bcat, []), {});
 
+  /* HOW FAR A BOTTLE REACHES, which settles a tie in what Cooper is handed. BZ,
+     2026-10-03, after asking where a beer drinker should start and being given
+     craft releases: "I'm not sure the shape of the answer is correct given the
+     relative scarcity of the suggestions." He can only name what he is handed,
+     and L.guideGround broke every tie on the NAME - so among equally relevant
+     bottles the winner was whichever sorted first. */
+  eq('one anybody knows reaches furthest', L.guideReach({ obsc: 'known' }), 0);
+  eq('and one you will be explaining reaches least',
+    L.guideReach({ obsc: 'obscure' }) > L.guideReach({ obsc: 'niche' }), true);
+  eq('a bottle that says nothing sits in the middle, not at the top',
+    L.guideReach({}), L.guideReach({ obsc: 'niche' }));
+  /* AND WHAT CANNOT SIMPLY BE BOUGHT GOES BELOW WHAT CAN, however well known:
+     an allocated bottle is a poor suggestion to somebody starting out. */
+  eq('allocated costs it more than being obscure does',
+    L.guideReach({ obsc: 'known', alloc: 'unicorn' })
+      > L.guideReach({ obsc: 'obscure' }), true);
+  /* RELEVANCE STILL OUTRANKS IT. Ask about the obscure thing and the obscure
+     thing comes back, because it answers more of the question. */
+  {
+    const gcat = {
+      a: { k: 'a', name: 'Chattanooga High Malt', sub: 'bourbon', obsc: 'obscure' },
+      b: { k: 'b', name: 'Famous Malt Whiskey', sub: 'scotch', obsc: 'known' }
+    };
+    eq('among equals, the one somebody can find comes first',
+      L.guideGround('malt', gcat, []).rows[0].name, 'Famous Malt Whiskey');
+    eq('but naming the obscure one still brings it back first',
+      L.guideGround('chattanooga malt', gcat, []).rows[0].name,
+      'Chattanooga High Malt');
+  }
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

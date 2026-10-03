@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 911 |
-| tables | 217 |
-| carrying a stated purpose | 720 |
+| functions | 912 |
+| tables | 218 |
+| carrying a stated purpose | 721 |
 
 ## Tables
 
@@ -83,6 +83,7 @@ QUESTION, not the name you were going to use.
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
 - **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens
 - **`L.GUIDE_PROCESS`** — Canon, not invention (rule 36)
+- **`L.GUIDE_REACH`** — HOW FAR A BOTTLE REACHES
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
@@ -477,13 +478,14 @@ QUESTION, not the name you were going to use.
 - **`L.guideChoices`** — WHAT TO OFFER AT A STEP, when somebody would rather tick than type.
 - **`L.guideCost`** — _no comment above it_
 - **`L.guideDoor`** — THE DOOR HE ASKED FOR, by name, or nothing
-- **`L.guideGround`** — `base` is S.base - the shipped catalogue and the shared library - and never
+- **`L.guideGround`** — _no comment above it_
 - **`L.guideHeard`** — Everything else depends on where they are
 - **`L.guideKey`** — _no comment above it_
 - **`L.guideLessons`** — THE LESSONS, WHICH NOTHING COULD SEE
 - **`L.guideNext`** — NO METER. A bar counting six steps is a form's idea of progress; in a
 - **`L.guideNote`** — THE NOTE A TASTING WRITES
 - **`L.guidePickList`** — The list was the first twelve alphabetically, which on a shelf of 352 meant
+- **`L.guideReach`** — HOW FAR A BOTTLE REACHES
 - **`L.guideRecall`** — _no comment above it_
 - **`L.guideRemember`** — _no comment above it_
 - **`L.guideReply`** — AND WHAT CAME BACK
