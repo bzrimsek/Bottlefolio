@@ -28390,6 +28390,16 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     L.verdictRows({}), []);
   eq('and nothing at all is not an error', L.verdictRows(null), []);
 
+  /* WHAT IS OWNED, OFF ONE CATALOGUE. The Shop screen kept its own version of
+     this that merged a catalogue from a different base, and a 352-whisky shelf
+     came back as 7 - which Shop then reported as "not enough shelf yet" (BZ,
+     2026-10-03, with the screenshot). One question, one answer. */
+  eq('what is owned is read off the catalogue it is given',
+    Object.keys(L.ownedCatalog(bcat, bbot)).sort(), ['a', 'b', 'c']);
+  eq('a bottle whose key the catalogue does not carry is not invented',
+    Object.keys(L.ownedCatalog({ a: bcat.a }, bbot)), ['a']);
+  eq('and nothing owned is nothing', L.ownedCatalog(bcat, []), {});
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

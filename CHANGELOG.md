@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.7.30  ·  2026-10-03 12:36 PM ET
+
+Shop told a man with 352 whiskies that he had 7 and there was not enough shelf to work with. The screen kept its own copy of what-is-owned, and the copy merged a catalogue from LIB.products rather than from S.base - a different base, because S.base IS the library once it has been read and healed, so LIB.products is the rawer shape underneath it and its keys are not the keys the bottles carry. Almost nothing resolved. L.ownedCatalog is the engine's answer to that question and had been there all along; the screen asks it now. One question answered in two places, with the copy wrong, which is the fault this project keeps finding. The count feeds the floor under Shop's planning mode, so with it right the screen draws the ideas it was always meant to draw - BZ, 2026-10-03: 'I'd expect no comment on first open. Or specific ideas.' Verified by loading the app on his real shelf and reading the screen: 351 owned, and Shop opens on You are likely to like.
+
 ## v2.7.29  ·  2026-10-03 10:42 AM ET
 
 The fingerprint stops saying You on every line. BZ, 2026-10-03: the word is redundant. The name exists to tell two shelves apart, so with nobody sharing a shelf it was saying You five times to the person whose app it is. It is written only when there is more than one side, and every row is named again the moment a buddy shares one, because then the question it answers is real.
