@@ -2139,7 +2139,7 @@ sec('a line about what a screen is showing');
     ['scotch', 2, 2, null]);
   eq('the shelf says what you are looking at',
     L.listLine(Object.values(cat), bs, {}),
-    '3 whiskeys \u00b7 2 Scotch \u00b7 2 from Islay \u00b7 1 at 100 proof or more \u00b7 2 open');
+    '3 whiskies \u00b7 2 Scotch \u00b7 2 from Islay \u00b7 1 at 100 proof or more \u00b7 2 open');
   eq('and nothing shown is nothing said', L.listLine([], bs, {}), '');
   eq('the map says how far the shelf reaches and what it misses',
     L.mapLine(cat, bs, {}),
@@ -7405,7 +7405,7 @@ eq('macaloney is canadian', Object.values(data.catalog)
   .filter(p => /Macaloney/.test(p.dist)).every(p => p.sub === 'canadian'), true);
 eq('crown royal is canadian', Object.values(data.catalog)
   .filter(p => p.dist === 'Crown Royal').every(p => p.sub === 'canadian'), true);
-// Bourbon-forward blends of straight whiskeys read as bourbon on this shelf;
+// Bourbon-forward blends of straight whiskies read as bourbon on this shelf;
 // style keeps 'blended' so the construction is not lost.
 eq('barrell blends file as bourbon', Object.values(data.catalog)
   .filter(p => /Barrell.*(Dovetail|Anniversary)/.test(p.name))
@@ -10551,6 +10551,24 @@ sec('\u00a7223 what the shelf adds up to');
     '1 whisky to search, filter and sort.');
   eq('it never says bottles', /bottle/.test(L.shelfBooksLine(351)), false);
 
+  /* THE VENN JOINS ONE WHISKY WRITTEN TWO WAYS, given the taxonomy. Without it
+     "W.L. Weller 12 Year Old" and "Weller 12 Year Old" keyed separately - two
+     bottles, two people, no overlap - which is the Venn BZ reported on
+     2026-10-02, and eight callers passed no registry at all. */
+  const vLib = { w_l_weller_12: { k: 'w_l_weller_12', dist: 'Buffalo Trace',
+    name: 'W.L. Weller 12 Year Old', sub: 'bourbon' } };
+  const vBrands = { w_l_weller: { name: 'W.L. Weller', house: 'Buffalo Trace' },
+    weller: { name: 'Weller', house: 'Buffalo Trace' } };
+  const vShelf = n => ({ catalog: { x: { k: 'x', name: n, sub: 'bourbon',
+    dist: 'Buffalo Trace' } }, bottles: [{ k: 'x', status: 'open' }] });
+  const vKey = (n, br) => Object.keys(L.shelfSet(vShelf(n), false, vLib, {}, br))[0];
+  eq('without the taxonomy the two spellings are two bottles',
+    vKey('W.L. Weller 12 Year Old', null) === vKey('Weller 12 Year Old', null),
+    false);
+  eq('and with it they are one',
+    vKey('W.L. Weller 12 Year Old', vBrands)
+      === vKey('Weller 12 Year Old', vBrands), true);
+
   /* WHISKIES OR BOTTLES, TOLD APART. 25 whiskies across 55 bottles, so a chip
      cannot be right by accident: `tally` takes a weightByBottles flag, and the
      house, the region, the style and the mash bill are the weighted ones while
@@ -11383,7 +11401,7 @@ sec('§232 the portrait a shelf earns');
   const plain = L.shelfPortrait(bland.cat, bland.bs, {});
   eq('a shelf with no strong opinion is a generalist',
     plain.title, 'The Generalist');
-  eq('and says how many it looked at', /12 whiskeys/.test(plain.why), true);
+  eq('and says how many it looked at', /12 whiskies/.test(plain.why), true);
   eq('a generalist has no runners-up', plain.also.length, 0);
 
   /* PX has to be earned: four is not a preference, and the threshold is
