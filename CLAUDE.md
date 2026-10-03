@@ -18,6 +18,27 @@ write a second version of it here.
 
 ---
 
+## Bottlefolio's own rules
+
+Moved out of the shared rule book on 2026-10-03 because they name
+Bottlefolio's code and no other app has the thing they govern. They keep
+their numbers, because `consistency.js` and `says.js` cite them.
+
+**9z** App use is updated with every build, alongside the changelog and the
+version bump. BZ: remember to update App Use with each build. A help page
+describing a screen that has been rebuilt is worse than one saying nothing,
+and consistency.js only checks the controls it has been told about — so a
+new named control goes in BOTH the App use entry and the CONTROLS list that
+guards it.
+
+**25f** CALL THE APPS SCRIPT FILE Code.gs. It is delivered from the
+container as lookup.gs and it lives in my project as Code.gs, and two names
+for one file is how a paste lands in the wrong place. Say Code.gs when
+handing it over. label.gs and shelf.gs match on both sides and keep their
+names.
+
+---
+
 ## Shape of the file
 
 `index.html` is two halves, and which half code belongs in is not a matter

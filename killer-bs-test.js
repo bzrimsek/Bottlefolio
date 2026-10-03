@@ -28491,6 +28491,52 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     L.joinParts(['Gortinore Distillers & Co.', 'Irish'])
       .indexOf('Co.') >= 0, true);
 
+  /* COOPER ONLY KNOWS ABOUT WHISKEY (BZ, 2026-10-03). Nothing kept the bar shelf
+     out of what he is handed: on this two-entry base the vodka ranked FIRST and
+     was given to him ahead of the whisky beside it. Only four non-whiskey entries
+     ship in data.json and none matched the questions anybody tried, which is why
+     nothing noticed - BZ's library holds thirteen. */
+  {
+    const gcat2 = {
+      a: { k: 'a', name: 'Smoky Peat Whisky', sub: 'scotch', dist: 'A', proof: 92 },
+      z: { k: 'z', name: 'Smoky Peat Vodka', sub: 'vodka', dist: 'Z', proof: 80 },
+      f: { k: 'f', name: 'Smoky Peat Cinnamon Flavored Whiskey', sub: 'flavored',
+           dist: 'F', proof: 70 }
+    };
+    eq('a vodka is never handed to Cooper, however well it matches',
+      L.guideGround('smoky peat', gcat2, []).rows.map(r => r.name),
+      ['Smoky Peat Whisky']);
+    eq('and neither is a flavored whiskey, which is the rule it inherits',
+      L.guideGround('cinnamon', gcat2, []).rows.length, 0);
+  }
+
+  /* A WORD THAT ONLY LANDS IN THE NOTES COUNTS ONLY IF THE APP CAN TASTE IT.
+     "What should I try first" matched twelve entries on `first`, almost every one
+     inside the phrase "first fill", and Cooper was handed all of them under a
+     question with no whisky in it. The palate vocabulary already separates them,
+     so nothing new was invented (BZ, 2026-10-03: "add it"). */
+  eq('a flavour the app can taste is a word worth matching on',
+    ['fig', 'smoke', 'raisin', 'oak'].map(L.tasteWord), [true, true, true, true]);
+  eq('and a word that is merely in several notes is not',
+    ['first', 'try', 'start', 'beer'].map(L.tasteWord),
+    [false, false, false, false]);
+  eq('nothing is not a flavour', [L.tasteWord(''), L.tasteWord(null)], [false, false]);
+  {
+    /* THE WHOLE RULE, END TO END: a bottle whose NOTES merely contain the word is
+       not handed over, and one whose notes carry a flavour the app knows is. */
+    const ncat = {
+      a: { k: 'a', name: 'Plain Bourbon', sub: 'bourbon', dist: 'A',
+           tn: { nose: 'first fill oak', palate: 'caramel' } },
+      b: { k: 'b', name: 'Figgy One', sub: 'scotch', dist: 'B',
+           tn: { nose: 'fig and raisin', palate: 'dried fruit' } }
+    };
+    eq('a question matching only prose is handed nothing',
+      L.guideGround('what should I try first', ncat, []).rows.length, 0);
+    eq('and one naming a flavour still gets its answer',
+      L.guideGround('what tastes of fig', ncat, []).rows.map(r => r.name),
+      ['Figgy One']);
+  }
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

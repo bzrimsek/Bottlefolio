@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 914 |
+| functions | 915 |
 | tables | 218 |
-| carrying a stated purpose | 722 |
+| carrying a stated purpose | 723 |
 
 ## Tables
 
@@ -954,7 +954,7 @@ QUESTION, not the name you were going to use.
 - **`L.sealedRowCount`** — Open and sealed counted as WHISKIES, which is what the bar opens.
 - **`L.searchLibrary`** — lot into a list first.
 - **`L.searchReference`** — _no comment above it_
-- **`L.searchText`** — to find some whiskies.
+- **`L.searchText`** — WHAT IDENTIFIES A BOTTLE, as against what it tastes of
 - **`L.seedFromText`** — A TYPED NAME IS ENOUGH (BZ, 2026-09-20
 - **`L.sentenceCase`** — proper nouns and acronyms that carry their own capitals.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
@@ -1076,6 +1076,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteWants`** — _no comment above it_
 - **`L.tasteWeights`** — _no comment above it_
 - **`L.tasteWinner`** — What they said the LAST time they were asked.
+- **`L.tasteWord`** — IS THIS A FLAVOUR THE APP CAN TASTE? Asked of the palate index, which is the
 - **`L.tastingForGuest`** — What a guest's device does with one
 - **`L.tastingNotes`** — _no comment above it_
 - **`L.tastingRecord`** — _no comment above it_

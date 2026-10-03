@@ -202,6 +202,125 @@ function bad(what, detail) {
     bad('a library-keyed shelf miscounts', JSON.stringify(keyed));
   }
 
+  /* WHAT COOPER IS HANDED. His words are the model's and cost money, so nothing
+     can read them every build - but the bottles he is allowed to name are picked
+     here, by L.guideGround, and that is where the fault was (BZ, 2026-10-03: "I'm
+     not sure the shape of the answer is correct given the relative scarcity of the
+     suggestions"). */
+  {
+    /* THE REAL SHELF BACK. An earlier scenario empties S.base on purpose to prove
+       a library-keyed shelf still counts, and these run after it - so without this
+       Cooper is handed nothing and all three pass on an empty list. */
+    await p.evaluate(([bs, base]) => {
+      S.base = base; S.edits = {}; S.custom = {}; S.deleted = {};
+      S.bottles = bs; save_(); rebuildCatalog();
+    }, [bots, JSON.parse(fs.readFileSync(path.join(dir, 'data.json'),
+      'utf8')).catalog || {}]);
+
+    const GENERAL = ['If I like beer where should I start with whiskey',
+      'what should I try first', 'I am new to whiskey what do you recommend',
+      'something smoky to start with'];
+    /* MATCHED BY NAME, because L.guideRow answers a row carrying no key and no
+       obsc - so looking a product up by r.k missed every time, every bottle took
+       the default reach and the measure was flat. Found by breaking the ranking
+       and watching this pass. */
+    const handed = await p.evaluate(qs => {
+      const byName = {};
+      Object.values(S.base).forEach(x => { if (x && x.name) byName[x.name] = x; });
+      return qs.map(q => ({
+        q: q,
+        rows: (L.guideGround(q, S.base, S.bottles).rows || []).map(r => {
+          const p2 = byName[r.name] || {};
+          return { name: r.name, reach: L.guideReach(p2),
+            /* JUDGED INDEPENDENTLY of L.neverOffer, which is the function this
+               is meant to guard: asking it whether it was right is agreeing with
+               whatever it says. L.NOT_WHISKY is a list, not a decision. */
+            notWhisky: L.NOT_WHISKY.indexOf(
+              String(p2.sub || '').toLowerCase()) >= 0 };
+        })
+      }));
+    }, GENERAL);
+
+    /* NOT VACUOUS. Three assertions over an empty list all pass, which is the
+       trap this project keeps meeting - so the list is checked for being a list
+       first. */
+    const rowCount = handed.reduce((n, h) => n + h.rows.length, 0);
+    if (rowCount < 8) {
+      bad('Cooper is handed bottles at all',
+        rowCount + ' rows across ' + handed.length + ' questions - every check '
+        + 'below would pass on an empty list');
+    } else {
+      ok('Cooper is handed bottles at all (' + rowCount + ' rows)');
+    }
+
+    /* 1. NOTHING HE MAY NOT RECOMMEND. */
+    const offered = handed.filter(h => h.rows.some(r => r.notWhisky));
+    if (offered.length) {
+      bad('Cooper is never handed something that is not whiskey',
+        offered.map(h => h.q + ' \u2014 '
+          + h.rows.filter(r => r.notWhisky).map(r => r.name).join(', ')).join('\n'));
+    } else {
+      ok('Cooper is never handed something that is not whiskey');
+    }
+
+    /* 2. A GENERAL QUESTION IS ANSWERED WITH BOTTLES SOMEBODY CAN FIND. Half,
+       not all: a question about a rare thing may fairly return rare things, and
+       the bar has to be one a real shelf can clear. */
+    /* THE BAR IS THE MEAN, AND IT IS MEASURED IN BOTH STATES. Per question
+       nothing separates a working ranking from a broken one - "what should I try
+       first" comes back 8 of 12 findable either way - so a per-question bar
+       either fails that one always or passes the regression. On BZ's shelf, the
+       share of what Cooper is handed that somebody can buy:
+
+         with the tie-break   0.92  0.67  0.92  1.00   mean 0.88
+         without it           0.75  0.67  0.67  0.92   mean 0.75
+
+       0.70 sits between them, with room on both sides. RE-MEASURED when a
+       word landing only in a tasting note stopped counting unless the app can
+       taste it: the old figures were taken over lists that still held noise,
+       and "what should I try first" now returns ONE row rather than twelve, so
+       it leaves the mean entirely. The smoky question sits at 0.56 in both
+       states - genuinely peaty whiskies are often obscure, which is an answer
+       rather than a fault. A floor against the ranking regressing, not a
+       standard anybody designed to. */
+    const shares = handed.filter(h => h.rows.length >= 4)
+      .map(h => h.rows.filter(r => r.reach <= 1).length / h.rows.length);
+    const mean = shares.length
+      ? shares.reduce((a, b) => a + b, 0) / shares.length : 1;
+    if (mean < 0.70) {
+      const worst = handed.filter(h => h.rows.length >= 4)
+        .sort((a, b) => a.rows.filter(r => r.reach <= 1).length / a.rows.length
+          - b.rows.filter(r => r.reach <= 1).length / b.rows.length)[0];
+      bad('questions that name nothing are answered with findable bottles',
+        'mean ' + mean.toFixed(2) + ' across ' + shares.length
+        + ' questions, against a floor of 0.70. Worst: ' + worst.q + ' \u2014 '
+        + worst.rows.filter(r => r.reach > 1).slice(0, 3)
+          .map(r => r.name).join(', '));
+    } else {
+      ok('questions that name nothing are answered with findable bottles (mean '
+        + mean.toFixed(2) + ')');
+    }
+
+    /* 3. AND THE QUESTION STILL OUTRANKS THE TIE-BREAK. */
+    const named = await p.evaluate(() => {
+      const obscure = Object.values(S.base)
+        .filter(x => x && x.obsc === 'obscure' && x.dist)[0];
+      if (!obscure) return null;
+      const rows = L.guideGround(obscure.dist, S.base, S.bottles).rows || [];
+      return { asked: obscure.dist, first: (rows[0] || {}).name || '' };
+    });
+    if (!named) {
+      ok('nothing obscure on this shelf to ask about');
+    } else if (named.first && new RegExp(named.asked.split(/\s+/)[0], 'i')
+        .test(named.first)) {
+      ok('naming an obscure house still brings it back first ('
+        + named.asked + ')');
+    } else {
+      bad('naming an obscure house still brings it back first',
+        'asked ' + named.asked + ', was handed ' + named.first);
+    }
+  }
+
   if (threw.length) bad('the page threw while answering', threw.join('\n'));
 
   await b.close();
