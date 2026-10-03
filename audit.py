@@ -374,6 +374,32 @@ def run_audit(html_path):
                 fail(f'{name} is missing {", ".join(missing)}')
             else:
                 ok(f'{name} parses and holds {", ".join(keys)}')
+            # NOTHING SHIPPED CARRIES SOMEBODY'S SHELF. data.json holds an
+            # empty one on purpose so a new user opens the app empty rather
+            # than holding BZ's collection, and until 2026-10-03 nothing
+            # checked it. This class has happened once: the phone screenshots
+            # were uploaded as a gate artifact with his real shelf loaded,
+            # publishing his bottle count and what the shelf is worth to
+            # anybody with a GitHub account (2026-09-16, found by a security
+            # scan rather than by a check).
+            if name == 'data.json':
+                held = len(d.get('bottles') or []) + len(d.get('flights') or [])
+                if held:
+                    fail(f'{name} ships {held} bottles or flights - it must '
+                         f'ship an empty shelf, or every new user opens the '
+                         f'app holding somebody else\u2019s collection')
+                else:
+                    ok(f'{name} ships an empty shelf, as it must')
+                # AND NOT THE FIELDS A BOTTLE ROW HAS. `paid` and `status`
+                # describe what somebody owns, never what a product IS, so
+                # either one in a catalogue is a shelf that has leaked into it.
+                raw = open(p, encoding='utf-8').read()
+                leaked = [f for f in ('"paid"', '"status"') if f in raw]
+                if leaked:
+                    fail(f'{name} carries {", ".join(leaked)} - those are a '
+                         f'bottle\u2019s fields, not a product\u2019s')
+                else:
+                    ok(f'{name} carries no field that describes a shelf')
         except Exception as e:
             fail(f'{name} does not parse: {e}')
 
