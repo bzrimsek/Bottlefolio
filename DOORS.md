@@ -13,14 +13,15 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 909 |
-| tables | 215 |
-| carrying a stated purpose | 718 |
+| functions | 912 |
+| tables | 217 |
+| carrying a stated purpose | 720 |
 
 ## Tables
 
 - **`L.ACTIONS`** — THE INVENTORY OF FUNDAMENTAL ACTIONS.
 - **`L.ADJACENT_TYPES`** — Symmetric on purpose
+- **`L.AGE_FLOORS`** — MEASURED: all three floors are below L.AGE_TIERS' first tier of ten, so they land in
 - **`L.AGE_TIERS`** — single cask somebody happened to fill, not something to go and look for.
 - **`L.ALLOCATED`** — How hard a bottle is to actually buy
 - **`L.ASK_ORDER`** — WHICH GROUP ANSWERS FIRST
@@ -227,6 +228,7 @@ QUESTION, not the name you were going to use.
 - **`L.US_SUBS`** — _no comment above it_
 - **`L.VAGUE_FRUIT`** — THE FRUIT CATEGORIES, which are not fruit anybody tastes
 - **`L.VARIABLES`** — _no comment above it_
+- **`L.VERDICT_ROWS`** — THE ORDER IS AN ARGUMENT
 - **`L.VERDICTS`** — What you thought of it.
 - **`L.WHEEL_OF`** — _no comment above it_
 - **`L.WHEEL_RINGS`** — WHAT IS NOT HERE is which words belong to which group
@@ -248,8 +250,9 @@ QUESTION, not the name you were going to use.
 - **`L.adoptCandidates`** — WEAK WHEN THE EXTRA WORDS TELL BOTTLINGS APART
 - **`L.adoptOrphans`** — IT DOES NOT GUESS
 - **`L.ageCell`** — A PROOF IN THE SIDE COLUMN, drawn one way
+- **`L.ageFloor`** — _no comment above it_
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
-- **`L.agePrior`** — THE BANDS ARE L.AGE_TIERS, which is already this app's word for "the ages
+- **`L.agePrior`** — _no comment above it_
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
@@ -615,6 +618,7 @@ QUESTION, not the name you were going to use.
 - **`L.libraryWords`** — _no comment above it_
 - **`L.likelyByAge`** — AGE AGAINST NO AGE, for a drinker who runs an AGE IS NOT A FLAVOR flight.
 - **`L.likelyByFlavour`** — MORE OF WHAT THE SHELF ACTUALLY TASTES OF.
+- **`L.likelyLine`** — WHAT CARRIED IT, by band and fit together, because a strong showing on flavour
 - **`L.likelyToLike`** — _no comment above it_
 - **`L.listLine`** — THE SHELF, AS FILTERED
 - **`L.loadStuck`** — A load still marked as running, long after anything could still be
@@ -1114,6 +1118,7 @@ QUESTION, not the name you were going to use.
 - **`L.vennRegions`** — encode it.
 - **`L.vennSpots`** — WHERE EACH REGION'S NUMBER SITS in the fixed diagram, keyed by the region
 - **`L.verdictOf`** — What you last thought of one bottle
+- **`L.verdictRows`** — _no comment above it_
 - **`L.verdicts`** — Reversed before the sort and not after, because a stable sort keeps the
 - **`L.verdictSplit`** — Split three ways, for anything that wants to reason about it.
 - **`L.verifyProposal`** — _no comment above it_

@@ -28096,6 +28096,45 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
   eq('and the oldest tier is the top of it, with nothing above',
     L.agePrior({ age: 40 }), 1);
 
+  /* NO AGE STATEMENT IS NOT NO INFORMATION (BZ, 2026-10-03: "Age at 0 is NAS. Any
+     non stated is the same analytically", then "Straight bourbon is at least 2, bib
+     has time rules too"). The app's own Learn text holds every one of these: "Two
+     years earns the word straight; four is the bonded rule", and Scotch is "at least
+     three years in oak casks". */
+  eq('straight means at least two years, with no statement anywhere',
+    L.ageFloor({ sub: 'bourbon', name: 'Old Thing Kentucky Straight Bourbon' }), 2);
+  eq('and it counts in the style field as well as the name',
+    L.ageFloor({ sub: 'bourbon', name: 'X', style: 'straight bourbon' }), 2);
+  /* BONDED IS FOUR, read off L.bottleMarks - which answers an ARRAY of mark ids.
+     Written as a property lookup this was silently undefined and every bonded
+     bottle came back with no floor at all. */
+  eq('bonded is four years by the Act',
+    L.ageFloor({ sub: 'bourbon', name: 'Old Fitzgerald Bottled-in-Bond' }), 4);
+  eq('and the oldest floor wins when two apply',
+    L.ageFloor({ sub: 'bourbon', name: 'Heaven Hill Bottled in Bond Straight' }), 4);
+  eq('Scotch, Irish and Canadian are three',
+    ['scotch', 'irish', 'canadian'].map(x => L.ageFloor({ sub: x, name: 'A' })),
+    [3, 3, 3]);
+  /* AND WHAT THE LAW SAYS NOTHING ABOUT STAYS AT NOTHING, which is the half of BZ's
+     sentence that was already right: bourbon has no minimum age at all, so a NAS
+     bourbon that does not say straight is genuinely unknown. */
+  eq('a bourbon that does not say straight has no floor',
+    L.ageFloor({ sub: 'bourbon', name: 'Plain Bourbon' }), 0);
+  eq('nor has a world whisky, or a bottle with no category',
+    [L.ageFloor({ sub: 'world', name: 'A' }), L.ageFloor({})], [0, 0]);
+  /* THE FLOOR IS USED WHERE A STATEMENT IS ABSENT, and a statement wins where there
+     is one. */
+  eq('a floor lifts a bottle the law constrains above one it does not',
+    L.agePrior({ sub: 'scotch', name: 'A' })
+      > L.agePrior({ sub: 'bourbon', name: 'Plain Bourbon' }), true);
+  eq('and a statement is what is used when there is one',
+    L.agePrior({ sub: 'scotch', name: 'A', age: 18 }),
+    L.agePrior({ name: 'B', age: 18 }));
+  /* MEASURED: every floor is under the first tier of ten, so all three score alike -
+     what they separate is law-known from unknown, not bonded from straight. */
+  eq('all three floors land in one band, being under the first tier',
+    new Set([2, 3, 4].map(y => L.agePrior({ age: y }))).size, 1);
+
   /* A BOTTLE AGAINST THE FINGERPRINT. X is a bourbon from Alpha and nothing
      else: type and distillery are full marks, flavour and wood are not judged,
      the prior is nought for no age - (2 + 1 + 0) / 4. */
@@ -28294,6 +28333,55 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     report.filter(r => /flavour$/.test(r[0])).length, 2);
   eq('a section with nobody in it is still a section',
     L.fingerprintReport([], pcat, bbot), [['shelves', 'nobody is sharing one']]);
+
+  /* HOW LIKE THE SHELF, IN ONE LINE, for the three screens BZ named (2026-10-03:
+     "When shopping, tasting out, or looking at buddies part of the venn, we should
+     provide the likely to like score for a bottle"). */
+  const likeLine = L.likelyLine({ name: 'Near', sub: 'bourbon', dist: 'Alpha',
+    proof: 100, age: 12, tn: { nose: 'oak and vanilla', palate: 'oak' } }, bfp);
+  eq('the line leads with how like the shelf it is',
+    /^\d{1,3}% like your shelf/.test(likeLine), true);
+  eq('and names what carried it', / \u00b7 \w/.test(likeLine), true);
+  /* NOT A RECOMMENDATION, in any of its words. At a bar a low figure is the reason
+     TO order - the app's own copy says the point there is what you cannot pour at
+     home - so a line that told anybody to buy or skip would be wrong on one of the
+     three screens it appears on. */
+  eq('it recommends nothing, because one of its three screens wants the opposite',
+    /\b(buy|skip|order|worth|avoid|recommend)/i.test(likeLine), false);
+  /* NOTHING IS NAMED THAT SCORED NOTHING. The line names the two strongest reasons
+     and the age prior at nought sorts last, so a bottle with several reasons cannot
+     show it either way - the case that bites is one known ONLY by its distillery,
+     whose two parts are the distillery at one and the age at nought. Nought is then
+     the second of two, and unfiltered the line would offer a bottle's missing age
+     as a reason it is like the shelf. Written the other way first, where removing
+     the filter left the suite green. */
+  const onlyHouse = L.likelyLine({ name: 'JustAHouse', dist: 'Alpha' }, bfp);
+  eq('a bottle known only by its house says only that',
+    / \u00b7 distillery/.test(onlyHouse), true);
+  eq('and its missing age is not offered as a reason it fits',
+    /age/.test(onlyHouse), false);
+  /* AND IT SAYS WHEN IT RESTS ON ALMOST NOTHING (rule 13d). A listing with a name
+     and a proof scored 67% off that one fact on BZ's shelf. */
+  eq('a figure drawn from almost nothing says so',
+    / \u2014 little else known$/.test(L.likelyLine({ name: 'Thin',
+      proof: 100 }, bfp)), true);
+  eq('and a bottle the app knows properly does not',
+    / little else known/.test(likeLine), false);
+  eq('nothing to judge is no line at all',
+    L.likelyLine({ name: 'Blank' }, bfp), null);
+  eq('and neither is an empty shelf',
+    L.likelyLine({ sub: 'bourbon' }, L.shelfFingerprint(null)), null);
+
+  /* WHICH LINES A BAR VERDICT HAS, which the screen used to decide for itself. */
+  eq('only the lines it actually has, in the order the engine sets',
+    L.verdictRows({ bar: 'B', why: 'W', likely: 'L' }),
+    [['sub', 'B'], ['sub', 'W'], ['src', 'L']]);
+  eq('the measurement comes last, because the verdict may point the other way',
+    L.verdictRows({ bar: 'B', why: 'W', effect: 'E', likely: 'L' })
+      .slice(-1)[0][1], 'L');
+  eq('a verdict with nothing under it draws nothing',
+    L.verdictRows({}), []);
+  eq('and nothing at all is not an error', L.verdictRows(null), []);
 
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
