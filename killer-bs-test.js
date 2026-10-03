@@ -28537,6 +28537,81 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
       ['Figgy One']);
   }
 
+  /* WHAT ON THIS SHELF CONTRADICTS ITSELF (BZ, 2026-10-03: "No clear way to
+     address these data issues"). L.rowFaults could name these for weeks and
+     nothing in the app ever asked it about his own bottles. */
+  {
+    const fcat = {
+      ok: { k: 'ok', name: 'Fine Bourbon', sub: 'bourbon', proof: 100 },
+      bad: { k: 'bad', name: 'Private Barrel Select Bourbon', sub: 'bourbon',
+             proof: 100, scar: 'standard' },
+      /* A RELEASE CLASS IS A WHISKEY JUDGEMENT. Same name, filed as vodka:
+         "small batch" on a vodka is a phrase on a label, not a contradiction
+         (BZ: "Why is a style needed if the type is not whiskey"). */
+      vod: { k: 'vod', name: 'Private Barrel Select Vodka', sub: 'vodka',
+             proof: 80, scar: 'standard' },
+      /* OWNED IS THE POPULATION: an entry nobody holds is the library's. */
+      un: { k: 'un', name: 'Unowned Private Barrel Select', sub: 'bourbon',
+            proof: 100, scar: 'standard' }
+    };
+    const fbot = [{ k: 'ok', status: 'open' }, { k: 'bad', status: 'open' },
+      { k: 'vod', status: 'open' }];
+    eq('a bottle whose row contradicts itself is named',
+      L.shelfFaults(fcat, fbot).map(x => x.k), ['bad']);
+    eq('and it carries the contradiction in words',
+      /name reads exclusive/.test(L.shelfFaults(fcat, fbot)[0].says), true);
+    eq('the bar shelf is not held to a whiskey judgement',
+      L.rowFaults(fcat.vod).map(f => f.id), []);
+    eq('nothing wrong is nothing to say',
+      L.shelfFaultLine(L.shelfFaults({ ok: fcat.ok }, [{ k: 'ok' }])), '');
+    eq('one reads as one',
+      /^1 bottle contradicts itself/.test(L.shelfFaultLine([{}])), true);
+    eq('and several as several',
+      /^3 bottles contradict themselves/.test(L.shelfFaultLine([{}, {}, {}])), true);
+  }
+
+  /* THE CIRCLE (BZ, 2026-10-03: "bottles are circling back"). The library merges a
+     key away; the bottle points at a key with no entry; the put-back turns that key
+     back into a NAME and asks for a key, which gives back the SAME dead key because
+     the name has not changed; it is written into S.custom; the next library read
+     buries it again. His log showed the same two lines on every render. */
+  {
+    const cCat = { seagrass_16_year_old: { k: 'seagrass_16_year_old',
+      name: 'Barrell Gray Label Seagrass 16 Year Old' } };
+    const cGrave = { seagrass: 'seagrass_16_year_old' };
+    const cBot = [{ k: 'seagrass', status: 'open' }];
+    eq('a merged bottle is not lost - it shows under what it was merged into',
+      L.showsUnder(cCat, cGrave, 'seagrass'), 'seagrass_16_year_old');
+    eq('so it is not reported as a bottle the shelf cannot show',
+      L.unlistedBottles(cCat, cBot, cGrave).length, 0);
+    eq('and putting it back files it under the heir, never under itself',
+      L.rekeyPlan(cCat, cBot, cGrave).map(p => p.from + '->' + p.to),
+      ['seagrass->seagrass_16_year_old']);
+    /* AND A BURIED KEY WHOSE HEIR IS NOT HERE IS LEFT ALONE, because writing a
+       record under it puts back the key the next read buries. */
+    eq('a buried key with no heir on the shelf is not resurrected',
+      L.rekeyPlan({}, cBot, cGrave).length, 0);
+    /* A KEY WITH NO GRAVE IS SIMPLY UNKNOWN, and still re-keys to itself so the
+       record gets written - which is what the put-back was built for. */
+    eq('an unknown key still gets its record written',
+      L.rekeyPlan({}, [{ k: 'willett_family_estate_4yr', status: 'open' }], {})
+        .map(p => p.to), ['willett_family_estate_4yr']);
+  }
+
+  /* THE TWO DOORS LIFTED OUT OF L.rowFaults when it went over its ceiling. */
+  eq('a bonded bottle at the wrong proof is named',
+    L.bondedFaults({ name: 'Old Fitzgerald Bottled-in-Bond', sub: 'bourbon',
+      proof: 114 }).map(f => f.id), ['bondproof']);
+  eq('and bonded cask strength is a contradiction in law',
+    L.bondedFaults({ name: 'Bottled in Bond Cask Strength', sub: 'bourbon',
+      proof: 100 }).map(f => f.id), ['bondcs']);
+  eq('nothing bonded is nothing to say',
+    L.bondedFaults({ name: 'Ardbeg Ten', sub: 'scotch', proof: 92 }), []);
+  eq('a strength above pure alcohol says so',
+    /pure alcohol/.test(L.proofFaultSay({ proof: 400, sub: 'bourbon' })), true);
+  eq('and one below the floor with no category names the category',
+    /^no category/.test(L.proofFaultSay({ proof: 70 })), true);
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

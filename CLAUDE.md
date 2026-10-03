@@ -37,6 +37,18 @@ for one file is how a paste lands in the wrong place. Say Code.gs when
 handing it over. label.gs and shelf.gs match on both sides and keep their
 names.
 
+Two shared rules, as they apply here:
+
+- **22b, the linter:** `lint.js` is one of the seventeen checks below, and
+  its `ALLOWED` list is empty.
+- **30f, the size ratchet:** the allowances are `BIG_TODAY` in
+  `consistency.js`, measured 2026-09-15 with 51 functions over 100 code lines;
+  39 were still over on 2026-10-03. Regenerate with `node consistency.js
+  --sizes`, never by hand.
+- **35, timing the gate:** `gatetime.py` keeps the last thirty runs and
+  gives the median of nine. The checks themselves are run by `check.js`,
+  described under Building below.
+
 ---
 
 ## Shape of the file

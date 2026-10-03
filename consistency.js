@@ -726,8 +726,12 @@ const SCREEN_COPIES_OK = [
   'contribFillFirst + libraryFillRun', 'libraryFillRun + spendLookups',
   // Both sync paths and the push ask L.resetSide which side replaced a list.
   'fbLoadAfterWipeCheck + fbOnRemote + fbPush',
-  // Three screens ask L.flavourOptions of the shelf and draw if it answers.
-  'flightBuilder + renderShelfCharts', 'flightBuilder + renderShelfCharts + showLessons',
+  // Four screens ask the engine of the shelf and draw if it answers anything.
+  // shelfToolsItself joined them on 2026-10-03, asking L.shelfFaults the same way:
+  // the shape is "ask the engine, draw if there is something", which is what a
+  // screen is FOR - not a rule stated twice. Each asks a different door.
+  'flightBuilder + renderShelfCharts + shelfToolsItself',
+  'flightBuilder + renderShelfCharts + shelfToolsItself + showLessons',
   'flightBuilder + showLessons', 'renderCandidateList + showLessons',
   // Three presses refuse with the one no-service sentence.
   'labelCapture + libraryFillStart + pickShelfPhotos',

@@ -80,8 +80,11 @@ function bad(what, detail) {
   await p.goto('http://app.local/index.html');
   await p.waitForTimeout(1200);
 
-  const bots = JSON.parse(fs.readFileSync(path.join(dir, 'bz-bottles.json'),
-    'utf8'));
+  /* THROUGH THE ONE SHELF LOADER, which every other harness already uses. This
+     read the file itself, which is a second door to one question - and the door it
+     skipped is the one that says how old the shelf is, so this check alone never
+     said what it was grading (2026-10-03). */
+  const bots = require('./engine.js').shelf(dir).bottles;
 
   /* THE CHECK ITSELF, PROVEN TO FAIL FIRST. A guard that has never gone
      red is a guard nobody has tested, and several in this project were

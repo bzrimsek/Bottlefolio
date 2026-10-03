@@ -25,6 +25,23 @@ module.exports.shelf = function (dir) {
   const here = dir || __dirname;
   const read = n => JSON.parse(fs.readFileSync(path.join(here, n), 'utf8'));
   const shelf = { bottles: read('bz-bottles.json'), custom: read('bz-custom.json') };
+  /* HOW OLD THE SHELF IS, said once, because rule 13d wants the population with
+     the measurement and this IS the population. On 2026-10-03 I reported fourteen
+     faults off files written on 20 September, against a shelf that had moved on by
+     two weeks - his screen said 328 whiskies where I kept quoting 339, and nothing
+     anywhere said the files were old. It never fails a build: a stale shelf is a
+     fact about what the numbers describe, not a fault in them. */
+  shelf.asOf = [path.join(here, 'bz-bottles.json'),
+    path.join(here, 'bz-custom.json')]
+    .filter(f => fs.existsSync(f))
+    .reduce((t, f) => Math.max(t, fs.statSync(f).mtimeMs), 0);
+  if (shelf.asOf) {
+    const days = Math.floor((Date.now() - shelf.asOf) / 86400000);
+    console.log('  shelf files as of '
+      + new Date(shelf.asOf).toISOString().slice(0, 10)
+      + (days > 1 ? ' (' + days + ' days old)' : '')
+      + ' \u2014 ' + shelf.bottles.length + ' bottles');
+  }
   /* Flights are optional: two harnesses do not draw one. */
   const f = path.join(here, 'bz-flights.json');
   shelf.flights = fs.existsSync(f) ? read('bz-flights.json') : [];

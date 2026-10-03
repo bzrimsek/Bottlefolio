@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 915 |
+| functions | 920 |
 | tables | 218 |
-| carrying a stated purpose | 723 |
+| carrying a stated purpose | 726 |
 
 ## Tables
 
@@ -291,6 +291,7 @@ QUESTION, not the name you were going to use.
 - **`L.blendProof`** — rather than treating it as unknown.
 - **`L.blindGiven`** — bottles were swapped in is not.
 - **`L.blindTheme`** — so the theme is built from the flight's shape instead.
+- **`L.bondedFaults`** — THE BOTTLED-IN-BOND RULES, which are American whiskey LAW and so are asked of
 - **`L.bottleAsk`** — _no comment above it_
 - **`L.bottleContext`** — ONLY FOR A WHISKEY YOU OWN
 - **`L.bottleFacts`** — THE SHELF THE PROSE WAS WRITTEN ABOUT
@@ -821,6 +822,7 @@ QUESTION, not the name you were going to use.
 - **`L.project`** — _no comment above it_
 - **`L.promptNotesInLibrary`** — Which library entries are carrying a note we invented for a flight.
 - **`L.proofCell`** — _no comment above it_
+- **`L.proofFaultSay`** — _no comment above it_
 - **`L.proofFit`** — HOW NEAR A STRENGTH IS TO THE ONE SOMEBODY DRINKS AT, nought to one (BZ,
 - **`L.proofInTen`** — _no comment above it_
 - **`L.proofLooksDoubled`** — IT ANSWERS WITH THE HALF, NOT WITH A VERDICT
@@ -974,6 +976,8 @@ QUESTION, not the name you were going to use.
 - **`L.shelfEnd`** — _no comment above it_
 - **`L.shelfFactsKeep`** — AND WHAT IS LEFT OF A SHELF RECORD once its shared facts have gone
 - **`L.shelfFactsPlan`** — ONLY THE THIRD IS A JUDGEMENT, and the library wins it - so they are named and
+- **`L.shelfFaultLine`** — AND THE SENTENCE ABOVE THE BUTTON, in the engine because a screen that words its
+- **`L.shelfFaults`** — NAMED, NOT FIXED
 - **`L.shelfFilter`** — _no comment above it_
 - **`L.shelfFingerprint`** — A SHARE IS OF THE SHELF for an axis a whisky can carry several of, and of the
 - **`L.shelfFit`** — _no comment above it_
@@ -1012,6 +1016,7 @@ QUESTION, not the name you were going to use.
 - **`L.shouldLookUp`** — _no comment above it_
 - **`L.shouldResetLocal`** — _no comment above it_
 - **`L.showDate`** — A DATE AS AN AMERICAN READS IT.
+- **`L.showsUnder`** — WHERE A BOTTLE ACTUALLY SHOWS, following a merge, or '' if nowhere
 - **`L.slotOpen`** — _no comment above it_
 - **`L.smsBody`** — after the reveal, so it is the answer key people keep.
 - **`L.snacksFor`** — _no comment above it_
@@ -1106,7 +1111,7 @@ QUESTION, not the name you were going to use.
 - **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_
-- **`L.unlistedBottles`** — BOTTLES THE SHELF CANNOT SHOW YOU
+- **`L.unlistedBottles`** — _no comment above it_
 - **`L.unlistedLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY
 - **`L.upcKey`** — 12-digit code is compared on its last 12.
 - **`L.upcRow`** — something stable to check.
