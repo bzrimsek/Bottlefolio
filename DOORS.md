@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 907 |
+| functions | 909 |
 | tables | 215 |
-| carrying a stated purpose | 716 |
+| carrying a stated purpose | 718 |
 
 ## Tables
 
@@ -407,6 +407,7 @@ QUESTION, not the name you were going to use.
 - **`L.finFaults`** — _no comment above it_
 - **`L.finFromName`** — THE FINISH A NAME STATES
 - **`L.fingerprintPicks`** — THE CANDIDATES ARE DECIDED BY THE DOORS THAT ALREADY DECIDE THEM
+- **`L.fingerprintReport`** — HIS OWN IS NOT PRINTED TWICE
 - **`L.fingerprintRows`** — A FINGERPRINT IN WORDS
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
@@ -922,6 +923,7 @@ QUESTION, not the name you were going to use.
 - **`L.restDays`** — _no comment above it_
 - **`L.ringLayout`** — WHERE THE RING STARTS, in sixths of a turn
 - **`L.roomBuckets`** — The one answerer for "how many of us have this" (rule 30d)
+- **`L.roomFingerprintRows`** — THE SIDES ARRIVE WITH THEIR PROFILES ALREADY BUILT, by the same L.tasteProfile
 - **`L.roomHabit`** — Whether a trait is enough OF A SHELF to be called a habit on it.
 - **`L.roomNotes`** — _no comment above it_
 - **`L.roomTop`** — _no comment above it_

@@ -28220,6 +28220,81 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
   eq('and nothing to pick says so rather than printing nothing',
     L.pickRows([]), [['picks', 'nothing unowned to score']]);
 
+  /* TWO SHELVES, ONE SCALE - the thing the fixed proof span was for. Six whiskies
+     each, described, because a weight needs something to read. */
+  const shelfOf = (pre, sub, dist, proof, nose, palate, fin) => {
+    const c = {}, bs = [];
+    for (let i = 0; i < 6; i++) {
+      const k = pre + i;
+      c[k] = { k: k, name: pre + ' ' + i, sub: sub, dist: dist + (i % 2),
+        proof: proof, fin: fin, tn: { nose: nose, palate: palate } };
+      bs.push({ k: k, status: 'open' });
+    }
+    return { catalog: c, bottles: bs,
+      profile: L.tasteProfile(c, bs, {}) };
+  };
+  const scotchy = shelfOf('S', 'scotch', 'Islay House', 92,
+    'peat smoke, iodine', 'smoke, brine');
+  const bourbony = shelfOf('B', 'bourbon', 'Kentucky House', 120,
+    'caramel, char', 'brown sugar, oak');
+  const fpS = L.shelfFingerprint(scotchy.profile);
+  const fpB = L.shelfFingerprint(bourbony.profile);
+
+  /* THE SAME BOTTLE, BOTH WAYS ROUND. One direction can pass by accident of the
+     fixture; both cannot. */
+  const peaty = { name: 'A Peaty One', sub: 'scotch', dist: 'Islay House0',
+    proof: 92, tn: { nose: 'peat smoke, iodine', palate: 'smoke, brine' } };
+  const barrel = { name: 'A Barrel One', sub: 'bourbon', dist: 'Kentucky House0',
+    proof: 120, tn: { nose: 'caramel, char', palate: 'brown sugar, oak' } };
+  eq('a peaty Scotch is more like the Scotch shelf than the bourbon one',
+    L.bottleScore(peaty, fpS).score > L.bottleScore(peaty, fpB).score, true);
+  eq('and a barrel-proof bourbon the other way round',
+    L.bottleScore(barrel, fpB).score > L.bottleScore(barrel, fpS).score, true);
+  /* AND THE SCORES ARE ON ONE SCALE, which is what makes two shelves comparable at
+     all. Note what this does NOT check: putting the strength axis back on each
+     shelf's own range leaves both directions above intact, because flavour and type
+     carry them on their own. The span is guarded by the proof assertions further up,
+     not here - tested by breaking it, which is the only way to know. */
+  eq('both scores are nought to one, on either shelf',
+    [peaty, barrel].every(p => [fpS, fpB].every(f => {
+      const v = L.bottleScore(p, f).score;
+      return v >= 0 && v <= 1;
+    })), true);
+
+  /* A FINGERPRINT PER PERSON, worded the same way his own is. */
+  const roomRows = L.roomFingerprintRows([
+    { name: 'You', profile: scotchy.profile },
+    { name: 'Dave', profile: bourbony.profile }]);
+  eq('every side gets a row for every axis, and the described line',
+    roomRows.length, (L.FP_AXES.length + 1) * 2);
+  eq('and each row says whose shelf it is',
+    [roomRows[0][0], roomRows[L.FP_AXES.length + 1][0]],
+    ['You \u2014 flavour', 'Dave \u2014 flavour']);
+  eq('the two shelves do not come back the same',
+    roomRows[0][1] === roomRows[L.FP_AXES.length + 1][1], false);
+  eq('and nobody sharing says so rather than printing nothing',
+    L.roomFingerprintRows([]), [['shelves', 'nobody is sharing one']]);
+
+  /* THE WHOLE SECTION, composed in the engine rather than by the screen. */
+  const report = L.fingerprintReport([{ name: 'You', profile: scotchy.profile },
+    { name: 'Dave', profile: bourbony.profile }], pcat, bbot);
+  eq('the shelves come first, because the picks mean nothing before them',
+    report[0][0], 'You \u2014 flavour');
+  eq('and the picks are marked where they begin',
+    report.filter(r => r[0] === 'picks').length, 1);
+  /* HIS OWN FINGERPRINT APPEARS ONCE. The three rows this replaces printed it
+     twice - on its own and again inside the list of every shelf - and the fix only
+     holds if nothing puts it back.
+
+     COUNTED BY WHAT THE ROW IS ABOUT, not by its label. Written as a count of
+     "You - flavour" rows this could not fail: an unnamed fingerprint row is
+     labelled plain "flavour", so the duplicate it was guarding against was a row
+     it never looked at. Two shelves, two flavour rows, whatever they are called. */
+  eq('nobody\u2019s fingerprint is printed twice',
+    report.filter(r => /flavour$/.test(r[0])).length, 2);
+  eq('a section with nobody in it is still a section',
+    L.fingerprintReport([], pcat, bbot), [['shelves', 'nobody is sharing one']]);
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of
