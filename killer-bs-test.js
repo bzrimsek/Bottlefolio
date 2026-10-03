@@ -10551,6 +10551,37 @@ sec('\u00a7223 what the shelf adds up to');
     '1 whisky to search, filter and sort.');
   eq('it never says bottles', /bottle/.test(L.shelfBooksLine(351)), false);
 
+  /* WHISKIES OR BOTTLES, TOLD APART. 25 whiskies across 55 bottles, so a chip
+     cannot be right by accident: `tally` takes a weightByBottles flag, and the
+     house, the region, the style and the mash bill are the weighted ones while
+     the wood, the peat and the proof count one per whisky. One function, two
+     populations - nine sentences wore the wrong word for months, and two of the
+     corrections on 2026-10-02 went the wrong way until this fixture caught
+     them. */
+  const popCat = {}, popBottles = [];
+  for (let i = 0; i < 25; i++) {
+    popCat['w' + i] = { k: 'w' + i, name: 'Whisky ' + i, dist: 'Nonesuch',
+      sub: 'bourbon', proof: 115, fin: 'Pedro Ximenez', region: 'Islay' };
+    popBottles.push({ k: 'w' + i, status: 'open' });
+  }
+  for (let i = 0; i < 30; i++) popBottles.push({ k: 'w0', status: 'sealed' });
+  const popWhy = id => ((L.shelfPortrait(popCat, popBottles, {}) || {}).also || [])
+    .filter(c => c.id === id).map(c => c.why)[0] || '(not earned)';
+  eq('the wood counts whiskies, one per bottling',
+    popWhy('px'), '25 whiskies finished in Pedro Ximenez');
+  eq('and so does the sherry chip',
+    popWhy('sherry'), '25 sherried whiskies across 1 houses');
+  eq('the house counts BOTTLES, because its tally is weighted by them',
+    popWhy('house'), '55 bottles from Nonesuch');
+  eq('and so does the region', popWhy('region'), '55 bottles from Islay');
+  /* AND THE STORY UNDER THEM, which reads the same two tallies. */
+  const popLine = k => ((L.shelfPortrait(popCat, popBottles, {}) || {}).lines || [])
+    .filter(l => l.k === k).map(l => l.text)[0] || '(none)';
+  eq('the wood line counts whiskies',
+    popLine('wood').indexOf('25 whiskies in sherry wood'), 0);
+  eq('and the depth line counts bottles',
+    popLine('depth').indexOf('55 bottles from Nonesuch'), 0);
+
   eq('everything shown is just the count', L.shelfCountLine(12, 12),
     '12 whiskies');
   eq('a filtered shelf says so', L.shelfCountLine(3, 12), '3 of 12');

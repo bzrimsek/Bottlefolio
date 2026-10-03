@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.7.16  ·  2026-10-02 08:45 PM ET
+
+Two of this morning's nine corrections were themselves wrong, and a fixture now tells the two populations apart (BZ: look for any and all improvement and consistency opportunities). The tally behind the shelf portrait takes a flag - tally(fn, weightByBottles) - and the house, the region, the style and the mash bill are the weighted ones counting BOTTLES, while the wood, the peat and the proof count one per whisky. One function, two populations, and this morning I read the first four as the last: 55 whiskies from Nonesuch was printed on a shelf holding twenty-five of them. Proven by a fixture where the two numbers differ at last - 25 whiskies across 55 bottles - where every earlier fixture had them equal, which is how nine sentences wore the wrong word for months and two corrections went the wrong way without anything noticing. The house and the region go back to bottles. The wood line in the story below them had the same fault in the other direction and now says whiskies. Four chips and two story lines are pinned to that fixture, and swapping either word turns it red. Also found and not yet settled: the app says whiskeys in fifteen user-visible strings and whiskies in twelve, which is BZ's voice to choose rather than mine.
+
 ## v2.7.15  ·  2026-10-02 05:09 PM ET
 
 Learn stops counting itself when nobody has asked it anything (BZ: Learn has a 35 term subtitle that is not needed). The count sat under the title whenever the screen was idle, and it is a fact about the app rather than an answer to anything: the terms are on the screen to be read, and knowing there are thirty-five of them changes nothing anybody does next. The search count stays, because 18 matches answers a question somebody has just asked and is the only way to tell a search that found little from one that found nothing - driven to check all three states, the idle header is empty, a hit says 18 matches and a miss says 0 matches, and the title still measures exactly centred. L.referenceCount keeps its assertions and its other callers.
