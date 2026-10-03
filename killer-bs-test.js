@@ -28612,6 +28612,32 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
   eq('and one below the floor with no category names the category',
     /^no category/.test(L.proofFaultSay({ proof: 70 })), true);
 
+  /* AN ANSWER THAT IS NOT ABOUT THE BOTTLE ASKED ABOUT IS NOT A NEW BOTTLE (BZ,
+     2026-10-03: "Silver Grove keeps wanting filled", and then "There are 2
+     bottles. One bourbon and one rye" - while the library held three names for
+     the bourbon). L.sameBottle is the door, and it decides deep into the
+     taxonomy rather than on whose name wins. */
+  {
+    const sgCat = { a: { k: 'a', name: '2025 New Riff Silver Grove Bourbon',
+      dist: 'New Riff Distilling', sub: 'bourbon', age: 4 } };
+    /* NO REGISTRY IS `null`, NOT `{}`. An empty object is truthy, so bottleIdentity
+       runs with no brands and keys the whole name as the brand - "without one, no
+       two records ever match", says its own comment - and the gate refuses
+       everything. refBrands() answers null when the reference is unread, which is
+       why the app is not caught by this; a fixture passing {} is.
+
+       The service answering about the same bottle in its own words. */
+    eq('an answer in other words is still the same bottle',
+      L.sameBottle({ name: '2025 New Riff Silver Grove Bourbon' },
+        { name: 'Silver Grove Bourbon', dist: 'New Riff Distilling',
+          sub: 'bourbon', age: 4 }, sgCat, null), true);
+    /* And the rye beside it on his shelf is not. */
+    eq('and the rye beside it is not the bourbon',
+      L.sameBottle({ name: '2025 New Riff Silver Grove Bourbon' },
+        { name: 'New Riff Silver Grove Barrel Proof 6 Year Old Straight Rye',
+          dist: 'New Riff Distilling', sub: 'rye', age: 6 }, sgCat, null), false);
+  }
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of

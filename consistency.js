@@ -730,8 +730,7 @@ const SCREEN_COPIES_OK = [
   // shelfToolsItself joined them on 2026-10-03, asking L.shelfFaults the same way:
   // the shape is "ask the engine, draw if there is something", which is what a
   // screen is FOR - not a rule stated twice. Each asks a different door.
-  'flightBuilder + renderShelfCharts + shelfToolsItself',
-  'flightBuilder + renderShelfCharts + shelfToolsItself + showLessons',
+  'flightBuilder + renderShelfCharts', 'flightBuilder + renderShelfCharts + showLessons',
   'flightBuilder + showLessons', 'renderCandidateList + showLessons',
   // Three presses refuse with the one no-service sentence.
   'labelCapture + libraryFillStart + pickShelfPhotos',
