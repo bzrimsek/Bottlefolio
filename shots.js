@@ -60,6 +60,17 @@ const SCREENS = [
   const { bottles: bots, custom } = require('./engine.js').shelf(dir);
   await p.evaluate(([bs, cu]) => {
     S.bottles = bs; S.custom = cu; save_(); rebuildCatalog();
+    /* AND A LOG, because the cards that need one are otherwise never drawn and
+       so are never measured: renderBuyVsDrink returns early without pours, and
+       both faults BZ found by eye on 2026-10-03 - a card inside a card, and a
+       label clipped to "BOUGH AGAI" - were in that card. His own log is in his
+       account rather than this repo, and the card's LAYOUT does not depend on
+       which whiskies were poured, only on there being pours. One to four pours
+       of each of thirty owned keys fills all four quadrants. */
+    const keys = Object.keys(L.ownedCounts(S.bottles)).slice(0, 30);
+    S.history = keys.map((k, i) => ({ at: Date.now() - i * 86400000,
+      pours: new Array((i % 4) + 1).fill(k) }));
+    save_();
   }, [bots, custom]);
 
   /* WHAT A PHONE ACTUALLY SHOWS. Measured per screen, because a page that
@@ -89,7 +100,22 @@ const SCREENS = [
       wide.push(String(n.className || n.tagName) + ' (' + n.clientWidth
         + 'px holds ' + n.scrollWidth + 'px): ' + txt);
     });
+    /* A CARD INSIDE A CARD, and cards that do not share a gutter. Neither
+       overflows anything, so the measurement above cannot see either: a nested
+       card is a correctly laid out card in the wrong place (2026-10-03). */
+    const nested = [...on.querySelectorAll('.sheet .sheet')]
+      .map(n => (n.className || '') + ': '
+        + (n.textContent || '').trim().slice(0, 40));
+    const edges = {};
+    on.querySelectorAll('.sheet').forEach(c => {
+      /* A card inside another is reported above; counting its gutter too
+         would say the same fault twice. */
+      if (c.parentElement && c.parentElement.closest('.sheet')) return;
+      const x = Math.round(c.getBoundingClientRect().left);
+      (edges[x] = edges[x] || []).push((c.textContent || '').trim().slice(0, 30));
+    });
     return { page: doc.scrollWidth, view: window.innerWidth,
+      nested: nested.slice(0, 4), edges: edges,
       wide: wide.slice(0, 6) };
   });
 
@@ -121,6 +147,28 @@ const SCREENS = [
         m.wide.join('\n'));
     } else {
       ok(name + ' fits a ' + m.view + 'px phone');
+    }
+
+    /* A CARD INSIDE A CARD. Neither card overflows anything, so the measurement
+       above cannot see it - it is a correctly laid out card in the wrong place,
+       drawing a second border and a second gutter around the one inside it
+       (BZ, 2026-10-03, from a screenshot of the Shelf). */
+    if (m.nested.length) {
+      bad(name + ' draws no card inside another card',
+        m.nested.join('\n'));
+    } else {
+      ok(name + ' draws no card inside another card');
+    }
+
+    /* AND THE CARDS SHARE A GUTTER. Two distances from the edge means one of
+       them is wrong, and the count says which. */
+    const lefts = Object.keys(m.edges);
+    if (lefts.length > 1) {
+      bad(name + ' sets every card on one gutter',
+        lefts.map(x => x + 'px: ' + m.edges[x].length + ' card(s) — '
+          + m.edges[x][0]).join('\n'));
+    } else if (lefts.length) {
+      ok(name + ' sets every card on one gutter (' + lefts[0] + 'px)');
     }
   }
 
