@@ -19887,6 +19887,35 @@ sec('\u00a7355 what the library contradicts');
   eq('and the pair that shares an entry with it is still asked about',
     macLeft.some(r => L.auditItemKey(r) === 'mac_dc+mac_so'), true);
 
+  /* WHERE AGREEMENT TURNS. The share decides whether two bottlings are one, it
+     was changed on 2026-10-02 to be computed on what is left after the words
+     both names open with, and nothing wrote down where its line falls. It is AT
+     three in five, not past it. No digits and no mark words here: a number,
+     cask, barrel, proof, strength or bonded must agree both ways before the
+     share is reached, so a fixture carrying one would be testing that rule. */
+  const shareA = 'alpha beta gamma delta epsilon';
+  eq('three words in five agrees',
+    L.nameAgrees(shareA, 'zeta beta gamma delta theta'), true);
+  eq('and two in five does not',
+    L.nameAgrees(shareA, 'zeta beta gamma theta iota'), false);
+  eq('two in four does not either, so the line is at 0.6 and not 0.5',
+    L.nameAgrees('alpha beta gamma delta', 'zeta beta gamma theta'), false);
+  eq('the same name all the way down agrees', L.nameAgrees(shareA, shareA), true);
+  /* AND ONE SHARED WORD IS NEVER ENOUGH, whatever the share works out to. */
+  eq('a single shared word is not agreement',
+    L.nameAgrees('alpha beta', 'zeta beta'), false);
+
+  /* THE LONGEST FILED BRAND WINS, which matters the moment the registry holds
+     both a name and the start of it. The loop counts down from the longest key
+     in the index and is one sign away from answering Buffalo for everything. */
+  const longBrands = { buffalo: { name: 'Buffalo' },
+    buffalo_trace: { name: 'Buffalo Trace' } };
+  eq('a bottle takes the longer brand it opens with',
+    (L.brandOf('Buffalo Trace Kosher Wheat', longBrands) || {}).key,
+    'buffalo trace');
+  eq('and the shorter one when that is all it has',
+    (L.brandOf('Buffalo Bayou Reserve', longBrands) || {}).key, 'buffalo');
+
   /* A NAME WITH NOTHING TAKEN OUT BUT PUNCTUATION, which is what lets the
      registry be asked before anything is stripped. */
   eq('punctuation goes and nothing else',
