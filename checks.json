@@ -62,6 +62,10 @@
     { "name": "ios", "harness": "ios.js", "secs": 9,
       "reaches": ["screens"] },
 
+    { "name": "says", "harness": "says.js", "secs": 18,
+      "reaches": ["engine", "screens", "data"],
+      "note": "what every screen SAYS, on BZ's real shelf: a count that contradicts the shelf, a number with nothing to say what it counts, an empty state over a full shelf. Reaches data too, because the sentences are about the shelf the data describes" },
+
     { "name": "sync", "harness": "sync.js", "secs": 62,
       "reaches": ["engine", "screens", "worker"] },
 

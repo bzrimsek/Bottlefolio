@@ -741,7 +741,6 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCount`** — _no comment above it_
 - **`L.ownedCounts`** — _no comment above it_
 - **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
-- **`L.ownedProductCount`** — How many products you own at least one of
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
 - **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.
 - **`L.ownFindings`** — The findings whose answer is ALREADY YOURS
@@ -968,6 +967,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfBooksLine`** — THE LINE UNDER THE BOOKS
 - **`L.shelfBuild`** — _no comment above it_
 - **`L.shelfCountLine`** — How many whiskies are listed, against how many are owned.
+- **`L.shelfCountText`** — AND BOTH OF ITS NUMBERS, FROM ONE SET
 - **`L.shelfEnd`** — _no comment above it_
 - **`L.shelfFactsKeep`** — AND WHAT IS LEFT OF A SHELF RECORD once its shared facts have gone
 - **`L.shelfFactsPlan`** — ONLY THE THIRD IS A JUDGEMENT, and the library wins it - so they are named and

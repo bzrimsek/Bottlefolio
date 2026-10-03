@@ -10844,10 +10844,24 @@ sec('§226 the shelf tiles, the money column and the count');
   const noSub = L.shelfTypeTiles({ a: {} }, { a: 1 });
   eq('a product with no style is still counted', noSub.tiles[0].sub, 'other');
 
-  eq('owned counts products, not bottles',
-    L.ownedProductCount(catalog, counts), 3);
-  eq('nothing owned is zero, not the catalog size',
-    L.ownedProductCount(catalog, {}), 0);
+  /* THE COUNT LINE, BOTH NUMBERS FROM ONE SET. L.ownedProductCount counted
+     owned BOTTLINGS and four screens printed that as "352 whiskies" when
+     thirteen were rum, vodka, gin, tequila, brandy and flavored; with those
+     screens counting whiskies it had no caller left and is gone (2026-10-03).
+     What replaces it must never compare two populations - the first attempt
+     printed "352 of 339". */
+  const ccat = { a: { k: 'a', sub: 'bourbon' }, b: { k: 'b', sub: 'scotch' },
+    v: { k: 'v', sub: 'vodka' } };
+  const cbot = [{ k: 'a', status: 'open' }, { k: 'b', status: 'open' },
+    { k: 'v', status: 'open' }];
+  eq('nothing filtered says how many whiskies there are, and counts no rum',
+    L.shelfCountText(ccat, cbot, Object.values(ccat)), '2 whiskies');
+  eq('a filtered list says how many of them it is showing',
+    L.shelfCountText(ccat, cbot, [ccat.a]), '1 of 2');
+  eq('and a list holding only the bar stock is showing none of them',
+    L.shelfCountText(ccat, cbot, [ccat.v]), '0 of 2');
+  eq('nothing owned is nothing, not the catalogue',
+    L.shelfCountText(ccat, [], Object.values(ccat)), '0 whiskies');
 
   /* Untouched: the state in which tiles are the way in. */
   eq('nothing typed and nothing filtered is untouched',

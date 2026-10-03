@@ -41,6 +41,12 @@ FAST = [
     # reached BZ on 2026-09-15 with 4,700 assertions green.
     ('answers',     ['node', 'answers.js']),
     ('shots',       ['node', 'shots.js']),
+    # AND WHAT THE ORDINARY SCREENS SAY, added 2026-10-03 after Shop told BZ
+    # he owned 7 bottles with every check green. answers.js reads one planning
+    # answer; this opens every tab on his real shelf and fails a count that
+    # contradicts it, a number with nothing to say what it counts, and an
+    # empty state said over three hundred and fifty bottles.
+    ('says',        ['node', 'says.js']),
     # SCREENS IN SEQUENCE, not one at a time. shots.js draws each screen
     # alone and photographs it; this draws them in PAIRS and asks what the
     # one before left behind. Added 2026-09-20, after a flight opened from
