@@ -20415,13 +20415,27 @@ sec('a typed name is enough');
      L.neverOffer({ sub: 'bourbon', name: 'Crown Royal Apple' }),
      L.neverOffer({ sub: 'bourbon', name: 'Buffalo Trace' })],
     [true, true, true, false]);
-  // Nothing BZ owns is refused by it except the ones that should be.
+  /* Nothing BZ owns is refused by it except the ones that should be - and all
+     three that are refused are things filed as whiskey that are not. Pinnacle
+     Whipped joined when the strength bound did (BZ, 2026-10-02: "Below 80 and
+     above 150 is valid but not recommended"): it is a whipped-cream vodka at 70
+     proof, where the number is right and the category is wrong, which is the same
+     row L.rowFaults reports from the other side. */
   eq('the rule does not touch the whiskey on his shelf',
     Object.values(shelfCat)
       .filter(p => L.neverOffer(p) && L.isWhisky(p)
         && String(p.sub || '').toLowerCase() !== 'flavored')
       .map(p => p.name).sort(),
-    ['Baileys Salted Caramel', 'Baileys The Original Irish Cream']);
+    ['Baileys Salted Caramel', 'Baileys The Original Irish Cream',
+      'Pinnacle Whipped']);
+  /* AND A REAL CASK-STRENGTH BOTTLING IS REFUSED TOO, which is the half of his
+     rule that is not about bad data: 151 is valid, kept and counted, and never
+     recommended. */
+  eq('valid but not recommended, at both ends',
+    [L.neverOffer({ sub: 'bourbon', name: 'Hot One', proof: 151 }),
+     L.neverOffer({ sub: 'bourbon', name: 'Soft One', proof: 79 }),
+     L.neverOffer({ sub: 'bourbon', name: 'Ordinary', proof: 100 })],
+    [true, true, false]);
 
   // THE AGE IN A NAME, which on a back bar is all the app has: the catalog
   // returns nothing at all for a bottle it has never met.
@@ -28022,6 +28036,200 @@ sec('§461 a fact in the wrong field');
       proof: 100 }), []);
   eq('a bottle that says nothing about bonding is not asked',
     faults({ name: 'Ardbeg Ten', sub: 'scotch', proof: 114 }), []);
+}
+
+sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
+{
+  /* FOUR BOTTLES, THREE WHISKIES, composition known exactly: two bourbons from
+     Alpha (one held twice, one sherried) and a scotch from Beta. So type is
+     bourbon 0.75 / scotch 0.25, the distillery Alpha 0.75 / Beta 0.25, the one
+     wood sherry at a third, and the four flavour words weigh 0.5 each. */
+  const bcat = {
+    a: { k: 'a', name: 'A', sub: 'bourbon', dist: 'Alpha', proof: 100,
+         tn: { nose: 'oak and vanilla', palate: 'oak' } },
+    b: { k: 'b', name: 'B', sub: 'bourbon', dist: 'Alpha', proof: 100,
+         fin: 'Pedro Ximenez' },
+    c: { k: 'c', name: 'C', sub: 'scotch', dist: 'Beta', proof: 90,
+         tn: { nose: 'smoke and honey' } }
+  };
+  const bbot = [{ k: 'a', status: 'open' }, { k: 'a', status: 'sealed' },
+    { k: 'b', status: 'open' }, { k: 'c', status: 'open' }];
+  const bfp = L.shelfFingerprint(L.tasteProfile(bcat, bbot, {}));
+
+  /* AN AXIS MUST READ A BOTTLE IN THE VOCABULARY ITS TALLY IS KEYED BY. `on`
+     states the extraction beside the tally it has to agree with, and this is
+     what stops the two drifting: every value `on` finds on a whisky that was
+     counted must be a key the count produced. */
+  const drift = [];
+  L.FP_AXES.filter(ax => ax.on).forEach(ax => {
+    Object.keys(bcat).forEach(k => ax.on(bcat[k]).filter(Boolean).forEach(v => {
+      if (!(v in bfp.axes[ax.id].share)) drift.push(ax.id + ':' + v);
+    }));
+  });
+  eq('an axis reads a bottle in the same words its tally counts', drift, []);
+
+  /* HOW WELL VALUES FIT WEIGHTS, the one door both halves of a score go
+     through. Relative to the heaviest weight, so full marks mean all of it is
+     what you reach for. */
+  eq('a value that is the heaviest thing on the shelf fits it entirely',
+    L.axisFit(['x'], { x: 0.4, y: 0.2 }), 1);
+  eq('and one at half that fits by half',
+    L.axisFit(['y'], { x: 0.4, y: 0.2 }), 0.5);
+  eq('averaged over the values given, so length is not an advantage',
+    Math.round(L.axisFit(['x', 'y'], { x: 0.4, y: 0.2 }) * 100), 75);
+  eq('a value the shelf has never held fits nothing', L.axisFit(['z'], { x: 1 }), 0);
+  eq('nothing to judge is null, never nought', L.axisFit([], { x: 1 }), null);
+  eq('and no weights to judge against is null too', L.axisFit(['x'], {}), null);
+
+  /* AGE IS A PRIOR, not read off the shelf at all (BZ, 2026-10-02: "an age
+     statement is better than NAS and 20yr is likely better then a 10yr"). Its
+     bands are L.AGE_TIERS, which this app already calls the ages whisky is
+     actually bottled at, so there is no constant here anybody chose. */
+  eq('no age statement scores nothing on the prior', L.agePrior({}), 0);
+  eq('and a statement under the first tier still beats none',
+    L.agePrior({ age: 8 }) > L.agePrior({}), true);
+  eq('twenty beats ten, which is the whole of what BZ asked for',
+    L.agePrior({ age: 20 }) > L.agePrior({ age: 10 }), true);
+  eq('every tier beats the one below it',
+    L.AGE_TIERS.every((t, i) => !i
+      || L.agePrior({ age: t }) > L.agePrior({ age: L.AGE_TIERS[i - 1] })), true);
+  eq('and the oldest tier is the top of it, with nothing above',
+    L.agePrior({ age: 40 }), 1);
+
+  /* A BOTTLE AGAINST THE FINGERPRINT. X is a bourbon from Alpha and nothing
+     else: type and distillery are full marks, flavour and wood are not judged,
+     the prior is nought for no age - (2 + 1 + 0) / 4. */
+  const bx = L.bottleScore({ name: 'X', sub: 'bourbon', dist: 'Alpha' }, bfp);
+  eq('a bottle made of what the shelf is made of scores by its bands',
+    bx.score, 0.75);
+  eq('and an axis it says nothing on is left out of the reasons',
+    bx.parts.map(q => q.axis), ['type', 'house', 'age']);
+
+  /* SILENCE IS DROPPED, NOT ZEROED, and this is the only check that can tell
+     the difference: the same bottle given notes the shelf does not care for
+     must score LOWER than the one given no notes at all. Zeroed, the two would
+     come out the same. */
+  const bOff = L.bottleScore({ name: 'X2', sub: 'bourbon', dist: 'Alpha',
+    tn: { nose: 'tar and rubber', palate: 'tar' } }, bfp);
+  eq('notes the shelf does not care for score worse than no notes',
+    bOff.score < bx.score, true);
+  const bOn = L.bottleScore({ name: 'X3', sub: 'bourbon', dist: 'Alpha',
+    tn: { nose: 'oak and vanilla', palate: 'oak' } }, bfp);
+  eq('and notes it does care for score better', bOn.score > bx.score, true);
+  /* FLAVOUR OUTWEIGHS THE LABEL, which is the band doing its work - and it is
+     measured between two bottles judged on the SAME axes. Comparing a bottle
+     with notes against the same bottle without cannot measure a band, because an
+     unjudged axis leaves the denominator too and the two scores are fractions of
+     different wholes. So: one that tastes of the shelf and is made like nothing
+     on it, against one made exactly like the shelf that tastes of nothing on
+     it. */
+  const bTaste = L.bottleScore({ name: 'T', sub: 'scotch', dist: 'Beta',
+    tn: { nose: 'oak and vanilla', palate: 'oak' } }, bfp);
+  const bLabel = L.bottleScore({ name: 'L', sub: 'bourbon', dist: 'Alpha',
+    tn: { nose: 'tar and rubber', palate: 'tar' } }, bfp);
+  eq('what a bottle tastes of outweighs what its label says',
+    bTaste.score > bLabel.score, true);
+
+  /* A STRENGTH ON THE RANGE BZ SET (2026-10-02: "since there is a hard lower
+     bound of 80 and an upper bound of 150 a distribution between them should
+     work", then "Read the laws"). Three bounds, three different kinds of thing,
+     asserted with what each one is so nobody has to work it out later. */
+  eq('the floor is law, and the app already said so in its own Learn text',
+    L.PROOF_FLOOR, 80);
+  eq('the ceiling is what BZ recommends to, not a statute', L.PROOF_CEILING, 150);
+  eq('and pure alcohol is chosen by nobody \u2014 proof is twice the ABV',
+    L.PROOF_PURE, 200);
+
+  /* THE FIT IS DISTANCE FROM THE MIDDLE OF WHAT SOMEBODY DRINKS, over the 70
+     points between the floor and the ceiling. */
+  const curve = L.proofProfile([{ proof: 90 }, { proof: 100 }, { proof: 100 },
+    { proof: 100 }, { proof: 110 }]);
+  eq('the middle of what somebody drinks is what they drink at',
+    L.proofFit({ proof: 100 }, curve), 1);
+  eq('and the middle is the median, so one outlier cannot drag it',
+    L.proofProfile([{ proof: 90 }, { proof: 100 }, { proof: 148 }]).median, 100);
+  eq('half the span away from it scores a half',
+    L.proofFit({ proof: 135 }, curve), 0.5);
+  eq('and the same distance below scores the same',
+    L.proofFit({ proof: 65 }, curve), 0.5);
+  /* THE SPAN IS FIXED, NOT THE SHELF'S OWN, so a shelf of four is not noise and
+     two people's shelves can be compared on one scale - which is what a
+     fingerprint per person needs. An earlier version ranked against the shelf's
+     own curve and scored BZ's 149.66 at nought for being the rarest thing he
+     owns. */
+  eq('a strength the whole span from the middle scores nothing',
+    L.proofFit({ proof: 170 }, curve), 0);
+  eq('and nothing worse than nothing, however far out', L.proofFit({ proof: 400 },
+    curve), 0);
+  eq('a shelf of one still places a bottle against it',
+    L.proofFit({ proof: 100 }, L.proofProfile([{ proof: 100 }])), 1);
+  eq('a proof the bottle will not say is null, not nought',
+    L.proofFit({}, curve), null);
+  eq('and no shelf to measure against is null too',
+    L.proofFit({ proof: 100 }, L.proofProfile([])), null);
+
+  /* THE ORDINALS ARE DECLARED IN ONE TABLE, both banded like every axis. */
+  eq('strength bands with the production facts, age below them',
+    L.FP_ORD.map(o => o.id + ':' + o.band), ['proof:2', 'age:1']);
+  eq('and age is the only prior, the one not read off this shelf',
+    L.FP_ORD.filter(o => o.prior).map(o => o.id), ['age']);
+  /* PROOF IS IN THE SUM. BZ, 2026-10-02: "I'd know type and probably proof" - it
+     sat in the fingerprint as a position and did no work, so a 140 barrel pick
+     and a 100 pour scored alike against a shelf that drinks at a hundred. */
+  const bHouse = L.bottleScore({ name: 'House', sub: 'bourbon', dist: 'Alpha',
+    proof: 100 }, bfp);
+  eq('a strength this shelf does not drink at costs a bottle its score',
+    L.bottleScore({ name: 'Loud', sub: 'bourbon', dist: 'Alpha', proof: 140 },
+      bfp).score < bHouse.score, true);
+  eq('and the reason says so', bHouse.parts.some(q => q.axis === 'proof'), true);
+  /* AND PROOF ALONE IS ENOUGH TO JUDGE BY, because it is read off this shelf -
+     unlike the age prior, which is true of whisky and cannot carry a score. */
+  eq('a bottle that says only its strength still gets a score',
+    L.bottleScore({ name: 'P', proof: 100 }, bfp) !== null, true);
+
+  /* WHAT THE FINGERPRINT WOULD PICK, a prototype beside L.likelyToLike. The
+     candidates are decided by the doors that already decide them, and these
+     assertions are about exactly that - a pick list that filtered for itself
+     would be the place NEVER RECOMMEND FLAVORED quietly stopped being true. */
+  const pcat = Object.assign({}, bcat, {
+    /* UNOWNED and made like the shelf: this is the one that should come back. */
+    d: { k: 'd', name: 'D Bourbon', sub: 'bourbon', dist: 'Alpha', proof: 100 },
+    /* UNOWNED and flavored, which is never recommended whatever it scores. */
+    e: { k: 'e', name: 'E Cinnamon Flavored Whiskey', sub: 'flavored',
+         dist: 'Alpha', proof: 100 },
+    /* UNOWNED, whiskey by category, and at a strength nobody is sent to. */
+    f: { k: 'f', name: 'F Hot One', sub: 'bourbon', dist: 'Alpha', proof: 151 }
+  });
+  const picks = L.fingerprintPicks(pcat, bbot, bfp, 5);
+  eq('what is already on the shelf is not offered back',
+    picks.every(x => ['a', 'b', 'c'].indexOf(x.k) < 0), true);
+  eq('a flavored whiskey is never picked, whatever it scores',
+    picks.map(x => x.k).indexOf('e'), -1);
+  eq('and neither is a strength nobody is sent looking for',
+    picks.map(x => x.k).indexOf('f'), -1);
+  eq('what is left is the one made like the shelf',
+    picks.map(x => x.k), ['d']);
+  eq('best first', L.fingerprintPicks(pcat, bbot, bfp, 5)
+    .every((x, i, a) => !i || a[i - 1].score >= x.score), true);
+  eq('an empty shelf picks nothing', L.fingerprintPicks(pcat, bbot,
+    L.shelfFingerprint(null), 5), []);
+  /* AND THE WORDS, because a screen that words its own numbers disagrees with
+     the engine in the end (rule 30). */
+  eq('a pick is worded as its score and its reasons',
+    /^\d\.\d\d$/.test(L.pickRows(picks)[0][0]), true);
+  eq('and nothing to pick says so rather than printing nothing',
+    L.pickRows([]), [['picks', 'nothing unowned to score']]);
+
+  /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
+     shelf, so it may not be the only thing in the sum - a bottle with no type,
+     no distillery, no wood and no notes once scored 0.0000 on the strength of
+     carrying no age statement, and nought is a verdict. */
+  eq('a bottle the shelf can say nothing about gets no score',
+    L.bottleScore({ name: 'blank' }, bfp), null);
+  eq('an age statement on its own is not something to go on either',
+    L.bottleScore({ name: 'old', age: 21 }, bfp), null);
+  eq('and neither does any bottle against an empty shelf',
+    L.bottleScore({ sub: 'bourbon' }, L.shelfFingerprint(null)), null);
 }
 
 queueSection()

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 901 |
-| tables | 214 |
-| carrying a stated purpose | 709 |
+| functions | 907 |
+| tables | 215 |
+| carrying a stated purpose | 716 |
 
 ## Tables
 
@@ -71,7 +71,8 @@ QUESTION, not the name you were going to use.
 - **`L.FLAVOUR_WORDS`** — Flights built around a FLAVOR.
 - **`L.FLIGHT_RULES`** — standard the validators check against.
 - **`L.FLIGHT_SORTS`** — state and contents, sortable.
-- **`L.FP_AXES`** — `weighed` MEANS THE PROFILE ALREADY WEIGHED IT and counting is not wanted.
+- **`L.FP_AXES`** — `on` READS ONE BOTTLE'S VALUES on the axis, and must answer in the vocabulary
+- **`L.FP_ORD`** — THE ORDINAL TERMS, which are a position rather than a match and so have no
 - **`L.FREE_MODES`** — _no comment above it_
 - **`L.FROM_KINDS`** — HOW a bottle was acquired (BZ's list)
 - **`L.GAP_KINDS`** — _no comment above it_
@@ -248,6 +249,7 @@ QUESTION, not the name you were going to use.
 - **`L.adoptOrphans`** — IT DOES NOT GUESS
 - **`L.ageCell`** — A PROOF IN THE SIDE COLUMN, drawn one way
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
+- **`L.agePrior`** — THE BANDS ARE L.AGE_TIERS, which is already this app's word for "the ages
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
@@ -275,6 +277,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisEffect`** — What one bottle would do to the shape
 - **`L.axisEffectLine`** — The same effect, in words, so every surface says it identically.
 - **`L.axisEvenness`** — HOW EVENLY A SHELF SITS ACROSS ONE AXIS
+- **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — One gap, in words
 - **`L.axisLabel`** — _no comment above it_
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
@@ -293,6 +296,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottleMarks`** — THE MARKS THIS BOTTLE CARRIES, from its fields first and its name second
 - **`L.bottleOrigin`** — HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED
 - **`L.bottlePick`** — _no comment above it_
+- **`L.bottleScore`** — A BOTTLE AGAINST A SHELF'S FINGERPRINT, nought to one, with the reason it
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
@@ -402,6 +406,7 @@ QUESTION, not the name you were going to use.
 - **`L.findUrl`** — Where a hard bottle can actually be got.
 - **`L.finFaults`** — _no comment above it_
 - **`L.finFromName`** — THE FINISH A NAME STATES
+- **`L.fingerprintPicks`** — THE CANDIDATES ARE DECIDED BY THE DOORS THAT ALREADY DECIDE THEM
 - **`L.fingerprintRows`** — A FINGERPRINT IN WORDS
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
@@ -762,6 +767,7 @@ QUESTION, not the name you were going to use.
 - **`L.permitKey`** — TTB permit numbers name the same plant two ways
 - **`L.permitNames`** — The spirits producers list
 - **`L.pickLine`** — _no comment above it_
+- **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
 - **`L.pickSpread`** — `used` is the set of keys the last run poured, and it only decides ties
 - **`L.pinRadius`** — _no comment above it_
 - **`L.pinsInView`** — against Speyside, not bottles off screen.
@@ -808,6 +814,7 @@ QUESTION, not the name you were going to use.
 - **`L.project`** — _no comment above it_
 - **`L.promptNotesInLibrary`** — Which library entries are carrying a note we invented for a flight.
 - **`L.proofCell`** — _no comment above it_
+- **`L.proofFit`** — HOW NEAR A STRENGTH IS TO THE ONE SOMEBODY DRINKS AT, nought to one (BZ,
 - **`L.proofInTen`** — _no comment above it_
 - **`L.proofLooksDoubled`** — IT ANSWERS WITH THE HALF, NOT WITH A VERDICT
 - **`L.proofOutOfName`** — _no comment above it_
