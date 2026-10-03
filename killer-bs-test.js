@@ -10600,6 +10600,21 @@ sec('\u00a7223 what the shelf adds up to');
   eq('and the depth line counts bottles',
     popLine('depth').indexOf('55 bottles from Nonesuch'), 0);
 
+  /* AND THE WHOLE FAMILY AT ONCE, which is the rule rather than the wording: on
+     this shelf every count printed is 25 whiskies or 55 bottles, so no sentence
+     may pair 25 with the word bottles or 55 with the word whiskies. Five taste
+     suggestions did the first of those until 2026-10-02. */
+  const popSay = (L.likelyToLike(popCat, popBottles, {}, 30) || [])
+    .map(o => o.why || '')
+    .concat(((L.shelfPortrait(popCat, popBottles, {}) || {}).lines || [])
+      .map(l => l.text || ''))
+    .concat(((L.shelfPortrait(popCat, popBottles, {}) || {}).also || [])
+      .map(c => c.why || ''));
+  eq('no sentence calls a count of whiskies bottles',
+    popSay.filter(w => /\b25\b[^.]{0,40}\bbottles?\b/.test(w)), []);
+  eq('and none calls a count of bottles whiskies',
+    popSay.filter(w => /\b55\b[^.]{0,40}\bwhisk(y|ies)\b/.test(w)), []);
+
   eq('everything shown is just the count', L.shelfCountLine(12, 12),
     '12 whiskies');
   eq('a filtered shelf says so', L.shelfCountLine(3, 12), '3 of 12');
