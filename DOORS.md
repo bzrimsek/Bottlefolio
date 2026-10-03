@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 912 |
+| functions | 913 |
 | tables | 218 |
-| carrying a stated purpose | 721 |
+| carrying a stated purpose | 722 |
 
 ## Tables
 
@@ -1100,6 +1100,7 @@ QUESTION, not the name you were going to use.
 - **`L.ttbInUS`** — _no comment above it_
 - **`L.ttbSub`** — The category an approval's class states
 - **`L.typedName`** — A name as somebody typed it, tidied only where they said nothing:
+- **`L.typeGroup`** — WHICH GROUP A PRODUCT IS FILED UNDER, which is not the same question as what it
 - **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_

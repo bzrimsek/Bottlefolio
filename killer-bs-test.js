@@ -28454,6 +28454,29 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
       'Chattanooga High Malt');
   }
 
+  /* WHERE A BLANK CATEGORY IS FILED (BZ, 2026-10-03: "Other here says 6 but a
+     click finds none"). The books counted it under Other and the filter looked
+     for the literal 'other', so the book opened on an empty shelf. */
+  eq('a bottle nobody categorised is filed under other', L.typeGroup(''), 'other');
+  eq('and so is one that says nothing at all', L.typeGroup(null), 'other');
+  eq('a category it was given is left alone', L.typeGroup('bourbon'), 'bourbon');
+  /* THE ROUND TRIP, which is the fault itself: what the books count under a
+     label must be what tapping that label finds. Asserting the two separately
+     is how they drifted apart in the first place. */
+  {
+    const tcat = { blank: { k: 'blank', name: 'No Category' },
+      bourbon: { k: 'bourbon', name: 'A Bourbon', sub: 'bourbon' } };
+    const tcount = { blank: 1, bourbon: 1 };
+    const tiles = L.shelfTypeTiles(tcat, tcount).tiles;
+    const other = tiles.filter(t => t.label === L.typeLabel(''))[0];
+    eq('the books show a book for the uncategorised one', other.n, 1);
+    eq('and tapping it finds exactly that bottle',
+      L.shelfFilter(Object.values(tcat), [{ k: 'blank', status: 'open' },
+        { k: 'bourbon', status: 'open' }], { types: [other.sub] },
+        L.shelfIndex([{ k: 'blank', status: 'open' },
+          { k: 'bourbon', status: 'open' }])).map(p => p.k), ['blank']);
+  }
+
   /* AND NOTHING TO GO ON IS NULL. The prior is about whisky, not about this
      shelf, so it may not be the only thing in the sum - a bottle with no type,
      no distillery, no wood and no notes once scored 0.0000 on the strength of
