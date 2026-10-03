@@ -7274,12 +7274,13 @@ eq('every type has a definition',
 // Every Scotch region is defined too.
 eq('every scotch region is defined',
   L.SCOTCH_REGIONS.filter(r => defined.indexOf(r.toLowerCase()) < 0), []);
-eq('our-data term count', L.referenceCount('ourdata'), defined.length);
-// Summed over whatever groups exist, rather than three named ones — this
-// failed the moment a fourth was added, which is a test about arithmetic
-// breaking on a change that was not about arithmetic.
-eq('the total is every group added up', L.referenceCount(),
-  L.REF_GROUPS.reduce((n, g) => n + L.referenceCount(g.id), 0));
+/* COUNTED HERE RATHER THAN BY AN ENGINE FUNCTION. L.referenceCount existed for
+   the Learn subtitle, and when BZ had that count taken off the subtitle
+   (2026-10-03) nothing in the app called it any more - consistency.js said so.
+   The check it protected is worth keeping: that the glossary holds exactly as
+   many items as there are defined terms, so a duplicate or a dropped one shows. */
+const refItems = sec2 => sec2.reduce((m, x) => m + x.items.length, 0);
+eq('our-data term count', refItems(L.refGroup('ourdata')), defined.length);
 
 sec('reference search');
 eq('search finds a term', L.searchReference('lincoln county')
@@ -11211,7 +11212,16 @@ sec('§229 books on a shelf');
   eq('spelling is not changed either',
     L.typeLabel('flavored'), 'Flavored');
   eq('a one-word type is capitalised', L.typeLabel('bourbon'), 'Bourbon');
-  eq('nothing is nothing', L.typeLabel(''), '');
+  /* A CATEGORY NOBODY FILLED IN IS STILL A GROUP ON A CHART, and it used to be
+     the empty string - so the Shelf drew a bar with a count of 7 and no label at
+     all, which is BZ's uncategorised bar stock (2026-10-03). L.shelfTypeTiles was
+     already calling that group Other, by its own `sub || 'other'`, so one rule had
+     two spellings and the chart's was invisible. */
+  eq('a category nobody filled in is still called something',
+    L.typeLabel(''), 'Other');
+  eq('and the tiles call it the same thing, which is the point',
+    L.shelfTypeTiles({ z: { sub: '' } }, { z: 1 }).tiles[0].label,
+    L.typeLabel(''));
   eq('capitalised', bourbon.label, 'Bourbon');
 
   /* Banding, on the five counts worked out above. */

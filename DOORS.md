@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 912 |
+| functions | 911 |
 | tables | 217 |
 | carrying a stated purpose | 720 |
 
@@ -898,7 +898,6 @@ QUESTION, not the name you were going to use.
 - **`L.refBrands`** — Every brand: how its approvals split by category, its country when they
 - **`L.refConflictsOpen`** — _no comment above it_
 - **`L.refCountry`** — _no comment above it_
-- **`L.referenceCount`** — _no comment above it_
 - **`L.refFill`** — _no comment above it_
 - **`L.refGroup`** — _no comment above it_
 - **`L.refHouseKey`** — The key a house is stored under
