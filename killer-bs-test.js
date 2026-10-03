@@ -28306,6 +28306,13 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     { name: 'Dave', profile: bourbony.profile }]);
   eq('every side gets a row for every axis, and the described line',
     roomRows.length, (L.FP_AXES.length + 1) * 2);
+  /* AND ONE SHELF IS NOT NAMED AT ALL (BZ, 2026-10-03: "The word You seems
+     redundant in that fingerprint"). The name tells two shelves apart, so with
+     nobody sharing it was saying "You" on every line to the person whose app it
+     is. */
+  eq('one shelf alone carries no name, because there is nothing to tell it from',
+    L.roomFingerprintRows([{ name: 'You', profile: scotchy.profile }])[0][0],
+    'flavour');
   eq('and each row says whose shelf it is',
     [roomRows[0][0], roomRows[L.FP_AXES.length + 1][0]],
     ['You \u2014 flavour', 'Dave \u2014 flavour']);

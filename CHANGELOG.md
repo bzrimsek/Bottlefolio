@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.7.29  ·  2026-10-03 10:42 AM ET
+
+The fingerprint stops saying You on every line. BZ, 2026-10-03: the word is redundant. The name exists to tell two shelves apart, so with nobody sharing a shelf it was saying You five times to the person whose app it is. It is written only when there is more than one side, and every row is named again the moment a buddy shares one, because then the question it answers is real.
+
 ## v2.7.28  ·  2026-10-03 09:57 AM ET
 
 The fingerprint fold is called what BZ asked for. It was labelled 'The same thing in numbers', which describes it accurately and is not the word anybody would look for: he asked for a fingerprint, then went looking for one and could not find it, twice. It now says 'Your shelf's fingerprint', on Home under Your taste profile. Verified by loading the app and opening the fold rather than by reading the code: eleven rows draw, and the age floors show in the picks, where a Kentucky Straight Bourbon with no age statement scores 0.13 off the two-year rule and a bourbon that does not say straight scores 0.00.
