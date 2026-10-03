@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 897 |
 | tables | 213 |
-| carrying a stated purpose | 705 |
+| carrying a stated purpose | 704 |
 
 ## Tables
 
@@ -295,7 +295,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
-- **`L.brandOf`** — THE BRAND THE REGISTRY KNOWS A NAME BY
+- **`L.brandOf`** — _no comment above it_
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
