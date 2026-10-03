@@ -84,6 +84,13 @@ COST = [
     ('cost',        ['node', 'cost.js']),
 ]
 SLOW = [
+    # AN OLD WORKER INSTALLED AND A NEW BUILD LANDING, which no other check
+    # can drive: every one of them serves the app from a route interception
+    # on http://app.local, and a service worker will not register on an
+    # origin that is not secure. This one serves over 127.0.0.1, which the
+    # browser treats as secure, so the worker is real. Added 2026-10-03,
+    # after BZ looked for a live feature twice and had an old build.
+    ('update',      ['node', 'update.js']),
     ('walk',  ['node', 'browser.js']),
     ('sync',  ['node', 'sync.js']),
     # THE APP IN WEBKIT, which is the engine iOS ships (2026-09-29). Every

@@ -69,6 +69,10 @@
     { "name": "sync", "harness": "sync.js", "secs": 62,
       "reaches": ["engine", "screens", "worker"] },
 
+    { "name": "update", "harness": "update.js", "secs": 12,
+      "reaches": ["worker", "screens"],
+      "note": "an old worker installed and a new build landing, over 127.0.0.1 - the one origin a service worker will register on, which is why no other check can drive this at all" },
+
     { "name": "appsscript", "harness": "gscheck.js", "secs": 1,
       "reaches": ["script", "engine"],
       "note": "engine too: L.GS_BUILD and the service's build must move together" },

@@ -101,8 +101,10 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
            # how wide it is. Everything else here proves the code runs.
            'answers.js', 'shots.js',
-           # 2026-10-03: what every ordinary screen SAYS, on BZ's real shelf.
-           'says.js',
+           # 2026-10-03: what every ordinary screen SAYS, on BZ's real shelf;
+           # an old worker meeting a new build; and what is wrong with the
+           # shelf itself, which is a report and never a check.
+           'says.js', 'update.js', 'mine.js',
            # 2026-09-20: screens in sequence, for what one leaves behind.
            'seq.js',
            'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
