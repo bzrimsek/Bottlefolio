@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 899 |
-| tables | 213 |
-| carrying a stated purpose | 707 |
+| functions | 901 |
+| tables | 214 |
+| carrying a stated purpose | 709 |
 
 ## Tables
 
@@ -71,6 +71,7 @@ QUESTION, not the name you were going to use.
 - **`L.FLAVOUR_WORDS`** — Flights built around a FLAVOR.
 - **`L.FLIGHT_RULES`** — standard the validators check against.
 - **`L.FLIGHT_SORTS`** — state and contents, sortable.
+- **`L.FP_AXES`** — `weighed` MEANS THE PROFILE ALREADY WEIGHED IT and counting is not wanted.
 - **`L.FREE_MODES`** — _no comment above it_
 - **`L.FROM_KINDS`** — HOW a bottle was acquired (BZ's list)
 - **`L.GAP_KINDS`** — _no comment above it_
@@ -401,6 +402,7 @@ QUESTION, not the name you were going to use.
 - **`L.findUrl`** — Where a hard bottle can actually be got.
 - **`L.finFaults`** — _no comment above it_
 - **`L.finFromName`** — THE FINISH A NAME STATES
+- **`L.fingerprintRows`** — A FINGERPRINT IN WORDS
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
 - **`L.finIsNote`** — IS THIS A CASK NAME, OR SOMEBODY'S FINISH?
@@ -607,7 +609,7 @@ QUESTION, not the name you were going to use.
 - **`L.libraryWords`** — _no comment above it_
 - **`L.likelyByAge`** — AGE AGAINST NO AGE, for a drinker who runs an AGE IS NOT A FLAVOR flight.
 - **`L.likelyByFlavour`** — MORE OF WHAT THE SHELF ACTUALLY TASTES OF.
-- **`L.likelyToLike`** — The list itself
+- **`L.likelyToLike`** — _no comment above it_
 - **`L.listLine`** — THE SHELF, AS FILTERED
 - **`L.loadStuck`** — A load still marked as running, long after anything could still be
 - **`L.logEntry`** — _no comment above it_
@@ -958,6 +960,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfFactsKeep`** — AND WHAT IS LEFT OF A SHELF RECORD once its shared facts have gone
 - **`L.shelfFactsPlan`** — ONLY THE THIRD IS A JUDGEMENT, and the library wins it - so they are named and
 - **`L.shelfFilter`** — _no comment above it_
+- **`L.shelfFingerprint`** — A SHARE IS OF THE SHELF for an axis a whisky can carry several of, and of the
 - **`L.shelfFit`** — _no comment above it_
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can
 - **`L.shelfGaps`** — _no comment above it_

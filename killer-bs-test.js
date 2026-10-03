@@ -19930,6 +19930,86 @@ sec('\u00a7355 what the library contradicts');
   eq('an age loses its words and keeps its number',
     L.normTail(['10', 'year', 'old']).join(' '), '10');
 
+  /* A SHELF'S FINGERPRINT, on four bottles of three whiskies whose composition
+     is known exactly: two bourbons (one held twice) and one scotch. */
+  const fpCat = {
+    a: { k: 'a', name: 'A', sub: 'bourbon', dist: 'Alpha', proof: 100,
+         tn: { nose: 'oak and vanilla', palate: 'oak' } },
+    b: { k: 'b', name: 'B', sub: 'bourbon', dist: 'Alpha', proof: 100,
+         fin: 'Pedro Ximenez' },
+    /* DESCRIBED TOO, so the mentions (6) and the shelf (4) differ and the wrong
+       denominator cannot give the right answer by coincidence. */
+    c: { k: 'c', name: 'C', sub: 'scotch', dist: 'Beta', proof: 90,
+         tn: { nose: 'smoke and honey' } }
+  };
+  const fpBottles = [{ k: 'a', status: 'open' }, { k: 'a', status: 'sealed' },
+    { k: 'b', status: 'open' }, { k: 'c', status: 'open' }];
+  /* READ OFF THE PROFILE, which is the one place this shelf is counted. */
+  const fp = L.shelfFingerprint(L.tasteProfile(fpCat, fpBottles, {}));
+  eq('the fingerprint counts the whiskies it was given', fp.n, 3);
+  /* PER BOTTLE: A is held twice, so bourbon covers three of the four. */
+  eq('a share is of the shelf, counted per bottle',
+    Math.round(fp.axes.type.share.bourbon * 100), 75);
+  /* A WOOD IS CARRIED BY A WHISKY, so its share is of the shelf: one of the
+     three whiskies is sherried. */
+  eq('a wood share is of the shelf, not of the woods named',
+    Math.round(fp.axes.wood.share.sherry * 100), 33);
+  /* FLAVOUR IS WEIGHED, NOT COUNTED, and L.tasteWeights is the one thing that
+     weighs it. Counting it was the first draft here, and it is the failure that
+     function's own comment records - prevalence swamping distinctiveness - which
+     on BZ's shelf put oak top at 52% because half a bourbon shelf tastes of oak
+     and none of that is about him (2026-10-02). Weighed, oak falls to eleventh
+     and dried fruit leads, which is the sherry he actually reaches for. */
+  const fpProf = L.tasteProfile(fpCat, fpBottles, {});
+  eq('the flavour axis IS the profile\u2019s weights, not a second count',
+    JSON.stringify(fp.axes.flavour.share), JSON.stringify(fpProf.weights));
+  eq('and it says so, because a weight is not a share',
+    fp.axes.flavour.weighed, true);
+  eq('a counted axis says so too', fp.axes.type.weighed, false);
+  /* A LEAD IS CAPPED AT ONE so the bands keep meaning what they say:
+     tasteWeights multiplies a prevalence capped at one by a lift capped at
+     three, and uncapped that put flavour at 4.01 beside type's 0.81. */
+  eq('a weight above one does not carry its band past it',
+    L.shelfFingerprint({ owned: 2, weights: { x: 1.5 } }).axes.flavour.weight, 3);
+  /* AND WHAT HE ANSWERED REACHES IT. Everything answered in Shape your taste
+     recommendations was once saved, synced and weighed nothing anywhere, because
+     the profile every screen read was built without it (2026-09-27). Checked
+     with answers that have PASSED their holdout: answers short of the bar weigh
+     nothing by design, so against those this could not fail. */
+  const fpAsked = {};
+  L.TASTE_TERMS.forEach((t, i) => L.TASTE_TERMS.slice(i + 1).forEach(u => {
+    if (Object.keys(fpAsked).length < 12) fpAsked[L.tastePairKey(t, u)] = t + '>' + t;
+  }));
+  eq('the answers the next check leans on have passed their bar',
+    L.tasteHoldout(fpAsked).passed, true);
+  eq('an answered preference moves the fingerprint',
+    JSON.stringify(L.shelfFingerprint(
+      L.tasteProfile(fpCat, fpBottles, {}, fpAsked)).axes.flavour.share)
+      !== JSON.stringify(fp.axes.flavour.share), true);
+  /* THE WEIGHT IS THE LEADING SHARE TIMES THE BAND, so what a person tastes
+     outweighs what a label says. */
+  eq('flavour is weighted above the commercial axes',
+    fp.axes.flavour.weight > fp.axes.house.weight, true);
+  eq('and the band is the lead, so the strongest type scores its share times two',
+    Math.round(fp.axes.type.weight * 100), 150);
+  /* THE ORDINALS ARE A POSITION, NOT A MATCH. */
+  eq('the ordinals come from the profile, not counted again',
+    fp.ord.proof.median, 100);
+  eq('an empty shelf has no fingerprint to speak of',
+    L.shelfFingerprint(L.tasteProfile({}, [], {})).n, 0);
+  eq('and neither has nothing at all', L.shelfFingerprint(null).n, 0);
+  /* AND THE WORDS IT PRINTS, which a screen must not invent for itself. */
+  const fpRows = L.fingerprintRows(fp);
+  eq('a row for every axis, and the described line',
+    fpRows.length, L.FP_AXES.length + 1);
+  eq('each row leads with the axis it is about',
+    fpRows[0][0], 'flavour');
+  eq('and carries the weight and the leading values',
+    /^\d\.\d\d {2}— {2}\w/.test(fpRows[0][1]), true);
+  eq('an empty shelf says so rather than printing nothing',
+    L.fingerprintRows(L.shelfFingerprint(null)),
+    [['shelf', 'nothing on it yet']]);
+
   /* THE CANON DECIDES WHICH WORDS ARE THE NAME (BZ, 2026-10-02: "Maybe we
      should review the words you've decided to strip", then "we should leverage
      canon for advice"). The category list exists to reduce "Kentucky Straight
