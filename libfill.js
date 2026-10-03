@@ -139,7 +139,7 @@ async function main() {
   say('asking about ' + due.length + ' of them'
     + (DRY ? ' (dry run, nothing written)' : ''));
 
-  let filled = 0, empty = 0, failed = 0;
+  let filled = 0, empty = 0, failed = 0, kept = 0;
   const wrote = {};
   for (const row of due) {
     const p = products[row.k];
@@ -166,15 +166,25 @@ async function main() {
     /* WHAT MAY BE WRITTEN: what the entry does not already say, and nothing
        else. The same door the bottle page uses. */
     const add = res ? L.enhanceDiff(p, res) : null;
+    /* AND THE ONE TRY A VAGUE NOTE GETS IS SPENT, whatever the answer was.
+       Asked against the entry as it would stand, so a run that improved the
+       note writes no mark and the note is simply not vague any more; one that
+       answered "dark fruits" again settles it, and the entry stops being
+       offered on every run for ever (BZ, 2026-10-03: "One try at improving
+       vague then done"). */
+    const settled = L.keptVague(Object.assign({}, p, add || {}));
     if (!add || !Object.keys(add).length) {
       empty++;
       ledger[row.k] = L.recordLookup(ledger, row.k, 'empty', today)[row.k];
+      if (settled) { wrote[row.k] = settled; kept++; }
       continue;
     }
     filled++;
-    wrote[row.k] = add;
+    wrote[row.k] = settled ? Object.assign({}, add, settled) : add;
+    if (settled) kept++;
     ledger[row.k] = L.recordLookup(ledger, row.k, 'found', today)[row.k];
   }
+  if (kept) say(kept + ' vague note(s) kept after their one try');
 
   say(filled + ' filled, ' + empty + ' had nothing to add, ' + failed
     + ' would not answer');

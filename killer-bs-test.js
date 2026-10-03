@@ -6263,6 +6263,104 @@ const real = { k: 'b', name: 'B', tn: { nose: 'Honey and apple', palate: 'Toffee
                tnSrc: 'review' };
 const bare = { k: 'c', name: 'C' };
 
+/* A BLACKBERRY IS A FRUIT SOMEBODY NAMED, NOT A SHRUG (BZ, 2026-10-03, on the
+ * same bottle for the third build running: "Still being asked to fill one
+ * bottle. Same one.").
+ *
+ * L.noteVague is right to refuse "honeyed dark fruits" and nothing else. This
+ * note named the fruit in the nose and was refused anyway, twice over: the
+ * plural "blackberries" was not a spelling any row listed, and L.palateTerms
+ * strips only ONE trailing s, so it became "blackberrie" and matched nothing;
+ * and `blackberry` itself sat in the `berry` row, which L.VAGUE_FRUIT holds -
+ * so naming a blackberry counted as naming no fruit. `dark berry` is its own
+ * term now, beside the `red berry` that already existed for the same reason. */
+{
+  const his = { k: 'sg', name: '2025 New Riff Silver Grove Bourbon',
+    sub: 'bourbon', proof: 110.3, dist: 'New Riff Distilling',
+    mash: '65% corn, 30% rye, 5% malted barley', tnSrc: 'model',
+    tn: { nose: 'Maple sugar, blackberries and rye bread, with lightly '
+            + 'spiced oak and cinnamon',
+          palate: 'Mouthful of honeyed dark fruits, a touch of brown sugar '
+            + 'and baking spices' } };
+  eq('the blackberries are seen, and as a dark berry',
+    L.palateTerms(his.tn.nose).indexOf('dark berry') >= 0, true);
+  eq('and the plural is what the note actually says',
+    L.palateTerms('blackberries').concat(L.palateTerms('blackberry')),
+    ['dark berry', 'dark berry']);
+  eq('a dark berry is not one of the vague ones',
+    L.VAGUE_FRUIT.indexOf('dark berry'), -1);
+  eq('so the note is not a shrug', L.noteVague(his), false);
+  eq('and the bottle is short of nothing', L.libraryGaps(his), []);
+  /* THE UMBRELLA IS STILL AN UMBRELLA: "berries" alone names no berry. */
+  eq('but berries alone still is a shrug',
+    L.noteVague(Object.assign({}, his,
+      { tn: { nose: 'oak and berries', palate: 'dark fruits and sugar' } })),
+    true);
+}
+
+/* ONE TRY AT A VAGUE NOTE, THEN IT IS KEPT (BZ, 2026-10-03: "One try at
+ * improving vague then done").
+ *
+ * After the dark-berry fix 74 of 583 library entries were still vague, and
+ * correctly: 51 say only "fruit", 28 only "citrus", 26 only "dried fruit". The
+ * service answers with the same words every run, so they rested a week, then
+ * six months, then a year, and never left the list - which this app's own
+ * L.flightNoteQueue calls an accusation rather than a task.
+ *
+ * L.keptVague is asked AFTER the answer is applied, so an improved note writes
+ * no mark and is simply not vague; and it reads on the vague clause ALONE, so a
+ * bottle with no note at all is still asked about for as long as it has none. */
+{
+  const vague = { k: 'v', name: 'V', sub: 'bourbon', proof: 100, dist: 'D',
+    mash: 'm', tnSrc: 'model',
+    tn: { nose: 'honeyed dark fruits', palate: 'more dark fruits' } };
+  eq('a vague note is open on its first pass', L.slotOpen(vague, 'notes'), true);
+  eq('and the run is told to spend its try', L.keptVague(vague), { tnKept: true });
+  const kept = Object.assign({}, vague, { tnKept: true });
+  eq('once spent the note is kept', L.slotOpen(kept, 'notes'), false);
+  eq('and it is not offered again', L.needsEnhancing(kept), false);
+  eq('the try is spent only once', L.keptVague(kept), null);
+  /* A BETTER ANSWER NEEDS NO MARK. */
+  const better = Object.assign({}, vague,
+    { tn: { nose: 'blackberries and oak', palate: 'cherry and clove' } });
+  eq('an improved note is marked with nothing', L.keptVague(better), null);
+  eq('and is closed on its own merits', L.slotOpen(better, 'notes'), false);
+  /* AND A MISSING NOTE IS NOT SETTLED BY THE MARK. */
+  eq('a bottle with no note is still asked about',
+    L.slotOpen({ k: 'n', name: 'N', sub: 'bourbon', tnKept: true }, 'notes'),
+    true);
+  eq('nor does the mark settle a flight-card prompt',
+    L.slotOpen({ k: 'f', name: 'F', sub: 'bourbon', tnKept: true,
+      tnFrom: 'THE ROOM', tn: { nose: 'deeper' } }, 'notes'), true);
+}
+
+/* HOW A RUNNING FILL IS GOING. The NAME is the point: a number alone could be
+ * a stuck loop, and a moving name is what proves it is working. Six seconds is
+ * the guess before there is anything to average, because the first bottle has
+ * no elapsed time of its own to divide. */
+{
+  eq('the first bottle has no estimate to give',
+    L.fillProgress(0, 12, 'Weller 12', 0), '1 of 12  \u00b7  Weller 12');
+  /* Four done in twenty-four seconds is six seconds each, eight left, 48s. */
+  eq('and after that it says how long is left',
+    L.fillProgress(4, 12, 'Weller 12', 24000),
+    '5 of 12  \u00b7  Weller 12  \u00b7  about 48s left');
+  eq('ninety seconds and over is said in minutes',
+    L.fillProgress(1, 60, 'Ardbeg Uigeadail', 6000),
+    '2 of 60  \u00b7  Ardbeg Uigeadail  \u00b7  about 6 min left');
+  /* A LONG NAME IS CUT, because the bar is one line on a phone. */
+  eq('a long name is cut to 28 and marked',
+    L.fillProgress(0, 2, '2025 New Riff Silver Grove Bourbon', 0),
+    '1 of 2  \u00b7  2025 New Riff Silver Grove B\u2026');
+  eq('a name of exactly 28 is not marked',
+    L.fillProgress(0, 2, 'x'.repeat(28), 0).indexOf('\u2026'), -1);
+  /* NOTHING IS NOT A CRASH: the bar must say something on any input. */
+  eq('nothing still says something',
+    L.fillProgress(null, null, null, null), '1 of 0');
+  eq('and the estimate never runs backwards',
+    L.fillProgress(9, 4, 'X', 9000), '10 of 4  \u00b7  X  \u00b7  about 0s left');
+}
+
 eq('a card note counts as missing', L.needsEnhancing(card), true);
 eq('a real note does not', L.needsEnhancing(real), false);
 eq('and no note at all still does', L.needsEnhancing(bare), true);
@@ -25175,9 +25273,16 @@ sec('§441 a lookup asks who is asking');
      model and a busy minute all arrived as 'the service answered nothing'.
      2.6.6: he stays an old tradesman rather than reaching for slang, repeats
      a figure exactly as he was given it, spends in dollars, and asks the app
-     what is missing instead of working it out from the portrait. */
+     what is missing instead of working it out from the portrait.
+     2.6.7: he may name a DARK BERRY. The wheel he is offered had blackberry
+     and blackcurrant only under `berry`, which L.VAGUE_FRUIT counts as naming
+     no fruit at all - so an answer could not say which dark fruit it meant
+     however clearly it knew, and L.noteVague sent the bottle back to the fill
+     queue for ever (BZ, 2026-10-03: "Still being asked to fill one bottle.
+     Same one."). A word the app can read and the service is never offered is
+     a word no answer will ever carry. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.6');
+    L.GS_BUILD, '2.6.7');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

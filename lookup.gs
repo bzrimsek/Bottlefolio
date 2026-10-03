@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.6';
+var GS_BUILD = '2.6.7';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
@@ -569,7 +569,7 @@ var WHEEL_TERMS_ = [
   'peat', 'smoke', 'medicinal', 'corn', 'rye', 'wheat', 'malt', 'grain',
   'bread', 'honey', 'floral', 'fruit', 'apple', 'pear', 'orange',
   'lemon', 'grapefruit', 'citrus', 'cherry', 'apricot', 'plum', 'raisin',
-  'fig', 'dried fruit', 'berry', 'red berry', 'banana', 'coconut',
+  'fig', 'dried fruit', 'berry', 'red berry', 'dark berry', 'banana', 'coconut',
   'melon', 'grass', 'fresh', 'mint', 'herbal', 'tea', 'dill', 'earthy',
   'vegetable', 'oak', 'toasted oak', 'cedar', 'pine', 'tobacco',
   'leather', 'vanilla', 'spice', 'cinnamon', 'clove', 'nutmeg', 'pepper',

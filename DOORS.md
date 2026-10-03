@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 920 |
+| functions | 922 |
 | tables | 219 |
-| carrying a stated purpose | 728 |
+| carrying a stated purpose | 730 |
 
 ## Tables
 
@@ -403,6 +403,7 @@ QUESTION, not the name you were going to use.
 - **`L.fillBlanks`** — `only` LIMITS IT TO NAMED FIELDS, because an empty string is not always
 - **`L.fillOf`** — AN UNSET LEVEL MEANS FULL.
 - **`L.fillPlan`** — WHAT THE ADD FORM SHOULD DO WITH THE NAME IT HAS, here so the harness can
+- **`L.fillProgress`** — SIX SECONDS IS THE GUESS BEFORE THERE IS ANYTHING TO AVERAGE, because the
 - **`L.fillSay`** — HOW A FILL IS GOING, SAID ONE WAY
 - **`L.fillSnap`** — _no comment above it_
 - **`L.fillWords`** — _no comment above it_
@@ -581,6 +582,7 @@ QUESTION, not the name you were going to use.
 - **`L.joinParts`** — PARTS JOINED INTO A SENTENCE, without doubling a stop
 - **`L.judgeListing`** — _no comment above it_
 - **`L.keepers`** — A second bottle is a stronger statement than a star
+- **`L.keptVague`** — NOT FOR A MISSING NOTE
 - **`L.keyAsName`** — A KEY READ BACK AS WORDS, for a bottle that has no record to take a name from.
 - **`L.keyForName`** — THE KEY A NAME ALREADY HAS, when the key you built from it does not exist.
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
