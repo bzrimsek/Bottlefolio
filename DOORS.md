@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 933 |
+| functions | 934 |
 | tables | 221 |
 | carrying a stated purpose | 739 |
 
@@ -266,6 +266,7 @@ QUESTION, not the name you were going to use.
 - **`L.article`** — "A Amontillado" is what happens when a reason is assembled from parts.
 - **`L.askableHouse`** — Whether this entry is worth asking about, given what its house has
 - **`L.askAllSay`** — WHAT RUNNING THE WHOLE STILL MISSING LIST WOULD ASK AND COST (BZ,
+- **`L.askGone`** — IS THE ACCOUNT STILL THERE? The tombstone, and nothing else
 - **`L.askLabel`** — _no comment above it_
 - **`L.askScore`** — What each ask has actually produced.
 - **`L.askState`** — _no comment above it_
@@ -1148,7 +1149,7 @@ QUESTION, not the name you were going to use.
 - **`L.verdictSplit`** — Split three ways, for anything that wants to reason about it.
 - **`L.verifyProposal`** — _no comment above it_
 - **`L.viewFor`** — narrows by cos(latitude), so an oversized span gets the whole map.
-- **`L.waitingName`** — WHO IT WENT TO, as far as anything knows
+- **`L.waitingName`** — _no comment above it_
 - **`L.waitingOn`** — THE ASKS THAT ARE STILL WAITING and belong to nobody on the list
 - **`L.waitingSay`** — _no comment above it_
 - **`L.waitSay`** — WHAT A WAIT SAYS AS IT GOES ON

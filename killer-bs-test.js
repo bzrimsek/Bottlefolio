@@ -2111,6 +2111,31 @@ sec('an ask that reaches nobody');
   eq('a shelf that has arrived ends the wait',
     L.waitingOn(asked, {}, { gone: { bottles: [] }, soon: { bottles: [] },
       here: { bottles: [] } }, now).length, 0);
+  /* AN ASK TO AN ACCOUNT THAT IS GONE SAYS SO, rather than printing a uid.
+     BZ followed an invite link whose account had been deleted 36 minutes
+     earlier, and the card could only call it "the account [P3bIGp]". The
+     tombstone is the one thing that knows: the directory cannot answer it,
+     because an entry is published only while findable is on, so a missing
+     one means deleted OR private (2026-10-04). */
+  {
+    const dead = { uid: 'P3bIGpkTuj', days: 4, state: 'waiting',
+                   wipedAt: 1790724689209 };
+    eq('a deleted account is named as one, not as a uid',
+      L.waitingName(dead, {}), 'an account that has been deleted');
+    eq('and the line stops waiting for an answer',
+      L.waitingSay(dead),
+      'Asked 4 days ago. That account has been deleted, so no answer is coming.');
+    /* A NAME STILL WINS: it is still who you asked, and the say line carries
+       the fact. */
+    eq('a name survives the tombstone',
+      L.waitingName(Object.assign({}, dead, { name: 'Nik' }), {}), 'Nik');
+    /* AND NOTHING CHANGES WITHOUT ONE - no tombstone, no claim. A refused
+       read answers 0, so this is the case that must stay as it was. */
+    const live = { uid: 'P3bIGpkTuj', days: 4, state: 'waiting' };
+    eq('without a tombstone it reads exactly as before',
+      [L.waitingName(live, {}), L.waitingSay(live), L.askGone(live)],
+      ['the account [P3bIGp]', 'Asked 4 days ago.', false]);
+  }
   /* AND THE LINK SAYS WHO IT IS FROM. */
   eq('an invite link carries the name, and is read back with it',
     L.inviterFromUrl(L.buddyLink('https://x.test/app', 'abc123', 'BZ')),

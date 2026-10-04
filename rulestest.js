@@ -196,6 +196,12 @@ async function suite(env) {
   /* THE REST. */
   await check('you can mark your own account wiped', 'ok', () => set(r('alice', 'wiped/alice'), at()));
   await check('nobody else can', 'refused', () => set(r('bob', 'wiped/alice'), at()));
+  /* READABLE BY ANYBODY SIGNED IN, so an ask to a deleted account can say so
+     rather than printing a uid. One timestamp, to somebody who already holds
+     the uid because their own invite link carried it, and it authorises
+     nothing. Writing it is still the account itself or an admin, above. */
+  await check('anybody signed in can read a tombstone', 'ok', () => get(r('bob', 'wiped/alice')));
+  await check('a stranger still cannot', 'refused', () => get(r(null, 'wiped/alice')));
   await check('you can write your own diagnostics', 'ok', () => set(r('alice', 'diagnostics/alice'), { at: at() }));
   await check('an admin can read them', 'ok', () => get(r('admin', 'diagnostics/alice')));
   await check('nobody else can', 'refused', () => get(r('bob', 'diagnostics/alice')));

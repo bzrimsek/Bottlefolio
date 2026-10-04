@@ -196,7 +196,7 @@
         },
         "wiped": {
           "$uid": {
-            ".read": "auth != null && ($uid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
+            ".read": "auth != null",
             ".write": "auth != null && ($uid === auth.uid || root.child('bz-apps/whisky/admins').child(auth.uid).exists())",
             ".validate": "newData.isNumber() || !newData.exists()"
           }
