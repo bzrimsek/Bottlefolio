@@ -6563,6 +6563,44 @@ const bare = { k: 'c', name: 'C' };
   eq('no canon, no finding', L.houseFaults(cat, null, null), []);
 }
 
+/* A FACT WANTS A SOURCE, THE WAY A NOTE HAS ONE (BZ, 2026-10-03: "And why
+ * would we allow a shelf to maintain a wrong core data valu").
+ *
+ * Blue Spot's distillery read "Spot Whiskey" - the brand family, not a
+ * distillery - and nothing could correct it, because "a blank is the only
+ * invitation" protects a model's mistake exactly as hard as it protects
+ * somebody's typing. A note records where it came from; a fact did not. */
+{
+  const blank = { k: 'a', name: 'A' };
+  eq('a blank may be written', L.mayReplace(blank, 'proof'), true);
+  const typed = { k: 'b', name: 'B', proof: 118 };
+  eq('and an unstamped value is treated as a person’s',
+    L.mayReplace(typed, 'proof'), false);
+  const guessed = { k: 'c', name: 'C', dist: 'Spot Whiskey',
+    factSrc: { dist: 'model' } };
+  eq('but what a model put there may be corrected',
+    L.mayReplace(guessed, 'dist'), true);
+  eq('and the source is readable', L.factFrom(guessed, 'dist'), 'model');
+  eq('an unrecorded one says nothing', L.factFrom(typed, 'proof'), '');
+  /* THE STAMP COVERS THE FACTS THE LOOKUP WROTE AND NOTHING ELSE. */
+  eq('the stamp names the fields taken',
+    L.stampFacts(blank, { proof: 100, dist: 'D', tn: { nose: 'x' } }),
+    { proof: 'model', dist: 'model' });
+  eq('and nothing is stamped when no fact was taken',
+    L.stampFacts(blank, { tn: { nose: 'x' } }), null);
+  eq('an earlier stamp is kept',
+    L.stampFacts({ factSrc: { proof: 'model' } }, { dist: 'D' }),
+    { proof: 'model', dist: 'model' });
+  /* END TO END: the lookup corrects its own earlier answer and leaves the
+     typed proof alone. */
+  const found = { dist: 'Midleton', proof: 118.4 };
+  eq('the model’s distillery is corrected, the typed proof is not',
+    L.enhanceDiff({ k: 'd', name: 'Blue Spot', sub: 'irish', proof: 118,
+      dist: 'Spot Whiskey', factSrc: { dist: 'model' },
+      tn: { nose: 'a', palate: 'b' }, tnSrc: 'you' }, found),
+    { dist: 'Midleton' });
+}
+
 /* THE BAR SHELF IS NOT IN THE VENN EITHER (BZ, 2026-10-03: "Smoky Bill has a
  * bunch of tequilla that I\u2019d rather filter out and we whould probable have
  * a whiskey only filter on all of the Venns").

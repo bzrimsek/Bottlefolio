@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 930 |
+| functions | 933 |
 | tables | 221 |
-| carrying a stated purpose | 736 |
+| carrying a stated purpose | 739 |
 
 ## Tables
 
@@ -392,6 +392,7 @@ QUESTION, not the name you were going to use.
 - **`L.exportRows`** — One row per BOTTLE, not per whisky
 - **`L.faceMatch`** — _no comment above it_
 - **`L.facesOf`** — The reels a bottle would satisfy, one face per reel.
+- **`L.factFrom`** — AN UNSTAMPED VALUE IS TREATED AS A PERSON'S
 - **`L.factGaps`** — WHAT IS MISSING, WHICH IS NOT THE SAME AS WHAT IS EMPTY (BZ, 2026-09-28:
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
@@ -682,6 +683,7 @@ QUESTION, not the name you were going to use.
 - **`L.matchesSearch`** — A WHOLE SEARCH, and every search box asks this
 - **`L.matchFacts`** — WHAT A SIDE STATES, PLUS WHAT ITS NAME IMPLIES, so a bare name (read off
 - **`L.matchReceipts`** — _no comment above it_
+- **`L.mayReplace`** — MAY A LOOKUP WRITE HERE? A blank, or something a model put there
 - **`L.median`** — _no comment above it_
 - **`L.mergeCatalog`** — _no comment above it_
 - **`L.mergeContribution`** — _no comment above it_
@@ -1042,6 +1044,7 @@ QUESTION, not the name you were going to use.
 - **`L.spreadBy`** — _no comment above it_
 - **`L.spreadHouses`** — _no comment above it_
 - **`L.srcFault`** — WHAT IS WRONG WITH A STAMP, as a list rather than a boolean, because a
+- **`L.stampFacts`** — WHAT TO STAMP WHEN A LOOKUP WRITES
 - **`L.stampFault`** — _no comment above it_
 - **`L.standingOf`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
 - **`L.stateCounts`** — _no comment above it_
