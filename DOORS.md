@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 923 |
 | tables | 219 |
-| carrying a stated purpose | 730 |
+| carrying a stated purpose | 731 |
 
 ## Tables
 
@@ -306,7 +306,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
-- **`L.brandOf`** — _no comment above it_
+- **`L.brandOf`** — STRICTLY NARROWER, so a tie leaves the prefix answer standing.
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_

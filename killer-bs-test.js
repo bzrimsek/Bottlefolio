@@ -6421,6 +6421,29 @@ const bare = { k: 'c', name: 'C' };
     L.editionsDiffer('Blood Oath Pact', 'Blood Oath Pact No. 11'), false);
   eq('and the same edition twice is no difference',
     L.editionsDiffer('Stagg Batch 24C', 'Batch 24C Stagg'), false);
+  /* A `#` BETWEEN THE WORD AND THE NUMBER, which a label often prints and the
+     pattern did not allow: "Stagg Batch #24C" matched nothing at all, so two
+     batches carried no edition and nothing told them apart (BZ, 2026-10-03). */
+  eq('a hash before the number is still an edition',
+    [L.bottleMarks({ name: 'Stagg Batch #24C' }),
+      L.bottleMarks({ name: 'Stagg Batch #25D' })], [['e24c'], ['e25d']]);
+  eq('so two hashed batches are two bottles',
+    L.editionsDiffer('Stagg Batch #24C', 'Stagg Batch #25D'), true);
+  /* AND A SERIES NUMBER IS AN EDITION. `s13.4` is set by the rule written for
+     exactly this - "nothing told the two Octomores apart and they came back as
+     one bottle" - and reading only the `e` marks meant the mark put there to
+     tell releases apart was not used to tell releases apart. */
+  eq('a series number is read',
+    [L.bottleMarks({ name: 'Bruichladdich Octomore 13.4' }),
+      L.bottleMarks({ name: 'Bruichladdich Octomore 14.3' })],
+    [['s13.4'], ['s14.3']]);
+  eq('and two Octomores are two bottles',
+    L.editionsDiffer('Bruichladdich Octomore 13.4',
+      'Bruichladdich Octomore 14.3'), true);
+  eq('which sameBottle now refuses',
+    L.sameBottle({ k: 'a', name: 'Bruichladdich Octomore 13.4', dist: 'Bruichladdich',
+      sub: 'scotch' }, { k: 'b', name: 'Bruichladdich Octomore 14.3',
+      dist: 'Bruichladdich', sub: 'scotch' }, {}, null), false);
   /* ONLY THE EDITION. The other marks are other layers - a cask strength
      bottling of one batch is that batch, not a different release. */
   eq('the other marks are not editions',
