@@ -6403,6 +6403,184 @@ const bare = { k: 'c', name: 'C' };
     L.dupeGroups(byNorm, null).length, 0);
 }
 
+/* THE HEAD IS THE BUCKET WHERE THERE IS AN EXPRESSION, THE WHOLE IDENTITY
+ * WHERE THERE IS NOT (BZ, 2026-10-03: "Old forester is the house and brand").
+ *
+ * The five layers that say what a bottle IS are type, house, brand, expression
+ * and style; the marks after them are what ONE record happens to know. Two of
+ * his Silver Grove bourbons agree on all five and differ only in that one
+ * states a year, so bucketing on the whole identity could never join them.
+ *
+ * But where the expression is EMPTY the head says nothing the brand did not:
+ * Old Forester is its own house AND its own brand, so "Old Forester 100 Proof
+ * Bourbon" and "Old Forester 1924 10 Year Old" both reduce to nothing, and the
+ * marks are the only thing telling them apart. Those keep the strict bucket. */
+{
+  /* WITH THE LABEL COUNTS, because the narrower-brand rule ranks a sub-brand
+     below its house by how many TTB labels each carries - Silver Grove 2
+     against New Riff 55 - and a registry with no counts cannot rank. */
+  const brands = { 'new riff': { name: 'New Riff', n: 55 },
+                   'silver grove': { name: 'Silver Grove', n: 2 },
+                   'old forester': { name: 'Old Forester', n: 30 } };
+  const sg = (n, x) => Object.assign({ k: n, name: n,
+    dist: 'New Riff Distilling', sub: 'bourbon', age: 4 }, x || {});
+  const a = sg('2025 New Riff Silver Grove Bourbon', { proof: 110.3 });
+  const b = sg('New Riff Silver Grove Bourbon 2025', { proof: 110.3 });
+  const c = sg('Silver Grove Bourbon');
+  /* ALL THREE ANSWER ONE BRAND, which is the narrower-brand rule doing its
+     job: Silver Grove is filed under 2 TTB labels and New Riff under 55, so
+     the sub-brand wins however the title orders them. */
+  eq('the house in front no longer changes the brand',
+    [a, b, c].map(p => (L.brandOf(p.name, brands, p.dist) || {}).key),
+    ['silver grove', 'silver grove', 'silver grove']);
+  /* AND THE BRAND'S OWN WORDS ARE NOT ALSO THE EXPRESSION, so these carry
+     none and are told apart by their marks alone. */
+  eq('so the expression is empty for all three',
+    [a, b, c].map(p => L.bottleIdentity(p, brands).split('|')[3]), ['', '', '']);
+  const bucket = {};
+  [a, b].forEach(p => {
+    const k = L.shopNorm(p.name, brands);
+    (bucket[k] = bucket[k] || []).push(p);
+  });
+  eq('the two that agree on every mark are one bottle',
+    L.dupeGroups(bucket, brands).map(g => g.length), [2]);
+
+  /* AND AN EMPTY EXPRESSION KEEPS THE STRICT BUCKET. */
+  const of1 = { k: 'o1', name: 'Old Forester 100 Proof Bourbon',
+    dist: 'Old Forester', sub: 'bourbon', proof: 100 };
+  const of2 = { k: 'o2', dist: 'Old Forester', sub: 'bourbon', age: 10,
+    name: 'Old Forester 1924 10 Year Old Kentucky Straight Bourbon Whiskey' };
+  /* A LAST-CENTURY YEAR IS WHAT THE BOTTLING IS CALLED, not a release and not
+     an age, so the expression keeps it and 1924 is what separates these two
+     (BZ, 2026-10-03: "The expression for old forester looks like a year",
+     "Doint we find a release year before 2000"). */
+  eq('1924 is the name, so it is the expression',
+    [of1, of2].map(p => L.bottleIdentity(p, brands).split('|')[3]), ['', '1924']);
+  eq('and it is no longer read as a release',
+    L.bottleMarks({ name: of2.name }), ['age10']);
+  eq('while a release year still is',
+    L.bottleMarks({ name: 'Old Forester 2024 Birthday Bourbon' }), ['y2024']);
+  /* AND WHERE NOTHING IS LEFT ON EITHER SIDE, the strict bucket still holds:
+     Old Forester is its own house AND its own brand, so these two carry no
+     expression at all and the marks are all there is. */
+  const of3 = { k: 'o3', name: 'Old Forester Single Barrel 100 Proof',
+    dist: 'Old Forester', sub: 'bourbon', proof: 100 };
+  eq('two nothings are still not one bottle',
+    [of1, of3].map(p => L.bottleIdentity(p, brands).split('|')[3]), ['', '']);
+  const ob = {};
+  [of1, of3].forEach(p => {
+    const k = L.shopNorm(p.name, brands);
+    (ob[k] = ob[k] || []).push(p);
+  });
+  eq('so they are not grouped', L.dupeGroups(ob, brands).length, 0);
+}
+
+/* A WORD THIS APP HAS ALREADY RESERVED CANNOT ALSO BE A BRAND (BZ, 2026-10-03:
+ * "Peated seems like a reserved word", "Double charred ... Is the modifier
+ * phrase", "Peated is not a brand").
+ *
+ * The TTB list records what people filed, not a taxonomy, so regions, colours,
+ * flavours, cask kinds and scarcity words are all filed as brands by somebody.
+ * Each is already a vocabulary this app keeps, and a word one of them holds is
+ * not free to be a brand as well.
+ *
+ * ALL OF THEM, NEVER ANY OF THEM: Port Charlotte survives because `port` is a
+ * cask kind and `charlotte` is nothing at all. That single word is the
+ * difference between a rule and a word list. */
+{
+  eq('a flavour, a region and a colour are spoken for',
+    ['peated', 'speyside', 'black'].map(w => L.reservedWord(w)),
+    [true, true, true]);
+  eq('and so is a category and a cask',
+    ['bourbon', 'port'].map(w => L.reservedWord(w)), [true, true]);
+  eq('a real brand word is not',
+    ['grove', 'octomore', 'charlotte', 'winkle'].map(w => L.reservedWord(w)),
+    [false, false, false, false]);
+  eq('every word taken means it is not a brand',
+    [['peated'], ['charred', 'oak'], ['corn', 'whiskey'], ['exclusive']]
+      .map(w => L.allReserved(w)), [true, true, true, true]);
+  eq('one free word is enough to keep it',
+    [['port', 'charlotte'], ['silver', 'grove'], ['gentleman', 'jack']]
+      .map(w => L.allReserved(w)), [false, false, false]);
+  eq('and nothing is not reserved', L.allReserved([]), false);
+}
+
+/* THE NARROWER REGISTERED BRAND IS THE BRAND (BZ: "Silver Grove is clearly the
+ * brand. Bought at New Riff", "3 should be a canon answer", "But eagle rare
+ * brand is in the Buffalo Trace house").
+ *
+ * The canon ranks a sub-brand below the house that makes it by how many labels
+ * are filed under each, so a title that states both answers the narrower one
+ * however it orders them. Three guards, each from a wrong answer it removes. */
+{
+  const reg = { 'new riff': { name: 'New Riff', n: 55 },
+                'silver grove': { name: 'Silver Grove', n: 2 },
+                'buffalo trace': { name: 'Buffalo Trace', n: 40 },
+                'eagle rare': { name: 'Eagle Rare', n: 10 },
+                'peated': { name: 'Peated', n: 1 },
+                'speyside': { name: 'Speyside', n: 4 },
+                'lagavulin': { name: 'Lagavulin', n: 9 },
+                'triple cask': { name: 'Triple Cask', n: 3,
+                                 maker: 'Ragged Branch' } };
+  const key = (n, d) => (L.brandOf(n, reg, d) || {}).key || null;
+  eq('the house in front does not take the brand',
+    key('New Riff Silver Grove Bourbon 2025', 'New Riff Distilling'),
+    'silver grove');
+  eq('and a house that IS the brand keeps it',
+    key('Buffalo Trace Kentucky Straight Bourbon Whiskey', 'Buffalo Trace'),
+    'buffalo trace');
+  eq('a brand in that house is still its own',
+    key('Eagle Rare 10 Year', 'Buffalo Trace'), 'eagle rare');
+  /* THE GUARDS. */
+  eq('a reserved word is not taken as the narrower brand',
+    key('Benriach 10 Year Old Speyside Single Malt', 'Benriach'), null);
+  eq('nor a brand the canon gives to another house',
+    key('10th Street Triple Cask Single Malt', '10th Street Distillery'), null);
+  eq('nor one the canon has seen once',
+    key('Amrut Peated Cask Strength', 'Amrut'), null);
+  eq('nor a house named as the cask it was finished in',
+    key('Starward Lagavulin Cask Finish', 'Starward'), null);
+}
+
+/* THE DOOR ITSELF, asked directly: which of two registered brands in one name
+ * is the brand. It takes the normalised name, the prefix answer L.brandOf
+ * already found, the brand index, and the house the entry states. */
+{
+  const reg = { 'new riff': { name: 'New Riff', n: 55 },
+                'silver grove': { name: 'Silver Grove', n: 2 },
+                'peated': { name: 'Peated', n: 1 } };
+  const idx = L.brandIndex(reg);
+  const found = { key: 'new riff', n: 'new riff', at: 'new riff' };
+  eq('the narrower of the two wins',
+    (L.narrowerBrand('new riff silver grove bourbon 2025', found, idx,
+      'New Riff Distilling') || {}).key, 'silver grove');
+  eq('a name stating one brand has no narrower one',
+    L.narrowerBrand('new riff bourbon', found, idx, 'New Riff Distilling'),
+    null);
+  eq('and one lone filing is not narrower, it is noise',
+    L.narrowerBrand('new riff peated bourbon', found, idx,
+      'New Riff Distilling'), null);
+  /* THE PREFIX ANSWER HAS TO BE RANKED ITSELF, or there is nothing to be
+     narrower than. */
+  eq('an unranked prefix answer settles nothing',
+    L.narrowerBrand('new riff silver grove bourbon',
+      { key: 'x', n: 'x', at: 'x' }, idx, 'New Riff Distilling'), null);
+}
+
+/* AND 1792 IS A BRAND, NOT A YEAR (BZ, 2026-10-03: "1792 is a brand!"). It
+ * resolves through the registry, so its words belong to the brand and never
+ * reach the expression - which the last-century-year rule above could quietly
+ * have broken. */
+{
+  const reg = { '1792': { name: '1792', n: 20 } };
+  eq('1792 answers a brand',
+    (L.brandOf('1792 Small Batch Kentucky Straight Bourbon Whiskey', reg)
+      || {}).key, '1792');
+  eq('and is not left in the expression',
+    L.bottleIdentity({ k: 'x', name: '1792 Bottled in Bond',
+      dist: '1792 Barton', sub: 'bourbon' }, reg).split('|')[3], '');
+}
+
 /* A DIFFERENT EDITION IS A DIFFERENT BOTTLE, which is the layer that was
  * missing. BZ left both of these where they stood when a check that could not
  * see it called them one (2026-10-03). L.bottleMarks already carried the

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 923 |
-| tables | 219 |
-| carrying a stated purpose | 731 |
+| functions | 926 |
+| tables | 220 |
+| carrying a stated purpose | 733 |
 
 ## Tables
 
@@ -46,6 +46,7 @@ QUESTION, not the name you were going to use.
 - **`L.COUNTRY_DEPTH`** — How much whisky world each country is
 - **`L.COUNTRY_OF_SUB`** — _no comment above it_
 - **`L.CURRENCY`** — The price out of a listing, with its currency
+- **`L.DESCRIBES_NOT_NAMES`** — WORDS THAT DESCRIBE RATHER THAN NAME, which no other list of this app's
 - **`L.DETAIL`** — States fills the window
 - **`L.DIMENSIONS`** — _no comment above it_
 - **`L.EXITS`** — leaves the bottle in existence elsewhere
@@ -255,6 +256,7 @@ QUESTION, not the name you were going to use.
 - **`L.ageFloor`** — _no comment above it_
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
 - **`L.agePrior`** — _no comment above it_
+- **`L.allReserved`** — IS EVERY WORD OF THIS SPOKEN FOR? ALL of them, never any of them
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
@@ -306,7 +308,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
-- **`L.brandOf`** — STRICTLY NARROWER, so a tie leaves the prefix answer standing.
+- **`L.brandOf`** — _no comment above it_
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
@@ -702,6 +704,7 @@ QUESTION, not the name you were going to use.
 - **`L.namePrefixPairs`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
+- **`L.narrowerBrand`** — A NARROWER REGISTERED BRAND STATED LATER IN THE SAME NAME, which is how a
 - **`L.nearestBy`** — _no comment above it_
 - **`L.nearlyNamed`** — THE SAME BOTTLE BY NAME, allowing the small differences a shop page and a
 - **`L.needsEnhancing`** — DOES THIS BOTTLE STILL NEED NOTES? L.slotOpen holds the whole rule,
@@ -928,6 +931,7 @@ QUESTION, not the name you were going to use.
 - **`L.removePour`** — _no comment above it_
 - **`L.repoint`** — POINTING BOTTLES AT ANOTHER PRODUCT
 - **`L.reservedIn`** — _no comment above it_
+- **`L.reservedWord`** — _no comment above it_
 - **`L.resetSide`** — WHO HAS THE LAST WORD ON ONE KEY AFTER A REPLACEMENT.
 - **`L.resolveLibKey`** — _no comment above it_
 - **`L.resolveUpc`** — cannot be searched by name, so the barcode store comes first.
