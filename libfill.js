@@ -109,6 +109,9 @@ async function idToken() {
    products so every device and this job read one answer to "when was this
    last asked", rather than each keeping a private opinion. */
 const PRODUCTS = '/bz-apps/whisky/shared/catalog/products';
+/* The canon, so a house is filed the way the library spells it rather than
+   with its town and country appended (L.houseCanon). */
+const REF = '/bz-apps/whisky/shared/ref';
 const LEDGER = '/bz-apps/whisky/shared/catalog/fillLedger';
 
 async function main() {
@@ -123,6 +126,10 @@ async function main() {
 
   const products = L.libraryFromValue(await (await fetch(at(PRODUCTS))).json())
     || {};
+  /* NOT FATAL. Without the canon a house is written as the service spelled it,
+     which is what happened before this read existed. */
+  let ref = null;
+  try { ref = await (await fetch(at(REF))).json(); } catch (e) { ref = null; }
   const ledger = (await (await fetch(at(LEDGER))).json()) || {};
   const rows = L.libraryRows(products);
   const today = L.todayISO();
@@ -165,7 +172,9 @@ async function main() {
     }
     /* WHAT MAY BE WRITTEN: what the entry does not already say, and nothing
        else. The same door the bottle page uses. */
-    const add = res ? L.enhanceDiff(p, res) : null;
+    /* AND THE CANON, so a house arrives spelled the way the library files it
+       rather than with its town and country appended. */
+    const add = res ? L.enhanceDiff(p, res, ref) : null;
     /* AND THE ONE TRY A VAGUE NOTE GETS IS SPENT, whatever the answer was.
        Asked against the entry as it would stand, so a run that improved the
        note writes no mark and the note is simply not vague any more; one that

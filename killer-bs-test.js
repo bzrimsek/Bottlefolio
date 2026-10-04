@@ -6563,6 +6563,26 @@ const bare = { k: 'c', name: 'C' };
   eq('no canon, no finding', L.houseFaults(cat, null, null), []);
 }
 
+/* A HOUSE ARRIVING FROM A LOOKUP IS FILED AS THE CANON SPELLS IT (BZ,
+ * 2026-10-03, after four dressed names were cleaned and four more appeared on
+ * newer bottles). The service answers "Yamazaki Distillery, Osaka, Japan" and
+ * filing that verbatim is what kept refilling the Clean up list. */
+{
+  const ref = { houses: {} };
+  ref.houses[L.refHouseKey('Yamazaki')] = { name: 'Yamazaki distillery' };
+  const p = { k: 'x', name: 'Yamazaki 18', sub: 'japanese' };
+  eq('the town and the country come off at the door',
+    L.enhanceDiff(p, { dist: 'Yamazaki Distillery, Osaka, Japan' }, ref),
+    { dist: 'Yamazaki distillery' });
+  /* A HOUSE THE CANON DOES NOT HOLD IS WRITTEN AS IT ARRIVED. The TTB list
+     registers US plants, and a lookup's spelling of Starward beats nothing. */
+  eq('one the canon never heard of keeps its own spelling',
+    L.enhanceDiff(p, { dist: 'Starward' }, ref), { dist: 'Starward' });
+  eq('and without the canon nothing is changed',
+    L.enhanceDiff(p, { dist: 'Yamazaki Distillery, Osaka, Japan' }, null),
+    { dist: 'Yamazaki Distillery, Osaka, Japan' });
+}
+
 /* A FACT WANTS A SOURCE, THE WAY A NOTE HAS ONE (BZ, 2026-10-03: "And why
  * would we allow a shelf to maintain a wrong core data valu").
  *
