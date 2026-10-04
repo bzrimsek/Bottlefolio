@@ -233,6 +233,36 @@ function step(n) {
   // 3. The shelf actually lists bottles, and its header lines up with them.
   await page.locator('nav button[data-scr="shelf"]').click();
   await page.waitForTimeout(100);
+  /* ONE GAP BETWEEN THE SUMMARY CARDS, and it is measured, not read. They
+     stack inside #shelfList, which is also the hairline bottle-row
+     container, so for a long time the only space between two cards was
+     whatever margin each happened to carry: 27, 1, 1, 1, 27, 13 down one
+     screen (BZ, 2026-10-03: "the gaps are inconsistent and these cards are
+     all on the Shelf page"). Reading the stylesheet cannot catch it - the
+     margins were corrected one at a time twice and the page still read
+     wrong - because no single margin was the fault. This fails on the
+     numbers DISAGREEING, not on any particular number, so a later design
+     that wants a different gap is free to have one everywhere. */
+  const cardGaps = await page.evaluate(() => {
+    const host = document.querySelector('#shelfList .cards');
+    if (!host) return null;
+    const out = [];
+    let prev = null;
+    [...host.children].forEach(k => {
+      const r = k.getBoundingClientRect();
+      if (r.height <= 0) return;
+      if (prev !== null) out.push(Math.round(r.top - prev));
+      prev = r.bottom;
+    });
+    return out;
+  });
+  if (!cardGaps) failures.push('shelf: no card stack to measure');
+  else if (cardGaps.length < 2) {
+    failures.push('shelf: only ' + cardGaps.length + ' card gap to compare');
+  } else if ([...new Set(cardGaps)].length > 1) {
+    failures.push('shelf: the card gaps disagree - ' + cardGaps.join(', ') + 'px');
+  }
+
   const tiles = await page.locator('#shelfList .tile').count();
   if (!tiles) failures.push('shelf: no type tiles');
   else {
