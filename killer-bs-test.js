@@ -6563,6 +6563,45 @@ const bare = { k: 'c', name: 'C' };
   eq('no canon, no finding', L.houseFaults(cat, null, null), []);
 }
 
+/* THE BAR SHELF IS NOT IN THE VENN EITHER (BZ, 2026-10-03: "Smoky Bill has a
+ * bunch of tequilla that I\u2019d rather filter out and we whould probable have
+ * a whiskey only filter on all of the Venns").
+ *
+ * The rule is the app\u2019s own and was already everywhere else: the bar shelf
+ * is inventory, L.isWhisky says which is which, and a Venn comparing two
+ * shelves is an analysis - it is the picture somebody reads to decide what to
+ * pour and what to ask for. Measured live before it was written: nine of one
+ * buddy\u2019s 182 bottles are not whisky, four of them tequila. */
+{
+  const shelf = {
+    bottles: [{ id: '1', k: 'a', status: 'open' },
+              { id: '2', k: 'b', status: 'open' },
+              { id: '3', k: 'c', status: 'open' }],
+    catalog: { a: { k: 'a', name: 'Ardbeg Ten', sub: 'scotch' },
+               b: { k: 'b', name: 'Don Julio 70', sub: 'tequila' },
+               c: { k: 'c', name: 'Bacardi Gold', sub: 'rum' } }
+  };
+  const set = L.shelfSet(shelf, false, null, null, null);
+  eq('three bottles, one whisky, one in the set',
+    Object.values(set).map(p => p.name), ['Ardbeg Ten']);
+  /* AND THE ORPHAN PATH TOO. It exists so a bottle naming no product is still
+     compared - BZ owned two Redbreast PX the comparison could not see - not so
+     a bar bottle escapes the rule through it. */
+  const orphans = {
+    bottles: [{ id: '4', k: 'Tito\u2019s Handmade Vodka', status: 'open' },
+              { id: '5', k: 'Ardbeg Wee Beastie', status: 'open' }],
+    catalog: {}
+  };
+  const got = L.shelfSet(orphans, false, null, null, null);
+  eq('a bar bottle with no product is out too',
+    Object.values(got).map(p => p.name), ['Ardbeg Wee Beastie']);
+  /* AND A WHISKY IS NOT TOUCHED BY ANY OF IT. */
+  eq('a whisky shelf is unchanged',
+    Object.keys(L.shelfSet({ bottles: [{ id: '6', k: 'x', status: 'open' }],
+      catalog: { x: { k: 'x', name: 'Lagavulin 16', sub: 'scotch' } } },
+      false, null, null, null)).length, 1);
+}
+
 /* A WORD THIS APP HAS ALREADY RESERVED CANNOT ALSO BE A BRAND (BZ, 2026-10-03:
  * "Peated seems like a reserved word", "Double charred ... Is the modifier
  * phrase", "Peated is not a brand").
