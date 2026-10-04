@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 926 |
-| tables | 220 |
-| carrying a stated purpose | 733 |
+| functions | 930 |
+| tables | 221 |
+| carrying a stated purpose | 736 |
 
 ## Tables
 
@@ -88,6 +88,7 @@ QUESTION, not the name you were going to use.
 - **`L.GUIDE_REACH`** — HOW FAR A BOTTLE REACHES
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
+- **`L.HOUSE_DRESS`** — WHAT A NAME HAS BEEN DRESSED UP WITH
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
 - **`L.IMPORT_FIELDS`** — WHICH FIELDS THIS ROW WOULD CHANGE, named so the preview can say
@@ -515,11 +516,14 @@ QUESTION, not the name you were going to use.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdsFor`** — flight answers neither.
 - **`L.hostCard`** — _no comment above it_
+- **`L.houseCanon`** — UNKNOWN IS NOT WRONG
 - **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
+- **`L.houseFaults`** — _no comment above it_
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
 - **`L.houseInterest`** — HOW MUCH A BOTTLING ADDS TO A HOUSE YOU ALREADY HOLD (BZ, 2026-09-27:
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
+- **`L.houseItems`** — THE ROWS THE SCREEN SHOWS, with the key so a row can be gone to.
 - **`L.houseKey`** — _no comment above it_
 - **`L.houseList`** — The houses the catalog knows, longest name first, so a house called
 - **`L.houseMeant`** — _no comment above it_
@@ -532,6 +536,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
 - **`L.housesThatDoNotPublish`** — _no comment above it_
 - **`L.houseTakeBack`** — PUTTING ONE BACK
+- **`L.houseTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule rather than inside the
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
 - **`L.identOf`** — _no comment above it_
@@ -911,7 +916,7 @@ QUESTION, not the name you were going to use.
 - **`L.refCountry`** — _no comment above it_
 - **`L.refFill`** — _no comment above it_
 - **`L.refGroup`** — _no comment above it_
-- **`L.refHouseKey`** — The key a house is stored under
+- **`L.refHouseKey`** — _no comment above it_
 - **`L.refHouses`** — One entry per distillery, keyed by its name and every alias
 - **`L.refItems`** — A SECTION IS A STORY OR A GLOSSARY (BZ, 2026-09-20)
 - **`L.refKeysFor`** — THE KEYS A NAME COULD BE FILED UNDER, longest first

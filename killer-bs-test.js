@@ -6475,6 +6475,94 @@ const bare = { k: 'c', name: 'C' };
   eq('so they are not grouped', L.dupeGroups(ob, brands).length, 0);
 }
 
+/* A COMPANY FORM AND THE WORD DISTILLERY ARE DRESSING ON BOTH SIDES (BZ,
+ * 2026-10-03: "im curious then how we can have producers not on the list").
+ *
+ * The permits file registers the company: "NEW RIFF DISTILLING, LLC.",
+ * "KENTUCKY BOURBON DISTILLERS, LTD." operating as "The Willett Distillery",
+ * "OLD ELK DISTILLERIES, LLC". A shelf holds New Riff Distilling, Willett
+ * Distillery, Old Elk Distillery. 133 of 201 houses did not match, and this is
+ * the mechanical half of that - 42 of them.
+ *
+ * L.refHouseKey is what the canon is keyed BY and what a shelf is looked up
+ * WITH, so normalising inside it fixes the match at both ends at once. */
+{
+  const same = (a, b) => L.refHouseKey(a) === L.refHouseKey(b);
+  eq('a company form is not part of the name',
+    same('NEW RIFF DISTILLING, LLC.', 'New Riff Distilling'), true);
+  eq('nor is a leading The',
+    same('The Willett Distillery', 'Willett Distillery'), true);
+  eq('and the word Distillery matches its own plural',
+    same('OLD ELK DISTILLERIES, LLC', 'Old Elk Distillery'), true);
+  eq('a limited company is the same house',
+    same('Kentucky Bourbon Distillers, Ltd.', 'Kentucky Bourbon Distillers'),
+    true);
+  /* AND TWO DIFFERENT HOUSES STAY DIFFERENT. */
+  eq('two houses are still two',
+    same('New Riff Distilling', 'Old Elk Distillery'), false);
+  eq('nothing is still nothing', L.refHouseKey(''), '');
+  /* A NAME OF NOTHING BUT DRESSING IS EMPTY, which L.houseKey already decides
+     before this rule is reached - it strips the category words. Asserted so
+     the behaviour is written down rather than discovered again. */
+  eq('a name of nothing but dressing has no key',
+    L.refHouseKey('The Distillery Co'), '');
+}
+
+/* IS THIS A HOUSE THE CANON KNOWS, AND IF NOT, WHAT IS IT PROBABLY? (BZ,
+ * 2026-10-03: "the bottles came first and canon second - we need to clean up
+ * the bottles to match canon".)
+ *
+ * On his library 99 of 201 distilleries are not names the canon holds, and they
+ * are four different things in one field: a name wearing its town, a brand, a
+ * place or parent company, and a real distillery the canon has never heard of.
+ * Only the first can be answered mechanically, and only it is reported. */
+{
+  const ref = { houses: {
+    [L.refHouseKey('Yamazaki')]: { name: 'Yamazaki distillery' },
+    [L.refHouseKey("Maker's Mark")]: { name: "Maker's Mark" },
+    [L.refHouseKey('Hakushu')]: { name: 'Hakushu distillery' },
+    [L.refHouseKey('Buffalo Trace')]: { name: 'Buffalo Trace' }
+  } };
+  eq('a house the canon holds as filed is known',
+    L.houseCanon('Buffalo Trace', ref).how, 'known');
+  /* THE TOWN AND THE COUNTRY ARE DRESSING. */
+  eq('and one wearing its town is placed',
+    [L.houseCanon('Yamazaki Distillery, Osaka, Japan', ref).how,
+      L.houseCanon('Yamazaki Distillery, Osaka, Japan', ref).as],
+    ['dressed', 'Yamazaki distillery']);
+  eq('so is one wearing the word Distillery',
+    L.houseCanon("Maker's Mark Distillery, Loretto, Kentucky", ref).as,
+    "Maker's Mark");
+  /* A LIST OF HOUSES IS NOT ONE HOUSE WEARING SOMETHING. */
+  eq('a field naming three distilleries is not placed',
+    L.houseCanon('Suntory (Yamazaki, Hakushu, Chita)', ref).how, 'unknown');
+  /* AND UNKNOWN IS NOT WRONG: the TTB list is of US bottlers and Wikidata is
+     not complete, so a real distillery can simply be absent. */
+  eq('a house the canon has never heard of is unknown, not wrong',
+    L.houseCanon('Macaloney\u2019s Island Distillery', ref).how, 'unknown');
+  eq('and nothing is nothing', L.houseCanon('', ref), null);
+  /* ONLY WHAT CAN BE ACTED ON REACHES THE SCREEN. */
+  const cat = {
+    a: { k: 'a', name: 'A', sub: 'japanese', dist: 'Yamazaki Distillery, Osaka, Japan' },
+    b: { k: 'b', name: 'B', sub: 'bourbon', dist: 'Buffalo Trace' },
+    c: { k: 'c', name: 'C', sub: 'scotch', dist: 'Mackmyra' },
+    d: { k: 'd', name: 'D', sub: 'japanese', dist: 'Suntory (Yamazaki, Hakushu, Chita)' }
+  };
+  eq('one row, and it is the one with an answer',
+    L.houseFaults(cat, ref, null).map(x => [x.was, x.as]),
+    [['Yamazaki Distillery, Osaka, Japan', 'Yamazaki distillery']]);
+  eq('the row carries its key and reads as a correction',
+    L.houseItems(cat, ref, null),
+    [{ key: L.libKey('Yamazaki Distillery, Osaka, Japan'),
+       text: 'Yamazaki Distillery, Osaka, Japan  \u2192  Yamazaki distillery' }]);
+  eq('and the title counts them',
+    [L.houseTitle(1), L.houseTitle(3)],
+    ['1 distillery is filed under a name the canon does not hold',
+     '3 distilleries are filed under names the canon does not hold']);
+  /* WITHOUT THE REFERENCE DATA NOTHING IS CLAIMED. */
+  eq('no canon, no finding', L.houseFaults(cat, null, null), []);
+}
+
 /* A WORD THIS APP HAS ALREADY RESERVED CANNOT ALSO BE A BRAND (BZ, 2026-10-03:
  * "Peated seems like a reserved word", "Double charred ... Is the modifier
  * phrase", "Peated is not a brand").
