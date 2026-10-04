@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 922 |
+| functions | 928 |
 | tables | 219 |
-| carrying a stated purpose | 730 |
+| carrying a stated purpose | 733 |
 
 ## Tables
 
@@ -391,6 +391,7 @@ QUESTION, not the name you were going to use.
 - **`L.factGaps`** — WHAT IS MISSING, WHICH IS NOT THE SAME AS WHAT IS EMPTY (BZ, 2026-09-28:
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
+- **`L.factsShared`** — HOW MANY IDENTITY FACTS BOTH SIDES STATE AND AGREE ON
 - **`L.familyLabel`** — _no comment above it_
 - **`L.faultFix`** — WHETHER A FAULT HAS A MECHANICAL REPAIR, asked of the table rather than of a
 - **`L.fbDecode`** — _no comment above it_
@@ -691,6 +692,7 @@ QUESTION, not the name you were going to use.
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
 - **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
+- **`L.nameCore`** — THE NAME LESS WHAT IT SHARES WITH ITS OWN HOUSE
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromKey`** — THE WORDS BEHIND A KEY
 - **`L.nameFromShopPage`** — the price alongside it.
@@ -945,6 +947,10 @@ QUESTION, not the name you were going to use.
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
 - **`L.sameBottle`** — _no comment above it_
+- **`L.sameEntry`** — _no comment above it_
+- **`L.sameEntryItems`** — _no comment above it_
+- **`L.sameEntryPairs`** — _no comment above it_
+- **`L.sameEntryTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule it describes rather than
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
