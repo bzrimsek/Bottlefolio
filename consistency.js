@@ -50,6 +50,44 @@ check('no definition leans on the entry above it', (() => {
    that height for nothing - four of them cost 88px of a phone screen on
    Home, which is a tenth of the screen on four short words. Anything not
    pressable is .pill, which has no target size to keep. */
+/* THE SHARE VERDICT IS ASKED IN ONE PLACE. L.shareHealth turns an audit row
+   into theyCanSeeMine / iCanSeeTheirs. A caller that works it out again is
+   the fault of 2026-10-04 coming back: one did, and read r.outSeen and
+   r.inSeen, which fbShareAudit does not write and nothing else does either,
+   so every person in the admin list read "no sharing" while sharing both
+   ways (BZ: "no sharing? yet we are buddies"). Nothing could see it - the
+   engine tests do not run the glue, lint checks identifiers rather than
+   fields, and the duplicate-decision check compares shapes, which differ
+   when the copy reads different names. */
+check('the share verdict comes from L.shareHealth', (() => {
+  const found = [];
+  /* COMMENTS BLANKED IN PLACE, not deleted: this check names the two dead
+     fields in its own note above, and reading that note it reported them as
+     faults. A checker that reads comments is checking the wrong file. Spaces
+     for the text and the newlines kept, so a line number still points at the
+     real one. */
+  const bare = src
+    .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+    .replace(/^(\s*)\/\/.*$/gm, '$1');
+  const dead = /\b(?:outSeen|inSeen)\b/g;
+  const lineAt = at => bare.slice(0, at).split('\n').length;
+  let m;
+  while ((m = dead.exec(bare))) {
+    found.push('line ' + lineAt(m.index) + ': ' + m[0]
+      + ' is read but nothing writes it');
+  }
+  /* And the verdict assigned from anything but shareHealth's answer. */
+  const asg = /\b(?:theySeeYours|youSeeTheirs)\s*:\s*([^,\n]+)/g;
+  while ((m = asg.exec(bare))) {
+    const from = m[1].trim();
+    if (!/theyCanSeeMine|iCanSeeTheirs|shareHealth/.test(from)) {
+      found.push('line ' + lineAt(m.index)
+        + ': the verdict is worked out again, from ' + from.slice(0, 48));
+    }
+  }
+  return found;
+})());
+
 check('no label is dressed as a chip', (() => {
   const found = [];
   const re = /el\(\s*'(div|span|p|li)'\s*,\s*'([^']*\bchip\b[^']*)'/g;
