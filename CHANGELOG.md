@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.7.51  ·  2026-10-03 11:20 PM ET
+
+The waiting badge clears its number, and a library row is two columns rather than the shelf's seven. BZ was still seeing a 1 on the badge with every count this app can compute reading zero - no offers in contrib, nothing pending to publish, an empty fill queue. showPending set hidden and returned BEFORE writing data-n, so a count of zero left the previous number on the element, and the badge is drawn from that attribute. This file already records the hazard one rule away: an author display:flex beats the browser's own hidden rule, which is guarded for the brand bar and for the nav and would have been a third thing to remember. The number goes when the reason for it goes. And the library list reused the shelf's .item grid, which is seven columns - 1fr and six fixed tracks adding up to about 408 pixels - while filling two of them, so a name had whatever was left and Woodford Reserve Distiller's Select Kentucky Straight Bourbon Whiskey wrapped to two lines on a wide screen. A row with two things in it now says so, and min-width:0 on the tracks because a grid column will not shrink below its content without it - the same trap the narrow-phone rule below already records.
+
 ## v2.7.50  ·  2026-10-03 11:07 PM ET
 
 Spirits is a company form too. The permits file registers RABBIT HOLE SPIRITS LLC and HEAVENS DOOR SPIRITS while a shelf says Rabbit Hole Distillery and Heaven's Door, so the two names came to rabbit hole spirits against rabbit hole and missed each other by one word. L.refHouseKey already drops llc, ltd, inc and the word Distillery from both the canon's side and the shelf's; spirits belongs with them. Five more of BZ's houses match the canon because of it, and a name that really carries the word is unaffected since it is dropped from whichever side has it - BARRELL CRAFT SPIRITS LLC and Barrell Craft Spirits both come to barrell craft.
