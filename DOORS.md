@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 928 |
+| functions | 923 |
 | tables | 219 |
-| carrying a stated purpose | 733 |
+| carrying a stated purpose | 730 |
 
 ## Tables
 
@@ -371,6 +371,7 @@ QUESTION, not the name you were going to use.
 - **`L.dropPairClaims`** — ASKED BY THE SHARED LIBRARY'S SCAN AND NOTHING ELSE
 - **`L.dupeFindings`** — _no comment above it_
 - **`L.dupeGroups`** — WITHOUT A REGISTRY the names are all there is, which is where this started.
+- **`L.editionsDiffer`** — BOTH MUST STATE ONE, as with L.yearsDiffer below
 - **`L.editsApart`** — HOW FAR APART TWO SPELLINGS ARE, in single-character edits, and never more
 - **`L.emptyFindSay`** — THE THREE EMPTY ANSWERS, which must not read alike
 - **`L.emptyOf`** — _no comment above it_
@@ -391,7 +392,6 @@ QUESTION, not the name you were going to use.
 - **`L.factGaps`** — WHAT IS MISSING, WHICH IS NOT THE SAME AS WHAT IS EMPTY (BZ, 2026-09-28:
 - **`L.factsAgree`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.factsLine`** — WHAT A BOTTLE IS, IN ONE LINE, BUILT ONCE, so two screens cannot show one
-- **`L.factsShared`** — HOW MANY IDENTITY FACTS BOTH SIDES STATE AND AGREE ON
 - **`L.familyLabel`** — _no comment above it_
 - **`L.faultFix`** — WHETHER A FAULT HAS A MECHANICAL REPAIR, asked of the table rather than of a
 - **`L.fbDecode`** — _no comment above it_
@@ -692,7 +692,6 @@ QUESTION, not the name you were going to use.
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
 - **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
-- **`L.nameCore`** — THE NAME LESS WHAT IT SHARES WITH ITS OWN HOUSE
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromKey`** — THE WORDS BEHIND A KEY
 - **`L.nameFromShopPage`** — the price alongside it.
@@ -947,10 +946,6 @@ QUESTION, not the name you were going to use.
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
 - **`L.sameBottle`** — _no comment above it_
-- **`L.sameEntry`** — _no comment above it_
-- **`L.sameEntryItems`** — _no comment above it_
-- **`L.sameEntryPairs`** — _no comment above it_
-- **`L.sameEntryTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule it describes rather than
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
@@ -1166,6 +1161,6 @@ QUESTION, not the name you were going to use.
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_
 - **`L.wouldILike`** — _no comment above it_
-- **`L.yearsDiffer`** — Where one name is silent there is nothing to contradict and this says nothing:
+- **`L.yearsDiffer`** — _no comment above it_
 - **`L.yearsIn`** — THE RELEASE YEARS A NAME STATES
 - **`L.zoomAbout`** — Zoom about a point so pinching and double-tap keep that point still.

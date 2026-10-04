@@ -6361,136 +6361,80 @@ const bare = { k: 'c', name: 'C' };
     L.fillProgress(9, 4, 'X', 9000), '10 of 4  \u00b7  X  \u00b7  about 0s left');
 }
 
-/* ONE BOTTLE UNDER TWO ENTRIES. THE TAXONOMY VETOES AND THE NAME PROVES (BZ,
- * 2026-10-03: "4 are actually the same", then "Can we look at where the
- * taxonomy is the same aside from the name?", then "Buffalo Trace and eagle
- * rare share house not brand").
+/* ONE BOTTLE UNDER TWO ENTRIES, AND THE TAXONOMY IS WHAT SAYS SO (BZ,
+ * 2026-10-03: "I've been asking about using the taxonomy broadly since we built
+ * it yet here we are").
  *
- * Measured on his 583-row library before the rule was written, because each
- * half alone is useless: the name alone caught 143 entries that were right to
- * be apart, the taxonomy alone caught 179 pairs that were not one whisky, and
- * the two together caught 4. Every case below is one of those. */
+ * L.dupeGroups already filtered each group down to the rows whose
+ * L.bottleIdentity matched - the taxonomy answering - but it was handed buckets
+ * keyed on L.shopNorm, so it was only ever asked about rows that already shared
+ * a normalised name. "Silver Grove Bourbon" shares none with "New Riff Silver
+ * Grove Bourbon 2025", so five rows for two whiskies went unseen.
+ *
+ * THE IDENTITY IS THE BUCKET NOW. On his 583-row library it collides on five
+ * pairs and he confirmed all five by eye; a name-core-plus-agreeing-facts rule
+ * written beside it found four, two of which he threw out, and missed three of
+ * the five. That rule is gone. */
 {
-  const cat = {};
-  const sg1 = { k: 'a', name: '2025 New Riff Silver Grove Bourbon',
-    dist: 'New Riff Distilling', sub: 'bourbon', age: 4, proof: 110.3 };
-  const sg2 = { k: 'b', name: 'New Riff Silver Grove Bourbon 2025',
-    dist: 'New Riff Distilling', sub: 'bourbon', age: 4, proof: 110.3 };
-  eq('the house in one title and not the other is still one bottle',
-    L.sameEntry(sg1, sg2, cat), true);
-  eq('and the name core is what says so',
-    [L.nameCore(sg1).join(' '), L.nameCore(sg2).join(' ')],
-    ['grove silver', 'grove silver']);
-
-  /* THE TAXONOMY VETOES. Same house, same name core, different whisky. */
-  const rye = { k: 'c',
-    name: 'New Riff Silver Grove Barrel Proof 6 Year Old Straight Rye 2026',
-    dist: 'New Riff Distilling', sub: 'rye', age: 6, proof: 115 };
-  eq('a rye is not the bourbon beside it', L.sameEntry(sg1, rye, cat), false);
-  const other = { k: 'd', name: 'New Riff Silver Grove Bourbon',
-    dist: 'New Riff Distilling', sub: 'bourbon', age: 4, proof: 114.1 };
-  eq('nor is the same line at another proof',
-    L.sameEntry(sg1, other, cat), false);
-
-  /* A HOUSE IS NOT A BRAND (BZ). These share a distillery, a type and a proof
-     and are two famous whiskies; the name core is what keeps them apart. */
-  const bt = { k: 'e', name: 'Buffalo Trace Kentucky Straight Bourbon Whiskey',
-    dist: 'Buffalo Trace', sub: 'bourbon', proof: 90 };
-  const er = { k: 'f', name: 'Eagle Rare 10 Year',
-    dist: 'Buffalo Trace', sub: 'bourbon', proof: 90 };
-  eq('a house shared is not a bottle shared', L.sameEntry(bt, er, cat), false);
-
-  /* BLANK AGAINST BLANK IS NOT AGREEMENT. Six bar bottles state no taxonomy at
-     all, so nothing contradicts and sameBottle called them the same as 3,472
-     pairs of things. */
-  /* TWO BAR BOTTLES THAT AGREE ON EVERYTHING. Written so that only L.isWhisky
-     can refuse them: same house, same type, same proof, same two-word core - a
-     whisky pair shaped like this IS one bottle (asserted below). The bar shelf
-     is inventory and is excluded from every analysis, so it is excluded here. */
-  const bar1 = { k: 'g', name: 'Tito Handmade Vodka',
-    dist: 'Tito', sub: 'vodka', proof: 80 };
-  const bar2 = { k: 'h', name: 'Handmade Vodka 2024',
-    dist: 'Tito', sub: 'vodka', proof: 80 };
-  eq('the bar pair agrees on three facts and one core',
-    [L.factsShared(bar1, bar2, cat).length,
-      L.nameCore(bar1).join(' ') === L.nameCore(bar2).join(' ')], [3, true]);
-  eq('and is still not one bottle, because it is not whisky',
-    L.sameEntry(bar1, bar2, cat), false);
-  eq('while the same shape in whisky is',
-    L.sameEntry(Object.assign({}, bar1, { sub: 'bourbon' }),
-      Object.assign({}, bar2, { sub: 'bourbon' }), cat), true);
-  /* TWO FACTS IS NOT ENOUGH, and this pair reaches that floor and no other: the
-     core is two real words and identical, and only the count of agreeing facts
-     stands between them. */
-  const thin1 = { k: 'i', name: 'Ardbeg Wee Beastie',
-    dist: 'Ardbeg', sub: 'scotch' };
-  const thin2 = { k: 'j', name: 'Wee Beastie Ardbeg',
-    dist: 'Ardbeg', sub: 'scotch' };
-  eq('the cores match and the evidence does not',
-    [L.nameCore(thin1).join(' '), L.factsShared(thin1, thin2, cat).length],
-    ['beastie wee', 2]);
-  eq('so two agreeing facts is not enough',
-    L.sameEntry(thin1, thin2, cat), false);
-  eq('and a third makes it one bottle',
-    L.sameEntry(Object.assign({}, thin1, { proof: 92 }),
-      Object.assign({}, thin2, { proof: 92 }), cat), true);
-
-  /* A NAME CORE OF NOTHING MATCHES NOTHING. Both of these reduce to an empty
-     core once the house, the category words and the numbers are gone, and they
-     agreed on house, type and proof - the one false pair the floor removed. */
-  const of1 = { k: 'k', name: 'Old Forester 100 Proof Bourbon',
-    dist: 'Old Forester', sub: 'bourbon', proof: 100 };
-  const of2 = { k: 'l',
-    name: 'Old Forester 1924 10 Year Old Kentucky Straight Bourbon Whiskey',
-    dist: 'Old Forester', sub: 'bourbon', proof: 100 };
-  eq('an empty name core proves nothing', L.sameEntry(of1, of2, cat), false);
-
-  eq('nothing is the same as nothing', L.sameEntry(null, null, cat), false);
-  eq('and a row is not its own duplicate', L.sameEntry(sg1, sg1, cat), false);
-
-  /* THE PAIRS DOOR REPORTS EACH ONE ONCE. */
-  eq('each pair is listed in one direction only',
-    L.sameEntryPairs([sg1, sg2, rye, bt, er], cat)
-      .map(p => [p.a.k, p.b.k].join('')), ['ab']);
-  /* AND THE ROW CARRIES BOTH KEYS, because two entries that print almost
-     identically cannot be told apart from their text. */
-  eq('the row carries both keys and names both bottles',
-    L.sameEntryItems([sg1, sg2, rye], cat),
-    [{ key: L.libKey(sg1.name),
-       pairs: [L.libKey(sg1.name), L.libKey(sg2.name)],
-       text: sg1.name + '  ==  ' + sg2.name }]);
-  eq('and the title counts what was found',
-    [L.sameEntryTitle(1), L.sameEntryTitle(4)],
-    ['1 pair is one bottle under two entries',
-     '4 pairs are one bottle under two entries']);
+  const brands = { 'new riff': { n: 'new riff', raw: 'New Riff' },
+                   'blood oath': { n: 'blood oath', raw: 'Blood Oath' },
+                   'stagg': { n: 'stagg', raw: 'Stagg' } };
+  const mk = (n, x) => Object.assign({ k: n, name: n, dist: 'New Riff Distilling',
+    sub: 'bourbon', proof: 110.3, age: 4 }, x || {});
+  const a = mk('2025 New Riff Silver Grove Bourbon');
+  const b = mk('New Riff Silver Grove Bourbon 2025');
+  /* The two spellings never shared a shopNorm bucket, which is why nothing saw
+     them; by identity they are one row twice. */
+  eq('the two spellings do not share a name bucket',
+    L.shopNorm(a.name, brands) === L.shopNorm(b.name, brands), false);
+  eq('and the taxonomy says they are one bottle',
+    L.bottleIdentity(a, brands) === L.bottleIdentity(b, brands), true);
+  /* THE BUCKETS ARE THE IDENTITY'S, so a group forms across two spellings. */
+  const byNorm = {};
+  [a, b].forEach(p => {
+    const k = L.shopNorm(p.name, brands);
+    (byNorm[k] = byNorm[k] || []).push(p);
+  });
+  eq('so dupeGroups finds the pair the name buckets kept apart',
+    L.dupeGroups(byNorm, brands).map(g => g.length), [2]);
+  /* WITHOUT A REGISTRY NOTHING CHANGES: no brand can be resolved, so the
+     spelling buckets stand and a pair in two of them is not reported. */
+  eq('and without a registry it falls back to the spellings',
+    L.dupeGroups(byNorm, null).length, 0);
 }
 
-/* A YEAR IN FRONT OF A NAME IS NOT PART OF THE BRAND. L.brandOf matches the
- * name's own longest PREFIX that the registry lists, so a title opening with a
- * year had no brand at all - and with no brand L.bottleIdentity keys the whole
- * name as the house, which is why two spellings of one Silver Grove could never
- * meet. 19xx and 20xx only, so 1792 is still the brand it is. */
+/* A DIFFERENT EDITION IS A DIFFERENT BOTTLE, which is the layer that was
+ * missing. BZ left both of these where they stood when a check that could not
+ * see it called them one (2026-10-03). L.bottleMarks already carried the
+ * edition; L.MARK_SAYS holds only the special classes, so nothing asked. */
 {
-  const reg = { 'new riff': 1, '1792': 1, 'eagle rare': 1 };
-  eq('a leading year no longer hides the brand',
-    (L.brandOf('2025 New Riff Silver Grove Bourbon', reg) || {}).key,
-    'new riff');
-  /* 1792 IS A BRAND AND NOT A YEAR, asserted on the BOUND rather than on the
-     lookup: L.brandOf tries the name as filed first, so a wider pattern could
-     never break it through that door and an assertion there cannot fail. */
-  eq('the year pattern is 19xx and 20xx only',
-    [L.LEADING_YEAR.test('1792 Small Batch'),
-      L.LEADING_YEAR.test('2025 New Riff'),
-      L.LEADING_YEAR.test('1984 Release')], [false, true, true]);
-  eq('and it only reads the front', L.LEADING_YEAR.test('Longrow 18 2021'),
-    false);
-  eq('1792 is still a brand',
-    (L.brandOf('1792 Small Batch Kentucky Straight Bourbon Whiskey', reg)
-      || {}).key, '1792');
-  eq('a name with no leading year is unaffected',
-    (L.brandOf('Eagle Rare 10 Year', reg) || {}).key, 'eagle rare');
-  eq('and a year alone is still no brand',
-    L.brandOf('2025 Nothing Anybody Sells', reg), null);
+  eq('a pact number is read as an edition',
+    [L.bottleMarks({ name: 'Blood Oath Pact No. 10' }),
+      L.bottleMarks({ name: 'Blood Oath Pact No. 11' })], [['e10'], ['e11']]);
+  eq('two stated editions that differ are two bottles',
+    L.editionsDiffer('Blood Oath Pact No. 10', 'Blood Oath Pact No. 11'), true);
+  eq('and a batch code is the same question',
+    L.editionsDiffer('Stagg Batch 24C', 'Stagg Batch 23A'), true);
+  /* BOTH MUST STATE ONE: a bottling named without its batch is usually the
+     line itself, so an edition against none settles nothing. */
+  eq('an edition against none settles nothing',
+    L.editionsDiffer('Blood Oath Pact', 'Blood Oath Pact No. 11'), false);
+  eq('and the same edition twice is no difference',
+    L.editionsDiffer('Stagg Batch 24C', 'Batch 24C Stagg'), false);
+  /* ONLY THE EDITION. The other marks are other layers - a cask strength
+     bottling of one batch is that batch, not a different release. */
+  eq('the other marks are not editions',
+    [L.bottleMarks({ name: 'Stagg Batch 24C Cask Strength' }),
+      L.bottleMarks({ name: 'Stagg Batch 24C' })], [['cs', 'e24c'], ['e24c']]);
+  eq('so a special class is not a different edition',
+    L.editionsDiffer('Stagg Batch 24C Cask Strength', 'Stagg Batch 24C'), false);
+  /* AND THE DOOR EVERY CALLER ASKS NOW REFUSES THEM. */
+  const mk = (n) => ({ k: n, name: n, dist: 'D', sub: 'bourbon', proof: 100, age: 5 });
+  eq('so sameBottle keeps the two pacts apart',
+    L.sameBottle(mk('Blood Oath Pact No. 10'), mk('Blood Oath Pact No. 11'),
+      {}, null), false);
+  eq('and the two batches',
+    L.sameBottle(mk('Stagg Batch 24C'), mk('Stagg Batch 23A'), {}, null), false);
 }
 
 eq('a card note counts as missing', L.needsEnhancing(card), true);
