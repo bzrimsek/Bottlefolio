@@ -2094,6 +2094,51 @@ sec('the log says who, not how many');
     ['Nik', 'Nik', 'the account [LFp1Oy]']);
 }
 
+sec('no bottle you own is invisible');
+{
+  /* BZ, 2026-10-04: "inventory must be bulletproof". Measured on his live
+     account the day this was written: 381 bottles, 351 distinct products
+     owned, and the shelf drew 308 rows. 43 products were on no screen -
+     eight because the duplicate clean-up merged their library entry away and
+     rebuildCatalog never read the ledger that recorded where it went, and
+     thirty-five because no catalogue ever held the key. */
+  const cat = { good: { k: 'good', name: 'Ardbeg Ten', sub: 'scotch' },
+                heir: { k: 'heir', name: 'Lagavulin 16', sub: 'scotch',
+                        dist: 'Lagavulin', proof: 86 } };
+  const bottles = [{ id: '1', k: 'good', status: 'open' },
+                   { id: '2', k: 'merged_away', status: 'open' },
+                   { id: '3', k: 'Bacardi Gold', status: 'open' }];
+  const graves = { merged_away: 'heir' };
+  const out = L.catalogWithOwned(cat, bottles, {}, graves, {});
+
+  eq('a bottle whose entry was merged away finds the heir\u2019s facts',
+    [out.merged_away.name, out.merged_away.dist, out.merged_away.proof],
+    ['Lagavulin 16', 'Lagavulin', 86]);
+  /* FILED UNDER THE KEY THE BOTTLE CARRIES, not the heir's: the shelf looks a
+     product up as catalog[b.k], and a record of what you bought is not a
+     thing to be rewritten. */
+  eq('and it is filed under the key the bottle actually carries',
+    out.merged_away.k, 'merged_away');
+  eq('a key nothing has ever heard of is named from itself',
+    out['Bacardi Gold'].name, 'Bacardi Gold');
+  eq('and what was already there is untouched',
+    out.good.name, 'Ardbeg Ten');
+  /* THE RULE ITSELF, which is the one that must never come back false. */
+  eq('nothing owned is left unseen',
+    L.ownedUnseen(out, bottles).length, 0);
+  eq('and before the recovery it WAS unseen \u2014 so this can fail',
+    L.ownedUnseen(cat, bottles).sort(),
+    ['Bacardi Gold', 'merged_away']);
+
+  /* THE BAR SHELF MUST NOT BECOME WHISKY AS THE PRICE OF BEING SEEN. An entry
+     with no sub reads as whisky to L.isWhisky, so without a guessed category
+     every recovered rum and vodka would join the whisky counts. */
+  eq('a recovered rum is inventory and not whisky',
+    L.isWhisky(out['Bacardi Gold']), false);
+  eq('and a recovered whisky still is',
+    L.isWhisky(out.merged_away), true);
+}
+
 sec('an ask that reaches nobody');
 {
   const now = Date.parse('2026-09-20T00:00:00Z');

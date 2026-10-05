@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 934 |
+| functions | 936 |
 | tables | 221 |
-| carrying a stated purpose | 739 |
+| carrying a stated purpose | 741 |
 
 ## Tables
 
@@ -331,6 +331,7 @@ QUESTION, not the name you were going to use.
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskFamily`** — _no comment above it_
 - **`L.caskKind`** — A label naming two casks keys as both, sorted
+- **`L.catalogWithOwned`** — THE CATEGORY IS GUESSED, because L.isWhisky reads an entry with no `sub`
 - **`L.catFault`** — WHAT IS WRONG WITH A RECORD
 - **`L.catKeyFor`** — _no comment above it_
 - **`L.changedKeys`** — _no comment above it_
@@ -761,6 +762,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCounts`** — _no comment above it_
 - **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
+- **`L.ownedUnseen`** — AND WHAT IS STILL MISSING AFTER ALL THAT, which must be nothing
 - **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.
 - **`L.ownFindings`** — The findings whose answer is ALREADY YOURS
 - **`L.ownsIt`** — DO YOU OWN IT, answered once for the shop card, offers and bar

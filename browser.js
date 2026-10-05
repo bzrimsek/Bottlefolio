@@ -263,6 +263,35 @@ function step(n) {
     failures.push('shelf: the card gaps disagree - ' + cardGaps.join(', ') + 'px');
   }
 
+  /* EVERY BOTTLE YOU OWN DRAWS A ROW (BZ, 2026-10-04: "inventory must be
+     bulletproof"). This is the check that would have caught it: the engine
+     was never wrong, the screen simply drew 308 rows for 351 products owned
+     and nothing anywhere compared the two numbers. Measured on the screen,
+     in a real browser, because that is where a bottle goes missing. */
+  const unseen = await page.evaluate(() => {
+    /* THE LIST VIEW IS THE ONLY ONE WITH ROWS, so the count has to be taken
+       there - and the screen is put back exactly as it was found, because
+       the step after this one looks for the type tiles and an earlier
+       version of this check left the shelf in list mode and broke it. */
+    const was = S.shelfSub;
+    S.shelfSub = 'all';
+    renderShelf();
+    const rows = document.querySelectorAll('#shelfList > .item').length;
+    const owned = Object.keys(L.ownedCounts(S.bottles)).length;
+    const missing = L.ownedUnseen(S.catalog, S.bottles);
+    S.shelfSub = was;
+    renderShelf();
+    return { rows: rows, owned: owned, missing: missing };
+  });
+  if (unseen.missing.length) {
+    failures.push('shelf: ' + unseen.missing.length + ' product(s) owned and in no '
+      + 'catalogue - ' + unseen.missing.slice(0, 3).join(', '));
+  }
+  if (unseen.owned && unseen.rows < unseen.owned) {
+    failures.push('shelf: ' + unseen.owned + ' products owned but only '
+      + unseen.rows + ' rows drawn');
+  }
+
   const tiles = await page.locator('#shelfList .tile').count();
   if (!tiles) failures.push('shelf: no type tiles');
   else {
