@@ -89,7 +89,7 @@ QUESTION, not the name you were going to use.
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.HOUSE_DRESS`** — WHAT A NAME HAS BEEN DRESSED UP WITH
-- **`L.IDENT_SOURCES`** — WHERE AN IDENTITY CAME FROM, BEST FIRST
+- **`L.IDENT_SOURCES`** — THIS IS THE `canon` FIELD AND NOT `ident`
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
 - **`L.IMPORT_FIELDS`** — WHICH FIELDS THIS ROW WOULD CHANGE, named so the preview can say

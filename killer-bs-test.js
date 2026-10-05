@@ -2174,6 +2174,27 @@ sec('an identity, namespaced, aligned with whiskybase');
   eq('the sources are listed best first',
     L.IDENT_SOURCES, ['wb', 'bg', 'local']);
 
+  /* AND A TAXONOMY FINGERPRINT IS NOT AN IDENTITY. `ident` already holds what
+     L.bottleIdentity composes - 321 of the 706 entries in BZ's library carry
+     one - and it opens with a word, which is where a source name goes. The
+     dry run for the migration found this before anything was written, which
+     is what a dry run is for. */
+  eq('a taxonomy fingerprint is not read as an issued id',
+    L.identString('bourbon|1792 barton|1792||bourbon|p937'), '');
+  eq('and nor is one that opens with a known-looking word',
+    L.identString('rye|jim beam|a overholt|mash'), '');
+
+  /* CANON OUTRANKS THE TAXONOMY, and only canon. */
+  const taxed = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+    ident: 'scotch|ardbeg|ardbeg||islay|p92' } };
+  const bare2 = { k: 'ardbeg_ten', name: 'Ardbeg Ten' };
+  eq('an entry with only a fingerprint answers with it',
+    L.shelfKeyOf(bare2, taxed, {}, null), 'id:scotch|ardbeg|ardbeg||islay|p92');
+  const both = { ardbeg_ten: Object.assign({}, taxed.ardbeg_ten,
+    { canon: 'WB37719' }) };
+  eq('and canon wins where there is any',
+    L.shelfKeyOf(bare2, both, {}, null), 'id:wb:37719');
+
   /* AND THE WHOLE BUILD IS ADDITIVE: an entry with no identity answers
      exactly what it answered before, which is every entry in his library
      today. */
@@ -2181,9 +2202,10 @@ sec('an identity, namespaced, aligned with whiskybase');
   const bare = { k: 'ardbeg_ten', name: 'Ardbeg Ten' };
   eq('an entry with no identity is unchanged',
     L.shelfKeyOf(bare, lib, {}, null), 'id:lib:ardbeg_ten');
-  /* WHILE ONE THAT CARRIES CANON ANSWERS WITH IT. */
+  /* WHILE ONE THAT CARRIES CANON ANSWERS WITH IT - the `canon` field, not
+     `ident`, which holds the taxonomy fingerprint this app composes. */
   const withId = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
-    ident: 'WB37719' } };
+    canon: 'WB37719' } };
   eq('and one that carries canon answers with it, normalised',
     L.shelfKeyOf(bare, withId, {}, null), 'id:wb:37719');
 }
