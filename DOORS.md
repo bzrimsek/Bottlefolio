@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 936 |
+| functions | 937 |
 | tables | 221 |
 | carrying a stated purpose | 741 |
 
@@ -299,7 +299,7 @@ QUESTION, not the name you were going to use.
 - **`L.bondedFaults`** — THE BOTTLED-IN-BOND RULES, which are American whiskey LAW and so are asked of
 - **`L.bottleAsk`** — _no comment above it_
 - **`L.bottleContext`** — ONLY FOR A WHISKEY YOU OWN
-- **`L.bottleFacts`** — THE SHELF THE PROSE WAS WRITTEN ABOUT
+- **`L.bottleFacts`** — _no comment above it_
 - **`L.bottleFrom`** — _no comment above it_
 - **`L.bottleIdentity`** — IT IS RESOLVED ON THE LIBRARY ENTRY, never on each person's copy - ask
 - **`L.bottleLabel`** — How a bottle is named to the person who owns it.
@@ -511,6 +511,7 @@ QUESTION, not the name you were going to use.
 - **`L.hardToGet`** — _no comment above it_
 - **`L.hasFact`** — DOES THE RECORD ACTUALLY HOLD THIS FACT? The tasting fields live inside
 - **`L.hasFlavour`** — _no comment above it_
+- **`L.haveAlready`** — L.shelfKeyOf is the door that already answers "are these the same whisky" -
 - **`L.healCollisions`** — _no comment above it_
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.

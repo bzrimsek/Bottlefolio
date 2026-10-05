@@ -2094,6 +2094,50 @@ sec('the log says who, not how many');
     ['Nik', 'Nik', 'the account [LFp1Oy]']);
 }
 
+sec('nothing you own is offered back to you');
+{
+  /* BZ tested Cooper on 2026-10-04, asked what he should buy, and was offered
+     an Aberlour 18 and a New Riff Silver Grove he owns. The guards asked
+     L.ownedCount(p.k), which asks whether that EXACT KEY is owned, and the
+     catalogue holds each of those whiskies under two or three keys. Measured
+     on his live shelf: thirteen entries were offerable and owned at once. */
+  const cat = {
+    slug: { k: 'slug', name: 'New Riff Silver Grove Bourbon 2025',
+            sub: 'bourbon', dist: 'New Riff Distilling', proof: 110.3 },
+    shipped: { k: 'shipped', name: 'New Riff Silver Grove Bourbon 2025',
+               sub: 'bourbon', dist: 'New Riff Distilling', proof: 110.3 },
+    other: { k: 'other', name: 'Lagavulin 16', sub: 'scotch', dist: 'Lagavulin' }
+  };
+  const bottles = [{ id: '1', k: 'slug', status: 'open' }];
+  /* The library is what says the two spellings are one whisky, exactly as it
+     does for two people's shelves in the Venn. */
+  const library = { nr: { k: 'nr', name: 'New Riff Silver Grove Bourbon 2025',
+                          dist: 'New Riff Distilling' } };
+
+  eq('the key you own is owned', L.haveAlready(cat.slug, bottles, cat), true);
+  eq('a whisky you do not own is not',
+    L.haveAlready(cat.other, bottles, cat), false);
+  /* THE ONE THAT MATTERS: one whisky under two catalogue keys, and the bottle
+     carries only one of them. L.shelfKeyOf collapses them - by the library
+     where it knows the pair, by the name where there is nothing to add - and
+     the guards must ask that rather than the key.
+
+     The live case also had the two names in a different word order ("2025 New
+     Riff Silver Grove Bourbon" against "New Riff Silver Grove Bourbon 2025"),
+     and both answered id:lib:new_riff_silver_grove_bourbon_2025 because the
+     real library links them. That is checked against the account rather than
+     claimed here, since a three-line fixture cannot stand in for it. */
+  eq('the other key for a bottle you own counts as owned',
+    L.haveAlready(cat.shipped, bottles, cat, library, {}, null), true);
+  eq('and asking by key alone misses it \u2014 which was the fault',
+    L.ownedCount(cat.shipped.k, bottles), 0);
+
+  /* AND IT IS NOT WRITTEN UP AS SOMETHING TO BUY. The picks are asserted
+     where a real fingerprint already exists, further down. */
+  eq('nor is it written up as something to buy',
+    L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
+}
+
 sec('no bottle you own is invisible');
 {
   /* BZ, 2026-10-04: "inventory must be bulletproof". Measured on his live
@@ -28953,6 +28997,21 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
   const picks = L.fingerprintPicks(pcat, bbot, bfp, 5);
   eq('what is already on the shelf is not offered back',
     picks.every(x => ['a', 'b', 'c'].indexOf(x.k) < 0), true);
+  /* NOR UNDER ANOTHER SPELLING OF ITSELF. BZ asked Cooper what to buy on
+     2026-10-04 and was offered an Aberlour 18 and a Silver Grove he owns:
+     the guard asked whether that EXACT KEY was owned, and his catalogue held
+     each of those whiskies under two or three keys. The library is what says
+     two spellings are one whisky - the same door the Venn compares two
+     shelves with - so without it this still passes by key alone, which is
+     exactly the hole. */
+  const twin = Object.assign({}, pcat,
+    { a2: { k: 'a2', name: 'A', sub: 'bourbon', dist: 'Alpha', proof: 100 } });
+  const lib2 = { a: { k: 'a', name: 'A', dist: 'Alpha' } };
+  eq('a second spelling of an owned bottle is not offered back',
+    L.fingerprintPicks(twin, bbot, bfp, 9, lib2, {}, null)
+      .map(x => x.k).indexOf('a2'), -1);
+  eq('and the door says so directly',
+    L.haveAlready(twin.a2, bbot, twin, lib2, {}, null), true);
   eq('a flavored whiskey is never picked, whatever it scores',
     picks.map(x => x.k).indexOf('e'), -1);
   eq('and neither is a strength nobody is sent looking for',
