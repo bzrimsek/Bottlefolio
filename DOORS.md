@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 946 |
+| functions | 947 |
 | tables | 223 |
-| carrying a stated purpose | 749 |
+| carrying a stated purpose | 750 |
 
 ## Tables
 
@@ -1061,6 +1061,7 @@ QUESTION, not the name you were going to use.
 - **`L.srcFault`** — WHAT IS WRONG WITH A STAMP, as a list rather than a boolean, because a
 - **`L.stampFacts`** — WHAT TO STAMP WHEN A LOOKUP WRITES
 - **`L.stampFault`** — _no comment above it_
+- **`L.stampIdentities`** — ONLY FROM AN ENTRY THAT HAS ONE, so a bottle the library has never heard of
 - **`L.standingOf`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
 - **`L.stateCounts`** — _no comment above it_
 - **`L.stateOf`** — _no comment above it_

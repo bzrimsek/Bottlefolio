@@ -2155,7 +2155,7 @@ sec('a bottle that holds its own identity');
   /* THE WHOLE POINT: the entry moved and the bottle still finds it, with no
      grave and no forwarding address. */
   eq('a bottle finds its entry by identity after the key moved',
-    L.keyForBottle({ k: 'the_old_dead_key', id: 'local:abc123' }, lib, {}),
+    L.keyForBottle({ k: 'the_old_dead_key', ref: 'local:abc123' }, lib, {}),
     'new_key');
   /* AND WITHOUT ONE IT IS NO WORSE OFF THAN BEFORE - every bottle today. */
   eq('a bottle with no identity still answers by its key',
@@ -2168,15 +2168,53 @@ sec('a bottle that holds its own identity');
   /* IDENTITY BEATS THE GRAVE, which is the ordering that ends the chasing:
      the forwarding address is for when there is no identity. */
   eq('identity is read before any forwarding address',
-    L.keyForBottle({ k: 'dead', id: 'local:abc123' }, lib, { dead: 'other' }),
+    L.keyForBottle({ k: 'dead', ref: 'local:abc123' }, lib, { dead: 'other' }),
     'new_key');
   /* AN IDENTITY NOTHING HOLDS FALLS BACK rather than answering nothing. */
   eq('an identity no entry carries falls back to the key',
-    L.keyForBottle({ k: 'other', id: 'local:nothing' }, lib, {}), 'other');
+    L.keyForBottle({ k: 'other', ref: 'local:nothing' }, lib, {}), 'other');
   /* AND IT IS READ THROUGH THE ONE READER, so WB37719 and wb:37719 are one. */
   eq('an issued identity is matched however it is written',
-    L.keyForBottle({ k: 'x', id: '37719' },
+    L.keyForBottle({ k: 'x', ref: '37719' },
       { e: { k: 'e', name: 'E', canon: 'WB37719' } }, {}), 'e');
+}
+
+sec('a bottle takes the identity of its entry');
+{
+  const lib = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+                  canon: 'local:ardbeg_ten' },
+                moved_to: { k: 'moved_to', name: 'Moved', canon: 'local:zzz' },
+                plain:   { k: 'plain', name: 'No Identity Here' } };
+  const bots = [{ id: '1', k: 'ardbeg_ten', status: 'open' },
+                { id: '2', k: 'plain', status: 'open' },
+                { id: '3', k: 'never_heard_of_it', status: 'open' }];
+  const got = L.stampIdentities(bots, lib, {});
+  eq('a bottle whose entry has an identity takes it',
+    got.bottles[0].ref, 'local:ardbeg_ten');
+  eq('one whose entry has none keeps none',
+    got.bottles[1].ref, undefined);
+  eq('and one the library never heard of is untouched',
+    got.bottles[2].ref, undefined);
+  eq('and it says how many it marked', got.stamped, 1);
+
+  /* NEVER RE-STAMPED, which is the whole value of it: the entry may move
+     later, and re-deriving from the key of the day would put the bottle back
+     to depending on the address. */
+  const again = L.stampIdentities(got.bottles, lib, {});
+  eq('a second pass changes nothing', again, null);
+  /* A BOTTLE'S OWN id IS ITS ROW NUMBER - B001 - and the entry it refers to
+     lives in `ref`. Overloading id made every bottle look already stamped,
+     with "1" reading as a Whiskybase id (2026-10-05). */
+  const moved = [{ id: 'B7', k: 'some_new_key', status: 'open',
+    ref: 'local:ardbeg_ten' }];
+  eq('and a bottle that already carries one keeps it even under a new key',
+    (L.stampIdentities(moved, lib, {}) || { bottles: moved }).bottles[0].ref,
+    'local:ardbeg_ten');
+
+  /* NOTHING TO DO IS NOTHING WRITTEN, so a caller only saves on a change. */
+  eq('a library with no identities stamps nothing',
+    L.stampIdentities(bots, { a: { k: 'a', name: 'A' } }, {}), null);
+  eq('and an empty shelf likewise', L.stampIdentities([], lib, {}), null);
 }
 
 sec('an identity re-files a bottle through the route that already exists');
@@ -2188,8 +2226,8 @@ sec('an identity re-files a bottle through the route that already exists');
     canon: 'local:abc123' } };
   const cat = { new_key: { k: 'new_key', name: 'The Proper Name' },
                 old_key: { k: 'old_key', name: 'Old Spelling' } };
-  const held = [{ id: '1', k: 'old_key', status: 'open', id2: 0 }];
-  held[0].id = 'local:abc123';
+  const held = [{ id: 'B1', k: 'old_key', status: 'open',
+    ref: 'local:abc123' }];
   const out = L.catalogWithOwned(cat, held, lib, {}, {});
   eq('the bottle says where it belongs, with no grave anywhere',
     out.old_key.filedAt, 'new_key');
@@ -2249,7 +2287,10 @@ sec('an identity, namespaced, aligned with whiskybase');
   eq('and nor is one that opens with a known-looking word',
     L.identString('rye|jim beam|a overholt|mash'), '');
 
-  /* CANON OUTRANKS THE TAXONOMY, and only canon. */
+  /* THE TAXONOMY IS THE GROUP KEY, and a BOTTLING id does not displace it:
+     this door answers "the same whisky", and a per-entry id would stop two
+     entries for one whisky collapsing. Corrected after the minting dry run
+     showed 348 of 349 identities would have changed (2026-10-05). */
   const taxed = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
     ident: 'scotch|ardbeg|ardbeg||islay|p92' } };
   const bare2 = { k: 'ardbeg_ten', name: 'Ardbeg Ten' };
@@ -2257,8 +2298,12 @@ sec('an identity, namespaced, aligned with whiskybase');
     L.shelfKeyOf(bare2, taxed, {}, null), 'id:scotch|ardbeg|ardbeg||islay|p92');
   const both = { ardbeg_ten: Object.assign({}, taxed.ardbeg_ten,
     { canon: 'WB37719' }) };
-  eq('and canon wins where there is any',
-    L.shelfKeyOf(bare2, both, {}, null), 'id:wb:37719');
+  eq('a bottling id leaves the group key alone',
+    L.shelfKeyOf(bare2, both, {}, null), 'id:scotch|ardbeg|ardbeg||islay|p92');
+  const grp2 = { ardbeg_ten: Object.assign({}, taxed.ardbeg_ten,
+    { canon: 'BG124' }) };
+  eq('while a group id replaces it, because that is what it names',
+    L.shelfKeyOf(bare2, grp2, {}, null), 'id:bg:124');
 
   /* AND THE WHOLE BUILD IS ADDITIVE: an entry with no identity answers
      exactly what it answered before, which is every entry in his library
@@ -2267,12 +2312,30 @@ sec('an identity, namespaced, aligned with whiskybase');
   const bare = { k: 'ardbeg_ten', name: 'Ardbeg Ten' };
   eq('an entry with no identity is unchanged',
     L.shelfKeyOf(bare, lib, {}, null), 'id:lib:ardbeg_ten');
-  /* WHILE ONE THAT CARRIES CANON ANSWERS WITH IT - the `canon` field, not
-     `ident`, which holds the taxonomy fingerprint this app composes. */
-  const withId = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
-    canon: 'WB37719' } };
-  eq('and one that carries canon answers with it, normalised',
-    L.shelfKeyOf(bare, withId, {}, null), 'id:wb:37719');
+  /* A GROUP IDENTITY ANSWERS HERE, AND ONLY A GROUP ONE. This is the door
+     that decides two things are the same whisky, so a BOTTLING id must not
+     reach it: it is per entry, and two entries for one whisky would stop
+     collapsing - which would have made the duplicate finding blind. Found by
+     the minting dry run before anything was written (2026-10-05). */
+  const grouped = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+    canon: 'BG124' } };
+  eq('a bottle group identity answers for the group',
+    L.shelfKeyOf(bare, grouped, {}, null), 'id:bg:124');
+  const bottling = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+    canon: 'WB37719', ident: 'scotch|ardbeg|ardbeg||islay|p92' } };
+  eq('a bottling id does not, the taxonomy does',
+    L.shelfKeyOf(bare, bottling, {}, null), 'id:scotch|ardbeg|ardbeg||islay|p92');
+  /* AND A MINTED LOCAL ONE IS INVISIBLE HERE, which is what makes minting
+     safe to write at all. */
+  const minted = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+    canon: 'local:ardbeg_ten' } };
+  eq('a minted identity changes nothing about what is the same whisky',
+    L.shelfKeyOf(bare, minted, {}, null), L.shelfKeyOf(bare, lib, {}, null));
+  /* WHILE THE BOTTLE-TO-ENTRY LINK USES ANY OF THEM, because there the
+     question is which entry, not which whisky. */
+  eq('but the bottle still finds its entry by that minted identity',
+    L.keyForBottle({ k: 'gone', ref: 'local:ardbeg_ten' }, minted, {}),
+    'ardbeg_ten');
 }
 
 sec('one whisky on the shelf twice');
