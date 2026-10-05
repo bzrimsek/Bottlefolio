@@ -2138,6 +2138,59 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('a buried key is never the right place');
+{
+  /* BZ searched "envy" and saw one whisky twice, one row reading Angel's Envy
+     where every other read Louisville Distilling. The library had merged that
+     slug away and recorded the heir, but an earlier put-back had written a
+     CUSTOM entry under the dead key - the circle this code warns about - so
+     the key was defined locally, L.showsUnder said "filed here", the plan had
+     nothing to move, and the duplicate was permanent (2026-10-05). */
+  const lib = { heir_key: { k: 'heir_key', name: 'The Proper Name',
+    dist: 'Louisville Distilling' } };
+  const graves = { dead_slug: 'heir_key' };
+  /* The catalogue as it was: the heir under its display name, AND a local
+     entry pinning the dead slug. */
+  const cat = { 'The Proper Name': { k: 'The Proper Name',
+                  name: 'The Proper Name', dist: 'Louisville Distilling' },
+                dead_slug: { k: 'dead_slug', name: 'Dead Slug' } };
+  const bottles = [{ id: '1', k: 'dead_slug', status: 'open' }];
+
+  /* WITHOUT the address, the local entry wins and nothing can move it - which
+     is the fault, so this is what must no longer happen. */
+  eq('a local entry alone would call the dead key filed',
+    L.showsUnder({ dead_slug: cat.dead_slug }, graves, 'dead_slug'), 'dead_slug');
+
+  /* WITH it: catalogWithOwned stamps where the bottle really belongs, even
+     though something already defines the key. */
+  const out = L.catalogWithOwned(cat, bottles, lib, graves, {});
+  eq('the buried key is stamped with the address it belongs at',
+    out.dead_slug.filedAt, 'The Proper Name');
+  eq('so it shows under the heir, not under itself',
+    L.showsUnder(out, graves, 'dead_slug'), 'The Proper Name');
+  eq('and the plan can finally move it',
+    L.rekeyPlan(out, bottles, graves).map(p => p.from + '->' + p.to),
+    ['dead_slug->The Proper Name']);
+  /* A KEY WITH NO GRAVE IS LEFT ALONE - only the buried are redirected. */
+  eq('a key nobody buried keeps its own entry',
+    L.showsUnder(out, graves, 'The Proper Name'), 'The Proper Name');
+}
+
+sec('a key reads back without shouting');
+{
+  /* BZ: "the cap S is wrong too". A word boundary sits after an apostrophe,
+     so title-casing every one turned angel's into Angel'S - and this is fed
+     real names, not only underscored keys (2026-10-05). */
+  eq('an apostrophe does not start a new word',
+    L.keyAsName("angel's envy bourbon"), "Angel's Envy Bourbon");
+  eq('an underscored key still reads as words',
+    L.keyAsName('old_forester_1924'), 'Old Forester 1924');
+  /* AND A DIGIT IS NOT A WORD BREAK: the first attempt at this made 4yr
+     into 4Yr and two assertions caught it. */
+  eq('a digit does not start a new word',
+    L.keyAsName('willett family estate 4yr'), 'Willett Family Estate 4yr');
+}
+
 sec('a name beats a region');
 {
   /* BZ added a Highland Park 15 Year Old Viking Heart and could not find it:
