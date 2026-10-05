@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 937 |
-| tables | 221 |
-| carrying a stated purpose | 742 |
+| functions | 938 |
+| tables | 222 |
+| carrying a stated purpose | 743 |
 
 ## Tables
 
@@ -96,6 +96,7 @@ QUESTION, not the name you were going to use.
 - **`L.INTAKE_NOT_A_FACT`** — TWO OFFERS OF ONE BOTTLE ARE ONE OFFER
 - **`L.INTAKE_SETTLE`** — WHAT WOULD SETTLE THIS WITHOUT ASKING ANYBODY
 - **`L.IRISH_HOUSES`** — _no comment above it_
+- **`L.KEYED_BY_BOTTLE`** — EVERYTHING ELSE FILED UNDER A BOTTLE'S KEY
 - **`L.KIND_ALONE`** — SOURCES THAT STAND ALONE
 - **`L.LABEL_FILLABLE`** — WHAT A LABEL COULD NOT TELL US, AND THE VERDICT NEEDS (single-bottle
 - **`L.LABEL_NAMES`** — How a field reads on the confirmation sheet
@@ -328,6 +329,7 @@ QUESTION, not the name you were going to use.
 - **`L.candidateFits`** — finished bottling "from Buffalo Trace" came back as three other houses.
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
+- **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskFamily`** — _no comment above it_
 - **`L.caskKind`** — A label naming two casks keys as both, sorted
@@ -935,7 +937,7 @@ QUESTION, not the name you were going to use.
 - **`L.regionFault`** — A REGION THAT BELONGS TO ANOTHER COUNTRY'S WHISKY.
 - **`L.regionFaultRow`** — _no comment above it_
 - **`L.regionOf`** — _no comment above it_
-- **`L.rekeyPlan`** — THE NAME COMES FROM THE KEY, because a bottle with no record has nothing else
+- **`L.rekeyPlan`** — _no comment above it_
 - **`L.relabel`** — they are always relabelled from the current order rather than stored.
 - **`L.rememberBuddies`** — PRUNED ONLY ON A GOOD READ, which is the caller's business
 - **`L.rememberRead`** — _no comment above it_

@@ -2138,6 +2138,118 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('re-filing a bottle takes its note with it');
+{
+  /* BZ re-filed seven keys on 2026-10-05 and his tasting note for the
+     Laphroaig Williamson stayed on the dead one: putBottlesBack rewrote the
+     bottle's key and moved nothing else, so the note, the star, the edit and
+     the guest's sealed mark were all left behind by the one operation whose
+     whole job is to change that key. */
+  const plan = [{ from: 'old_slug', to: 'The Proper Name' },
+                { from: 'also_old', to: 'Another Proper Name' }];
+  const notes = { old_slug: { nose: 'smoke' }, keep_me: { nose: 'honey' } };
+  const moved = L.carryKeyed(notes, plan);
+  eq('the note arrives under the new key', moved['The Proper Name'].nose, 'smoke');
+  eq('and is gone from the old one',
+    Object.prototype.hasOwnProperty.call(moved, 'old_slug'), false);
+  eq('a record for a key not in the plan is untouched',
+    moved.keep_me.nose, 'honey');
+  eq('and a plan entry with nothing filed under it does nothing',
+    Object.prototype.hasOwnProperty.call(moved, 'Another Proper Name'), false);
+
+  /* THE DESTINATION WINS. A note written against the proper key is what
+     somebody meant; the one under the dead key is the leftover. */
+  const both = L.carryKeyed(
+    { old_slug: { nose: 'leftover' }, 'The Proper Name': { nose: 'meant' } },
+    plan);
+  eq('a record already at the destination is not overwritten',
+    both['The Proper Name'].nose, 'meant');
+  eq('and the leftover is cleared away',
+    Object.prototype.hasOwnProperty.call(both, 'old_slug'), false);
+
+  /* AND THE LIST OF MAPS IS NAMED, so one added later is added here too. */
+  eq('every map filed by bottle key is named in one place',
+    L.KEYED_BY_BOTTLE.indexOf('bottleSaid') >= 0
+      && L.KEYED_BY_BOTTLE.indexOf('favs') >= 0, true);
+  /* NOTHING MOVES WITHOUT A PLAN. */
+  eq('an empty plan changes nothing',
+    JSON.stringify(L.carryKeyed(notes, [])), JSON.stringify(notes));
+}
+
+sec('a different strength is a different bottle');
+{
+  /* BZ owns both, and his own export has them as separate rows at 750ml and
+     1000ml. L.identOf resolved them to one entry because every word of the
+     shorter name appears in the longer and nothing caught the proof
+     (2026-10-05). */
+  const lib = {
+    sazerac_100_proof_straight_rye_whiskey: {
+      k: 'sazerac_100_proof_straight_rye_whiskey',
+      name: 'Sazerac 100 Proof Straight Rye Whiskey',
+      dist: 'Buffalo Trace', sub: 'rye', proof: 100 }
+  };
+  const ninety = { k: 'Sazerac Rye', name: 'Sazerac Rye',
+    dist: 'Buffalo Trace', sub: 'rye', proof: 90 };
+  const hundred = { k: 'Sazerac 100 Proof Straight Rye Whiskey',
+    name: 'Sazerac 100 Proof Straight Rye Whiskey',
+    dist: 'Buffalo Trace', sub: 'rye', proof: 100 };
+  const id = p => L.shelfKeyOf(p, lib, {}, null);
+  eq('ninety proof and a hundred are not one whisky', id(ninety) === id(hundred),
+    false);
+  eq('and the hundred still finds its own entry',
+    id(hundred), 'id:lib:sazerac_100_proof_straight_rye_whiskey');
+
+  /* THE SILENT SIDE, which is what keeps this refusal narrow. A record that
+     states no strength is never refused by it, so a bottle whose proof IS its
+     name - Weller Antique 107 - is not split off its own library entry just
+     because the shelf copy never filled the field in. */
+  const wLib = { weller_antique_107: { k: 'weller_antique_107',
+    name: 'Weller Antique 107', dist: 'Buffalo Trace', sub: 'bourbon',
+    proof: 107 } };
+  const silent = { k: 'Weller Antique 107', name: 'Weller Antique 107',
+    dist: 'Buffalo Trace', sub: 'bourbon' };
+  eq('a record that states no strength is not refused',
+    L.shelfKeyOf(silent, wLib, {}, null), 'id:lib:weller_antique_107');
+  /* AND ONE THAT AGREES IS NOT EITHER. */
+  eq('nor is one that states the same strength',
+    L.shelfKeyOf(Object.assign({}, silent, { proof: 107 }), wLib, {}, null),
+    'id:lib:weller_antique_107');
+  /* WHILE ONE THAT DISAGREES IS - the whole point. */
+  eq('but one that states a different strength is',
+    L.shelfKeyOf(Object.assign({}, silent, { proof: 90 }), wLib, {}, null)
+      === 'id:lib:weller_antique_107', false);
+}
+
+sec('the line and the button count the same bottles');
+{
+  /* He pressed Put them back on my shelf: the line said 9 and the toast
+     reported 8. Whatever the odd one was - it was on his device and not on
+     the account, so I could not reproduce it - the two numbers must come from
+     one set, or the screen shows two figures for one list (2026-10-05). */
+  const cat = { good: { k: 'good', name: 'Ardbeg Ten' },
+                heir: { k: 'heir', name: 'Lagavulin 16' } };
+  const graves = { merged: 'heir' };
+  const bottles = [{ id: '1', k: 'good', status: 'open' },
+                   { id: '2', k: 'merged', status: 'open' },
+                   { id: '3', k: 'merged', status: 'sealed' },
+                   { id: '4', k: 'nowhere', status: 'open' },
+                   { id: '5', k: 'drunk', status: 'gone' }];
+  const cwo = L.catalogWithOwned(cat, bottles, {}, graves, {});
+  const flagged = L.unlistedBottles(cwo, bottles, graves);
+  const plan = L.rekeyPlan(cwo, bottles, graves);
+  /* Every bottle the line counts is one the plan has a move for. */
+  const moving = {};
+  plan.forEach(p => { moving[p.from] = 1; });
+  eq('every bottle the line counts, the button moves',
+    flagged.filter(b => !moving[b.k]).map(b => b.k), []);
+  /* AND IT IS NOT VACUOUS - there is something to count. */
+  eq('and there is something to count, so this can fail',
+    flagged.length > 0, true);
+  /* A FINISHED BOTTLE IS NEITHER COUNTED NOR MOVED. */
+  eq('a bottle already drunk is not on the list',
+    flagged.some(b => b.k === 'drunk'), false);
+}
+
 sec('no bottle you own is invisible');
 {
   /* BZ, 2026-10-04: "inventory must be bulletproof". Measured on his live
