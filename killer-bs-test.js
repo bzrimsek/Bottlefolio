@@ -11360,15 +11360,43 @@ sec('\u00a7223 what the shelf adds up to');
   eq('a key the catalogue does not hold is unlisted',
     L.unlistedBottles(uCat, uGhost).length, 2);
   /* IT NO LONGER BLAMES THE LIBRARY: his nineteen are filed under their own
-     display names, so nothing ever asked the library about them (2026-10-02). */
+     display names, so nothing ever asked the library about them (2026-10-02).
+     AND IT NO LONGER SAYS NO CARD IS DRAWN, because since v2.7.58 one is:
+     L.catalogWithOwned keeps every owned bottle in the catalogue so none can
+     be invisible. What is still wrong is the FILING, and the line says that
+     instead - the old wording would now be a sentence the screen disproves
+     two inches below itself (2026-10-05). */
   eq('and is reported as what it is',
     L.unlistedLine(uCat, uGhost),
-    '2 bottles are on your shelf but not listed on it: no cards are drawn for '
-    + 'them and no total counts them.');
+    '2 bottles are filed under a key nothing else uses. They show on your '
+    + 'shelf, but a lookup or a second bottle of the same whisky will not '
+    + 'find them.');
   eq('one of them reads as one',
     L.unlistedLine(uCat, uHave.concat([{ k: 'ghost-1', status: 'open' }])),
-    '1 bottle is on your shelf but not listed on it: no card is drawn for it '
-    + 'and no total counts it.');
+    '1 bottle is filed under a key nothing else uses. It shows on your '
+    + 'shelf, but a lookup or a second bottle of the same whisky will not '
+    + 'find it.');
+  /* VISIBLE IS NOT THE SAME AS FILED RIGHT. v2.7.58 put every owned key in the
+     catalogue so nothing could be invisible, and by doing so it answered "yes,
+     it shows" for every bottle and emptied this list - 0 unlisted, 0 planned,
+     and the button gone from Settings on BZ's real shelf, the day after he had
+     used it. A recovered entry is a stand-in and says so, and this list is
+     about the filing, not the drawing. */
+  {
+    const held = [{ k: 'lost_key', status: 'open' }];
+    const bare = { real: { k: 'real', name: 'Ardbeg Ten' } };
+    const withOwned = L.catalogWithOwned(bare, held, {}, {}, {});
+    eq('the recovered entry exists, so the bottle is not invisible',
+      !!withOwned.lost_key, true);
+    eq('and it is marked as the stand-in it is',
+      !!withOwned.lost_key.recovered, true);
+    eq('so the bottle is STILL waiting to be filed properly',
+      L.unlistedBottles(withOwned, held, {}).length, 1);
+    /* AND A REAL ENTRY IS NOT TOUCHED BY ANY OF IT. */
+    eq('a bottle filed correctly is not on the list',
+      L.unlistedBottles(withOwned, [{ k: 'real', status: 'open' }], {}).length, 0);
+  }
+
   /* A BOTTLE THAT IS GONE IS NOT MISSING, it is drunk: it was never going to be
      listed, and reporting it would make the line permanent. */
   eq('a retired bottle with no entry is not reported',
