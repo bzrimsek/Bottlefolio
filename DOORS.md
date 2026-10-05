@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 947 |
-| tables | 223 |
-| carrying a stated purpose | 750 |
+| tables | 224 |
+| carrying a stated purpose | 751 |
 
 ## Tables
 
@@ -128,6 +128,7 @@ QUESTION, not the name you were going to use.
 - **`L.NOT_A_PLACE`** — Not the same as a value this app has not heard of, which stays a place:
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
 - **`L.NOT_FILTERS`** — Not filters, named so the check can tell "not a filter" from "somebody
+- **`L.NOT_GUESSED`** — A TYPE A PERSON MAY CHOOSE AND THE APP MAY NOT GUESS
 - **`L.NOT_WHISKY`** — 'flavored' joined on 2026-09-24
 - **`L.NOTE_WORDS_MEMO`** — THE WORDS OF A NOTE, split once
 - **`L.OFFER_GENERIC`** — WHAT EVERY BOTTLE SHARES, and so identifies none
@@ -228,7 +229,7 @@ QUESTION, not the name you were going to use.
 - **`L.TN_ORDER`** — bottle tastes like, not where it came from.
 - **`L.TN_SOURCES`** — cards as prompts for a taster
 - **`L.TYPE_LABELS`** — One label for a type, everywhere.
-- **`L.TYPES`** — Every face is an exact subcategory match, so no bottle is unreachable.
+- **`L.TYPES`** — `malt` is a straight malt whiskey - Woodford's is 51% malt - and is NOT
 - **`L.UNKNOWN_CASK`** — _no comment above it_
 - **`L.US_PLACES`** — Where a US label says it was made
 - **`L.US_SUBS`** — _no comment above it_

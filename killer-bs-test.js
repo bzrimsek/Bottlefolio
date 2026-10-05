@@ -2179,6 +2179,30 @@ sec('a bottle that holds its own identity');
       { e: { k: 'e', name: 'E', canon: 'WB37719' } }, {}), 'e');
 }
 
+sec('malt is a category, chosen and never guessed');
+{
+  /* Woodford's Kentucky Straight Malt is 51% malt, so it is not an american
+     single malt - a defined class needing 100% malted barley - and the
+     taxonomy had no other slot (BZ, 2026-10-05). */
+  eq('malt is a type a bottle may be filed as',
+    L.TYPES.indexOf('malt') >= 0, true);
+  eq('and it is a whisky, not something off the bar shelf',
+    L.isWhisky({ sub: 'malt' }), true);
+  eq('it reads as a word on a chart', L.typeLabel('malt'), 'Malt');
+  /* AND IT IS NEVER DECIDED FROM A NAME, because "malt" stands as a word
+     inside "single malt" and two of BZ's own bottles name no other type. */
+  eq('it is on the list of types that may only be chosen',
+    L.NOT_GUESSED.indexOf('malt') >= 0, true);
+  eq('american single malt is still guessed, being its own words',
+    L.NOT_GUESSED.indexOf('american single malt') < 0, true);
+  /* THE CASCADE IS UNTOUCHED AND STILL RIGHT. */
+  eq('a scotch single malt is still a scotch',
+    L.guessSub('Lagavulin 16 Single Malt', 'Lagavulin'), 'scotch');
+  eq('and an american single malt is still that',
+    L.guessSub('New Riff Single Malt', 'New Riff Distilling'),
+    'american single malt');
+}
+
 sec('a bottle takes the identity of its entry');
 {
   const lib = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
@@ -7629,7 +7653,14 @@ eq('no other face exists', L.REELS.find(r => r.id === 'type')
    sub the app does not know is stored as null and the bottle loses what it
    is. It gets no reel face: the machine picks a whisky to drink, and a
    face nobody wants to land on is a dead control. */
-eq('every whisky type has a face', L.TYPES.filter(L.isWhisky
+/* EXCEPT `malt`, FOR THE SAME REASON THE BAR SHELF HAS NO FACES. A straight
+   malt is a whisky and is declared so a bottle keeps its category, but nobody
+   owns one here - the check below on the real collection says so - and a face
+   that never pays out is a dead control. It earns one the day a 51% malt is
+   on the shelf, and the assertion above already expects it to have none until
+   then (2026-10-05). */
+eq('every whisky type has a face, bar the ones nothing on the shelf is yet',
+  L.TYPES.filter(t => t !== 'malt').filter(L.isWhisky
   ? t => L.isWhisky({ sub: t }) : () => true).every(s =>
   L.REELS.find(r => r.id === 'type').faces.some(f => f.v === s)), true);
 
@@ -8446,6 +8477,8 @@ eq('house conventions claim no legal source',
 const defined = L.REFERENCE.reduce((a, s) => a.concat(s.items.map(i => i.term.toLowerCase())), []);
 const NAMED = { 'bourbon': 'bourbon whiskey', 'rye': 'rye whiskey',
   'wheat': 'wheat whiskey',
+  /* A straight malt is 51% malted barley and is NOT the class below it. */
+  'malt': 'malt whiskey',
   'tennessee': 'tennessee whiskey',
   'american single malt': 'american single malt whiskey',
   'scotch': 'scotch whisky', 'irish': 'irish whiskey', 'canadian': 'canadian whisky',
