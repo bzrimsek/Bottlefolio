@@ -2138,6 +2138,44 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('one whisky on the shelf twice');
+{
+  /* BZ found his duplicate Angel's Envy by searching "envy" and noticing one
+     row named a different house. That is the only way he has ever found one -
+     by eye, one at a time - so the shelf says it instead (2026-10-05). */
+  const lib = { ae: { k: 'ae', name: "Angel's Envy Port Wine Barrel Finish",
+    dist: 'Louisville Distilling' } };
+  const cat = {
+    slug: { k: 'slug', name: "Angel's Envy Port Wine Barrel Finish",
+            dist: 'Louisville Distilling' },
+    named: { k: 'named', name: "Angel's Envy Port Wine Barrel Finish",
+             dist: 'Louisville Distilling' },
+    other: { k: 'other', name: 'Lagavulin 16', dist: 'Lagavulin' }
+  };
+  const bots = [{ k: 'slug', status: 'open' }, { k: 'named', status: 'open' },
+                { k: 'other', status: 'open' }];
+  const groups = L.ownedTwice(cat, bots, lib, {}, null);
+  eq('the pair is found, and nothing else is',
+    groups.map(g => g.join('+')), ['named+slug']);
+  eq('and it is said in words',
+    /One whisky is on your shelf twice/.test(L.ownedTwiceLine(groups)), true);
+  /* A CLEAN SHELF SAYS NOTHING, which is the normal state. */
+  eq('a shelf with no duplicate says nothing',
+    L.ownedTwiceLine(L.ownedTwice(cat, [{ k: 'other', status: 'open' }],
+      lib, {}, null)), '');
+  /* AND A PAIR THE IDENTITY REFUSES IS NOT A DUPLICATE: BZ's 90-proof
+     Sazerac against his 100-proof is two whiskies, by the same door. */
+  const sz = { a: { k: 'a', name: 'Sazerac Rye', dist: 'Buffalo Trace',
+                    sub: 'rye', proof: 90 },
+               b: { k: 'b', name: 'Sazerac 100 Proof Straight Rye Whiskey',
+                    dist: 'Buffalo Trace', sub: 'rye', proof: 100 } };
+  const szLib = { s100: { k: 's100',
+    name: 'Sazerac 100 Proof Straight Rye Whiskey', proof: 100 } };
+  eq('two strengths of one line are not one whisky',
+    L.ownedTwice(sz, [{ k: 'a', status: 'open' }, { k: 'b', status: 'open' }],
+      szLib, {}, null).length, 0);
+}
+
 sec('a buried key is never the right place');
 {
   /* BZ searched "envy" and saw one whisky twice, one row reading Angel's Envy

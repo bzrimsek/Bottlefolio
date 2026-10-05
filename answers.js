@@ -180,6 +180,28 @@ function bad(what, detail) {
     }
   }
 
+  /* AND NOTHING OFFERED IS SOMETHING HE ALREADY OWNS (BZ, 2026-10-04). He
+     asked Cooper what to buy and was offered an Aberlour 18 and a New Riff
+     Silver Grove off his own shelf, and found it by chance. The engine's own
+     suggestion doors, driven against the shelf he actually has. */
+  const offers = await p.evaluate(() => {
+    const fp = L.shelfFingerprint(L.tasteProfile(S.catalog, S.bottles, S.favs));
+    const picks = L.fingerprintPicks(S.catalog, S.bottles, fp, 12,
+      LIB.products, LIB.graves, null);
+    const owned = picks.filter(x => L.haveAlready(S.catalog[x.k], S.bottles,
+      S.catalog, LIB.products, LIB.graves, null));
+    return { n: picks.length, owned: owned.map(x => x.name || x.k) };
+  });
+  if (!offers.n) {
+    bad('the picks offered nothing at all, so this proves nothing',
+      'a check that cannot fail is not a check');
+  } else if (offers.owned.length) {
+    bad('the picks offer ' + offers.owned.length + ' bottle(s) he already owns',
+      offers.owned.join('\n  '));
+  } else {
+    ok('none of the ' + offers.n + ' bottles offered is one he already owns');
+  }
+
   /* A SHELF FED BY THE LIBRARY, which is what volume looks like. Every
      entry the shared library publishes is filed under libKey — a slug, not
      its name — and the bottle count on the answer was read out of a map

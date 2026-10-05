@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 940 |
+| functions | 942 |
 | tables | 222 |
-| carrying a stated purpose | 744 |
+| carrying a stated purpose | 745 |
 
 ## Tables
 
@@ -767,6 +767,8 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCounts`** — _no comment above it_
 - **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
+- **`L.ownedTwice`** — ONE WHISKY ON YOUR SHELF UNDER TWO KEYS
+- **`L.ownedTwiceLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY, as with the line above it.
 - **`L.ownedUnseen`** — AND WHAT IS STILL MISSING AFTER ALL THAT, which must be nothing
 - **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.
 - **`L.ownFindings`** — The findings whose answer is ALREADY YOURS
@@ -1135,7 +1137,7 @@ QUESTION, not the name you were going to use.
 - **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_
-- **`L.unlistedBottles`** — IS THIS BOTTLE FILED UNDER THE KEY IT SHOWS UNDER? Both answers are wrong
+- **`L.unlistedBottles`** — _no comment above it_
 - **`L.unlistedLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY
 - **`L.upcKey`** — 12-digit code is compared on its last 12.
 - **`L.upcRow`** — something stable to check.

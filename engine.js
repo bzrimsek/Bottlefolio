@@ -48,6 +48,88 @@ module.exports.shelf = function (dir) {
   return shelf;
 };
 
+/* THE STATE THE APP WOULD HAVE, ASSEMBLED THE WAY THE APP ASSEMBLES IT.
+ * Runs IN THE PAGE - pass it straight to page.evaluate with the data as its
+ * one argument. It closes over nothing, so it survives being serialised.
+ *
+ *   const { setupState, account } = require('./engine.js');
+ *   const data = await account(uid);
+ *   await page.evaluate(setupState, data);
+ *
+ * THE LIBRARY JOINS S.base UNDER EACH ENTRY'S DISPLAY NAME. That is what the
+ * app does when it reads the library (index.html, where `np.k = np.name`),
+ * and every probe that set LIB.products and called rebuildCatalog without it
+ * measured a catalogue 400 entries short - which is where five wrong reports
+ * to BZ came from on 2026-10-05.
+ */
+module.exports.setupState = function setupState(data) {
+  const d = data || {};
+  S.bottles = d.bottles || [];
+  S.custom = d.custom || {};
+  S.edits = d.edits || {};
+  S.deleted = d.deleted || {};
+  if (d.flights) S.customFlights = d.flights;
+  if (d.favs) S.favs = d.favs;
+  if (d.history) S.history = d.history;
+  LIB.products = d.library || {};
+  LIB.graves = d.graves || {};
+  const base = Object.assign({}, S.base);
+  Object.values(d.library || {}).forEach(e => {
+    if (!e || !e.name) return;
+    const np = Object.assign({}, e);
+    np.k = np.name;
+    base[np.k] = np;
+  });
+  S.base = base;
+  rebuildCatalog();
+  save_();
+  /* SAID BACK, so a probe can see at a glance whether it loaded a real shelf
+     or an empty one - the difference between 326 and 723 is the whole of the
+     fault this exists to stop. */
+  return { bottles: S.bottles.length,
+    catalog: Object.keys(S.catalog).length,
+    library: Object.keys(LIB.products).length,
+    graves: Object.keys(LIB.graves).length };
+};
+
+/* A LIVE ACCOUNT, IN THE SHAPES THE PAGE WANTS. Needs a service-account key in
+ * FIREBASE_SA_FILE or FIREBASE_SA, exactly as rules.js does; required lazily so
+ * a harness with no credentials still loads this file.
+ *
+ * KEYS ARE AS FIREBASE HOLDS THEM. Maps keyed by a bottle key keep their
+ * escapes - `.` is stored `~d` - and the app decodes them on the way in with
+ * L.unFbKey. Reading them raw and calling the difference a fault is one of the
+ * mistakes this file exists to stop, so anything comparing those keys to the
+ * catalogue decodes first.
+ */
+module.exports.account = async function (uid) {
+  const { token, DB } = require('./rules.js');
+  const tok = await token();
+  const get = async p => {
+    const r = await fetch(DB + p + '.json',
+      { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) throw new Error('read ' + p + ' gave HTTP ' + r.status);
+    return r.json();
+  };
+  const mine = await get('/bz-apps/whisky/' + uid);
+  const library = await get('/bz-apps/whisky/shared/catalog/products');
+  const renamed = await get('/bz-apps/whisky/shared/renamed');
+  /* THE GRAVES, FLATTENED ONCE. Every probe wrote this loop again, which is
+     three chances to write it differently. */
+  const graves = {};
+  Object.keys(renamed || {}).forEach(k => {
+    const rec = renamed[k];
+    const to = (rec && typeof rec === 'object') ? rec.to : rec;
+    if (to && typeof to === 'string') graves[k] = to;
+  });
+  const bottles = Array.isArray(mine.bottles)
+    ? mine.bottles : Object.values(mine.bottles || {});
+  return { bottles: bottles, custom: mine.custom || {}, edits: mine.edits || {},
+    deleted: mine.deleted || {}, flights: mine.customFlights || {},
+    favs: mine.favs || {}, history: mine.history || [],
+    library: library || {}, graves: graves, node: mine };
+};
+
 module.exports = Object.assign(function loadEngine(file) {
   const html = fs.readFileSync(file || path.join(__dirname, 'index.html'), 'utf8');
   const start = html.indexOf('const L = {};');
