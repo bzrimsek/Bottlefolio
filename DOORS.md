@@ -97,7 +97,7 @@ QUESTION, not the name you were going to use.
 - **`L.INTAKE_NOT_A_FACT`** — TWO OFFERS OF ONE BOTTLE ARE ONE OFFER
 - **`L.INTAKE_SETTLE`** — WHAT WOULD SETTLE THIS WITHOUT ASKING ANYBODY
 - **`L.IRISH_HOUSES`** — _no comment above it_
-- **`L.KEYED_BY_BOTTLE`** — EVERYTHING ELSE FILED UNDER A BOTTLE'S KEY
+- **`L.KEYED_BY_BOTTLE`** — NOT `wish`: it is a LIST of keys, not a map keyed by one, and carrying a
 - **`L.KIND_ALONE`** — SOURCES THAT STAND ALONE
 - **`L.LABEL_FILLABLE`** — WHAT A LABEL COULD NOT TELL US, AND THE VERDICT NEEDS (single-bottle
 - **`L.LABEL_NAMES`** — How a field reads on the confirmation sheet

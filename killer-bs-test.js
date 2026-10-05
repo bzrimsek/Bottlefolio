@@ -2547,6 +2547,21 @@ sec('re-filing a bottle takes its note with it');
   eq('and the leftover is cleared away',
     Object.prototype.hasOwnProperty.call(both, 'old_slug'), false);
 
+  /* A LIST IS NOT A MAP. Object.assign({}, anArray) answers an OBJECT, so
+     handed S.wish - a list of keys - this turned it into {} and BZ's app threw
+     on every render until he closed the tab (2026-10-05:
+     "(wish || []).slice is not a function"). A shape it does not understand is
+     one it has no business editing. */
+  const list = ['a_key', 'another'];
+  eq('a list is handed back exactly as it came',
+    L.carryKeyed(list, plan), list);
+  eq('and it is still a list afterwards',
+    Array.isArray(L.carryKeyed(list, plan)), true);
+  eq('a list of keys is not among the maps carried',
+    L.KEYED_BY_BOTTLE.indexOf('wish') < 0, true);
+  /* NOTHING ELSE SNEAKS THROUGH EITHER. */
+  eq('a string is not reshaped', L.carryKeyed('nope', plan), 'nope');
+
   /* AND THE LIST OF MAPS IS NAMED, so one added later is added here too. */
   eq('every map filed by bottle key is named in one place',
     L.KEYED_BY_BOTTLE.indexOf('bottleSaid') >= 0
@@ -21442,7 +21457,16 @@ sec('\u00a7355 what the library contradicts');
        style   Macaloney's Searaidh Braiche, name says single malt and the
                row says new make. Deliberate: the stored value is right and
                the NAME misleads, which is recorded beside L.STYLE_FROM_NAME
-       dups    one Barrell release under two names
+       dups    one Barrell release under two names; the Sazerac pair the
+               comment on L.libraryAudit explains BZ has refused more than
+               once; and the Angel's Envy flagship, which the shipped
+               catalogue has carried TWICE all along - "Angel's Envy Bourbon
+               Finished in Port Wine Barrels" beside the entry his own bottle
+               points at. Invisible until 2026-10-05, when that entry's name
+               was corrected to the one the distiller uses and the two finally
+               normalised to the same words. A decision for BZ: nothing is
+               broken, the shelf counts one of them, and removing a shipped
+               entry is his call and not a test's.
        name    six bottles carrying their proof in the name
 
      Every one is a decision for BZ rather than something to fix here. */
@@ -21451,13 +21475,16 @@ sec('\u00a7355 what the library contradicts');
   eq('one known style clash, the deliberate one', cnt('style'), 1);
   eq('and it is the entry the comment names',
     /Macaloney/.test(real.filter(f => f.id === 'style')[0].items[0].text), true);
-  /* TWO PAIRS NOW, not one. The matcher stopped counting a proof as part
-     of a name - BZ: removing it from the name allows another entry to
-     enter it again with proof in the name - so "Old Forester 100 Proof
-     Bourbon" and "Old Forester Bourbon" finally meet. They were the same
-     whisky all along and the normaliser could not see it, which is how
-     these get made, one import at a time. */
-  eq('two pairs under two names', cnt('dups'), 2);
+  /* THREE PAIRS NOW. The matcher stopped counting a proof as part of a name
+     - BZ: removing it from the name allows another entry to enter it again
+     with proof in the name - so "Old Forester 100 Proof Bourbon" and "Old
+     Forester Bourbon" finally met. The third arrived the same way on
+     2026-10-05: Angel's Envy's flagship was filed under a scrambled word
+     order, and naming it as the distiller does - "Kentucky Straight Bourbon
+     Whiskey Finished in Port Wine Barrels" - let it meet the entry beside it
+     that had always been the same whisky. Each time, correcting a name made
+     a duplicate visible rather than making one. */
+  eq('three pairs under two names', cnt('dups'), 3);
   /* And none of the six: every one of them has the proof in its field. */
   eq('no proof is stranded on the shipped shelf', cnt('proofname'), 0);
   eq('and no grain bill on the shipped catalog fails to add up',
