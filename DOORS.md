@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 944 |
+| functions | 946 |
 | tables | 223 |
-| carrying a stated purpose | 748 |
+| carrying a stated purpose | 749 |
 
 ## Tables
 
@@ -547,6 +547,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule rather than inside the
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
+- **`L.identIndex`** — EVERY ISSUED IDENTITY IN THE LIBRARY, AND WHERE IT LIVES NOW
 - **`L.identOf`** — _no comment above it_
 - **`L.identString`** — AND WRITTEN ONE WAY, so two records of one bottling cannot differ by a
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
@@ -602,6 +603,7 @@ QUESTION, not the name you were going to use.
 - **`L.keepers`** — A second bottle is a stronger statement than a star
 - **`L.keptVague`** — NOT FOR A MISSING NOTE
 - **`L.keyAsName`** — A KEY READ BACK AS WORDS, for a bottle that has no record to take a name from.
+- **`L.keyForBottle`** — THE GRAVE IS LAST, not first
 - **`L.keyForName`** — THE KEY A NAME ALREADY HAS, when the key you built from it does not exist.
 - **`L.knownHere`** — EVERYTHING THAT ALREADY KNOWS THIS BOTTLE, in one map
 - **`L.labelDiff`** — Step two: what it would change, said before anything is written. `fill`
@@ -769,7 +771,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCounts`** — _no comment above it_
 - **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
-- **`L.ownedTwice`** — ONE WHISKY ON YOUR SHELF UNDER TWO KEYS
+- **`L.ownedTwice`** — _no comment above it_
 - **`L.ownedTwiceLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY, as with the line above it.
 - **`L.ownedUnseen`** — AND WHAT IS STILL MISSING AFTER ALL THAT, which must be nothing
 - **`L.ownedWhiskies`** — THE WHISKIES YOU OWN, which is what every flavour figure is counted from.

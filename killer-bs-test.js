@@ -2138,6 +2138,71 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('a bottle that holds its own identity');
+{
+  /* The second half of the migration. A bottle stores k, which is what the
+     whisky IS and where its record LIVES at once, and every fault of
+     2026-10-05 came from those two coming apart. An identity it holds itself
+     does not move when the address does. */
+  const lib = {
+    new_key: { k: 'new_key', name: 'The Proper Name', canon: 'local:abc123' },
+    other:   { k: 'other', name: 'Lagavulin 16', canon: 'local:zzz999' }
+  };
+  const ix = L.identIndex(lib);
+  eq('every issued identity is indexed to where it lives now',
+    [ix['local:abc123'], ix['local:zzz999']], ['new_key', 'other']);
+
+  /* THE WHOLE POINT: the entry moved and the bottle still finds it, with no
+     grave and no forwarding address. */
+  eq('a bottle finds its entry by identity after the key moved',
+    L.keyForBottle({ k: 'the_old_dead_key', id: 'local:abc123' }, lib, {}),
+    'new_key');
+  /* AND WITHOUT ONE IT IS NO WORSE OFF THAN BEFORE - every bottle today. */
+  eq('a bottle with no identity still answers by its key',
+    L.keyForBottle({ k: 'other' }, lib, {}), 'other');
+  eq('and a merged key still follows its grave',
+    L.keyForBottle({ k: 'dead' }, lib, { dead: 'other' }), 'other');
+  /* A KEY NOBODY KNOWS IS LEFT AS IT IS, never guessed at. */
+  eq('an unknown key is answered with itself',
+    L.keyForBottle({ k: 'who_knows' }, lib, {}), 'who_knows');
+  /* IDENTITY BEATS THE GRAVE, which is the ordering that ends the chasing:
+     the forwarding address is for when there is no identity. */
+  eq('identity is read before any forwarding address',
+    L.keyForBottle({ k: 'dead', id: 'local:abc123' }, lib, { dead: 'other' }),
+    'new_key');
+  /* AN IDENTITY NOTHING HOLDS FALLS BACK rather than answering nothing. */
+  eq('an identity no entry carries falls back to the key',
+    L.keyForBottle({ k: 'other', id: 'local:nothing' }, lib, {}), 'other');
+  /* AND IT IS READ THROUGH THE ONE READER, so WB37719 and wb:37719 are one. */
+  eq('an issued identity is matched however it is written',
+    L.keyForBottle({ k: 'x', id: '37719' },
+      { e: { k: 'e', name: 'E', canon: 'WB37719' } }, {}), 'e');
+}
+
+sec('an identity re-files a bottle through the route that already exists');
+{
+  /* An identity does not get its own way of moving a bottle: the app has one,
+     built the same day - filedAt, showsUnder, rekeyPlan, and the button in
+     Settings. This checks the identity reaches that route and no further. */
+  const lib = { new_key: { k: 'new_key', name: 'The Proper Name',
+    canon: 'local:abc123' } };
+  const cat = { new_key: { k: 'new_key', name: 'The Proper Name' },
+                old_key: { k: 'old_key', name: 'Old Spelling' } };
+  const held = [{ id: '1', k: 'old_key', status: 'open', id2: 0 }];
+  held[0].id = 'local:abc123';
+  const out = L.catalogWithOwned(cat, held, lib, {}, {});
+  eq('the bottle says where it belongs, with no grave anywhere',
+    out.old_key.filedAt, 'new_key');
+  eq('so the plan moves it by the one route there is',
+    L.rekeyPlan(out, held, {}).map(p => p.from + '->' + p.to),
+    ['old_key->new_key']);
+  /* AND A SHELF WITH NO IDENTITIES IS UNTOUCHED, which is every shelf today. */
+  const plain = [{ id: '2', k: 'old_key', status: 'open' }];
+  eq('a bottle with no identity is left exactly as it was',
+    !!(L.catalogWithOwned(cat, plain, lib, {}, {}).old_key || {}).filedAt,
+    false);
+}
+
 sec('an identity, namespaced, aligned with whiskybase');
 {
   /* BZ, 2026-10-05: "moving to an ID serves us better if we ever get 3rd party
