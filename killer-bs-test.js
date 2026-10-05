@@ -2138,6 +2138,71 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('a name beats a region');
+{
+  /* BZ added a Highland Park 15 Year Old Viking Heart and could not find it:
+     "highland", "Highland Park" and the full name all came back empty, and
+     both of his Highland Parks went with them. L.parseQuery reads Highland as
+     the Scotch REGION, and Highland Park is on Orkney - Islands - so the
+     shelf was asked for a Highland bottle named "park" (2026-10-05). */
+  eq('the region is still what the word means on its own',
+    L.parseQuery('Highland Park').set.regions, ['Highland']);
+  eq('and the rest of the words are left as text',
+    L.parseQuery('Highland Park').q, 'park');
+
+  /* THE JOIN, which is what stops one reading hiding the other. */
+  const a = [{ k: 'x', name: 'A' }, { k: 'y', name: 'B' }];
+  const b2 = [{ k: 'y', name: 'B' }, { k: 'z', name: 'C' }];
+  eq('both readings are kept, in order, without repeating one',
+    L.joinHits(a, b2).map(p => p.k), ['x', 'y', 'z']);
+  eq('nothing from the second is lost',
+    L.joinHits([], b2).map(p => p.k), ['y', 'z']);
+  eq('and an empty second changes nothing',
+    L.joinHits(a, []).map(p => p.k), ['x', 'y']);
+
+  /* AND THE WHOLE POINT, through the filter: a bottle the query NAMES is
+     found even when the query's own region pill excludes it. */
+  const cat = [
+    { k: 'hp', name: 'Highland Park 15 Year Old Viking Heart',
+      dist: 'Highland Park', sub: 'scotch', region: 'Islands' },
+    { k: 'gl', name: 'Glenmorangie 10', dist: 'Glenmorangie',
+      sub: 'scotch', region: 'Highland' }
+  ];
+  const bots = [{ k: 'hp', status: 'open' }, { k: 'gl', status: 'open' }];
+  const ix = L.shelfIndex(bots);
+  const asRegion = L.shelfFilter(cat, bots, { regions: ['Highland'], q: 'park' }, ix);
+  eq('read as a region alone, the Orkney bottle is not there',
+    asRegion.map(p => p.k), []);
+  const asName = L.shelfFilter(cat, bots, { q: 'highland' }, ix);
+  eq('read as a name, it is',
+    asName.map(p => p.k).indexOf('hp') >= 0, true);
+  eq('and joining the two answers both readings',
+    L.joinHits(asRegion, asName).map(p => p.k).sort(), ['gl', 'hp']);
+}
+
+sec('the sign-in card waits for an answer');
+{
+  /* BZ, 2026-10-05: on a fresh build the card appeared on open and then took
+     itself away. FB.user is null both while auth is connecting and when auth
+     has said nobody is here, and the card read the first as the second. */
+  const shelf = [{ k: 'a', status: 'open' }];
+  eq('while the sdk is still loading, nothing is said',
+    L.askToSignIn('off', null, shelf), false);
+  eq('while auth is connecting, nothing is said',
+    L.askToSignIn('connecting', null, shelf), false);
+  eq('once auth says nobody is here, it is said',
+    L.askToSignIn('signedout', null, shelf), true);
+  /* AND NEVER TO SOMEBODY SIGNED IN - the case that produced the flash, since
+     a signed-in user passes through connecting on every open. */
+  eq('a signed-in user is never asked',
+    L.askToSignIn('signedin', { uid: 'u' }, shelf), false);
+  eq('nor while their sign-in is still landing',
+    L.askToSignIn('connecting', { uid: 'u' }, shelf), false);
+  /* AND AN EMPTY SHELF IS NOT WORTH KEEPING ANYWHERE YET. */
+  eq('an empty shelf is not asked either',
+    L.askToSignIn('signedout', null, []), false);
+}
+
 sec('re-filing a bottle takes its note with it');
 {
   /* BZ re-filed seven keys on 2026-10-05 and his tasting note for the

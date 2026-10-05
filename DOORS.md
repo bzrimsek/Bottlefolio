@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 938 |
+| functions | 940 |
 | tables | 222 |
-| carrying a stated purpose | 743 |
+| carrying a stated purpose | 744 |
 
 ## Tables
 
@@ -272,6 +272,7 @@ QUESTION, not the name you were going to use.
 - **`L.askScore`** — What each ask has actually produced.
 - **`L.askState`** — _no comment above it_
 - **`L.askStem`** — THE STEM OF A WORD, roughly, because the reference is searched by substring
+- **`L.askToSignIn`** — A status of `off` - the SDK never loaded - deliberately says nothing, since
 - **`L.askWords`** — Lowercased here, which the stop list and every later `includes` both need
 - **`L.asUids`** — WHO IS WORTH READING BY NAME (probeCandidates), bounded in two tiers.
 - **`L.auditFix`** — WHAT A FINDING WOULD CHANGE
@@ -592,6 +593,7 @@ QUESTION, not the name you were going to use.
 - **`L.isProductCode`** — A QR CODE IS NOT A BARCODE, and a whisky label often carries both.
 - **`L.isSealed`** — What a bottle's status MEANS, in one place
 - **`L.isWhisky`** — _no comment above it_
+- **`L.joinHits`** — TWO READINGS OF ONE QUERY, JOINED, FIRST ONE WINNING ORDER
 - **`L.joinMeText`** — and what to look for.
 - **`L.joinParts`** — PARTS JOINED INTO A SENTENCE, without doubling a stop
 - **`L.judgeListing`** — _no comment above it_
@@ -1033,7 +1035,7 @@ QUESTION, not the name you were going to use.
 - **`L.shopNorm`** — GIVEN THE BRAND REGISTRY it keeps the words the name OPENS with when those
 - **`L.shopSearch`** — _no comment above it_
 - **`L.shopSeed`** — Which value a Shop form field starts with, and where it came from
-- **`L.shortIds`** — A LIST OF ACCOUNTS AS THE LOG SHOWS THEM
+- **`L.shortIds`** — _no comment above it_
 - **`L.shouldLookUp`** — _no comment above it_
 - **`L.shouldResetLocal`** — _no comment above it_
 - **`L.showDate`** — A DATE AS AN AMERICAN READS IT.
