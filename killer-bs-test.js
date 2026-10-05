@@ -2138,6 +2138,56 @@ sec('nothing you own is offered back to you');
     L.prospectAsk(cat.shipped, cat, bottles, library, {}, null), null);
 }
 
+sec('an identity, namespaced, aligned with whiskybase');
+{
+  /* BZ, 2026-10-05: "moving to an ID serves us better if we ever get 3rd party
+     canon ... if we can find how Whiskybase structures their key maybe we can
+     align." They use WB<number> for one bottling and BG<number> for bottles a
+     missing bottle code cannot tell apart, grouped - which is this app's own
+     two levels: an entry is a bottling, and the identity L.shelfKeyOf answers
+     is a bottle group. */
+  eq('a whiskybase id is read however it is written',
+    [L.identString('WB37719'), L.identString('wb:37719'),
+     L.identString('37719')],
+    ['wb:37719', 'wb:37719', 'wb:37719']);
+  eq('a bottle group keeps its own level',
+    L.identString('BG124'), 'bg:124');
+  eq('and ours says so too', L.identString('local:ardbeg_ten'),
+    'local:ardbeg_ten');
+  /* ANYTHING IT CANNOT PLACE IS NOTHING, because a half-read identity is
+     worse than none. */
+  eq('a source nobody knows is refused',
+    [L.identString('zz:1'), L.identString(''), L.identString('  ')],
+    ['', '', '']);
+
+  /* THE READER ITSELF, directly: it is the part a third party's data meets
+     first, and it answers what the identity IS as well as how it is written. */
+  eq('a bare number is a whiskybase id, as their own api reads it',
+    JSON.stringify(L.parseIdent('37719')), '{"source":"wb","id":"37719"}');
+  eq('and a group keeps its level',
+    JSON.stringify(L.parseIdent('BG124')), '{"source":"bg","id":"124"}');
+  eq('a source nobody knows is not half-read, it is nothing',
+    [L.parseIdent('zz:1'), L.parseIdent(''), L.parseIdent(null)],
+    [null, null, null]);
+  /* BEST FIRST, because that order is the rule for taking canon on when the
+     migration needs it. */
+  eq('the sources are listed best first',
+    L.IDENT_SOURCES, ['wb', 'bg', 'local']);
+
+  /* AND THE WHOLE BUILD IS ADDITIVE: an entry with no identity answers
+     exactly what it answered before, which is every entry in his library
+     today. */
+  const lib = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten' } };
+  const bare = { k: 'ardbeg_ten', name: 'Ardbeg Ten' };
+  eq('an entry with no identity is unchanged',
+    L.shelfKeyOf(bare, lib, {}, null), 'id:lib:ardbeg_ten');
+  /* WHILE ONE THAT CARRIES CANON ANSWERS WITH IT. */
+  const withId = { ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten',
+    ident: 'WB37719' } };
+  eq('and one that carries canon answers with it, normalised',
+    L.shelfKeyOf(bare, withId, {}, null), 'id:wb:37719');
+}
+
 sec('one whisky on the shelf twice');
 {
   /* BZ found his duplicate Angel's Envy by searching "envy" and noticing one

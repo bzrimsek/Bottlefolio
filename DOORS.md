@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 942 |
-| tables | 222 |
-| carrying a stated purpose | 745 |
+| functions | 944 |
+| tables | 223 |
+| carrying a stated purpose | 748 |
 
 ## Tables
 
@@ -89,6 +89,7 @@ QUESTION, not the name you were going to use.
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.HOUSE_DRESS`** — WHAT A NAME HAS BEEN DRESSED UP WITH
+- **`L.IDENT_SOURCES`** — WHERE AN IDENTITY CAME FROM, BEST FIRST
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
 - **`L.IMPORT_FIELDS`** — WHICH FIELDS THIS ROW WOULD CHANGE, named so the preview can say
@@ -547,6 +548,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
 - **`L.identOf`** — _no comment above it_
+- **`L.identString`** — AND WRITTEN ONE WAY, so two records of one bottling cannot differ by a
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
 - **`L.importChanges`** — _no comment above it_
 - **`L.importKey`** — THE NAME, FOR DECIDING WHETHER IT IS THE SAME BOTTLE
@@ -784,6 +786,7 @@ QUESTION, not the name you were going to use.
 - **`L.parseCandidates`** — _no comment above it_
 - **`L.parseCSV`** — doubled quotes, CRLF, and a trailing newline.
 - **`L.parseDelimited`** — Rows and columns, however they arrive
+- **`L.parseIdent`** — READ AN IDENTITY, HOWEVER IT IS WRITTEN
 - **`L.parseLookup`** — opts.needIdentity - true unless said otherwise
 - **`L.parseMash`** — What the printed sentence actually says, as data
 - **`L.parsePlace`** — _no comment above it_
