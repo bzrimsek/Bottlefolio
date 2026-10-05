@@ -29356,8 +29356,19 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     const cBot = [{ k: 'seagrass', status: 'open' }];
     eq('a merged bottle is not lost - it shows under what it was merged into',
       L.showsUnder(cCat, cGrave, 'seagrass'), 'seagrass_16_year_old');
-    eq('so it is not reported as a bottle the shelf cannot show',
-      L.unlistedBottles(cCat, cBot, cGrave).length, 0);
+    /* AND IT IS STILL WAITING TO BE FILED PROPERLY. The line asks whether a
+       bottle is filed under the key it shows under, not whether it can be
+       shown at all - it shows under the heir, and the key on the bottle is
+       one nothing else matches. Counting only the unshowable while the
+       button re-files the mis-filed is how the sentence and the button came
+       to disagree (2026-10-05). */
+    eq('and it is still filed under a key nothing else uses',
+      L.unlistedBottles(cCat, cBot, cGrave).length, 1);
+    /* A BOTTLE FILED CORRECTLY IS NOT, which is what keeps this from
+       reporting the whole shelf. */
+    eq('while one filed correctly is not reported',
+      L.unlistedBottles(cCat, [{ k: 'seagrass_16_year_old', status: 'open' }],
+        cGrave).length, 0);
     eq('and putting it back files it under the heir, never under itself',
       L.rekeyPlan(cCat, cBot, cGrave).map(p => p.from + '->' + p.to),
       ['seagrass->seagrass_16_year_old']);

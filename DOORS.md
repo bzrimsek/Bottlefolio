@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 937 |
 | tables | 221 |
-| carrying a stated purpose | 741 |
+| carrying a stated purpose | 742 |
 
 ## Tables
 
@@ -1131,7 +1131,7 @@ QUESTION, not the name you were going to use.
 - **`L.typeKey`** — A TYPE OR A STYLE, SETTLED FOR COMPARING - and NOT through shopNorm, which
 - **`L.typeLabel`** — _no comment above it_
 - **`L.unFbKey`** — _no comment above it_
-- **`L.unlistedBottles`** — _no comment above it_
+- **`L.unlistedBottles`** — IS THIS BOTTLE FILED UNDER THE KEY IT SHOWS UNDER? Both answers are wrong
 - **`L.unlistedLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY
 - **`L.upcKey`** — 12-digit code is compared on its last 12.
 - **`L.upcRow`** — something stable to check.
