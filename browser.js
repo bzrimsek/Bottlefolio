@@ -292,6 +292,40 @@ function step(n) {
       + unseen.rows + ' rows drawn');
   }
 
+  /* AND EVERY FLIGHT POINTS AT SOMETHING REAL. A flight holds its bottles as
+     keys in f.core[].k - cards[].bottle is only the printed fallback - so it
+     was exposed to the fault that hid 43 bottles: a flight naming one of them
+     would have called that bottle missing and sent him to buy a whisky he
+     owns. 40 flights and 240 keyed pours on his shelf the night this was
+     written, none of them dangling.
+
+     NO FLIGHTS IS A FAILURE, not a pass. The walk loads his real flights; if
+     that ever stopped, a check that found zero pours would stay green for
+     ever and prove nothing. */
+  const fl = await page.evaluate(() => {
+    const flights = Object.values(S.customFlights || {});
+    const bad = [];
+    let keyed = 0;
+    flights.forEach(f => {
+      ((f && f.core) || []).forEach(pr => {
+        /* A blend is mixed rather than taken off the shelf, so it has
+           nothing to point at and nothing to check. */
+        if (!pr || !pr.k) return;
+        keyed++;
+        if (!S.catalog[pr.k]) bad.push(pr.k);
+      });
+    });
+    return { flights: flights.length, keyed: keyed, nbad: bad.length,
+      sample: bad.slice(0, 3) };
+  });
+  if (!fl.flights || !fl.keyed) {
+    failures.push('flights: nothing to check - ' + fl.flights + ' flight(s) and '
+      + fl.keyed + ' keyed pour(s), so this check proves nothing');
+  } else if (fl.nbad) {
+    failures.push('flights: ' + fl.nbad + ' pour(s) name a bottle no catalogue '
+      + 'has - ' + fl.sample.join(', '));
+  }
+
   const tiles = await page.locator('#shelfList .tile').count();
   if (!tiles) failures.push('shelf: no type tiles');
   else {
