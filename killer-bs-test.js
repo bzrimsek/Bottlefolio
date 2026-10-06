@@ -5359,11 +5359,15 @@ eq('and no note on a bottle is no terms', L.palateOf({}).all, []);
      and is met by every flavour there is on a shelf of three hundred, which
      made the axis read 100% and say nothing. */
   const spread = L.flavourSpread(Object.values(fc), 3);
-  eq('the bar is a twentieth of the described shelf, never below the floor',
-    spread.enough, 3);
-  eq('a big shelf raises it', L.flavourSpread(
+  /* THREE, LIKE EVERY OTHER AXIS. The bar was a twentieth of the described
+     shelf, which on BZ's is sixteen - so fifteen bottles tasting of cedar
+     read as ONE short of a comparison and five read as eleven short (BZ,
+     2026-10-06). Forty-three families is a reason for the DENOMINATOR to
+     be large, not for the bar to be. */
+  eq('the bar is three, whatever the shelf', spread.enough, 3);
+  eq('and a big shelf does not raise it', L.flavourSpread(
     Array.from({ length: 200 }, (x, i) =>
-      mk('b' + i, { nose: 'oak', palate: 'caramel' })), 3).enough, 10);
+      mk('b' + i, { nose: 'oak', palate: 'caramel' })), 3).enough, 3);
   eq('what it holds and what it is short of are both named',
     [spread.held.indexOf('oak') >= 0, spread.gaps.some(g => g.name === 'tea')],
     [true, true]);
@@ -7260,25 +7264,22 @@ const bare = { k: 'c', name: 'C' };
   eq('and a stated age always wins',
     L.ageFloorOf({ sub: 'scotch', name: 'Lagavulin 16', age: 16 }), 16);
 
-  /* THE RUNGS ARE READ OFF THE LIBRARY, not asserted. The asserted seven
-     covered 144 of the 359 aged entries in BZ's library, missed the whole
-     4-to-8 band, and kept 21 - which carries four bottlings in 711. */
-  const manyAged = {};
-  [[4, 40], [5, 30], [6, 35], [10, 43], [12, 43], [13, 9], [30, 11]]
-    .forEach(([age, n]) => {
-      for (let i = 0; i < n; i++) manyAged['w' + age + '_' + i] =
-        { name: 'w' + age + '_' + i, age: age };
-    });
-  const derived = L.ageTiersFrom(manyAged);
-  eq('an age the library actually bottles at is a rung',
-    derived.indexOf(4) >= 0 && derived.indexOf(30) >= 0, true);
-  /* AND A SHOULDER IS NOT A RUNG: 13 sits beside 12, which is four times
-     its size. */
-  eq('a shoulder of a peak is not', derived.indexOf(13), -1);
-  /* A THIN LIBRARY SAYS NOTHING RATHER THAN SOMETHING WRONG. */
-  eq('too thin to derive falls back to the asserted tiers',
-    L.ageTiersFrom({ a: { name: 'a', age: 12 } }), L.AGE_TIERS);
-  eq('and so does no library at all', L.ageTiersFrom(null), L.AGE_TIERS);
+  /* FIVE-YEAR BANDS, which is how whisky is talked about (BZ, 2026-10-06:
+     "can we 10-14, 15-19, 20-24, 25-29, 30+"). The derived rungs before
+     them were honest about what the library bottles at and unreadable as a
+     ladder: eleven of them, unevenly spaced, each printed as a bare number
+     that looked like an exact age. */
+  eq('the bands are five years wide', L.AGE_BANDS,
+    [0, 5, 10, 15, 20, 25, 30]);
+  const banded = L.ageRungs([{ age: 3 }, { age: 12 }, { age: 40 }], null);
+  eq('and are named as ranges', banded.label.join(','),
+    'under 5,5–9,10–14,15–19,20–24,25–29,30+');
+  /* THE BOTTOM TAKES EVERYTHING BELOW AND THE TOP EVERYTHING ABOVE, so
+     nothing falls between two bands. */
+  eq('nothing falls between bands',
+    banded.counts.reduce((a, b) => a + b, 0), 3);
+  eq('a forty year old is in the top band',
+    banded.counts[banded.all.length - 1], 1);
 
   /* ONE CLEARS A RUNG, which is age's exception to the three-bottle rule: a
      thirty year old is one bottle by nature and asking for three is asking
@@ -7287,17 +7288,18 @@ const bare = { k: 'c', name: 'C' };
   const aged = [{ age: 15 }, { age: 17 }, { sub: 'scotch', name: 'NAS' }];
   const rungs = L.ageRungs(aged, null);
   eq('one bottle clears a rung', rungs.held.indexOf('15') >= 0, true);
-  eq('and a rung covers the three years above it',
-    rungs.counts[L.AGE_TIERS.indexOf(15)], 2);
-  eq('a rung nothing reaches is a gap one bottle short',
+  /* A BAND REACHES THE NEXT ONE, so a 17 year old sits with the 15s. */
+  eq('and a band reaches the next one',
+    rungs.counts[L.AGE_BANDS.indexOf(15)], 2);
+  eq('a band nothing reaches is a gap one bottle short',
     rungs.gaps.filter(g => g.name === '30')[0].short, 1);
   /* AND THE NO-AGE SCOTCH LANDS AT THREE, which the law guarantees - and
      ON A RUNG, because the bottom one takes everything below it. Leaving it
      between rungs put 104 of BZ's bottles on no rung at all, most of them
      the ones his labels say nothing about (2026-10-06). */
   const nas = L.ageRungs([{ sub: 'scotch', name: 'NAS' }], null);
-  eq('a bottle with no age statement stands on the bottom rung',
-    nas.held, [String(L.AGE_TIERS[0])]);
+  eq('a bottle with no age statement stands on the bottom band',
+    nas.held, [String(L.AGE_BANDS[0])]);
   /* AND NOTHING FALLS BETWEEN TWO RUNGS, nor above the top one. */
   const spread = L.ageRungs([{ age: 21 }, { age: 23 }, { age: 40 },
     { sub: 'scotch', name: 'NAS' }], null);
@@ -7435,6 +7437,49 @@ const bare = { k: 'c', name: 'C' };
   eq('which is the other part', /judgment/.test(parts.source), true);
   eq('and the body still ends as a sentence',
     /\.$/.test(parts.body), true);
+
+  /* WHAT THE AXIS HOLDS, IN ITS OWN ORDER. Sorted by headcount it read as
+     shuffled - proof bands out of numerical order, age bands out of
+     sequence - and every row claimed to be "your thinnest", which on 124
+     one-finish bottles and 55 at cask strength is not a claim anybody would
+     make (BZ, 2026-10-06: "114 with one finish - my thinnest?", "55 is not
+     thin"). */
+  const ordered = L.axisHeld({ id: 'strength',
+    order: ['under 90', 'the 90s', '100 to 110', '110 to 120',
+      'above 120'],
+    tally: [53, 0, 0, 55, 27] });
+  eq('the rows follow the axis, not the headcount',
+    ordered.map(r => r.name),
+    ['under 90', '110 to 120', 'above 120']);
+  /* EVERY BUCKET THE SHELF HOLDS, not the three smallest: `thin` is
+     capped at three and using it as the list showed three of
+     Strength's five bands (BZ, 2026-10-06). */
+  eq('and a band holding nothing is not listed', ordered.length, 3);
+  /* AND EXACTLY ONE IS THE THINNEST, the one that actually is. */
+  eq('only the smallest is called the thinnest',
+    ordered.filter(r => r.thinnest).map(r => r.name), ['above 120']);
+
+  /* AN AGE BAND IS A RANGE AND THE ROW SAYS SO. */
+  const ageAx = { id: 'age', order: ['0', '5', '10'],
+    rungLabel: ['under 5', '5–9', '10–14'] };
+  eq('a band is named as a range', L.axisLabelOf(ageAx, '5'), '5–9');
+  eq('and anything else is called what it is called',
+    L.axisLabelOf({ id: 'wood', order: ['wine'] }, 'wine'), 'wine');
+
+  /* AND WHAT COUNTS AS ONE, where the name does not say it: "not oak" and
+     "other oak" are buckets nobody can shop for without being told what is
+     in them (BZ: "not oak and other oak could use some ideas as to what
+     fits"). The examples come out of L.CANON, so a bucket is never described
+     one way in the citation and another on the row. */
+  eq('a bucket whose name says nothing offers examples',
+    /amburana/.test(L.axisExamples({ id: 'species' }, 'not oak')), true);
+  eq('and an axis with no canon list offers none',
+    L.axisExamples({ id: 'smoke' }, 'heavy'), '');
+
+  /* A LADDER'S RUNGS CARRY THEIR OWN NAMES. */
+  eq('the labels ride on the axis',
+    (L.named({ id: 'age' }, ['a', 'b']) || {}).rungLabel, ['a', 'b']);
+  eq('and nothing is required', L.named(null, ['a']), null);
 
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
@@ -13594,19 +13639,22 @@ sec('§233 six axes, no total');
      Campbeltown single malt Scotch left the number without a noun. */
   eq('a started gap credits what you already hold',
     L.axisGapLine({ name: 'Campbeltown', n: 1, short: 2 }),
-    'You have 1 Campbeltown \u2014 2 more make it a comparison.');
-  eq('and without a name it still reads',
+    '1 on the shelf — 2 more make it a comparison.');
+  /* THE ROW ALREADY SAYS WHAT IT IS, so the line does not repeat it: on
+     Regions eight rows each said their own title twice (BZ, 2026-10-06:
+     "regions are not as bad but redundant"). */
+  eq('and says nothing of the name, which the row carries',
     L.axisGapLine({ n: 1, short: 2 }),
-    'You have 1 \u2014 2 more make it a comparison.');
-  eq('an unowned gap names the thing too',
+    L.axisGapLine({ name: 'Campbeltown', n: 1, short: 2 }));
+  eq('and an unowned one does not name it either',
     L.axisGapLine({ name: 'Lowland', n: 0, short: 3 }),
-    'Nothing from Lowland on the shelf yet.');
+    'None on the shelf yet.');
   eq('one short agrees with its verb',
     /1 more makes it/.test(L.axisGapLine({ n: 2, short: 1 })), true);
   eq('something you own none of says so plainly',
-    L.axisGapLine({ n: 0, short: 3 }), 'Nothing on the shelf yet.');
+    L.axisGapLine({ n: 0, short: 3 }), 'None on the shelf yet.');
   eq('a missing gap is not an error',
-    L.axisGapLine(null), 'Nothing on the shelf yet.');
+    L.axisGapLine(null), 'None on the shelf yet.');
 
   /* Every gap an axis reports has to be openable, so every one needs a
      name and a count. */
@@ -15575,7 +15623,9 @@ sec('§250 an edge point without the span between');
     });
     return L.shelfAxes(cat, bs).filter(x => x.id === 'age')[0];
   };
-  eq('five contiguous tiers of seven', mk([10, 12, 15, 18, 21]).coverPct, 71);
+  /* FIVE-YEAR BANDS: 10, 12, 15, 18 and 21 fall in 10-14, 15-19 and
+     20-24, which is three of the seven. */
+  eq('three bands of seven', mk([10, 12, 15, 18, 21]).coverPct, 43);
   eq('and skipping the middle costs',
     mk([10, 30]).coverPct < mk([10, 12]).coverPct, true);
 

@@ -13,14 +13,15 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 970 |
-| tables | 233 |
-| carrying a stated purpose | 774 |
+| functions | 973 |
+| tables | 234 |
+| carrying a stated purpose | 778 |
 
 ## Tables
 
 - **`L.ACTIONS`** — THE INVENTORY OF FUNDAMENTAL ACTIONS.
 - **`L.ADJACENT_TYPES`** — Symmetric on purpose
+- **`L.AGE_BANDS`** — THE TWO BELOW TEN ARE HIS TOO, even though he started the list at 10-14:
 - **`L.AGE_FLOOR_SUB`** — AND NOTHING FOR A BARE BOURBON, because there is no minimum for one
 - **`L.AGE_FLOORS`** — MEASURED: all three floors are below L.AGE_TIERS' first tier of ten, so they land in
 - **`L.AGE_TIERS`** — THE ASSERTED AGES, kept as the FALLBACK rather than the answer
@@ -271,7 +272,6 @@ QUESTION, not the name you were going to use.
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
 - **`L.agePrior`** — _no comment above it_
 - **`L.ageRungs`** — _no comment above it_
-- **`L.ageTiersFrom`** — _no comment above it_
 - **`L.allReserved`** — IS EVERY WORD OF THIS SPOKEN FOR? ALL of them, never any of them
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
@@ -303,9 +303,12 @@ QUESTION, not the name you were going to use.
 - **`L.axisEffect`** — What one bottle would do to the shape
 - **`L.axisEffectLine`** — The same effect, in words, so every surface says it identically.
 - **`L.axisEvenness`** — PIELOU'S EVENNESS, J = H' / ln(S), which is the Shannon entropy of the
+- **`L.axisExamples`** — AND WHAT COUNTS AS ONE, where the name does not say it
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
-- **`L.axisGapLine`** — One gap, in words
+- **`L.axisGapLine`** — _no comment above it_
+- **`L.axisHeld`** — WHAT THE AXIS HOLDS, IN ITS OWN ORDER, for a spoke with nothing left to
 - **`L.axisLabel`** — _no comment above it_
+- **`L.axisLabelOf`** — THE NAME A ROW SHOWS
 - **`L.axisMaths`** — _no comment above it_
 - **`L.axisMathsParts`** — THE ARITHMETIC IN ITS PARTS, so a screen can give each its own line
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
@@ -740,6 +743,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameAgrees`** — bottling, whatever else agrees
 - **`L.nameBuckets`** — THE SAME BOTTLE TWICE - two half-filled entries, two lookups, and an
 - **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
+- **`L.named`** — A LADDER'S RUNGS CARRY THEIR OWN NAMES
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromKey`** — THE WORDS BEHIND A KEY
 - **`L.nameFromShopPage`** — the price alongside it.
