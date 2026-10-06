@@ -7071,6 +7071,79 @@ const bare = { k: 'c', name: 'C' };
     L.shopNorm(a.name, brands) === L.shopNorm(b.name, brands), false);
   eq('and the taxonomy says they are one bottle',
     L.bottleIdentity(a, brands) === L.bottleIdentity(b, brands), true);
+
+  /* WHETHER TWO IDENTITIES MAY BE ONE WHISKY WRITTEN TWICE. The pair checks
+     used to ask whether the fingerprints were EQUAL, which inverts what they
+     are for - they look for entries that disagree in NAME and are one whisky,
+     so demanding agreement first left only what the exact-duplicate list had
+     already taken. Every duplicate finding in BZ's 706-entry library was
+     suppressed (2026-10-05: "No clean ups visible"). */
+  const id = (type, house, brand, expr, style, marks) =>
+    [type, house, brand, expr, style].concat(marks || []).join('|');
+  const FLAG = id('bourbon', 'woodford reserve', 'woodford reserve', '',
+    'bourbon', ['p904']);
+  const FULL = id('bourbon', 'woodford reserve',
+    'woodford reserve distillers select', '', 'proprietary batch', ['p904']);
+  eq('an identity matches itself', L.identityPairable(FLAG, FLAG), true);
+  /* A SUB-RANGE WRITTEN OUT IN FULL. The registry carries "Woodford Reserve
+     Distiller's Select" as a brand of its own, so the flagship written out
+     read as a different house - which is the case being looked for. */
+  eq('a brand that nests in the other is a sub-range, not a difference',
+    L.identityPairable(FLAG, FULL), true);
+  /* AND A STYLE THAT ONLY REPEATS THE TYPE SAYS NOTHING, so it cannot
+     disagree with one that says something. */
+  eq('a style that repeats the type is not a difference',
+    L.identityPairable(
+      id('bourbon', 'h', 'b', '', 'bourbon', ['p900']),
+      id('bourbon', 'h', 'b', '', 'small batch', ['p900'])), true);
+  eq('but two real styles that differ are',
+    L.identityPairable(
+      id('bourbon', 'h', 'b', '', 'proprietary batch', ['p900']),
+      id('bourbon', 'h', 'b', '', 'small batch', ['p900'])), false);
+  /* EVERYTHING ELSE STILL HAS TO MATCH EXACTLY, which is what keeps the
+     pairs BZ rejected out: a bourbon is never a rye, two houses are two
+     houses, and a cask finish is a different bottling. */
+  eq('a bourbon is not a rye', L.identityPairable(
+    id('bourbon', 'h', 'b', '', '', ['p900']),
+    id('rye', 'h', 'b', '', '', ['p900'])), false);
+  eq('two houses are two houses', L.identityPairable(
+    id('bourbon', 'bardstown bourbon company', 'b', '', '', ['p900']),
+    id('bourbon', 'old bardstown', 'b', '', '', ['p900'])), false);
+  eq('two unrelated brands are not a sub-range', L.identityPairable(
+    id('bourbon', 'h', 'basil hayden', '', '', ['p900']),
+    id('bourbon', 'h', 'elmer t lee', '', '', ['p900'])), false);
+  eq('a finish on one side only is a different bottling',
+    L.identityPairable(
+      id('rye', 'h', 'heavens door', '', '', ['p900']),
+      id('rye', 'h', 'heavens door', '', '', ['cvosges oak', 'p900'])), false);
+  eq('and so is a different strength', L.identityPairable(
+    id('bourbon', 'h', 'b', '', '', ['p900']),
+    id('bourbon', 'h', 'b', '', '', ['p1070'])), false);
+  /* THE EXPRESSION IS IGNORED ON PURPOSE: the words one name carries and the
+     other does not are the whole of what these checks look at. */
+  eq('the expression is what the pair is about, so it is not a veto',
+    L.identityPairable(
+      id('bourbon', 'h', 'b', 'sampleroomcollection', '', ['age25']),
+      id('bourbon', 'h', 'b', '', '', ['age25'])), true);
+  /* NOTHING IS NOT AN IDENTITY. */
+  eq('an empty identity pairs with nothing', L.identityPairable('', FLAG), false);
+  eq('and neither does a missing one', L.identityPairable(FLAG, null), false);
+
+  /* A BOURBON'S OWN BARREL IS NOT A FINISH, whatever wood is named inside the
+     phrase. 27 CFR 5.22 makes a new charred oak barrel the definition of a
+     bourbon rather than something done to one, and "new charred american
+     oak" - one entry in the library - carried a cask mark no bourbon should
+     carry, which is what kept the Woodford pair apart. */
+  eq('new charred american oak is not a finish',
+    L.FINISH_NOT.test('new charred american oak'), true);
+  eq('nor is new american oak', L.FINISH_NOT.test('new american oak'), true);
+  eq('and the ones it already refused still are',
+    ['new charred oak', 'virgin oak', 'charred oak', 'standard']
+      .every(f => L.FINISH_NOT.test(f)), true);
+  /* AND A REAL FINISH IS STILL A REAL FINISH. */
+  eq('a wine cask is still a finish',
+    ['oloroso', 'port', 'vosges oak', 'cognac'].some(f => L.FINISH_NOT.test(f)),
+    false);
   /* THE BUCKETS ARE THE IDENTITY'S, so a group forms across two spellings. */
   const byNorm = {};
   [a, b].forEach(p => {

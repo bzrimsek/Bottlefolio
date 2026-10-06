@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 948 |
+| functions | 949 |
 | tables | 224 |
 | carrying a stated purpose | 752 |
 
@@ -305,7 +305,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottleContext`** — ONLY FOR A WHISKEY YOU OWN
 - **`L.bottleFacts`** — _no comment above it_
 - **`L.bottleFrom`** — _no comment above it_
-- **`L.bottleIdentity`** — IT IS RESOLVED ON THE LIBRARY ENTRY, never on each person's copy - ask
+- **`L.bottleIdentity`** — _no comment above it_
 - **`L.bottleLabel`** — How a bottle is named to the person who owns it.
 - **`L.bottleMarks`** — THE MARKS THIS BOTTLE CARRIES, from its fields first and its name second
 - **`L.bottleOrigin`** — HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED
@@ -550,6 +550,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
 - **`L.identIndex`** — EVERY ISSUED IDENTITY IN THE LIBRARY, AND WHERE IT LIVES NOW
+- **`L.identityPairable`** — EVERYTHING ELSE MATCHES EXACTLY - type, house, age, proof, finish, special
 - **`L.identOf`** — _no comment above it_
 - **`L.identString`** — AND WRITTEN ONE WAY, so two records of one bottling cannot differ by a
 - **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
