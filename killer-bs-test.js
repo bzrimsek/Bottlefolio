@@ -7196,6 +7196,89 @@ const bare = { k: 'c', name: 'C' };
   eq('and it is named as an absence rather than a choice',
     L.NOT_A_CHOICE['oak, unsaid'], 1);
 
+  /* REACH TOPS OUT; DEPTH DOES NOT (BZ, 2026-10-05: "new stuff always comes
+     and we should never be satisfied"). Reach is how much of the denominator
+     you have met, against a denominator that GROWS when a regulator adds a
+     class; depth is how many bottles stand behind each thing you hold, which
+     has no ceiling. */
+  const shallow = L.scoreAxis('wood', ['wine', 'spirits'], 4, [],
+    [3, 3, 0, 0], ['wine', 'spirits', 'beer/ale', 'new oak']);
+  const deepEr = L.scoreAxis('wood', ['wine', 'spirits'], 4, [],
+    [30, 30, 0, 0], ['wine', 'spirits', 'beer/ale', 'new oak']);
+  eq('two shelves meeting the same buckets have the same reach',
+    shallow.pct, deepEr.pct);
+  eq('and different depth', deepEr.depth > shallow.depth, true);
+  eq('depth is bottles per thing you hold', shallow.depth, 3);
+  eq('and has no ceiling', deepEr.depth, 30);
+  eq('an axis holding nothing is nought deep',
+    L.scoreAxis('wood', [], 4, [], [0, 0, 0, 0],
+      ['wine', 'spirits', 'beer/ale', 'new oak']).depth, 0);
+
+  /* A BOTTLE WITH NO AGE STATEMENT IS NOT AGELESS: the law gives it a floor
+     (BZ: "Remember law for some nas in bottles 2,3,4"). */
+  eq('a no-age Scotch is three by law',
+    L.ageFloorOf({ sub: 'scotch', name: 'Ardbeg Wee Beastie' }), 3);
+  eq('bottled in bond is four',
+    L.ageFloorOf({ sub: 'bourbon', name: 'Old Grand-Dad Bottled in Bond' }), 4);
+  eq('a straight American whiskey is two',
+    L.ageFloorOf({ sub: 'bourbon',
+      name: 'Buffalo Trace Kentucky Straight Bourbon' }), 2);
+  /* AND NOTHING FOR A BARE BOURBON, because there is no minimum for one -
+     a floor is what the law guarantees, never a guess at what is likely. */
+  eq('but a bourbon claiming nothing gets no floor',
+    L.ageFloorOf({ sub: 'bourbon', name: 'Something Bourbon' }), 0);
+  eq('and a stated age always wins',
+    L.ageFloorOf({ sub: 'scotch', name: 'Lagavulin 16', age: 16 }), 16);
+
+  /* THE RUNGS ARE READ OFF THE LIBRARY, not asserted. The asserted seven
+     covered 144 of the 359 aged entries in BZ's library, missed the whole
+     4-to-8 band, and kept 21 - which carries four bottlings in 711. */
+  const manyAged = {};
+  [[4, 40], [5, 30], [6, 35], [10, 43], [12, 43], [13, 9], [30, 11]]
+    .forEach(([age, n]) => {
+      for (let i = 0; i < n; i++) manyAged['w' + age + '_' + i] =
+        { name: 'w' + age + '_' + i, age: age };
+    });
+  const derived = L.ageTiersFrom(manyAged);
+  eq('an age the library actually bottles at is a rung',
+    derived.indexOf(4) >= 0 && derived.indexOf(30) >= 0, true);
+  /* AND A SHOULDER IS NOT A RUNG: 13 sits beside 12, which is four times
+     its size. */
+  eq('a shoulder of a peak is not', derived.indexOf(13), -1);
+  /* A THIN LIBRARY SAYS NOTHING RATHER THAN SOMETHING WRONG. */
+  eq('too thin to derive falls back to the asserted tiers',
+    L.ageTiersFrom({ a: { name: 'a', age: 12 } }), L.AGE_TIERS);
+  eq('and so does no library at all', L.ageTiersFrom(null), L.AGE_TIERS);
+
+  /* ONE CLEARS A RUNG, which is age's exception to the three-bottle rule: a
+     thirty year old is one bottle by nature and asking for three is asking
+     for a mortgage. A rung covers the three years above it, because a 16 and
+     a 17 are both the back half of 15. */
+  const aged = [{ age: 15 }, { age: 17 }, { sub: 'scotch', name: 'NAS' }];
+  const rungs = L.ageRungs(aged, null);
+  eq('one bottle clears a rung', rungs.held.indexOf('15') >= 0, true);
+  eq('and a rung covers the three years above it',
+    rungs.counts[L.AGE_TIERS.indexOf(15)], 2);
+  eq('a rung nothing reaches is a gap one bottle short',
+    rungs.gaps.filter(g => g.name === '30')[0].short, 1);
+  /* AND THE NO-AGE SCOTCH LANDS AT THREE, which is below every asserted
+     rung, so it clears none of them and is not counted twice either. */
+  eq('a bottle with no age statement is placed by the law, not discarded',
+    L.ageRungs([{ sub: 'scotch', name: 'NAS' }], null).held.length, 0);
+  eq('an empty shelf holds no rungs', L.ageRungs([], null).held, []);
+
+  /* THE PROOF BANDS, COUNTED FIRST AND NAMED AFTER, because gapsOf
+     stringifies its key and would turn a band into "[object Object]". */
+    const pb = L.proofBands([{ proof: 95 }, { proof: 96 }, { proof: 97 },
+    { proof: 125 }], 3);
+  eq('three in a band covers it', pb.held.indexOf('the 90s') >= 0, true);
+  eq('one does not', pb.held.indexOf('above 120'), -1);
+  eq('and the gap says how many short',
+    pb.gaps.filter(g => g.name === 'above 120')[0].short, 2);
+  eq('every band is named, held or not', pb.all.length, L.PROOF_BANDS.length);
+  eq('a band is named by its label, never by its object',
+    pb.gaps.every(g => typeof g.name === 'string'), true);
+
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
     L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);
@@ -13221,9 +13304,19 @@ sec('§233 six axes, no total');
   const threeAx = L.shelfAxes(three.cat, three.bs)
     .filter(a => a.id === 'breadth')[0];
   eq('three does', threeAx.have, 1);
-  eq('out of the nine worth covering', threeAx.total, 9);
-  eq('and the percentage follows', threeAx.pct, 11);
-  eq('the rest are named as missing', threeAx.missing.length, 8);
+  /* EIGHTEEN WAYS OF MAKING WHISKEY, read off L.CANON so the denominator and
+     the citations cannot drift apart. Nine were asserted here before, every
+     one of which survives inside the eighteen (BZ, 2026-10-05: "yes 18 is
+     better"). 5.143's own list could not be used alone: it calls the whole
+     of Scotland one class, which would have lost single malt against
+     blended malt against blended grain. */
+  eq('out of the eighteen worth covering', threeAx.total, 18);
+  eq('and the percentage follows', threeAx.pct, 6);
+  eq('the rest are named as missing', threeAx.missing.length, 17);
+  eq('and the denominator is the canon list itself',
+    threeAx.total, L.CANON.kinds.length);
+  eq('every one of which cites something',
+    L.CANON.kinds.filter(k => !k.cite).map(k => k.id), []);
   eq('bourbon is not among them',
     threeAx.missing.indexOf('bourbon'), -1);
 
@@ -15100,7 +15193,7 @@ sec('§248 an axis is covered and spread, not just covered');
      one category present there is nothing yet to be uneven about. */
   const one = breadth(mk([[3, 'bourbon']]));
   eq('one category present is not called uneven', one.even, 100);
-  eq('and coverage still reads honestly', one.pct, 11);
+  eq('and coverage still reads honestly', one.pct, 6);
 
   /* The point of the change: full coverage alone no longer reads 100. */
   const ALL = L.CORE_MAKES;
@@ -15439,12 +15532,18 @@ sec('§253 how it is made, not where it is from');
     L.makeOf({ sub: 'scotch', style: 'Single Malt' }), 'single malt');
   eq('and so is a Japanese one',
     L.makeOf({ sub: 'japanese', style: 'single malt' }), 'single malt');
-  eq('and an American one',
-    L.makeOf({ sub: 'american single malt' }), 'single malt');
+  /* AN AMERICAN SINGLE MALT ANSWERS FOR ITSELF since the TTB gave it a class
+     of its own in 2025 - it was folded into `single malt` when it had no
+     bucket, and that is no longer true. */
+  eq('and an American one is its own kind',
+    L.makeOf({ sub: 'american single malt' }), 'american single malt');
+  /* SO IS A TENNESSEE WHISKEY, which BZ asked to stop being counted as a
+     bourbon (2026-10-05: "Make tennesee its own"). */
+  eq('a Tennessee whiskey is its own kind',
+    L.makeOf({ sub: 'tennessee' }), 'tennessee');
+  eq('however the label writes it',
+    L.makeOf({ style: 'Tennessee Whiskey' }), 'tennessee');
 
-  /* Tennessee is a bourbon that had to be made somewhere particular. */
-  eq('Tennessee whiskey is made as bourbon',
-    L.makeOf({ sub: 'tennessee' }), 'bourbon');
 
   /* Irish pot still is its own way of making and not a country. */
   eq('single pot still is a style',

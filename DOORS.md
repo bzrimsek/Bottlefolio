@@ -13,16 +13,17 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 959 |
+| functions | 963 |
 | tables | 232 |
-| carrying a stated purpose | 766 |
+| carrying a stated purpose | 768 |
 
 ## Tables
 
 - **`L.ACTIONS`** — THE INVENTORY OF FUNDAMENTAL ACTIONS.
 - **`L.ADJACENT_TYPES`** — Symmetric on purpose
+- **`L.AGE_FLOOR_SUB`** — AND NOTHING FOR A BARE BOURBON, because there is no minimum for one
 - **`L.AGE_FLOORS`** — MEASURED: all three floors are below L.AGE_TIERS' first tier of ten, so they land in
-- **`L.AGE_TIERS`** — single cask somebody happened to fill, not something to go and look for.
+- **`L.AGE_TIERS`** — THE ASSERTED AGES, kept as the FALLBACK rather than the answer
 - **`L.ALLOCATED`** — How hard a bottle is to actually buy
 - **`L.ASK_ORDER`** — WHICH GROUP ANSWERS FIRST
 - **`L.ASK_STOP`** — Function words and the generic verbs questions are built out of
@@ -45,7 +46,6 @@ QUESTION, not the name you were going to use.
 - **`L.CHORO`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.COLOUR_SCALE`** — THE COLOUR SCALE, off BZ's printed sheet (2026-09-20)
 - **`L.COLUMN_SCORERS`** — A field with several candidate columns is decided by EVIDENCE, not
-- **`L.CORE_MAKES`** — What KIND of whisky, as opposed to where it is from.
 - **`L.CORRECTABLE`** — _no comment above it_
 - **`L.COUNTRY_DEPTH`** — HOW MANY BOTTLES IT TAKES TO HAVE MET A COUNTRY, out of L.CANON rather
 - **`L.COUNTRY_OF_SUB`** — _no comment above it_
@@ -266,8 +266,11 @@ QUESTION, not the name you were going to use.
 - **`L.adoptOrphans`** — IT DOES NOT GUESS
 - **`L.ageCell`** — A PROOF IN THE SIDE COLUMN, drawn one way
 - **`L.ageFloor`** — _no comment above it_
+- **`L.ageFloorOf`** — AND NOTHING FOR A BARE BOURBON, because there is no minimum for one
 - **`L.ageFromName`** — THE AGE IN A NAME, for a bottle the catalog has never met - which on a
 - **`L.agePrior`** — _no comment above it_
+- **`L.ageRungs`** — _no comment above it_
+- **`L.ageTiersFrom`** — _no comment above it_
 - **`L.allReserved`** — IS EVERY WORD OF THIS SPOKEN FOR? ALL of them, never any of them
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
@@ -869,6 +872,7 @@ QUESTION, not the name you were going to use.
 - **`L.probeCandidates`** — _no comment above it_
 - **`L.project`** — _no comment above it_
 - **`L.promptNotesInLibrary`** — Which library entries are carrying a note we invented for a flight.
+- **`L.proofBands`** — THE STRENGTH SPOKE'S ARITHMETIC, lifted for the same reason as the age
 - **`L.proofCell`** — _no comment above it_
 - **`L.proofFaultSay`** — _no comment above it_
 - **`L.proofFit`** — HOW NEAR A STRENGTH IS TO THE ONE SOMEBODY DRINKS AT, nought to one (BZ,
