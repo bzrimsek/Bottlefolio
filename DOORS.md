@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 967 |
-| tables | 232 |
-| carrying a stated purpose | 770 |
+| functions | 968 |
+| tables | 233 |
+| carrying a stated purpose | 772 |
 
 ## Tables
 
@@ -111,6 +111,7 @@ QUESTION, not the name you were going to use.
 - **`L.LIBRARY_COLS`** — THE LIBRARY, AS A SPREADSHEET
 - **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
 - **`L.LIKELY_SOURCES`** — What each source is, in words, so a row says where it came from.
+- **`L.MAKE_FINER`** — WHICH PAIRS COUNT IS WRITTEN DOWN, not worked out from the strings
 - **`L.MAKE_OF`** — _no comment above it_
 - **`L.MAP_KEYS`** — A map key writes only the entries that changed
 - **`L.MAP_PLACES`** — Places to fly to
@@ -693,6 +694,7 @@ QUESTION, not the name you were going to use.
 - **`L.lostPostSay`** — WHAT TO SAY WHEN THE ANSWER DID NOT COME BACK
 - **`L.makeBackup`** — _no comment above it_
 - **`L.makeBuckets`** — _no comment above it_
+- **`L.makeFine`** — WHICH PAIRS COUNT IS WRITTEN DOWN, not worked out from the strings
 - **`L.makeOf`** — _no comment above it_
 - **`L.makeProposal`** — _no comment above it_
 - **`L.mapDelta`** — _no comment above it_

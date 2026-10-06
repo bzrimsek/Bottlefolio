@@ -7291,10 +7291,20 @@ const bare = { k: 'c', name: 'C' };
     rungs.counts[L.AGE_TIERS.indexOf(15)], 2);
   eq('a rung nothing reaches is a gap one bottle short',
     rungs.gaps.filter(g => g.name === '30')[0].short, 1);
-  /* AND THE NO-AGE SCOTCH LANDS AT THREE, which is below every asserted
-     rung, so it clears none of them and is not counted twice either. */
-  eq('a bottle with no age statement is placed by the law, not discarded',
-    L.ageRungs([{ sub: 'scotch', name: 'NAS' }], null).held.length, 0);
+  /* AND THE NO-AGE SCOTCH LANDS AT THREE, which the law guarantees - and
+     ON A RUNG, because the bottom one takes everything below it. Leaving it
+     between rungs put 104 of BZ's bottles on no rung at all, most of them
+     the ones his labels say nothing about (2026-10-06). */
+  const nas = L.ageRungs([{ sub: 'scotch', name: 'NAS' }], null);
+  eq('a bottle with no age statement stands on the bottom rung',
+    nas.held, [String(L.AGE_TIERS[0])]);
+  /* AND NOTHING FALLS BETWEEN TWO RUNGS, nor above the top one. */
+  const spread = L.ageRungs([{ age: 21 }, { age: 23 }, { age: 40 },
+    { sub: 'scotch', name: 'NAS' }], null);
+  eq('every bottle stands on exactly one rung',
+    spread.counts.reduce((a, b) => a + b, 0), 4);
+  eq('the top rung takes everything above it',
+    spread.counts[spread.all.length - 1], 1);
   eq('an empty shelf holds no rungs', L.ageRungs([], null).held, []);
 
   /* THE PROOF BANDS, COUNTED FIRST AND NAMED AFTER, because gapsOf
@@ -7376,6 +7386,29 @@ const bare = { k: 'c', name: 'C' };
   eq('and that gap is two short',
     pl.gaps.filter(g => g.name === L.PEAT_LABELS[2])[0].short, 2);
   eq('every level is named', pl.all.length, L.PEAT_LABELS.length);
+
+  /* THE MORE SPECIFIC OF A STYLE AND A SUB WINS. BZ's nine American single
+     malts carry sub "american single malt" and style "single malt", the
+     style is read first, so all nine answered as plain single malts: ASM
+     showed uncovered while single malt was inflated by nine (2026-10-06,
+     found by opening the app). */
+  eq('a sub naming the finer class beats a generic style',
+    L.makeFine({ sub: 'american single malt', style: 'single malt' }),
+    'american single malt');
+  /* AND A STYLE SAYING SOMETHING GENUINELY DIFFERENT KEEPS ITS ANSWER: a
+     Woodford blended malt whose sub is ASM is a blended malt. */
+  eq('but a different class is not overruled',
+    L.makeFine({ sub: 'american single malt', style: 'blended malt' }),
+    'blended malt');
+  /* WHICH PAIRS COUNT IS WRITTEN DOWN, not read off the strings. Asking
+     whether the longer name ENDS with the shorter is true of "single malt"
+     and "malt" too, and a US malt whisky - 51% malted barley in new charred
+     oak - is not a kind of single malt. It was promoted anyway. */
+  eq('a US malt whisky is not promoted to single malt',
+    L.makeFine({ sub: 'scotch', style: 'malt' }), 'malt');
+  eq('and every category still answers for itself',
+    L.CORE_MAKES.filter(st =>
+      L.makeFine({ sub: 'scotch', style: st }) !== st), []);
 
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
