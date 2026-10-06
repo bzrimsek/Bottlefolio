@@ -7086,6 +7086,50 @@ const bare = { k: 'c', name: 'C' };
     'woodford reserve distillers select', '', 'proprietary batch', ['p904']);
   eq('an identity matches itself', L.identityPairable(FLAG, FLAG), true);
 
+  /* HOW A SPOKE REACHED ITS NUMBER. Three formulas score eight spokes and
+     the chart printed only the answer, so two of them read as arithmetic
+     errors - Categories is 6 of 9 covered (67%) held unevenly enough to
+     score 69, and 67 x 69 is 46, while the sentence said "6 of 9" and never
+     mentioned the spread (BZ, 2026-10-05: "I want to revisit what math
+     drives each data point"). */
+  const SET = { id: 'breadth', label: 'Categories', of: 'ways of making whiskey',
+    pct: 46, coverPct: 67, even: 69, have: 6, total: 9 };
+  const setSay = L.axisMaths(SET);
+  eq('a set axis names both halves and the answer',
+    /46%/.test(setSay) && /67%/.test(setSay) && /69%/.test(setSay), true);
+  eq('and says what the count means',
+    /6 of 9 ways of making whiskey/.test(setSay), true);
+  /* AN EVEN SHELF IS SAID DIFFERENTLY FROM A LOPSIDED ONE. */
+  eq('an even axis says the two are close',
+    /sit evenly/.test(L.axisMaths(Object.assign({}, SET, { even: 95 }))), true);
+  eq('and a lopsided one says why 100 is out of reach',
+    /would still not reach 100/.test(setSay), true);
+
+  /* A LADDER IS NOT A SET: a rung missed BETWEEN two held costs more than
+     one not reached, and evenness is never applied. */
+  const LAD = { id: 'age', label: 'Age', of: 'age tiers',
+    pct: 71, coverPct: 71, even: 100, have: 5, total: 7 };
+  const ladSay = L.axisMaths(LAD);
+  eq('a ladder says it is a ladder', /ladder/.test(ladSay), true);
+  eq('and that spread is not applied',
+    /Spread is not applied/.test(ladSay), true);
+  eq('and it never quotes an evenness', /100%\)/.test(ladSay), false);
+
+  /* REGIONS HAS ITS OWN MEASURE, and the number beside it answers a
+     different question - which is what made it look wrong. */
+  const ORI = { id: 'origin', label: 'Regions', of: 'whiskey countries',
+    pct: 66, coverPct: 66, even: 100, have: 5, total: 15 };
+  const oriSay = L.axisMaths(ORI);
+  eq('regions explains the depth each country needs',
+    /depth each one needs/.test(oriSay), true);
+  eq('and says the count beside it is a different question',
+    /deep enough to compare/.test(oriSay), true);
+  /* EVERY AXIS SAYS SOMETHING, and every one of them says its own number. */
+  eq('every axis kind answers with its own pct',
+    [SET, LAD, ORI].every(a => L.axisMaths(a).indexOf(a.pct + '%') === 0), true);
+  eq('and nothing throws on an axis that is not there',
+    typeof L.axisMaths(null), 'string');
+
   /* THE KEY ALWAYS WINS. An entry does not hold its own key, the map does,
      and importAudit read the values alone - so every pair it raised carried
      two undefined keys, namePrefixPairs deduped them all onto the one id

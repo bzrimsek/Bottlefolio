@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 950 |
+| functions | 951 |
 | tables | 224 |
-| carrying a stated purpose | 752 |
+| carrying a stated purpose | 753 |
 
 ## Tables
 
@@ -293,6 +293,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — One gap, in words
 - **`L.axisLabel`** — _no comment above it_
+- **`L.axisMaths`** — In the engine rather than the screen because it is arithmetic, and because
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
 - **`L.barRows`** — pies: readers compare lengths better than angles.
