@@ -7410,6 +7410,32 @@ const bare = { k: 'c', name: 'C' };
     L.CORE_MAKES.filter(st =>
       L.makeFine({ sub: 'scotch', style: st }) !== st), []);
 
+  /* THE SOURCE AS A SENTENCE OF ITS OWN. canonSay answers a CLAUSE, and hung
+     off the end of the arithmetic it read "...rises only by spreading. - a
+     judgment - the species are botanical fact", with the judgment attached
+     to nothing (BZ, 2026-10-06, from a screenshot). */
+  eq('a judgment says it is one, first',
+    /^This one is a judgment rather than a rule: /
+      .test(L.canonSentence('bands', 'species')), true);
+  eq('and canon names where it comes from',
+    /^Where this comes from: /.test(L.canonSentence('bands', 'fill')), true);
+  eq('and a derived one says that instead',
+    /^This one is derived rather than ruled on: /
+      .test(L.canonSentence('bands', 'age')), true);
+  eq('nothing filed says nothing', L.canonSentence('bands', 'nope'), '');
+
+  /* AND THE ARITHMETIC COMES APART, so a screen can give each its own line:
+     run together they were a wall nobody would read. */
+  const parts = L.axisMathsParts({ id: 'species', label: 'Species',
+    of: 'cask woods', pct: 50, coverPct: 50, even: 80, have: 3, total: 6,
+    canReach: 6, depth: 1.6 });
+  eq('the body is the arithmetic', /^50% is 3 of the 6/.test(parts.body), true);
+  eq('and carries no dangling source clause',
+    /judgment/.test(parts.body), false);
+  eq('which is the other part', /judgment/.test(parts.source), true);
+  eq('and the body still ends as a sentence',
+    /\.$/.test(parts.body), true);
+
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
     L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);

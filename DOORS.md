@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 968 |
+| functions | 970 |
 | tables | 233 |
-| carrying a stated purpose | 772 |
+| carrying a stated purpose | 774 |
 
 ## Tables
 
@@ -307,6 +307,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisGapLine`** — One gap, in words
 - **`L.axisLabel`** — _no comment above it_
 - **`L.axisMaths`** — _no comment above it_
+- **`L.axisMathsParts`** — THE ARITHMETIC IN ITS PARTS, so a screen can give each its own line
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
 - **`L.barRows`** — pies: readers compare lengths better than angles.
@@ -346,6 +347,7 @@ QUESTION, not the name you were going to use.
 - **`L.candidateFits`** — finished bottling "from Buffalo Trace" came back as three other houses.
 - **`L.canonOf`** — ONE DOOR FOR "WHERE DOES THIS NUMBER COME FROM"
 - **`L.canonSay`** — SAID IN A CLAUSE, for the end of a sentence the screen is already
+- **`L.canonSentence`** — THE SAME THING AS A SENTENCE OF ITS OWN
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
 - **`L.carryFlights`** — AND A FLIGHT, WHICH IS ITS OWN SHAPE
