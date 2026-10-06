@@ -2801,7 +2801,7 @@ sec('a line about what a screen is showing');
   eq('the wishlist says what the wanting has in common',
     L.wishLine([{ name: 'Ardbeg Ten' }, { name: 'Lagavulin 16', forFlight: 'PEAT' },
       { name: 'Nothing Known' }], cat),
-    '3 wanted \u00b7 2 Scotch \u00b7 1 to finish a flight');
+    '3 wanted \u00b7 2 Scotch \u00b7 1 of them to finish a flight');
   eq('the library says what it is short of',
     L.libraryLine({ done: [{ k: 'x' }], score: 92,
       todo: [{ k: 'a', missing: ['mash'] }], waiting: [{ k: 'b', missing: ['mash', 'notes'] }] }),
@@ -7610,6 +7610,46 @@ const bare = { k: 'c', name: 'C' };
     eq('and so does pointing a key at itself',
       L.pointPourAt(fl, 'Mine Already', 'Mine Already'), null);
   }
+
+  /* A FLIGHT FOLLOWS A LIBRARY RENAME. carryFlights moves pours along a
+     PUT-BACK plan, which is the only thing that re-keys a bottle on the
+     device - but the library renames entries too, and a merged-away entry
+     orphans every flight naming the old spelling. The graves are a RECORD
+     rather than a guess, which is what lets this apply itself where the
+     join finder has to propose and wait (BZ, 2026-10-06). */
+  {
+    const fl = { f1: { title: 'T', premise: 'p',
+      core: [{ k: 'old name' }, { k: 'keep' }] } };
+    const moved = L.carryFlightsToGraves(fl, { 'old name': 'new name' },
+      { 'new name': { k: 'new name' } });
+    eq('a pour follows the rename', moved.flights.f1.core[0].k, 'new name');
+    eq('and one that was not renamed does not',
+      moved.flights.f1.core[1].k, 'keep');
+    eq('the flight itself is untouched', moved.flights.f1.premise, 'p');
+    /* ONLY WHERE THE DESTINATION IS A REAL ENTRY: a grave pointing at
+       something this device has never heard of would move a pour onto
+       nothing at all. */
+    eq('a grave pointing nowhere moves nothing',
+      L.carryFlightsToGraves(fl, { 'old name': 'nowhere' }, {}), null);
+    eq('no graves, nothing to do', L.carryFlightsToGraves(fl, {}, {}), null);
+    eq('and no flights either', L.carryFlightsToGraves(null, { a: 'b' }, {}),
+      null);
+  }
+
+  /* THE WISHLIST LINE COUNTS EACH BOTTLE ONCE. "2 wanted - 2 to finish a
+     flight" is two bottles described twice and reads as four, which is how
+     BZ read it (2026-10-06). */
+  eq('all of them is said in the same breath',
+    L.wishLine([{ name: 'A', forFlight: 'F' }, { name: 'B', forFlight: 'F' }],
+      {}), '2 wanted, all to finish a flight');
+  eq('and one of them is said as a share',
+    L.wishLine([{ name: 'A', forFlight: 'F' }, { name: 'B' }], {}),
+    '2 wanted · 1 of them to finish a flight');
+  eq('a single bottle reads as a sentence',
+    L.wishLine([{ name: 'A', forFlight: 'F' }], {}),
+    '1 wanted, to finish a flight');
+  eq('and none of them says nothing about flights',
+    L.wishLine([{ name: 'A' }, { name: 'B' }], {}), '2 wanted');
 
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',

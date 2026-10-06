@@ -286,7 +286,13 @@ def run_audit(html_path):
     # were separate elements with the columns copied between them, so every
     # change to a row had to be mirrored by hand and was not — BZ reported
     # the misalignment four times.
-    if '.shelfgrid,.item{' not in css:
+    # WHEREVER IT IS WRITTEN. This asked for '.shelfgrid,.item{' by name, so
+    # it reported a broken invariant when the invariant was intact and only
+    # the selector had moved: `.item` used to BE the shelf rule, which made
+    # every list in the app a shelf row, and the shelf's own rows now say
+    # `cols7` with the header beside them (2026-10-06).
+    if not [r for r in css.split('}')
+            if '.shelfgrid' in r and 'grid-template-columns:' in r]:
         fail('the shelf header and rows no longer share one grid rule')
     head = html.split('class="listhead shelfgrid"')
     if len(head) != 2:
@@ -296,10 +302,23 @@ def run_audit(html_path):
         # <b> meant the first sortable header read as five missing columns.
         block = head[1].split('</div>')[0]
         cells = block.count('<b>') + block.count('class="sorthead"')
-        cols = css.split('.shelfgrid,.item{')[1].split('}')[0]
-        n = len(cols.split('grid-template-columns:')[1]
-                .split(';')[0].strip().split())
-        if cells != n:
+        # THE RULE, WHEREVER IT IS WRITTEN. The header and the shelf's rows
+        # must share ONE grid rule or their columns drift - that is the
+        # invariant. `.item` used to be that rule, which made every list in
+        # the app a shelf row; the shelf's rows now say `cols7` and the
+        # header joins them there (2026-10-06). Found rather than spelled
+        # out, so the next rename reports a mismatch instead of crashing on
+        # an index that is not there.
+        rule = [r for r in css.split('}')
+                if '.shelfgrid' in r and 'grid-template-columns:' in r]
+        if not rule:
+            fail('the shelf header and rows no longer share one grid rule')
+            cols, n = '', -1
+        else:
+            cols = rule[0]
+            n = len(cols.split('grid-template-columns:')[1]
+                    .split(';')[0].strip().split())
+        if n >= 0 and cells != n:
             fail('the shelf header has %d cells against %d columns'
                  % (cells, n))
 

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 977 |
+| functions | 978 |
 | tables | 234 |
-| carrying a stated purpose | 780 |
+| carrying a stated purpose | 781 |
 
 ## Tables
 
@@ -354,6 +354,7 @@ QUESTION, not the name you were going to use.
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
 - **`L.carryFlights`** — _no comment above it_
+- **`L.carryFlightsToGraves`** — THE GRAVES ARE A RECORD, NOT A GUESS
 - **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskBuckets`** — ONE CASK SPOKE'S WHOLE ARITHMETIC
