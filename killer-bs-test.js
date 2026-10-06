@@ -28896,7 +28896,7 @@ sec('§459 which library entry a bottle belongs to');
      field nobody names is a field that is dropped. */
   const chip = L.normalizeProduct({ name: 'BZ\u2019s Blend',
     dist: 'Pennington Distilling Co', sub: 'bourbon', proof: 119.26,
-    share: 'mine alone' });
+    share: L.SHARE_MINE });
   eq('the form\u2019s chip reaches the product', chip.mine, true);
   eq('and shared is the absence of it, not a false',
     Object.prototype.hasOwnProperty.call(
