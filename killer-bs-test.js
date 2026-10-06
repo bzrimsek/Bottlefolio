@@ -7444,20 +7444,33 @@ const bare = { k: 'c', name: 'C' };
      one-finish bottles and 55 at cask strength is not a claim anybody would
      make (BZ, 2026-10-06: "114 with one finish - my thinnest?", "55 is not
      thin"). */
-  const ordered = L.axisHeld({ id: 'strength',
+  /* THE WHOLE AXIS, IN ITS OWN ORDER. Showing only the gaps hid six of
+     Age's seven bands, so the ladder he was standing on was invisible and
+     the one rung he was missing was all he could see (BZ, 2026-10-06:
+     "for Age you only included the none category and left the rest off").
+     Sorted by headcount it read as shuffled besides - proof bands out of
+     numerical order, age bands out of sequence. */
+  const ordered = L.axisRows({ id: 'strength',
     order: ['under 90', 'the 90s', '100 to 110', '110 to 120',
       'above 120'],
-    tally: [53, 0, 0, 55, 27] });
-  eq('the rows follow the axis, not the headcount',
+    tally: [53, 0, 0, 55, 27],
+    gaps: [{ name: 'the 90s', n: 0, short: 3 },
+           { name: '100 to 110', n: 0, short: 3 }] });
+  eq('every bucket is listed, in the axis order',
     ordered.map(r => r.name),
-    ['under 90', '110 to 120', 'above 120']);
-  /* EVERY BUCKET THE SHELF HOLDS, not the three smallest: `thin` is
-     capped at three and using it as the list showed three of
-     Strength's five bands (BZ, 2026-10-06). */
-  eq('and a band holding nothing is not listed', ordered.length, 3);
-  /* AND EXACTLY ONE IS THE THINNEST, the one that actually is. */
-  eq('only the smallest is called the thinnest',
+    ['under 90', 'the 90s', '100 to 110', '110 to 120', 'above 120']);
+  eq('a gap carries how many short',
+    ordered.filter(r => r.short).map(r => r.name),
+    ['the 90s', '100 to 110']);
+  /* AND EXACTLY ONE IS THE THINNEST, among the ones he actually holds. */
+  eq('only the smallest held band is called the thinnest',
     ordered.filter(r => r.thinnest).map(r => r.name), ['above 120']);
+  /* THE SHORTEST WALK IS NAMED ONCE rather than by reordering the axis. */
+  eq('the closest gap is the fewest short',
+    (L.nearestGap({ gaps: [{ name: 'far', short: 3 },
+      { name: 'near', short: 1 }] }) || {}).name, 'near');
+  eq('and nothing to shop for names nothing',
+    L.nearestGap({ gaps: [] }), null);
 
   /* AN AGE BAND IS A RANGE AND THE ROW SAYS SO. */
   const ageAx = { id: 'age', order: ['0', '5', '10'],

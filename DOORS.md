@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 973 |
+| functions | 974 |
 | tables | 234 |
 | carrying a stated purpose | 778 |
 
@@ -306,13 +306,13 @@ QUESTION, not the name you were going to use.
 - **`L.axisExamples`** — AND WHAT COUNTS AS ONE, where the name does not say it
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — _no comment above it_
-- **`L.axisHeld`** — WHAT THE AXIS HOLDS, IN ITS OWN ORDER, for a spoke with nothing left to
 - **`L.axisLabel`** — _no comment above it_
 - **`L.axisLabelOf`** — THE NAME A ROW SHOWS
 - **`L.axisMaths`** — _no comment above it_
 - **`L.axisMathsParts`** — THE ARITHMETIC IN ITS PARTS, so a screen can give each its own line
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
+- **`L.axisRows`** — _no comment above it_
 - **`L.barRows`** — pies: readers compare lengths better than angles.
 - **`L.baselineOf`** — _no comment above it_
 - **`L.blendProof`** — rather than treating it as unknown.
@@ -756,6 +756,7 @@ QUESTION, not the name you were going to use.
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
 - **`L.narrowerBrand`** — A NARROWER REGISTERED BRAND STATED LATER IN THE SAME NAME, which is how a
 - **`L.nearestBy`** — _no comment above it_
+- **`L.nearestGap`** — THE SHORTEST WALK, named once at the top of the chooser rather than by
 - **`L.nearlyNamed`** — THE SAME BOTTLE BY NAME, allowing the small differences a shop page and a
 - **`L.needsEnhancing`** — DOES THIS BOTTLE STILL NEED NOTES? L.slotOpen holds the whole rule,
 - **`L.needsSignIn`** — _no comment above it_
