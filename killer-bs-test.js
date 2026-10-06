@@ -28874,6 +28874,50 @@ sec('§459 which library entry a bottle belongs to');
     [{ id: 'B9', k: WELLER, status: 'open' }], {}, lib, {}, {});
   eq('what the copy knew is kept as an edit on the real product',
     ((kept || { edits: {} }).edits[WELLER] || {}).age, 7);
+
+  /* HIS ALONE IS LEFT ALONE, even when the library carries the same name.
+     BZ blended a bourbon himself at Pennington and there was no way to add
+     it without publishing it to everybody (2026-10-05: "this needs to be
+     clearly labled CUSTOM on the bottle", "and excluded from the library"). */
+  const own = L.subscribeToLibrary(
+    { [WELLER]: { k: WELLER, name: WELLER, mine: true } },
+    [{ id: 'B9', k: WELLER, status: 'open' }], {}, lib, {}, {});
+  eq('a bottle of his own is never collected', own, null);
+  /* AND IT IS NOT REPORTED AS MISSING EITHER. A private bottle is not absent
+     from the library by accident, so saying so would ask him the same
+     question on every load for ever. */
+  const alone = L.subscribeToLibrary(
+    { 'BZ\u2019s Blend': { k: 'BZ\u2019s Blend', name: 'BZ\u2019s Blend',
+        dist: 'Pennington Distilling Co', sub: 'bourbon', mine: true } },
+    [{ id: 'B8', k: 'BZ\u2019s Blend', status: 'open' }], {}, lib, {}, {});
+  eq('nor reported as a bottle the library is missing', alone, null);
+
+  /* THE PRODUCT CARRIES IT. normalizeProduct builds a FIXED object, so a
+     field nobody names is a field that is dropped. */
+  const chip = L.normalizeProduct({ name: 'BZ\u2019s Blend',
+    dist: 'Pennington Distilling Co', sub: 'bourbon', proof: 119.26,
+    share: 'mine alone' });
+  eq('the form\u2019s chip reaches the product', chip.mine, true);
+  eq('and shared is the absence of it, not a false',
+    Object.prototype.hasOwnProperty.call(
+      L.normalizeProduct({ name: 'Anything', share: 'shared' }), 'mine'), false);
+  eq('a flag set directly is carried too',
+    L.normalizeProduct({ name: 'Anything', mine: true }).mine, true);
+
+  /* AND THE ONE DOOR THAT OFFERS REFUSES IT. The same bottle passes every
+     other test this function makes - a name, a maker and a category - which
+     is exactly why it would have been published. */
+  const blend = { name: 'BZ\u2019s Blend', dist: 'Pennington Distilling Co',
+    sub: 'bourbon', proof: 119.26 };
+  eq('a one-off would otherwise be worth contributing',
+    L.worthContributing(blend, {}), true);
+  eq('but a bottle of his own is never offered',
+    L.worthContributing(Object.assign({ mine: true }, blend), {}), false);
+  /* ASKED FIRST, so no judgement of the name can reach past it: a private
+     bottle with a name the library would refuse is refused for being his,
+     and a private bottle the library already has is refused the same way. */
+  eq('and it is refused whatever else is true of it',
+    L.worthContributing({ name: 'x', mine: true }, {}), false);
   /* AND IT IS IDEMPOTENT. */
   const again = L.subscribeToLibrary(got.custom, got.bottles, got.edits, lib,
     {}, drops);
