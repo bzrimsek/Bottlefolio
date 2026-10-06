@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 975 |
+| functions | 977 |
 | tables | 234 |
-| carrying a stated purpose | 779 |
+| carrying a stated purpose | 780 |
 
 ## Tables
 
@@ -353,7 +353,7 @@ QUESTION, not the name you were going to use.
 - **`L.canonSentence`** — THE SAME THING AS A SENTENCE OF ITS OWN
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
-- **`L.carryFlights`** — AND A FLIGHT, WHICH IS ITS OWN SHAPE
+- **`L.carryFlights`** — _no comment above it_
 - **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskBuckets`** — ONE CASK SPOKE'S WHOLE ARITHMETIC
@@ -479,6 +479,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightNoteQueue`** — Notes written for a flight card, not for the bottle
 - **`L.flightPayload`** — whole catalog would include sealed bottles it must not reach for.
 - **`L.flightPoured`** — Everything a run put in a glass, whatever list it came from, so the
+- **`L.flightPourJoins`** — ONE CANDIDATE ONLY
 - **`L.flightProof`** — _no comment above it_
 - **`L.flightReady`** — How much of a flight you could actually pour tonight.
 - **`L.flightRequestBody`** — _no comment above it_
@@ -847,6 +848,7 @@ QUESTION, not the name you were going to use.
 - **`L.placeLine`** — How it reads back
 - **`L.plainError`** — A FAILURE IN PLAIN WORDS, never the service's own ("PERMISSION_DENIED").
 - **`L.plural`** — _no comment above it_
+- **`L.pointPourAt`** — AND THE POUR ITSELF, RE-POINTED
 - **`L.pondRank`** — _no comment above it_
 - **`L.poolCandidates`** — _no comment above it_
 - **`L.poolGain`** — So each row carries the best cast that actually borrows, and a lesson

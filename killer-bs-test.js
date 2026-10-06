@@ -7564,6 +7564,53 @@ const bare = { k: 'c', name: 'C' };
     (L.named({ id: 'age' }, ['a', 'b']) || {}).rungLabel, ['a', 'b']);
   eq('and nothing is required', L.named(null, ['a']), null);
 
+  /* A FLIGHT POUR NAMING A BOTTLE HE OWNS UNDER ANOTHER NAME. Fourteen of
+     BZ's flights read as waiting on one bottle each, and thirteen of the
+     twenty-three missing pours were already on his shelf: the flight says
+     "Weller 12 Year Old Kentucky Straight Wheated" and the shelf says "W.L.
+     Weller 12 Year Old..." (BZ, 2026-10-06: "that same flight thought I did
+     not have weller 12"). L.pourAvailable asks by raw KEY where every other
+     ownership question goes through a name door. */
+  {
+    const fl = [{ title: 'WHO IS YOUR DADDY?', core: [
+      { k: 'Weller 12 Year Old Kentucky Straight Wheated Bourbon' },
+      { k: 'Mine Already' }] }];
+    const bs = [{ id: 'w1', status: 'open',
+      k: 'W.L. Weller 12 Year Old Kentucky Straight Wheated Bourbon' },
+      { id: 'w2', k: 'Mine Already', status: 'open' }];
+    const c2 = { 'Mine Already': { k: 'Mine Already', name: 'Mine Already' } };
+    const joins = L.flightPourJoins(fl, bs, c2);
+    eq('the pour he owns under another name is found', joins.length, 1);
+    eq('and it says where to point it', joins[0].to,
+      'W.L. Weller 12 Year Old Kentucky Straight Wheated Bourbon');
+    eq('and which flight it is in', joins[0].title, 'WHO IS YOUR DADDY?');
+    /* A POUR HE CAN ALREADY POUR IS NOT A JOIN. */
+    eq('a pour already on the shelf is left alone',
+      joins.filter(j => j.from === 'Mine Already').length, 0);
+
+    /* TWO CANDIDATES IS NOTHING TO PROPOSE: a person has to look. */
+    const two = L.flightPourJoins(
+      [{ title: 'T', core: [{ k: 'Woodford Reserve' }] }],
+      [{ id: 'a', k: 'Woodford Reserve Double Oaked', status: 'open' },
+       { id: 'b', k: 'Woodford Reserve Malt Whiskey', status: 'open' }], {});
+    eq('two candidates propose nothing', two.length, 0);
+
+    /* AND THE REPAIR IS PURE: it answers the new flights and writes nothing,
+       so the plan can be shown before anybody trusts it. */
+    const flew = L.pointPourAt(fl, joins[0].from, joins[0].to);
+    eq('one pour moves', flew.moved, 1);
+    eq('and lands on the bottle he owns', flew.flights[0].core[0].k,
+      joins[0].to);
+    eq('the other pour is untouched', flew.flights[0].core[1].k,
+      'Mine Already');
+    eq('and so is the flight itself', flew.flights[0].title,
+      'WHO IS YOUR DADDY?');
+    eq('nothing to move answers nothing',
+      L.pointPourAt(fl, 'nowhere', 'elsewhere'), null);
+    eq('and so does pointing a key at itself',
+      L.pointPourAt(fl, 'Mine Already', 'Mine Already'), null);
+  }
+
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
     L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);
