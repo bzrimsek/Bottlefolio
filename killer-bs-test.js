@@ -2569,6 +2569,33 @@ sec('re-filing a bottle takes its note with it');
   /* NOTHING MOVES WITHOUT A PLAN. */
   eq('an empty plan changes nothing',
     JSON.stringify(L.carryKeyed(notes, [])), JSON.stringify(notes));
+
+  /* AND A FLIGHT, WHICH IS ITS OWN SHAPE. Its bottles live in core[].k -
+     keys nested in an array rather than keys OF a map - so carryKeyed could
+     not reach them, and naming customFlights beside the maps would have
+     reshaped the flights themselves. A flight left pointing at the key a
+     bottle used to sit under reports that bottle missing for ever. */
+  const flights = {
+    f1: { title: 'KEEP THIS TITLE', premise: 'unchanged',
+          core: [{ k: 'old_slug' }, { k: 'untouched' },
+                 { kind: 'wish', name: 'Longrow 18' }] },
+    f2: { title: 'NOTHING TO DO', core: [{ k: 'untouched' }] }
+  };
+  const flew = L.carryFlights(flights, plan);
+  eq('the pour follows its bottle', flew.flights.f1.core[0].k, 'The Proper Name');
+  eq('and the count is what moved', flew.moved, 1);
+  eq('a pour not in the plan is left alone', flew.flights.f1.core[1].k, 'untouched');
+  eq('a wish pour has no key to move', flew.flights.f1.core[2].name, 'Longrow 18');
+  /* WHAT THE FLIGHT SAYS IS NOT WHAT A PUT-BACK MOVES. */
+  eq('the title is untouched', flew.flights.f1.title, 'KEEP THIS TITLE');
+  eq('and so is the premise', flew.flights.f1.premise, 'unchanged');
+  eq('a flight with nothing to move is unchanged',
+    flew.flights.f2.core[0].k, 'untouched');
+  /* NOTHING TO DO IS SAID BY ANSWERING NOTHING, so the caller writes nothing. */
+  eq('no plan, no answer', L.carryFlights(flights, []), null);
+  eq('no flights, no answer', L.carryFlights(null, plan), null);
+  eq('a plan that touches no pour answers nothing',
+    L.carryFlights({ f: { core: [{ k: 'elsewhere' }] } }, plan), null);
 }
 
 sec('a different strength is a different bottle');
@@ -4025,18 +4052,36 @@ const ranked = L.shelfGaps(gCat, gBot, [sealedShort, oneShort], []);
 eq('the owned one comes first', ranked[0].owned, true);
 eq('flights outrank thinness',
   L.GAP_KINDS.indexOf(ranked[0].kind) < L.GAP_KINDS.indexOf('region'), true);
-// A bottle two flights want is one thing to buy, not two.
-const twice = [{ title: 'F1', core: [{ k: 'a' }, { kind: 'wish', name: 'Same One' }] },
-               { title: 'F2', core: [{ k: 'b' }, { kind: 'wish', name: 'Same One' }] }];
-eq('one entry for a bottle two flights want',
-  L.shelfGaps(gCat, gBot, twice, []).filter(g => g.name === 'Same One').length, 1);
+/* NOTHING TO BUY COMES FROM A FLIGHT (BZ, 2026-10-05: "almost every flight
+   bottle is owned - that is the point - ignore the flights here"). A flight
+   is built from bottles he owns and the pour it lacks is a closed list he
+   wrote himself, so at weight 100 it crowded out every other kind. */
+const wishPour = [{ title: 'F3',
+  core: [{ k: 'a' }, { kind: 'wish', name: 'Same One' }] }];
+eq('an unowned flight pour is not a thing to buy',
+  L.shelfGaps(gCat, gBot, wishPour, []).some(g => g.name === 'Same One'), false);
+// And a sealed bottle two flights want is still one thing to open, not two.
+const twice = [{ title: 'F1', core: [{ k: 'a' }, { k: 's' }] },
+               { title: 'F2', core: [{ k: 'b' }, { k: 's' }] }];
+const twiceG = L.shelfGaps(gCat, gBot, twice, []);
+eq('one entry for a sealed bottle two flights want',
+  twiceG.filter(g => g.name === 'Sealed').length, 1);
+eq('and what a flight contributes is the owned finding',
+  twiceG.find(g => g.name === 'Sealed').owned, true);
 
-// A wishlist entry a flight already explains is not repeated.
+/* A WISH A FLIGHT WANTS IS EXPLAINED, NOT DELETED. gapsFromWish used to drop
+   it because the flight gap said the same thing with a better reason - and
+   once flight gaps left the buy advice there was no second place, so the
+   suppression deleted his wish outright. */
 const wl = [{ name: 'Longrow 18', added: '2026-01-01' },
             { name: 'Just Because', reason: 'looked good', added: '2026-01-02' }];
 const withWish = L.shelfGaps(gCat, gBot, [oneShort], wl);
-eq('a wish covered by a flight is not repeated',
+eq('a wish a flight wants appears exactly once',
   withWish.filter(g => g.name === 'Longrow 18').length, 1);
+eq('and it is his wish, not a flight finding',
+  withWish.find(g => g.name === 'Longrow 18').kind, 'wish');
+eq('and the reason says the flight would be finished too',
+  /finish a flight/.test(withWish.find(g => g.name === 'Longrow 18').why), true);
 eq('a wish nothing explains still appears',
   withWish.some(g => g.name === 'Just Because'), true);
 eq('and it keeps the reason you gave',
@@ -4110,18 +4155,23 @@ eq('a balanced shelf raises no contrast',
   L.gapsFromContrast(balanced, []).some(g => /wood-only/.test(g.name)), false);
 
 sec('flights only count when flights get run');
-const fCat2 = { a: { k: 'a', name: 'A', dist: 'D', proof: 90 } };
-const fBot2 = [{ id: 'x', k: 'a', status: 'open' }];
-const oneAway = { title: 'ONE AWAY',
-  core: [{ k: 'a' }, { kind: 'wish', name: 'Missing One' }] };
+/* ON THE SEALED FINDING, which is all a flight contributes to this list
+   since 2026-10-05. Same discount and the same thresholds; what changed is
+   the only kind of flight finding left to apply them to. */
+const fCat2 = { a: { k: 'a', name: 'A', dist: 'D', proof: 90 },
+                z: { k: 'z', name: 'Z', dist: 'D', proof: 95 } };
+const fBot2 = [{ id: 'x', k: 'a', status: 'open' },
+               { id: 'y', k: 'z', status: 'sealed' }];
+const oneAway = { title: 'ONE AWAY', core: [{ k: 'a' }, { k: 'z' }] };
 const never = L.shelfGaps(fCat2, fBot2, [oneAway], [], []);
 const often = L.shelfGaps(fCat2, fBot2, [oneAway], [],
   Array.from({ length: 6 }, (_, i) => ({ kind: 'flight', flight: 'F' + i })));
-const wNever = never.find(g => g.name === 'Missing One').weight;
-const wOften = often.find(g => g.name === 'Missing One').weight;
+const wNever = never.find(g => g.name === 'Z').weight;
+const wOften = often.find(g => g.name === 'Z').weight;
 // 36 flights designed and none run makes unlocking one a hypothesis.
 eq('unlocking a flight is worth less when none are run', wNever < wOften, true);
-eq('and worth full value once they are', wOften, 100);
+// 100 for the only missing pour, and 50 because the answer is upstairs.
+eq('and worth full value once they are', wOften, 150);
 eq('history is optional', L.shelfGaps(fCat2, fBot2, [oneAway], []).length > 0, true);
 }
 
@@ -4710,13 +4760,24 @@ eq('relabelling keeps the bottles',
   L.relabel([{ k: 'a' }]).map(p => p.k), ['a']);
 
 sec('the remaining gap sources');
-// A wish a flight already explains is not repeated as its own finding.
+/* A WISH A FLIGHT COVERS IS EXPLAINED, NOT LEFT TO IT. This used to drop the
+   wish because the flight finding said the same thing with a better reason -
+   and when flight findings left the buy advice there was nothing left to
+   leave it to, so his wish disappeared (2026-10-05). */
 const wishFlights = [{ title: 'F', core: [{ kind: 'wish', name: 'Longrow 18' }] }];
 const wl = [{ name: 'Longrow 18', added: '2026-01-01' },
             { name: 'Own Idea', reason: 'looked good', added: '2026-01-02' }];
 const gw = L.gapsFromWish(wl, wishFlights);
-eq('a wish a flight covers is left to the flight', gw.length, 1);
-eq('the rest keeps its own reason', gw[0].why, 'looked good');
+eq('every wish is a finding of its own', gw.length, 2);
+eq('a wish a flight covers says so',
+  /finish a flight/.test(gw.find(w => w.name === 'Longrow 18').why), true);
+eq('the rest keeps its own reason',
+  gw.find(w => w.name === 'Own Idea').why, 'looked good');
+/* HIS OWN WORDS STILL WIN OUTRIGHT: the flight only ever sharpens the
+   default reason, never replaces one he wrote. */
+eq('and a reason he gave is never added to',
+  L.gapsFromWish([{ name: 'Longrow 18', reason: 'mine' }], wishFlights)[0].why,
+  'mine');
 eq('no wishlist, no findings', L.gapsFromWish([], []), []);
 
 // The ends of the proof ladder.
@@ -8761,20 +8822,25 @@ eq('with no flights run, a shelf observation leads',
 // 97 wine-cask against 13 wood-only is a contrast BZ cannot currently taste.
 eq('the lopsided cask split is the top finding',
   /wood-only/.test(realGaps[0].name), true);
-// Once flights get run, the bottle that completes one takes the lead.
+/* AND RUNNING THEM CHANGES NOTHING HERE, which is the whole of the change
+   (BZ, 2026-10-05: "almost every flight bottle is owned - that is the point -
+   ignore the flights here"). A flight is built from bottles he owns, so the
+   pour it lacks is a closed list he wrote himself; only the SEALED finding
+   survives, and on his real shelf no sealed bottle completes a flight - 0 of
+   40, measured. The shelf's own observations lead either way. */
 const runGaps = L.shelfGaps(shelfCat, data.bottles, data.flights, [],
   Array.from({ length: 6 }, (_, i) => ({ kind: 'flight', flight: 'F' + i })));
-/* THE SHAPE, NOT THE BOTTLE. This was pinned to Longrow 18, which BZ has
-   since bought - so it failed on a purchase rather than on a fault. What
-   the test is about is that once flights have been run, the finding that
-   leads is one that would let another flight run, and that it says which. */
-eq('once flights are run, the bottle that unlocks one leads',
-  runGaps[0].kind, 'flight');
-eq('and it names the flight that bottle would complete',
-  data.flights.some(f => f.title === runGaps[0].flight), true);
-// It is a bottle he does not have open: either never bought, or drunk.
-eq('and it is not something already pourable',
-  L.pourable(runGaps[0].name, data.bottles), false);
+eq('running flights does not change what leads',
+  runGaps[0].name, realGaps[0].name);
+eq('nothing to buy comes from a flight, however many have been run',
+  runGaps.filter(g => g.kind === 'flight' && !g.owned).length, 0);
+eq('nor before any have', realGaps.filter(g => g.kind === 'flight'
+  && !g.owned).length, 0);
+/* THE REAL SHELF IS THE POINT: 40 flights, every shelf pour a bottle he
+   owns, and not one of them a thing to go and buy. */
+eq('his forty flights raise nothing to buy',
+  L.shelfGaps(shelfCat, data.bottles, data.flights, [], [])
+    .filter(g => g.kind === 'flight' && !g.owned).length, 0);
 // Buffalo Trace is 24 bottles with no finished bottling — a real
 // observation about the shelf that has nothing to do with flights.
 // This test pinned the bug. It required the finding to NAME Buffalo Trace
@@ -9220,19 +9286,17 @@ eq('the bottle dropped by the cap is the one you cannot buy',
 
 sec('§180 allocated gaps stay, and stay last');
 {
-  // Two flights, each one bottle short: one wants Pappy, one wants a
-  // bottle nothing knows anything about. Both are findings; only one is
-  // something to go and buy today.
-  const gflights = [
-    { id: 'F1', title: 'Proof ladder', tag: 'variable \u00b7 proof',
-      core: [{ name: 'Pappy Van Winkle 15 Year', kind: 'wish' }] },
-    { id: 'F2', title: 'Islay run', tag: 'variable \u00b7 peat',
-      core: [{ name: 'Auchentoshan 12 Year Old', kind: 'wish' }] }
-  ];
-  const gaps = L.shelfGaps(catalog, bottles, gflights, [], [], {});
+  /* Two wishes: one for Pappy, one for a bottle nothing knows anything
+     about. Both are findings; only one is something to go and buy today.
+     DRIVEN THROUGH THE WISHLIST since 2026-10-05, because a flight raises
+     nothing to buy any more and this rule is about ORDERING - a bottle
+     nobody can buy sorts last, whichever generator raised it. */
+  const gwish = [{ name: 'Pappy Van Winkle 15 Year', added: '2026-01-01' },
+                 { name: 'Auchentoshan 12 Year Old', added: '2026-01-02' }];
+  const gaps = L.shelfGaps(catalog, bottles, [], gwish, [], {});
   const named = gaps.filter(g => /Pappy|Auchentoshan/.test(g.name || ''))
     .map(g => g.name);
-  eq('an allocated flight gap is still reported',
+  eq('an allocated gap is still reported',
     named.indexOf('Pappy Van Winkle 15 Year') >= 0, true);
   eq('and it is reported after the one you can buy',
     named, ['Auchentoshan 12 Year Old', 'Pappy Van Winkle 15 Year']);
@@ -28787,12 +28851,29 @@ sec('§459 which library entry a bottle belongs to');
     (weak || { left: [] }).left.indexOf('Barrell Craft Spirits Seagrass') >= 0,
     true);
 
-  /* ALREADY SUBSCRIBED: a product filed under the library's own name needs
-     nothing doing. */
+  /* ALREADY SUBSCRIBED: a product filed under the library's own name needs no
+     MOVE - the bottles already carry the right key - but the private copy is
+     still a private copy, and saying "nothing to do" left two of them on BZ's
+     account for a week ("i never asked for private", 2026-10-05). */
   const done = L.subscribeToLibrary({ [WELLER]: { k: WELLER, name: WELLER } },
     [{ id: 'B9', k: WELLER, status: 'open' }], {}, lib, {}, {});
-  eq('a product already filed as the library files it is left alone',
-    done, null);
+  eq('a product the library already carries is not kept privately',
+    (done || { redundant: [] }).redundant.indexOf(WELLER) >= 0, true);
+  eq('and the private copy is gone',
+    Object.keys((done || { custom: { x: 1 } }).custom).length, 0);
+  eq('while nothing is moved, because the key was already right',
+    (done || {}).moved, 0);
+  /* THE BOTTLE DOES NOT BUDGE. Repointing a bottle whose key is already the
+     library's would be a move with nowhere to go. */
+  eq('the bottle keeps the key it had', (done || { bottles: [] }).bottles[0].k,
+    WELLER);
+  /* A FACT THE PRIVATE COPY KNEW AND THE LIBRARY DOES NOT SURVIVES IT.
+     Somebody typed it, and losing it would be the second fault. */
+  const kept = L.subscribeToLibrary(
+    { [WELLER]: { k: WELLER, name: WELLER, age: 7 } },
+    [{ id: 'B9', k: WELLER, status: 'open' }], {}, lib, {}, {});
+  eq('what the copy knew is kept as an edit on the real product',
+    ((kept || { edits: {} }).edits[WELLER] || {}).age, 7);
   /* AND IT IS IDEMPOTENT. */
   const again = L.subscribeToLibrary(got.custom, got.bottles, got.edits, lib,
     {}, drops);

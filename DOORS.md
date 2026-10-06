@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 947 |
+| functions | 948 |
 | tables | 224 |
-| carrying a stated purpose | 751 |
+| carrying a stated purpose | 752 |
 
 ## Tables
 
@@ -332,6 +332,7 @@ QUESTION, not the name you were going to use.
 - **`L.candidateFits`** — finished bottling "from Buffalo Trace" came back as three other houses.
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
+- **`L.carryFlights`** — AND A FLIGHT, WHICH IS ITS OWN SHAPE
 - **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskFamily`** — _no comment above it_
