@@ -7591,8 +7591,8 @@ const bare = { k: 'c', name: 'C' };
     /* TWO CANDIDATES IS NOTHING TO PROPOSE: a person has to look. */
     const two = L.flightPourJoins(
       [{ title: 'T', core: [{ k: 'Woodford Reserve' }] }],
-      [{ id: 'a', k: 'Woodford Reserve Double Oaked', status: 'open' },
-       { id: 'b', k: 'Woodford Reserve Malt Whiskey', status: 'open' }], {});
+      [{ id: 'a', k: 'Woodford Reserve Small Batch', status: 'open' },
+       { id: 'b', k: 'Woodford Reserve 12 Year Old', status: 'open' }], {});
     eq('two candidates propose nothing', two.length, 0);
 
     /* AND THE REPAIR IS PURE: it answers the new flights and writes nothing,
@@ -7689,6 +7689,55 @@ const bare = { k: 'c', name: 'C' };
   eq('and two different whiskies do not reach each other',
     L.pourFitsBottle('Woodford Reserve Double Oaked',
       'Woodford Reserve Distiller’s Select'), false);
+  /* A TITLE THAT IS ALL BOILERPLATE REDUCES TO ITS HOUSE. L.shopNorm strips
+     "Kentucky Straight Bourbon Whiskey", so this pour is the words "woodford
+     reserve" and sat inside every Woodford on the shelf - seven of them.
+     Refusing only the words that TELL_APART let "double oaked" and "batch
+     proof" through; EVERY word the fuller name adds has to be a
+     non-difference now (found 2026-10-06, after v2.7.96 shipped). */
+  const WR = 'Woodford Reserve Kentucky Straight Bourbon Whiskey';
+  eq('a bare house does not reach the double oaked',
+    L.pourFitsBottle(WR, 'Woodford Reserve Double Oaked'), false);
+  eq('nor the batch proof',
+    L.pourFitsBottle(WR, 'Woodford Reserve Batch Proof'), false);
+  eq('nor an expression of any other kind',
+    L.pourFitsBottle(WR, 'Woodford Reserve Master’s Collection'), false);
+  eq('and a vintage does not reach the flagship',
+    L.pourFitsBottle('Bunnahabhain 1998 Fèis Ìle 2023 Manzanilla Cask',
+      'Bunnahabhain 12 Year Old Single Malt Scotch Whisky'), false);
+  /* THE HOUSE WRITTEN OUT PROPERLY IS NOT AN EXPRESSION. Initials are the
+     one word a fuller name adds that says nothing new. */
+  eq('but the house spelled in full still reaches it',
+    L.pourFitsBottle('Weller 12 Year Old Kentucky Straight Wheated Bourbon',
+      'W.L. Weller 12 Year Old Kentucky Straight Wheated Bourbon'), true);
+  /* AND "SMALL" BELONGS TO "BATCH" - a qualifier is soft only where the
+     thing it qualifies is in the same name. */
+  eq('a small batch is not a different whiskey',
+    L.pourFitsBottle('Jack Daniel Rye', 'Jack Daniel Small Batch Rye'), true);
+  eq('but a single barrel is still a specific barrel',
+    L.pourFitsBottle("Angel's Envy Single Barrel",
+      "Angel's Envy Single Barrel Sherry Cask"), false);
+  /* TWO STATED AGES ARE TWO WHISKIES. Excusing an age wherever it appeared
+     offered to point Aberlour 18 Year Old at Aberlour 12 Year Old - the
+     class of pair BZ has rejected three times. An age is a non-difference
+     only where the other name states none, as with years and editions. */
+  eq('two stated ages do not reach each other',
+    L.pourFitsBottle('Aberlour 18 Year Old', 'Aberlour 12 Year Old'), false);
+  eq('but an age against no age still does',
+    L.pourFitsBottle('Aberlour Double Cask', 'Aberlour 12 Year Old Double Cask'),
+    true);
+  /* A CONNECTIVE IS NOT A WORD. Requiring every added word to be a
+     non-difference caught "in", which is the whole of the distance between
+     BZ's two Angel's Envys - "AE bourbon is port wine finished. Period." */
+  eq('a connective does not separate two bottles',
+    L.pourFitsBottle(
+      "Angel's Envy Port Wine Barrel Finish Kentucky Straight Bourbon Whiskey",
+      "Angel's Envy Kentucky Straight Bourbon Whiskey Finished in Port Wine Barrels"),
+    true);
+  eq('and the madeira pair meets too',
+    L.pourFitsBottle("Angel's Envy Bourbon Madeira Cask Finish",
+      "Angel's Envy Kentucky Straight Bourbon Whiskey Finished in Madeira Casks"),
+    true);
   /* THE LIBRARY'S GRADING IS UNTOUCHED: a lone year is still a WEAK
      candidate there, which is the third state the six assertions this
      change first broke exist to hold. */
