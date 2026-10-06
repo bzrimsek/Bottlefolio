@@ -7454,14 +7454,23 @@ const bare = { k: 'c', name: 'C' };
     order: ['under 90', 'the 90s', '100 to 110', '110 to 120',
       'above 120'],
     tally: [53, 0, 0, 55, 27],
-    gaps: [{ name: 'the 90s', n: 0, short: 3 },
+    /* ONE SHORT AGAINST THREE, so which is nearest is not a tiebreak. */
+    gaps: [{ name: 'the 90s', n: 2, short: 1 },
            { name: '100 to 110', n: 0, short: 3 }] });
-  eq('every bucket is listed, in the axis order',
+  /* EVERY BUCKET IS LISTED, and the one to buy goes FIRST. Scrolling the
+     list to it was the tidier answer and not a usable one: on eighteen
+     categories the row he needs can sit well below the fold, and a
+     recommendation he has to hunt for is not one (BZ, 2026-10-06: "i just
+     struggle when the buy this is well below the fold"). It moves ONE row;
+     the rest stays in the axis order. */
+  eq('every bucket is listed, the one to buy first',
     ordered.map(r => r.name),
-    ['under 90', 'the 90s', '100 to 110', '110 to 120', 'above 120']);
+    ['the 90s', 'under 90', '100 to 110', '110 to 120', 'above 120']);
+  eq('and that is the one marked',
+    ordered.filter(r => r.pick).map(r => r.name), ['the 90s']);
   eq('a gap carries how many short',
-    ordered.filter(r => r.short).map(r => r.name),
-    ['the 90s', '100 to 110']);
+    ordered.filter(r => r.short).map(r => r.name).sort(),
+    ['100 to 110', 'the 90s']);
   /* AND EXACTLY ONE IS THE THINNEST, among the ones he actually holds. */
   eq('only the smallest held band is called the thinnest',
     ordered.filter(r => r.thinnest).map(r => r.name), ['above 120']);

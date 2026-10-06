@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.7.90  ·  2026-10-06 10:27 AM ET
+
+The one to buy goes first. BZ: "i just struggle when the buy this is well below the fold from a scroll perspective." Scrolling the list to it was the tidier answer and not a usable one - on eighteen categories the row he needs can sit well below the fold, and a recommendation somebody has to hunt for is not a recommendation. The argument against it was that a ladder read out of sequence is not a ladder, which is a real thing and BZ reported it himself two builds ago when the age rungs came back shuffled by headcount. But floating moves exactly ONE row: the rest of the axis stays in its own order behind it, and the row carries its own range name, so nothing is ambiguous about where it came from. Age reads 25-29 with the mark, then under 5, 5-9, 10-14, 15-19, 20-24, 30+ in sequence. He raised it twice. The tidiness was costing him the thing the screen exists for, which is a bad trade whatever the principle behind it.
+
 ## v2.7.89  ·  2026-10-06 10:19 AM ET
 
 The one to buy is in view without being moved. BZ: "should the buy this float to the top?" Floating it was the obvious answer and the wrong one. On Age, Strength and Smoke the ORDER is the information - "under 5, 5-9, 10-14" only means anything in sequence, and a ladder read out of sequence is not a ladder, which is the fault BZ reported himself two builds ago when the rungs came back shuffled by headcount. Categories and Regions are sets and would lose nothing, but a chooser that behaves one way on four spokes and another on five is a chooser nobody can predict. So the list opens scrolled to the marked row instead, centred rather than at the edge so what sits either side of it stays readable. Nothing reorders, nothing is listed twice, and the recommendation is the first thing seen. One behaviour on every axis.
