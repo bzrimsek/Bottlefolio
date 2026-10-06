@@ -793,11 +793,15 @@ const SCREEN_COPIES_OK = [
 
 const COPY_WINDOW = 12;
 const COPIES_OK = [
-  /* ONE DOOR, THREE DIFFERENT QUESTIONS. What a pour is (pourKind) decides
-     how each of these answers - whether it can be poured, what to call it,
-     what proof to place it at. They quote the door; none decides the
-     kind. */
-  'pourAvailable + pourLabel + pourProof'
+  /* ONE DOOR, DIFFERENT QUESTIONS. What a pour is (pourKind) decides how
+     each of these answers - what to call it, what proof to place it at.
+     They quote the door; neither decides the kind. pourAvailable asked the
+     same way until 2026-10-06, when its wish branch learned to ask the
+     shelf and its shape stopped matching theirs. */
+  'pourAvailable + pourLabel + pourProof',
+  /* AND THE PAIR THAT IS LEFT at the other width, since pourAvailable's
+     wish branch learned to ask the shelf (2026-10-06). Same exception. */
+  'pourLabel + pourProof'
 ];
 /* THE SHAPE OF CODE, for finding the same rule written twice. Comments
    gone, strings and numbers made alike, local names made alike, the "is

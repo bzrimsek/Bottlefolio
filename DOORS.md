@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 979 |
+| functions | 981 |
 | tables | 234 |
-| carrying a stated purpose | 781 |
+| carrying a stated purpose | 782 |
 
 ## Tables
 
@@ -864,9 +864,10 @@ QUESTION, not the name you were going to use.
 - **`L.portraitPick`** — THE HEADLINE, and what earned it.
 - **`L.pourable`** — _no comment above it_
 - **`L.pourAtRung`** — Everything on the shelf that sits at a given distance, nearest first
-- **`L.pourAvailable`** — open. A wish cannot, by definition.
+- **`L.pourAvailable`** — _no comment above it_
 - **`L.pourDrinks`** — _no comment above it_
 - **`L.pouredBefore`** — _no comment above it_
+- **`L.pourFitsBottle`** — IT PROPOSES, IT DOES NOT APPLY
 - **`L.pourFor`** — _no comment above it_
 - **`L.pourForTaste`** — THE GENTLE END OF THE SHELF
 - **`L.pourFrom`** — WHO BRINGS ONE POUR
@@ -1070,6 +1071,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfSort`** — _no comment above it_
 - **`L.shelfStats`** — _no comment above it_
 - **`L.shelfStory`** — _no comment above it_
+- **`L.shelfSubLine`** — WHAT GOES UNDER A SHELF ROW'S NAME
 - **`L.shelfSummary`** — What the shelf adds up to, as NUMBERS, so the harness can test them
 - **`L.shelfSummaryLine`** — The line the shelf prints, beside the numbers so a screen never formats
 - **`L.shelfTodo`** — IS THERE ANYTHING NEW BEHIND THE GEAR? Not "anything to do"

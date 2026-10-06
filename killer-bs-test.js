@@ -7664,6 +7664,63 @@ const bare = { k: 'c', name: 'C' };
   eq('a double s is left alone', L.wordStem('glass'), 'glass');
   eq('and so is a short word', L.wordStem('is'), 'is');
   eq('and one that only looks plural', L.wordStem('red'), 'red');
+
+  /* CAN A FLIGHT POUR REACH A BOTTLE HE HAS? Three things one name states
+     and the other does not, each settled by BZ on 2026-10-06. This is NOT
+     L.nameContains - that grades library entries and keeps a weak third
+     state; this answers a blunter question for a flight. */
+  eq('a year on one side only still reaches the bottle',
+    L.pourFitsBottle("Angel's Envy Cask Strength Bourbon",
+      "Angel's Envy Cask Strength Bourbon 2023"), true);
+  eq('an age on one side only does too',
+    L.pourFitsBottle('Willett Family Estate Bottled 4 Year Rye',
+      'Willett Family Estate Bottled Small Batch Straight Rye Whiskey'), true);
+  eq('and a bare batch, which is how it is made',
+    L.pourFitsBottle('Jack Daniel Rye', 'Jack Daniel Small Batch Rye'), true);
+  /* AND THE THREE THAT STILL REFUSE, each one BZ settled himself. */
+  eq('two different years are two bottles',
+    L.pourFitsBottle("Angel's Envy Cask Strength Bourbon 2021",
+      "Angel's Envy Cask Strength Bourbon 2023"), false);
+  eq('two different editions are two bottles',
+    L.pourFitsBottle('Blood Oath Pact No. 10', 'Blood Oath Pact No. 11'), false);
+  eq('a named range is another bottling',
+    L.pourFitsBottle('Barrell Craft Spirits Seagrass',
+      'Barrell Craft Spirits Gray Label Seagrass'), false);
+  eq('and two different whiskies do not reach each other',
+    L.pourFitsBottle('Woodford Reserve Double Oaked',
+      'Woodford Reserve Distiller’s Select'), false);
+  /* THE LIBRARY'S GRADING IS UNTOUCHED: a lone year is still a WEAK
+     candidate there, which is the third state the six assertions this
+     change first broke exist to hold. */
+  eq('the library still grades a lone year weak',
+    (L.nameContains("Angel's Envy Cask Strength Bourbon",
+      "Angel's Envy Cask Strength Bourbon 2023") || {}).marked, true);
+
+  /* A WISH HE HAS SINCE BOUGHT. L.pourAvailable answered false for a wish
+     without asking the shelf, so a flight never noticed the bottle arriving
+     (BZ, 2026-10-06: "I own long row"). */
+  const wcat = { 'Longrow 18': { k: 'Longrow 18', name: 'Longrow 18' } };
+  const wopen = [{ k: 'Longrow 18', status: 'open' }];
+  eq('a wish whose bottle is open is pourable',
+    L.pourAvailable({ kind: 'wish', name: 'Longrow 18' }, wcat, wopen), true);
+  eq('a wish he has not bought is not',
+    L.pourAvailable({ kind: 'wish', name: 'Pappy 15' }, wcat, wopen), false);
+  eq('and a sealed one is not either',
+    L.pourAvailable({ kind: 'wish', name: 'Longrow 18' }, wcat,
+      [{ k: 'Longrow 18', status: 'sealed' }]), false);
+  eq('the readiness count asks the same door',
+    L.flightReady({ core: [{ kind: 'wish', name: 'Longrow 18' }] },
+      wcat, wopen).pct, 100);
+
+  /* WHAT GOES UNDER A SHELF ROW'S NAME. A distillery the name already opens
+     with is a line spent on a word the reader has (BZ: "Which bunni?"). */
+  eq('the house the name opens with is not repeated',
+    L.shelfSubLine({ name: 'Bunnahabhain 12 Year Old', dist: 'Bunnahabhain' }), '');
+  eq('a house the name does not carry still prints',
+    L.shelfSubLine({ name: 'Elijah Craig Small Batch', dist: 'Heaven Hill' }),
+    'Heaven Hill');
+  eq('and no distillery says nothing',
+    L.shelfSubLine({ name: 'Elijah Craig Small Batch' }), '');
   eq('the two names meet',
     !!L.nameContains('Angel’s Envy Port Wine Barrel Finish',
       'Angel’s Envy Finished in Port Wine Barrels'), true);
