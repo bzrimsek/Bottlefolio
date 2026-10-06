@@ -7651,6 +7651,27 @@ const bare = { k: 'c', name: 'C' };
   eq('and none of them says nothing about flights',
     L.wishLine([{ name: 'A' }, { name: 'B' }], {}), '2 wanted');
 
+  /* ONE WORD, HOWEVER IT IS INFLECTED. "Angel's Envy Port Wine Barrel
+     Finish" and "Angel's Envy ... Finished in Port Wine Barrels" are the
+     same bottle - BZ: "AE bourbon is port wine finished. Period." - and the
+     only thing keeping them apart was barrel against barrels and finish
+     against finished. Three of his flights waited on a bottle open on his
+     shelf for that. */
+  eq('a plural is the same word', L.wordStem('barrels'), 'barrel');
+  eq('and so is a past tense', L.wordStem('finished'), 'finish');
+  /* NOT A STEMMER: a trailing s or ed and nothing more, because anything
+     cleverer starts matching things that are genuinely different. */
+  eq('a double s is left alone', L.wordStem('glass'), 'glass');
+  eq('and so is a short word', L.wordStem('is'), 'is');
+  eq('and one that only looks plural', L.wordStem('red'), 'red');
+  eq('the two names meet',
+    !!L.nameContains('Angel’s Envy Port Wine Barrel Finish',
+      'Angel’s Envy Finished in Port Wine Barrels'), true);
+  /* AND IT RE-ADMITS NOTHING HE REJECTED. */
+  eq('a named range still refuses',
+    (L.nameContains('Barrell Gray Label Seagrass', 'Barrell Seagrass')
+      || { marked: true }).marked, true);
+
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
     L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);

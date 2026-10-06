@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 978 |
+| functions | 979 |
 | tables | 234 |
 | carrying a stated purpose | 781 |
 
@@ -745,7 +745,7 @@ QUESTION, not the name you were going to use.
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
 - **`L.nameBuckets`** — THE SAME BOTTLE TWICE - two half-filled entries, two lookups, and an
-- **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
+- **`L.nameContains`** — _no comment above it_
 - **`L.named`** — A LADDER'S RUNGS CARRY THEIR OWN NAMES
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromKey`** — THE WORDS BEHIND A KEY
@@ -1228,6 +1228,7 @@ QUESTION, not the name you were going to use.
 - **`L.woodFamily`** — _no comment above it_
 - **`L.woodLead`** — WHICH WOOD A SET OF BOTTLES MOSTLY SAT IN, as {value, n}.
 - **`L.woodsOf`** — Every wood on a product, and every family it touches
+- **`L.wordStem`** — A TRAILING s OR ed AND NOTHING MORE
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_
 - **`L.wouldILike`** — _no comment above it_
