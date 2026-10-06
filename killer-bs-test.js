@@ -7182,8 +7182,30 @@ const bare = { k: 'c', name: 'C' };
   const sa = L.scoreAxis('wood', ['wine', 'spirits'], 4,
     [{ name: 'beer/ale', n: 0, short: 3 }], [10, 10, 0, 0],
     ['wine', 'spirits', 'beer/ale', 'new oak']);
-  eq('covered and spread are both in the score', sa.pct <= sa.coverPct, true);
-  eq('coverage is what it covers', sa.coverPct, 50);
+  /* THE SPOKE IS REACH AND ONLY REACH since 2026-10-05. It was coverage
+     TIMES evenness, which is a homemade approximation of a Hill number of
+     order 1 - and now that `depth` says that properly, the spoke says the
+     simpler thing: how much of what you can reach have you met. The spread
+     did not vanish; it moved to the reading that has no ceiling. */
+  eq('the spoke is reach against what can be reached', sa.pct, 50);
+  eq('with no library, nothing is ruled unreachable', sa.canReach, 4);
+  eq('coverage against every NAMED bucket still reads', sa.coverPct, 50);
+  /* AND WITH A POPULATION, A BUCKET NOBODY HAS AN EXAMPLE OF DROPS OUT.
+     Six of the eighteen kinds 27 CFR 5.143 defines have no bottling in a
+     676-whisky library, so scoring a shelf against them marks it down for
+     not owning what nobody sells (BZ, 2026-10-05). */
+  const pop = L.scoreAxis('wood', ['wine', 'spirits'], 4,
+    [], [10, 10, 0, 0], ['wine', 'spirits', 'beer/ale', 'new oak'],
+    [200, 50, 0, 0]);
+  eq('an unsellable bucket is not a gap in a shelf', pop.canReach, 2);
+  eq('so reach is measured against what exists', pop.pct, 100);
+  /* AND OWNING THE FIRST OF SOMETHING IS NEVER A PENALTY: it joins the
+     numerator and the denominator in the same motion, so 100% is a ceiling
+     by arithmetic (BZ: "how do we not exceed 100%"). */
+  const first = L.scoreAxis('wood', ['beer/ale'], 4, [], [0, 0, 5, 0],
+    ['wine', 'spirits', 'beer/ale', 'new oak'], [200, 50, 0, 0]);
+  eq('being first adds to both sides', first.canReach, 3);
+  eq('and never reads over a hundred', first.pct <= 100, true);
   eq('and the spoke carries its label from L.SHELF_AXES', sa.label, 'Wood');
   /* AN ABSENCE OF DATA IS NOT A LOPSIDED COLLECTION: `oak, unsaid` holds
      every bottle a regulation makes oak and no label names, and counting it
@@ -7207,9 +7229,17 @@ const bare = { k: 'c', name: 'C' };
     [30, 30, 0, 0], ['wine', 'spirits', 'beer/ale', 'new oak']);
   eq('two shelves meeting the same buckets have the same reach',
     shallow.pct, deepEr.pct);
-  eq('and different depth', deepEr.depth > shallow.depth, true);
-  eq('depth is bottles per thing you hold', shallow.depth, 3);
-  eq('and has no ceiling', deepEr.depth, 30);
+  /* DEPTH IS A HILL NUMBER OF ORDER 1 - the effective number of equally
+     common buckets this shelf amounts to (Jost 2006). Two buckets held
+     evenly is two, however many bottles stand in them: a count of KINDS,
+     not of bottles, which is why it does not move with the shelf's size. */
+  eq('two buckets held evenly are two effective buckets', shallow.depth, 2);
+  eq('however many bottles are in them', deepEr.depth, 2);
+  /* AND IT FALLS AS ONE OF THEM TAKES OVER, which is the thing the spoke
+     used to say by multiplying evenness in. */
+  eq('a lopsided pair is worth less than two',
+    L.scoreAxis('wood', ['wine', 'spirits'], 4, [], [100, 1, 0, 0],
+      ['wine', 'spirits', 'beer/ale', 'new oak']).depth < 1.5, true);
   eq('an axis holding nothing is nought deep',
     L.scoreAxis('wood', [], 4, [], [0, 0, 0, 0],
       ['wine', 'spirits', 'beer/ale', 'new oak']).depth, 0);
@@ -7279,6 +7309,74 @@ const bare = { k: 'c', name: 'C' };
   eq('a band is named by its label, never by its object',
     pb.gaps.every(g => typeof g.name === 'string'), true);
 
+  /* HILL NUMBERS, the standard way to say how diverse a collection is - the
+     effective number of equally common buckets that would give the diversity
+     you actually have (Jost 2006). BZ: "There must be an existing maths for
+     this problem." There is, and half of it was already here: axisEvenness
+     is Pielou's J, the Shannon branch of the same family. */
+  const flat = [10, 10, 10, 10];
+  eq('four held evenly are four, at any order',
+    [0, 1, 2].map(q => Math.round(L.hillNumber(flat, q))), [4, 4, 4]);
+  /* AND THE ORDERS DIVERGE AS SOON AS IT IS LOPSIDED: q=0 counts a bucket
+     you own one of as much as the one you own a hundred of, q=1 weights
+     each by exactly its share, q=2 lets the big ones dominate. */
+  const skewed = [100, 10, 1, 1];
+  eq('richness counts them all', Math.round(L.hillNumber(skewed, 0)), 4);
+  eq('and the higher the order the fewer it finds',
+    L.hillNumber(skewed, 0) > L.hillNumber(skewed, 1)
+      && L.hillNumber(skewed, 1) > L.hillNumber(skewed, 2), true);
+  /* q = 1 IS A LIMIT, not a value the formula reaches - 1/(1-q) divides by
+     zero there - and the limit is the exponential of Shannon entropy. */
+  eq('order one is the exponential of Shannon entropy',
+    Math.round(L.hillNumber(skewed, 1) * 1000) / 1000,
+    Math.round(Math.exp(-[100, 10, 1, 1].map(v => v / 112)
+      .reduce((a, p) => a + p * Math.log(p), 0)) * 1000) / 1000);
+  /* AND PIELOU'S J IS THE SAME FAMILY READ AS A RATIO. */
+  eq('evenness is the order-one Hill number over a flat one',
+    Math.round(L.axisEvenness(skewed) * 1000) / 1000,
+    Math.round((Math.log(L.hillNumber(skewed, 1)) / Math.log(4)) * 1000) / 1000);
+  eq('nothing at all is nought', L.hillNumber([], 1), 0);
+  eq('and so is a list of zeroes', L.hillNumber([0, 0], 1), 0);
+
+  /* A BUCKET NOBODY HAS AN EXAMPLE OF CANNOT BE REACHED (BZ, 2026-10-05:
+     "Scarcity should not score equally"). */
+  eq('a bucket with no example anywhere drops out',
+    L.reachable(['a', 'b', 'c'], [5, 0, 3], [0, 0, 0]), ['a', 'c']);
+  /* AND OWNING ONE PUTS IT BACK, which is what keeps the reading at or
+     under 100%: being first is never a penalty. */
+  eq('unless you own one yourself',
+    L.reachable(['a', 'b', 'c'], [5, 0, 3], [0, 2, 0]), ['a', 'b', 'c']);
+  /* ABSENT KNOWLEDGE MUST NOT NARROW A DENOMINATOR: with no population,
+     filtering on the shelf alone made every reach reading 100%. */
+  eq('with no population at all, nothing is ruled out',
+    L.reachable(['a', 'b', 'c'], null, [1, 0, 0]), ['a', 'b', 'c']);
+  eq('and a population of zeroes is the same as none',
+    L.reachable(['a', 'b'], [0, 0], [1, 0]), ['a', 'b']);
+
+  /* THE CATEGORIES BUCKETS, the same shape as the casks and the bands. */
+  const mb = L.makeBuckets([{ style: 'bourbon' }, { style: 'bourbon' },
+    { style: 'bourbon' }, { style: 'rye' }], 3, null);
+  eq('three of a kind is held', mb.held, ['bourbon']);
+  eq('one is a gap two short',
+    mb.gaps.filter(g => g.name === 'rye')[0].short, 2);
+  eq('every kind is named, held or not', mb.all.length, L.CORE_MAKES.length);
+  eq('and with no library there is no population', mb.pop, null);
+
+  /* THE SMOKE LEVELS, where ONE clears the extreme rung: an Octomore is a
+     decision rather than a shopping trip, which is the same exception age
+     and country make. */
+  const pl = L.peatLevels([{ peat: 0 }, { peat: 0 }, { peat: 0 },
+    { peat: 2 }, { peat: 4 }], 3, null);
+  eq('three unpeated clears the bottom rung',
+    pl.held.indexOf(L.PEAT_LABELS[0]) >= 0, true);
+  eq('one peat monster clears the top one',
+    pl.held.indexOf(L.PEAT_LABELS[4]) >= 0, true);
+  eq('but one in the middle does not',
+    pl.held.indexOf(L.PEAT_LABELS[2]), -1);
+  eq('and that gap is two short',
+    pl.gaps.filter(g => g.name === L.PEAT_LABELS[2])[0].short, 2);
+  eq('every level is named', pl.all.length, L.PEAT_LABELS.length);
+
   /* EVERY AXIS CAN BE SHOPPED, including the new one. */
   eq('every axis has a way to be searched for',
     L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);
@@ -7305,17 +7403,27 @@ const bare = { k: 'c', name: 'C' };
      mentioned the spread (BZ, 2026-10-05: "I want to revisit what math
      drives each data point"). */
   const SET = { id: 'breadth', label: 'Categories', of: 'ways of making whiskey',
-    pct: 46, coverPct: 67, even: 69, have: 6, total: 9 };
+    pct: 58, coverPct: 39, even: 69, have: 7, total: 18, canReach: 12,
+    depth: 4.6 };
   const setSay = L.axisMaths(SET);
-  eq('a set axis names both halves and the answer',
-    /46%/.test(setSay) && /67%/.test(setSay) && /69%/.test(setSay), true);
-  eq('and says what the count means',
-    /6 of 9 ways of making whiskey/.test(setSay), true);
-  /* AN EVEN SHELF IS SAID DIFFERENTLY FROM A LOPSIDED ONE. */
-  eq('an even axis says the two are close',
-    /sit evenly/.test(L.axisMaths(Object.assign({}, SET, { even: 95 }))), true);
-  eq('and a lopsided one says why 100 is out of reach',
-    /would still not reach 100/.test(setSay), true);
+  eq('a set axis says the reach it is reporting',
+    /58% is 7 of the 12/.test(setSay), true);
+  /* AND WHY THE OTHER SIX ARE NOT COUNTED: six of the eighteen kinds the
+     law defines have no bottling anybody here has seen, and marking a shelf
+     down for not owning what nobody sells is measuring the list. */
+  eq('and says what it left out, and why',
+    /other 6 of 18 exist in the rules and nobody here has one/.test(setSay),
+    true);
+  /* AND THE SECOND READING, as a COUNT rather than a percentage, because it
+     is the one with no ceiling. */
+  eq('and gives the depth as an effective number',
+    /amount to 4\.6 held evenly/.test(setSay), true);
+  eq('and says that is the reading without a ceiling',
+    /no ceiling/.test(setSay), true);
+  /* NOTHING IS LEFT OUT WHEN NOTHING IS UNREACHABLE. */
+  eq('an axis where everything is reachable says nothing about leftovers',
+    /exist in the rules/.test(L.axisMaths(Object.assign({}, SET,
+      { canReach: 18 }))), false);
 
   /* A LADDER IS NOT A SET: a rung missed BETWEEN two held costs more than
      one not reached, and evenness is never applied. */
@@ -13331,7 +13439,14 @@ sec('§233 six axes, no total');
     .filter(a => a.id === 'breadth')[0];
   eq('three hundred of one thing covers one category', nb.have, 1);
   eq('twelve bottles across four covers four', bb.have, 4);
+  /* REACH, so four categories of three beats one category of three hundred -
+     which is the claim the whole design rests on and is now said by the
+     simpler number. */
   eq('so the smaller shelf scores higher on breadth', bb.pct > nb.pct, true);
+  /* AND DEPTH SAYS IT TWICE: three hundred of one thing is one effective
+     category however many bottles it is. */
+  eq('three hundred of one thing is one effective category', nb.depth, 1);
+  eq('four held evenly is four', bb.depth, 4);
 
   /* However many axes there are, no total anywhere in what comes back.
      This asserted exactly six and broke when Finish was added, which is a
@@ -15185,7 +15300,14 @@ sec('§248 an axis is covered and spread, not just covered');
   /* The same two, wildly lopsided: same coverage, lower score. */
   const skew = breadth(mk([[60, 'bourbon'], [3, 'rye']]));
   eq('the same coverage, held lopsidedly', skew.coverPct, even.coverPct);
-  eq('scores lower', skew.pct < even.pct, true);
+  /* THE SAME REACH TOO, since 2026-10-05: the spoke says how much of what
+     you can reach you have met, and both shelves have met the same two. */
+  eq('and the same reach', skew.pct, even.pct);
+  /* THE LOPSIDEDNESS IS IN THE DEPTH, which is where it belongs: two
+     categories held evenly is two effective categories, and sixty against
+     three is barely more than one. */
+  eq('but it is worth less in depth', skew.depth < even.depth, true);
+  eq('two held evenly are two effective categories', even.depth, 2);
   eq('because the spread is worse', skew.even < even.even, true);
 
   /* An absent bucket is counted by coverage and must not be counted
@@ -15195,12 +15317,17 @@ sec('§248 an axis is covered and spread, not just covered');
   eq('one category present is not called uneven', one.even, 100);
   eq('and coverage still reads honestly', one.pct, 6);
 
-  /* The point of the change: full coverage alone no longer reads 100. */
+  /* FULL REACH IS FULL REACH, and the lopsidedness is said by depth. This
+     used to assert that covering everything could not read 100 - true while
+     the spoke multiplied evenness in, and replaced on 2026-10-05 by two
+     readings that each say one thing: reach met everything, and depth says
+     the shelf amounts to far fewer kinds than it holds. */
   const ALL = L.CORE_MAKES;
   const lop = breadth(mk(ALL.map((sub, i) => [i ? 3 : 200, sub])));
   eq('every category covered', lop.coverPct, 100);
-  eq('but one of them holding nearly everything is not perfect',
-    lop.pct < 100, true);
+  eq('and reach says so', lop.pct, 100);
+  eq('but one of them holding nearly everything is far from even',
+    lop.depth < ALL.length / 2, true);
   /* And a genuinely balanced shelf still can reach it, so the ceiling is
      earned rather than withheld. */
   const flat = breadth(mk(ALL.map(sub => [5, sub])));
@@ -15446,8 +15573,13 @@ sec('§251 how far the finishing goes');
      exists. */
   const skew = mk([[200, ''], [3, 'Sherry'], [3, 'A+B'], [3, 'A+B+C']]);
   eq('every rung present', skew.coverPct, 100);
-  eq('but a shelf that is nearly all unfinished does not read 100',
-    skew.pct < 80, true);
+  /* AND THE SPOKE SAYS SO, because it is reach. What a shelf of two hundred
+     unfinished bottles and three of everything else is really telling you is
+     in the DEPTH: an effective number near one, where four rungs held evenly
+     would read four. The spread moved out of the spoke rather than away
+     (2026-10-05). */
+  eq('reach says every rung is met', skew.pct, 100);
+  eq('and depth says it is nearly all one thing', skew.depth < 2, true);
 
   /* The scarcity WEIGHTS were cut when the scoring became two rules — a
      ladder discounts by its holes, a set multiplies by spread — so there

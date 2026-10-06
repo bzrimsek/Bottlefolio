@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 963 |
+| functions | 967 |
 | tables | 232 |
-| carrying a stated purpose | 768 |
+| carrying a stated purpose | 770 |
 
 ## Tables
 
@@ -301,7 +301,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisAsk`** — _no comment above it_
 - **`L.axisEffect`** — What one bottle would do to the shape
 - **`L.axisEffectLine`** — The same effect, in words, so every surface says it identically.
-- **`L.axisEvenness`** — HOW EVENLY A SHELF SITS ACROSS ONE AXIS
+- **`L.axisEvenness`** — PIELOU'S EVENNESS, J = H' / ln(S), which is the Shannon entropy of the
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — One gap, in words
 - **`L.axisLabel`** — _no comment above it_
@@ -537,6 +537,7 @@ QUESTION, not the name you were going to use.
 - **`L.hasFlavour`** — _no comment above it_
 - **`L.haveAlready`** — L.shelfKeyOf is the door that already answers "are these the same whisky" -
 - **`L.healCollisions`** — _no comment above it_
+- **`L.hillNumber`** — q = 1 IS THE ONE THIS APP USES (BZ, 2026-10-05)
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.
 - **`L.histRestore`** — _no comment above it_
@@ -691,6 +692,7 @@ QUESTION, not the name you were going to use.
 - **`L.lostPost`** — _no comment above it_
 - **`L.lostPostSay`** — WHAT TO SAY WHEN THE ANSWER DID NOT COME BACK
 - **`L.makeBackup`** — _no comment above it_
+- **`L.makeBuckets`** — _no comment above it_
 - **`L.makeOf`** — _no comment above it_
 - **`L.makeProposal`** — _no comment above it_
 - **`L.mapDelta`** — _no comment above it_
@@ -819,6 +821,7 @@ QUESTION, not the name you were going to use.
 - **`L.pct`** — _no comment above it_
 - **`L.peatFromPpm`** — _no comment above it_
 - **`L.peatLevel`** — How peated, 0 to 4
+- **`L.peatLevels`** — THE SMOKE LEVELS, the last block written inline in L.shelfAxes
 - **`L.pendingForLibrary`** — _no comment above it_
 - **`L.pendingSplit`** — Filling a blank is not correcting anybody
 - **`L.peopleLine`** — What one row says
@@ -923,6 +926,7 @@ QUESTION, not the name you were going to use.
 - **`L.rankAsks`** — _no comment above it_
 - **`L.rankOffer`** — _no comment above it_
 - **`L.rawNorm`** — A NAME WITH NOTHING TAKEN OUT OF IT BUT PUNCTUATION
+- **`L.reachable`** — THE POPULATION IS THE LIBRARY PLUS HIS OWN SHELF, which is what keeps the
 - **`L.readBackup`** — rather than half-applied.
 - **`L.readFailSays`** — _no comment above it_
 - **`L.readNumber`** — A number as a person or a spreadsheet actually writes it.
@@ -1002,7 +1006,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
 - **`L.saveRoute`** — Asked of the platform, never guessed
 - **`L.saysBanned`** — One sentence against one list
-- **`L.scoreAxis`** — ONE SPOKE, SCORED
+- **`L.scoreAxis`** — _no comment above it_
 - **`L.scotchRegions`** — _no comment above it_
 - **`L.sealedKeys`** — The whiskies you hold a SEALED bottle of.
 - **`L.sealedNote`** — The bottle figure, said where it cannot be mistaken for what the bar
