@@ -5216,7 +5216,7 @@ eq('a lesson that needs them survives with its cast',
 {
 sec('one cask, several houses');
 /* BZ's own "TAKE YOUR PX?" (2026-09-24), which the engine could not express:
-   every other flight holds a FIELD still, and a cask is a judgement rather
+   every other flight holds a FIELD still, and a cask is a judgment rather
    than a field.
 
    And there are TWO levels of it, which is his correction the same evening:
@@ -5330,7 +5330,7 @@ eq('pedro ximenez is a sherry', L.palateTerms('aged in Pedro Ximenez casks'),
 eq('rye is not found inside dryer',
   L.palateTerms('a dryer, oaky finish'), ['dry', 'oak']);
 eq('oil is not found inside boiled', L.palateTerms('boiled sweets'), ['sweet']);
-/* A judgement is not a flavour, and an empty note is not a default. */
+/* A judgment is not a flavour, and an empty note is not a default. */
 eq('how much the writer liked it is not a taste',
   L.palateTerms('complex, lovely, beautifully balanced'), []);
 eq('no note is no terms', L.palateTerms(''), []);
@@ -5413,7 +5413,7 @@ eq('and nothing at all does not throw', L.woodLead(null), null);
 })();
 /* WHAT YOU ARE LIKELY TO LIKE, FROM WHAT THE SHELF TASTES OF (v2.5.62).
    Every other reason in that list is a fact off a label; this one is read from
-   the notes, and it is the Shop verdict's judgement pointed the other way. */
+   the notes, and it is the Shop verdict's judgment pointed the other way. */
 (function () {
   const mk = (k, sub, tn, fin) => ({ k: k, name: k, sub: sub, dist: 'D' + k,
     fin: fin, tn: tn });
@@ -7085,6 +7085,135 @@ const bare = { k: 'c', name: 'C' };
   const FULL = id('bourbon', 'woodford reserve',
     'woodford reserve distillers select', '', 'proprietary batch', ['p904']);
   eq('an identity matches itself', L.identityPairable(FLAG, FLAG), true);
+
+  /* EVERY DENOMINATOR CARRIES THE REASON IT IS THAT NUMBER (BZ, 2026-10-05:
+     "Should the denominators be stored values with reasons why?"), per
+     ENTRY rather than per axis - Categories is canon with one judgment
+     sitting inside it, and filing the whole spoke as canon would have
+     smuggled that in. */
+  eq('a canon kind names its paragraph',
+    /5\.143\(c\)\(15\)/.test(L.canonSay('kinds', 'american single malt')), true);
+  eq('and carries the year it became one',
+    (L.canonOf('kinds', 'american single malt') || {}).since, 2025);
+  /* TENNESSEE IS NOT IN 5.143. A state standard, which BZ wants counted -
+     so it is filed as his rather than beside the regulation. */
+  eq('tennessee is filed as a judgment',
+    (L.canonOf('kinds', 'tennessee') || {}).kind, 'judgment');
+  eq('and says it is absent from the federal regulation',
+    /absent from 27 CFR 5\.143/.test(L.canonSay('kinds', 'tennessee')), true);
+  eq('every other kind is canon',
+    L.CANON.kinds.filter(k => k.kind !== 'canon').map(k => k.id),
+    ['tennessee']);
+
+  /* A DEPTH IS THE COUNT OF LEGALLY DEFINED KINDS, not a guess at a
+     distillery count. */
+  eq('the United States is thirteen', L.COUNTRY_DEPTH['United States'], 13);
+  eq('Scotland five', L.COUNTRY_DEPTH.Scotland, 5);
+  eq('a country nobody has ruled on is one, and says why',
+    /no domestic standard/.test(L.canonSay('countries', 'Taiwan')), true);
+  /* AND NO SPOKE IS LEFT WITHOUT A SOURCE, which is the whole point: eight
+     numbers that all looked equally authoritative. */
+  eq('every axis can say where its denominator came from',
+    L.SHELF_AXES.filter(d => !L.canonSay('bands',
+      (L.AXIS_CANON[d.id] || [])[1] || d.id)).map(d => d.id), []);
+
+  /* A CASK IS TWO FACTS. Five of the six wood families said what it HELD
+     and the sixth what it was MADE OF, so an ex-bourbon barrel and a
+     mizunara puncheon landed in one bucket (BZ: "Both please"). */
+  eq('a sherry cask is wine to the regulation',
+    L.fillsOf({ fin: 'Oloroso Sherry' }), ['wine']);
+  eq('and says nothing about the species',
+    L.speciesOf({ fin: 'Oloroso Sherry' }), []);
+  eq('a mizunara cask is a species and not a fill',
+    L.speciesOf({ fin: 'Mizunara' }), ['mizunara']);
+  eq('an ex-bourbon cask is a spirits fill',
+    L.fillsOf({ fin: 'First-fill bourbon' }).indexOf('spirits') >= 0, true);
+  /* THE LAW ALREADY NAMES THE CASK for an American straight whiskey, so a
+     shelf of bourbon is not empty of new oak just because nobody typed it.
+     Without this BZ's Wood read 22% on a mostly-bourbon shelf. */
+  eq('a bourbon is new oak by law',
+    L.fillsOf({ sub: 'bourbon' }), ['new oak']);
+  eq('and so is a rye', L.fillsOf({ sub: 'rye' }), ['new oak']);
+  /* CORN WHISKY IS DELIBERATELY ABSENT: it need not be stored at all, and
+     when it is, it is used or uncharred oak. */
+  eq('but corn whisky is not', L.fillsOf({ sub: 'corn' }), []);
+  eq('and a Scotch is not either', L.fillsOf({ sub: 'scotch' }), []);
+  /* A BOTTLE WITH SEVERAL WOODS COUNTS FOR EACH. */
+  eq('a bottle finished twice counts in both',
+    L.fillsOf({ fin: 'Port + Rum' }), ['spirits', 'wine']);
+  /* ONE DOOR READS BOTH HALVES, so neither can learn a second way to match
+     a cask word. */
+  eq('the reader finds a word anywhere in the part',
+    L.caskRead({ fin: 'First-Fill Oloroso Sherry Butt' }, L.CASK_FILL),
+    ['wine']);
+  eq('and answers nothing for a cask it does not know',
+    L.caskRead({ fin: 'Unobtanium' }, L.CASK_FILL), []);
+  eq('and nothing at all for a bottle with no cask',
+    L.caskRead({}, L.CASK_FILL), []);
+  /* MIZUNARA IS ONE BUCKET UNDER BOTH ITS NAMES, because the authorities
+     differ on species or variety and it is one tree to anybody drinking it. */
+  eq('mongolian oak and mizunara are one bucket',
+    L.speciesOf({ fin: 'Mongolian Oak' }), L.speciesOf({ fin: 'Mizunara' }));
+  /* AND MISSOURI OAK IS AMERICAN OAK: provenance, not species (BZ,
+     2026-10-05: "missouri v kentucky oak?"). */
+  eq('missouri oak is american oak',
+    L.speciesOf({ fin: 'Missouri Oak' }), ['american']);
+  /* OAK AND NOT-OAK ARE DIFFERENT QUESTIONS, which a bucket called "other"
+     could not ask: amburana is a Brazilian hardwood and cherry is more
+     porous than oak, so they finish faster and taste nothing like it. */
+  eq('amburana is not oak', L.speciesOf({ fin: 'Amburana' }), ['not oak']);
+  eq('and garry oak is', L.speciesOf({ fin: 'Garry Oak' }), ['other oak']);
+  /* ONE CASK SPOKE'S WHOLE ARITHMETIC, written once because Wood and Species
+     ask the identical question of different tables. */
+  const cf = [{ fill: ['wine'] }, { fill: ['wine'] }, { fill: ['wine'] },
+              { fill: ['spirits'] }];
+  const cb = L.caskBuckets(cf, { wine: [], spirits: [], 'beer/ale': [] },
+    'fill', 3);
+  eq('a bucket with three is covered', cb.held, ['wine']);
+  eq('one with fewer is a gap, and says how many short',
+    cb.gaps.filter(g => g.name === 'spirits')[0].short, 2);
+  eq('and one with none says three',
+    cb.gaps.filter(g => g.name === 'beer/ale')[0].short, 3);
+  eq('the counts line up with the names', cb.counts, [3, 1, 0]);
+  eq('the nearest gap sorts first', cb.gaps[0].name, 'spirits');
+
+  /* ONE SPOKE, SCORED. Lifted out of shelfAxes so the arithmetic every
+     number on the chart comes from can be tested on its own. */
+  const sa = L.scoreAxis('wood', ['wine', 'spirits'], 4,
+    [{ name: 'beer/ale', n: 0, short: 3 }], [10, 10, 0, 0],
+    ['wine', 'spirits', 'beer/ale', 'new oak']);
+  eq('covered and spread are both in the score', sa.pct <= sa.coverPct, true);
+  eq('coverage is what it covers', sa.coverPct, 50);
+  eq('and the spoke carries its label from L.SHELF_AXES', sa.label, 'Wood');
+  /* AN ABSENCE OF DATA IS NOT A LOPSIDED COLLECTION: `oak, unsaid` holds
+     every bottle a regulation makes oak and no label names, and counting it
+     in the spread took Species from 30% to 11% for knowing MORE (BZ,
+     2026-10-05: "infer oak by law"). */
+  const lop = L.scoreAxis('species', ['american', 'oak, unsaid'], 2,
+    [], [10, 240], ['american', 'oak, unsaid']);
+  eq('the unsaid bucket is left out of the spread', lop.even, 100);
+  eq('but it still counts as covered', lop.coverPct, 100);
+  eq('and it is named as an absence rather than a choice',
+    L.NOT_A_CHOICE['oak, unsaid'], 1);
+
+  /* EVERY AXIS CAN BE SHOPPED, including the new one. */
+  eq('every axis has a way to be searched for',
+    L.SHELF_AXES.filter(d => !L.AXIS_ASK[d.id]).map(d => d.id), []);
+
+  /* THE SPOKES ARE DRAWN IN L.SHELF_AXES' ORDER, grain to glass, and not in
+     whichever order the arithmetic happened to be written (BZ: "is there a
+     clockwise sequence that makes sense?"). */
+  eq('the spokes are ordered by the declaration, not by the arithmetic',
+    L.axesInOrder([{ id: 'strength' }, { id: 'breadth' }, { id: 'wood' }])
+      .map(a => a.id), ['breadth', 'wood', 'strength']);
+  /* AND A SPOKE NOBODY DECLARED STILL SHOWS, at the end: one computed and
+     never drawn is the harder fault to see. */
+  eq('an undeclared axis is not dropped',
+    L.axesInOrder([{ id: 'mystery' }, { id: 'breadth' }]).map(a => a.id),
+    ['breadth', 'mystery']);
+  eq('the cask story is kept whole',
+    L.SHELF_AXES.map(a => a.id).join(',').indexOf('species,wood,finish,flavour')
+      >= 0, true);
 
   /* HOW A SPOKE REACHED ITS NUMBER. Three formulas score eight spokes and
      the chart printed only the answer, so two of them read as arithmetic
@@ -15023,9 +15152,28 @@ sec('§249 how much of the whisky world');
     return L.shelfAxes(cat, bs, geo).filter(a => a.id === 'origin')[0];
   };
 
-  /* Depths are proportional to how much whisky a place actually makes. */
-  eq('the United States takes a dozen', L.COUNTRY_DEPTH['United States'], 12);
-  eq('Scotland ten', L.COUNTRY_DEPTH.Scotland, 10);
+  /* A DEPTH IS THE COUNT OF LEGALLY DEFINED KINDS THAT COUNTRY MAKES, out
+     of L.CANON, which carries the citation for each. This used to be
+     "roughly the log of its distillery count" and could be checked against
+     nothing (BZ, 2026-10-05, on the number it produced: "I want to revisit
+     what math drives each data point"). You have met Scotland when you have
+     tried its five categories, not when you have counted its distilleries. */
+  eq('the United States takes thirteen — twelve base kinds and Tennessee',
+    L.COUNTRY_DEPTH['United States'], 13);
+  eq('Scotland five, for the five categories of the 2009 regulations',
+    L.COUNTRY_DEPTH.Scotland, 5);
+  eq('Ireland four, for the Technical File’s four',
+    L.COUNTRY_DEPTH.Ireland, 4);
+  /* THE 2021 STANDARD DEFINES WHAT MAY BE CALLED JAPANESE WHISKY and no
+     kinds within it, so there is nothing canonical to count beyond one. */
+  eq('and Japan one, because its standard defines the category and not its '
+    + 'kinds', L.COUNTRY_DEPTH.Japan, 1);
+  /* EVERY DEPTH SAYS WHERE IT CAME FROM. */
+  eq('a depth cites its regulation',
+    /Scotch Whisky Regulations 2009/.test(L.canonSay('countries', 'Scotland')),
+    true);
+  eq('and a country with no standard says that instead',
+    /no domestic standard/.test(L.canonSay('countries', 'Taiwan')), true);
   eq('and Taiwan one, because Taiwan is essentially Kavalan',
     L.COUNTRY_DEPTH.Taiwan, 1);
   /* BZ's buddy has a Chinese whisky, and China is real now — Pernod's
@@ -15039,9 +15187,9 @@ sec('§249 how much of the whisky world');
     three.covered.indexOf('United States') >= 0, false);
   eq('but they count for something',
     three.pct > 0, true);
-  const twelve = mk([[12, 'bourbon']]);
-  eq('twelve do', twelve.covered.indexOf('United States') >= 0, true);
-  eq('and a dozen bourbons scores more than three',
+  const twelve = mk([[13, 'bourbon']]);
+  eq('thirteen do', twelve.covered.indexOf('United States') >= 0, true);
+  eq('and thirteen bourbons score more than three',
     twelve.pct > three.pct, true);
 
   /* One Kavalan IS Taiwan, which is the other half of the same idea. */
@@ -15065,7 +15213,7 @@ sec('§249 how much of the whisky world');
   /* The gaps say how many MORE, not merely that something is absent. */
   const some = mk([[3, 'bourbon'], [3, 'scotch']]);
   const usGap = some.gaps.filter(g => g.name === 'United States')[0];
-  eq('a part-reached country reports what it still needs', usGap.short, 9);
+  eq('a part-reached country reports what it still needs', usGap.short, 10);
   eq('and what is already there', usGap.n, 3);
 
   /* Every country on the list must be REACHABLE. France carried a depth
@@ -21364,7 +21512,7 @@ sec('\u00a7355 what the library contradicts');
       dist: 'Somewhere', style: 'straight' } }).length, 0);
   /* A PAIR IS JUDGED AS A PAIR. Three entries sharing a house, a strength and
      an age make three pairs from two first-entries, so a verdict keyed on the
-     first alone had two slots for three judgements: marking Double Cask against
+     first alone had two slots for three judgments: marking Double Cask against
      Fine Oak also answered Double Cask against Sherry Oak, which nobody had
      looked at, and the key moved with the order the library came back in (BZ,
      2026-10-02: "some of these we have seen many times"). */
@@ -28157,7 +28305,7 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
     L.auditFix('proofdouble', { name: 'A', proof: 96 }, 'A'), null);
 
   /* WHICH NAME SAYS MORE. BZ kept the fuller title 28 times out of 28, and
-     the merge dialog offers both sides and asks, so that was his judgement
+     the merge dialog offers both sides and asks, so that was his judgment
      every time rather than a direction baked into the code. He then corrected
      the rule himself - "More descriptive happens to be longer" - and the
      first pair below is why it matters: the winner DROPS a word, so a length
@@ -28949,7 +29097,7 @@ sec('§459 which library entry a bottle belongs to');
     got.moves['Oban Little Bay'], 'Oban Little Bay Small Cask');
   /* BUT CONTAINMENT DECIDES. Kevrin's PX really was dropped as already in as
      the Kentucky Oak, which is a different whisky. */
-  eq('a judgement the names contradict is refused',
+  eq('a judgment the names contradict is refused',
     got.moves['Redbreast PX Edition'], undefined);
   eq('and the bottle lands on the right entry instead, by its own name',
     got.bottles.filter(b => b.id === 'B3')[0].k, 'Redbreast PX Edition');
@@ -29069,7 +29217,7 @@ sec('§459 which library entry a bottle belongs to');
     L.worthContributing(blend, {}), true);
   eq('but a bottle of his own is never offered',
     L.worthContributing(Object.assign({ mine: true }, blend), {}), false);
-  /* ASKED FIRST, so no judgement of the name can reach past it: a private
+  /* ASKED FIRST, so no judgment of the name can reach past it: a private
      bottle with a name the library would refuse is refused for being his,
      and a private bottle the library already has is refused the same way. */
   eq('and it is refused whatever else is true of it',
@@ -29257,7 +29405,7 @@ sec('§461 a fact in the wrong field');
   /* A FINDING THAT CANNOT BE ACTED ON IS A LIST OF COMPLAINTS (BZ, 2026-10-01:
      "unclear on what to do and not row by row edit/ask"). Where the repair is
      mechanical and the same on every row it is declared beside the words, and
-     anything needing a judgement deliberately has none. */
+     anything needing a judgment deliberately has none. */
   eq('a finish holding a scarcity has a repair',
     (L.faultFix('finscar') || {}).clears, 'fin');
   eq('so does a tasting note in the cask field',
@@ -29265,7 +29413,7 @@ sec('§461 a fact in the wrong field');
   eq('and a special class in the style field',
     (L.faultFix('styleclass') || {}).clears, 'style');
   eq('a bonded cask strength has none, because which word is wrong is a '
-    + 'judgement', L.faultFix('bondcs'), null);
+    + 'judgment', L.faultFix('bondcs'), null);
   eq('nor does a mash bill that does not add up', L.faultFix('mashsum'), null);
   eq('nor a fault nobody has heard of', L.faultFix('nosuchfault'), null);
   /* THE WRITE ITSELF: one field, nulled on every row the finding names. */
@@ -30143,7 +30291,7 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
       L.shelfFaults(fcat, fbot).map(x => x.k), ['bad']);
     eq('and it carries the contradiction in words',
       /name reads exclusive/.test(L.shelfFaults(fcat, fbot)[0].says), true);
-    eq('the bar shelf is not held to a whiskey judgement',
+    eq('the bar shelf is not held to a whiskey judgment',
       L.rowFaults(fcat.vod).map(f => f.id), []);
     eq('nothing wrong is nothing to say',
       L.shelfFaultLine(L.shelfFaults({ ok: fcat.ok }, [{ k: 'ok' }])), '');

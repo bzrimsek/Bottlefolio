@@ -225,8 +225,17 @@ const axBlock = src.slice(src.indexOf('L.SHELF_AXES = ['),
   src.indexOf('L.SHELF_AXES = [') + 1200);
 const axisIds = (axBlock.match(/\{ id: '([a-z]+)'/g) || [])
   .map(m => m.split("'")[1]);
-const askBlock = src.slice(src.indexOf('L.AXIS_ASK'),
-  src.indexOf('L.AXIS_ASK') + 1400);
+/* TO THE END OF THE OBJECT, not a magic number of characters. This read the
+   first 1400 bytes after L.AXIS_ASK, so the day a ninth axis was added the
+   last two phrases fell off the end of the window and the check reported two
+   axes as unsearchable when every one of them had a phrase (2026-10-05). A
+   check that fails when the thing it checks GROWS teaches you to ignore it. */
+const askBlock = (() => {
+  const at = src.indexOf('L.AXIS_ASK');
+  if (at < 0) return '';
+  const end = src.indexOf(String.fromCharCode(10) + '};', at);
+  return src.slice(at, end < 0 ? at + 1400 : end);
+})();
 /* EVERY NAMED SET OPENS WITH ITS OWN ARGUMENT.
 
    STORY_OPENERS was keyed by chip only, so a shelf called Islay Lifer -
@@ -3389,7 +3398,6 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderGaps: 170,
     renderShelfCharts: 165,
     renderUsers: 160,
-    shelfAxes: 159,
     shelfPortrait: 159,
     renderGuest: 157,
     flightEditor: 153,
@@ -3399,6 +3407,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     libraryAudit: 131,
     shelfBuildSheet: 131,
     fbLoadAfterWipeCheck: 130,
+    shelfAxes: 129,
     awayLookingCard: 128,
     flightBuilder: 128,
     renderOffer: 128,

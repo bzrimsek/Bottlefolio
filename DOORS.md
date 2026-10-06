@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 951 |
-| tables | 224 |
-| carrying a stated purpose | 753 |
+| functions | 959 |
+| tables | 232 |
+| carrying a stated purpose | 766 |
 
 ## Tables
 
@@ -27,14 +27,18 @@ QUESTION, not the name you were going to use.
 - **`L.ASK_ORDER`** — WHICH GROUP ANSWERS FIRST
 - **`L.ASK_STOP`** — Function words and the generic verbs questions are built out of
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
+- **`L.AXIS_CANON`** — WHICH AXIS'S DENOMINATOR IS FILED WHERE, so the arithmetic line can name
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CANDIDATE_FIELDS`** — BZ'S EIGHT in his order, less brand and name, which are the row's title.
+- **`L.CANON`** — IN THE ENGINE RATHER THAN A canon.json
 - **`L.CASE_FIXED`** — casing are spelled out rather than guessed at.
 - **`L.CASK_FAMILY`** — A named trait orders the rung
+- **`L.CASK_FILL`** — A WORD THAT ONLY NAMES A SPECIES IS NOT HERE
 - **`L.CASK_KIND`** — THE CASK ITSELF, and the family it lives in
+- **`L.CASK_SPECIES`** — WHAT THE CASK IS MADE OF, and a judgment that says so
 - **`L.CASK_WINEY`** — THE FINISHES THAT MAKE A WHISKY WINEY, and the woods that do not
 - **`L.CASK_WOODY`** — THE FINISHES THAT MAKE A WHISKY WINEY, and the woods that do not
 - **`L.CAT_KINDS`** — THE THREE KINDS, and the one place each is keyed
@@ -43,7 +47,7 @@ QUESTION, not the name you were going to use.
 - **`L.COLUMN_SCORERS`** — A field with several candidate columns is decided by EVIDENCE, not
 - **`L.CORE_MAKES`** — What KIND of whisky, as opposed to where it is from.
 - **`L.CORRECTABLE`** — _no comment above it_
-- **`L.COUNTRY_DEPTH`** — How much whisky world each country is
+- **`L.COUNTRY_DEPTH`** — HOW MANY BOTTLES IT TAKES TO HAVE MET A COUNTRY, out of L.CANON rather
 - **`L.COUNTRY_OF_SUB`** — _no comment above it_
 - **`L.CURRENCY`** — The price out of a listing, with its currency
 - **`L.DESCRIBES_NOT_NAMES`** — WORDS THAT DESCRIBE RATHER THAN NAME, which no other list of this app's
@@ -122,8 +126,10 @@ QUESTION, not the name you were going to use.
 - **`L.NAME_TAKEN`** — message in a shared list.
 - **`L.NAMED_GAPS`** — one ("a Campbeltown Scotch")
 - **`L.NEAR_AXES`** — Nearest, and on WHICH axis
+- **`L.NEW_OAK_BY_LAW`** — THE KINDS WHOSE CASK THE LAW ALREADY NAMES
 - **`L.NO_PLURAL`** — are already mass nouns or end in a sibilant stay as they are.
 - **`L.NOT_A_CASK`** — Words that name a kind of whisky rather than a kind of cask
+- **`L.NOT_A_CHOICE`** — BUCKETS THAT ARE AN ABSENCE OF DATA RATHER THAN A CHOICE
 - **`L.NOT_A_FACT`** — AND WHAT IS NEITHER
 - **`L.NOT_A_PLACE`** — Not the same as a value this app has not heard of, which stays a place:
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
@@ -131,6 +137,7 @@ QUESTION, not the name you were going to use.
 - **`L.NOT_GUESSED`** — A TYPE A PERSON MAY CHOOSE AND THE APP MAY NOT GUESS
 - **`L.NOT_WHISKY`** — 'flavored' joined on 2026-09-24
 - **`L.NOTE_WORDS_MEMO`** — THE WORDS OF A NOTE, split once
+- **`L.OAK_BY_LAW`** — DELIBERATELY NARROWER THAN IT LOOKS, and the exclusions are the point.
 - **`L.OFFER_GENERIC`** — WHAT EVERY BOTTLE SHARES, and so identifies none
 - **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
 - **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
@@ -197,7 +204,7 @@ QUESTION, not the name you were going to use.
 - **`L.SHEET_PROMPTS`** — _no comment above it_
 - **`L.SHEET_ROW_MM`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
 - **`L.SHEET_SAFE`** — every sheet's prompts, and a check that cries wolf gets switched off.
-- **`L.SHELF_AXES`** — The shape of a shelf, on six axes, each measuring something the others
+- **`L.SHELF_AXES`** — The order was Categories, Regions, Flavor, Wood, Strength, Age, Smoke,
 - **`L.SHELF_ENDS`** — _no comment above it_
 - **`L.SHELF_FACTS`** — THE HOLDER STILL LEADS, through fillBlanks, so this can fill a gap and never
 - **`L.SHELF_LEAN_BAND`** — THE FLAVOURS THAT SEPARATE THIS SHELF FROM ITSELF.
@@ -240,6 +247,7 @@ QUESTION, not the name you were going to use.
 - **`L.WHEEL_OF`** — _no comment above it_
 - **`L.WHEEL_RINGS`** — WHAT IS NOT HERE is which words belong to which group
 - **`L.WHISKEY`** — _no comment above it_
+- **`L.WHISKY_COUNTRIES`** — WHICH COUNTRIES GET A SPOKE AT ALL, which is a judgment and stays one
 - **`L.WHY_PT`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.WOOD_FAMILIES`** — _no comment above it_
 - **`L.WOOD_ONLY`** — finish classifies the way an imported one does.
@@ -286,6 +294,7 @@ QUESTION, not the name you were going to use.
 - **`L.autoSpelledRecently`** — WHAT THE APP RESPELLED ON ITS OWN, and can still be put back - the same
 - **`L.awayPour`** — _no comment above it_
 - **`L.awayWishable`** — _no comment above it_
+- **`L.axesInOrder`** — THE SPOKES IN THE ORDER THEY ARE DRAWN, which is L.SHELF_AXES' order and
 - **`L.axisAsk`** — _no comment above it_
 - **`L.axisEffect`** — What one bottle would do to the shape
 - **`L.axisEffectLine`** — The same effect, in words, so every surface says it identically.
@@ -293,7 +302,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — One gap, in words
 - **`L.axisLabel`** — _no comment above it_
-- **`L.axisMaths`** — In the engine rather than the screen because it is arithmetic, and because
+- **`L.axisMaths`** — _no comment above it_
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
 - **`L.barRows`** — pies: readers compare lengths better than angles.
@@ -331,13 +340,17 @@ QUESTION, not the name you were going to use.
 - **`L.canDeleteProduct`** — them. Retire the bottles first.
 - **`L.candFill`** — WHAT A NAME LEAVES OUT, FILLED FROM THE CATALOG, so a bottle judged from
 - **`L.candidateFits`** — finished bottling "from Buffalo Trace" came back as three other houses.
+- **`L.canonOf`** — ONE DOOR FOR "WHERE DOES THIS NUMBER COME FROM"
+- **`L.canonSay`** — SAID IN A CLAUSE, for the end of a sentence the screen is already
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
 - **`L.carryFlights`** — AND A FLIGHT, WHICH IS ITS OWN SHAPE
 - **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
+- **`L.caskBuckets`** — ONE CASK SPOKE'S WHOLE ARITHMETIC
 - **`L.caskFamily`** — _no comment above it_
 - **`L.caskKind`** — A label naming two casks keys as both, sorted
+- **`L.caskRead`** — ONE DOOR FOR BOTH READINGS, because a cask word answers whichever question
 - **`L.catalogWithOwned`** — THE CATEGORY IS GUESSED, because L.isWhisky reads an entry with no `sub`
 - **`L.catFault`** — WHAT IS WRONG WITH A RECORD
 - **`L.catKeyFor`** — _no comment above it_
@@ -420,6 +433,7 @@ QUESTION, not the name you were going to use.
 - **`L.fillProgress`** — SIX SECONDS IS THE GUESS BEFORE THERE IS ANYTHING TO AVERAGE, because the
 - **`L.fillSay`** — HOW A FILL IS GOING, SAID ONE WAY
 - **`L.fillSnap`** — _no comment above it_
+- **`L.fillsOf`** — _no comment above it_
 - **`L.fillWords`** — _no comment above it_
 - **`L.filterFlights`** — _no comment above it_
 - **`L.findability`** — _no comment above it_
@@ -984,6 +998,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
 - **`L.saveRoute`** — Asked of the platform, never guessed
 - **`L.saysBanned`** — One sentence against one list
+- **`L.scoreAxis`** — ONE SPOKE, SCORED
 - **`L.scotchRegions`** — _no comment above it_
 - **`L.sealedKeys`** — The whiskies you hold a SEALED bottle of.
 - **`L.sealedNote`** — The bottle figure, said where it cannot be mistaken for what the bar
@@ -1059,6 +1074,7 @@ QUESTION, not the name you were going to use.
 - **`L.sortByProof`** — Order the pours by ascending proof -- the house rule, applied in one call.
 - **`L.sortFlights`** — _no comment above it_
 - **`L.sortMark`** — The mark a header carries
+- **`L.speciesOf`** — _no comment above it_
 - **`L.spinValid`** — the holds themselves are unsatisfiable
 - **`L.splitPours`** — More than one glass, typed the way somebody types it.
 - **`L.spreadBy`** — _no comment above it_
