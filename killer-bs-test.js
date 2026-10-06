@@ -7798,10 +7798,21 @@ const bare = { k: 'c', name: 'C' };
     id('bourbon', 'h', 'b', '', '', ['p1070'])), false);
   /* THE EXPRESSION IS IGNORED ON PURPOSE: the words one name carries and the
      other does not are the whole of what these checks look at. */
-  eq('the expression is what the pair is about, so it is not a veto',
+  /* AND THE EXPRESSION MUST MATCH. This layer was ignored on the reasoning
+     that "the expression is what the pair is about" - and that was wrong:
+     the expression is exactly what NAMES a release. Every pair BZ rejected
+     differs here and nowhere else - Curiositas against The Smoky Ten,
+     Double Cask against Fine Oak, Cinnamon Spiced against Ginger Root, a
+     Port Cask Finish against the plain one (2026-10-06: "clearly not the
+     same bottle and I've said so multiple times"). */
+  eq('two releases are not one whisky written twice',
     L.identityPairable(
-      id('bourbon', 'h', 'b', 'sampleroomcollection', '', ['age25']),
-      id('bourbon', 'h', 'b', '', '', ['age25'])), true);
+      id('scotch', 'macallan', 'macallan', 'double', '', ['age30']),
+      id('scotch', 'macallan', 'macallan', 'fineoak', '', ['age30'])), false);
+  /* AND THE SAME EXPRESSION STILL PAIRS ACROSS A SUB-RANGE, which is the
+     Woodford flagship and the only pair left standing on BZ's library. */
+  eq('the same expression under a sub-range still pairs',
+    L.identityPairable(FLAG, FULL), true);
   /* NOTHING IS NOT AN IDENTITY. */
   eq('an empty identity pairs with nothing', L.identityPairable('', FLAG), false);
   eq('and neither does a missing one', L.identityPairable(FLAG, null), false);
