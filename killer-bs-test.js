@@ -7588,6 +7588,29 @@ const bare = { k: 'c', name: 'C' };
     eq('a pour already on the shelf is left alone',
       joins.filter(j => j.from === 'Mine Already').length, 0);
 
+    /* A FLIGHT MAY POUR TWO BOTTLES THE NAME DOOR WOULD PAIR, and when it
+       does the flight is the better evidence: "One Barrel or Many?" holds a
+       single barrel beside a small batch from one house on purpose. The
+       join was proposed, BZ pressed it, and two pours became one bottle
+       (2026-10-06). */
+    const both = L.flightPourJoins(
+      [{ title: 'ONE BARREL OR MANY?', core: [
+        { k: 'Willett Family Estate 4 Year Rye' },
+        { k: 'Willett Family Estate Small Batch Rye' }] }],
+      [{ id: 'w', k: 'Willett Family Estate Small Batch Rye', status: 'open' }],
+      { 'Willett Family Estate Small Batch Rye':
+        { k: 'Willett Family Estate Small Batch Rye' } });
+    eq('a pour the flight already holds is not proposed', both.length, 0);
+    /* AND THE REPAIR REFUSES IT TOO, because it walks every flight: a join
+       offered from one could collapse two pours in another. */
+    const guarded = L.pointPourAt(
+      { f1: { core: [{ k: 'A' }, { k: 'B' }] },
+        f2: { core: [{ k: 'A' }] } }, 'A', 'B');
+    eq('and the flight already pouring it is left alone',
+      guarded.flights.f1.core.map(p => p.k).join(','), 'A,B');
+    eq('while the flight that is not keeps the repair',
+      guarded.flights.f2.core[0].k, 'B');
+
     /* TWO CANDIDATES IS NOTHING TO PROPOSE: a person has to look. */
     const two = L.flightPourJoins(
       [{ title: 'T', core: [{ k: 'Woodford Reserve' }] }],
