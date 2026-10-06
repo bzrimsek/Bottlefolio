@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 974 |
+| functions | 975 |
 | tables | 234 |
-| carrying a stated purpose | 778 |
+| carrying a stated purpose | 779 |
 
 ## Tables
 
@@ -386,6 +386,7 @@ QUESTION, not the name you were going to use.
 - **`L.countBy`** — _no comment above it_
 - **`L.countIntake`** — _no comment above it_
 - **`L.countLookup`** — _no comment above it_
+- **`L.countryBuckets`** — THE COUNTRIES SPOKE
 - **`L.countryCounts`** — _no comment above it_
 - **`L.countryOf`** — _no comment above it_
 - **`L.csvCell`** — A cell a spreadsheet will read back the way it was written.

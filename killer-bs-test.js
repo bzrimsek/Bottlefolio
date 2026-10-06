@@ -7465,6 +7465,67 @@ const bare = { k: 'c', name: 'C' };
   /* AND EXACTLY ONE IS THE THINNEST, among the ones he actually holds. */
   eq('only the smallest held band is called the thinnest',
     ordered.filter(r => r.thinnest).map(r => r.name), ['above 120']);
+  /* AND ONE ROW IS THE ONE TO BUY, marked where it sits rather than named
+     in a line above the list (BZ, 2026-10-06: "should we put an indicator
+     next to the one that we would recommend to buy?"). It is the shortest
+     walk, because that is the bottle that moves the number for the least
+     money. */
+  const picked = L.axisRows({ order: ['bourbon', 'wheat', 'single grain'],
+    tally: [124, 1, 2],
+    gaps: [{ name: 'wheat', n: 1, short: 2 },
+           { name: 'single grain', n: 2, short: 1 }] });
+  eq('the shortest walk is the one to buy',
+    picked.filter(r => r.pick).map(r => r.name), ['single grain']);
+  eq('and only one row carries it',
+    picked.filter(r => r.pick).length, 1);
+  /* NOTHING TO SHOP FOR, NOTHING TO MARK. */
+  eq('a covered axis recommends nothing',
+    L.axisRows({ order: ['a', 'b'], tally: [5, 9], gaps: [] })
+      .filter(r => r.pick).length, 0);
+  /* AND NOTHING IS THINNEST ON ITS OWN: one covered bucket called "your
+     thinnest" says nothing at all. */
+  eq('one covered bucket is not the thinnest of anything',
+    L.axisRows({ order: ['a', 'b'], tally: [5, 0],
+      gaps: [{ name: 'b', n: 0, short: 3 }] })
+      .filter(r => r.thinnest).length, 0);
+  eq('but two are', L.axisRows({ order: ['a', 'b'], tally: [5, 9], gaps: [] })
+    .filter(r => r.thinnest).map(r => r.name), ['a']);
+
+  /* EVERY AXIS HANDS OVER ITS BUCKET NAMES, or its chooser cannot list
+     anything, mark the one to buy, or say which is thinnest. Flavor read
+     100% and listed nothing, and Regions read "nothing to buy" with eight
+     gaps on it, both because the call left the names off (2026-10-06). */
+  {
+    const c2 = {}, b2 = [];
+    ['bourbon', 'rye', 'scotch'].forEach((sub, i) => {
+      for (let j = 0; j < 4; j++) {
+        const k = 'ax' + i + j;
+        c2[k] = { k: k, name: k, sub: sub, proof: 100, age: 12,
+                  fin: 'Oloroso', dist: 'D' + i };
+        b2.push({ k: k, status: 'open' });
+      }
+    });
+    eq('no axis is built without its names',
+      (L.shelfAxes(c2, b2, null, null) || [])
+        .filter(a => !(a.order || []).length).map(a => a.id), []);
+  }
+
+  /* A COUNTRY IS A DEPTH RATHER THAN A BOX: some ask for more bottles than
+     others, which makes it the one set axis whose buckets are not all worth
+     the same. */
+  const ctry = L.countryBuckets({ 'United States': 13, Scotland: 2, Taiwan: 1 });
+  eq('a country deep enough is held', ctry.held.indexOf('United States') >= 0,
+    true);
+  eq('one bottle covers a country that only needs one',
+    ctry.held.indexOf('Taiwan') >= 0, true);
+  /* AND SCOTLAND ASKS FOR FIVE, so two is three short. */
+  eq('a part-reached country says how many more',
+    ctry.gaps.filter(g => g.name === 'Scotland')[0].short, 3);
+  eq('every country is named, held or not', ctry.all.length,
+    L.WHISKY_COUNTRIES.length);
+  eq('and the nearest gap sorts first', ctry.gaps[0].short <= ctry.gaps[1].short,
+    true);
+
   /* THE SHORTEST WALK IS NAMED ONCE rather than by reordering the axis. */
   eq('the closest gap is the fewest short',
     (L.nearestGap({ gaps: [{ name: 'far', short: 3 },
