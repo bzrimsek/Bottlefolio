@@ -7085,6 +7085,45 @@ const bare = { k: 'c', name: 'C' };
   const FULL = id('bourbon', 'woodford reserve',
     'woodford reserve distillers select', '', 'proprietary batch', ['p904']);
   eq('an identity matches itself', L.identityPairable(FLAG, FLAG), true);
+
+  /* THE KEY ALWAYS WINS. An entry does not hold its own key, the map does,
+     and importAudit read the values alone - so every pair it raised carried
+     two undefined keys, namePrefixPairs deduped them all onto the one id
+     "+", four pairs became one, and BZ's cross wrote a verdict under
+     `samestart:+` that silenced the check for every admin and every pair,
+     including ones nobody had seen (2026-10-05: "The woodfords did not show
+     up"). */
+  const twoNamed = {
+    the_long_one: { name: 'Woodford Reserve Distillers Select Bourbon',
+      dist: 'Woodford Reserve', sub: 'bourbon', proof: 90.4 },
+    the_short_one: { name: 'Woodford Reserve Bourbon',
+      dist: 'Woodford Reserve', sub: 'bourbon', proof: 90.4 }
+  };
+  const rowsOf = L.libraryRows(twoNamed);
+  eq('a keyed map read as rows keeps its keys',
+    rowsOf.map(r => r.k).sort(), ['the_long_one', 'the_short_one']);
+  const audited = L.importAudit(twoNamed, [], null);
+  const starts = (audited.filter(f => f.id === 'samestart')[0] || { items: [] });
+  eq('the pair is raised', starts.items.length, 1);
+  eq('and it carries BOTH entry keys, not two blanks',
+    (starts.items[0].keys || []).slice().sort(),
+    ['the_long_one', 'the_short_one']);
+  /* AND THE VERDICT IT IS REMEMBERED UNDER IS THE PAIR'S, NOT EVERY PAIR'S. */
+  eq('a pair is filed under its own two keys',
+    L.auditItemKey({ keys: ['b_one', 'a_two'], text: 'x  ==  y' }),
+    'a_two+b_one');
+  eq('two blanks are not two keys',
+    L.auditItemKey({ keys: [undefined, undefined], text: 'Alpha  ==  Beta' }),
+    L.libKey('Alpha'));
+  eq('and one blank beside one real key is that key',
+    L.auditItemKey({ keys: ['', 'only_this'], text: 'x  ==  y' }), 'only_this');
+
+  /* ONE NAME, ONE BUCKET. */
+  eq('rows are bucketed by the name the shop search would match',
+    Object.keys(L.nameBuckets(rowsOf, null)).length, 2);
+  eq('and a row with no name is in no bucket',
+    Object.keys(L.nameBuckets([{ name: '' }, { name: 'Real One' }], null)).length,
+    1);
   /* A SUB-RANGE WRITTEN OUT IN FULL. The registry carries "Woodford Reserve
      Distiller's Select" as a brand of its own, so the flagship written out
      read as a different house - which is the case being looked for. */

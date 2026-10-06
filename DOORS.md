@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 949 |
+| functions | 950 |
 | tables | 224 |
 | carrying a stated purpose | 752 |
 
@@ -553,7 +553,7 @@ QUESTION, not the name you were going to use.
 - **`L.identityPairable`** — EVERYTHING ELSE MATCHES EXACTLY - type, house, age, proof, finish, special
 - **`L.identOf`** — _no comment above it_
 - **`L.identString`** — AND WRITTEN ONE WAY, so two records of one bottling cannot differ by a
-- **`L.importAudit`** — WHAT AN IMPORT LEFT BEHIND.
+- **`L.importAudit`** — _no comment above it_
 - **`L.importChanges`** — _no comment above it_
 - **`L.importKey`** — THE NAME, FOR DECIDING WHETHER IT IS THE SAME BOTTLE
 - **`L.importSummary`** — _no comment above it_
@@ -714,6 +714,7 @@ QUESTION, not the name you were going to use.
 - **`L.movePour`** — _no comment above it_
 - **`L.myBottles`** — _no comment above it_
 - **`L.nameAgrees`** — bottling, whatever else agrees
+- **`L.nameBuckets`** — THE SAME BOTTLE TWICE - two half-filled entries, two lookups, and an
 - **`L.nameContains`** — ONE DOOR, because the duplicate finder and the orphan surface both ask it and
 - **`L.nameError`** — _no comment above it_
 - **`L.nameFromKey`** — THE WORDS BEHIND A KEY
