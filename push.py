@@ -159,7 +159,11 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # a version behind. consistency.js now fails if anything this table
            # names is missing from here.
            'check.js', 'checks.json',
-           'package.json', 'package-lock.json', '.github/workflows/gate.yml']
+           'package.json', 'package-lock.json', '.github/workflows/gate.yml',
+           # 2026-10-06: the door for changing the account from off-device
+           # (BZ's flights spreadsheet). The tool only - its snapshots hold
+           # his shelf and are in NEVER below.
+           'remote.js']
 # The cloud gate deploys Code.gs, label.gs, recap.gs, shelf.gs and
 # apps-script/appsscript.json - the live project's exact file set, checked by
 # cloning it on 2026-09-15. lookup.gs and recap-handler.gs ride along for the
@@ -186,7 +190,11 @@ NEVER = [r'^bz-(bottles|flights|custom)\.json$', r'\.csv$', r'\.xlsx$',
          # real protection and this is the second gate, so the second gate
          # should cover them too. library-backup.json is a dump of the shared
          # library; refcache/ is what refdata.js keeps between runs.
-         r'^library-backup\.json$', r'^refcache/', r'-backup\.json$']
+         r'^library-backup\.json$', r'^refcache/', r'-backup\.json$',
+         # 2026-10-06: remote.js snapshots the account before it writes. They
+         # live in ~/.bottlefolio/remote-snapshots, outside this folder; these
+         # catch one copied or written here.
+         r'^_?remote-\d{4}-.*\.json$', r'^remote-snapshots/']
 
 
 def gh_path():
