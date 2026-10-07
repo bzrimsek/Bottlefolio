@@ -42,14 +42,28 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript',
    what a deploy does to a phone that already has the app. */
 let serving = null;          // null = the build as it stands on disk
 
+/* WHAT THIS BUILD CALLS ITSELF, off the one line that says so. A stand-in
+   deploy that cannot find the version is not a passing test, so this stops
+   rather than quietly serving the same bytes twice. */
+const NOW = (String(fs.readFileSync(path.join(dir, 'index.html')))
+  .match(/APP_VERSION = '([0-9][0-9.]*)'/) || [])[1];
+if (!NOW) {
+  console.log('  ✖ update: no APP_VERSION in index.html - nothing to swap');
+  process.exit(1);
+}
+
 function body(name) {
   const p = path.join(dir, name);
   if (!fs.existsSync(p)) return null;
   const raw = fs.readFileSync(p);
   if (!serving || (name !== 'index.html' && name !== 'sw.js')) return raw;
   /* A BUILD IS ITS VERSION STRING, everywhere bump.py writes one. Rewriting
-     them is the smallest honest stand-in for a deploy: same files, new build. */
-  return Buffer.from(String(raw).replace(/2\.7\.\d+/g, serving), 'utf8');
+     them is the smallest honest stand-in for a deploy: same files, new build.
+     READ OFF THE BUILD, never typed: this said /2\.7\.\d+/ and matched
+     nothing the moment the version reached 2.8.0, so the "new" build served
+     was byte-identical and the worker was called broken for doing the right
+     thing with it (2026-10-06). */
+  return Buffer.from(String(raw).split(NOW).join(serving), 'utf8');
 }
 
 (async () => {

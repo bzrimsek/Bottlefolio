@@ -2241,6 +2241,36 @@ sec('a bottle takes the identity of its entry');
   eq('and an empty shelf likewise', L.stampIdentities([], lib, {}), null);
 }
 
+sec('a country is not a way of making whisky');
+{
+  /* L.MAKE_OF answered single malt for a bare Scotch, single pot still for a
+     bare Irish and single malt for a bare Japanese. SWR 2009 defines FIVE
+     Scotch categories, the Irish Technical File four, and JSLMA 2021 defines
+     the category rather than kinds within it - so each guess counted a
+     product whose maker never said toward the finest bucket on the axis
+     (BZ, 2026-10-06). */
+  eq('a bare Scotch says nothing', L.makeOf({ sub: 'Scotch' }), null);
+  eq('nor a bare Irish', L.makeOf({ sub: 'Irish' }), null);
+  eq('nor a bare Japanese', L.makeOf({ sub: 'Japanese' }), null);
+  /* AND A STATED STYLE STILL ANSWERS, which is the whole point: the gap is
+     made visible, not filled in. */
+  eq('a Scotch that says single malt is one',
+    L.makeOf({ sub: 'Scotch', style: 'Single Malt' }), 'single malt');
+  eq('an Irish that says pot still is one',
+    L.makeOf({ sub: 'Irish', style: 'Single Pot Still' }), 'single pot still');
+  /* THE AMERICAN CLASSES ARE NOT COUNTRIES and keep answering from the sub:
+     bourbon IS a way of making, where Scotland is a place. */
+  eq('bourbon still answers from the sub alone',
+    L.makeOf({ sub: 'Bourbon' }), 'bourbon');
+  eq('and so does Tennessee', L.makeOf({ sub: 'Tennessee' }), 'tennessee');
+  /* A CORRECTION IS NOT AN EXIT. The modal asks L.isCleanup to tell them
+     apart rather than learning a second way (rule 30d). */
+  eq('adjusted is the one reason that is not an end',
+    L.EXITS.filter(L.isCleanup), ['adjusted']);
+  eq('and every other reason ends the bottle',
+    L.EXITS.filter(x => !L.isCleanup(x)).length, L.EXITS.length - 1);
+}
+
 sec('the words behind a key');
 {
   /* L.libKey dissolves an apostrophe into an underscore, so a re-keyed
@@ -13891,8 +13921,11 @@ sec('§233 six axes, no total');
   /* Coverage, not size: a small broad shelf beats a big narrow one. This
      is the claim the whole design rests on. */
   const narrow = shelf([[300, {}]]);
+  /* THE STYLES ARE STATED, because a country no longer says how a whisky
+     was made (2026-10-06) - and four kinds is what this fixture means. */
   const broad = shelf([[3, { sub: 'bourbon' }], [3, { sub: 'rye' }],
-                       [3, { sub: 'scotch' }], [3, { sub: 'irish' }]]);
+                       [3, { sub: 'scotch', style: 'single malt' }],
+                       [3, { sub: 'irish', style: 'single pot still' }]]);
   const nb = L.shelfAxes(narrow.cat, narrow.bs)
     .filter(a => a.id === 'breadth')[0];
   const bb = L.shelfAxes(broad.cat, broad.bs)
@@ -16146,8 +16179,16 @@ sec('§253 how it is made, not where it is from');
   eq('single pot still is a style',
     L.makeOf({ sub: 'irish', style: 'Single Pot Still' }),
     'single pot still');
-  eq('and a plain Irish bottle falls back to it',
-    L.makeOf({ sub: 'irish' }), 'single pot still');
+  /* AND A PLAIN IRISH BOTTLE FALLS BACK TO NOTHING. It used to answer
+     `single pot still`, which is the way of making only Ireland DEFINES
+     rather than the one Ireland mostly makes - and this section is called
+     "how it is made, not where it is from" (2026-10-06). The Technical File
+     gives Ireland four categories; a maker who never said belongs in none
+     of them, and the axis shows the gap instead of filling it. */
+  eq('but a plain Irish bottle falls back to nothing',
+    L.makeOf({ sub: 'irish' }), null);
+  eq('and a plain Scotch likewise, with five categories to choose from',
+    L.makeOf({ sub: 'scotch' }), null);
 
   /* The style field wins over the category, because it is more precise. */
   eq('a blended Scotch is blended, not a single malt',
