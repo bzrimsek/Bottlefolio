@@ -9765,7 +9765,7 @@ const shelfCat = Object.assign({}, data.catalog, JSON.parse(
 // could be dropped without anything failing.
 const mapData = JSON.parse(fs.readFileSync(path.join(__dirname, 'map.json'), 'utf8'));
 eq('380 bottles', data.bottles.length, 380);
-eq('325 shipped products', Object.keys(data.catalog).length, 325);
+eq('324 shipped products', Object.keys(data.catalog).length, 324);
 /* EVERY CASK VALUE IN THE SHIPPED CATALOGUE RESOLVES: a wood family, a
    tasting note that arrived in the wrong field, or a release word. Nothing
    sits unplaced, which is how "limited" was being announced as a cask. */
@@ -9787,7 +9787,7 @@ eq('and none of them reads back as no state',
   Object.values(data.catalog).reduce((bad, e) => bad.concat(
     Object.keys(e.srcOf || {}).filter(f => !L.stateOf(e, f))
       .map(f => e.name + ': ' + f)), []), []);
-eq('129 entries carry provenance, all of it claimed',
+eq('128 entries carry provenance, all of it claimed',
   (function () {
     const withIt = Object.values(data.catalog)
       .filter(e => Object.keys(e.srcOf || {}).length);
@@ -9795,7 +9795,7 @@ eq('129 entries carry provenance, all of it claimed',
     withIt.forEach(e => Object.keys(e.srcOf).forEach(f =>
       states.add(L.stateOf(e, f))));
     return [withIt.length, [...states]];
-  })(), [129, ['claimed']]);
+  })(), [128, ['claimed']]);
 /* THE EXACT FAULT THAT HAPPENED, and the flag that is not one. */
 eq('a field stamped in the group slot is a fault',
   L.stampFault({ tn: { nose: 'x' },
@@ -9905,8 +9905,8 @@ const woodOnly = Object.values(data.catalog).filter(p => p.fin && p.wine === fal
 eq('thirteen wood-only products', woodOnly.length, 13);
 eq('wood-only means no wine in any component', woodOnly.every(p =>
   p.fin.split('+').every(c => /Oak|Mizunara|Amburana/.test(c))), true);
-eq('ninety-eight wine-cask products',
-  Object.values(data.catalog).filter(p => p.wine === true).length, 98);
+eq('ninety-seven wine-cask products',
+  Object.values(data.catalog).filter(p => p.wine === true).length, 97);
 const tripleOak = Object.values(data.catalog).find(p => /Triple Oak/.test(p.name));
 eq('triple oak is finished', tripleOak.fin, 'Hungarian Oak+Chinkapin Oak+French Oak');
 eq('triple oak has no wine', tripleOak.wine, false);
@@ -10065,7 +10065,7 @@ eq('and every pour really is scotch',
 
 // Tasting notes across the real shelf, and where each set came from.
 const withTn = Object.values(data.catalog).filter(p => p.tn);
-eq('310 products carry tasting notes', withTn.length, 310);
+eq('309 products carry tasting notes', withTn.length, 309);
 eq('every note set has at least three columns',
   withTn.every(p => L.tastingNotes(p).length >= 3), true);
 // Twelve are now sourced from WHISKY:EDITION rather than written by me for
@@ -10079,7 +10079,7 @@ eq('twelve note sets are sourced', sourced.length, 12);
 /* 140 since v2.5.58: twenty-seven shipped entries carried flight-card
    prompts as their notes - "Read the label first", a palate of an em dash -
    and BZ's own edits held real model-written notes for them. */
-eq('140 were read by the model', modelRead.length, 140);
+eq('139 were read by the model', modelRead.length, 139);
 eq('a sourced note is never also credited to a card',
   sourced.filter(p => p.tnFrom).length, 0);
 eq('nor is a model-read one', modelRead.filter(p => p.tnFrom).length, 0);
@@ -10165,7 +10165,7 @@ eq('nor south of Mizen', Math.min(...lats) > 51.2, true);
 eq('nor east into Wales', Math.max(...lons) < -5.2, true);
 
 eq('53 US distilleries plotted', usPins.length, 53);
-eq('180 US bottles sit on a pin', usPins.reduce((n, p) => n + p.total, 0), 180);
+eq('179 US bottles sit on a pin', usPins.reduce((n, p) => n + p.total, 0), 179);
 eq('47 irish bottles sit on a pin', iePins.reduce((n, p) => n + p.total, 0), 47);
 // 76 of 80: the other four are blends and independent bottlings whose
 // "distillery" is a blender with no single place -- Dewar's, Johnnie Walker,
@@ -10190,8 +10190,8 @@ eq('the four unplaced scotch names are all blenders',
 
 // The remainder are Canadian, Japanese, world and tequila, which have no
 // coordinate set of their own - and, since 2026-09-20, the bar shelf.
-eq('302 bottles are placeable',
-  usPins.concat(scPins, iePins).reduce((n, p) => n + p.total, 0), 302);
+eq('301 bottles are placeable',
+  usPins.concat(scPins, iePins).reduce((n, p) => n + p.total, 0), 301);
 
 // Pins must come apart at the ceiling, or a cluster can never be read.
 const worldSpan = L.mapExtent(mapData.world, 3).w;
@@ -22748,7 +22748,9 @@ sec('\u00a7355 what the library contradicts');
      Whiskey Finished in Port Wine Barrels" - let it meet the entry beside it
      that had always been the same whisky. Each time, correcting a name made
      a duplicate visible rather than making one. */
-  eq('three pairs under two names', cnt('dups'), 3);
+  /* TWO, SINCE THE SHIPPED CATALOGUE WAS DEDUPED on 2026-10-06: one of the
+     three was Angel's Envy's port finish, filed twice in data.json. */
+  eq('two pairs under two names', cnt('dups'), 2);
   /* And none of the six: every one of them has the proof in its field. */
   eq('no proof is stranded on the shipped shelf', cnt('proofname'), 0);
   eq('and no grain bill on the shipped catalog fails to add up',
