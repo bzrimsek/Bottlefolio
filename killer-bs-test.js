@@ -2241,6 +2241,31 @@ sec('a bottle takes the identity of its entry');
   eq('and an empty shelf likewise', L.stampIdentities([], lib, {}), null);
 }
 
+sec('the words behind a key');
+{
+  /* L.libKey dissolves an apostrophe into an underscore, so a re-keyed
+     bottle whose catalogue entry has gone read back as "Angel S Envy" on
+     every screen that asks L.shelfName (BZ, 2026-10-06: "fix the four
+     slugged rows"). A lone s between underscores is never a word of its own
+     in a whisky's name. */
+  eq('a slug gives its possessive back',
+    L.keyAsName('angel_s_envy_bourbon'), "Angel's Envy Bourbon");
+  eq('and so does one at the end', L.keyAsName('maker_s'), "Maker's");
+  eq('a slug with no possessive is unchanged',
+    L.keyAsName('aberlour_18_year_old'), 'Aberlour 18 Year Old');
+  /* AND A REAL NAME PASSING THROUGH IS LEFT ALONE: this is fed both. */
+  eq('a name that is already a name keeps its apostrophe',
+    L.keyAsName("Angel's Envy Cask Strength"), "Angel's Envy Cask Strength");
+  eq('and one with no underscores is untouched',
+    L.keyAsName('Bunnahabhain Toiteach A Dha'), 'Bunnahabhain Toiteach A Dha');
+  /* ONE DOOR: the screens ask nameFromKey, the re-key plan asks keyAsName,
+     and they answered differently about the apostrophe (rule 30d). */
+  ['angel_s_envy_bourbon', 'aberlour_18_year_old', 'booker_s_kentucky',
+    'willett_family_estate_4yr'].forEach(k => {
+    eq('both doors agree on ' + k, L.nameFromKey(k), L.keyAsName(k));
+  });
+}
+
 sec('an identity re-files a bottle through the route that already exists');
 {
   /* An identity does not get its own way of moving a bottle: the app has one,
