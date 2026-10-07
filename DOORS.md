@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 985 |
+| functions | 988 |
 | tables | 235 |
-| carrying a stated purpose | 786 |
+| carrying a stated purpose | 789 |
 
 ## Tables
 
@@ -400,6 +400,7 @@ QUESTION, not the name you were going to use.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
 - **`L.directoryEntry`** — what everyone can see.
+- **`L.dirtyEntries`** — WHAT THIS DEVICE HAS THAT THE ACCOUNT DOES NOT, entry by entry
 - **`L.dirtyRecords`** — NO RECORD OF A PUSH MEANS NOTHING IS KNOWN, not that nothing changed
 - **`L.discoveryFor`** — _no comment above it_
 - **`L.distinctiveWords`** — The words in a line that could name something
@@ -417,6 +418,7 @@ QUESTION, not the name you were going to use.
 - **`L.enhanceQueue`** — Bottles with NO real note
 - **`L.enrichContribution`** — mergeContribution, below, cannot overwrite
 - **`L.entryFor`** — WHERE resolveLibKey CANNOT SETTLE A NAME, containment is asked
+- **`L.entryPrints`** — THE SAME, FOR A MAP
 - **`L.entryScore`** — _no comment above it_
 - **`L.escHtml`** — TEXT INTO HTML, safe between tags AND inside a quoted attribute
 - **`L.exactDupes`** — _no comment above it_
@@ -1129,6 +1131,7 @@ QUESTION, not the name you were going to use.
 - **`L.suggestPurchase`** — further than anything open can — the gap the collection cannot fill.
 - **`L.syncDecision`** — _no comment above it_
 - **`L.syncList`** — WHAT A LIST BECOMES ON A LOAD, and the one line worth logging about it.
+- **`L.syncMap`** — A MAP, MERGED ONTO THE ACCOUNT
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — `which` is 'all' for a bottle somebody is looking at
 - **`L.tasteAsk`** — _no comment above it_

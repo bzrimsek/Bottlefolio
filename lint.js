@@ -97,8 +97,39 @@ const config = {
     'valid-typeof': 'error'
   }
 };
+/* THE ENGINE'S OWN NAMES, which eslint cannot check. L is one object, so a
+   call to a function that was never defined is a member access on a declared
+   variable and no-undef says nothing - which is how L.syncList shipped past a
+   green lint on 2026-10-06, called and undefined, after the script meant to
+   define it wrote nothing (rule 16a). The app would have thrown on its first
+   sync; what caught it was a DIFFERENT check noticing a different function
+   had gone unwired, which is luck rather than a guard.
+
+   COMMENTS AND STRINGS BLANKED FIRST. A name written in a sentence is not a
+   call, and a check satisfied by its own explanatory comment is how two of
+   these have gone vacuous before. */
+const bare = all
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/^\s*\/\/.*$/gm, ' ')
+const engineDef = new Set();
+let dm;
+const defRe = /\bL\.([A-Za-z0-9_]+)\s*=[^=]/g;
+while ((dm = defRe.exec(bare))) engineDef.add(dm[1]);
+/* A CALL, not a read: data is declared and read the same way, so only a
+   name followed by ( is something that has to exist as a function. */
+const engineMissing = new Map();
+let cm;
+const callRe = /\bL\.([A-Za-z0-9_]+)\s*\(/g;
+while ((cm = callRe.exec(bare))) {
+  if (engineDef.has(cm[1]) || engineMissing.has(cm[1])) continue;
+  engineMissing.set(cm[1], bare.slice(0, cm.index).split('\n').length);
+}
 
 let problems = [];
+engineMissing.forEach((line, name) => {
+  problems.push({ line: line, rule: 'engine-undefined',
+    text: 'L.' + name + ' is called and never defined' });
+});
 blocks.forEach(b => {
   const msgs = linter.verify(b.code, config, { filename: 'index.html' });
   msgs.forEach(x => {

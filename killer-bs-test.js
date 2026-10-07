@@ -2349,6 +2349,40 @@ sec('the server is the starting point, and local work merges onto it');
     /merged/.test(L.syncList('bottles', [sentList[0]], sentList, false, {},
       null).said), true);
 
+  /* AND A MAP IS THE SAME QUESTION. The lists were fixed first and the maps
+     had the identical shape: where the device was 'local' the load returned
+     early with the WHOLE of its copy, discarding the account's version of
+     every entry including ones it never touched. For `edits` that is every
+     name and proof correction made on another device (2026-10-06). */
+  const eSent = L.entryPrints({ a: { proof: 90 }, b: { proof: 100 },
+                                c: { proof: 110 } });
+  const eMine = { a: { proof: 90 }, b: { proof: 107 } };
+  const eAcct = { a: { proof: 95 }, b: { proof: 100 }, c: { proof: 110 } };
+  const ed = L.dirtyEntries(eMine, eSent, true);
+  eq('only the entry this device changed is dirty',
+    Object.keys(ed.changed), ['b']);
+  eq('and the one it removed is gone', Object.keys(ed.gone), ['c']);
+  const em = L.syncMap('edits', eMine, eAcct, eSent, true);
+  eq('a correction made elsewhere survives', em.map.a.proof, 95);
+  eq('this device keeps the entry it changed', em.map.b.proof, 107);
+  eq('and an entry removed here stays removed', 'c' in em.map, false);
+  eq('with a line saying what was kept',
+    /kept 1 unsent change and 1 removal/.test(em.said), true);
+  /* THE SAME UPGRADE RULE: pushed and printless takes the account; never
+     pushed keeps its own. */
+  eq('an upgrading device takes the account for a map',
+    L.syncMap('edits', eMine, eAcct, null, true).map.a.proof, 95);
+  /* AND ONE THAT HAS NEVER PUSHED KEEPS WHAT IT HOLDS: its entries sit on
+     top of the account's, because what is on it exists nowhere else. The
+     account's extras still come, since having them costs nothing. */
+  const fresh = L.syncMap('edits', eMine, eAcct, null, false);
+  eq('a device that has never pushed keeps its own entries',
+    fresh.map.b.proof, 107);
+  eq('and still takes what only the account has', fresh.map.c.proof, 110);
+  /* EVERY MAP THE SYNC SENDS IS ONE THIS CAN PRINT. */
+  eq('no map key is left without a print path',
+    L.MAP_KEYS.filter(k => L.SYNC_KEYS.indexOf(k) < 0 && k !== 'tasteAB'), []);
+
   /* THE FOUR LISTS THE SYNC MERGES AS RECORDS each keep prints. */
   eq('a print is kept for every list merged as records',
     L.PRINTED.slice().sort(),
