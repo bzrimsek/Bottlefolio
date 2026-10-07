@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 981 |
-| tables | 234 |
-| carrying a stated purpose | 782 |
+| functions | 985 |
+| tables | 235 |
+| carrying a stated purpose | 786 |
 
 ## Tables
 
@@ -163,6 +163,7 @@ QUESTION, not the name you were going to use.
 - **`L.PORTRAIT_TITLES`** — The story the shelf tells.
 - **`L.POUR_RUNGS`** — _no comment above it_
 - **`L.POUR_WIDE`** — AND WHERE THE CHIPS BELONG
+- **`L.PRINTED`** — THE LISTS A PRINT IS KEPT FOR
 - **`L.PROOF_BANDS`** — _no comment above it_
 - **`L.PROPER`** — _no comment above it_
 - **`L.PROPER_PHRASES`** — into words, or only the first half gets its capital.
@@ -399,6 +400,7 @@ QUESTION, not the name you were going to use.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
 - **`L.directoryEntry`** — what everyone can see.
+- **`L.dirtyRecords`** — NO RECORD OF A PUSH MEANS NOTHING IS KNOWN, not that nothing changed
 - **`L.discoveryFor`** — _no comment above it_
 - **`L.distinctiveWords`** — The words in a line that could name something
 - **`L.doubledProofFinding`** — A PROOF THAT IS TWICE THE REAL ONE, as a finding.
@@ -966,6 +968,8 @@ QUESTION, not the name you were going to use.
 - **`L.recordAsk`** — One result, recorded
 - **`L.recordId`** — Lists are merged, never replaced (L.mergeRecords)
 - **`L.recordLookup`** — _no comment above it_
+- **`L.recordPrint`** — _no comment above it_
+- **`L.recordPrints`** — WHAT THIS DEVICE SENT, one print per record, kept beside the push.
 - **`L.redactSecrets`** — A SIGN-IN TOKEN NEVER REACHES THE LOG
 - **`L.reelMatches`** — top of this, ranked by the same scorer the shelf uses.
 - **`L.refBrandFor`** — The brand a bottle's name starts with - the longest one.
@@ -1124,6 +1128,7 @@ QUESTION, not the name you were going to use.
 - **`L.suggestName`** — only: the surname is not needed to tell three friends apart.
 - **`L.suggestPurchase`** — further than anything open can — the gap the collection cannot fill.
 - **`L.syncDecision`** — _no comment above it_
+- **`L.syncList`** — WHAT A LIST BECOMES ON A LOAD, and the one line worth logging about it.
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.takeFor`** — `which` is 'all' for a bottle somebody is looking at
 - **`L.tasteAsk`** — _no comment above it_

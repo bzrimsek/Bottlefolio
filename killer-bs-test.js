@@ -2241,6 +2241,131 @@ sec('a bottle takes the identity of its entry');
   eq('and an empty shelf likewise', L.stampIdentities([], lib, {}), null);
 }
 
+sec('the server is the starting point, and local work merges onto it');
+{
+  /* BZ, 2026-10-06, after losing the same twenty-two changes three times:
+     "Most users will be app only. I'm doing both. Ideally they merge together
+     and the server always is the starting point for local data application."
+
+     WHAT IT DID INSTEAD: one flag decided which side's version of EVERY
+     record won, and L.syncDecision set it to 'local' whenever the device had
+     saved since its last push - which the one-second push delay makes near
+     permanent. His log showed NINE consecutive 'local wins', each throwing
+     away the whole account copy to protect one unsent edit. */
+  const sentList = [{ id: 'B1', k: 'A', status: 'open' },
+                    { id: 'B2', k: 'B', status: 'open' },
+                    { id: 'B3', k: 'C', status: 'open' }];
+  const sent = L.recordPrints('bottles', sentList);
+  eq('a print is kept for every record that has an id',
+    Object.keys(sent).length, 3);
+  eq('and the key order a record was built in does not change its print',
+    L.recordPrint({ a: 1, b: { c: 2, d: 3 } }),
+    L.recordPrint({ b: { d: 3, c: 2 }, a: 1 }));
+
+  /* THE DEVICE CHANGED ONE BOTTLE. The account changed two others. */
+  const local = [{ id: 'B1', k: 'A', status: 'open' },
+                 { id: 'B2', k: 'B', status: 'sealed' },
+                 { id: 'B3', k: 'C', status: 'open' }];
+  const acct = [{ id: 'B1', k: 'A', status: 'gone', exit: 'adjusted' },
+                { id: 'B2', k: 'B', status: 'open' },
+                { id: 'B3', k: 'C', status: 'gone', exit: 'adjusted' }];
+  const d = L.dirtyRecords('bottles', local, sent);
+  eq('only the record this device changed is dirty',
+    Object.keys(d.changed), ['b:B2']);
+  eq('and nothing was deleted here', Object.keys(d.gone), []);
+  const m = L.mergeRecords('bottles', local, acct, true, {}, d);
+  const by = {};
+  m.forEach(r => { by[r.id] = r; });
+  eq('the account keeps the records this device did not touch',
+    [by.B1.status, by.B3.status], ['gone', 'gone']);
+  eq('and this device keeps the one it did', by.B2.status, 'sealed');
+  eq('with nothing lost or doubled', m.length, 3);
+  /* AND THE OLD WAY, ON THE SAME DATA, IS THE FAULT: every account change
+     discarded to protect one unsent edit. */
+  const old = L.mergeRecords('bottles', local, acct, true, {});
+  eq('where the old merge threw both account changes away',
+    old.filter(r => r.status === 'gone').length, 0);
+
+  /* A DELETE IS A DECISION (BZ's call): sent once, gone from here now, and
+     opening the app does not bring it back. */
+  const dropped = [{ id: 'B1', k: 'A', status: 'open' }];
+  const d2 = L.dirtyRecords('bottles', dropped, sent);
+  eq('a record that was sent and is gone counts as deleted',
+    Object.keys(d2.gone).sort(), ['b:B2', 'b:B3']);
+  const m2 = L.mergeRecords('bottles', dropped, sentList, true, {}, d2);
+  eq('and the account does not put it back', m2.map(r => r.id), ['B1']);
+
+  /* A RECORD ADDED HERE AND NEVER SENT SURVIVES, which is the thing a
+     server-first rule must not break. */
+  const added = sentList.concat([{ id: 'B9', k: 'Z', status: 'open' }]);
+  const d3 = L.dirtyRecords('bottles', added, sent);
+  const m3 = L.mergeRecords('bottles', added, sentList, true, {}, d3);
+  eq('a bottle added here and not yet pushed is kept',
+    m3.filter(r => r.id === 'B9').length, 1);
+
+  /* A DEVICE THAT HAS NEVER PUSHED knows nothing, so it keeps what it holds:
+     its work exists nowhere else and taking the account is the one loss that
+     cannot be undone. */
+  const d4 = L.dirtyRecords('bottles', local, null, false);
+  eq('no record of a push means nothing is known', d4.known, false);
+  eq('and every record it holds is treated as unsent',
+    Object.keys(d4.changed).length, 3);
+  const m4 = L.mergeRecords('bottles', local, acct, true, {}, d4);
+  eq('so the old behaviour still applies to it',
+    m4.filter(r => r.status === 'gone').length, 0);
+
+  /* A DEVICE UPGRADING INTO THIS IS THE OPPOSITE CASE (BZ, 2026-10-06). It
+     HAS pushed, so its work is on the account already; the prints are
+     missing only because it pushed under the older code. Without this the
+     change does nothing until a device has pushed once under the new rule,
+     and that first load would run the old one - which is how the same
+     twenty-two changes were lost three times in a night. */
+  const up = L.dirtyRecords('bottles', local, null, true);
+  eq('an upgrading device has nothing to prove', up.known, true);
+  eq('and claims no unsent change', Object.keys(up.changed).length, 0);
+  const m5 = L.mergeRecords('bottles', local, acct, true, {}, up);
+  eq('so the account version of every record it shares wins',
+    m5.filter(r => r.status === 'gone').length, 2);
+  /* BUT A RECORD THE ACCOUNT HAS NEVER SEEN IS STILL KEPT: deletions made
+     elsewhere travel as tombstones, so nothing resurrects by holding it. */
+  const only = local.concat([{ id: 'B9', k: 'Z', status: 'open' }]);
+  const m6 = L.mergeRecords('bottles', only, acct, true, {},
+    L.dirtyRecords('bottles', only, null, true));
+  eq('while a record only this device has is not thrown away',
+    m6.filter(r => r.id === 'B9').length, 1);
+
+  /* AND THE DOOR THE LOAD PATH CALLS. L.syncList is what the screen asks;
+     it was called before it existed and lint passed, because lint does not
+     resolve L.* members (2026-10-06, rule 16a: an edit script that asserts
+     on several patterns writes nothing if a later assert fails). */
+  const sl = L.syncList('bottles', local, acct, true, {}, sent);
+  eq('the door the load path calls merges the same way',
+    sl.list.filter(r => r.status === 'gone').length, 2);
+  eq('and says what this device kept',
+    /kept 1 unsent change/.test(sl.said), true);
+  eq('with nothing to say when nothing was unsent',
+    L.syncList('bottles', sentList, sentList, true, {}, sent).said, '');
+  eq('and a device with no push record still reports a merge',
+    /merged/.test(L.syncList('bottles', [sentList[0]], sentList, false, {},
+      null).said), true);
+
+  /* THE FOUR LISTS THE SYNC MERGES AS RECORDS each keep prints. */
+  eq('a print is kept for every list merged as records',
+    L.PRINTED.slice().sort(),
+    ['bottles', 'customFlights', 'history', 'wish']);
+  eq('and every one of them is synced',
+    L.PRINTED.filter(k => L.SYNC_KEYS.indexOf(k) < 0), []);
+  /* FLIGHTS TOO, which is what BZ actually lost. */
+  const fSent = L.recordPrints('customFlights',
+    [{ title: 'ONE BARREL OR MANY?', core: [{ k: 'old' }] }]);
+  const fLocal = [{ title: 'ONE BARREL OR MANY?', core: [{ k: 'old' }] }];
+  const fAcct = [{ title: 'ONE BARREL OR MANY?', core: [{ k: 'Four Roses' }] }];
+  const fd = L.dirtyRecords('customFlights', fLocal, fSent);
+  eq('a flight this device did not touch comes from the account',
+    L.mergeRecords('customFlights', fLocal, fAcct, true, {}, fd)[0].core[0].k,
+    'Four Roses');
+}
+
 sec('a country is not a way of making whisky');
 {
   /* L.MAKE_OF answered single malt for a bare Scotch, single pot still for a
