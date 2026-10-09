@@ -29867,6 +29867,63 @@ sec('§453 the library entry a bottle probably means');
   eq('and it points at the key that survived', (after[0] || {}).to, 'z');
 }
 
+sec('§462 a bottle finds its entry by name, not only by key');
+{
+  /* THE ONE DEFECT BEHIND MOST OF WHAT LOOKED LIKE A DATA PROBLEM. A shelf
+     is keyed by a bottle's display name and the library by a slug, so
+     "Four Roses" and "four_roses" are one whisky that no test on keys can
+     join. L.keyForBottle asked the key and the graves and nothing else, and
+     answered 2 of BZ's 384 bottles; the name door answers 383. Because
+     L.stampIdentities asks this function, the mechanism that lets a shelf
+     stop depending on its addresses had never engaged (2026-10-09). */
+  const lib = {
+    four_roses: { k: 'four_roses', name: 'Four Roses', canon: 'wb|1' },
+    ardbeg_ten: { k: 'ardbeg_ten', name: 'Ardbeg Ten', canon: 'wb|2' }
+  };
+  eq('a bottle keyed by its display name finds the slug',
+    L.keyForBottle({ k: 'Four Roses' }, lib, {}, {}), 'four_roses');
+  eq('a bottle keyed by the slug still finds it',
+    L.keyForBottle({ k: 'ardbeg_ten' }, lib, {}, {}), 'ardbeg_ten');
+  /* AND A NAME THAT RESOLVES TO AN ENTRY SINCE MERGED AWAY lands on the
+     live one rather than on another headstone. */
+  const moved = { ardbeg_ten: lib.ardbeg_ten };
+  eq('through the graves afterwards',
+    L.keyForBottle({ k: 'Four Roses' }, moved,
+      { four_roses: 'ardbeg_ten' }, {}), 'ardbeg_ten');
+  eq('a bottle the library has never heard of keeps its key',
+    L.keyForBottle({ k: 'Nothing At All' }, lib, {}, {}), 'Nothing At All');
+  /* AND THE STAMPING THAT DEPENDS ON IT. */
+  const stamped = L.stampIdentities([{ id: 'B1', k: 'Four Roses' }], lib, {});
+  eq('so a bottle keyed by name takes an identity',
+    stamped && stamped.stamped, 1);
+  eq('and it is the entry it is filed under',
+    stamped.bottles[0].ref, L.identString('wb|1'));
+
+  /* TWO STATED CLASSES ARE TWO BOTTLINGS. L.NORM_CATEGORY strips `bourbon`
+     AND `malt`, so the two Woodfords reduced to the same three words and
+     the name door filed BZ's standard bourbon as the malt - caught by
+     grading every bottle against the entry it landed on, not by a test. */
+  eq('a class is read out of a name',
+    L.classesIn('Woodford Reserve Kentucky Straight Bourbon Whiskey'),
+    ['bourbon']);
+  eq('a name may state two', L.classesIn('Single Malt Scotch'),
+    ['malt', 'scotch']);
+  eq('and a name may state none', L.classesIn('Blantons'), []);
+  eq('bourbon and malt are two bottlings',
+    L.classesDiffer('Woodford Reserve Kentucky Straight Bourbon Whiskey',
+      'Woodford Reserve Kentucky Straight Malt Whiskey'), true);
+  eq('a class on one side only is not a difference',
+    L.classesDiffer('Blantons', 'Blantons Single Barrel Bourbon'), false);
+  eq('and sharing one is not either',
+    L.classesDiffer('Ardbeg Single Malt Scotch', 'Ardbeg Malt'), false);
+  eq('so the name door keeps the two Woodfords apart',
+    L.sameBottling('Woodford Reserve Kentucky Straight Bourbon Whiskey',
+      'Woodford Reserve Kentucky Straight Malt Whiskey'), false);
+  /* AND THE STRIPPING STILL EARNS ITS KEEP. */
+  eq('a bottle stating a class still finds the stub that states none',
+    L.sameName('Woodford Reserve Bourbon', 'Woodford Reserve'), true);
+}
+
 sec('§461 where you are, from the device and OpenStreetMap');
 {
   /* BZ, 2026-10-09: "Take the free path and just on taste, not shop." The

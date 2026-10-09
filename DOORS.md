@@ -13,8 +13,8 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1013 |
-| tables | 240 |
+| functions | 1015 |
+| tables | 241 |
 | carrying a stated purpose | 810 |
 
 ## Tables
@@ -46,6 +46,7 @@ QUESTION, not the name you were going to use.
 - **`L.CASK_WOODY`** — THE FINISHES THAT MAKE A WHISKY WINEY, and the woods that do not
 - **`L.CAT_KINDS`** — THE THREE KINDS, and the one place each is keyed
 - **`L.CHORO`** — a linear ramp would paint everything but Kentucky the same.
+- **`L.CLASS_WORDS`** — TWO STATED CLASSES THAT DISAGREE ARE TWO BOTTLINGS.
 - **`L.COLOUR_SCALE`** — THE COLOUR SCALE, off BZ's printed sheet (2026-09-20)
 - **`L.COLUMN_SCORERS`** — A field with several candidate columns is decided by EVIDENCE, not
 - **`L.CORRECTABLE`** — _no comment above it_
@@ -378,6 +379,8 @@ QUESTION, not the name you were going to use.
 - **`L.choroStep`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.clampView`** — on a phone and disorienting.
 - **`L.clampZoom`** — _no comment above it_
+- **`L.classesDiffer`** — _no comment above it_
+- **`L.classesIn`** — _no comment above it_
 - **`L.cleanFinish`** — _no comment above it_
 - **`L.cleanName`** — _no comment above it_
 - **`L.clearFacets`** — IN PLACE, returning the same object
@@ -925,7 +928,7 @@ QUESTION, not the name you were going to use.
 - **`L.proofProfile`** — _no comment above it_
 - **`L.proofPrompt`** — A LOOKUP THAT FOUND THE BOTTLE AND NOT ITS PROOF
 - **`L.proofsDiffer`** — _no comment above it_
-- **`L.proofsIn`** — TWO STATED PROOFS THAT DISAGREE ARE TWO BOTTLINGS.
+- **`L.proofsIn`** — _no comment above it_
 - **`L.proofTens`** — one band is not a filter.
 - **`L.proposalAsks`** — the reader actually has.
 - **`L.proseNames`** — _no comment above it_
