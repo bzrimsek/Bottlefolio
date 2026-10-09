@@ -29867,6 +29867,30 @@ sec('§453 the library entry a bottle probably means');
   eq('and it points at the key that survived', (after[0] || {}).to, 'z');
 }
 
+sec('§463 one judgement, however it was made');
+{
+  /* Two audits raised the same findings over the same library rows and kept
+     two ledgers: the library scan on shared/reviewed, the shelf check on the
+     account. BZ had 142 verdicts in the first and none in the second, so
+     every rest he made in the library scan was invisible to the shelf check
+     and it asked again for ever (2026-10-09). */
+  const shared = { 'scarsays:a': { v: 'ok', at: 1 } };
+  const own = { 'scarsays:b': { v: 'ok', at: 2 } };
+  const both = L.allVerdicts(shared, own);
+  eq('a judgement made in the library scan is seen by the shelf check',
+    L.auditVerdict(both, 'scarsays:a', Date.now()), 'ok');
+  eq('and one made on the shelf is seen too',
+    L.auditVerdict(both, 'scarsays:b', Date.now()), 'ok');
+  eq('a row nobody has judged is still asked',
+    L.auditVerdict(both, 'scarsays:c', Date.now()), null);
+  eq('neither ledger is required',
+    Object.keys(L.allVerdicts(null, null)).length, 0);
+  /* HIS OWN LAST, so the most recent thing he did on his own shelf wins. */
+  eq('his own answer wins a tie',
+    L.allVerdicts({ x: { v: 'later', at: 1 } },
+      { x: { v: 'ok', at: 2 } }).x.v, 'ok');
+}
+
 sec('§462 a bottle finds its entry by name, not only by key');
 {
   /* THE ONE DEFECT BEHIND MOST OF WHAT LOOKED LIKE A DATA PROBLEM. A shelf

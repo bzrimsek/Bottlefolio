@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1015 |
+| functions | 1016 |
 | tables | 241 |
-| carrying a stated purpose | 810 |
+| carrying a stated purpose | 811 |
 
 ## Tables
 
@@ -280,6 +280,7 @@ QUESTION, not the name you were going to use.
 - **`L.agePrior`** — _no comment above it_
 - **`L.ageRungs`** — _no comment above it_
 - **`L.allReserved`** — IS EVERY WORD OF THIS SPOKEN FOR? ALL of them, never any of them
+- **`L.allVerdicts`** — ONE JUDGEMENT, HOWEVER IT WAS MADE.
 - **`L.alreadyNamed`** — _no comment above it_
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
