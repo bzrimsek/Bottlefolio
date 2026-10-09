@@ -2430,6 +2430,33 @@ sec('a country is not a way of making whisky');
     L.EXITS.filter(x => !L.isCleanup(x)).length, L.EXITS.length - 1);
 }
 
+sec('when a write-up was written');
+{
+  /* BZ, 2026-10-08, after opening Home and reading a paragraph about
+     September: "maybe add a small date/time at the end of the text". A
+     cached write-up and a current one read exactly alike, so the only thing
+     that tells them apart is being told when it was written. */
+  const now = new Date('2026-10-08T14:00:00').getTime();
+  const at = t => new Date(t).getTime();
+  eq('today says the time and not the date',
+    L.writtenSay(at('2026-10-08T19:41:00'), now), 'written today, 7:41 pm');
+  /* YESTERDAY BY THE CALENDAR, which is what a person means at 1am. */
+  eq('yesterday is named rather than dated',
+    L.writtenSay(at('2026-10-07T20:44:00'), now), 'written yesterday, 8:44 pm');
+  eq('and anything older takes the date',
+    L.writtenSay(at('2026-09-29T09:05:00'), now),
+    'written Sep 29, 2026, 9:05 am');
+  /* MIDNIGHT AND NOON are where a 12-hour clock goes wrong. */
+  eq('midnight is 12am', L.writtenSay(at('2026-10-08T00:07:00'), now),
+    'written today, 12:07 am');
+  eq('and noon is 12pm', L.writtenSay(at('2026-10-08T12:00:00'), now),
+    'written today, 12:00 pm');
+  /* NOTHING SAID WHERE NOTHING IS KNOWN: every write-up already on an
+     account predates this and has no stamp, which is honest. */
+  eq('no stamp says nothing', L.writtenSay(null, now), '');
+  eq('and neither does a bad one', L.writtenSay('not a time', now), '');
+}
+
 sec('the words behind a key');
 {
   /* L.libKey dissolves an apostrophe into an underscore, so a re-keyed

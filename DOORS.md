@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 988 |
+| functions | 989 |
 | tables | 235 |
-| carrying a stated purpose | 789 |
+| carrying a stated purpose | 790 |
 
 ## Tables
 
@@ -1242,6 +1242,7 @@ QUESTION, not the name you were going to use.
 - **`L.worldReach`** — How far through the whisky world a shelf is
 - **`L.worthContributing`** — _no comment above it_
 - **`L.wouldILike`** — _no comment above it_
+- **`L.writtenSay`** — WHEN A WRITE-UP WAS WRITTEN
 - **`L.yearsDiffer`** — _no comment above it_
 - **`L.yearsIn`** — THE RELEASE YEARS A NAME STATES
 - **`L.zoomAbout`** — Zoom about a point so pinching and double-tap keep that point still.
