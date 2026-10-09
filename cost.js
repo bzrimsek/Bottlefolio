@@ -57,7 +57,7 @@ const BUDGET = {
   'adoptCandidates, one name': 2,
   'shelfSet, 400 bottles': 51,
   'a five-shelf overlap': 249,
-  'dupeFindings, 1000 entries': 58,
+  'dupeFindings, 1000 entries': 44,
   'importAudit, 400 products': 3,
   'rowFaults, 1000 entries': 6
 };

@@ -2486,14 +2486,20 @@ sec('Shop asks the chart');
   const line = L.gapsOneAwayLine(L.axisGapPicks(axes));
   eq('the header counts what is one bottle away',
     line.head, '5 gaps are one bottle from closed');
-  eq('and names them across axes rather than from one',
-    /Australia.*mizunara/.test(line.sub), true);
+  /* AND NAMES NONE OF THEM. The pill row says which AXES and the
+     card below lists the GAPS; the header naming them too was the
+     same words a third time (BZ, 2026-10-08: "the words don't match
+     the pills and matching makes them redundant"). */
+  eq('and names none of them, because the card below does',
+    line.sub, '');
   /* NOTHING ONE BOTTTLE AWAY STILL SAYS SOMETHING USEFUL. */
   const far = L.gapsOneAwayLine(L.axisGapPicks([{ id: 'w', label: 'Wood',
     pct: 75, gaps: [{ name: 'beer/ale', short: 3 }] }]));
   eq('with none one away it names the nearest',
     far.head, 'Nothing is one bottle away');
-  eq('and says how far', /3 bottles short on Wood/.test(far.sub), true);
+  /* HOW FAR, NOT WHICH: the card under it opens with that very gap. */
+  eq('and says how far without naming it',
+    far.sub, 'The nearest needs 3 bottles.');
   eq('and a covered shelf says so',
     L.gapsOneAwayLine(L.axisGapPicks([{ id: 's', label: 'Smoke', pct: 100,
       gaps: [] }])).head,
@@ -29861,7 +29867,87 @@ sec('§453 the library entry a bottle probably means');
   eq('and it points at the key that survived', (after[0] || {}).to, 'z');
 }
 
-sec('§454 one name said more fully than the other');
+sec('§456b one name in another, words in any order');
+{
+  /* THE READING L.pourFitsBottle HAD THE ONLY COPY OF, lifted out so the
+     library can ask it too (rule 30d). The connectives are the point:
+     "Finished IN Port Wine Barrels" is "Port Wine Barrel Finish", and the
+     library held one spelling and called the other missing (2026-10-08). */
+  const AE1 = "Angel's Envy Port Wine Barrel Finish Kentucky Straight "
+    + 'Bourbon Whiskey';
+  const AE2 = "Angel's Envy Kentucky Straight Bourbon Whiskey Finished in "
+    + 'Port Wine Barrels';
+  eq('the same words in another order are the same words',
+    L.sameWords(AE1, AE2, null, false), true);
+  eq('and the library calls them one bottling',
+    L.sameBottling(AE1, AE2), true);
+  eq('an exact match is still a match',
+    L.sameBottling('Ardbeg Ten', 'Ardbeg Ten'), true);
+  eq('a word that is not a connective keeps them apart',
+    L.sameBottling('Basil Hayden Bourbon',
+      'Basil Hayden Cognac Cask Reserve'), false);
+
+  /* NOTHING IS FORGIVEN BY IDENTITY. A flight excuses an age the other name
+     is silent about because it is choosing something to pour; identity may
+     not, or Aberlour 18 becomes Aberlour 12. */
+  eq('two stated ages are two bottlings',
+    L.sameBottling('Aberlour 18 Year Old', 'Aberlour 12 Year Old'), false);
+  eq('two stated proofs are two bottlings',
+    L.sameBottling('Old Forester 86 Proof Bourbon',
+      'Old Forester 100 Proof Bourbon'), false);
+  eq('and a mark one carries and the other does not',
+    L.sameBottling('Barrell Craft Spirits Gray Label Seagrass',
+      'Barrell Seagrass'), false);
+
+  /* AN INITIAL IS THE FLIGHT DOOR'S FORGIVENESS AND NOT IDENTITY'S. BZ
+     settled on 2026-10-02 that the brand taxonomy joins "W.L. Weller" to
+     "Weller", not the name door. */
+  eq('a lone letter is forgiven where the caller says so',
+    L.sameWords('Weller 12 Year Old', 'W.L. Weller 12 Year Old', null, true),
+    true);
+  eq('and is not forgiven where it is not',
+    L.sameWords('Weller 12 Year Old', 'W.L. Weller 12 Year Old', null, false),
+    false);
+  eq('so identity leaves them to the taxonomy',
+    L.sameBottling('Weller 12 Year Old', 'W.L. Weller 12 Year Old'), false);
+
+  /* THE SIGNATURE IS THE CHEAP FORM OF THE SAME QUESTION, cached per name
+     because L.libKeysNamed asks it of 718 entries per bottle - the honest
+     walk put shelfSet at 115 times its budget (cost.js, 2026-10-08). */
+  eq('a signature is the sorted set of a name stems',
+    L.nameSig('Finished in Port Wine Barrels'),
+    L.nameSig('Port Wine Barrel Finish'));
+  eq('and a connective counts for nothing in it',
+    L.nameSig('Ardbeg of the Ten'), L.nameSig('Ardbeg Ten'));
+  eq('two different names have two signatures',
+    L.nameSig('Ardbeg Ten') === L.nameSig('Ardbeg Uigeadail'), false);
+  eq('asked twice it answers the same', L.nameSig('Ardbeg Ten'),
+    L.nameSig('Ardbeg Ten'));
+  eq('an empty name has no signature', L.nameSig(''), '');
+
+  eq('an empty name is nobody', L.sameBottling('', 'Ardbeg Ten'), false);
+  eq('and words come back stemmed',
+    L.nameWords('Finished Barrels').length, 2);
+
+  /* THE NORMALISER WIDENED WITH IT. A nationality says as little as scotch
+     and irish already did, an accent must fold rather than vanish, and a
+     category phrase goes before its own halves do. */
+  eq('a nationality is a category word',
+    L.shopNorm('Suntory Hibiki Japanese Harmony'), 'suntory hibiki harmony');
+  eq('pot still is the Irish class, matched as a pair',
+    L.shopNorm('Redbreast PX Single Pot Still Irish Whiskey'),
+    'redbreast px');
+  eq('but Still Austin keeps its still',
+    L.shopNorm('Still Austin Bourbon'), 'still austin');
+  eq('an accent folds rather than vanishing',
+    L.shopNorm('Bunnahabhain Toiteach a Dh\u00e0'),
+    'bunnahabhain toiteach a dha');
+  eq('so the two spellings of it are one name',
+    L.sameName('Bunnahabhain Toiteach A Dha Single Malt Scotch Whisky',
+      'Bunnahabhain Toiteach a Dh\u00e0'), true);
+}
+
+sec('\u00a7454 one name said more fully than the other');
 {
   /* THE DOOR BOTH THE DUPLICATE FINDER AND THE ORPHAN SURFACE ASK (rule 30d).
      A prefix test and an anagram test stood in namePrefixPairs and between them
@@ -29869,7 +29955,12 @@ sec('§454 one name said more fully than the other');
      and three of BZ's live library duplicates. */
   const got = L.nameContains('Hibiki Harmony', 'Hibiki Japanese Harmony');
   eq('a word added in the middle is still the same name', !!got, true);
-  eq('and what it adds is reported', got.extra, ['japanese']);
+  /* NOTHING, NOW. Japanese is a category word the way scotch and
+     irish already were, and L.NORM_CATEGORY drops it - which is what
+     lets a shelf bottle called Suntory Hibiki Harmony find the
+     library entry spelled Suntory Hibiki Japanese Harmony
+     (2026-10-08). The two names are one name with nothing added. */
+  eq('and a category word counts as nothing added', got.extra, []);
   eq('a plain word added does not make another bottling', got.marked, false);
   eq("Blanton's Single Barrel is inside the longer title",
     !!L.nameContains("Blanton's Single Barrel",

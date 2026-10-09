@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1004 |
+| functions | 1008 |
 | tables | 239 |
-| carrying a stated purpose | 804 |
+| carrying a stated purpose | 805 |
 
 ## Tables
 
@@ -519,7 +519,7 @@ QUESTION, not the name you were going to use.
 - **`L.gapsFromProof`** — up there. THE SHELF, NOT THE CATALOG - see L.gapsFromThinness.
 - **`L.gapsFromThinness`** — THE SHELF, NOT THE CATALOG
 - **`L.gapsFromWish`** — a reason; the reason was recorded.
-- **`L.gapsOneAwayLine`** — WHAT THE HEADER SAYS, which is a count of CHEAP WINS rather than an axis
+- **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
 - **`L.giftFromLink`** — _no comment above it_
 - **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
@@ -773,7 +773,9 @@ QUESTION, not the name you were going to use.
 - **`L.nameOverlap`** — _no comment above it_
 - **`L.namePrefixPairs`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
+- **`L.nameSig`** — THE SAME QUESTION AS L.sameWords(a, b, null, false), ANSWERED ONCE PER
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
+- **`L.nameWords`** — _no comment above it_
 - **`L.narrowerBrand`** — A NARROWER REGISTERED BRAND STATED LATER IN THE SAME NAME, which is how a
 - **`L.nearestBy`** — _no comment above it_
 - **`L.nearestGap`** — THE SHORTEST WALK, named once at the top of the chooser rather than by
@@ -885,7 +887,7 @@ QUESTION, not the name you were going to use.
 - **`L.pourAvailable`** — _no comment above it_
 - **`L.pourDrinks`** — _no comment above it_
 - **`L.pouredBefore`** — _no comment above it_
-- **`L.pourFitsBottle`** — IT PROPOSES, IT DOES NOT APPLY
+- **`L.pourFitsBottle`** — _no comment above it_
 - **`L.pourFor`** — _no comment above it_
 - **`L.pourForTaste`** — THE GENTLE END OF THE SHELF
 - **`L.pourFrom`** — WHO BRINGS ONE POUR
@@ -1035,11 +1037,13 @@ QUESTION, not the name you were going to use.
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
 - **`L.sameBottle`** — _no comment above it_
+- **`L.sameBottling`** — _no comment above it_
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
 - **`L.sameName`** — _no comment above it_
 - **`L.sameStrength`** — ARE THESE ONE STRENGTH? Rounding differs between a label, a listing and a
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
+- **`L.sameWords`** — `initials` IS THE CALLER'S TOO, and it is the difference between the two
 - **`L.saveRoute`** — Asked of the platform, never guessed
 - **`L.saysBanned`** — One sentence against one list
 - **`L.scoreAxis`** — _no comment above it_
