@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 991 |
-| tables | 236 |
-| carrying a stated purpose | 793 |
+| functions | 995 |
+| tables | 237 |
+| carrying a stated purpose | 798 |
 
 ## Tables
 
@@ -30,6 +30,7 @@ QUESTION, not the name you were going to use.
 - **`L.ASK_STOP`** — Function words and the generic verbs questions are built out of
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.AXIS_CANON`** — WHICH AXIS'S DENOMINATOR IS FILED WHERE, so the arithmetic line can name
+- **`L.AXIS_DIM`** — WHICH SHOPPING DIMENSION AN AXIS DRIVES, where one exists
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
@@ -308,6 +309,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisExamples`** — AND WHAT COUNTS AS ONE, where the name does not say it
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — _no comment above it_
+- **`L.axisGapPicks`** — EVERY GAP THE CHART CAN SEE, as rows, cheapest first
 - **`L.axisLabel`** — _no comment above it_
 - **`L.axisLabelOf`** — THE NAME A ROW SHOWS
 - **`L.axisMaths`** — _no comment above it_
@@ -315,6 +317,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
 - **`L.axisRows`** — _no comment above it_
+- **`L.axisShort`** — THE CHEAPEST GAP ON AN AXIS, in bottles
 - **`L.barRows`** — pies: readers compare lengths better than angles.
 - **`L.baselineOf`** — _no comment above it_
 - **`L.blendProof`** — rather than treating it as unknown.
@@ -511,6 +514,7 @@ QUESTION, not the name you were going to use.
 - **`L.gapsFromProof`** — up there. THE SHELF, NOT THE CATALOG - see L.gapsFromThinness.
 - **`L.gapsFromThinness`** — THE SHELF, NOT THE CATALOG
 - **`L.gapsFromWish`** — a reason; the reason was recorded.
+- **`L.gapsOneAwayLine`** — WHAT THE HEADER SAYS, which is a count of CHEAP WINS rather than an axis
 - **`L.giftFromLink`** — _no comment above it_
 - **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
@@ -1088,6 +1092,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfUntouched`** — Nothing searched or filtered
 - **`L.shelfValue`** — two sealed spares are two bottles of value.
 - **`L.shelvesSay`** — WHO SHARES WITH YOU AND WHETHER THEIR SHELF ARRIVED, said per person
+- **`L.shopAxisPills`** — THE PILLS, WHICH ARE THE CHART'S AXES
 - **`L.shopFieldLooked`** — Does this field read as LOOKED UP? Only when a lookup happened, for THIS
 - **`L.shopIsNewBottle`** — Has the bottle changed under the form? S.shop keeps what was typed
 - **`L.shopNorm`** — GIVEN THE BRAND REGISTRY it keeps the words the name OPENS with when those

@@ -2430,6 +2430,76 @@ sec('a country is not a way of making whisky');
     L.EXITS.filter(x => !L.isCleanup(x)).length, L.EXITS.length - 1);
 }
 
+sec('Shop asks the chart');
+{
+  /* BZ, 2026-10-08: "all of the pills and the list and the header note are
+     all pulling in difference directions", then "use the same logic". Three
+     vocabularies sat on one screen - an axis in the header, seven shopping
+     ideas as pills (two of which were not axes, one of which called wood a
+     cask, none of which could shop for the axis the header named), and a
+     list built from buying habits that knew nothing about the chart. */
+  const axes = [
+    { id: 'regions', label: 'Regions', pct: 71, gaps: [
+      { name: 'Australia', short: 1 }, { name: 'China', short: 1 },
+      { name: 'England', short: 1 }, { name: 'Israel', short: 1 }] },
+    { id: 'species', label: 'Species', pct: 50, gaps: [
+      { name: 'mizunara', short: 1 }, { name: 'not oak', short: 2 }] },
+    { id: 'wood', label: 'Wood', pct: 75, gaps: [{ name: 'beer/ale', short: 2 }] },
+    { id: 'smoke', label: 'Smoke', pct: 100, gaps: [] }
+  ];
+
+  /* THE CHEAPEST GAP, IN BOTTLES. A covered axis says null rather than 0:
+     nothing to shop for is not the same as a free win. */
+  eq('an axis says what its cheapest gap costs', L.axisShort(axes[2]), 2);
+  eq('and a covered one says nothing at all', L.axisShort(axes[3]), null);
+
+  /* THE PILLS ARE THE CHART'S AXES, ordered by what it costs to move them -
+     not by percentage. BZ: "species at 50% is random to me... some are more,
+     some are less", and his own shelf proves it: Wood sits at 75% and wants
+     TWO bottles where Categories sits at 44% and wants one. */
+  const pills = L.shopAxisPills(axes);
+  eq('the cheapest axis leads', pills[0].label, 'Regions');
+  eq('a dearer one follows even at a higher percentage', pills[2].label, 'Wood');
+  eq('and a covered axis keeps its place at the end',
+    pills[pills.length - 1].label, 'Smoke');
+  eq('every axis is a pill, none invented and none dropped',
+    pills.length, axes.length);
+
+  /* ONE GAP FROM EACH AXIS BEFORE A SECOND FROM ANY. Sorted purely by cost,
+     BZ's eleven single-bottle Regions flooded the header and the first five
+     rows - which is a fact about an axis having fifteen buckets, not about
+     where to spend. */
+  const rows = L.axisGapPicks(axes, null, 4);
+  eq('the first four rows come from different axes',
+    rows.map(r => r.axis), ['regions', 'species', 'wood', 'regions']);
+  eq('and each one carries the axis it belongs to', rows[0].label, 'Regions');
+  eq('with the count the chart draws', rows[0].short, 1);
+  /* ASKED FOR ONE AXIS, it is simply that axis, cheapest first. */
+  eq('one axis gives its own gaps in order',
+    L.axisGapPicks(axes, 'species').map(r => r.name), ['mizunara', 'not oak']);
+  eq('and an axis with none gives none',
+    L.axisGapPicks(axes, 'smoke').length, 0);
+
+  /* THE HEADER COUNTS CHEAP WINS rather than naming an axis and a
+     percentage: "Species is at 50%" was a number he could neither act on
+     nor compare. */
+  const line = L.gapsOneAwayLine(L.axisGapPicks(axes));
+  eq('the header counts what is one bottle away',
+    line.head, '5 gaps are one bottle from closed');
+  eq('and names them across axes rather than from one',
+    /Australia.*mizunara/.test(line.sub), true);
+  /* NOTHING ONE BOTTTLE AWAY STILL SAYS SOMETHING USEFUL. */
+  const far = L.gapsOneAwayLine(L.axisGapPicks([{ id: 'w', label: 'Wood',
+    pct: 75, gaps: [{ name: 'beer/ale', short: 3 }] }]));
+  eq('with none one away it names the nearest',
+    far.head, 'Nothing is one bottle away');
+  eq('and says how far', /3 bottles short on Wood/.test(far.sub), true);
+  eq('and a covered shelf says so',
+    L.gapsOneAwayLine(L.axisGapPicks([{ id: 's', label: 'Smoke', pct: 100,
+      gaps: [] }])).head,
+    'Every axis is covered');
+}
+
 sec('a write-up is neither a record nor an entry');
 {
   /* The sync merges lists by record and maps by entry; anything else fell
