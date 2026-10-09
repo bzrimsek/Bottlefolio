@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 989 |
-| tables | 235 |
-| carrying a stated purpose | 790 |
+| functions | 991 |
+| tables | 236 |
+| carrying a stated purpose | 793 |
 
 ## Tables
 
@@ -254,6 +254,7 @@ QUESTION, not the name you were going to use.
 - **`L.WHY_PT`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.WOOD_FAMILIES`** — _no comment above it_
 - **`L.WOOD_ONLY`** — finish classifies the way an imported one does.
+- **`L.WRITEUPS`** — THE WRITE-UPS, which are neither records nor entries
 
 ## Functions
 
@@ -770,6 +771,7 @@ QUESTION, not the name you were going to use.
 - **`L.needsToken`** — _no comment above it_
 - **`L.neverOffer`** — THE ONE QUESTION EVERY RECOMMENDER ASKS
 - **`L.newBottle`** — _no comment above it_
+- **`L.newerWriteUp`** — WHICH OF TWO WRITE-UPS IS THE ONE TO KEEP
 - **`L.newestOwned`** — Sorting by arrival needs the BOTTLES
 - **`L.newFacts`** — WHAT THE FORM SAYS AND THE RECORD DOES NOT
 - **`L.newFlight`** — _no comment above it_
@@ -1133,6 +1135,7 @@ QUESTION, not the name you were going to use.
 - **`L.syncList`** — WHAT A LIST BECOMES ON A LOAD, and the one line worth logging about it.
 - **`L.syncMap`** — A MAP, MERGED ONTO THE ACCOUNT
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
+- **`L.syncWriteUp`** — ONE KEY'S WORTH, whichever shape it is
 - **`L.takeFor`** — `which` is 'all' for a bottle somebody is looking at
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — _no comment above it_

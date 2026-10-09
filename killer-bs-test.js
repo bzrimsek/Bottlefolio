@@ -2430,6 +2430,48 @@ sec('a country is not a way of making whisky');
     L.EXITS.filter(x => !L.isCleanup(x)).length, L.EXITS.length - 1);
 }
 
+sec('a write-up is neither a record nor an entry');
+{
+  /* The sync merges lists by record and maps by entry; anything else fell
+     through to a branch where a device that won on local kept its own copy
+     whole. `lately` and `recaps` are plain objects, so they sat in that gap:
+     BZ's write-up was rewritten twice on the evening of 7 October and his
+     device refused the account's copy for a day and a half, showing him a
+     paragraph about September (2026-10-08). */
+  const sep = { text: 'September', at: 1000 };
+  const now = { text: 'Flight Club', at: 2000 };
+  eq('the newer one is kept', L.newerWriteUp(sep, now).text, 'Flight Club');
+  eq('whichever side it is on', L.newerWriteUp(now, sep).text, 'Flight Club');
+  /* UNDATED LOSES TO DATED: a write-up carrying `at` was written after the
+     change that added it, so it is the later of the two by definition. */
+  eq('an undated one loses to a dated one',
+    L.newerWriteUp({ text: 'old, undated' }, now).text, 'Flight Club');
+  eq('and two undated keep this device’s',
+    L.newerWriteUp({ text: 'mine' }, { text: 'theirs' }).text, 'mine');
+  /* NOTHING HERE TAKES WHAT IS THERE, which is the case that was broken. */
+  eq('an empty one takes the account’s',
+    L.newerWriteUp({}, now).text, 'Flight Club');
+  eq('and an empty account leaves this one alone',
+    L.newerWriteUp(now, {}).text, 'Flight Club');
+
+  /* A RECAP IS ONE PER SPAN, so it is compared span by span: the month may
+     be newer here and the year there, and taking either side whole throws
+     the other away. */
+  const r = L.syncWriteUp('recaps', { month: now, year: sep },
+                                    { month: sep, year: now });
+  eq('the newer month is kept', r.month.text, 'Flight Club');
+  eq('and the newer year with it', r.year.text, 'Flight Club');
+  eq('a span only one side has survives',
+    L.syncWriteUp('recaps', { month: now }, { year: sep }).year.text,
+    'September');
+  /* AND EVERY KEY THIS GOVERNS IS ONE THE SYNC ACTUALLY SENDS. */
+  eq('every write-up key is synced',
+    L.WRITEUPS.filter(k => L.SYNC_KEYS.indexOf(k) < 0), []);
+  eq('and none of them is a list or a map',
+    L.WRITEUPS.filter(k => L.PRINTED.indexOf(k) >= 0
+      || L.MAP_KEYS.indexOf(k) >= 0), []);
+}
+
 sec('when a write-up was written');
 {
   /* BZ, 2026-10-08, after opening Home and reading a paragraph about
