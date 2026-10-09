@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.17  ·  2026-10-09 07:11 PM ET
+
+The map pin lives inside the Where field. BZ: a field with a map pin button, same as some camera usages - so it is the label.withslots and instbtn.scanfield pair the name field already uses for its label reader, which pads the field to clear the button and draws it at 34px inside a 44px target, because it is pressed standing in a bar. That takes Find where I am out of the chip row entirely: the field is where you are, the pin fills it from the map, and the chips are the places you might mean. Measured on the drawn screen rather than asserted - the pin sits inside the field and its target is 44 by 44.
+
 ## v2.8.16  ·  2026-10-09 07:03 PM ET
 
 One picker for one question. The Out card had grown three ways to answer where you are: a text field, a row of the places you have been, and - once the location lookup landed yesterday - a button and a second row of its own. BZ: why keep a location field for user entry and add one for the map, consolidate into one function. He is right twice over, because each of the three also carried its own copy of the same three lines, filling the field, setting the kind and clearing the other chips. L.placePicker is now the one function and one row: a buddy, somewhere you have been and Find where I am are chips side by side, and what the map finds joins that row rather than starting another. A single pick fills the field, so the three kinds of chip cannot come to behave differently - which they already did, since only a buddy set the kind and only a buddy could be tapped off again. Tapping a place you have been now sets its kind too, because the recent place has carried one since it was first parsed. renderAway is down to 265 code lines from 306.
