@@ -1307,6 +1307,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Back up everything', 'Add to the shelf',
     /* Added with the portrait veto's way back, 2026-09-13. */
     'Put aside',
+    /* Added with the location lookup on Taste, 2026-10-09. */
+    'Find where I am',
     /* Added with the drinks budget, 2026-09-13. */
     'Running a tasting',
     /* Added with the service build check, 2026-09-14. */
@@ -3396,7 +3398,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     likelyToLike: 455,
     productForm: 316,
     renderShelf: 309,
-    renderAway: 306,
+    renderAway: 296,
     openLibraryCleanUp: 286,
     shopAnswer: 243,
     renderGaps: 170,

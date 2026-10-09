@@ -29867,6 +29867,76 @@ sec('§453 the library entry a bottle probably means');
   eq('and it points at the key that survived', (after[0] || {}).to, 'z');
 }
 
+sec('§461 where you are, from the device and OpenStreetMap');
+{
+  /* BZ, 2026-10-09: "Take the free path and just on taste, not shop." The
+     reading is pure so the whole of it can be tested against a recorded
+     answer, with no network and no fix. */
+  const q = L.overpassQuery(39.9612, -82.9988, 120);
+  eq('the question asks for json', q.indexOf('[out:json]') === 0, true);
+  eq('and for a point even from an outline',
+    q.indexOf('out center') > 0, true);
+  eq('it searches around the fix', q.indexOf('around:120,39.961200,-82.998800')
+    > 0, true);
+  /* NODE, WAY AND RELATION: a bar is a point in one town and a building
+     outline in the next, and asking only for nodes misses half of them. */
+  eq('as node, way and relation', q.indexOf('nwr(') > 0, true);
+  eq('and only for things with a name', q.indexOf('[name]') > 0, true);
+
+  /* EVERY TAG MAPS ONTO A KIND THE APP ALREADY HAS, or something downstream
+     has to learn a second vocabulary. */
+  Object.keys(L.OSM_KINDS).forEach(k => {
+    eq(k + ' is a kind the app already knows',
+      L.PLACE_KINDS.indexOf(L.OSM_KINDS[k]) >= 0, true);
+  });
+  eq('a pub is a bar', L.osmKind({ amenity: 'pub' }), 'bar');
+  eq('a wine shop is a shop', L.osmKind({ shop: 'wine' }), 'shop');
+  eq('a church is not a place a pour happens',
+    L.osmKind({ amenity: 'place_of_worship' }), null);
+  eq('and nothing at all is nothing', L.osmKind(null), null);
+
+  /* METRES, close enough to sort doors on a street. A tenth of a degree of
+     latitude is about 11.1km. */
+  eq('a tenth of a degree north is about 11km',
+    Math.abs(L.metresBetween(40, -83, 40.1, -83) - 11119) < 40, true);
+  eq('and the same place is no distance',
+    L.metresBetween(40, -83, 40, -83), 0);
+
+  const answer = { elements: [
+    { tags: { name: 'Playhouse', amenity: 'bar', 'addr:city': 'Columbus',
+      'addr:state': 'OH' }, lat: 39.9613, lon: -82.9989 },
+    /* THE SAME PLACE AS AN OUTLINE, which is how OpenStreetMap often
+       carries a building and its tenant. */
+    { tags: { name: 'Playhouse', amenity: 'bar' },
+      center: { lat: 39.96131, lon: -82.99891 } },
+    { tags: { name: 'Far Pub', amenity: 'pub' }, lat: 39.97, lon: -82.9988 },
+    { tags: { name: 'A Church', amenity: 'place_of_worship' },
+      lat: 39.9612, lon: -82.9988 },
+    { tags: { amenity: 'bar' }, lat: 39.9612, lon: -82.9988 }
+  ] };
+  const rows = L.nearbyFrom(answer, 39.9612, -82.9988, 5);
+  eq('one place, one row', rows.map(r => r.name), ['Playhouse', 'Far Pub']);
+  eq('nearest first', rows[0].away < rows[1].away, true);
+  eq('a church is not offered',
+    rows.some(r => r.name === 'A Church'), false);
+  eq('nor is a bar with no name', rows.length, 2);
+  eq('the kind comes back with it', rows[0].kind, 'bar');
+  eq('an empty answer is no rows', L.nearbyFrom({}, 1, 1, 5).length, 0);
+  eq('and so is nothing at all', L.nearbyFrom(null, 1, 1, 5).length, 0);
+
+  /* THE LINE IS WHAT L.parsePlace READS BACK, so a looked-up place and a
+     typed one become one record. */
+  const line = L.nearbyLine(rows[0]);
+  eq('the line is the shape the field expects', line, 'Playhouse, Columbus OH');
+  const back = L.parsePlace(line, 'bar');
+  eq('and it parses to the place', back.place, 'Playhouse');
+  eq('to the city', back.city, 'Columbus');
+  eq('and to the state', back.state, 'OH');
+  eq('a place with no address is just its name',
+    L.nearbyLine({ name: 'Far Pub' }), 'Far Pub');
+  eq('and nothing has no line', L.nearbyLine(null), '');
+}
+
 sec('§456b one name in another, words in any order');
 {
   /* THE READING L.pourFitsBottle HAD THE ONLY COPY OF, lifted out so the

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1008 |
-| tables | 239 |
-| carrying a stated purpose | 805 |
+| functions | 1013 |
+| tables | 240 |
+| carrying a stated purpose | 810 |
 
 ## Tables
 
@@ -146,6 +146,7 @@ QUESTION, not the name you were going to use.
 - **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
 - **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
+- **`L.OSM_KINDS`** — THE OSM TAGS THAT ARE PLACES A POUR HAPPENS, each mapped onto a kind the
 - **`L.PAIR_CLAIMS`** — WHICH FINDINGS CLAIM THAT TWO ENTRIES ARE ONE BOTTLE
 - **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]
@@ -754,6 +755,7 @@ QUESTION, not the name you were going to use.
 - **`L.mergeRecords`** — _no comment above it_
 - **`L.mergeShelfReads`** — _no comment above it_
 - **`L.mergeSyncValue`** — _no comment above it_
+- **`L.metresBetween`** — HOW FAR, IN METRES
 - **`L.missingSay`** — _no comment above it_
 - **`L.missList`** — Busiest first, because that is the order worth reading.
 - **`L.modeOf`** — _no comment above it_
@@ -777,6 +779,8 @@ QUESTION, not the name you were going to use.
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
 - **`L.nameWords`** — _no comment above it_
 - **`L.narrowerBrand`** — A NARROWER REGISTERED BRAND STATED LATER IN THE SAME NAME, which is how a
+- **`L.nearbyFrom`** — WHAT CAME BACK, AS PLACES, NEAREST FIRST
+- **`L.nearbyLine`** — THE TEXT A TAP PUTS IN THE FIELD, in the shape L.parsePlace reads back -
 - **`L.nearestBy`** — _no comment above it_
 - **`L.nearestGap`** — THE SHORTEST WALK, named once at the top of the chooser rather than by
 - **`L.nearlyNamed`** — THE SAME BOTTLE BY NAME, allowing the small differences a shop page and a
@@ -821,7 +825,9 @@ QUESTION, not the name you were going to use.
 - **`L.originSays`** — WHAT THIS BOTTLE TASTES OF, IN LAYERS (BZ's model, 2026-09-27).
 - **`L.originSources`** — _no comment above it_
 - **`L.orphanBottles`** — with no product is on no screen at all and the counts do not mention it.
+- **`L.osmKind`** — _no comment above it_
 - **`L.otherAccount`** — A SHELF ON THIS DEVICE THAT BELONGS TO ANOTHER ACCOUNT must not be merged
+- **`L.overpassQuery`** — THE QUESTION, in Overpass QL
 - **`L.ownedCatalog`** — _no comment above it_
 - **`L.ownedCount`** — _no comment above it_
 - **`L.ownedCounts`** — _no comment above it_
