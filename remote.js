@@ -102,6 +102,37 @@ if (!file) {
       + '\n        -> ' + p.to);
   });
 
+  /* A WHOLE CAST, IN ORDER. The guard is on the FINISHED list, because a
+     shift makes every pour a duplicate of the one above it on the way. */
+  (plan.casts || []).forEach(c => {
+    const hit = flightAt(c.flight);
+    if (!hit) return;
+    const core = hit.f.core || [];
+    const want = c.pours || [];
+    if (want.length !== core.length) {
+      faults.push(hit.f.title + ' has ' + core.length + ' pours, the cast gives '
+        + want.length + ' - a cast replaces them all or none');
+      return;
+    }
+    const shut = want.filter(k => !open[k]);
+    if (shut.length) {
+      faults.push('not open on the shelf: ' + shut.join(', '));
+      return;
+    }
+    const twice = want.filter((k, i) => want.indexOf(k) !== i);
+    if (twice.length) {
+      faults.push(hit.f.title + ' would pour ' + twice[0] + ' twice');
+      return;
+    }
+    want.forEach((k, i) => {
+      if ((core[i] || {}).k === k) return;        // already right
+      writes['customFlights/' + hit.at + '/core/' + i + '/k'] = k;
+      lines.push(hit.f.title + '  [' + i + ']  '
+        + ((core[i] || {}).k || (core[i] || {}).name || '(empty)')
+        + '\n        -> ' + k);
+    });
+  });
+
   (plan.blends || []).forEach(b => {
     const hit = flightAt(b.flight);
     if (!hit) return;
