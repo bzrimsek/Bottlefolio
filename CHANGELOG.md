@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.13  ·  2026-10-09 06:02 PM ET
+
+One bottle, one row in a search. The Out pour finder offered Four Roses twice and Four Roses Single Barrel Barrel Strength OBSV twice, which is not a duplicate in the data: its pool is three sources merged with Object.assign and they do not agree on what a key is, since S.base is keyed by an entry's display name and LIB.products by its slug, so one whisky survives both merges under two keys and Object.values hands back both. No caller can see that from the outside, so L.shopSearch now returns one row per bottle and all six callers get it. It asks L.sameBottling, which is the library's own door, so the dedupe cannot come to disagree with the library about what one bottle is: it crosses word order and a category word, and it keeps two stated proofs apart, so Old Forester 86 Proof and Old Forester 100 Proof stay two rows. It runs on the sorted hits, so the best-scoring spelling is the one kept.
+
 ## v2.8.12  ·  2026-10-08 11:17 PM ET
 
 The library's identity door is cached. L.libKeysNamed asks whether a name is already in the library once for every one of 718 entries for every bottle on a shelf, and the honest form of the new word-order test - stem both names, walk both word lists, read both sets of marks - put shelfSet at 115 times its budget and a five-shelf overlap at 531 times, which cost.js caught before anything shipped. L.nameSig answers the same question as the sorted set of a name's non-filler stems, cached per name the way L.shopNorm is, so two names hold each other's words exactly when their signatures match and the expensive reading only runs for the pair that already agreed. The cost budgets ratcheted down with it.
