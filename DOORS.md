@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 995 |
-| tables | 237 |
-| carrying a stated purpose | 798 |
+| functions | 1004 |
+| tables | 239 |
+| carrying a stated purpose | 804 |
 
 ## Tables
 
@@ -95,6 +95,7 @@ QUESTION, not the name you were going to use.
 - **`L.GUIDE_TOOLS`** — Each one names the door in this app it goes through, so `consistency.js` can
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.HOUSE_DRESS`** — WHAT A NAME HAS BEEN DRESSED UP WITH
+- **`L.HOUSE_GAP_DIMS`** — IN ORDER OF HOW DIFFERENT A BOTTLE IT MAKES, which is also "further in
 - **`L.IDENT_SOURCES`** — THIS IS THE `canon` FIELD AND NOT `ident`
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
@@ -255,6 +256,7 @@ QUESTION, not the name you were going to use.
 - **`L.WHY_PT`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.WOOD_FAMILIES`** — _no comment above it_
 - **`L.WOOD_ONLY`** — finish classifies the way an imported one does.
+- **`L.WOOD_SAY`** — THE FAMILY KEYS AS A READER SAYS THEM
 - **`L.WRITEUPS`** — THE WRITE-UPS, which are neither records nor entries
 
 ## Functions
@@ -338,6 +340,8 @@ QUESTION, not the name you were going to use.
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
 - **`L.brandIndex`** — _no comment above it_
 - **`L.brandOf`** — _no comment above it_
+- **`L.bucketStock`** — `pop` is a denominator and counts his shelf in
+- **`L.bucketStockOf`** — THE COUNT, AND ONE NAME THAT PROVES IT
 - **`L.buddiesChanged`** — Whether remembering it is worth a write
 - **`L.buddyBottle`** — What THEY had, matched against what you typed
 - **`L.buddyFromUrl`** — _no comment above it_
@@ -392,7 +396,7 @@ QUESTION, not the name you were going to use.
 - **`L.countBy`** — _no comment above it_
 - **`L.countIntake`** — _no comment above it_
 - **`L.countLookup`** — _no comment above it_
-- **`L.countryBuckets`** — THE COUNTRIES SPOKE
+- **`L.countryBuckets`** — THE ONE SPOKE NEVER HANDED THE LIBRARY, which is why "Australia, 1 short"
 - **`L.countryCounts`** — _no comment above it_
 - **`L.countryOf`** — _no comment above it_
 - **`L.csvCell`** — A cell a spreadsheet will read back the way it was written.
@@ -465,6 +469,7 @@ QUESTION, not the name you were going to use.
 - **`L.fingerprintRows`** — A FINGERPRINT IN WORDS
 - **`L.finishDepth`** — _no comment above it_
 - **`L.finishParts`** — A LIST OF CASKS, however it is written
+- **`L.finishTiers`** — THE FINISH SPOKE, out of L.shelfAxes
 - **`L.finIsNote`** — IS THIS A CASK NAME, OR SOMEBODY'S FINISH?
 - **`L.finIsWine`** — _no comment above it_
 - **`L.finNotCask`** — _no comment above it_
@@ -567,6 +572,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
 - **`L.houseFaults`** — _no comment above it_
+- **`L.houseGap`** — _no comment above it_
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
 - **`L.houseInterest`** — HOW MUCH A BOTTLING ADDS TO A HOUSE YOU ALREADY HOLD (BZ, 2026-09-27:
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
@@ -575,6 +581,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseList`** — The houses the catalog knows, longest name first, so a house called
 - **`L.houseMeant`** — _no comment above it_
 - **`L.houseMergePlan`** — _no comment above it_
+- **`L.houseOpps`** — THE ASK CLAIMS ONLY WHAT CANNOT BE WRONG
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases
 - **`L.houseSame`** — THROUGH houseKey, the house's one key, so the registry and everything
@@ -585,6 +592,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseTakeBack`** — PUTTING ONE BACK
 - **`L.houseTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule rather than inside the
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
+- **`L.houseWhy`** — THE HOUSE SENTENCE
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
 - **`L.identIndex`** — EVERY ISSUED IDENTITY IN THE LIBRARY, AND WHERE IT LIVES NOW
 - **`L.identityPairable`** — EVERYTHING ELSE MATCHES EXACTLY - type, house, age, proof, finish, special
@@ -908,6 +916,8 @@ QUESTION, not the name you were going to use.
 - **`L.proofOutOfName`** — _no comment above it_
 - **`L.proofProfile`** — _no comment above it_
 - **`L.proofPrompt`** — A LOOKUP THAT FOUND THE BOTTLE AND NOT ITS PROOF
+- **`L.proofsDiffer`** — _no comment above it_
+- **`L.proofsIn`** — TWO STATED PROOFS THAT DISAGREE ARE TWO BOTTLINGS.
 - **`L.proofTens`** — one band is not a filter.
 - **`L.proposalAsks`** — the reader actually has.
 - **`L.proseNames`** — _no comment above it_
@@ -950,7 +960,7 @@ QUESTION, not the name you were going to use.
 - **`L.rankAsks`** — _no comment above it_
 - **`L.rankOffer`** — _no comment above it_
 - **`L.rawNorm`** — A NAME WITH NOTHING TAKEN OUT OF IT BUT PUNCTUATION
-- **`L.reachable`** — THE POPULATION IS THE LIBRARY PLUS HIS OWN SHELF, which is what keeps the
+- **`L.reachable`** — _no comment above it_
 - **`L.readBackup`** — rather than half-applied.
 - **`L.readFailSays`** — _no comment above it_
 - **`L.readNumber`** — A number as a person or a spreadsheet actually writes it.
@@ -1027,7 +1037,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameBottle`** — _no comment above it_
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
-- **`L.sameName`** — ARE THESE TWO NAMES ONE BOTTLE? ONE DOOR
+- **`L.sameName`** — _no comment above it_
 - **`L.sameStrength`** — ARE THESE ONE STRENGTH? Rounding differs between a label, a listing and a
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
 - **`L.saveRoute`** — Asked of the platform, never guessed
@@ -1245,6 +1255,7 @@ QUESTION, not the name you were going to use.
 - **`L.withOrigin`** — _no comment above it_
 - **`L.woodFamily`** — _no comment above it_
 - **`L.woodLead`** — WHICH WOOD A SET OF BOTTLES MOSTLY SAT IN, as {value, n}.
+- **`L.woodSay`** — _no comment above it_
 - **`L.woodsOf`** — Every wood on a product, and every family it touches
 - **`L.wordStem`** — A TRAILING s OR ed AND NOTHING MORE
 - **`L.worldReach`** — How far through the whisky world a shelf is

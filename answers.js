@@ -346,6 +346,107 @@ function bad(what, detail) {
     }
   }
 
+  /* WHEN THE SHOP SCREEN SAYS ONE SHORT, DOES ONE EXIST?
+   *
+   * BZ, 2026-10-08: "I'd hope youd test that when it says 1 that 1 exists."
+   * Every other check here grades a sentence; this one grades a PROMISE. A
+   * gap is an instruction to go and buy something, and eleven of the
+   * twenty-three the screen offered could not be filled by anything the
+   * library holds - "Australia, 1 short" with no Australian whisky anywhere
+   * in it, "blended grain, 3 short" against a class with no bottling at all.
+   * The arithmetic already knew: L.reachable has said since 2026-10-05 that
+   * a bucket nobody has an example of is not a gap in a shelf, and only the
+   * denominator ever heard it.
+   *
+   * It runs on BZ's real shelf against the real library, because that is the
+   * only place the question means anything, and it NAMES the bottle rather
+   * than trusting a count - a number nobody can turn into a bottle is the
+   * fault itself. */
+  {
+    const gapsSaid = await p.evaluate(() => {
+      /* THE LIBRARY THIS HARNESS ACTUALLY HAS. It runs with no Firebase
+         credentials - the gate gives FIREBASE_SA to the rules deploy and to
+         nothing else - so LIB.products is empty here and the shipped
+         catalogue in S.base is the population. Smaller than the shared
+         library and real: a gap it cannot fill is a gap the same code
+         offered with nothing behind it. */
+      const lib = (LIB && LIB.products && Object.keys(LIB.products).length)
+        ? LIB.products : S.base;
+      const axes = L.shelfAxes(S.catalog, S.bottles, MAPDATA, lib);
+      if (!axes) return null;
+      const picks = L.axisGapPicks(axes);
+      const held = L.ownedCounts(S.bottles);
+      const own = {};
+      Object.keys(S.catalog || {}).forEach(k => {
+        if (held[k] > 0) own[L.shopNorm(String((S.catalog[k] || {}).name || ''))] = 1;
+      });
+      const rows = L.libraryRows(lib);
+      return {
+        libN: rows.length,
+        picks: picks.map(r => ({ axis: r.axis, label: r.label, name: r.name,
+          short: r.short, stock: r.stock, eg: r.eg,
+          /* IS THE EXAMPLE A REAL LIBRARY ENTRY HE DOES NOT OWN? Asked of
+             the library itself, not of the number that came with it. */
+          real: !!r.eg && rows.some(q => String(q.name || '') === r.eg),
+          unowned: !!r.eg && !own[L.shopNorm(r.eg)] })),
+        pills: L.shopAxisPills(axes).map(x => ({ label: x.label, id: x.id,
+          short: x.short }))
+      };
+    });
+
+    if (!gapsSaid) {
+      ok('no shelf to find gaps on');
+    } else {
+      const blank = gapsSaid.picks.filter(r => !r.stock);
+      if (blank.length) {
+        bad('every gap the Shop screen offers is one the library can fill',
+          blank.length + ' of ' + gapsSaid.picks.length + ' name nothing: '
+          + blank.slice(0, 6).map(r => r.label + '/' + r.name
+            + ' (' + r.short + ' short, stock ' + r.stock + ')').join(', '));
+      } else {
+        ok('every gap the Shop screen offers is one the library can fill ('
+          + gapsSaid.picks.length + ' gaps, against '
+          + gapsSaid.libN + ' catalogue entries)');
+      }
+
+      /* AND THE NAME IS A BOTTLE, not a leftover string. */
+      const unnamed = gapsSaid.picks.filter(r => !r.real || !r.unowned);
+      if (unnamed.length) {
+        bad('each gap names a real library bottling he does not own',
+          unnamed.slice(0, 6).map(r => r.label + '/' + r.name + ' -> '
+            + (r.eg ? '"' + r.eg + '"' + (r.real ? ' (already owned)'
+              : ' (not in the library)') : 'nothing named')).join('; '));
+      } else {
+        ok('each gap names a real library bottling he does not own (e.g. '
+          + gapsSaid.picks[0].label + '/' + gapsSaid.picks[0].name + ' -> '
+          + gapsSaid.picks[0].eg + ')');
+      }
+
+      /* AND THE PILL'S NUMBER IS THE LIST'S NUMBER. The Age pill said one
+         short above a card saying the axis was covered (BZ, 2026-10-08:
+         "also this is bad"), which is two answers to one question. */
+      const byAxis = {};
+      gapsSaid.picks.forEach(r => {
+        if (byAxis[r.axis] === undefined || r.short < byAxis[r.axis])
+          byAxis[r.axis] = r.short;
+      });
+      const liars = gapsSaid.pills.filter(x =>
+        (x.short === null) !== (byAxis[x.id] === undefined)
+        || (x.short !== null && x.short !== byAxis[x.id]));
+      if (liars.length) {
+        bad('a pill’s number is the nearest gap the list actually offers',
+          liars.map(x => x.label + ' pill says '
+            + (x.short === null ? 'covered' : x.short + ' short')
+            + ', the list offers '
+            + (byAxis[x.id] === undefined ? 'nothing'
+              : byAxis[x.id] + ' short')).join('; '));
+      } else {
+        ok('a pill’s number is the nearest gap the list actually offers ('
+          + gapsSaid.pills.length + ' pills)');
+      }
+    }
+  }
+
   if (threw.length) bad('the page threw while answering', threw.join('\n'));
 
   await b.close();

@@ -7718,6 +7718,131 @@ const bare = { k: 'c', name: 'C' };
   eq('and a population of zeroes is the same as none',
     L.reachable(['a', 'b'], [0, 0], [1, 0]), ['a', 'b']);
 
+  /* WHAT THE LIBRARY COULD SELL YOU FOR A BUCKET, which is the difference
+     between a gap and an instruction nobody can follow. Eleven of the
+     twenty-three gaps the Shop screen offered could not be filled by
+     anything the library held (2026-10-08). */
+  {
+    const lib = [{ name: 'A', style: 'rye' }, { name: 'B', style: 'rye' },
+      { name: 'C', style: 'bourbon' }];
+    const mineRows = [{ name: 'B', style: 'rye' }];
+    const rye = p => p.style === 'rye';
+    eq('stock is what the library holds and he does not',
+      (L.bucketStock(lib, mineRows, rye) || []).map(p => p.name), ['A']);
+    eq('and his own bottle is not stock',
+      (L.bucketStock(lib, mineRows, rye) || []).some(p => p.name === 'B'),
+      false);
+    /* ABSENT KNOWLEDGE MUST NOT SHRINK A SHOPPING LIST, the same rule
+       L.reachable keeps for a denominator. */
+    eq('with no library at all, stock is unknown rather than empty',
+      L.bucketStock(null, mineRows, rye), null);
+    eq('and the wrapper says so too', L.bucketStockOf(null, mineRows, rye),
+      { stock: null, eg: null });
+    eq('the wrapper counts and names in one answer',
+      L.bucketStockOf(lib, mineRows, rye), { stock: 1, eg: 'A' });
+    eq('a bucket the library has never bottled is known to be empty',
+      L.bucketStockOf(lib, mineRows, p => p.style === 'wheat').stock, 0);
+  }
+
+  /* AND A GAP NOTHING CAN FILL IS NOT OFFERED. The filter lives in
+     L.scoreAxis so every axis gets it once; this drives it through the
+     scorer the way the chart does. */
+  {
+    const ax = L.scoreAxis('wood', [], 2,
+      [{ name: 'wine', n: 0, short: 3, stock: 2 },
+       { name: 'beer/ale', n: 0, short: 3, stock: 0 }],
+      [0, 0], ['wine', 'beer/ale'], [5, 0]);
+    eq('a gap with stock survives the scorer',
+      ax.gaps.map(g => g.name), ['wine']);
+    eq('and the one nothing can fill is gone',
+      ax.gaps.some(g => g.name === 'beer/ale'), false);
+    const unknown = L.scoreAxis('wood', [], 2,
+      [{ name: 'wine', n: 0, short: 3 }], [0], ['wine'], null);
+    eq('a gap whose stock is unknown is still offered',
+      unknown.gaps.map(g => g.name), ['wine']);
+  }
+
+  /* THE FINISH SPOKE, lifted out of L.shelfAxes so its gaps carry stock
+     like every other axis's. */
+  {
+    const ownedF = [{ name: 'p', fin: '' }, { name: 'q', fin: '' },
+      { name: 'r', fin: '' }];
+    const ft = L.finishTiers(ownedF, 3, null);
+    eq('three un-finished bottles clear the bottom tier',
+      ft.held.indexOf(L.FINISH_TIERS[0]) >= 0, true);
+    eq('every tier is named', ft.all.length, L.FINISH_TIERS.length);
+    eq('and with no library there is no population', ft.pop, null);
+    eq('a tier nobody holds is a gap', ft.gaps.length > 0, true);
+  }
+
+  /* A STATED PROOF IS A STATED FACT. L.shopNorm strips it on purpose, which
+     made "Old Forester 86 Proof Bourbon" and "Old Forester 100 Proof
+     Bourbon" one name - and the library held two Sazeracs its own door
+     called a duplicate (2026-10-08). BZ's rule for years and ages: one side
+     stating it is not a difference, two stating different ones is. */
+  eq('a proof is read out of a name', L.proofsIn('Old Forester 100 Proof'),
+    [100]);
+  eq('and a decimal one too', L.proofsIn('Stagg 131.2 proof'), [131.2]);
+  eq('a name with no proof states none', L.proofsIn('Old Forester'), []);
+  eq('two stated proofs that disagree are two bottlings',
+    L.proofsDiffer('Old Forester 100 Proof', 'Old Forester 86 Proof'), true);
+  eq('a proof on one side only is not a difference',
+    L.proofsDiffer('Blantons 93 proof', 'Blantons'), false);
+  eq('and the same proof twice is no difference',
+    L.proofsDiffer('OF 100 proof', 'OF 100 Proof'), false);
+  eq('so the name door keeps two proofs of one house apart',
+    L.sameName('Old Forester 100 Proof Bourbon',
+      'Old Forester 86 Proof Bourbon'), false);
+  eq('and still matches where only one side says it',
+    L.sameName('Old Forester 100 Proof Bourbon', 'Old Forester'), true);
+
+  /* THE HOUSE GAP, named from the library rather than from a Math.max over
+     his own shelf (BZ, 2026-10-08: "name the gap"). */
+  {
+    const heldH = [{ name: 'Ardbeg Ten', dist: 'Ardbeg', proof: 92,
+      fin: 'Sherry' },
+      { name: 'Ardbeg Uigeadail', dist: 'Ardbeg', proof: 92,
+        fin: 'Sherry' }];
+    const libH = heldH.concat(
+      [{ name: 'Ardbeg Corryvreckan', dist: 'Ardbeg', proof: 92,
+        fin: 'Port' }]);
+    const g = L.houseGap('Ardbeg', heldH, libH);
+    eq('the gap is the cask he has not had from them',
+      /fortified wine casks/.test(g.phrase), true);
+    eq('and it counts what is actually buyable', g.n, 1);
+    eq('with no library there is no gap to name',
+      L.houseGap('Ardbeg', heldH, null), null);
+    eq('a house the library can sell nothing from says so',
+      L.houseGap('Ardbeg', heldH, heldH), { phrase: null, n: 0 });
+    /* STOCK BUT NO DIMENSION GAP still has something to buy. */
+    const flat = L.houseGap('Ardbeg', heldH, heldH.concat(
+      [{ name: 'Ardbeg Anamh', dist: 'Ardbeg', proof: 92,
+        fin: 'Sherry' }]));
+    eq('stock with every dimension covered names the count',
+      flat, { phrase: null, n: 1 });
+    eq('and the sentence says it',
+      L.houseWhy('Ardbeg', 3, 92, flat),
+      '3 from Ardbeg, and the library has one more you do not own.');
+    eq('the library sentence names the gap',
+      L.houseWhy('Ardbeg', 3, 92, g),
+      '3 from Ardbeg, and the library has fortified wine casks '
+      + 'you do not own.');
+    /* AND THE SHELF'S OWN HIGH-WATER MARK, where no library was handed
+       over, which is how the rest of this harness calls it. */
+    eq('no library falls back to the shelf',
+      L.houseWhy('Ardbeg', 3, 92, null),
+      '3 from Ardbeg, nothing above 92 proof.');
+  }
+
+  /* A FAMILY KEY IS NOT A WORD. "table casks you do not own" is not a
+     sentence anybody writes (2026-10-08, by reading it). */
+  eq('a table key is said as table wine', L.woodSay('table'), 'table wine');
+  eq('and fortified as fortified wine', L.woodSay('fortified'),
+    'fortified wine');
+  eq('a key with no reader word is said as it is', L.woodSay('sherry'),
+    'sherry');
+  eq('and an unknown one is not invented', L.woodSay('zzz'), 'zzz');
+
   /* THE CATEGORIES BUCKETS, the same shape as the casks and the bands. */
   const mb = L.makeBuckets([{ style: 'bourbon' }, { style: 'bourbon' },
     { style: 'bourbon' }, { style: 'rye' }], 3, null);
@@ -10682,6 +10807,14 @@ sec('§182 an ask may not invent a bottle');
     { name: 'Benriach B', dist: 'Benriach Distillery', proof: 92, age: 10 },
     { name: 'Benriach C', dist: 'Benriach Distillery', proof: 90, age: 33 }
   ];
+
+  /* THE HOUSES, THROUGH THEIR OWN DOOR. L.exploreAxis hands straight to
+     L.houseOpps, so the branch is testable without a catalogue. */
+  eq('three from a house is deep enough to be an opportunity',
+    L.houseOpps(benriach, null).map(o => o.value), ['Benriach Distillery']);
+  eq('two is not', L.houseOpps(benriach.slice(0, 2), null).length, 0);
+  eq('and a house the library can sell nothing from is dropped',
+    L.houseOpps(benriach, benriach).length, 0);
 
   eq('a house ask names the house, not a bottling it may not make',
     asks('house', benriach), ['Another Benriach']);
