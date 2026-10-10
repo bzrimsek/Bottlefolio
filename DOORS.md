@@ -14,7 +14,7 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1016 |
-| tables | 241 |
+| tables | 242 |
 | carrying a stated purpose | 811 |
 
 ## Tables
@@ -97,6 +97,7 @@ QUESTION, not the name you were going to use.
 - **`L.HARD_GAPS`** — _no comment above it_
 - **`L.HOUSE_DRESS`** — WHAT A NAME HAS BEEN DRESSED UP WITH
 - **`L.HOUSE_GAP_DIMS`** — IN ORDER OF HOW DIFFERENT A BOTTLE IT MAKES, which is also "further in
+- **`L.ID_SOFT_MARKS`** — THE MARKS WHOSE ABSENCE MEANS NOTHING, as against the ones that are a
 - **`L.IDENT_SOURCES`** — THIS IS THE `canon` FIELD AND NOT `ident`
 - **`L.IDENTITY_FACTS`** — DO TWO STATED VALUES OF ONE FACT AGREE? ONE ANSWER, for the same-bottle
 - **`L.IMPORT_ALIASES`** — same things differently, and one map covers all three.
@@ -600,7 +601,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseWhy`** — THE HOUSE SENTENCE
 - **`L.identBackfill`** — WHICH ENTRIES ARE CARRYING THE WRONG IDENTITY, OR NONE
 - **`L.identIndex`** — EVERY ISSUED IDENTITY IN THE LIBRARY, AND WHERE IT LIVES NOW
-- **`L.identityPairable`** — EVERYTHING ELSE MATCHES EXACTLY - type, house, age, proof, finish, special
+- **`L.identityPairable`** — _no comment above it_
 - **`L.identOf`** — _no comment above it_
 - **`L.identString`** — AND WRITTEN ONE WAY, so two records of one bottling cannot differ by a
 - **`L.importAudit`** — _no comment above it_

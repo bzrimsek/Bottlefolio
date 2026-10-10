@@ -29867,6 +29867,46 @@ sec('§453 the library entry a bottle probably means');
   eq('and it points at the key that survived', (after[0] || {}).to, 'z');
 }
 
+sec('§464 a mark on one side only is not a difference');
+{
+  /* L.identityPairable required the whole mark tail to match, and the tail
+     is built from an entry FIELDS - so the less complete of two duplicates
+     could never pair with its fuller twin, which is the one thing a
+     duplicate finder exists to catch. With the brand registry loaded, the
+     way the live library scan calls it, the finder reported NO duplicates
+     at all (2026-10-09). */
+  const nova = 'world|starward|starward|nova||p820';
+  eq('an age only one side states does not split a bottle',
+    L.identityPairable(nova,
+      'world|starward|starward|nova|single malt|age2|p820'), true);
+  /* BUT A CASK STILL DOES, which is BZ own ruling on a finish against the
+     plain bottle - so the real Starward pair, whose fuller record carries a
+     wine cask the other was never given, is NOT found here and is a
+     judgement he makes. */
+  eq('a cask only one side states still splits it',
+    L.identityPairable(nova,
+      'world|starward|starward|nova|single malt|age2|cwine|p820'), false);
+  /* TWO STATED MARKS THAT DISAGREE STILL REFUSE. Sazerac Rye at 90 and
+     Sazerac 100 Proof both state a proof and the proofs differ. */
+  eq('two stated proofs still refuse',
+    L.identityPairable('rye|bt|sazerac||rye|p900',
+      'rye|bt|sazerac||rye|p1000'), false);
+  eq('and two stated ages do too',
+    L.identityPairable('scotch|x|y|z||age10|p860',
+      'scotch|x|y|z||age18|p860'), false);
+  eq('a shared mark and an extra one is still one bottle',
+    L.identityPairable('scotch|x|y|z||p860',
+      'scotch|x|y|z||age18|p860'), true);
+  /* THE LAYERS ABOVE THE TAIL ARE UNTOUCHED: the expression still names a
+     release, and that refusal was BZ own, more than once. */
+  eq('a different expression is still two bottles',
+    L.identityPairable('scotch|x|y|curiositas||p860',
+      'scotch|x|y|smokyten||p860'), false);
+  eq('and a different type is too',
+    L.identityPairable('rye|x|y|z||p860', 'bourbon|x|y|z||p860'), false);
+  eq('nothing pairs with nothing', L.identityPairable('', ''), false);
+}
+
 sec('§463 one judgement, however it was made');
 {
   /* Two audits raised the same findings over the same library rows and kept
