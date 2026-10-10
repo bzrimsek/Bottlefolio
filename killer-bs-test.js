@@ -29951,6 +29951,64 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§465 a record the account holds is not unsent work');
+{
+  /* BZ's Android said "bottles kept 377 unsent changes over the account" on
+     three consecutive opens and the number never moved (2026-10-09, from
+     the log). It could not move. Its copy was IDENTICAL to the account's,
+     so there was nothing to push; FB.pushed is seeded from the remote on
+     load, so with nothing to push `sentPrints` never updated, and the next
+     load said the same thing. For ever. */
+  const recs = [{ id: 'B1', k: 'Ardbeg Ten', status: 'open' },
+    { id: 'B2', k: 'Lagavulin 16', status: 'open' }];
+  const real = L.recordPrints('bottles', recs);
+  /* THE PHONE'S STATE: the right records, with prints from an older push. */
+  const stale = {};
+  Object.keys(real).forEach(k => { stale[k] = 'from-an-older-push'; });
+
+  const one = L.syncList('bottles', recs, recs, false, {}, stale, true);
+  eq('a stale print makes an identical record look unsent',
+    one.said, 'bottles kept 2 unsent changes over the account');
+  /* AND THE LOOP IS BROKEN BY RECORDING WHAT THE ACCOUNT HOLDS. */
+  const next = L.sentAfterLoad('bottles', one.list, recs, stale);
+  const two = L.syncList('bottles', one.list, recs, false, {}, next, true);
+  eq('once the account is known to hold them, the next load is silent',
+    two.said, '');
+
+  /* REAL UNSENT WORK IS STILL THIS DEVICE'S, AND STILL WINS. */
+  const mineNewer = [{ id: 'B1', k: 'Ardbeg Ten', status: 'dead' }, recs[1]];
+  const d = L.sentAfterLoad('bottles', mineNewer, recs, stale);
+  const three = L.syncList('bottles', mineNewer, recs, false, {}, d, true);
+  eq('a record this device really changed is still kept',
+    three.said, 'bottles kept 1 unsent change over the account');
+  eq('and it still beats the account',
+    three.list.filter(x => x.id === 'B1')[0].status, 'dead');
+
+  /* A DELETE IS NOT FORGOTTEN. A print in `sent` for a record neither side
+     holds is how L.dirtyRecords knows this device removed it, so prints are
+     only ever ADDED here. */
+  const withGone = Object.assign({ 'b:B9': 'gone-print' }, real);
+  const kept = L.sentAfterLoad('bottles', recs, recs, withGone);
+  eq('a delete this device made survives the recording',
+    kept['b:B9'], 'gone-print');
+
+  /* AND NOTHING IS RECORDED FOR A RECORD THE ACCOUNT DOES NOT HOLD. */
+  const alone = L.sentAfterLoad('bottles', recs, [], {});
+  eq('an account that holds none of them teaches nothing',
+    Object.keys(alone).length, 0);
+
+  /* THE MAPS HAVE THE SAME LEDGER AND THE SAME FAULT. */
+  const m = { 'Ardbeg Ten': { proof: 92 } };
+  const mPrints = L.entryPrints(m);
+  const mStale = {};
+  Object.keys(mPrints).forEach(k => { mStale[k] = 'older'; });
+  eq('a map entry the account holds is not unsent work either',
+    L.sentEntriesAfterLoad(m, m, mStale)[Object.keys(mPrints)[0]],
+    mPrints[Object.keys(mPrints)[0]]);
+  eq('and one it does not hold is left alone',
+    L.sentEntriesAfterLoad(m, {}, mStale)[Object.keys(mPrints)[0]], 'older');
+}
+
 sec('§462 a bottle finds its entry by name, not only by key');
 {
   /* THE ONE DEFECT BEHIND MOST OF WHAT LOOKED LIKE A DATA PROBLEM. A shelf

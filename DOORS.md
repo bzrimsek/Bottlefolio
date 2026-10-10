@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1016 |
+| functions | 1018 |
 | tables | 242 |
-| carrying a stated purpose | 811 |
+| carrying a stated purpose | 813 |
 
 ## Tables
 
@@ -1067,7 +1067,9 @@ QUESTION, not the name you were going to use.
 - **`L.searchReference`** — _no comment above it_
 - **`L.searchText`** — WHAT IDENTIFIES A BOTTLE, as against what it tastes of
 - **`L.seedFromText`** — A TYPED NAME IS ENOUGH (BZ, 2026-09-20
+- **`L.sentAfterLoad`** — WHAT THE ACCOUNT IS NOW KNOWN TO HOLD.
 - **`L.sentenceCase`** — proper nouns and acronyms that carry their own capitals.
+- **`L.sentEntriesAfterLoad`** — THE SAME, FOR A MAP, which keeps its prints by entry key.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
 - **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
