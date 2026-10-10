@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.20  ·  2026-10-09 11:02 PM ET
+
+A grave for a key holding a dot or a slash never matched. BZ: every octomore has a decimal so I'm confused why one is an issue - and he was right to be. The decimal was never the problem. A library key is a slug, where the dot has already become an underscore; it is the SHELF key, which is a display name, that carries the real one. Firebase forbids a dot or a slash in a key, so such a grave is written through L.fbKey, which escapes them - and the loader read the node raw, so the escaped key never matched the name it was written for and the grave did nothing at all. The read decodes with L.unFbKey now, the way the audit verdicts already did, and engine.js decodes the same node the same way so a harness and the app cannot disagree about what a grave says. Two bottles that had been called unredirectable are ordinary graves, written and confirmed.
+
 ## v2.8.19  ·  2026-10-09 10:41 PM ET
 
 The duplicate finder could not see the less complete of two duplicates. L.identityPairable required the whole mark tail to match exactly, and that tail is built from an entry's FIELDS - so a record that had simply never been given an age or a proof could never pair with its fuller twin, which is the one thing a duplicate finder exists to catch. With the brand registry loaded, which is how the live library scan calls it, the finder reported NO duplicates at all: Waterford Organic Cuvee Gaia sat in the library twice and nothing said so. A mark is now compared by its kind, and L.ID_SOFT_MARKS names the ones whose absence means nothing - an age, a year and a proof are facts a record may never have been told. Everything else stays exact, because a cask or a bond is something the whisky HAS and one on a single side names another bottling, which BZ has ruled more than once on a finish against the plain bottle. Two stated marks that disagree still refuse, so Sazerac Rye at 90 and Sazerac 100 Proof remain two bottlings. The scan now finds four candidate pairs with the registry where it found none.

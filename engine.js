@@ -102,6 +102,12 @@ module.exports.setupState = function setupState(data) {
  * mistakes this file exists to stop, so anything comparing those keys to the
  * catalogue decodes first.
  */
+/* THE ENGINE, ONCE, FOR THIS FILE'S OWN USE. account() has to decode a
+   Firebase key the way the app does, and L.unFbKey is that door; loading
+   the engine is not cheap, so it is done at most once per process. */
+let _ownL = null;
+const ownL = () => (_ownL = _ownL || module.exports().L);
+
 module.exports.account = async function (uid) {
   const { token, DB } = require('./rules.js');
   const tok = await token();
@@ -120,7 +126,9 @@ module.exports.account = async function (uid) {
   Object.keys(renamed || {}).forEach(k => {
     const rec = renamed[k];
     const to = (rec && typeof rec === 'object') ? rec.to : rec;
-    if (to && typeof to === 'string') graves[k] = to;
+    /* DECODED like the app does: a grave for a key holding a dot or a
+       slash is written through L.fbKey. */
+    if (to && typeof to === 'string') graves[ownL().unFbKey(k)] = to;
   });
   const bottles = Array.isArray(mine.bottles)
     ? mine.bottles : Object.values(mine.bottles || {});

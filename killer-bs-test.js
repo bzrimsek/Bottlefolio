@@ -12011,6 +12011,26 @@ sec('§204 keys Firebase will take, and what comes back');
 
   eq('a name with nothing to escape is left alone',
     L.fbKey('Ardbeg 10'), 'Ardbeg 10');
+  /* AND A GRAVE FOR SUCH A KEY IS WRITTEN ESCAPED AND READ BACK DECODED.
+     The write already used L.fbKey and the read did not decode, so the
+     grave never matched the name it was for - which is the whole reason
+     "Bruichladdich Octomore Edition 16.1" and "Re/Define" looked as
+     though no grave could redirect them. Nothing to do with the decimal,
+     which every Octomore has (BZ, 2026-10-09). */
+  {
+    const shelfKey = 'Bruichladdich Octomore Edition 16.1 Aged 5 Years';
+    const stored = L.fbKey(shelfKey);
+    eq('a dot is escaped out of the key', stored.indexOf('.') < 0, true);
+    eq('a slash is too', L.fbKey('Re/Define 18').indexOf('/') < 0, true);
+    /* THE LOADER'S OWN STEP: decode, then the graves map answers for the
+       name the shelf actually carries. */
+    const graves = {};
+    graves[L.unFbKey(stored)] = 'octomore_edition_16_1';
+    eq('and the decoded grave answers for the shelf key',
+      L.mergedInto(graves, shelfKey), 'octomore_edition_16_1');
+    eq('where the raw stored key would not',
+      L.mergedInto({ [stored]: 'x' }, shelfKey), shelfKey);
+  }
   eq("and an apostrophe is not a problem for it",
     L.fbKey("Angel's Envy"), "Angel's Envy");
 
