@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.24  Build 2026-10-10 08:17 PM ET
+     Version : v2.8.25  Build 2026-10-10 10:48 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.25  2026-10-10  Vosges is oak.
 // v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.18  2026-10-09  Four things BZ found by using it.
 // v2.8.17  2026-10-09  The map pin lives inside the Where field.
 // v2.8.16  2026-10-09  One picker for one question.
-// v2.8.15  2026-10-09  A bottle finds its library entry by name, not only by key.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3089,8 +3089,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.24';
-const BUILD_TIME  = '2026-10-10 08:17 PM ET';
+const APP_VERSION = '2.8.25';
+const BUILD_TIME  = '2026-10-10 10:48 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -26966,6 +26966,11 @@ L.WOOD_FAMILIES = {
               'bourbon', 'ex-bourbon', 'first-fill bourbon', 'bourbon barrel',
               /* 2026-09-27: oak said in ways the list did not carry. */
               'portuguese oak', 'double oak', 'twin oak', 'oak barrel',
+              /* A NAMED FRENCH FOREST, the way Limousin and Troncais are.
+                 BZ filed Heaven's Door Straight Rye as "Vosges (French)
+                 oak" and the brackets broke every match the list had, so
+                 the Wood axis saw no family at all (2026-10-10). */
+              'vosges',
               'oak cask']
 };
 
@@ -58251,7 +58256,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.24</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.25</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

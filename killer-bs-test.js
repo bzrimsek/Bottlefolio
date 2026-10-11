@@ -7842,6 +7842,13 @@ const bare = { k: 'c', name: 'C' };
 
   /* A FAMILY KEY IS NOT A WORD. "table casks you do not own" is not a
      sentence anybody writes (2026-10-08, by reading it). */
+  /* A NAMED FRENCH FOREST. BZ filed Heaven's Door Straight Rye as
+     "Vosges (French) oak" and the brackets broke every match the list
+     had, so the Wood axis saw no family at all (2026-10-10). */
+  eq('a bracketed French forest is still oak',
+    L.woodsOf({ name: 'x', fin: 'Vosges (French) oak' }).families, ['oak']);
+  eq('and it is European oak',
+    L.speciesOf({ name: 'x', fin: 'Vosges (French) oak' }), ['european']);
   eq('a table key is said as table wine', L.woodSay('table'), 'table wine');
   eq('and fortified as fortified wine', L.woodSay('fortified'),
     'fortified wine');
