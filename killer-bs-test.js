@@ -30125,6 +30125,19 @@ sec('§461 where you are, from the device and OpenStreetMap');
      reading is pure so the whole of it can be tested against a recorded
      answer, with no network and no fix. */
   const q = L.overpassQuery(39.9612, -82.9988, 120);
+  /* MORE THAN ONE SERVER. BZ pressed the pin once in the world and the log
+     says nearby: HTTP 504 - Overpass is free and public and a gateway
+     timeout is its ordinary bad day, so one refusal must not end it. */
+  eq('there is more than one server to ask',
+    L.OVERPASS_SERVERS.length > 1, true);
+  eq('and the single address is the first of them',
+    L.OVERPASS, L.OVERPASS_SERVERS[0]);
+  eq('every one of them is an interpreter endpoint',
+    L.OVERPASS_SERVERS.every(u => /^https:\/\/[^/]+\/api\/interpreter$/.test(u)),
+    true);
+  eq('and none is listed twice',
+    L.OVERPASS_SERVERS.length,
+    L.OVERPASS_SERVERS.filter((u, i) => L.OVERPASS_SERVERS.indexOf(u) === i).length);
   eq('the question asks for json', q.indexOf('[out:json]') === 0, true);
   eq('and for a point even from an outline',
     q.indexOf('out center') > 0, true);

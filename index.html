@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.23  Build 2026-10-10 08:04 PM ET
+     Version : v2.8.24  Build 2026-10-10 08:17 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
 // v2.8.21  2026-10-10  A record the account already holds is no longer counted as this device's unsent work.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.17  2026-10-09  The map pin lives inside the Where field.
 // v2.8.16  2026-10-09  One picker for one question.
 // v2.8.15  2026-10-09  A bottle finds its library entry by name, not only by key.
-// v2.8.14  2026-10-09  Find where I am, on Taste.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3089,8 +3089,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.23';
-const BUILD_TIME  = '2026-10-10 08:04 PM ET';
+const APP_VERSION = '2.8.24';
+const BUILD_TIME  = '2026-10-10 08:17 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9754,7 +9754,27 @@ L.recentPlaces = function (history, limit) {
  *
  * TASTE ONLY, by his instruction. A shop acquisition also takes a place and
  * is deliberately left alone. */
-L.OVERPASS = 'https://overpass-api.de/api/interpreter';
+/* MORE THAN ONE SERVER, because the first one said 504.
+ *
+ * BZ pressed the pin on 10/09 at 22:16 and the log says `nearby: HTTP 504`
+ * - the only time it has been used in the world, and it failed. Overpass is
+ * free and public and its main endpoint is heavily loaded, so a gateway
+ * timeout is its ordinary bad day rather than a fault in the request.
+ *
+ * I COULD NOT VERIFY THIS FROM THE BUILD MACHINE. Every request from here
+ * is refused 406 whatever its shape - raw body, form-encoded, GET, with a
+ * browser agent, even a trivial query - so the egress is blocked and the
+ * only real evidence about these servers is BZ's own log. The order below
+ * is therefore a reasonable guess, and the log line says which one answered
+ * so the next real use settles it rather than another guess. */
+L.OVERPASS_SERVERS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+];
+
+/* The first, for anything that wants one address. */
+L.OVERPASS = L.OVERPASS_SERVERS[0];
 
 /* THE OSM TAGS THAT ARE PLACES A POUR HAPPENS, each mapped onto a kind the
    app already has, so nothing downstream has to learn a second vocabulary -
@@ -47489,7 +47509,8 @@ function renderDiag() {
     const more = el('button', 'btn btn-sm',
       DIAG.logAll ? 'Show the last 40' : 'Show all ('
         + (S.log || []).length + ')');
-    more.onclick = () => { DIAG.logAll = !DIAG.logAll; renderDiag(); };
+    /* AND THE TOGGLE STAYS PUT: redrawing reset the view to the top. */
+    more.onclick = () => { DIAG.logAll = !DIAG.logAll; showTheLog(false); };
     row.appendChild(more);
     const cp = el('button', 'btn btn-sm', 'Copy the log');
     cp.onclick = () => {
@@ -48027,6 +48048,34 @@ function aboutPanel(box) {
   box.appendChild(upd);
 }
 
+/* SHOWING THE LOG, FROM ANYWHERE THAT OFFERS IT.
+ *
+ * The log is folded at the bottom of a long screen, so rendering it and
+ * navigating is not showing it: the fold has to open and the view has to
+ * land on it. "Show me the log" did all four steps and the other two
+ * buttons did two, so both looked broken - Settings' Open it landed at the
+ * top of a long page with the log still folded, and Show all redrew the
+ * page and reset the view, which from the outside is a button that does
+ * nothing (BZ, 2026-10-10: "the show the log buttons seem broker because
+ * the log is under the fold").
+ *
+ * LAND ON THE BUTTONS, NOT PAST THEM. The open fold is hundreds of lines,
+ * so scrolling to the fold itself hides the row above it - and that row,
+ * Copy the log, is the thing somebody came for.
+ *
+ * `go` is false when the screen is already showing, because a toggle on
+ * that page should not navigate. */
+function showTheLog(go) {
+  renderDiag();
+  if (go) goTo('diag');
+  setTimeout(() => {
+    const d = document.querySelector('#diagBody details.advanced');
+    if (d) d.open = true;
+    const top = document.getElementById('logTop') || d;
+    if (top && top.scrollIntoView) top.scrollIntoView({ block: 'start' });
+  }, 60);
+}
+
 /* SOMETHING NOT WORKING. The person who needs the log is somebody whose app is
    misbehaving, and they will not go looking under Admin. */
 function helpPanel(box) {
@@ -48037,21 +48086,7 @@ function helpPanel(box) {
      screen, so a button that names it opens the fold and brings it into
      view. */
   const hb = el('button', 'btn btn-sm', 'Show me the log');
-  hb.onclick = () => {
-    renderDiag();
-    goTo('diag');
-    setTimeout(() => {
-      const d = document.querySelector('#diagBody details.advanced');
-      if (d) d.open = true;
-      /* LAND ON THE BUTTONS, NOT PAST THEM. The open fold is hundreds of
-         lines, so scrolling to it hid the row above; the row (Copy the
-         log) is the thing you came for. */
-      const top = document.getElementById('logTop') || d;
-      if (top && top.scrollIntoView) {
-        top.scrollIntoView({ block: 'start' });
-      }
-    }, 60);
-  };
+  hb.onclick = () => showTheLog(true);
   hrow.appendChild(hb);
   const hw = el('div', 'datawhy');
   hw.textContent = 'What the app last did and what it knows about itself, '
@@ -48142,7 +48177,9 @@ function adminPanel(box) {
   diag.appendChild(el('summary', 'rs', 'Running this'));
   const dgrid = settingGrid();
   const open = el('button', 'btn btn-sm', 'Open it');
-  open.onclick = () => { renderDiag(); goTo('diag'); };
+  /* THROUGH THE SAME DOOR: this landed at the top of a long screen with
+     the log still folded at the bottom of it. */
+  open.onclick = () => showTheLog(true);
   /* THE WAY IN, not the screen: Diagnostics is its own page with its own back
      button, and drawing it here would be a second copy of it. */
   settingRow(dgrid, open, 'What the app knows and last did, including what a '
@@ -50594,11 +50631,30 @@ function askTheMap(onRows, onStart, done) {
   onStart(true);
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    fetch(L.OVERPASS, { method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: L.overpassQuery(lat, lon, 150) })
-      .then(r => r.ok ? r.json()
-        : Promise.reject(new Error('HTTP ' + r.status)))
+    const body = L.overpassQuery(lat, lon, 150);
+    /* EACH SERVER IN TURN, and the one that answers is named in the log.
+       A timeout on a free public service is not a reason to give up while
+       another one is sitting there. */
+    const ask = i => {
+      const at = L.OVERPASS_SERVERS[i];
+      const began = Date.now();
+      return fetch(at, { method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, body: body })
+        .then(r => r.ok ? r.json()
+          : Promise.reject(new Error('HTTP ' + r.status)))
+        .then(j => {
+          appLog('nearby: ' + at.split('/')[2] + ' answered in '
+            + ((Date.now() - began) / 1000).toFixed(1) + 's');
+          return j;
+        })
+        .catch(e => {
+          appLog('nearby: ' + at.split('/')[2] + ' — '
+            + ((e && e.message) || e));
+          if (i + 1 >= L.OVERPASS_SERVERS.length) throw e;
+          return ask(i + 1);
+        });
+    };
+    ask(0)
       .then(j => {
         const rows = L.nearbyFrom(j, lat, lon, 5);
         if (!rows.length) {
@@ -50609,8 +50665,8 @@ function askTheMap(onRows, onStart, done) {
         onRows(rows);
       })
       .catch(e => {
-        done('The map service did not answer. Type it instead.', true);
-        appLog('nearby: ' + ((e && e.message) || e));
+        done('No map service answered. Type it instead.', true);
+        appLog('nearby: every server failed — ' + ((e && e.message) || e));
       });
   }, err => {
     done((err && err.code === 1)
@@ -58195,7 +58251,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.23</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.24</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
