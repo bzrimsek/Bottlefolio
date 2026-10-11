@@ -16,6 +16,22 @@
  */
 const { token, DB } = require('./rules.js');
 
+/* A LOOK THAT DOES NOT DISARM THE ALARM.
+ *
+ * Marking every shape seen is what makes "new" mean anything - but it is
+ * also what makes a second reader useless, and worse than useless: BZ runs
+ * a routine on his PC at 08:05 and the cloud job runs at 08:20 UTC, both
+ * this same script against the same `seen` node. Whichever got there first
+ * consumed the novelty, so on 2026-10-11 the routine ran at 12:36 UTC, the
+ * cloud ran at 14:56 and passed, and a new fault that morning would have
+ * reached nobody - the cloud's FAILURE is the mail.
+ *
+ * So: only the job that owns the alarm marks. Everybody else peeks. A peek
+ * still SAYS what is new and still exits 0, because it is a report, not a
+ * gate.
+ */
+const PEEK = process.argv.indexOf('--peek') >= 0;
+
 const say = s => console.log('  ' + s);
 
 /* A line worth reading twice. */
@@ -107,18 +123,23 @@ function findings(logs) {
   const seen = (await get('stats/logwatch/seen')) || {};
   const shapes = Object.keys(found);
   const fresh = shapes.filter(s => !seen[L64(s)]);
-  shapes.forEach(s => { seen[L64(s)] = Date.now(); });
-
-  await put('stats/logwatch/seen', seen);
-  await put('stats/logwatch/report', { at: Date.now(),
-    accounts: uids.length, lines: lines.length,
-    findings: shapes.map(s => found[s]) });
+  if (!PEEK) {
+    shapes.forEach(s => { seen[L64(s)] = Date.now(); });
+    await put('stats/logwatch/seen', seen);
+    await put('stats/logwatch/report', { at: Date.now(),
+      accounts: uids.length, lines: lines.length,
+      findings: shapes.map(s => found[s]) });
+  }
 
   shapes.sort((a, b) => found[b].n - found[a].n).forEach(s => {
     say((fresh.indexOf(s) >= 0 ? 'NEW  ' : '     ') + String(found[s].n).padStart(3) + '  ' + s);
   });
   say(shapes.length + ' kind(s) of problem, ' + fresh.length + ' of them new');
   say('the lines themselves are in stats/logwatch/report, which only an admin reads');
+  if (PEEK) {
+    say('a peek: nothing marked seen, so the nightly job still has the alarm');
+    return;
+  }
   if (fresh.length) {
     console.log('  \u2716 ' + fresh.length + ' new kind(s) of problem in the log');
     process.exit(1);
