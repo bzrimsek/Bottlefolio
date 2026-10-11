@@ -29951,6 +29951,57 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§466 a sync line says WHICH records, not just how many');
+{
+  /* BZ, 2026-10-10: "giving me a hint of an issue w/o detail or a way to
+     fix is not useful". "customFlights kept 1 unsent change over the
+     account" told him something was wrong and gave him no way to find it -
+     and no screen in the app names it either, so the line was the only
+     evidence there was. */
+  const f1 = [{ title: 'A FLIGHT', core: [{ k: 'a' }] },
+    { title: 'ANOTHER', core: [{ k: 'b' }] }];
+  const f2 = [{ title: 'A FLIGHT', core: [{ k: 'z' }] },
+    { title: 'ANOTHER', core: [{ k: 'b' }] }];
+  eq('one changed flight is named',
+    L.syncList('customFlights', f1, f2, false, {},
+      L.recordPrints('customFlights', f2), true).said,
+    'customFlights kept 1 unsent change over the account: A FLIGHT');
+
+  /* A COUNT TOO BIG TO READ STAYS A COUNT: a log line naming three hundred
+     bottles is its own problem. */
+  const many = [], old = [];
+  for (let i = 0; i < 9; i++) {
+    many.push({ id: 'B' + i, k: 'Bottle ' + i, status: 'open' });
+    old.push({ id: 'B' + i, k: 'Bottle ' + i, status: 'dead' });
+  }
+  eq('too many to name is left as a number',
+    L.syncList('bottles', many, old, false, {},
+      L.recordPrints('bottles', old), true).said,
+    'bottles kept 9 unsent changes over the account');
+
+  /* A MAP IS KEYED BY WHAT IT IS ABOUT, so its ids are already the names. */
+  eq('a map names the entry it is filed under',
+    L.syncMap('edits', { 'Ardbeg Ten': { proof: 92 } },
+      { 'Ardbeg Ten': { proof: 86 } },
+      L.entryPrints({ 'Ardbeg Ten': { proof: 86 } }), true).said,
+    'edits kept 1 unsent change over the account: Ardbeg Ten');
+
+  /* A BOTTLE IS NAMED BY ITS KEY, which is its name on every shelf; the id
+     is a row number and names nothing. */
+  eq('a bottle is named by its key',
+    L.recordLabel('bottles', { id: 'B9', k: 'Ardbeg Ten' }), 'Ardbeg Ten');
+  eq('and a kind with no label says nothing',
+    L.recordLabel('nonsense', { id: 'x' }), null);
+  eq('naming nothing is an empty tail', L.saidNames([], 0), '');
+  /* THE NAMES BEHIND A SET OF IDS, asked directly. */
+  eq('the names come back for the ids asked about',
+    L.namesOf('customFlights', f1, { 'f:A FLIGHT': 1 }), ['A FLIGHT']);
+  eq('an id nothing holds names nothing',
+    L.namesOf('customFlights', f1, { 'f:NOT HERE': 1 }), []);
+  eq('and a record with no label is skipped',
+    L.namesOf('bottles', [{ id: 'B1' }], { 'b:B1': 1 }), ['B1']);
+}
+
 sec('§465 a record the account holds is not unsent work');
 {
   /* BZ's Android said "bottles kept 377 unsent changes over the account" on
@@ -29968,7 +30019,8 @@ sec('§465 a record the account holds is not unsent work');
 
   const one = L.syncList('bottles', recs, recs, false, {}, stale, true);
   eq('a stale print makes an identical record look unsent',
-    one.said, 'bottles kept 2 unsent changes over the account');
+    one.said,
+    'bottles kept 2 unsent changes over the account: Ardbeg Ten, Lagavulin 16');
   /* AND THE LOOP IS BROKEN BY RECORDING WHAT THE ACCOUNT HOLDS. */
   const next = L.sentAfterLoad('bottles', one.list, recs, stale);
   const two = L.syncList('bottles', one.list, recs, false, {}, next, true);
@@ -29980,7 +30032,8 @@ sec('§465 a record the account holds is not unsent work');
   const d = L.sentAfterLoad('bottles', mineNewer, recs, stale);
   const three = L.syncList('bottles', mineNewer, recs, false, {}, d, true);
   eq('a record this device really changed is still kept',
-    three.said, 'bottles kept 1 unsent change over the account');
+    three.said,
+    'bottles kept 1 unsent change over the account: Ardbeg Ten');
   eq('and it still beats the account',
     three.list.filter(x => x.id === 'B1')[0].status, 'dead');
 

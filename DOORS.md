@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1018 |
+| functions | 1021 |
 | tables | 242 |
-| carrying a stated purpose | 813 |
+| carrying a stated purpose | 815 |
 
 ## Tables
 
@@ -781,6 +781,7 @@ QUESTION, not the name you were going to use.
 - **`L.namePrefixPairs`** — _no comment above it_
 - **`L.namesABottle`** — _no comment above it_
 - **`L.nameSig`** — THE SAME QUESTION AS L.sameWords(a, b, null, false), ANSWERED ONCE PER
+- **`L.namesOf`** — THE NAMES BEHIND A SET OF RECORD IDS, in the order the list holds them.
 - **`L.nameStates`** — HOW MUCH OF THE BOTTLE A NAME ACTUALLY STATES, counted in the app's own
 - **`L.nameWords`** — _no comment above it_
 - **`L.narrowerBrand`** — A NARROWER REGISTERED BRAND STATED LATER IN THE SAME NAME, which is how a
@@ -998,6 +999,7 @@ QUESTION, not the name you were going to use.
 - **`L.recentPlaces`** — Places already used, most recent first, so a second visit is one tap.
 - **`L.recordAsk`** — One result, recorded
 - **`L.recordId`** — Lists are merged, never replaced (L.mergeRecords)
+- **`L.recordLabel`** — _no comment above it_
 - **`L.recordLookup`** — _no comment above it_
 - **`L.recordPrint`** — _no comment above it_
 - **`L.recordPrints`** — WHAT THIS DEVICE SENT, one print per record, kept beside the push.
@@ -1047,6 +1049,7 @@ QUESTION, not the name you were going to use.
 - **`L.rowType`** — THE SHELF'S TYPE COLUMN says the type (BZ, 2026-09-16
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
+- **`L.saidNames`** — AND THE TAIL OF THE SENTENCE, which is the same shape wherever it is
 - **`L.sameBottle`** — _no comment above it_
 - **`L.sameBottling`** — _no comment above it_
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED

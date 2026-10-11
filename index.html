@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.22  Build 2026-10-10 05:27 PM ET
+     Version : v2.8.23  Build 2026-10-10 08:04 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
 // v2.8.21  2026-10-10  A record the account already holds is no longer counted as this device's unsent work.
 // v2.8.20  2026-10-09  A grave for a key holding a dot or a slash never matched.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.16  2026-10-09  One picker for one question.
 // v2.8.15  2026-10-09  A bottle finds its library entry by name, not only by key.
 // v2.8.14  2026-10-09  Find where I am, on Taste.
-// v2.8.13  2026-10-09  One bottle, one row in a search.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3089,8 +3089,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.22';
-const BUILD_TIME  = '2026-10-10 05:27 PM ET';
+const APP_VERSION = '2.8.23';
+const BUILD_TIME  = '2026-10-10 08:04 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -12864,6 +12864,50 @@ L.sentEntriesAfterLoad = function (map, theirs, sent) {
   return out;
 };
 
+/* WHICH ONES, NOT JUST HOW MANY.
+ *
+ * "customFlights kept 1 unsent change over the account" told BZ something
+ * was wrong and gave him no way to find it, no way to judge whether it
+ * mattered and no way to fix it - and the app has no screen that names it
+ * either, so the line was the only evidence there was (2026-10-10: "giving
+ * me a hint of an issue w/o detail or a way to fix is not useful").
+ *
+ * NAMED WHILE THE NUMBER IS SMALL ENOUGH TO READ. One flight is a name he
+ * can open; three hundred bottles is a count and nothing else, and a log
+ * line that long is its own problem. */
+L.SAY_NAMES_UPTO = 3;
+
+L.recordLabel = function (kind, r) {
+  const e = r || {};
+  /* THE BOTTLE'S OWN KEY is its display name on every shelf; the id is a
+     row number and names nothing. */
+  if (kind === 'bottles') return e.k || e.id || null;
+  if (kind === 'customFlights') return e.title || null;
+  if (kind === 'wish') return e.name || null;
+  if (kind === 'history') return e.k || e.away || null;
+  return null;
+};
+
+/* THE NAMES BEHIND A SET OF RECORD IDS, in the order the list holds them. */
+L.namesOf = function (kind, list, ids) {
+  const want = ids || {};
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach(r => {
+    const id = L.recordId(kind, r);
+    if (!id || !want[id]) return;
+    const lab = L.recordLabel(kind, r);
+    if (lab && out.indexOf(lab) < 0) out.push(lab);
+  });
+  return out;
+};
+
+/* AND THE TAIL OF THE SENTENCE, which is the same shape wherever it is
+   said, so a list and a map cannot come to phrase it differently. */
+L.saidNames = function (names, n) {
+  if (!names || !names.length || n > L.SAY_NAMES_UPTO) return '';
+  return ': ' + names.join(', ');
+};
+
 /* A MAP, MERGED ONTO THE ACCOUNT. Answers { map, said } so the screen
    appends and decides nothing, exactly as L.syncList does. */
 L.syncMap = function (kind, mine, theirs, sent, hasPushed) {
@@ -12883,6 +12927,9 @@ L.syncMap = function (kind, mine, theirs, sent, hasPushed) {
     ? kind + ' kept ' + nc + ' unsent change' + (nc === 1 ? '' : 's')
       + (ng ? ' and ' + ng + ' removal' + (ng === 1 ? '' : 's') : '')
       + ' over the account'
+      /* A MAP'S IDS ARE ITS KEYS, which is what it is keyed BY - an edit is
+         filed under the bottle it corrects. */
+      + L.saidNames(Object.keys(dirty.changed), nc)
     : '' };
 };
 
@@ -12902,7 +12949,8 @@ L.syncList = function (kind, mine, theirs, mineNewer, removed, sent, hasPushed) 
   if (dirty.known && (nc || ng)) {
     said = kind + ' kept ' + nc + ' unsent change' + (nc === 1 ? '' : 's')
       + (ng ? ' and ' + ng + ' delete' + (ng === 1 ? '' : 's') : '')
-      + ' over the account';
+      + ' over the account'
+      + L.saidNames(L.namesOf(kind, mine, dirty.changed), nc);
   } else if (list.length !== before) {
     said = kind + ' merged ' + before + ' + '
       + ((Array.isArray(theirs) ? theirs : []).length)
@@ -58147,7 +58195,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.22</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.23</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
