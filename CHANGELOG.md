@@ -2,6 +2,14 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.27  ·  2026-10-11 10:27 AM ET
+
+A flight of your own can be deleted, from under More. The only delete in the app was gated on a flag set in one place, where the app builds a flight from scratch, so every flight imported from the tasting cards was undeletable: forty-two of his own records and no button on any of them. L.flightIsMine answers whose a flight is by whether it sits in his own customFlights, however it got there; flightDeleteBtn decides once whether to offer it and builds it; deleteFlight holds the tombstone, the undo and the re-render that the editor and the More sheet had each been writing. The More sheet is its own function now, which put showFlight back under its ceiling, and a dangerous button keeps its colour when the sheet copies it. v2.8.26 was cut and never shipped: the lock was taken before those extractions, and rule 23 stopped it.
+
+## v2.8.26  ·  2026-10-11 10:18 AM ET
+
+A flight of your own can be deleted, from under More. The only delete in the app was gated on a flag that is set in one place, where the app builds a flight from scratch, so every flight imported from the tasting cards was undeletable: forty-two of his own records and no button on any of them. L.flightIsMine now answers whose a flight is by whether it is in his own customFlights, however it got there, and the tombstone, the undo and the re-render live in one deleteFlight that both the editor and the More sheet ask. A dangerous button keeps its colour when the More sheet copies it, which it did not.
+
 ## v2.8.25  ·  2026-10-10 10:48 PM ET
 
 Vosges is oak. BZ filed Heaven's Door Straight Rye as Vosges (French) oak and the brackets broke every match the wood list had, so L.woodsOf gave it no family at all and the Wood axis saw nothing for it - the species reading still found European oak, which is how the gap showed. Vosges is a named French forest the way Limousin and Troncais are, so the oak family learns the word rather than the wording being bent to suit the list, and the bracketed form reads as oak and European from here. Three cask corrections went with it, each matched on its proof as well as its name because there are four Heaven's Door entries at 92 proof and two Barrell Vantage entries, and each refused unless the entry still said what he said it said: Barrell Vantage at 114.44 from Port to Mizunara and French and toasted American oak, which reads as oak with American and mizunara species; Heaven's Door Refuge Rye at 92 from Sherry to Amontillado sherry; and Heaven's Door Straight Rye at 92 from Oloroso sherry casks to Vosges French oak.

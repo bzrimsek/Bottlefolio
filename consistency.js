@@ -1347,7 +1347,11 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.5.51: the sixth view on the guest ladder. */
     'Tastes like it',
     /* v2.5.56 */
-    'Shape your taste recommendations'];
+    'Shape your taste recommendations',
+    /* v2.8.26: the delete was gated on a flag only the app's own
+       flight builder sets, so every IMPORTED flight was
+       undeletable - forty-two of his own records, no button. */
+    'Delete this flight'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -3406,9 +3410,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderUsers: 160,
     shelfPortrait: 159,
     renderGuest: 157,
-    flightEditor: 153,
     showCandidates: 147,
     showEnhance: 139,
+    flightEditor: 136,
     libraryAudit: 131,
     shelfBuildSheet: 131,
     fbLoadAfterWipeCheck: 129,
@@ -3419,9 +3423,9 @@ check('no fixed svg id is emitted by a repeated drawing',
     shelfFit: 128,
     renderBuddies: 125,
     renderShop: 124,
-    showFlight: 122,
     postWithRetry: 120,
     roomNotes: 120,
+    showFlight: 114,
     renderBuddiesTab: 112,
     renderFlights: 111,
     shelfAxes: 107,

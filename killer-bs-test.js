@@ -29958,6 +29958,30 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§467 a flight of his own can be deleted, however it got there');
+{
+  /* BZ, 2026-10-11: "no way to delete - need a delete button under More".
+     The delete was gated on `custom`, which is set in ONE place - where the
+     app builds a flight from scratch - so all forty-two flights imported
+     from the tasting cards were undeletable and the button never drew. */
+  const imported = { title: 'WHAT GRAIN ON YOUR BiB?', core: [] };
+  const built = { title: 'MINE', core: [], custom: true };
+  const shipped = { title: 'SHIPPED', core: [] };
+  const mine = [imported, built];
+
+  eq('a flight the app built is his', L.flightIsMine(built, mine), true);
+  eq('an IMPORTED flight in his own list is his too',
+    L.flightIsMine(imported, mine), true);
+  eq('and one he does not hold is not',
+    L.flightIsMine(shipped, mine), false);
+  /* THE FLAG ALONE STILL ANSWERS, because a flight being edited is not
+     always reachable from the list it will be pushed onto. */
+  eq('the flag alone is enough', L.flightIsMine(built, []), true);
+  eq('nothing is not a flight', L.flightIsMine(null, mine), false);
+  eq('and an empty list does not throw',
+    L.flightIsMine(imported, null), false);
+}
+
 sec('§466 a sync line says WHICH records, not just how many');
 {
   /* BZ, 2026-10-10: "giving me a hint of an issue w/o detail or a way to

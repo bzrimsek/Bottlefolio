@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1021 |
+| functions | 1022 |
 | tables | 243 |
 | carrying a stated purpose | 816 |
 
@@ -495,6 +495,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightCandidates`** — _no comment above it_
 - **`L.flightDrinks`** — The arithmetic for a whole flight
 - **`L.flightIdeasFor`** — THE FLIGHT THIS BOTTLE MAKES
+- **`L.flightIsMine`** — WHOSE FLIGHT IS THIS, and so what may be done to it.
 - **`L.flightMissing`** — `sealed` is the shelf's own answer (L.ownedCount against L.pourable), so
 - **`L.flightMissingSay`** — Said in one line, because the card above it already says the count.
 - **`L.flightNoteQueue`** — Notes written for a flight card, not for the bottle
@@ -502,7 +503,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightPoured`** — Everything a run put in a glass, whatever list it came from, so the
 - **`L.flightPourJoins`** — ONE CANDIDATE ONLY
 - **`L.flightProof`** — _no comment above it_
-- **`L.flightReady`** — How much of a flight you could actually pour tonight.
+- **`L.flightReady`** — _no comment above it_
 - **`L.flightRequestBody`** — _no comment above it_
 - **`L.flightRoom`** — How many more glasses fit, at the strength this flight is actually
 - **`L.flightRunAt`** — _no comment above it_

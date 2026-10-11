@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.25  Build 2026-10-10 10:48 PM ET
+     Version : v2.8.27  Build 2026-10-11 10:27 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.27  2026-10-11  A flight of your own can be deleted, from under More.
+// v2.8.26  2026-10-11  A flight of your own can be deleted, from under More.
 // v2.8.25  2026-10-10  Vosges is oak.
 // v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.8.20  2026-10-09  A grave for a key holding a dot or a slash never matched.
 // v2.8.19  2026-10-09  The duplicate finder could not see the less complete of two duplicates.
 // v2.8.18  2026-10-09  Four things BZ found by using it.
-// v2.8.17  2026-10-09  The map pin lives inside the Where field.
-// v2.8.16  2026-10-09  One picker for one question.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3089,8 +3089,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.25';
-const BUILD_TIME  = '2026-10-10 10:48 PM ET';
+const APP_VERSION = '2.8.27';
+const BUILD_TIME  = '2026-10-11 10:27 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -8787,7 +8787,7 @@ L.FEATURES = [
   { term: 'Taste', src: 'deciding what to pour',
     def: 'Four reels: proof band, type, how well known, and occasion. Tap a reel to choose a value, or tap Spin and let it pick. It fills up to three glasses from what is open and never lands on a combination nothing satisfies. Tap a glass to see the bottle or log the pour. At home is the reels; Out is a bar, a shop or a friend’s kitchen, where you photograph what is in front of you and log what you drank.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, never run first, with More ideas for the next three. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours.' },
+    def: 'What you could pour tonight leads — flights with every bottle already open, never run first, with More ideas for the next three. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
@@ -31827,6 +31827,24 @@ L.FLIGHT_SORTS = [
 ];
 
 // How much of a flight you could actually pour tonight.
+/* WHOSE FLIGHT IS THIS, and so what may be done to it.
+ *
+ * `custom` is set in exactly one place - where the app builds a flight from
+ * scratch - so every flight IMPORTED from the tasting cards lacked it. The
+ * list held forty-two of his own records and offered a delete on none of
+ * them, because the only delete in the app was gated on that flag (BZ,
+ * 2026-10-11: "no way to delete - need a delete button under More").
+ *
+ * A record in his own customFlights is his, however it got there. This does
+ * NOT decide where an edit is saved: a shipped flight he has adjusted still
+ * writes to S.edits, which is what keeps the shipped copy underneath.
+ */
+L.flightIsMine = function (f, mine) {
+  if (!f) return false;
+  if (f.custom) return true;
+  return (mine || []).indexOf(f) >= 0;
+};
+
 L.flightReady = function (f, catalog, bottles) {
   const core = f.core || [];
   if (!core.length) return { open: 0, total: 0, pct: 0 };
@@ -54788,30 +54806,72 @@ function flightEditor(f) {
     };
     m.appendChild(save);
 
-    if (f.custom) {
-      const del = el('button', 'btn ghost wide danger', 'Delete this flight');
-      /* No "are you sure?" but an undo (BZ, 2026-09-15): typed confirmation
-         only for the account and for a person. */
-      del.onclick = () => {
-        const id = L.recordId('customFlights', f);
-        const at = S.customFlights.indexOf(f);
-        S.removed = L.tombstone(S.removed, id);
-        S.customFlights = S.customFlights.filter(x => x !== f);
-        save_(); closeModal(); renderFlights(); show('flights');
-        toast('Flight deleted', { label: 'Undo', action: () => {
-          const r2 = Object.assign({}, S.removed);
-          delete r2[id];
-          S.removed = r2;
-          S.customFlights.splice(Math.max(0, at), 0, f);
-          save_(); renderFlights();
-        } });
-      };
-      m.appendChild(del);
-    }
+    const del = flightDeleteBtn(f, 'btn ghost wide danger');
+    if (del) m.appendChild(del);
     const cancel = el('button', 'btn ghost wide', 'Cancel');
     cancel.onclick = closeModal;
     m.appendChild(cancel);
   });
+}
+
+/* DELETING A FLIGHT, FROM WHEREVER IT IS ASKED FOR.
+ *
+ * Two places ask now - the editor and the More sheet - and a tombstone,
+ * an undo and a re-render written twice is the fault rule 30d exists for.
+ *
+ * No "are you sure?" but an undo (BZ, 2026-09-15): typed confirmation only
+ * for the account and for a person. The tombstone is what makes the delete
+ * survive a sync; dropping it from the list alone lets the next device put
+ * it back. */
+/* OFFERED OR NOT, IN ONE PLACE. The editor and the More sheet both asked
+   whose flight it was and both built the same button, which is one decision
+   written twice (rule 30d) - consistency.js caught it the first time it
+   ran. `cls` is all that differs: the editor stacks wide buttons and the
+   sheet is a row of small ones. */
+/* THE REST OF THE ACTIONS, IN A SHEET. Six buttons in a header that never
+   wraps scrolled a 390px phone sideways, so the header keeps More and Back
+   and the rest live here. Out of showFlight because building the sheet is
+   not laying out the screen, and showFlight had reached its ceiling. */
+function flightMoreSheet(more) {
+  openModal('This flight', m => {
+    more.forEach(b => {
+      /* A DANGEROUS BUTTON STAYS DANGEROUS when it is copied into the
+         sheet: the clone took the label and left the colour behind. */
+      const again = el('button', 'btn wide'
+        + (b.classList.contains('danger') ? ' ghost danger' : ''),
+        b.textContent);
+      again.style.marginTop = '8px';
+      if (b.title) again.title = b.title;
+      again.onclick = () => { closeModal(); b.onclick(); };
+      m.appendChild(again);
+    });
+    const no = el('button', 'btn ghost wide', 'Close');
+    no.style.marginTop = '10px';
+    no.onclick = closeModal;
+    m.appendChild(no);
+  });
+}
+
+function flightDeleteBtn(f, cls) {
+  if (!L.flightIsMine(f, S.customFlights)) return null;
+  const b = el('button', cls, 'Delete this flight');
+  b.onclick = () => deleteFlight(f);
+  return b;
+}
+
+function deleteFlight(f) {
+  const id = L.recordId('customFlights', f);
+  const at = S.customFlights.indexOf(f);
+  S.removed = L.tombstone(S.removed, id);
+  S.customFlights = S.customFlights.filter(x => x !== f);
+  save_(); closeModal(); renderFlights(); show('flights');
+  toast('Flight deleted', { label: 'Undo', action: () => {
+    const r2 = Object.assign({}, S.removed);
+    delete r2[id];
+    S.removed = r2;
+    S.customFlights.splice(Math.max(0, at), 0, f);
+    save_(); renderFlights();
+  } });
 }
 
 /* Running a flight IS pouring its bottles, so the shelf learns what a
@@ -55017,6 +55077,12 @@ function showFlight(f) {
   papers.onclick = () => showPapers(f);
   more.push(papers);
 
+  /* LAST, AND ONLY FOR HIS OWN. Under More because that is where he looked
+     for it, and because the delete that existed was three taps inside Edit
+     and invisible to every imported flight. */
+  const fDel = flightDeleteBtn(f, 'btn btn-sm danger');
+  if (fDel) more.push(fDel);
+
   /* A whole flight is several pours at once, so it is named for that and
      not "Pour it" (BZ, 2026-09-15: one name per action). */
   const fRun = el('button', 'btn btn-sm btn-gold', 'Log the flight');
@@ -55028,19 +55094,7 @@ function showFlight(f) {
   /* The rest under More: six buttons in a header that never wraps scrolled
      a 390px phone sideways. The header keeps More and Back. */
   const fMore = el('button', 'btn btn-sm', 'More');
-  fMore.onclick = () => openModal('This flight', m => {
-    more.forEach(b => {
-      const again = el('button', 'btn wide', b.textContent);
-      again.style.marginTop = '8px';
-      if (b.title) again.title = b.title;
-      again.onclick = () => { closeModal(); b.onclick(); };
-      m.appendChild(again);
-    });
-    const no = el('button', 'btn ghost wide', 'Close');
-    no.style.marginTop = '10px';
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
+  fMore.onclick = () => flightMoreSheet(more);
   fa.appendChild(fMore);
   const head = el('div', 'sheet');
   const t = el('h2'); t.style.cssText = 'font-size:23px;color:var(--ink-deep)';
@@ -58256,7 +58310,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.25</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.27</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
