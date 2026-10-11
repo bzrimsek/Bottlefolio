@@ -115,6 +115,12 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # 2026-09-20: BZ's flight-cards document, read back into the
            # app. He hands over the same file again and is told what is new.
            'cards.js',
+           # 2026-10-11: the daily log read, as ONE command. His routine
+           # used to describe three steps and leave the last one to be
+           # written fresh each morning, so every run stopped for an
+           # approval no saved rule could match. Local-only until now,
+           # which is a tool that exists on one PC and in no record.
+           'logcheck.js',
            # 2026-09-27: the generator behind DOORS.md. consistency.js runs
            # it with --check, so the gate needs the generator as well as the
            # file it generates.
