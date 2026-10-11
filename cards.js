@@ -196,14 +196,46 @@ const numProof = p => {
 const sameName = (a, b) => String(a).toLowerCase().trim()
   === String(b).toLowerCase().trim();
 
+/* IS THIS DOCUMENT FLIGHT A RENAME OF ONE THE APP ALREADY HOLDS?
+ *
+ * A flight is matched to the app BY TITLE, so renaming one in the document
+ * makes it read as a flight the app lacks - and writing it then leaves TWO,
+ * the new title beside the old. That is not a theory: six flights were
+ * reconciled by hand on 2026-10-10 and two of them renamed, and BZ's next
+ * open showed 42 flights where there had been 40. His device still held the
+ * two under their old titles, matched nothing on the server and pushed its
+ * copies back.
+ *
+ * So ask what the app matches on everywhere else: the POURS, not the title.
+ * More than half the card's core already in one app flight means the same
+ * flight under a new name. Half, rather than all, because a rename usually
+ * arrives in the same edit as a pour swap.
+ *
+ * `appFlights` is [{ title, keys }] - the keys as the app resolves them.
+ */
+const renamedFrom = function (cardKeys, appFlights) {
+  const want = {};
+  (cardKeys || []).forEach(k => { if (k) want[k] = 1; });
+  const n = Object.keys(want).length;
+  if (!n) return [];
+  return (appFlights || []).map(fl => {
+    let shared = 0;
+    (fl.keys || []).forEach(k => { if (k && want[k]) shared++; });
+    return { title: fl.title, shared: shared, of: n };
+  }).filter(x => x.shared * 2 > x.of);
+};
+
 module.exports = { unzipOne, paragraphs, parseCards,
-  short, inOrder, nameFits, cardBottle, numProof, sameName };
+  short, inOrder, nameFits, cardBottle, numProof, sameName, renamedFrom };
 
 /* ---- run it ---------------------------------------------------------- */
 
 if (require.main === module) {
   const file = process.argv[2];
   const WRITE = process.argv.indexOf('--write') >= 0;
+  /* Claiming customFlights is a bigger thing than adding a flight - it
+     replaces the list on every device - so it is never implied. */
+  const RESET = process.argv.indexOf('--reset') >= 0;
   if (!file) {
     console.log('usage: node cards.js <tasting-flight-cards.docx> [--write]');
     process.exit(1);
@@ -406,7 +438,34 @@ if (require.main === module) {
         + 'and every card bottle matches something.');
     }
 
+    /* WHAT WOULD BE ADDED THAT IS REALLY A RENAME. Said on a dry run too,
+       because the point is to see it before writing anything. */
+    const held = flights.map(fl => ({ title: fl.title,
+      keys: (fl.core || []).filter(Boolean)
+        .map(p => L.pourLabel(p, cat) || p.k || p.name || '') }));
+    const renames = [];
+    add.forEach(a => {
+      renamedFrom(a.core.map(c => c.k), held).forEach(x =>
+        renames.push({ doc: a.f.title, app: x.title,
+          shared: x.shared, of: x.of }));
+    });
+    if (renames.length) {
+      console.log('\nTHESE LOOK LIKE RENAMES, not new flights:');
+      renames.forEach(x => console.log('  "' + x.app + '" is already in the '
+        + 'app with ' + x.shared + ' of this card\'s ' + x.of
+        + ' pours\n      the document calls it "' + x.doc + '"'));
+      console.log('  Writing them adds a SECOND copy, and the old title is '
+        + 'what\n  every device matches on, so the stale one comes back. '
+        + 'Pass --reset\n  to claim customFlights, which replaces the list '
+        + 'whole everywhere.');
+    }
+
     if (!WRITE) { console.log('\nDry run. Pass --write.'); return; }
+    if (renames.length && !RESET) {
+      console.log('\nREFUSED: a rename needs --reset. Nothing written.');
+      process.exitCode = 1;
+      return;
+    }
     /* ONE BLOCKED FLIGHT DOES NOT HOLD THE OTHERS BACK. A flight whose
        core names a bottle nothing matches cannot be built; the rest can,
        and refusing all of them over it helps nobody. */
@@ -427,6 +486,21 @@ if (require.main === module) {
       if (!r.ok) throw new Error(a.f.title + ': ' + r.status + ' ' + await r.text());
       console.log('written: ' + a.f.title);
       at++;
+    }
+    /* AND CLAIM THE KEY, so every device takes customFlights whole rather
+       than merging its own copy under the old title back in. L.markReset
+       and L.RESETTABLE are the app's own door for this (L.resetSide reads
+       it on the next load). */
+    if (renames.length) {
+      const now = Date.now();
+      const was = await get(uid + '/resets') || {};
+      const next = L.markReset(was, ['customFlights'], now);
+      const rr = await fetch(DB + '/bz-apps/whisky/' + uid + '/resets.json',
+        { method: 'PUT', headers: { Authorization: 'Bearer ' + tok,
+          'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+      if (!rr.ok) throw new Error('resets: ' + rr.status);
+      console.log('claimed customFlights at ' + now
+        + ' - every device takes the account copy whole on its next load.');
     }
     console.log('\n' + ready.length + ' flight(s) added. ' + at
       + ' in the app.');
