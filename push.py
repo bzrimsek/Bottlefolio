@@ -96,6 +96,10 @@ APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
 # reason, with the file sitting green on the PC that made it.
 DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
         'README.md', 'LICENSE', 'DOORS.md']
+# One rule book for every app (BZ, 2026-10-03). It lives in Apps I've Built\,
+# beside this folder, and is published into the repo as DEV-RULES.md so each
+# build carries the rules it was made under. There is no copy in this folder.
+SOURCE = {'DEV-RULES.md': os.path.join(os.path.dirname(HERE), 'DEV-RULES.md')}
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
@@ -397,7 +401,7 @@ def push(v, subject, dry):
 
     changed, missing = [], []
     for name in wanted(v):
-        path = os.path.join(HERE, name.replace('/', os.sep))
+        path = SOURCE.get(name) or os.path.join(HERE, name.replace('/', os.sep))
         if not os.path.exists(path):
             missing.append(name)
             continue
