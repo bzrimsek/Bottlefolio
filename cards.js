@@ -261,6 +261,16 @@ if (require.main === module) {
     [Object.values(shipped.catalog || {}), Object.values(custom || {}),
      Object.values(lib || {})].forEach(set =>
       set.forEach(p => { if (p && p.name) cat[p.name] = p; }));
+    /* AND BY THE LIBRARY'S OWN KEY. The shelf keys a bottle by its display
+       name and the library by a slug, so a flight pour stored as
+       `high_west_distillery_a_midwinter_night_s_dram` found nothing here:
+       L.pourLabel fell back to the slug and its proof read as null, which
+       took the proof tiebreak away and reported a pour that was perfectly
+       correct as a disagreement (2026-10-12). Keyed both ways, either
+       finds it. */
+    Object.keys(lib || {}).forEach(k => {
+      if (lib[k] && !cat[k]) cat[k] = lib[k];
+    });
     console.log(flights.length + ' flights in the app, '
       + Object.keys(cat).length + ' products to match against\n');
 
