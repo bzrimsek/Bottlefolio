@@ -29993,10 +29993,6 @@ sec('§469 one bottle at a time, its state can be flipped');
   eq('a gone bottle is not flipped', L.setState(bs, 'B3', 'open').ok, false);
   eq('and it did not move', bs[2].status, 'gone');
 
-  /* WHAT EACH ONE IS CALLED, so the sheet never spells one out. */
-  eq('open says Open', L.stateSay({ status: 'open' }), 'Open');
-  eq('keep says Do not open', L.stateSay({ status: 'keep' }), 'Do not open');
-  eq('gone says Gone', L.stateSay({ status: 'gone' }), 'Gone');
   eq('a state that exists is found', L.stateNamed('keep')[1], 'Do not open');
   eq('and one that does not is null', L.stateNamed('fizz'), null);
 }

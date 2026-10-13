@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.31  Build 2026-10-12 09:24 PM ET
+     Version : v2.8.32  Build 2026-10-12 09:40 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.32  2026-10-12  A bottle's state is set on the bottle's own row.
 // v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
 // v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.25  2026-10-10  Vosges is oak.
 // v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
-// v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.31';
-const BUILD_TIME  = '2026-10-12 09:24 PM ET';
+const APP_VERSION = '2.8.32';
+const BUILD_TIME  = '2026-10-12 09:40 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3408,11 +3408,6 @@ L.BOTTLE_STATES = [['open', 'Open'], ['sealed', 'Sealed'],
    consistency.js caught it the first time it ran. */
 L.stateNamed = function (want) {
   return L.BOTTLE_STATES.filter(x => x[0] === want)[0] || null;
-};
-
-L.stateSay = function (b) {
-  const hit = L.stateNamed((b || {}).status || '');
-  return hit ? hit[1] : 'Gone';
 };
 
 L.setState = function (bottles, id, want) {
@@ -35270,15 +35265,6 @@ function showBottle(k) {
   /* Do not open (BZ): a bottle held for a birth year, an unrepeatable
      release, a gift. A third state, not a kind of sealed: sealed means not
      yet; a keeper means not for now. */
-  /* ONE WAY IN, FOR EVERY BOTTLE. This drew only when a not-open
-     bottle already existed, so on a shelf where everything is open
-     there was no status control at all - and nothing anywhere took
-     a bottle from open back to sealed (BZ, 2026-10-12). */
-  if (L.myBottles(k, S.bottles).filter(L.isOwned).length) {
-    const stateBtn = el('button', 'btn btn-sm ghost', 'Open or sealed');
-    stateBtn.onclick = () => bottleStates(k);
-    _act.keepBtn = stateBtn;
-  }
 
   const spareBtn = el('button', 'btn btn-sm ghost', L.addBottleSay(L.ownedCount(k, S.bottles)));
   spareBtn.onclick = () => askStatus(p.name, st => {
@@ -35442,15 +35428,26 @@ function showBottle(k) {
        sold and broken happen to sealed bottles, and opening it first would
        record something false that cannot be taken back. So a sealed row
        gets Open it AND Retire. */
-    const btn = el('button', 'chip', L.isSealed(b) ? 'Open it' : 'Retire');
-    btn.onclick = () => L.isSealed(b) ? openBottle(b, k) : retireBottle(b, k);
-    r.appendChild(btn);
+    /* AND ITS STATE, ON ITS OWN ROW. A sheet listing the bottles
+       again was a second copy of this list, and a button under the
+       page said nothing about WHICH bottle (BZ, 2026-10-12: 'Where
+       is it. Not obvious'). Open it keeps its own flow, which asks
+       about pouring; the rest are a state and go through one door. */
+    const flip = (want, label) => r.appendChild(stateChip(b, k, want, label));
+    if (L.isOpen(b)) flip('sealed', 'Seal it');
     if (L.isSealed(b)) {
-      const out = el('button', 'chip', 'Retire');
-      out.title = 'Gifted, traded, sold or broken \u2014 without opening it';
-      out.onclick = () => retireBottle(b, k);
-      r.appendChild(out);
+      const open = el('button', 'chip', 'Open it');
+      open.onclick = () => openBottle(b, k);
+      r.appendChild(open);
+      flip('keep', 'Do not open');
     }
+    if (L.isKeeper(b)) flip('sealed', 'Allow opening');
+    /* A sealed bottle can leave without being opened (BZ): gifted,
+       traded, sold and broken happen to sealed bottles, and opening
+       it first would record something false. */
+    const out = el('button', 'chip', 'Retire');
+    out.onclick = () => retireBottle(b, k);
+    r.appendChild(out);
     bs.appendChild(r);
   });
   /* What you DO with the bottle you own. Retire and Open it stay on the
@@ -35460,8 +35457,6 @@ function showBottle(k) {
   if (_act.pb) bActs.appendChild(_act.pb);
   if (_act.find) bActs.appendChild(_act.find);
   bActs.appendChild(_act.spareBtn);
-  // Do not open, beside the other things you do to a bottle you own.
-  if (_act.keepBtn) bActs.appendChild(_act.keepBtn);
   bs.appendChild(bActs);
 
   /* AND THE ONES THAT HAVE LEFT. A retired bottle drops off every list, so
@@ -35648,54 +35643,19 @@ function showBottle(k) {
 function openBottle(b, k) { b.status = 'open'; showBottle(k); renderShelf(); }
 
 /* Opening a sealed bottle, from wherever you are. */
-/* EVERY BOTTLE OF ONE WHISKY, AND WHAT STATE EACH IS IN.
- *
- * One row per bottle, because a second bottle is a different bottle: the
- * one being put away is not always the one that is open. The row says when
- * it arrived and what it cost, so two bottles of the same whisky can be
- * told apart.
- */
-function bottleStates(k, after) {
-  const p = prod(k) || {};
-  const mine = L.myBottles(k, S.bottles).filter(L.isOwned);
-  if (!mine.length) { toast('You do not own one'); return; }
-  openModal(L.sentenceCase(p.name || k), m => {
-    m.appendChild(el('div', 'sub', mine.length === 1
-      ? 'Sealed keeps it for later. Do not open keeps it for good, and '
-        + 'nothing will offer to pour it.'
-      : mine.length + ' bottles, each set on its own.'));
-    mine.forEach(b => {
-      const row = el('div', 'sheet');
-      row.style.marginTop = '9px';
-      const says = [b.got ? 'added ' + b.got : null,
-        typeof b.paid === 'number' && b.paid > 0 ? '$' + b.paid : null]
-        .filter(Boolean).join(' · ');
-      row.appendChild(el('div', 'nm', L.stateSay(b)));
-      if (says) row.appendChild(el('div', 'sub', says));
-      const pick = el('div', 'chiprow');
-      L.BOTTLE_STATES.forEach(pair => {
-        const c = el('button', 'chip', pair[1]);
-        c.setAttribute('aria-pressed', b.status === pair[0] ? 'true' : 'false');
-        c.onclick = () => {
-          const r = L.setState(S.bottles, b.id, pair[0]);
-          if (!r.ok) { toast(r.why); return; }
-          save_(); closeModal();
-          showBottle(k); renderShelf(); renderShelfFilters(); renderHome();
-          renderPayline();
-          if (after) after();
-          toast(r.changed ? 'Now ' + pair[1].toLowerCase()
-            : 'Already ' + pair[1].toLowerCase());
-        };
-        pick.appendChild(c);
-      });
-      row.appendChild(pick);
-      m.appendChild(row);
-    });
-    const no = el('button', 'btn ghost wide', 'Close');
-    no.style.marginTop = '11px';
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
+/* ONE CHIP THAT PUTS A BOTTLE INTO A STATE. On the row of the bottle it
+   acts on, because with two on the shelf a control anywhere else cannot say
+   which one it means - the same reason Retire and Open it live there. */
+function stateChip(b, k, want, label) {
+  const c = el('button', 'chip', label);
+  c.onclick = () => {
+    const res = L.setState(S.bottles, b.id, want);
+    if (!res.ok) { toast(res.why); return; }
+    save_(); showBottle(k); renderShelf(); renderShelfFilters();
+    renderHome(); renderPayline();
+    toast('Now ' + label.toLowerCase());
+  };
+  return c;
 }
 
 function openSealed(k, after) {
@@ -58486,7 +58446,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.31</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.32</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

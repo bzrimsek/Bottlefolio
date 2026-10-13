@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1029 |
+| functions | 1028 |
 | tables | 245 |
 | carrying a stated purpose | 822 |
 
@@ -1162,7 +1162,6 @@ QUESTION, not the name you were going to use.
 - **`L.stateCounts`** — _no comment above it_
 - **`L.stateNamed`** — ONE PLACE THAT LOOKS A STATE UP, because both the name of a state and
 - **`L.stateOf`** — _no comment above it_
-- **`L.stateSay`** — _no comment above it_
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
 - **`L.strandedBottles`** — NO ENTRY, AND NOTHING TO JOIN IT TO
 - **`L.stripMarkup`** — Anything a model returns can carry citation markup ([cite index=...]).
