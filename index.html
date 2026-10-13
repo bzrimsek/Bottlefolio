@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.30  Build 2026-10-12 09:01 PM ET
+     Version : v2.8.31  Build 2026-10-12 09:24 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
 // v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // v2.8.28  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
-// v2.8.21  2026-10-10  A record the account already holds is no longer counted as this device's unsent work.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.30';
-const BUILD_TIME  = '2026-10-12 09:01 PM ET';
+const APP_VERSION = '2.8.31';
+const BUILD_TIME  = '2026-10-12 09:24 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3385,6 +3385,49 @@ L.bulkSaid = function (r, want) {
   return d.changed + (d.changed === 1 ? ' bottle ' : ' bottles ')
     + (opened ? 'opened' : 'sealed')
     + (d.kept ? ', ' + d.kept + ' left as do-not-open' : '');
+};
+
+/* THE THREE STATES A BOTTLE CAN BE IN, and setting ONE bottle to one of
+ * them.
+ *
+ * Until now nothing on a bottle could do this. "Do not open" only drew when
+ * a not-open bottle already existed, so on a shelf where everything is open
+ * - BZ's is 356 open, 14 sealed, 0 keepers - most whiskies offered no status
+ * control at all, and nothing anywhere took a single bottle from open back
+ * to sealed (BZ, 2026-10-12: "Just add a way on a bottle to flip the
+ * status").
+ *
+ * By ID, not by whisky: a second bottle is a different bottle, and the one
+ * you are putting away is not necessarily the one that is open.
+ */
+L.BOTTLE_STATES = [['open', 'Open'], ['sealed', 'Sealed'],
+  ['keep', 'Do not open']];
+
+/* ONE PLACE THAT LOOKS A STATE UP, because both the name of a state and
+   the test of whether a state exists were spelling out the same search and
+   consistency.js caught it the first time it ran. */
+L.stateNamed = function (want) {
+  return L.BOTTLE_STATES.filter(x => x[0] === want)[0] || null;
+};
+
+L.stateSay = function (b) {
+  const hit = L.stateNamed((b || {}).status || '');
+  return hit ? hit[1] : 'Gone';
+};
+
+L.setState = function (bottles, id, want) {
+  if (!L.stateNamed(want)) {
+    return { ok: false, why: 'not a state a bottle can be in' };
+  }
+  const b = (bottles || []).filter(x => x && String(x.id) === String(id))[0];
+  if (!b) return { ok: false, why: 'no bottle with that id' };
+  const was = b.status || '';
+  if (was === want) return { ok: true, was: was, now: want, changed: false };
+  /* A BOTTLE THAT IS GONE STAYS GONE. Bringing one back is an adjustment
+     with provenance behind it, not a status flip. */
+  if (!L.isOwned(b)) return { ok: false, why: 'that bottle is gone' };
+  b.status = want;
+  return { ok: true, was: was, now: want, changed: true };
 };
 
 L.bulkStatus = function (bottles, keys, want) {
@@ -9199,7 +9242,7 @@ L.FEATURES = [
   { term: 'Worth it?', src: 'after any pour',
     def: 'One question, one tap: again, fine, or not for me. Asked once per bottle, and you can skip it. Again marks it a favorite, which the recommendations read, so the shelf learns from what you drink as well as what you bought.' },
   { term: 'Do not open', src: 'under a bottle you own',
-    def: 'A third state beside open and sealed: sealed means not yet, do not open means a keeper \u2014 a birth year, an unrepeatable release, a gift. It counts as owned and toward what the shelf is worth, and it is never pourable: the reels cannot land on it and no flight uses it.' },
+    def: 'Open or sealed, on the bottle, sets ONE bottle at a time - a second bottle is a different bottle, and the one you are putting away is not always the one that is open. A third state beside open and sealed: sealed means not yet, do not open means a keeper \u2014 a birth year, an unrepeatable release, a gift. It counts as owned and toward what the shelf is worth, and it is never pourable: the reels cannot land on it and no flight uses it.' },
   { term: 'The recap', src: 'the top of Taste',
     def: 'What your log holds over a stretch you pick: a month, three months, a year or all of it. Pours, different whiskies, the most poured, the top house, where you went out, away against at home, and how many you would pour again. With a lookup service set, a written summary sits above the counts.' },
   { term: 'Where it came from', src: 'adding a bottle, or tapping one you own',
@@ -35227,21 +35270,14 @@ function showBottle(k) {
   /* Do not open (BZ): a bottle held for a birth year, an unrepeatable
      release, a gift. A third state, not a kind of sealed: sealed means not
      yet; a keeper means not for now. */
-  const sealedOnes = L.myBottles(k, S.bottles)
-    .filter(b => !L.isOpen(b) && L.isOwned(b));
-  if (sealedOnes.length) {
-    const kept = sealedOnes.filter(L.isKeeper).length;
-    const keepBtn = el('button', 'btn btn-sm ghost',
-      kept ? 'Allow opening' : 'Do not open');
-    keepBtn.onclick = () => {
-      const want = kept ? 'sealed' : 'keep';
-      sealedOnes.forEach(b => { b.status = want; });
-      save_(); showBottle(k); renderShelf(); renderPayline(); renderHome();
-      toast(want === 'keep'
-        ? 'Marked as one to keep \u2014 it will not be offered to pour'
-        : 'Back in the running');
-    };
-    _act.keepBtn = keepBtn;
+  /* ONE WAY IN, FOR EVERY BOTTLE. This drew only when a not-open
+     bottle already existed, so on a shelf where everything is open
+     there was no status control at all - and nothing anywhere took
+     a bottle from open back to sealed (BZ, 2026-10-12). */
+  if (L.myBottles(k, S.bottles).filter(L.isOwned).length) {
+    const stateBtn = el('button', 'btn btn-sm ghost', 'Open or sealed');
+    stateBtn.onclick = () => bottleStates(k);
+    _act.keepBtn = stateBtn;
   }
 
   const spareBtn = el('button', 'btn btn-sm ghost', L.addBottleSay(L.ownedCount(k, S.bottles)));
@@ -35612,6 +35648,56 @@ function showBottle(k) {
 function openBottle(b, k) { b.status = 'open'; showBottle(k); renderShelf(); }
 
 /* Opening a sealed bottle, from wherever you are. */
+/* EVERY BOTTLE OF ONE WHISKY, AND WHAT STATE EACH IS IN.
+ *
+ * One row per bottle, because a second bottle is a different bottle: the
+ * one being put away is not always the one that is open. The row says when
+ * it arrived and what it cost, so two bottles of the same whisky can be
+ * told apart.
+ */
+function bottleStates(k, after) {
+  const p = prod(k) || {};
+  const mine = L.myBottles(k, S.bottles).filter(L.isOwned);
+  if (!mine.length) { toast('You do not own one'); return; }
+  openModal(L.sentenceCase(p.name || k), m => {
+    m.appendChild(el('div', 'sub', mine.length === 1
+      ? 'Sealed keeps it for later. Do not open keeps it for good, and '
+        + 'nothing will offer to pour it.'
+      : mine.length + ' bottles, each set on its own.'));
+    mine.forEach(b => {
+      const row = el('div', 'sheet');
+      row.style.marginTop = '9px';
+      const says = [b.got ? 'added ' + b.got : null,
+        typeof b.paid === 'number' && b.paid > 0 ? '$' + b.paid : null]
+        .filter(Boolean).join(' · ');
+      row.appendChild(el('div', 'nm', L.stateSay(b)));
+      if (says) row.appendChild(el('div', 'sub', says));
+      const pick = el('div', 'chiprow');
+      L.BOTTLE_STATES.forEach(pair => {
+        const c = el('button', 'chip', pair[1]);
+        c.setAttribute('aria-pressed', b.status === pair[0] ? 'true' : 'false');
+        c.onclick = () => {
+          const r = L.setState(S.bottles, b.id, pair[0]);
+          if (!r.ok) { toast(r.why); return; }
+          save_(); closeModal();
+          showBottle(k); renderShelf(); renderShelfFilters(); renderHome();
+          renderPayline();
+          if (after) after();
+          toast(r.changed ? 'Now ' + pair[1].toLowerCase()
+            : 'Already ' + pair[1].toLowerCase());
+        };
+        pick.appendChild(c);
+      });
+      row.appendChild(pick);
+      m.appendChild(row);
+    });
+    const no = el('button', 'btn ghost wide', 'Close');
+    no.style.marginTop = '11px';
+    no.onclick = closeModal;
+    m.appendChild(no);
+  });
+}
+
 function openSealed(k, after) {
   const p = prod(k) || {};
   const ask = L.sealedPrompt(k, S.bottles, p);
@@ -58400,7 +58486,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.30</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.31</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

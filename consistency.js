@@ -1354,7 +1354,11 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Delete this flight',
     /* v2.8.28: the mark-bottles pills filter now, and taking what
        the filter left is its own button. */
-    'Select all shown'];
+    'Select all shown',
+    /* v2.8.31: flipping ONE bottle between open, sealed and do not
+       open. The old control drew only where a not-open bottle
+       already existed, so most of his shelf had none. */
+    'Open or sealed'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -3401,7 +3405,7 @@ check('no fixed svg id is emitted by a repeated drawing',
      `node consistency.js --sizes` \u2014 never edit a number here by hand, the
      same way a version is never edited by hand. */
   const BIG_TODAY = {
-    showBottle: 491,
+    showBottle: 483,
     likelyToLike: 455,
     productForm: 316,
     renderShelf: 309,
@@ -3432,7 +3436,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderBuddiesTab: 112,
     renderFlights: 111,
     shelfAxes: 107,
-    showBulkStatus: 107,
+    showBulkStatus: 106,
     renderDiag: 105,
     renderFromUrl: 103,
     receiptsDialog: 101,

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1026 |
-| tables | 244 |
-| carrying a stated purpose | 820 |
+| functions | 1029 |
+| tables | 245 |
+| carrying a stated purpose | 822 |
 
 ## Tables
 
@@ -34,6 +34,7 @@ QUESTION, not the name you were going to use.
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
+- **`L.BOTTLE_STATES`** — THE THREE STATES A BOTTLE CAN BE IN, and setting ONE bottle to one of
 - **`L.BULK_VIEWS`** — THROUGH THE SHELF'S OWN DOOR, which is L.shelfIndex
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CANDIDATE_FIELDS`** — BZ'S EIGHT in his order, less brand and name, which are the row's title.
@@ -1082,6 +1083,7 @@ QUESTION, not the name you were going to use.
 - **`L.sentEntriesAfterLoad`** — THE SAME, FOR A MAP, which keeps its prints by entry key.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
+- **`L.setState`** — _no comment above it_
 - **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES
 - **`L.shareRepairOps`** — WHAT TO DO ABOUT A HALF-LANDED SHARE
@@ -1158,7 +1160,9 @@ QUESTION, not the name you were going to use.
 - **`L.stampIdentities`** — ONLY FROM AN ENTRY THAT HAS ONE, so a bottle the library has never heard of
 - **`L.standingOf`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
 - **`L.stateCounts`** — _no comment above it_
+- **`L.stateNamed`** — ONE PLACE THAT LOOKS A STATE UP, because both the name of a state and
 - **`L.stateOf`** — _no comment above it_
+- **`L.stateSay`** — _no comment above it_
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
 - **`L.strandedBottles`** — NO ENTRY, AND NOTHING TO JOIN IT TO
 - **`L.stripMarkup`** — Anything a model returns can carry citation markup ([cite index=...]).

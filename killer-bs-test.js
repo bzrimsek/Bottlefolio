@@ -29958,6 +29958,49 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§469 one bottle at a time, its state can be flipped');
+{
+  /* BZ, 2026-10-12: "Just add a way on a bottle to flip the status". The
+     only control was Do not open, which drew ONLY where a not-open bottle
+     already existed - so on his shelf, 356 open and 0 keepers, most
+     whiskies had no status control at all, and nothing anywhere took a
+     bottle from open back to sealed. */
+  const bs = [{ id: 'B1', k: 'a', status: 'open' },
+    { id: 'B2', k: 'a', status: 'sealed' },
+    { id: 'B3', k: 'b', status: 'gone' }];
+
+  /* OPEN BACK TO SEALED, which nothing could do before. */
+  let r = L.setState(bs, 'B1', 'sealed');
+  eq('open goes back to sealed', r.ok && r.changed, true);
+  eq('and the bottle moved', bs[0].status, 'sealed');
+  /* AND ONLY THAT BOTTLE: the other one of the same whisky is untouched. */
+  eq('the second bottle is its own', bs[1].status, 'sealed');
+
+  r = L.setState(bs, 'B2', 'keep');
+  eq('sealed becomes a keeper', bs[1].status, 'keep');
+  eq('which is not sealed', L.isSealed(bs[1]), false);
+  eq('and is never pourable', L.pourable('a', bs), false);
+
+  /* SETTING WHAT IT ALREADY IS is fine and says nothing changed. */
+  r = L.setState(bs, 'B2', 'keep');
+  eq('no move is still ok', r.ok, true);
+  eq('and reports no change', r.changed, false);
+
+  /* THE TWO IT REFUSES. */
+  eq('a state that is not a state', L.setState(bs, 'B1', 'fizz').ok, false);
+  eq('a bottle that is not there', L.setState(bs, 'NOPE', 'open').ok, false);
+  /* A GONE BOTTLE STAYS GONE - coming back is an adjustment, not a flip. */
+  eq('a gone bottle is not flipped', L.setState(bs, 'B3', 'open').ok, false);
+  eq('and it did not move', bs[2].status, 'gone');
+
+  /* WHAT EACH ONE IS CALLED, so the sheet never spells one out. */
+  eq('open says Open', L.stateSay({ status: 'open' }), 'Open');
+  eq('keep says Do not open', L.stateSay({ status: 'keep' }), 'Do not open');
+  eq('gone says Gone', L.stateSay({ status: 'gone' }), 'Gone');
+  eq('a state that exists is found', L.stateNamed('keep')[1], 'Do not open');
+  eq('and one that does not is null', L.stateNamed('fizz'), null);
+}
+
 sec('§468 the mark-bottles pills filter, and say what they found');
 {
   /* BZ, 2026-10-12: "Pills/filters not working". They selected rather than
