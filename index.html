@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.43  Build 2026-10-12 11:53 PM ET
+     Version : v2.8.44  Build 2026-10-13 12:04 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
 // v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
 // v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
-// v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.43';
-const BUILD_TIME  = '2026-10-12 11:53 PM ET';
+const APP_VERSION = '2.8.44';
+const BUILD_TIME  = '2026-10-13 12:04 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -34532,7 +34532,7 @@ function renderShelf() {
        SHORT: five is a decision, thirty gets ignored. */
     if (wl.length) {
       const gift = el('div', 'sheet portrait');
-      gift.appendChild(el('div', 'portlabel', 'Ask for one of these'));
+      gift.appendChild(el('h3', null, 'Ask for one of these'));
       const picks = L.giftList(S.wish, S.catalog, S.bottles, allFlights(), 5);
       gift.appendChild(el('div', 'portstory', picks.length
         ? 'The five worth asking for, a flight-finishing bottle first. No prices.'
@@ -37156,7 +37156,7 @@ function renderHome() {
     w.appendChild(add);
 
     // The payoff, named. Nobody types in a collection on faith.
-    w.appendChild(el('div', 'portlabel', 'What turns up here'));
+    w.appendChild(el('h3', null, 'What turns up here'));
     [['A title your shelf has earned',
       'PX Lover, Peat Head, Proof Hunter \u2014 with the number that earned '
       + 'it, and the story it adds up to.'],
@@ -38060,7 +38060,7 @@ function inventoryScreen() {
          move to the next part of the shelf. */
       if (r.sub !== lastSub) {
         lastSub = r.sub;
-        const h = el('div', 'portlabel', L.typeLabel(r.sub));
+        const h = el('h3', null, L.typeLabel(r.sub));
         h.style.marginTop = '14px';
         list.appendChild(h);
       }
@@ -40621,7 +40621,7 @@ function showAxisCandidates(ax) {
     }
     /* AND WHICH ONE IS THE SHORT WALK, said once at the top rather than by
        reordering the axis: a ladder read out of sequence is not a ladder. */
-    m.appendChild(el('div', 'portlabel', gaps
+    m.appendChild(el('h3', null, gaps
       ? 'Pick what to shop for' : 'Every one covered'));
     const list = el('div', 'axislist');
     pool.forEach(x => list.appendChild(axisGapRow(ax, x)));
@@ -40673,7 +40673,7 @@ function renderBuyVsDrink(box) {
   wrap.style.marginTop = '0';
   wrap.style.paddingTop = '0';
   wrap.style.borderTop = '0';
-  wrap.appendChild(el('div', 'portlabel', 'What you buy, what you drink'));
+  wrap.appendChild(el('h3', null, 'What you buy, what you drink'));
   // The line is the upper quartile with a floor of two, not the middle.
   wrap.appendChild(el('div', 'sub',
     'The shelf records what you buy, the log what you pour. '
@@ -42451,7 +42451,7 @@ function buddiesWants(box, uids, names, plain) {
       'Bottles a buddy wants and does not own.'));
   }
   wants.forEach(x => {
-    if (uids.length > 1) wc.appendChild(el('div', 'portlabel', x.who));
+    if (uids.length > 1) wc.appendChild(el('h3', null, x.who));
     x.wish.forEach(w => {
       const r = el('button', 'item');
       r.style.cssText = 'width:100%;text-align:left';
@@ -42485,7 +42485,7 @@ function renderTonight(box) {
   wrap.style.marginTop = '0';
   wrap.style.paddingTop = '0';
   wrap.style.borderTop = '0';
-  wrap.appendChild(el('div', 'portlabel', 'You could pour tonight \u00b7 '
+  wrap.appendChild(el('h3', null, 'You could pour tonight \u00b7 '
     + list.length));
   /* The label stays put and the flights scroll under it, so the rest of the
      card - the flavour chips, Design one, Close - is still reachable on a
@@ -50294,7 +50294,7 @@ function pendingActions(offered, mine) {
 function pickFields(m, b) {
   const wrap = el('div');
   wrap.style.marginTop = '10px';
-  wrap.appendChild(el('div', 'portlabel', 'Store pick'));
+  wrap.appendChild(el('h3', null, 'Store pick'));
   const boxes = {};
   L.PICK_FIELDS.forEach(f => {
     const inp = el('input', 'field');
@@ -50353,7 +50353,7 @@ function askProvenance(b, after) {
     // And why, the same five, several allowed.
     const whyWrap = el('div');
     whyWrap.style.marginTop = '10px';
-    whyWrap.appendChild(el('div', 'portlabel', 'Why this one'));
+    whyWrap.appendChild(el('h3', null, 'Why this one'));
     const whyRow = el('div', 'chiprow');
     const whys = (b.why || []).slice();
     L.BUY_WHYS.forEach(w => {
@@ -54609,7 +54609,7 @@ function showLessons() {
     /* AND THE FLAVOR FLIGHTS, from the same place. */
     const flav = L.flavourOptions(S.catalog, S.bottles);
     if (flav.length) {
-      box.appendChild(el('div', 'portlabel', 'Or hold a flavor still'));
+      box.appendChild(el('h3', null, 'Or hold a flavor still'));
       const fr = el('div', 'actionrow');
       fr.style.marginTop = '6px';
       flav.slice(0, 6).forEach(o => {
@@ -55319,7 +55319,7 @@ function confirmRun(f, after, when) {
       (f.core || []).length + ' core pours logged. Anything else?'));
 
     if (ext.length) {
-      m.appendChild(el('div', 'portlabel', 'Extensions'));
+      m.appendChild(el('h3', null, 'Extensions'));
       ext.forEach(x => {
         const key = x.k || x.name;
         const r = el('button', 'item');
@@ -55340,7 +55340,7 @@ function confirmRun(f, after, when) {
     }
 
     if (buddies.length) {
-      m.appendChild(el('div', 'portlabel', 'Who was there'));
+      m.appendChild(el('h3', null, 'Who was there'));
       const row = el('div', 'actionrow');
       buddies.forEach(uid => {
         const nm = ((SHARED.shelves[uid] || {}).name) || 'a buddy';
@@ -55358,7 +55358,7 @@ function confirmRun(f, after, when) {
     /* A riff is a bottle somebody reached for that no list named, the
        strongest signal here. One field, because typing on a phone late in
        an evening rarely happens. */
-    m.appendChild(el('div', 'portlabel', 'Anything else you opened'));
+    m.appendChild(el('h3', null, 'Anything else you opened'));
     const riff = el('input', 'field');
     riff.placeholder = 'A bottle that was not in the flight';
     m.appendChild(riff);
@@ -58738,7 +58738,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.43</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.44</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
