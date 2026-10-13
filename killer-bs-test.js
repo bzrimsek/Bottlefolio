@@ -29958,6 +29958,55 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§471 the rest of the house, owned or not');
+{
+  /* BZ, 2026-10-12: "We should add a Same House section with owned or not
+     noted", "a clear connection based on canonical distilleries and brands",
+     "One list with an indicator", and on long ones: "When brand = house easy,
+     when brand is sub house use brand". */
+  const cat = {
+    'Ardbeg Ten': { name: 'Ardbeg Ten', dist: 'Ardbeg', sub: 'scotch', proof: 92 },
+    'Ardbeg An Oa': { name: 'Ardbeg An Oa', dist: 'Ardbeg', sub: 'scotch', proof: 92 },
+    'Ardbeg Uigeadail': { name: 'Ardbeg Uigeadail', dist: 'Ardbeg', sub: 'scotch', proof: 108 },
+    'Lagavulin 16': { name: 'Lagavulin 16', dist: 'Lagavulin', sub: 'scotch', proof: 86 }
+  };
+  const bottles = [{ id: 'b1', k: 'Ardbeg An Oa', status: 'open' }];
+
+  const r = L.sameHouse(cat['Ardbeg Ten'], cat, bottles, null);
+  eq('it lists the others of the house', r.rows.length, 2);
+  eq('and never the bottle itself',
+    r.rows.filter(x => x.name === 'Ardbeg Ten').length, 0);
+  eq('and nothing from another house',
+    r.rows.filter(x => /Lagavulin/.test(x.name)).length, 0);
+  /* ONE LIST WITH AN INDICATOR: his first, then the rest by name. */
+  eq('his own leads', r.rows[0].name, 'Ardbeg An Oa');
+  eq('and is marked', r.rows[0].owned, true);
+  eq('the rest are not', r.rows[1].owned, false);
+  /* NO BRANDS GIVEN MEANS NO NARROWING - the house shows whole. */
+  eq('nothing to narrow by', r.narrowed, null);
+
+  /* A HOUSE IS PUNCTUATION-BLIND, through L.houseSame's key. */
+  const c2 = {
+    "Angel's Envy Port": { name: "Angel's Envy Port", dist: "Angel's Envy" },
+    'Angels Envy Rye': { name: 'Angels Envy Rye', dist: 'Angels Envy' }
+  };
+  eq('one house written two ways',
+    L.sameHouse(c2["Angel's Envy Port"], c2, [], null).rows.length, 1);
+
+  eq('no distillery, no list', L.sameHouse({ name: 'x' }, cat, [], null).rows.length, 0);
+  eq('nothing in does not throw', L.sameHouse(null, null, null, null).rows.length, 0);
+
+  /* THE RULING. The registry files Weller five ways and gives none of them a
+     house, so the merge that groups spellings inside a house could never run
+     - 81 of 15,453 brands have a house at all, because `houses` is the world
+     distillery reference and a brand's maker is a US permit holder. */
+  eq('the ruling is written down', L.BRAND_SAME.length > 0, true);
+  eq('and names Weller first', L.BRAND_SAME[0][0], 'w l weller');
+  eq('with the two it absorbs',
+    L.BRAND_SAME[0].slice(1).sort().join(','),
+    'weller,william larue weller');
+}
+
 sec('§470 a bottle nobody has written about is not a blank page');
 {
   /* Measured on BZ's shelf 2026-10-12: 14 of 352 bottles have no distiller

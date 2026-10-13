@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.38  Build 2026-10-12 10:28 PM ET
+     Version : v2.8.39  Build 2026-10-12 10:52 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.39  2026-10-12  The rest of the house, owned or not.
 // v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
 // v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
 // v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.32  2026-10-12  A bottle's state is set on the bottle's own row.
 // v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
-// v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.38';
-const BUILD_TIME  = '2026-10-12 10:28 PM ET';
+const APP_VERSION = '2.8.39';
+const BUILD_TIME  = '2026-10-12 10:52 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -11362,6 +11362,15 @@ L.BRAND_MIN = 4;
    the engine stays pure. */
 const BRAND_IDX = new WeakMap();
 
+/* SPELLINGS BZ HAS RULED ARE ONE BRAND. The first is the name it keeps.
+   Normalised the way L.rawNorm leaves them, which is how the index is keyed:
+   lower case, punctuation gone. */
+L.BRAND_SAME = [
+  /* BZ, 2026-10-12: "Weller is WL Weller is William Larue Weller". Daniel
+     Weller and Old Weller are NOT in this ruling and stay their own. */
+  ['w l weller', 'weller', 'william larue weller']
+];
+
 L.brandIndex = function (brands) {
   if (!brands) return null;
   const had = BRAND_IDX.get(brands);
@@ -11407,6 +11416,27 @@ L.brandIndex = function (brands) {
     (byHouse[h] = byHouse[h] || []).push(b);
   });
   const canon = {};
+  /* AND THE ONES BZ HAS RULED ON, which no amount of joining will reach.
+     The merge below groups spellings INSIDE A HOUSE, and the registry gives
+     almost nothing a house: measured 2026-10-12, 81 of 15,453 brands have
+     one. The reason is that `houses` is the world distillery reference,
+     keyed a_smith_bowman and abbeyhill, while a brand's maker is a US TTB
+     permit holder, keyed Hearthstone Distilled and Whiskey Thief - two
+     namespaces that meet 81 times. Weller has neither, so nothing could
+     group its five spellings and W.L. Weller 12 stood apart from Weller
+     Antique.
+
+     So a ruling is written here, as a ruling, rather than inferred: every
+     name in a row is one brand and the FIRST is what it is called. It is
+     deliberately short - a list nobody can read is a list nobody can
+     check - and it is not a substitute for fixing the join, which is its
+     own piece of work. */
+  L.BRAND_SAME.forEach(row => {
+    const full = by[row[0]];
+    if (!full) return;
+    row.slice(1).forEach(short => { if (by[short]) canon[short] = full; });
+  });
+
   Object.keys(byHouse).forEach(h => {
     /* Longest first, so the fullest spelling is the one every shorter one
        settles on rather than each settling on the next one up. */
@@ -17889,6 +17919,63 @@ L.houseIndex = function (catalog, aliases) {
 
 /* THROUGH houseKey, the house's one key, so the registry and everything
    asking this agree on the possessive as well as the suffix. */
+/* EVERYTHING ELSE FROM THE SAME HOUSE, OWNED OR NOT (BZ, 2026-10-12: "We
+ * should add a Same House section with owned or not noted", "a clear
+ * connection based on canonical distilleries and brands", "One list with an
+ * indicator").
+ *
+ * The house is L.houseSame, which is the one door for "same distillery?" and
+ * is punctuation-blind, so Angel's Envy and Angels Envy are one house.
+ *
+ * WHEN THE BRAND IS THE HOUSE, SHOW THE HOUSE; WHEN THE BRAND SITS UNDER
+ * THE HOUSE, SHOW THE BRAND (BZ: "When brand = house easy, when brand is sub
+ * house use brand"). Angel's Envy is its own house and its bottlings belong
+ * together; Weller sits under Buffalo Trace, which holds 71 bottlings in the
+ * library, and a list that long says nothing about the bottle in front of
+ * you. The test is structural rather than a length: both names go through
+ * L.houseKey, and a brand that keys differently from the house is a brand
+ * under it.
+ */
+L.sameHouse = function (p, catalog, bottles, brands) {
+  const dist = (p || {}).dist;
+  const key = L.houseKey(dist);
+  if (!key) return { rows: [], narrowed: null };
+  const own = L.ownedCounts(bottles || []);
+  const seen = {};
+  let rows = Object.keys(catalog || {}).map(k => (catalog || {})[k])
+    .filter(x => {
+      if (!x || !x.name || x.name === (p || {}).name) return false;
+      if (seen[x.name]) return false;
+      if (L.houseKey(x.dist) !== key) return false;
+      seen[x.name] = 1;
+      return true;
+    });
+
+  let narrowed = null;
+  /* L.brandOf ANSWERS A RECORD, NOT A NAME: {key, n, at}. Read as a string it
+     gave "object object" through L.houseKey and never matched itself, so the
+     narrowing could not fire at all (2026-10-12). */
+  const mine = L.brandOf((p || {}).name, brands, dist);
+  const brandKey = b => (b && b.key) || null;
+  const my = brandKey(mine);
+  /* A BRAND THAT KEYS TO THE HOUSE IS THE HOUSE, and narrowing to it would
+     change nothing but the heading. */
+  if (my && my !== key) {
+    const tight = rows.filter(x => brandKey(L.brandOf(x.name, brands, x.dist))
+      === my);
+    /* A NARROWING THAT EMPTIES THE LIST IS NOT A NARROWING. */
+    if (tight.length) { rows = tight; narrowed = (mine && mine.n) || my; }
+  }
+
+  return {
+    narrowed: narrowed,
+    rows: rows.map(x => ({ k: x.name, name: x.name, sub: x.sub || null,
+      proof: x.proof == null ? null : x.proof, owned: !!own[x.name] }))
+      .sort((a, b) => (b.owned ? 1 : 0) - (a.owned ? 1 : 0)
+        || String(a.name).localeCompare(String(b.name)))
+  };
+};
+
 L.houseSame = function (a, b) {
   const l = L.houseKey(a);
   return !!l && l === L.houseKey(b);
@@ -35584,7 +35671,7 @@ function showBottle(k) {
   prospectCard(body, p, _act.wishBtn);
   const about = aboutCard(notes);
   if (about) body.appendChild(about);
-  flightsUsingCard(body, k);
+  howItFits(body, p, k);
 
   bottleTaste(body, p, k, notes, _act.noteFill);
 
@@ -35680,6 +35767,50 @@ function bottleTaste(body, p, k, notes, noteFill) {
      worked out about it. Rebuilding this section put the app's answer first
      and undid a ruling he had already given once. */
   tastesLikeCard(body, p);
+}
+
+/* HOW IT FITS: what else the house makes, and where it is poured. Two cards
+   and one job, so showBottle asks once. */
+function howItFits(body, p, k) {
+  sameHouseCard(body, p);
+  flightsUsingCard(body, k);
+}
+
+/* THE REST OF THE HOUSE, OWNED OR NOT (BZ, 2026-10-12). Part of how it
+   fits: what else this maker puts out, and how much of it he has. One list
+   with an indicator, his - owned first, then the rest by name - and it
+   SCROLLS rather than being capped, because a cap hides the very thing the
+   section is for. Tapping one opens it. */
+function sameHouseCard(body, p) {
+  const r = L.sameHouse(p, S.catalog, S.bottles, refBrands());
+  if (!r.rows.length) return;
+  const card = el('div', 'sheet');
+  card.appendChild(el('h3', null, r.narrowed
+    ? 'More ' + L.sentenceCase(r.narrowed) : 'The rest of the house'));
+  const had = r.rows.filter(x => x.owned).length;
+  card.appendChild(el('div', 'sub', r.rows.length + ' other'
+    + (r.rows.length === 1 ? '' : 's')
+    + (r.narrowed ? ' under this brand' : ' from ' + (p.dist || 'this house'))
+    + ' · ' + (had ? had + ' on your shelf' : 'none on your shelf')));
+  const box = el('div', 'scrollbox');
+  box.style.maxHeight = '38vh';
+  const list = el('div', 'recent');
+  r.rows.forEach(x => {
+    const row = el('button', 'item');
+    row.style.cssText = 'width:100%;text-align:left';
+    const left = el('div');
+    left.appendChild(el('div', 'nm oneline',
+      (x.owned ? '✓  ' : '') + x.name));
+    left.appendChild(el('div', 'sub', [x.owned ? 'on your shelf' : 'not yours',
+      x.sub || null, x.proof == null ? null : x.proof + ' proof']
+      .filter(Boolean).join(' · ')));
+    row.appendChild(left);
+    row.onclick = () => showBottle(x.k);
+    list.appendChild(row);
+  });
+  box.appendChild(list);
+  card.appendChild(box);
+  body.appendChild(card);
 }
 
 /* The flights this bottle is poured in - part of how it fits, not of how it
@@ -58521,7 +58652,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.38</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.39</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

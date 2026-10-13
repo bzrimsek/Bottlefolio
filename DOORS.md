@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1029 |
-| tables | 245 |
-| carrying a stated purpose | 823 |
+| functions | 1030 |
+| tables | 246 |
+| carrying a stated purpose | 824 |
 
 ## Tables
 
@@ -35,6 +35,7 @@ QUESTION, not the name you were going to use.
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
 - **`L.BOTTLE_STATES`** — THE THREE STATES A BOTTLE CAN BE IN, and setting ONE bottle to one of
+- **`L.BRAND_SAME`** — SPELLINGS BZ HAS RULED ARE ONE BRAND
 - **`L.BULK_VIEWS`** — THROUGH THE SHELF'S OWN DOOR, which is L.shelfIndex
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CANDIDATE_FIELDS`** — BZ'S EIGHT in his order, less brand and name, which are the row's title.
@@ -599,7 +600,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseOpps`** — THE ASK CLAIMS ONLY WHAT CANNOT BE WRONG
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases
-- **`L.houseSame`** — THROUGH houseKey, the house's one key, so the registry and everything
+- **`L.houseSame`** — _no comment above it_
 - **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
 - **`L.houseSplit`** — _no comment above it_
 - **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
@@ -1063,6 +1064,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameBottling`** — _no comment above it_
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
+- **`L.sameHouse`** — EVERYTHING ELSE FROM THE SAME HOUSE, OWNED OR NOT (BZ, 2026-10-12
 - **`L.sameName`** — _no comment above it_
 - **`L.sameStrength`** — ARE THESE ONE STRENGTH? Rounding differs between a label, a listing and a
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
