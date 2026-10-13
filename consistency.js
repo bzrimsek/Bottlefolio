@@ -3405,8 +3405,8 @@ check('no fixed svg id is emitted by a repeated drawing',
      `node consistency.js --sizes` \u2014 never edit a number here by hand, the
      same way a version is never edited by hand. */
   const BIG_TODAY = {
-    showBottle: 483,
     likelyToLike: 455,
+    showBottle: 424,
     productForm: 316,
     renderShelf: 309,
     openLibraryCleanUp: 286,

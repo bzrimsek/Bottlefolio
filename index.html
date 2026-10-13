@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.32  Build 2026-10-12 09:40 PM ET
+     Version : v2.8.35  Build 2026-10-12 10:07 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,9 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
+// v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
+// v2.8.33  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.32  2026-10-12  A bottle's state is set on the bottle's own row.
 // v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
@@ -18,9 +21,6 @@ CHANGELOG
 // v2.8.28  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // v2.8.27  2026-10-11  A flight of your own can be deleted, from under More.
 // v2.8.26  2026-10-11  A flight of your own can be deleted, from under More.
-// v2.8.25  2026-10-10  Vosges is oak.
-// v2.8.24  2026-10-10  The buttons that show the log now show it, and the map asks more than one server.
-// v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.32';
-const BUILD_TIME  = '2026-10-12 09:40 PM ET';
+const APP_VERSION = '2.8.35';
+const BUILD_TIME  = '2026-10-12 10:07 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -35555,54 +35555,77 @@ function showBottle(k) {
     }
   }
 
-  // The distiller's notes first: color, nose, palate, finish.
-  // Flight-card notes stay in the tasting: they are prompts written to be
-  // read beside other pours, not a description of the whisky alone.
+  /* HOW IT FITS, THEN TASTE (BZ, 2026-10-12). Three cards that say
+     where this bottle sits - what is known about it, whether it is
+     worth chasing, and the flights it is poured in - used to sit
+     BELOW the tasting notes, so the page went data, bottles, fit,
+     taste, fit again. They come up here with the rest of the fit. */
+  const notes = L.notesFor(p, allFlights(), (S.edits[k] || {}).userNote);
+  prospectCard(body, p, _act.wishBtn);
+  const about = aboutCard(notes);
+  if (about) body.appendChild(about);
+  flightsUsingCard(body, k);
+
+  bottleTaste(body, p, k, notes, _act.noteFill);
+
+  goTo('detail');
+}
+
+/* ONE SECTION ABOUT TASTE (BZ, 2026-10-12: "One section about taste").
+ *
+ * It was four cards under three headings, two of them both called Tasting
+ * notes, with cards about where the bottle FITS sitting in between and
+ * after. Everything about how it tastes now sits together, in the order he
+ * set: what to expect, what the distiller says, then your own - and only
+ * the last of the three can be edited.
+ *
+ * THE FIRST TWO ARE ONE SLOT, NOT TWO. The distiller's note where there is
+ * one, the canon's likely notes where there is not: measured 2026-10-12,
+ * 14 of his 352 shelf bottles lack a distiller note, so the fallback is a
+ * gap-filler and showing both would be two answers to one question.
+ */
+function bottleTaste(body, p, k, notes, noteFill) {
+  /* Flight-card notes stay in the tasting: they are prompts written to be
+     read beside other pours, not a description of the whisky alone. */
   const tn = p.tnFrom ? [] : L.tastingNotes(p);
   if (tn.length) body.appendChild(tastingCard(p, tn));
+  /* WHAT IS EXPECTED HOLDS WHETHER OR NOT A DISTILLER WROTE ANYTHING: it is
+     the origin and the cask - as a bourbon goes, vanilla and caramel; the
+     sherry is the finishing cask - not a substitute for a note. Making it a
+     fallback took it off 96%% of his shelf and screens.js caught it, which
+     is what the v2.5.73 guard is there for. The fallback he asked for is
+     LIKELY TASTING NOTES where the distiller wrote none, and that does not
+     exist yet. */
   const expect = expectedCard(p);
   if (expect) body.appendChild(expect);
 
-  // Add or correct the four columns yourself; what you write is marked as
-  // yours. When the notes went to a flight, say where they went.
-  if (p.tnFrom && !tn.length) {
-    const nb = el('div', 'sheet');
-    nb.appendChild(el('h3', null, 'Tasting notes'));
-    nb.appendChild(el('div', 'sub',
-      'The notes for this one belong to '
-      + L.sentenceCase(p.tnFrom) + '. Write your own here.'));
-    body.appendChild(nb);
+  tastesLikeCard(body, p);
+
+  /* THE DISTILLER'S FOUR COLUMNS, when there are none to show. ONE card
+     with that heading and never two: two both titled Tasting notes was half
+     of what made this page confusing, and the offer to fetch them has to be
+     somewhere a person looks for them. */
+  if (!tn.length) {
+    const ask = el('div', 'sheet');
+    ask.appendChild(el('h3', null, 'Tasting notes'));
+    ask.appendChild(el('div', 'sub', p.tnFrom
+      ? 'The notes for this one belong to ' + L.sentenceCase(p.tnFrom) + '.'
+      : 'Nothing recorded. Add color, nose, palate and finish as you pour '
+        + 'it.'));
+    const add = el('button', 'chip', 'Add tasting notes');
+    add.onclick = () => tastingNoteForm(p);
+    ask.appendChild(add);
+    if (noteFill) ask.appendChild(noteFill);
+    body.appendChild(ask);
   }
 
-  /* One card whatever the case, with the edit button on it: two cards both
-     titled Tasting notes could contradict each other. */
-  const tnEdit = el('button', 'chip', tn.length ? 'Edit tasting notes' : 'Add tasting notes');
-  tnEdit.style.marginTop = '9px';
-  tnEdit.onclick = () => tastingNoteForm(p);
-  if (tn.length || (p.tnFrom && !tn.length)) {
-    body.lastChild.appendChild(tnEdit);
-    if (_act.noteFill) body.lastChild.appendChild(_act.noteFill);
-  } else {
-    const nb0 = el('div', 'sheet');
-    nb0.appendChild(el('h3', null, 'Tasting notes'));
-    nb0.appendChild(el('div', 'sub',
-      'Nothing recorded. Add color, nose, palate and finish as you pour it.'));
-    nb0.appendChild(tnEdit);
-    // Ask for them, rather than typing them, when there is a service to ask.
-    if (_act.noteFill) nb0.appendChild(_act.noteFill);
-    body.appendChild(nb0);
-  }
-
-  /* TWO CARDS, NOT ONE CALLED NOTES (BZ, 2026-09-27). L.notesFor answers the
-     cask, the region, the price and what a flight card said, AND his own note,
-     in one list - so a card titled Notes sat under a card titled Tasting notes
-     and held mostly facts. His writing gets a card named his; the rest is what
-     is known about the bottle, and is not notes. */
-  const notes = L.notesFor(p, allFlights(), (S.edits[k] || {}).userNote);
+  /* HIS OWN, AND THE ONLY THING ON THE PAGE HE EDITS. */
   const nb = yourNotesCard(notes);
   const ta = document.createElement('textarea');
-  ta.className = 'field'; ta.rows = 3;
-  ta.placeholder = 'Your own note \u2014 how it drank, who liked it, what it sat next to';
+  ta.className = 'field';
+  ta.rows = 3;
+  ta.placeholder = 'Your own note — how it drank, who liked it, what it '
+    + 'sat next to';
   ta.value = (S.edits[k] || {}).userNote || '';
   ta.style.marginTop = '9px';
   nb.appendChild(ta);
@@ -35611,33 +35634,39 @@ function showBottle(k) {
   saveNote.onclick = () => {
     const v = ta.value.trim();
     S.edits[k] = Object.assign({}, S.edits[k], { userNote: v || null });
-    save_(); rebuildCatalog(); showBottle(k); toast(v ? 'Note saved' : 'Note cleared');
+    save_(); rebuildCatalog(); showBottle(k);
+    toast(v ? 'Note saved' : 'Note cleared');
   };
   nb.appendChild(saveNote);
-  body.appendChild(nb);
-  /* YOURS BEFORE OURS (BZ, 2026-09-27: "Im not sure my notes should be last
-     on the page"). What a person wrote about their own bottle belongs with the
-     notes, not underneath everything the app has to say about it. */
-  prospectCard(body, p, _act.wishBtn); tastesLikeCard(body, p);
-  const about = aboutCard(notes);
-  if (about) body.appendChild(about);
-
-  const used = L.useCount(k, S.flights, S.history);
-  if (used) {
-    const u = el('div', 'sheet');
-    u.appendChild(el('h3', null, 'Used in flights'));
-    const fl = S.flights.filter(f => f.core.some(x => x.k === k) || f.ext.some(x => x.k === k));
-    fl.forEach(f => {
-      const isCore = f.core.some(x => x.k === k);
-      const b2 = el('button', 'chip',
-        L.sentenceCase(f.title) + (isCore ? '' : ' (bench)'));
-      b2.style.marginRight = '5px';
-      b2.onclick = () => showFlight(f);
-      u.appendChild(b2);
-    });
-    body.appendChild(u);
+  /* The four columns the distiller fills, written or corrected by hand, go
+     on the same card: two cards both titled for notes could contradict
+     each other. */
+  if (tn.length) {
+    const tnEdit = el('button', 'chip', 'Edit tasting notes');
+    tnEdit.style.marginTop = '7px';
+    tnEdit.style.marginLeft = '5px';
+    tnEdit.onclick = () => tastingNoteForm(p);
+    nb.appendChild(tnEdit);
   }
-  goTo('detail');
+  body.appendChild(nb);
+}
+
+/* The flights this bottle is poured in - part of how it fits, not of how it
+   tastes. */
+function flightsUsingCard(body, k) {
+  if (!L.useCount(k, S.flights, S.history)) return;
+  const u = el('div', 'sheet');
+  u.appendChild(el('h3', null, 'Used in flights'));
+  S.flights.filter(f => f.core.some(x => x.k === k)
+    || f.ext.some(x => x.k === k)).forEach(f => {
+    const isCore = f.core.some(x => x.k === k);
+    const b2 = el('button', 'chip',
+      L.sentenceCase(f.title) + (isCore ? '' : ' (bench)'));
+    b2.style.marginRight = '5px';
+    b2.onclick = () => showFlight(f);
+    u.appendChild(b2);
+  });
+  body.appendChild(u);
 }
 
 function openBottle(b, k) { b.status = 'open'; showBottle(k); renderShelf(); }
@@ -58446,7 +58475,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.32</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.35</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
