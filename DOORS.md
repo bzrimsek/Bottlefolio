@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1030 |
+| functions | 1031 |
 | tables | 246 |
-| carrying a stated purpose | 824 |
+| carrying a stated purpose | 825 |
 
 ## Tables
 
@@ -346,6 +346,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottleScore`** — A BOTTLE AGAINST A SHELF'S FINGERPRINT, nought to one, with the reason it
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
 - **`L.bottleStory`** — The whole story of one bottle, in the order it happened
+- **`L.brandHouses`** — WHICH HOUSE A BRAND BELONGS TO, LEARNED FROM THE CATALOGUE.
 - **`L.brandIndex`** — _no comment above it_
 - **`L.brandOf`** — _no comment above it_
 - **`L.bucketStock`** — `pop` is a denominator and counts his shelf in

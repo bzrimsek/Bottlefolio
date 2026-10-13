@@ -29958,6 +29958,42 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§472 a brand learns its house from the catalogue');
+{
+  /* BZ, 2026-10-12: "Leverage canon". The registry cannot say which house a
+     brand sits under - 12 of its 1,481 makers appear among the 1,080 houses,
+     because a maker is a US TTB permit holder and `houses` is the world
+     distillery reference - and matching them on words put Lake Placid under
+     The Lakes Distillery. The catalogue carries both halves on every entry. */
+  const cat = {
+    a: { name: 'Weller Antique 107', dist: 'Buffalo Trace' },
+    b: { name: 'Weller Special Reserve', dist: 'Buffalo Trace' },
+    c: { name: 'Lagavulin 16', dist: 'Lagavulin' },
+    /* SOURCED: one brand, two houses, so it is left without one. */
+    d: { name: 'Smoke Wagon Small Batch', dist: 'Nevada H&C' },
+    e: { name: 'Smoke Wagon Uncut', dist: 'MGP' }
+  };
+  /* A REGISTRY IS WHAT TURNS A NAME INTO A BRAND, so there has to be one:
+     with none, L.brandOf answers nothing and nothing can be learned. */
+  const reg = { weller: { name: 'Weller' }, lagavulin: { name: 'Lagavulin' },
+    smoke_wagon: { name: 'Smoke Wagon' } };
+  const learned = L.brandHouses(cat, reg);
+  eq('a brand under one house is pinned to it',
+    learned[Object.keys(learned).filter(k => /weller/.test(k))[0]],
+    'buffalo trace');
+  eq('and another house is its own',
+    learned[Object.keys(learned).filter(k => /lagavulin/.test(k))[0]],
+    'lagavulin');
+  /* THE ONE IT REFUSES, which is the whole safety of it. */
+  eq('a brand seen under two houses gets none',
+    Object.keys(learned).filter(k => /smoke/.test(k)).length, 0);
+
+  eq('an entry with no distillery is skipped',
+    Object.keys(L.brandHouses({ x: { name: 'Nameless' } }, reg)).length, 0);
+  eq('nothing in does not throw',
+    Object.keys(L.brandHouses(null, null)).length, 0);
+}
+
 sec('§471 the rest of the house, owned or not');
 {
   /* BZ, 2026-10-12: "We should add a Same House section with owned or not
