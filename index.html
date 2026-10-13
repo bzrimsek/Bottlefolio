@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.40  Build 2026-10-12 11:11 PM ET
+     Version : v2.8.41  Build 2026-10-12 11:21 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
 // v2.8.39  2026-10-12  The rest of the house, owned or not.
 // v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.33  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.32  2026-10-12  A bottle's state is set on the bottle's own row.
-// v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -94,7 +94,7 @@ nav{flex:0 0 auto}
 body{
   background:var(--paper); color:var(--ink);
   font-family:'IBM Plex Sans',system-ui,sans-serif;
-  font-size:15px; line-height:1.45;
+  font-size:16px; line-height:1.45;
   font-variant-numeric:tabular-nums;
   -webkit-text-size-adjust:100%;
   /* MEASURED, not 100dvh. Closing and reopening fixed it because that is a
@@ -136,7 +136,7 @@ nav :focus-visible,.felted :focus-visible,.verdict :focus-visible,
   color:var(--ink)}
 .candidate .nm{font-weight:600}
 .candidate .sub{font-size:12px;color:var(--mute)}
-.candidate.quiet{font-size:13px;color:var(--mute);background:transparent}
+.candidate.quiet{font-size:14px;color:var(--mute);background:transparent}
 
 /* ---------- structure ---------- */
 .screen{display:none}
@@ -232,7 +232,7 @@ body.typing nav{display:none}
    from, What contradicts itself, all clipped between 40 and 62px. */
 @media (max-width:560px){
   .hdr .hdrtitle > *{white-space:normal;overflow:visible;
-    text-overflow:clip;line-height:1.12;font-size:17px;
+    text-overflow:clip;line-height:1.12;font-size:16px;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow-wrap:anywhere}
 }
@@ -313,7 +313,7 @@ body.typing nav{display:none}
    moves with .backbtn, one place to its left, so the pair stay together. */
 .hdr .shopback{order:8;margin-left:6px}
 .hdr-acts{display:flex;align-items:center;gap:7px;margin-left:auto}
-.btn-sm{padding:8px 13px;font-size:13px}
+.btn-sm{padding:8px 13px;font-size:14px}
 .btn-gold{background:var(--gold);border-color:var(--gold);color:#1A1613;font-weight:600}
 /* Detail screens put their actions on one row under the back button, so the
    thing you came to do is reachable without scrolling past the record. */
@@ -324,9 +324,9 @@ body.typing nav{display:none}
 /* Display and body sat close enough that a heading did not lead the eye.
    Widened, and the tracking opened, so Cinzel reads as a masthead rather
    than as slightly larger text. */
-.hdr h1{font-size:26px;color:var(--ink-deep);letter-spacing:.015em}
+.hdr h1{font-size:24px;color:var(--ink-deep);letter-spacing:.015em}
 /* Card headings likewise: a card's title should announce the card. */
-.sheet > h3{font-size:15.5px;letter-spacing:.025em;color:var(--ink-deep)}
+.sheet > h3{font-size:16px;letter-spacing:.025em;color:var(--ink-deep)}
 /* THE MASTHEAD IS A THING, not a row of text on the page. */
 .brand{display:flex;align-items:center;gap:11px;margin-bottom:14px;
   position:relative;background:var(--card);border:1px solid var(--line);
@@ -336,7 +336,7 @@ body.typing nav{display:none}
     var(--t-scotch));z-index:0}
 .brand > *{position:relative;z-index:1}
 .venn{width:100%;height:auto;max-width:340px;display:block;margin:0 auto}
-.venn .vcount{font-family:'Cinzel',Georgia,serif;font-size:15px;font-weight:700;
+.venn .vcount{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:700;
   fill:var(--ink-deep)}
 .venn .vname{font-size:12px;fill:var(--mute);letter-spacing:.04em;
   text-transform:uppercase}
@@ -372,7 +372,7 @@ body.typing nav{display:none}
 /* Quiet until wanted: a finding is a suggestion, and the way to refuse one
    should not compete with the suggestion itself. */
 .dismiss{flex:none;width:26px;height:26px;padding:0;margin-left:6px;
-  border:none;background:transparent;color:var(--line);font-size:17px;
+  border:none;background:transparent;color:var(--line);font-size:16px;
   line-height:1;cursor:pointer;align-self:flex-start;position:relative}
 /* It LOOKS 26px, because a heavier X would compete with the row it sits on,
    and it is 44 tall to the thumb. Grown mostly downward and to the right:
@@ -415,7 +415,7 @@ body.typing nav{display:none}
 
 /* WHEN A WRITE-UP WAS WRITTEN, after the writing. Quieter than the prose it
    follows: a fact about the paragraph rather than part of it. */
-.wrote{opacity:.62;font-size:11.5px;white-space:nowrap}
+.wrote{opacity:.62;font-size:12px;white-space:nowrap}
 
 /* The verdict on an offer or a bar list, said at the size of an answer.
    It was drawn as `pf` — the small right-aligned tag a shelf row uses for a
@@ -427,7 +427,7 @@ body.typing nav{display:none}
   padding-top:1px}
 /* The shop's sentence leading an offer row: the same voice, on its own line
    above the name, and allowed to wrap. */
-.awayverdict.awaylead{white-space:normal;margin:0 0 3px;font-size:13.5px}
+.awayverdict.awaylead{white-space:normal;margin:0 0 3px;font-size:14px}
 /* A form's finishing button, held at the foot of the sheet while the form
    scrolls above it. The shadow is the sheet's own colour, so rows passing
    under it fade rather than being cut. */
@@ -570,7 +570,7 @@ body.typing nav{display:none}
 .layer{margin-top:10px}
 .layerwords{margin-top:6px}
 .layerword{display:flex;justify-content:space-between;gap:12px;
-  padding:3px 0;border-top:1px solid var(--line);font-size:13px}
+  padding:3px 0;border-top:1px solid var(--line);font-size:14px}
 .layern{color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
 
 /* A WINDOW THAT IS REAL BUT NOT YET READABLE. Dimmed rather than hidden, so
@@ -587,7 +587,7 @@ body.typing nav{display:none}
 .tastemeter.done .tastefill{background:var(--good,var(--gold))}
 
 .toastact{background:none;border:none;color:var(--gold);font:inherit;
-  font-size:12.5px;text-decoration:underline;margin-left:12px;cursor:pointer;
+  font-size:12px;text-decoration:underline;margin-left:12px;cursor:pointer;
   padding:0;
   /* The pill is pointer-events:none so it never swallows a tap meant for
      the screen underneath. That also made every Undo in the app dead: the
@@ -608,7 +608,7 @@ body.typing nav{display:none}
 .instbtn{position:relative;z-index:0;
   width:44px;height:44px;flex:none;border-radius:9px;
   border:0;background:none;color:var(--ink-deep);
-  font-size:17px;line-height:1;padding:0;
+  font-size:16px;line-height:1;padding:0;
   display:flex;align-items:center;justify-content:center}
 /* The question card, in the nav's own stroke family. */
 .instbtn .qi{width:19px;height:19px;fill:none;stroke:currentColor;
@@ -707,7 +707,7 @@ label.withslots .instbtn.slot2{right:44px}
    and .chiprow's own 5px top margin is not room, it is the gap between two
    rows of chips. */
 #pourWhere{margin:18px 0 14px}
-.brand .wm{font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:17px;
+.brand .wm{font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:16px;
   line-height:1.1;color:var(--gold)}
 .brand .wm span{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;
   font-size:12px;color:var(--mute);letter-spacing:.04em;margin-top:3px}
@@ -762,7 +762,7 @@ label.withslots .instbtn.slot2{right:44px}
 }
 .hdr-sub{font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:12px;
   color:var(--mute);letter-spacing:.04em;margin-top:2px}
-.count{color:var(--mute);font-size:13px}
+.count{color:var(--mute);font-size:14px}
 
 /* ---------- nav ---------- */
 nav{
@@ -861,13 +861,13 @@ nav button{position:relative}
 /* BZ: and a larger font. This is the text that stops somebody pressing
    Restore by mistake, so it is not fine print — it reads at the size of
    the app's own prose, in the ink the prose uses rather than the gray. */
-.datagrid .datawhy{font-size:14.5px;line-height:1.45;color:var(--ink)}
+.datagrid .datawhy{font-size:14px;line-height:1.45;color:var(--ink)}
 @media (max-width:560px){
   /* A phone has no room for two columns of this, so it stacks — the
      explanation still belongs to the button above it. */
   .datagrid{grid-template-columns:1fr;gap:3px 0}
   .datagrid > .btn{margin-top:9px}
-  .datagrid .datawhy{font-size:13.5px;margin-bottom:2px}
+  .datagrid .datawhy{font-size:14px;margin-bottom:2px}
 }
 
 .instbtn{position:relative}
@@ -930,7 +930,7 @@ nav button[aria-current="page"]{
 .chip{
   padding:9px 13px;min-height:40px;border:1px solid var(--line);
   border-radius:999px;
-  background:var(--card);font-size:13px;color:var(--mute);
+  background:var(--card);font-size:14px;color:var(--mute);
 }
 /* A PILL IS A LABEL, A CHIP IS A CONTROL (BZ, 2026-09-20). They looked the
    same and so one was built from the other: the titles a shelf has earned
@@ -1013,7 +1013,7 @@ nav button[aria-current="page"]{
    tick that is only as big as a tick is a tick somebody misses. The words
    live in the title and the aria-label, so nothing is lost to a screen
    reader or to a hover. */
-.iconchip{min-width:40px;height:40px;padding:0;font-size:17px;
+.iconchip{min-width:40px;height:40px;padding:0;font-size:16px;
   line-height:1;display:inline-flex;align-items:center;
   justify-content:center}
 .rowacts{display:flex;gap:6px;flex:none;align-items:center;flex-wrap:wrap}
@@ -1067,7 +1067,7 @@ nav button[aria-current="page"]{
   display:flex;flex-direction:column;align-items:center;
   justify-content:space-between;padding:10px 0 14px;
   border-right:1px solid var(--line);background:var(--card)}
-.fillrail .cap{font-size:17px;opacity:.55;line-height:1}
+.fillrail .cap{font-size:16px;opacity:.55;line-height:1}
 /* THE HANDLE SITS ON THE TRACK. BZ: dot seems off center. It was - the
    input is 30px wide inside a 58px rail, and `direction:rtl` on a
    vertical range moves the thumb off the track's centre line rather than
@@ -1195,7 +1195,7 @@ nav button[aria-current="page"]{
 .rc-n{font-size:20px;line-height:1;color:var(--ink);font-weight:600}
 .rc-l{margin-top:4px;font-size:12px;color:var(--mute)}
 /* The name leads the tile, so it carries no top margin of its own. */
-.roomcell .rc-open > .rc-l:first-child{margin-top:0;font-size:13px;
+.roomcell .rc-open > .rc-l:first-child{margin-top:0;font-size:14px;
   color:var(--ink)}
 /* A BUDDY TILE is a region tile with two more lines: what only they have,
    and the two directions as dots. The dots are small on purpose - they are
@@ -1208,7 +1208,7 @@ nav button[aria-current="page"]{
    column of four lines reads as four. */
 .rc-two{display:flex;gap:10px;justify-content:center;margin-top:5px}
 .rc-two > div{min-width:0}
-.rc-s{margin-top:3px;font-size:11px;color:var(--mute)}
+.rc-s{margin-top:3px;font-size:12px;color:var(--mute)}
 .rc-d{margin-top:8px;display:flex;gap:8px;justify-content:center;
   align-items:center;flex-wrap:wrap}
 /* SIZED AGAINST THE SWITCH BESIDE IT. BZ said it twice, and it was right
@@ -1376,7 +1376,7 @@ nav button[aria-current="page"]{
 /* THE ONE THE APP WOULD BUY. Gold, because that is what this app uses for
    the thing it is pointing at, and small, because the row's own name is
    still the thing being read. */
-.pickmark{margin-left:7px;padding:1px 6px;border-radius:9px;font-size:10px;
+.pickmark{margin-left:7px;padding:1px 6px;border-radius:9px;font-size:12px;
   font-weight:600;letter-spacing:.04em;text-transform:uppercase;
   background:var(--gold);color:var(--paper);vertical-align:middle}
 .axislist{max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -1419,10 +1419,10 @@ nav button[aria-current="page"]{
 .item .money.msrp{opacity:.72}
 .item .have{color:var(--mute);font-size:12px}
 .item .have.allsealed{color:var(--rust)}
-.item .nm{font-size:13.5px;font-weight:500;line-height:1.3}
+.item .nm{font-size:14px;font-weight:500;line-height:1.3}
 .item .sub{font-size:12px;color:var(--mute);line-height:1.3}
 .item .ty{font-size:12px;color:var(--mute);text-align:left}
-.item .pf{font-size:13.5px;color:var(--ink-deep);font-weight:600;text-align:right}
+.item .pf{font-size:14px;color:var(--ink-deep);font-weight:600;text-align:right}
 /* Narrow phones drop the type column into the subtitle line. UP TO 560px,
    not 430: a Pixel is 449 CSS pixels wide, where the seven fixed columns and
    their gaps left the name about fifteen pixels and every letter wrapped
@@ -1615,7 +1615,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
    than being squeezed to nothing beside them. */
 .sortpick{flex:1 0 auto;display:flex;align-items:center;gap:6px;
   font-size:12px;color:var(--mute);white-space:nowrap}
-.sortpick select{padding:6px 26px 6px 9px;font-size:13px}
+.sortpick select{padding:6px 26px 6px 9px;font-size:14px}
 .facet{margin-top:8px}
 .facet .fh{font-size:12px;letter-spacing:.05em;color:var(--gold);
   text-transform:uppercase;margin-bottom:4px}
@@ -1641,7 +1641,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 /* The tail of the recommendations, closed by default. */
 /* Setup you touch once. Closed by default so Settings shows what changes. */
 .advanced{margin-top:4px}
-.advanced summary{font-size:12.5px;color:var(--mute);cursor:pointer;
+.advanced summary{font-size:12px;color:var(--mute);cursor:pointer;
   letter-spacing:.03em;list-style:none;padding:11px 2px}
 .advanced summary::-webkit-details-marker{display:none}
 .advanced summary::before{content:'\25b8 ';color:var(--gold)}
@@ -1699,14 +1699,14 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .shopform{gap:6px}
 .shopform .two{gap:7px}
 .shopform label{font-size:12px}
-.shopform .field,.shopform select.field{padding:6px 9px;font-size:13px}
+.shopform .field,.shopform select.field{padding:6px 9px;font-size:14px}
 .shopform label .field,.shopform label select{margin-top:1px}
 .picklist{background:var(--card);border:1px solid var(--line);border-radius:9px;
   margin-top:7px;box-shadow:0 6px 18px rgba(26,22,19,.14);
   max-height:52vh;overflow-y:auto}
 .pickrow{display:grid;grid-template-columns:20px 1fr auto;gap:8px;width:100%;
   align-items:center;padding:9px 12px;background:none;border:0;
-  border-top:1px solid var(--line);text-align:left;font-size:13.5px}
+  border-top:1px solid var(--line);text-align:left;font-size:14px}
 .pickrow:first-child{border-top:0}
 .pickrow.on{background:#FBF4E2}
 .pickrow .tick{color:var(--gold);font-weight:700}
@@ -1723,7 +1723,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .ftab{flex:none;padding:10px 17px 11px;min-height:40px;
   border:1px solid var(--line);border-bottom:none;
   border-radius:10px 10px 0 0;background:#CFC5AF;color:#5A5147;
-  font-size:13px;letter-spacing:.01em;cursor:pointer;
+  font-size:14px;letter-spacing:.01em;cursor:pointer;
   margin-bottom:-1px;position:relative;top:3px;max-width:46vw;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   box-shadow:inset 0 -3px 5px -3px rgba(36,27,19,.28)}
@@ -1787,7 +1787,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .kv{display:grid;grid-template-columns:104px 1fr;gap:6px 10px;font-size:14px}
 .kv dt{color:var(--mute)}
 .kv dd{margin:0}
-.kv.tn{grid-template-columns:64px 1fr;margin-top:8px;font-size:13px;line-height:1.4}
+.kv.tn{grid-template-columns:64px 1fr;margin-top:8px;font-size:14px;line-height:1.4}
 .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;
   background:#EDE9DF;color:var(--gold);margin:0 4px 4px 0}
 .tag.wine{background:#F3E4E4;color:var(--rust)}
@@ -1808,28 +1808,28 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .ladder .axis{position:absolute;left:42px;top:0;bottom:0;width:1px;background:var(--line)}
 .rung{position:relative;display:grid;grid-template-columns:1fr;padding:3px 0}
 .rung .pin{position:absolute;left:-52px;width:40px;text-align:right;
-  font-size:13px;color:var(--ink-deep);font-weight:600}
+  font-size:14px;color:var(--ink-deep);font-weight:600}
 .rung .tick{position:absolute;left:-11px;top:50%;width:11px;height:1px;background:var(--line)}
 .rung .body{border-left:3px solid var(--line);padding:4px 0 4px 10px}
 .rung.spot .body{border-left-color:var(--gold)}
 .rung.blind .body{border-left-color:var(--rust)}
-.rung .b{font-size:13.5px;font-weight:500}
+.rung .b{font-size:14px;font-weight:500}
 .rung .w{font-size:12px;color:var(--mute)}
 
 /* ---------- flights ---------- */
 .fcard{background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:12px 13px;margin-bottom:9px;width:100%;text-align:left}
-.fcard h3{font-size:15px;color:var(--ink-deep);letter-spacing:.02em}
-.fcard .var{font-size:12.5px;color:var(--gold);margin-top:2px}
+.fcard h3{font-size:16px;color:var(--ink-deep);letter-spacing:.02em}
+.fcard .var{font-size:12px;color:var(--gold);margin-top:2px}
 .fcard .meta{font-size:12px;color:var(--mute);margin-top:6px}
 .done{border-left:3px solid var(--ok)}
 .warn{background:#FBF5EC;border:1px solid #E3D3B4;border-radius:8px;padding:9px 11px;
-  font-size:13px;margin-bottom:8px}
+  font-size:14px;margin-bottom:8px}
 .warn b{color:var(--gold)}
 .ok{background:#EFF5F1;border-color:#CBDFD2}
 .ok b{color:var(--ok)}
-.snack{font-size:13px;color:var(--mute);margin-top:8px}
-.note{font-size:13px;padding:7px 0;border-top:1px solid var(--line);line-height:1.4}
+.snack{font-size:14px;color:var(--mute);margin-top:8px}
+.note{font-size:14px;padding:7px 0;border-top:1px solid var(--line);line-height:1.4}
 .note:first-of-type{border-top:0}
 .nsrc{font-size:12px;letter-spacing:.05em;color:var(--gold);text-transform:uppercase;
   margin-bottom:2px}
@@ -1883,7 +1883,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
   .homemap{height:46vh}
   .payline{gap:14px}
   .glass svg{max-width:118px}
-  .reel .rv{font-size:17px}
+  .reel .rv{font-size:16px}
 }
 @media (min-width:1000px){
   .screen{max-width:960px}
@@ -1913,7 +1913,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    A long word may break, with a hyphen, on the narrowest phones. */
 .reel .rl{font-size:12px;letter-spacing:0;color:var(--mute);line-height:1.15;
   hyphens:auto;overflow-wrap:break-word}
-.reel .rv{font-family:'Cinzel',Georgia,serif;font-size:15.5px;font-weight:700;
+.reel .rv{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:700;
   color:var(--ink-deep);margin-top:4px;min-height:38px;line-height:1.22;
   display:flex;align-items:center;justify-content:center;hyphens:auto}
 .reel .hold{font-size:12px;color:var(--gold);letter-spacing:.06em;
@@ -1940,7 +1940,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
 .matchsel{max-width:260px;text-align:center;text-align-last:center}
 .spin{background:var(--gold);border:2px solid var(--gold);border-radius:999px;
   color:#1A1613;font-family:'Cinzel',Georgia,serif;font-weight:700;
-  font-size:19px;letter-spacing:.06em;padding:14px 46px;
+  font-size:20px;letter-spacing:.06em;padding:14px 46px;
   box-shadow:0 3px 0 #6E5320, 0 5px 14px rgba(26,22,19,.3)}
 .spin:active{transform:translateY(2px);box-shadow:0 1px 0 #6E5320}
 .holdhint{text-align:center;font-size:12px;color:rgba(237,228,210,.6);
@@ -1967,7 +1967,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
   transition:border-color .12s,transform .12s}
 .modetile:hover{border-color:var(--gold);transform:translateY(-1px)}
 .modetile:active{transform:none}
-.modetile .nm{font-family:'Cinzel',Georgia,serif;font-size:12.5px;
+.modetile .nm{font-family:'Cinzel',Georgia,serif;font-size:12px;
   color:var(--ink-deep);line-height:1.25;margin-top:9px}
 /* The hint is the second thing read, and on a phone it is the difference
    between three tiles and three paragraphs. Gone below 430px: the drawing
@@ -2008,12 +2008,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
 .glass{background:transparent;border:0;padding:0;text-align:center;cursor:pointer}
 .glass svg{width:100%;height:auto;max-width:96px;display:block;margin:0 auto}
 /* Three lines of space, whether the name uses them or not. */
-.glass .gn{font-size:12.5px;line-height:1.3;color:#EDE4D2;margin-top:6px;
+.glass .gn{font-size:12px;line-height:1.3;color:#EDE4D2;margin-top:6px;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
   overflow:hidden;min-height:calc(12.5px * 1.3 * 3)}
 /* The lit gold on the dark glass: the brand gold read at 2.39:1 there
    (review, 2026-09-15). */
-.glass .gp{font-size:13px;color:var(--gold-lit);font-weight:600;margin-top:3px}
+.glass .gp{font-size:14px;color:var(--gold-lit);font-weight:600;margin-top:3px}
 .glass.empty .gn{color:rgba(237,228,210,.42)}
 .glass:disabled{cursor:default}
 /* A DISABLED BUTTON MUST LOOK DISABLED. BZ: the inconsistency scan button
@@ -2025,7 +2025,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    in the app looked live. There are 40-odd of them. */
 .btn:disabled, .chip:disabled{opacity:.45;cursor:not-allowed}
 .btn:disabled:hover, .chip:disabled:hover{border-color:var(--line)}
-.machine .empty{color:rgba(237,228,210,.72);font-size:13px;padding:12px 4px 2px}
+.machine .empty{color:rgba(237,228,210,.72);font-size:14px;padding:12px 4px 2px}
 
 /* ---------- modal ---------- */
 .overlay{position:fixed;inset:0;z-index:200;background:rgba(26,22,19,.55);
@@ -2067,7 +2067,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
 .modal .modalclose::before{content:'';position:absolute;z-index:-1;
   width:34px;height:34px;border-radius:9px;border:1px solid var(--line)}
 .modal .modalclose:active{background:var(--card)}
-.modal h2{font-size:18px;color:var(--ink-deep);margin-bottom:11px}
+.modal h2{font-size:20px;color:var(--ink-deep);margin-bottom:11px}
 .form{display:grid;gap:9px}
 .form label{font-size:12px;color:var(--mute);display:block}
 .form label .field,.form label select{margin-top:3px}
@@ -2076,7 +2076,7 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
   background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;
   background-size:5px 5px,5px 5px;background-repeat:no-repeat}
 .lookrow{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.lookrow .btn{flex:none;padding:7px 12px;font-size:13px}
+.lookrow .btn{flex:none;padding:7px 12px;font-size:14px}
 .looknote{font-size:12px;color:var(--mute);flex:1;min-width:150px;line-height:1.35}
 /* ON A BUTTON: the same drawing, the same animation, a size that suits a
    control. Nothing here redraws the bottle or redefines how it moves —
@@ -2099,9 +2099,9 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
    phone. Each part gets the weight its job deserves: the answer largest,
    the reasoning at reading size in full ink, and the two context lines
    left small because that is what they are. */
-.looknote.ok .nm{font-size:17px;color:var(--ink-deep);line-height:1.25;
+.looknote.ok .nm{font-size:16px;color:var(--ink-deep);line-height:1.25;
   font-family:'Cinzel',Georgia,serif;letter-spacing:.01em;margin-top:2px}
-.looknote.ok .sub{font-size:14.5px;color:var(--ink);line-height:1.45;
+.looknote.ok .sub{font-size:14px;color:var(--ink);line-height:1.45;
   margin-top:3px}
 .looknote.ok .src{font-size:12px;color:var(--mute);line-height:1.4}
 /* The lookup, as a word in the sentence rather than a button on a line. */
@@ -2114,7 +2114,7 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
    long name wraps against it rather than under it. */
 .titlerow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;
   align-items:start}
-.favstar.big{font-size:22px;line-height:1;background:none;border:0;padding:0;
+.favstar.big{font-size:24px;line-height:1;background:none;border:0;padding:0;
   cursor:pointer;color:var(--gold)}
 /* The controls that belong to a section, under it, wrapping rather than
    running off the right of a phone. */
@@ -2153,11 +2153,11 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
 /* A field somebody else filled in reads differently from one you typed. */
 .field.looked{background:#FBF6E9;border-color:#DCCB9F}
 .errs{background:#FBECEA;border:1px solid #E4C4BE;color:var(--rust);
-  border-radius:8px;padding:8px 10px;font-size:13px}
+  border-radius:8px;padding:8px 10px;font-size:14px}
 .danger{border-color:var(--rust);color:var(--rust);background:transparent}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px);
   z-index:400;background:var(--ink-deep);color:#F7F2E7;padding:9px 15px;border-radius:8px;
-  font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s}
+  font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s}
 .toast.on{opacity:1}
 .pourrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
   align-items:center;
@@ -2167,10 +2167,10 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
    because it is a sentence, not a value, and spanning both tracks keeps it
    out of the arrow buttons. minmax(0,1fr) above, or a long bottle name
    would push the row wider than the modal. */
-.pourrow .pnote{grid-column:1 / -1;font-size:12.5px;padding:6px 9px;
+.pourrow .pnote{grid-column:1 / -1;font-size:12px;padding:6px 9px;
   margin-top:2px}
 .pourrow .mv button{border:1px solid var(--line);background:var(--card);
-  border-radius:6px;width:30px;height:28px;font-size:13px}
+  border-radius:6px;width:30px;height:28px;font-size:14px}
 
 /* ---------- map ---------- */
 .mapwrap{position:relative;background:#DCE6E4;border:1px solid var(--line);
@@ -2195,14 +2195,14 @@ button.mapwrap:hover{border-color:var(--gold)}
    under the size at which people start missing, and it is the pair
    somebody presses repeatedly while pinching about a map. */
 .mapctl button{width:40px;height:40px;border:1px solid var(--line);border-radius:8px;
-  background:rgba(255,252,246,.94);font-size:15px;line-height:1}
+  background:rgba(255,252,246,.94);font-size:16px;line-height:1}
 /* The contents list and the per-section term index. Chips rather than a
    column of links: 60 terms as one link per line is a second scroll
    problem wearing a different hat. */
 .reftoc h3{font-size:16px;color:var(--ink-deep)}
 .toclist{display:flex;flex-direction:column;gap:2px;margin-top:6px}
 .toclist.inner{flex-direction:row;flex-wrap:wrap;gap:5px;margin:6px 0 10px}
-a.reflink{color:var(--ink-deep);text-decoration:none;font-size:13px}
+a.reflink{color:var(--ink-deep);text-decoration:none;font-size:14px}
 a.reflink:hover{text-decoration:underline}
 a.tocrow{display:flex;justify-content:space-between;align-items:center;
   gap:10px;padding:9px 2px;min-height:36px;
@@ -2238,18 +2238,18 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .ringsvg .rlabel{fill:var(--ink);font-size:10px;font-weight:600}
 .refitem{padding:8px 0;border-top:1px solid var(--line)}
 .refitem:first-of-type{border-top:0}
-.refitem .rt{font-size:13.5px;font-weight:600;color:var(--ink-deep)}
+.refitem .rt{font-size:14px;font-weight:600;color:var(--ink-deep)}
 .refitem .rs{font-size:12px;letter-spacing:.04em;color:var(--gold);
   text-transform:uppercase;margin-top:1px}
-.refitem .rd{font-size:13px;margin-top:3px;line-height:1.45}
+.refitem .rd{font-size:14px;margin-top:3px;line-height:1.45}
 /* The one dark surface per screen. The verdict is the thing Shop exists to
    say and it was body-weight text on cream, indistinguishable from the
    reasoning beneath it. */
 .verdict{background:var(--felt);color:var(--felt-ink);
   padding:14px 16px;border-radius:10px;margin:-2px 0 6px;
-  font-family:'Cinzel',Georgia,serif;font-size:19px;line-height:1.22;
+  font-family:'Cinzel',Georgia,serif;font-size:20px;line-height:1.22;
   letter-spacing:.005em}
-.find{font-size:13px;padding:6px 0;border-top:1px solid var(--line);line-height:1.4;
+.find{font-size:14px;padding:6px 0;border-top:1px solid var(--line);line-height:1.4;
   display:grid;grid-template-columns:16px 1fr;gap:7px;align-items:start}
 .find:first-of-type{border-top:0}
 .find .m{font-weight:600}
@@ -2311,18 +2311,18 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 }
 .portrait .portlabel{font-size:12px;letter-spacing:.9px;
   text-transform:uppercase;color:var(--mute)}
-.portrait .porttitle{font-family:'Cinzel',Georgia,serif;font-size:25px;
+.portrait .porttitle{font-family:'Cinzel',Georgia,serif;font-size:24px;
   font-weight:600;color:var(--ink-deep);line-height:1.1;margin:3px 0 2px}
 /* The verdict: bigger than the caption under it, smaller than the title
    over it, because it is the sentence somebody reads if they read one. */
-.portrait .portline1{font-family:'Cinzel',Georgia,serif;font-size:15px;
+.portrait .portline1{font-family:'Cinzel',Georgia,serif;font-size:16px;
   color:var(--ink-deep);margin:2px 0 3px;line-height:1.25}
-@media (min-width:700px){ .portrait .portline1{font-size:16.5px} }
+@media (min-width:700px){ .portrait .portline1{font-size:16px} }
 .portrait .portwhy{font-size:12px;color:var(--mute)}
 /* The story reads as prose and the bullets as evidence, so the story gets
    the larger size and the looser line, and the bullets keep their rule
    down the left. */
-.portrait .portstory{margin-top:12px;font-size:15px;line-height:1.5;
+.portrait .portstory{margin-top:12px;font-size:16px;line-height:1.5;
   color:var(--ink-deep)}
 @media (min-width:700px){ .portrait .portstory{font-size:16px} }
 .portrait .portlines{margin-top:11px;display:grid;gap:7px}
@@ -2391,9 +2391,9 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    reading had to come entirely from the words. */
 .portrait .quadcell{border-left-width:3px}
 
-.portrait .quadcell .qv{font-family:'Cinzel',Georgia,serif;font-size:21px;
+.portrait .quadcell .qv{font-family:'Cinzel',Georgia,serif;font-size:20px;
   color:var(--ink-deep);line-height:1}
-.portrait .quadcell .qt{font-size:13px;color:var(--ink);margin-top:3px}
+.portrait .quadcell .qt{font-size:14px;color:var(--ink);margin-top:3px}
 .portrait .quadcell .qs{font-size:12px;color:var(--mute);line-height:1.3;
   margin-top:1px}
 @media (max-width:430px){
@@ -2405,11 +2405,11 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 }
 .portrait .portsteps{margin-top:12px;padding-top:11px;
   border-top:1px solid var(--line)}
-.portrait .portstep{font-size:13px;line-height:1.45;color:var(--ink);
+.portrait .portstep{font-size:14px;line-height:1.45;color:var(--ink);
   margin-top:6px;display:block;width:100%;text-align:left;
   background:none;border:0;padding:5px 0;cursor:pointer}
 .portrait .portstep:active{color:var(--gold)}
-.portrait .portline{font-size:13.5px;line-height:1.45;color:var(--ink);
+.portrait .portline{font-size:14px;line-height:1.45;color:var(--ink);
   padding-left:11px;border-left:2px solid var(--line)}
 @media (min-width:700px){ .portrait .porttitle{font-size:30px} }
 
@@ -2476,7 +2476,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 @media (max-width:380px){ .tiles.books{gap:0 3px} }
 .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:10px 11px}
-.tile .v{font-family:'Cinzel',Georgia,serif;font-size:21px;font-weight:600;
+.tile .v{font-family:'Cinzel',Georgia,serif;font-size:20px;font-weight:600;
   color:var(--ink-deep);line-height:1.1}
 .tile .l{font-size:12px;color:var(--mute);margin-top:3px;line-height:1.25}
 
@@ -2524,7 +2524,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    doubling (scan, 2026-09-16). */
 .bars{display:grid;gap:0}
 .bar{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;
-  font-size:12.5px;width:100%;text-align:left;background:none;border:0;
+  font-size:12px;width:100%;text-align:left;background:none;border:0;
   padding:1px 0;min-height:28px}
 button.bar.tappable{cursor:pointer;border-radius:4px}
 button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.40';
-const BUILD_TIME  = '2026-10-12 11:11 PM ET';
+const APP_VERSION = '2.8.41';
+const BUILD_TIME  = '2026-10-12 11:21 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -44713,7 +44713,7 @@ function finishDelete(res, authProblem) {
       '<div style="display:flex;align-items:center;justify-content:center;'
       + 'height:100dvh;text-align:center;padding:40px 24px;font:16px Georgia,'
       + 'serif;color:#241f1b;background:#f2ede5">'
-      + '<div><div style="font-size:19px;margin-bottom:10px">Account deleted'
+      + '<div><div style="font-size:20px;margin-bottom:10px">Account deleted'
       + '</div><div style="color:#6b5f54;font-size:14px">'
       + 'Your shelf and your sign-in are gone. Anything you published to the '
       + 'library stays there.</div></div></div>';
@@ -45727,7 +45727,7 @@ function selectRows(card, list, opts) {
 function pickName(cls, name) {
   const nm = el('div', cls);
   const box = el('span', 'pickbox', '\u2610');
-  box.style.cssText = 'margin-right:7px;font-size:17px;line-height:1';
+  box.style.cssText = 'margin-right:7px;font-size:16px;line-height:1';
   nm.appendChild(box);
   nm.appendChild(document.createTextNode(name));
   return nm;
@@ -47972,7 +47972,7 @@ function showInvite() {
     const ta = document.createElement('textarea');
     ta.className = 'field';
     ta.rows = 9;
-    ta.style.cssText = 'margin-top:10px;font-size:13px;line-height:1.5;resize:vertical';
+    ta.style.cssText = 'margin-top:10px;font-size:14px;line-height:1.5;resize:vertical';
     ta.value = body;
     m.appendChild(ta);
 
@@ -54884,7 +54884,7 @@ function renderAIProposal(out, res, premise, pool) {
   }
   if (res.variable) out.appendChild(el('div', 'var', 'One variable: ' + res.variable));
   if (res.premise) {
-    const p = el('p'); p.style.cssText = 'font-size:13.5px;margin:7px 0 0';
+    const p = el('p'); p.style.cssText = 'font-size:14px;margin:7px 0 0';
     p.textContent = res.premise;
     out.appendChild(p);
   }
@@ -54923,7 +54923,7 @@ function renderAIProposal(out, res, premise, pool) {
     w.appendChild(el('h3', null, 'Why it is built this way'));
     res.why.forEach(x => {
       const p = el('p');
-      p.style.cssText = 'font-size:13px;margin:7px 0 0';
+      p.style.cssText = 'font-size:14px;margin:7px 0 0';
       p.textContent = x;
       w.appendChild(p);
     });
@@ -55514,7 +55514,7 @@ function showFlight(f) {
   fMore.onclick = () => flightMoreSheet(more);
   fa.appendChild(fMore);
   const head = el('div', 'sheet');
-  const t = el('h2'); t.style.cssText = 'font-size:23px;color:var(--ink-deep)';
+  const t = el('h2'); t.style.cssText = 'font-size:24px;color:var(--ink-deep)';
   t.textContent = L.sentenceCase(f.title);
   head.appendChild(t);
   head.appendChild(el('div', 'var', L.variableOf(f)));
@@ -55601,7 +55601,7 @@ function showFlight(f) {
     const w = el('div', 'sheet');
     w.appendChild(el('h3', null, 'Why it is built this way'));
     f.why.forEach(x => {
-      const p2 = el('p'); p2.style.cssText = 'font-size:13px;margin:8px 0 0;color:var(--ink)';
+      const p2 = el('p'); p2.style.cssText = 'font-size:14px;margin:8px 0 0;color:var(--ink)';
       p2.textContent = x; w.appendChild(p2);
     });
     body.appendChild(w);
@@ -56124,7 +56124,7 @@ function labelPick(onFiles, opts) {
         + 'margin:0;width:100%';
       if (slot.hint) b.title = slot.hint;
       const lab = el('div', 'nm', slot.label);
-      lab.style.cssText = 'font-size:13px;line-height:1.2';
+      lab.style.cssText = 'font-size:14px;line-height:1.2';
       const nm = el('div', 'src');
       nm.textContent = 'Not taken';
       b.appendChild(lab);
@@ -57003,7 +57003,7 @@ function fbCheckSuspended() {
         '<div style="display:flex;align-items:center;justify-content:center;'
         + 'height:100dvh;text-align:center;padding:40px 24px;font:16px Georgia,'
         + 'serif;color:#241f1b;background:#f2ede5">'
-        + '<div><div style="font-size:19px;margin-bottom:10px">'
+        + '<div><div style="font-size:20px;margin-bottom:10px">'
         + 'Access suspended</div><div style="color:#6b5f54;font-size:14px">'
         + 'Your shelf is untouched. Speak to whoever runs this to restore it.'
         + '</div></div></div>';
@@ -58727,7 +58727,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.40</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.41</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
