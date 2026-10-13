@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.29  Build 2026-10-12 08:45 PM ET
+     Version : v2.8.30  Build 2026-10-12 09:01 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
 // v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // v2.8.28  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // v2.8.27  2026-10-11  A flight of your own can be deleted, from under More.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.23  2026-10-10  A sync line says WHICH records, not just how many.
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
 // v2.8.21  2026-10-10  A record the account already holds is no longer counted as this device's unsent work.
-// v2.8.20  2026-10-09  A grave for a key holding a dot or a slash never matched.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.29';
-const BUILD_TIME  = '2026-10-12 08:45 PM ET';
+const APP_VERSION = '2.8.30';
+const BUILD_TIME  = '2026-10-12 09:01 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3338,12 +3338,21 @@ L.myBottles = function (key, bottles) {
  * So they filter now, which is what they look like, and selecting all of
  * what is shown is its own button. `view` is 'all', 'open' or 'sealed'.
  */
+/* THROUGH THE SHELF'S OWN DOOR, which is L.shelfIndex. The first version of
+   this asked L.pourable and got the question wrong twice over: pourable
+   means CAN I POUR THIS WHISKY, so one with an open bottle and a sealed
+   spare is pourable and never counted as sealed, and !pourable is not what
+   sealed means either. On BZ's shelf that read 0 sealed where the Shelf
+   screen, asking L.sealedKeys, said 10 (2026-10-12). A whisky is open when
+   he holds an open bottle of it and sealed when he holds a sealed one, and
+   it is perfectly ordinary to be both - which is why Open 353 and All 353
+   sit beside Sealed 10 and nothing is wrong with that. */
 L.BULK_VIEWS = ['all', 'open', 'sealed'];
 L.bulkView = function (rows, term, view, bottles) {
-  const bs = bottles || [];
+  const ix = L.shelfIndex(bottles || []);
   const list = (rows || []).filter(p => p && L.matchesSearch(p, term || ''));
-  if (view === 'open') return list.filter(p => L.pourable(p.k, bs));
-  if (view === 'sealed') return list.filter(p => !L.pourable(p.k, bs));
+  if (view === 'open') return list.filter(p => ix.open[p.k]);
+  if (view === 'sealed') return list.filter(p => ix.sealed[p.k]);
   return list;
 };
 
@@ -39487,7 +39496,9 @@ function runImport(prep) {
    a name with a tick when it is picked, and a line saying who made it and
    whether it is open. */
 function bulkRow(p, on, pick) {
-  const isOpen = L.pourable(p.k, S.bottles);
+  /* THE SAME QUESTION THE FILTER ASKS, so a row cannot say sealed while the
+     Sealed filter leaves it out. */
+  const isOpen = !!L.shelfIndex(S.bottles).open[p.k];
   const r = el('button', 'item' + (on ? ' picked' : ''));
   r.style.cssText = 'width:100%;text-align:left';
   r.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -58389,7 +58400,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.29</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.30</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

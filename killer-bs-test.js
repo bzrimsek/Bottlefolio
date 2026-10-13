@@ -29966,18 +29966,36 @@ sec('§468 the mark-bottles pills filter, and say what they found');
      picked nothing. Two did one thing and two looked dead. */
   const rows = [{ k: 'a', name: 'Ardbeg Ten' }, { k: 'b', name: 'Bowmore 12' },
     { k: 'c', name: 'Caol Ila 12' }];
-  /* b is sealed: owned, and no bottle of it pourable. */
+  /* a is open. b is sealed and nothing else. c IS BOTH - one open and a
+     sealed spare - which is the case the first version of this got wrong:
+     it asked L.pourable, c was pourable, and it never showed under Sealed.
+     BZ's shelf is 353 open and 10 sealed with every one of those 10 also
+     open, so the sheet said 0 sealed where the Shelf said 10. */
   const bottles = [{ id: '1', k: 'a', status: 'open' },
     { id: '2', k: 'b', status: 'sealed' },
-    { id: '3', k: 'c', status: 'open' }];
+    { id: '3', k: 'c', status: 'open' },
+    { id: '4', k: 'c', status: 'sealed' }];
   const names = l => l.map(p => p.k).join(',');
 
   eq('all shows everything',
     names(L.bulkView(rows, '', 'all', bottles)), 'a,b,c');
-  eq('open shows only the open ones',
+  eq('open shows the ones with an open bottle',
     names(L.bulkView(rows, '', 'open', bottles)), 'a,c');
-  eq('sealed shows only the sealed one',
-    names(L.bulkView(rows, '', 'sealed', bottles)), 'b');
+  eq('SEALED SHOWS A SPARE, even where the whisky is also open',
+    names(L.bulkView(rows, '', 'sealed', bottles)), 'b,c');
+  /* AND IT AGREES WITH THE SHELF SCREEN, through the screen's own door.
+     L.shelfFilter is what the Shelf tab's Open/Sealed counts go through,
+     and it already carried the rule this got wrong - "Sealed asks whether
+     you HOLD a sealed bottle, not whether nothing is open". Comparing
+     against shelfIndex alone would not have caught it, because the mistake
+     was which question to ask, not how to count the answer. Asking the
+     screen's door makes the two unable to disagree. */
+  const ix = L.shelfIndex(bottles);
+  ['open', 'sealed'].forEach(view => {
+    eq('the sheet and the Shelf screen agree on ' + view,
+      L.bulkView(rows, '', view, bottles).length,
+      L.shelfFilter(rows, bottles, { status: view }, ix).length);
+  });
   /* AND THE SEARCH NARROWS WITHIN THE VIEW, rather than replacing it. */
   eq('a search narrows the open ones',
     names(L.bulkView(rows, 'ardbeg', 'open', bottles)), 'a');

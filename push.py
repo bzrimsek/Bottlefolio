@@ -125,6 +125,11 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # approval no saved rule could match. Local-only until now,
            # which is a tool that exists on one PC and in no record.
            'logcheck.js',
+           # 2026-10-12: one slice of waiting with something in it. Rule 25g
+           # asks for twenty-second polls carrying real output and says the
+           # fix is mechanical rather than a promise; the promise kept
+           # failing, so this is the mechanism.
+           'poll.js',
            # 2026-09-27: the generator behind DOORS.md. consistency.js runs
            # it with --check, so the gate needs the generator as well as the
            # file it generates.
