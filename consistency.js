@@ -1351,7 +1351,10 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.8.26: the delete was gated on a flag only the app's own
        flight builder sets, so every IMPORTED flight was
        undeletable - forty-two of his own records, no button. */
-    'Delete this flight'];
+    'Delete this flight',
+    /* v2.8.28: the mark-bottles pills filter now, and taking what
+       the filter left is its own button. */
+    'Select all shown'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',

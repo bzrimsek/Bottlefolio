@@ -29958,6 +29958,66 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§468 the mark-bottles pills filter, and say what they found');
+{
+  /* BZ, 2026-10-12: "Pills/filters not working". They selected rather than
+     filtered, and on a shelf where every bottle is open - his, 353 of them -
+     All shown and Open only picked the same 353 while Sealed only and None
+     picked nothing. Two did one thing and two looked dead. */
+  const rows = [{ k: 'a', name: 'Ardbeg Ten' }, { k: 'b', name: 'Bowmore 12' },
+    { k: 'c', name: 'Caol Ila 12' }];
+  /* b is sealed: owned, and no bottle of it pourable. */
+  const bottles = [{ id: '1', k: 'a', status: 'open' },
+    { id: '2', k: 'b', status: 'sealed' },
+    { id: '3', k: 'c', status: 'open' }];
+  const names = l => l.map(p => p.k).join(',');
+
+  eq('all shows everything',
+    names(L.bulkView(rows, '', 'all', bottles)), 'a,b,c');
+  eq('open shows only the open ones',
+    names(L.bulkView(rows, '', 'open', bottles)), 'a,c');
+  eq('sealed shows only the sealed one',
+    names(L.bulkView(rows, '', 'sealed', bottles)), 'b');
+  /* AND THE SEARCH NARROWS WITHIN THE VIEW, rather than replacing it. */
+  eq('a search narrows the open ones',
+    names(L.bulkView(rows, 'ardbeg', 'open', bottles)), 'a');
+  eq('and can empty a view',
+    names(L.bulkView(rows, 'ardbeg', 'sealed', bottles)), '');
+  eq('an unknown view shows everything',
+    names(L.bulkView(rows, '', 'whatever', bottles)), 'a,b,c');
+  eq('nothing in does not throw', L.bulkView(null, '', 'all', null).length, 0);
+
+  /* THE LINE THAT SAYS WHAT HAPPENED. A press that selects nothing has to
+     read differently from one that selected everything. */
+  eq('none selected says so', L.bulkSay(353, 0), '353 shown · none selected');
+  eq('some selected counts them', L.bulkSay(353, 12),
+    '353 shown · 12 selected');
+  eq('an empty list still says a number', L.bulkSay(0, 0),
+    '0 shown · none selected');
+
+  /* WHAT A ROW SAYS UNDER ITS NAME. */
+  eq('a single bottle does not say how many',
+    L.bulkRowSay({ dist: 'Ardbeg' }, true, 1), 'Ardbeg · open');
+  eq('a spare is counted',
+    L.bulkRowSay({ dist: 'Ardbeg' }, false, 3),
+    'Ardbeg · sealed · 3 bottles');
+  eq('no distillery leaves no gap',
+    L.bulkRowSay({}, true, 1), 'open');
+
+  /* AND WHAT THE MARKING DID. The log line and the toast read this same
+     sentence, so they cannot disagree about what happened. */
+  eq('one bottle is singular', L.bulkSaid({ changed: 1 }, 'open'),
+    '1 bottle opened');
+  eq('several are plural', L.bulkSaid({ changed: 12 }, 'sealed'),
+    '12 bottles sealed');
+  eq('keepers are named', L.bulkSaid({ changed: 4, kept: 2 }, 'open'),
+    '4 bottles opened, 2 left as do-not-open');
+  eq('nothing to do says why', L.bulkSaid({ changed: 0 }, 'open'),
+    'Nothing to change — they were already open');
+  eq('and the other way round', L.bulkSaid({}, 'sealed'),
+    'Nothing to change — they were already sealed');
+}
+
 sec('§467 a flight of his own can be deleted, however it got there');
 {
   /* BZ, 2026-10-11: "no way to delete - need a delete button under More".

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.27  Build 2026-10-11 10:27 AM ET
+     Version : v2.8.29  Build 2026-10-12 08:45 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
+// v2.8.28  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
 // v2.8.27  2026-10-11  A flight of your own can be deleted, from under More.
 // v2.8.26  2026-10-11  A flight of your own can be deleted, from under More.
 // v2.8.25  2026-10-10  Vosges is oak.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.8.22  2026-10-10  The library scan drew before it had read what you had already judged.
 // v2.8.21  2026-10-10  A record the account already holds is no longer counted as this device's unsent work.
 // v2.8.20  2026-10-09  A grave for a key holding a dot or a slash never matched.
-// v2.8.19  2026-10-09  The duplicate finder could not see the less complete of two duplicates.
-// v2.8.18  2026-10-09  Four things BZ found by using it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2224,7 +2224,12 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    what is under it off a phone, and it scrolls for the rest. Used by the
    evenings that are ready and by the guest ladder, which are one idea
    (BZ, 2026-09-24). */
-.scrollbox{max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* AND THE PAGE BEHIND STAYS PUT. Without this a list that has reached its
+   end hands the scroll to whatever is under it, so the sheet slides away
+   while you are reading it (BZ, 2026-10-12: "scrolling should be the list
+   not the page"). */
+.scrollbox{max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain}
 .ringsvg{display:block;width:100%;max-width:320px;margin:10px auto 2px}
 .ringsvg .redge{stroke:var(--line);stroke-width:1.5}
 .ringsvg .redge.pend{stroke-dasharray:3 3}
@@ -3089,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.27';
-const BUILD_TIME  = '2026-10-11 10:27 AM ET';
+const APP_VERSION = '2.8.29';
+const BUILD_TIME  = '2026-10-12 08:45 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3320,6 +3325,59 @@ L.myBottles = function (key, bottles) {
    is left alone. A KEEPER IS NEVER TOUCHED ('keep' is a third state, not a
    kind of sealed); keepers are counted and reported, not skipped silently.
    Returns what changed, so the caller states a fact. */
+/* WHICH ROWS THE MARK-BOTTLES SHEET SHOWS.
+ *
+ * Its four buttons were named All shown / Sealed only / Open only / None
+ * and they SELECTED rather than filtered. Under a search box that reads as
+ * a filter, and on BZ's shelf - 353 whiskies, every one of them open - All
+ * shown and Open only picked the same 353 while Sealed only and None picked
+ * nothing, so two did the same thing and two looked broken (BZ, 2026-10-12:
+ * "Pills/filters not working"). The only feedback was the button label at
+ * the foot of a sheet whose list was clipped, so it was off screen too.
+ *
+ * So they filter now, which is what they look like, and selecting all of
+ * what is shown is its own button. `view` is 'all', 'open' or 'sealed'.
+ */
+L.BULK_VIEWS = ['all', 'open', 'sealed'];
+L.bulkView = function (rows, term, view, bottles) {
+  const bs = bottles || [];
+  const list = (rows || []).filter(p => p && L.matchesSearch(p, term || ''));
+  if (view === 'open') return list.filter(p => L.pourable(p.k, bs));
+  if (view === 'sealed') return list.filter(p => !L.pourable(p.k, bs));
+  return list;
+};
+
+/* WHAT THE SHEET SAYS IT IS HOLDING. Shown and selected both, because a
+   press that selects nothing has to look different from one that selected
+   everything, and the Mark buttons alone could not say so. */
+L.bulkSay = function (shown, picked) {
+  const n = shown || 0, p = picked || 0;
+  return n + (n === 1 ? ' shown' : ' shown')
+    + ' \u00b7 ' + (p ? p + ' selected' : 'none selected');
+};
+
+/* WHAT A ROW SAYS UNDER ITS NAME: who made it, whether it is open, and how
+   many of it there are when there is more than one. */
+L.bulkRowSay = function (p, isOpen, n) {
+  return [(p || {}).dist, isOpen ? 'open' : 'sealed',
+    n > 1 ? n + ' bottles' : null].filter(Boolean).join(' \u00b7 ');
+};
+
+/* AND WHAT THE MARKING DID, once it is done. Built here rather than in the
+   sheet because a sentence with three branches is not templating (rule 30),
+   and because the log line and the toast should never be able to disagree
+   about what happened. */
+L.bulkSaid = function (r, want) {
+  const d = r || {}, opened = want === 'open';
+  if (!d.changed) {
+    return 'Nothing to change \u2014 they were already '
+      + (opened ? 'open' : 'sealed');
+  }
+  return d.changed + (d.changed === 1 ? ' bottle ' : ' bottles ')
+    + (opened ? 'opened' : 'sealed')
+    + (d.kept ? ', ' + d.kept + ' left as do-not-open' : '');
+};
+
 L.bulkStatus = function (bottles, keys, want) {
   const list = bottles || [];
   const wanted = {};
@@ -9235,7 +9293,7 @@ L.FEATURES = [
   { term: 'Count the shelf', src: 'Shelf tools › Manage',
     def: 'A physical inventory, in shelf order \u2014 by type, then distillery \u2014 sealed bottles included. Select what you find. Stop whenever you like: it remembers where you were, and a bottle not yet looked at is not a missing one. Finishing offers to retire what is not there as an adjustment; it offers, it does not act.' },
   { term: 'Mark bottles open or sealed', src: 'Settings › Shelf',
-    def: 'For a shelf imported from a file, where nothing is marked and nothing can be poured. Select as many as you like, or all, all sealed or all open, in one press. Marking open opens one bottle of a whiskey, so a spare stays sealed; marking sealed closes every open one. Bottles marked do not open are never touched.' } ] },
+    def: 'For a shelf imported from a file, where nothing is marked and nothing can be poured. All, Open and Sealed filter the list and the search narrows within whichever is chosen; Select all shown takes everything the filter left, and the line above says how many are shown and how many selected. Marking open opens one bottle of a whiskey, so a spare stays sealed; marking sealed closes every open one. Bottles marked do not open are never touched.' } ] },
 
  /* THE CREDIT ONE OF THESE ASKS FOR, and the three that do not. Wikipedia's
     list of Scottish distilleries is CC BY-SA 4.0 and has been giving this
@@ -39424,6 +39482,24 @@ function runImport(prep) {
 }
 
 /* BULK OPEN AND SEALED. */
+/* ONE ROW OF THE MARK-BOTTLES LIST. Out of showBulkStatus because that
+   function had reached its ceiling and a row is a thing in its own right:
+   a name with a tick when it is picked, and a line saying who made it and
+   whether it is open. */
+function bulkRow(p, on, pick) {
+  const isOpen = L.pourable(p.k, S.bottles);
+  const r = el('button', 'item' + (on ? ' picked' : ''));
+  r.style.cssText = 'width:100%;text-align:left';
+  r.setAttribute('aria-pressed', on ? 'true' : 'false');
+  const left = el('div');
+  left.appendChild(el('div', 'nm oneline', (on ? '\u2713  ' : '') + p.name));
+  left.appendChild(el('div', 'sub',
+    L.bulkRowSay(p, isOpen, L.ownedCount(p.k, S.bottles))));
+  r.appendChild(left);
+  r.onclick = pick;
+  return r;
+}
+
 function showBulkStatus() {
   openModal('Mark bottles', m => {
     const owned = L.ownedCounts(S.bottles);
@@ -39436,9 +39512,9 @@ function showBulkStatus() {
     let term = '';
 
     m.appendChild(el('div', 'sub', rows.length
-      + ' whiskies on your shelf. Opening marks ONE bottle open, so a spare '
-      + 'you keep sealed stays sealed. Anything marked do not open is left '
-      + 'alone.'));
+      + ' whiskies on your shelf. Filter and search to find them, then '
+      + 'select. Opening marks ONE bottle open, so a spare you keep sealed '
+      + 'stays sealed. Anything marked do not open is left alone.'));
 
     const find = document.createElement('input');
     find.className = 'field';
@@ -39448,27 +39524,44 @@ function showBulkStatus() {
     find.oninput = () => { term = find.value.trim().toLowerCase(); draw(); };
     m.appendChild(find);
 
-    const quick = el('div', 'actionrow');
-    quick.style.margin = '9px 0 0';
-    const shown = () => rows.filter(p => L.matchesSearch(p, term));
-    [['All shown', () => shown()],
-     ['Sealed only', () => shown().filter(p => !L.pourable(p.k, S.bottles))],
-     ['Open only', () => shown().filter(p => L.pourable(p.k, S.bottles))],
-     ['None', () => []]
-    ].forEach(([label, pick]) => {
-      const c = el('button', 'chip', label);
-      c.onclick = () => {
-        Object.keys(picked).forEach(k => { delete picked[k]; });
-        pick().forEach(p => { picked[p.k] = 1; });
-        draw();
-      };
-      quick.appendChild(c);
-    });
+    /* THEY FILTER, which is what they look like under a search box. */
+    let view = 'all';
+    const quick = el('div', 'chiprow');
+    const chips = {};
+    const shown = () => L.bulkView(rows, term, view, S.bottles);
+    [['all', 'All'], ['open', 'Open'], ['sealed', 'Sealed']]
+      .forEach(([key, label]) => {
+        const c = el('button', 'chip', label);
+        c.setAttribute('aria-pressed', key === view ? 'true' : 'false');
+        c.onclick = () => { view = key; draw(); };
+        chips[key] = c;
+        quick.appendChild(c);
+      });
     m.appendChild(quick);
 
+    /* SELECTING IS ITS OWN ROW, so neither job is mistaken for the other. */
+    const tally = el('div', 'sub');
+    tally.style.marginTop = '9px';
+    const grab = el('div', 'actionrow');
+    const all = el('button', 'chip', 'Select all shown');
+    all.onclick = () => { shown().forEach(p => { picked[p.k] = 1; }); draw(); };
+    const none = el('button', 'chip', 'Clear');
+    none.onclick = () => {
+      Object.keys(picked).forEach(k => { delete picked[k]; });
+      draw();
+    };
+    [all, none].forEach(b => grab.appendChild(b));
+    [tally, grab].forEach(x => m.appendChild(x));
+
+    /* THE LIST SCROLLS, THE SHEET DOES NOT. .recent clips on purpose - it
+       is what rounds the corners - so the scrolling belongs to a wrapper
+       around it. With max-height on .recent itself and nothing to scroll
+       with, 347 of his 353 whiskies could not be reached at all. */
+    const scroll = el('div', 'scrollbox');
+    scroll.style.maxHeight = '44vh';
     const box = el('div', 'recent');
-    box.style.maxHeight = '44vh';
-    m.appendChild(box);
+    scroll.appendChild(box);
+    m.appendChild(scroll);
 
     const openBtn = el('button', 'btn wide btn-gold', 'Mark open');
     const sealBtn = el('button', 'btn wide', 'Mark sealed');
@@ -39484,12 +39577,7 @@ function showBulkStatus() {
       closeModal();
       appLog('bulk ' + want + ': ' + r.changed + ' bottles across '
         + r.whiskies + ' whiskies, ' + r.kept + ' keepers left alone');
-      toast(r.changed
-        ? r.changed + (r.changed === 1 ? ' bottle ' : ' bottles ')
-          + (want === 'open' ? 'opened' : 'sealed')
-          + (r.kept ? ', ' + r.kept + ' left as do-not-open' : '')
-        : 'Nothing to change \u2014 they were already '
-          + (want === 'open' ? 'open' : 'sealed'));
+      toast(L.bulkSaid(r, want));
     };
     openBtn.onclick = () => apply('open');
     sealBtn.onclick = () => apply('sealed');
@@ -39501,30 +39589,21 @@ function showBulkStatus() {
         box.appendChild(el('div', 'empty', 'Nothing on your shelf matches that.'));
       }
       list.slice(0, 400).forEach(p => {
-        const on = !!picked[p.k];
-        const isOpen = L.pourable(p.k, S.bottles);
-        const n = L.ownedCount(p.k, S.bottles);
-        const r = el('button', 'item' + (on ? ' picked' : ''));
-        r.style.cssText = 'width:100%;text-align:left';
-        r.setAttribute('aria-pressed', on ? 'true' : 'false');
-        const left = el('div');
-        left.appendChild(el('div', 'nm oneline', (on ? '\u2713  ' : '')
-          + p.name));
-        left.appendChild(el('div', 'sub',
-          [p.dist, isOpen ? 'open' : 'sealed',
-           n > 1 ? n + ' bottles' : null].filter(Boolean).join(' \u00b7 ')));
-        r.appendChild(left);
-        r.onclick = () => {
+        box.appendChild(bulkRow(p, !!picked[p.k], () => {
           if (picked[p.k]) delete picked[p.k]; else picked[p.k] = 1;
           draw();
-        };
-        box.appendChild(r);
+        }));
       });
       if (list.length > 400) {
         box.appendChild(el('div', 'src', 'Showing the first 400 \u2014 '
           + 'search to narrow it.'));
       }
       const n = Object.keys(picked).length;
+      L.BULK_VIEWS.forEach(k => chips[k]
+        && chips[k].setAttribute('aria-pressed', k === view ? 'true' : 'false'));
+      tally.textContent = L.bulkSay(list.length, n);
+      all.disabled = !list.length;
+      none.disabled = !n;
       openBtn.textContent = n ? 'Mark ' + n + ' open' : 'Mark open';
       sealBtn.textContent = n ? 'Mark ' + n + ' sealed' : 'Mark sealed';
       openBtn.disabled = !n;
@@ -58310,7 +58389,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.27</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.29</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

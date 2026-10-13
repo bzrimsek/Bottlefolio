@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1022 |
-| tables | 243 |
-| carrying a stated purpose | 816 |
+| functions | 1026 |
+| tables | 244 |
+| carrying a stated purpose | 820 |
 
 ## Tables
 
@@ -34,6 +34,7 @@ QUESTION, not the name you were going to use.
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
+- **`L.BULK_VIEWS`** — WHICH ROWS THE MARK-BOTTLES SHEET SHOWS.
 - **`L.BUY_WHYS`** — WHY: only what the app cannot work out. Coming off the wishlist or
 - **`L.CANDIDATE_FIELDS`** — BZ'S EIGHT in his order, less brand and name, which are the row's title.
 - **`L.CANON`** — IN THE ENGINE RATHER THAN A canon.json
@@ -354,7 +355,11 @@ QUESTION, not the name you were going to use.
 - **`L.buddyPlaces`** — A pour at somebody's house, where the somebody is on the app.
 - **`L.buddyRows`** — WHO IS IN THE ROOM, BOTH DIRECTIONS AT ONCE
 - **`L.buildFlight`** — The whole proposal, ready to render or to turn into a flight.
-- **`L.bulkStatus`** — Bulk open/close for an imported shelf, which reads as empty to the
+- **`L.bulkRowSay`** — WHAT A ROW SAYS UNDER ITS NAME
+- **`L.bulkSaid`** — AND WHAT THE MARKING DID, once it is done
+- **`L.bulkSay`** — WHAT THE SHEET SAYS IT IS HOLDING
+- **`L.bulkStatus`** — _no comment above it_
+- **`L.bulkView`** — WHICH ROWS THE MARK-BOTTLES SHEET SHOWS.
 - **`L.buryKey`** — Writing a grave
 - **`L.buyVsDrink`** — What you BUY against what you DRINK
 - **`L.buyWhys`** — _no comment above it_
