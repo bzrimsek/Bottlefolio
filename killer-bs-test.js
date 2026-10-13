@@ -9290,13 +9290,20 @@ const noteFlights = [
 const np = { k: 'Raasay Dun Cana @ 104.0', name: 'Raasay', fin: 'Pedro Ximenez+Oloroso',
              wine: true, region: 'Islands', notes: 'Bot. no. 12551.', msrpNote: 'GBP 91 @ 1.35' };
 let ns = L.notesFor(np, noteFlights, 'Poured this blind in August.');
-eq('every source contributes', ns.length, 6);
+eq('every source contributes', ns.length, 5);
 eq('sources in order', ns.map(n => n.src),
-  ['inventory', 'price', 'cask', 'region', 'sherry is not one thing', 'you']);
-eq('cask note names the casks', ns[2].text, 'Pedro Ximenez, Oloroso \u2014 a wine cask');
-eq('user note is last', ns[5].text, 'Poured this blind in August.');
-// Only the flights this bottle is actually in contribute a line.
-eq('unrelated flight excluded', ns.some(n => n.src === 'peat is a postcode'), false);
+  ['inventory', 'price', 'cask', 'region', 'you']);
+eq('cask note names the casks', ns[2].text,
+  'Pedro Ximenez, Oloroso — a wine cask');
+eq('user note is last', ns[4].text, 'Poured this blind in August.');
+/* NO FLIGHT CONTRIBUTES A NOTE ANY MORE. The card's wood cell is a
+   prompt written to be read BESIDE the other pours - "UNMALTED rye, two
+   years older than A" - and under a bottle on its own it points at a
+   letter that is not there (BZ, 2026-10-12). The flights are listed
+   instead, which is the part worth having. */
+eq('no flight contributes a note',
+  ns.some(n => n.src === 'sherry is not one thing'), false);
+eq('nor an unrelated one', ns.some(n => n.src === 'peat is a postcode'), false);
 // A wood-only finish says so, and an unknown one says neither.
 eq('wood-only is labeled', L.notesFor({ k: 'A', fin: 'Toasted Oak', wine: false }, [], null)[0].text,
   'Toasted Oak \u2014 wood only, no wine');

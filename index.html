@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.41  Build 2026-10-12 11:21 PM ET
+     Version : v2.8.42  Build 2026-10-12 11:34 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
 // v2.8.39  2026-10-12  The rest of the house, owned or not.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.33  2026-10-12  The bottle page is one section about taste, with how it fits above it.
-// v2.8.32  2026-10-12  A bottle's state is set on the bottle's own row.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.41';
-const BUILD_TIME  = '2026-10-12 11:21 PM ET';
+const APP_VERSION = '2.8.42';
+const BUILD_TIME  = '2026-10-12 11:34 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -14190,7 +14190,12 @@ L.notesFor = function (p, flights, userNote) {
     const i = (f.core || []).findIndex(x => x.k === p.k);
     if (i < 0) return;
     const card = (f.cards || [])[i];
-    if (card && card.wood) out.push({ src: f.title.toLowerCase(), text: card.wood });
+    /* NOT THE FLIGHT CARD'S WOOD CELL. It is a prompt written to be read
+       BESIDE the other pours - "UNMALTED rye, two years older than A" - and
+       on its own, under a bottle, it refers to a letter that is not there
+       (BZ, 2026-10-12: "the about as a pull from a flight leaves no
+       reference"). The flights themselves are listed instead, which is the
+       part that was worth having. */
   });
   if (userNote) out.push({ src: 'you', text: userNote });
   return out;
@@ -35034,7 +35039,7 @@ function prospectCard(body, p, wishBtn) {
   const line = L.prospectLine(L.prospectContext(p, S.catalog, S.bottles,
     LIB.products, LIB.graves, refBrands()));
   const card = el('div', 'sheet');
-  card.appendChild(el('div', 'portlabel', 'Against your shelf'));
+  card.appendChild(el('h3', null, 'Against your shelf'));
   card.appendChild(el('div', 'sub', 'Not on your shelf.' + (line ? ' ' + line : '')));
   prospectWriting(card, p);
   if (wishBtn) {
@@ -35629,7 +35634,7 @@ function showBottle(k) {
   const ctxLine = L.contextLine(L.bottleContext(p, S.catalog, S.bottles));
   if (ctxLine) {
     const cc = el('div', 'sheet');
-    cc.appendChild(el('div', 'portlabel', 'On your shelf'));
+    cc.appendChild(el('h3', null, 'On your shelf'));
     const said = el('div', 'sub');
     /* ONLY IF IT IS STILL TRUE. A stored sentence keeps the facts it was
        written from; when the shelf no longer matches them it is dropped and
@@ -35859,7 +35864,7 @@ function sameHouseCard(body, p) {
 function flightsUsingCard(body, k) {
   if (!L.useCount(k, S.flights, S.history)) return;
   const u = el('div', 'sheet');
-  u.appendChild(el('h3', null, 'Used in flights'));
+  u.appendChild(el('h3', null, 'Planner flights'));
   S.flights.filter(f => f.core.some(x => x.k === k)
     || f.ext.some(x => x.k === k)).forEach(f => {
     const isCore = f.core.some(x => x.k === k);
@@ -58727,7 +58732,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.41</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.42</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
