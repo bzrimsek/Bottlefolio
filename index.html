@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.35  Build 2026-10-12 10:07 PM ET
+     Version : v2.8.38  Build 2026-10-12 10:28 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,9 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
+// v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
+// v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
 // v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.33  2026-10-12  The bottle page is one section about taste, with how it fits above it.
@@ -18,9 +21,6 @@ CHANGELOG
 // v2.8.31  2026-10-12  A bottle's state can be flipped, one bottle at a time.
 // v2.8.30  2026-10-12  Mark bottles asks the Shelf's own question about sealed.
 // v2.8.29  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
-// v2.8.28  2026-10-12  Mark bottles: the pills filter, the list scrolls, and the sheet says what it is holding.
-// v2.8.27  2026-10-11  A flight of your own can be deleted, from under More.
-// v2.8.26  2026-10-11  A flight of your own can be deleted, from under More.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.35';
-const BUILD_TIME  = '2026-10-12 10:07 PM ET';
+const APP_VERSION = '2.8.38';
+const BUILD_TIME  = '2026-10-12 10:28 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -26189,6 +26189,26 @@ L.ORIGIN_GRAIN = { bourbon: 'corn', tennessee: 'corn', rye: 'rye',
   wheat: 'wheat', scotch: 'barley', irish: 'barley',
   'american single malt': 'barley', japanese: 'barley', canadian: 'rye' };
 
+/* HOW MANY FLAVOURS A CATEGORY IS DESCRIBED BY. Four is what the expected
+   card has always shown; more reads as a list rather than a characterisation. */
+L.ORIGIN_MOST = 4;
+
+/* "AS A BOURBON GOES: VANILLA, CARAMEL AND OAK." One sentence, and each
+   caller brings its own terms - the expected card the ones actually IN the
+   note, the no-note card what the category gives anyway. A second function
+   that only forwarded to this one was two doors to one question, and
+   consistency.js said so the first time it ran.
+
+   IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:
+   vodka, gin and tequila have no grain ring, so nothing is written for them
+   and there is no second list of what counts as whiskey to drift from
+   L.isWhisky. */
+L.goesSay = function (sub, terms) {
+  const list = (terms || []).slice(0, L.ORIGIN_MOST);
+  if (!sub || !list.length) return null;
+  return 'As a ' + sub + ' goes: ' + L.andList(list) + '.';
+};
+
 L.originSources = function (p) {
   const out = { wood: ['oak'], grain: [], process: [] };
   const sub = String((p || {}).sub || '').toLowerCase();
@@ -34976,7 +34996,7 @@ function expectedCard(p) {
   body.id = 'originLines';
   const line = t => body.appendChild(el('div', null, t));
   if (came.base.length) {
-    line('As a ' + p.sub + ' goes: ' + L.andList(came.base.slice(0, 4)) + '.');
+    line(L.goesSay(p.sub, came.base));
   }
   came.from.forEach(x => {
     line('The ' + L.andList(x.terms) + ' is the ' + x.source + ' cask.');
@@ -35599,8 +35619,6 @@ function bottleTaste(body, p, k, notes, noteFill) {
   const expect = expectedCard(p);
   if (expect) body.appendChild(expect);
 
-  tastesLikeCard(body, p);
-
   /* THE DISTILLER'S FOUR COLUMNS, when there are none to show. ONE card
      with that heading and never two: two both titled Tasting notes was half
      of what made this page confusing, and the offer to fetch them has to be
@@ -35612,6 +35630,12 @@ function bottleTaste(body, p, k, notes, noteFill) {
       ? 'The notes for this one belong to ' + L.sentenceCase(p.tnFrom) + '.'
       : 'Nothing recorded. Add color, nose, palate and finish as you pour '
         + 'it.'));
+    /* AND WHAT THE CATEGORY GIVES ANYWAY, so a bottle nobody has written
+       about is not a blank page. Marked as what to expect, never as what it
+       tastes of: nothing here has tasted it. */
+    const likely = L.goesSay(String(p.sub || '').toLowerCase(),
+      L.originBase(p));
+    if (likely) ask.appendChild(el('div', 'note', likely));
     const add = el('button', 'chip', 'Add tasting notes');
     add.onclick = () => tastingNoteForm(p);
     ask.appendChild(add);
@@ -35649,6 +35673,13 @@ function bottleTaste(body, p, k, notes, noteFill) {
     nb.appendChild(tnEdit);
   }
   body.appendChild(nb);
+
+  /* YOURS BEFORE OURS (BZ, 2026-09-27: "Im not sure my notes should be last
+     on the page", and again 2026-10-12: "My notes should be before tasted
+     like"). What he wrote about his own bottle comes before what the app
+     worked out about it. Rebuilding this section put the app's answer first
+     and undid a ruling he had already given once. */
+  tastesLikeCard(body, p);
 }
 
 /* The flights this bottle is poured in - part of how it fits, not of how it
@@ -53515,6 +53546,20 @@ function settleKnownFacts(facts) {
   facts.appendChild(fix);
 }
 
+/* THE CAMERA IN THE NAME FIELD IS FOR ADDING, NOT EDITING.
+ *
+ * In the field it means "the bottle is in my hand, read it", which is the
+ * ADD case: a single barrel or a festival bottling may be on no listing and
+ * in no library, and the label is the only source there is. On a bottle
+ * already on the shelf it answers a question nobody has - the name, the
+ * distillery, the proof and the finish are on the screen behind the form
+ * (BZ, 2026-10-12: "If the bottle is on the shelf and we can look up data,
+ * would I take a photo?").
+ *
+ * Reading the label of one he already owns is Read the label, on the bottle
+ * itself, offered there whether or not anything is missing - because a label
+ * CORRECTS, and an entry that needs correcting often scores as complete.
+ */
 function productForm(existing, fromScan) {
   const p = existing || {};
   openModal(existing ? 'Edit ' + p.name : 'Add a bottle', m => {
@@ -53531,7 +53576,8 @@ function productForm(existing, fromScan) {
        on a listing or in the library, and the label is the only source. */
     const shoot = el('button', 'instbtn scanfield slot2');
     shoot.type = 'button';
-    shoot.hidden = !S.lookupUrl;
+    /* ADDING ONLY - see above the function. */
+    shoot.hidden = !S.lookupUrl || !!existing;
     shoot.title = 'Photograph the label';
     shoot.setAttribute('aria-label', 'Photograph the label');
     shoot.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19"'
@@ -58475,7 +58521,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.35</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.38</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

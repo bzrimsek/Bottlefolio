@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1028 |
+| functions | 1029 |
 | tables | 245 |
-| carrying a stated purpose | 822 |
+| carrying a stated purpose | 823 |
 
 ## Tables
 
@@ -538,6 +538,7 @@ QUESTION, not the name you were going to use.
 - **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
 - **`L.giftText`** — The same list as a message
+- **`L.goesSay`** — IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
 - **`L.groupOf`** — _no comment above it_
 - **`L.groupShared`** — WHAT A GROUP HAS, said in the two ways that need no circles

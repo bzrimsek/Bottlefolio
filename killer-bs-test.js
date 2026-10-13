@@ -29958,6 +29958,40 @@ sec('§463 one judgement, however it was made');
       { x: { v: 'ok', at: 2 } }).x.v, 'ok');
 }
 
+sec('§470 a bottle nobody has written about is not a blank page');
+{
+  /* Measured on BZ's shelf 2026-10-12: 14 of 352 bottles have no distiller
+     note and every one was silent, because the expected card EXPLAINS a
+     note - which flavours came from the grain, the cask, the years - and
+     with no note there is nothing to explain. Eleven of the 14 are vodka,
+     gin, tequila, brandy or flavored; three are whiskies with no note and
+     no finish. */
+  eq('a bourbon says what a bourbon gives',
+    L.goesSay('bourbon', L.originBase({ sub: 'bourbon' })),
+    'As a bourbon goes: corn, caramel, sugar and toffee.');
+  eq('a rye says its own', L.goesSay('rye', L.originBase({ sub: 'rye' })),
+    'As a rye goes: bread, ginger, pepper and spice.');
+  /* TENNESSEE IS CORN, like bourbon - L.ORIGIN_GRAIN maps both. */
+  eq('tennessee reads as corn', L.goesSay('tennessee', L.originBase({ sub: 'tennessee' })),
+    L.goesSay('bourbon', L.originBase({ sub: 'bourbon' })).replace('bourbon', 'tennessee'));
+
+  /* THE STOCK EXCLUDES ITSELF. No grain ring, no sentence - so there is no
+     second list of what counts as whiskey to drift from L.isWhisky. */
+  ['vodka', 'gin', 'tequila', 'brandy', 'rum', 'liqueur'].forEach(sub => {
+    eq(sub + ' says nothing', L.goesSay(sub, L.originBase({ sub: sub })), null);
+  });
+  eq('no category says nothing',
+    L.goesSay('', L.originBase({})), null);
+
+  /* FOUR AT MOST: more reads as a list rather than a characterisation. */
+  eq('four at most', L.ORIGIN_MOST, 4);
+  eq('the sentence is one door',
+    L.goesSay('bourbon', ['a', 'b', 'c', 'd', 'e']),
+    'As a bourbon goes: a, b, c and d.');
+  eq('and refuses an empty one', L.goesSay('bourbon', []), null);
+  eq('and refuses no category', L.goesSay('', ['a', 'b']), null);
+}
+
 sec('§469 one bottle at a time, its state can be flipped');
 {
   /* BZ, 2026-10-12: "Just add a way on a bottle to flip the status". The
