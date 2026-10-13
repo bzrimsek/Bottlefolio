@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.44  Build 2026-10-13 12:04 AM ET
+     Version : v2.8.45  Build 2026-10-13 12:15 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
 // v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
 // v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
-// v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -326,7 +326,12 @@ body.typing nav{display:none}
    than as slightly larger text. */
 .hdr h1{font-size:24px;color:var(--ink-deep);letter-spacing:.015em}
 /* Card headings likewise: a card's title should announce the card. */
-.sheet > h3{font-size:16px;letter-spacing:.025em;color:var(--ink-deep)}
+/* A DESCENDANT, NOT A CHILD. An h3 one level deeper - Recent pours sits in
+   a .hdr inside its sheet - matched nothing and fell back to the browser
+   default, which is bigger, so Home showed two heading sizes that were both
+   meant to be 16px (BZ, 2026-10-13: "I see three title sizes on the first
+   page"). */
+.sheet h3{font-size:16px;letter-spacing:.025em;color:var(--ink-deep)}
 /* THE MASTHEAD IS A THING, not a row of text on the page. */
 .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px;
   position:relative;background:var(--card);border:1px solid var(--line);
@@ -3094,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.44';
-const BUILD_TIME  = '2026-10-13 12:04 AM ET';
+const APP_VERSION = '2.8.45';
+const BUILD_TIME  = '2026-10-13 12:15 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -42669,7 +42674,7 @@ function renderTasteShape(box) {
   const axes = L.tasteAxes(S.catalog, S.bottles);
   if (!axes) return null;
   const host = el('div', 'sheet portrait');
-  host.appendChild(el('div', 'portlabel', 'Your taste profile'));
+  host.appendChild(el('h3', null, 'Your taste profile'));
   /* NOT "what you reach for" (BZ, 2026-09-27, asking "is it what I reach
      for?"). It is not: L.tasteWeights reads the SHELF - how much of it carries
      a flavour, and how far that sets it apart - and then bends it by the
@@ -42748,7 +42753,7 @@ function renderShelfShape(box, opts) {
   if (!o.inline) {
     /* Both registers: what it IS on top, so a scanning eye knows what it is
        looking at, then the phrase for how it feels. */
-    host.appendChild(el('div', 'portlabel', 'Your collector profile'));
+    host.appendChild(el('h3', null, 'Your collector profile'));
     host.appendChild(el('div', 'portwhy', 'The shape of your shelf'));
   }
   const wrap = radarSvg(axes, showAxisCandidates);
@@ -42761,7 +42766,7 @@ function renderShelfShape(box, opts) {
     const sc = el('div', 'portsteps');
     const narrow = window.matchMedia
       && window.matchMedia('(max-width:560px)').matches;
-    sc.appendChild(el('div', 'portlabel', 'Where it is thinnest'));
+    sc.appendChild(el('h3', null, 'Where it is thinnest'));
     /* What the percentages mean, said once, so six numbers are not read as
        "how much of this do I own". */
     const whyBox = narrow ? el('details', 'advanced') : sc;
@@ -58738,7 +58743,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.44</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.45</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
