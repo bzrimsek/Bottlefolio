@@ -4091,20 +4091,17 @@ sec('your taste, painted');
 
 sec('the grain bill is not printed twice');
 {
-  /* The tags are the app's reading, the sentence is the label's own words, and
-     both are shown because when they disagree the label wins. On a plain bill
-     they cannot disagree and the page stuttered (BZ, 2026-09-27). */
-  eq('a sentence that is only the tags again is an echo',
-    L.mashEcho(L.mashSay({ mash: '72% corn, 18% rye, 10% malted barley' })),
-    true);
-  eq('a partial bill says something the tags cannot',
-    L.mashEcho(L.mashSay({ mash: '51% corn, rest undisclosed' })), false);
-  eq('and so does a bill the app reads a shape from',
-    L.mashEcho(L.mashSay({ mash: '70% corn, 20% rye, 10% malt' })), false);
-  eq('what the category requires is never an echo',
-    L.mashEcho(L.mashSay({ sub: 'scotch', style: 'single malt' })), false);
-  eq('and nothing at all is not one either',
-    [L.mashEcho(null), L.mashEcho({})], [false, false]);
+  /* THE SENTENCE IS NOT PRINTED BESIDE THE TAGS ANY MORE. It used to be,
+     on the reasoning that the tags are the app's reading and the sentence
+     the label's own words - but the sentence WAS the bill plus a shape the
+     app worked out, so a card carrying both read the grains twice (BZ,
+     2026-10-12). The shape is a tag now and L.mashEcho, which existed to
+     spot the repeat and could not, has gone with it. */
+  eq('the shape comes back on its own',
+    L.mashSay({ mash: '70% corn, 20% rye, 10% malt' }).shape, 'High-Rye');
+  eq('and the sentence is just the bill',
+    L.mashSay({ mash: '72% corn, 18% rye, 10% malted barley' }).say,
+    '72% corn, 18% rye, 10% malted barley');
 }
 
 sec('whose notes these are, always answered');

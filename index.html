@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.42  Build 2026-10-12 11:34 PM ET
+     Version : v2.8.43  Build 2026-10-12 11:53 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
 // v2.8.35  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // v2.8.34  2026-10-12  The bottle page is one section about taste, with how it fits above it.
-// v2.8.33  2026-10-12  The bottle page is one section about taste, with how it fits above it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -131,8 +131,8 @@ nav :focus-visible,.felted :focus-visible,.verdict :focus-visible,
    the only way out of a search that found nothing. */
 .form.seeking > *:not(.namerow):not(.scanfield){display:none}
 .candidates{margin-top:6px;display:flex;flex-direction:column;gap:4px}
-.candidate{text-align:left;width:100%;padding:8px 10px;
-  border:1px solid var(--line);border-radius:10px;background:var(--card);
+.candidate{text-align:left;width:100%;padding:8px 8px;
+  border:1px solid var(--line);border-radius:8px;background:var(--card);
   color:var(--ink)}
 .candidate .nm{font-weight:600}
 .candidate .sub{font-size:12px;color:var(--mute)}
@@ -171,7 +171,7 @@ nav :focus-visible,.felted :focus-visible,.verdict :focus-visible,
   /* -webkit-overflow-scrolling:touch stood here. WebKit removed it in iOS 13
      and it computes to nothing; it read like momentum scrolling was being
      configured here, and nothing was (2026-09-30). */
-  padding:20px 16px 72px;width:100%;
+  padding:16px 16px 72px;width:100%;
   -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 22px),transparent);
   mask-image:linear-gradient(to bottom,#000 calc(100% - 22px),transparent)}
 
@@ -279,7 +279,7 @@ body.typing nav{display:none}
    group holds its line; the title is what gives way, and it already ends in
    an ellipsis when it has to. */
 .hdr{flex-wrap:nowrap}
-.hdr .hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px;
+.hdr .hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;
   flex:0 0 auto;flex-wrap:nowrap;white-space:nowrap}
 .hdr .hdr-right > *{flex:none}
 
@@ -312,12 +312,12 @@ body.typing nav{display:none}
    name where the trail goes, and this one does not follow the trail. It
    moves with .backbtn, one place to its left, so the pair stay together. */
 .hdr .shopback{order:8;margin-left:6px}
-.hdr-acts{display:flex;align-items:center;gap:7px;margin-left:auto}
-.btn-sm{padding:8px 13px;font-size:14px}
+.hdr-acts{display:flex;align-items:center;gap:8px;margin-left:auto}
+.btn-sm{padding:8px 12px;font-size:14px}
 .btn-gold{background:var(--gold);border-color:var(--gold);color:#1A1613;font-weight:600}
 /* Detail screens put their actions on one row under the back button, so the
    thing you came to do is reachable without scrolling past the record. */
-.detail-acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;
+.detail-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
   margin-bottom:12px}
 /* Back sits first and is visually quieter than the actions beside it. */
 .detail-acts #backBtn{padding-left:10px}
@@ -328,9 +328,9 @@ body.typing nav{display:none}
 /* Card headings likewise: a card's title should announce the card. */
 .sheet > h3{font-size:16px;letter-spacing:.025em;color:var(--ink-deep)}
 /* THE MASTHEAD IS A THING, not a row of text on the page. */
-.brand{display:flex;align-items:center;gap:11px;margin-bottom:14px;
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:14px;
   position:relative;background:var(--card);border:1px solid var(--line);
-  border-radius:14px;padding:13px 14px;overflow:hidden}
+  border-radius:12px;padding:12px 12px;overflow:hidden}
 .brand::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,var(--t-bourbon),var(--gold),
     var(--t-scotch));z-index:0}
@@ -352,8 +352,8 @@ body.typing nav{display:none}
    which is what oneline already does to it. */
 .pourglass{flex:none;margin-left:6px;margin-right:2px;min-height:40px;
   min-width:56px;
-  text-align:center;padding:5px 10px;
-  border:1px solid var(--line);border-radius:9px;background:transparent;
+  text-align:center;padding:4px 8px;
+  border:1px solid var(--line);border-radius:8px;background:transparent;
   color:var(--gold);font-size:12px;line-height:1;cursor:pointer;
   white-space:nowrap;align-self:center}
 .pourglass:active{background:var(--gold);color:var(--paper)}
@@ -390,8 +390,8 @@ body.typing nav{display:none}
    as he asked above; only where it sits changed, to where the eye already is. */
 .working{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
   z-index:260;
-  display:flex;align-items:center;gap:7px;
-  padding:6px 11px;border-radius:999px;
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:999px;
   background:var(--ink-deep);color:#fff;font-size:12px;
   box-shadow:0 2px 9px rgba(0,0,0,.26);max-width:80vw}
 .working[hidden]{display:none}
@@ -448,10 +448,10 @@ body.typing nav{display:none}
    right in ink, so a glance tells you who is speaking without reading a word.
    The bubbles are narrow on purpose: a line of chat running the full width of
    a phone reads as a paragraph rather than as somebody talking. */
-.thread{display:flex;flex-direction:column;gap:9px;margin-bottom:10px}
+.thread{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 .said{display:flex;align-items:flex-start;gap:8px}
 .said.mine{justify-content:flex-end}
-.bubble{max-width:82%;padding:9px 12px;border-radius:13px;line-height:1.42;
+.bubble{max-width:82%;padding:8px 12px;border-radius:12px;line-height:1.42;
   background:var(--card);border:1px solid var(--line)}
 .said.mine .bubble{background:var(--ink-deep);color:var(--paper);
   border-color:var(--ink-deep)}
@@ -493,7 +493,7 @@ body.typing nav{display:none}
 /* HIM AT THE HEAD OF THE TALK, at the size the picture was drawn for. The
    44px beside a line of speech says who is speaking; this says who you have
    walked in on. It scrolls away with the rest of the thread. */
-.cooperhead{display:flex;justify-content:center;padding:4px 0 10px}
+.cooperhead{display:flex;justify-content:center;padding:4px 0 8px}
 /* HE TAKES THE ROOM THE PHONE HAS (BZ, 2026-10-05, on a screenshot with half
    the screen empty above him: "Room for more cooper on mobile"). 160 was
    picked as exactly native for a 320x320 picture on a 2x screen, which was a
@@ -506,7 +506,7 @@ body.typing nav{display:none}
    screen is the worse fault. Going further properly wants a 640x640 source,
    which is a file and not a rule. */
 .cooperhead .cooper{float:none;width:min(58vw,232px);height:min(58vw,232px);
-  margin:0;border-radius:16px;box-shadow:0 6px 18px rgba(26,22,19,.18)}
+  margin:0;border-radius:12px;box-shadow:0 6px 18px rgba(26,22,19,.18)}
 @media (max-width:380px){ .cooperhead .cooper{width:min(62vw,206px);
   height:min(62vw,206px)} }
 /* AND BIGGER WHERE THERE IS ROOM. 160 is exactly native on a 2x screen,
@@ -522,7 +522,7 @@ body.typing nav{display:none}
    ones stay perfect is the worse trade. Past this wants a 640x640 source,
    which is a file and not a rule. */
 @media (min-width:700px){ .cooperhead .cooper{width:240px;height:240px;
-  border-radius:18px} }
+  border-radius:12px} }
 
 /* HE IS THINKING, AND IT LOOKS LIKE IT (BZ, 2026-09-28: "those dots need
    motion"). An answer takes several seconds and this mark is the only thing on
@@ -533,7 +533,7 @@ body.typing nav{display:none}
    turned off for anybody who asked for less motion, so keyframes that begin
    faded would leave that person looking at nothing instead of at a quieter
    version of the same thing. */
-.thinking{display:inline-flex;gap:5px;align-items:center;padding:10px 12px}
+.thinking{display:inline-flex;gap:4px;align-items:center;padding:8px 12px}
 .thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink);
   opacity:.85;animation:cooperdot 1.25s ease-in-out infinite}
 .thinking i:nth-child(2){animation-delay:.18s}
@@ -554,14 +554,14 @@ body.typing nav{display:none}
 
 #guideChips{flex:0 0 auto}
 .askrow{display:flex;gap:8px;align-items:center;flex:0 0 auto;
-  padding:8px 0 calc(6px + env(safe-area-inset-bottom));background:var(--paper)}
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:var(--paper)}
 .askrow .in{flex:1;min-width:0}
 
 /* COOPER, beside what he is saying rather than above it: a portrait with the
    words wrapped round it reads as somebody talking, and one stacked on top
    reads as a header. He shrinks on a narrow phone rather than pushing the
    sentence into a column two words wide. */
-.cooper{float:left;width:110px;height:110px;border-radius:10px;
+.cooper{float:left;width:110px;height:110px;border-radius:8px;
   margin:0 12px 6px 0;shape-outside:inset(0 round 10px)}
 @media (max-width:380px){ .cooper{width:84px;height:84px;margin-right:9px} }
 
@@ -570,7 +570,7 @@ body.typing nav{display:none}
 .layer{margin-top:10px}
 .layerwords{margin-top:6px}
 .layerword{display:flex;justify-content:space-between;gap:12px;
-  padding:3px 0;border-top:1px solid var(--line);font-size:14px}
+  padding:4px 0;border-top:1px solid var(--line);font-size:14px}
 .layern{color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
 
 /* A WINDOW THAT IS REAL BUT NOT YET READABLE. Dimmed rather than hidden, so
@@ -581,7 +581,7 @@ body.typing nav{display:none}
    the text it follows, because the text is still the answer until it is not. */
 .again{color:var(--dim);white-space:nowrap}
 
-.tastemeter{height:4px;border-radius:2px;background:var(--line);
+.tastemeter{height:4px;border-radius:4px;background:var(--line);
   margin:10px 0 5px;overflow:hidden}
 .tastefill{height:100%;background:var(--gold);transition:width .25s ease}
 .tastemeter.done .tastefill{background:var(--good,var(--gold))}
@@ -606,7 +606,7 @@ body.typing nav{display:none}
    it does the catching. */
 /* 36px drawn, 44px reachable. */
 .instbtn{position:relative;z-index:0;
-  width:44px;height:44px;flex:none;border-radius:9px;
+  width:44px;height:44px;flex:none;border-radius:8px;
   border:0;background:none;color:var(--ink-deep);
   font-size:16px;line-height:1;padding:0;
   display:flex;align-items:center;justify-content:center}
@@ -615,14 +615,14 @@ body.typing nav{display:none}
   stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;
   position:relative;z-index:1}
 .instbtn::before{content:'';position:absolute;z-index:-1;
-  width:36px;height:36px;border-radius:9px;
+  width:36px;height:36px;border-radius:8px;
   border:1px solid var(--line);background:var(--card)}
 /* Only the first pushes off the wordmark; the rest sit beside it. */
 /* The auto margin belongs to the GROUP, not to whichever button happens to
    be first. :first-of-type put it on the install prompt, which is hidden
    most of the time — and a hidden element cannot push anything, so the gear
    slid left and moved again whenever a conditional button appeared. */
-.brand .brandacts{display:flex;align-items:center;gap:6px;margin-left:auto}
+.brand .brandacts{display:flex;align-items:center;gap:8px;margin-left:auto}
 .brand .instbtn[hidden]{display:none}
 .brand img{width:52px;height:52px;flex:none}
 /* The name field with its scanner beside it: the field takes the room and
@@ -643,7 +643,7 @@ label.withslots .instbtn.slot2{right:44px}
   width:44px;height:44px;padding:0;border:0;background:none;
   display:flex;align-items:center;justify-content:center}
 .instbtn.scanfield::before{content:'';position:absolute;z-index:-1;
-  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--line);
   background:var(--card)}
 /* The count, on the corner of the pending icon. A number rather than a
    dot, because "three waiting" and "one waiting" are different amounts of
@@ -652,7 +652,7 @@ label.withslots .instbtn.slot2{right:44px}
 #pendingBtn::after{content:attr(data-n);position:absolute;top:1px;right:1px;
   min-width:15px;height:15px;border-radius:8px;background:var(--rust);
   color:#FDFAF4;font-size:12px;font-weight:600;line-height:15px;
-  text-align:center;padding:0 3px}
+  text-align:center;padding:0 4px}
 /* The masthead dot: where the shelf is being kept, beside the gear. */
 /* An 11px DOT with a 44px reach. Measured on a phone at 390px: the dot was
    an 11 by 11 tap target, which is a quarter of the 44 that a finger needs
@@ -678,26 +678,26 @@ label.withslots .instbtn.slot2{right:44px}
    state is the whole point and it was missing: only .sortrow chips had
    one, so a row of three all looked the same and the form said nothing
    about what was chosen. */
-.chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px}
 /* TABS, NOT PILLS (BZ, 2026-10-01). A chip is this app's FILTER: several on at
    once, each one a thing you are keeping. A tab is one of a set with exactly one
    open and the page below belonging to it, so it takes the ordinary shape for
    that - a rule under the open one, a line under the set - rather than borrowing
    the filter's. One line that slides, because seven wrapped tabs read as two
    strips. */
-.tabrow{display:flex;gap:2px;margin:0 0 2px;overflow-x:auto;
+.tabrow{display:flex;gap:4px;margin:0 0 2px;overflow-x:auto;
   scrollbar-width:none;border-bottom:1px solid var(--line);
   -webkit-overflow-scrolling:touch}
 .tabrow::-webkit-scrollbar{display:none}
 .tabrow .tab{flex:0 0 auto;background:none;border:0;border-bottom:2px solid
-  transparent;border-radius:0;padding:10px 13px;margin-bottom:-1px;
+  transparent;border-radius:0;padding:8px 12px;margin-bottom:-1px;
   font:inherit;font-size:14px;color:var(--mute);cursor:pointer;
   white-space:nowrap}
 .tabrow .tab:hover{color:var(--ink)}
 .tabrow .tab.on{color:var(--ink);border-bottom-color:var(--gold);
   font-weight:600}
 .tabrow .tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
-.chiprow .chip{flex:1 1 auto;min-width:0;text-align:center;padding:9px 8px}
+.chiprow .chip{flex:1 1 auto;min-width:0;text-align:center;padding:8px 8px}
 /* The lit gold behind dark text: the brand gold gave 3.57:1, under the 4.5
    anything read needs (review, 2026-09-15). */
 .chiprow .chip[data-on="true"]{background:var(--gold-lit);
@@ -730,7 +730,7 @@ label.withslots .instbtn.slot2{right:44px}
      the same 36px square as the gear beside it, so what they have in common
      - press this, it goes somewhere - is what they look like. The dot keeps
      its color, which is the only thing about it that carries meaning. */
-  #scr-home .brand{padding:10px 12px;gap:9px}
+  #scr-home .brand{padding:8px 12px;gap:8px}
   #scr-home .brand img{width:42px;height:42px}
   #scr-home .brand .wm{font-size:16px}
   #scr-home .brand .brandacts{gap:4px}
@@ -740,7 +740,7 @@ label.withslots .instbtn.slot2{right:44px}
      as `color` so the light can read it with currentColor. It also gains a
      44px target on the way: it was a 9px dot that opens a screen. */
   #scr-home .brand .syncdot.mast{
-    width:44px;height:44px;border-radius:9px;margin:0;
+    width:44px;height:44px;border-radius:8px;margin:0;
     background:none;border:0;padding:0;position:relative;z-index:0;
     color:var(--line)}
   #scr-home .brand .syncdot.mast[data-status="synced"]{color:var(--ok)}
@@ -749,7 +749,7 @@ label.withslots .instbtn.slot2{right:44px}
   #scr-home .brand .syncdot.mast[data-status="error"]{color:var(--rust)}
   #scr-home .brand .syncdot.mast::before{content:'';position:absolute;
     z-index:-1;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:36px;height:36px;border-radius:9px;
+    width:36px;height:36px;border-radius:8px;
     border:1px solid var(--line);background:var(--card)}
   #scr-home .brand .syncdot.mast::after{content:'';position:absolute;
     left:50%;top:50%;transform:translate(-50%,-50%);
@@ -819,7 +819,7 @@ nav button{white-space:nowrap;overflow:hidden}
 
 nav button{
   background:none;border:0;color:#B9C3D4;font-size:12px;letter-spacing:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   padding:0;
 }
 nav button .g{font-size:16px;line-height:1;display:flex;align-items:center;
@@ -848,7 +848,7 @@ nav button{position:relative}
    group. A fixed column makes them equal across all three, which is what
    was asked for. */
 .datagrid{display:grid;grid-template-columns:190px 1fr;
-  gap:10px 14px;align-items:center;margin-top:12px}
+  gap:8px 14px;align-items:center;margin-top:12px}
 @media (max-width:460px){
   /* Where 190px would leave no room for the sentence beside it. */
   .datagrid{grid-template-columns:150px 1fr;gap:8px 10px}
@@ -865,7 +865,7 @@ nav button{position:relative}
 @media (max-width:560px){
   /* A phone has no room for two columns of this, so it stacks — the
      explanation still belongs to the button above it. */
-  .datagrid{grid-template-columns:1fr;gap:3px 0}
+  .datagrid{grid-template-columns:1fr;gap:4px 0}
   .datagrid > .btn{margin-top:9px}
   .datagrid .datawhy{font-size:14px;margin-bottom:2px}
 }
@@ -920,15 +920,15 @@ nav button[aria-current="page"]{
    forms on a 390px phone: fields came out at 37 and chips at 31, which
    reads fine on a desktop and misses on a phone. The change is two or
    three pixels of padding and a floor. */
-.field{width:100%;padding:11px 11px;border:1px solid var(--line);
-  border-radius:7px;background:var(--card);font:inherit;min-height:44px;
+.field{width:100%;padding:12px 12px;border:1px solid var(--line);
+  border-radius:8px;background:var(--card);font:inherit;min-height:44px;
   /* 16px, or an iPhone zooms the page on every tap into a field. */
   font-size:16px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 /* 40 tall, not 38: most chips measured 39px, under the 40 a thumb needs
    (review, 2026-09-15). */
 .chip{
-  padding:9px 13px;min-height:40px;border:1px solid var(--line);
+  padding:8px 12px;min-height:40px;border:1px solid var(--line);
   border-radius:999px;
   background:var(--card);font-size:14px;color:var(--mute);
 }
@@ -945,7 +945,7 @@ nav button[aria-current="page"]{
 .btn.rightone:disabled{background:var(--ok);border-color:var(--ok);
   color:#fff;opacity:1}
 .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;
-  padding:4px 10px;font-size:12px;line-height:1.25;color:var(--mute);
+  padding:4px 8px;font-size:12px;line-height:1.25;color:var(--mute);
   background:var(--card)}
 .chip[aria-pressed="true"]{background:var(--ink-deep);border-color:var(--ink-deep);color:#fff}
 /* A SWITCH THAT LOOKS LIKE ONE. Drawn as a track and a knob because that
@@ -986,7 +986,7 @@ nav button[aria-current="page"]{
    nothing back yet, and the ask sits beside it. */
 /* A DIAGNOSTIC ROW: label, then value, lined up down the card. */
 .diagrow{display:grid;grid-template-columns:minmax(90px,30%) 1fr;
-  gap:10px;align-items:baseline;padding:3px 0;
+  gap:8px;align-items:baseline;padding:4px 0;
   border-top:1px solid var(--line)}
 .diagrow:first-of-type{border-top:0}
 .diagrow .dk{font-size:12px;color:var(--mute)}
@@ -1016,7 +1016,7 @@ nav button[aria-current="page"]{
 .iconchip{min-width:40px;height:40px;padding:0;font-size:16px;
   line-height:1;display:inline-flex;align-items:center;
   justify-content:center}
-.rowacts{display:flex;gap:6px;flex:none;align-items:center;flex-wrap:wrap}
+.rowacts{display:flex;gap:8px;flex:none;align-items:center;flex-wrap:wrap}
 /* THE TEXT SIDE ONLY. Applied to every child, this let the PILL
    container shrink below the width of its own buttons, and they spilled
    44 to 51 pixels out of the row - caught by the walk in one run. A
@@ -1035,7 +1035,7 @@ nav button[aria-current="page"]{
 /* A SCAN ROW IS TWO COLUMNS, NOT SEVEN. Two columns: the words take what
    is left, the actions take what they need. Under 560px it becomes one
    column and they stack. */
-.scanrow{display:grid;gap:6px 12px;align-items:start;
+.scanrow{display:grid;gap:8px 12px;align-items:start;
   grid-template-columns:minmax(0,1fr) auto}
 .scanrow>div:first-child{min-width:0;overflow-wrap:anywhere}
 .scanrow .rowacts{justify-self:end}
@@ -1054,7 +1054,7 @@ nav button[aria-current="page"]{
    ordinary in-flow layout that the page has drawn a hundred times, and
    `top:0` against the screen's own scroller keeps it beside the bottle
    while the page moves - which is the whole requirement. */
-.fillwrap{display:flex;gap:14px;align-items:flex-start}
+.fillwrap{display:flex;gap:12px;align-items:flex-start}
 .fillwrap>.fillbody{flex:1;min-width:0}
 .fillrail{position:sticky;top:0;flex:none;width:44px;
   height:calc(100vh - 210px);min-height:260px;
@@ -1065,7 +1065,7 @@ nav button[aria-current="page"]{
      also stops short of, 74px up. */
   z-index:120;
   display:flex;flex-direction:column;align-items:center;
-  justify-content:space-between;padding:10px 0 14px;
+  justify-content:space-between;padding:8px 0 12px;
   border-right:1px solid var(--line);background:var(--card)}
 .fillrail .cap{font-size:16px;opacity:.55;line-height:1}
 /* THE HANDLE SITS ON THE TRACK. BZ: dot seems off center. It was - the
@@ -1093,16 +1093,16 @@ nav button[aria-current="page"]{
 /* A BAR, NOT A DOT. BZ: dot still not centered on mobile - and then, can
    you use a bar and not a dot? */
 .fillrail input[type=range]::-webkit-slider-runnable-track{
-  width:10px;background:var(--line);border-radius:5px}
+  width:10px;background:var(--line);border-radius:4px}
 .fillrail input[type=range]::-moz-range-track{
-  width:10px;background:var(--line);border-radius:5px}
+  width:10px;background:var(--line);border-radius:4px}
 .fillrail input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;
-  width:26px;height:7px;border-radius:2px;
+  width:26px;height:7px;border-radius:4px;
   background:var(--gold);border:1px solid rgba(0,0,0,.25);
   margin-left:-8px}
 .fillrail input[type=range]::-moz-range-thumb{
-  width:26px;height:7px;border-radius:2px;border:1px solid rgba(0,0,0,.25);
+  width:26px;height:7px;border-radius:4px;border:1px solid rgba(0,0,0,.25);
   background:var(--gold)}
 
 /* THE NUMBERS ON THE SCALE. BZ: we need the percents marked on the
@@ -1148,8 +1148,8 @@ nav button[aria-current="page"]{
    bottle B, actions. Printed as one line with an == in the middle, the
    names ran off the right edge under the buttons and the very thing you
    are being asked to judge was the part you could not see. */
-.dupgrid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;
-  align-items:start;padding:9px 0;border-top:1px solid var(--line)}
+.dupgrid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;
+  align-items:start;padding:8px 0;border-top:1px solid var(--line)}
 .dupgrid .dupside{min-width:0}
 .dupgrid .dupside .nm{white-space:normal;word-break:break-word}
 .dupgrid .rowacts{flex-direction:column;align-items:stretch}
@@ -1187,7 +1187,7 @@ nav button[aria-current="page"]{
 
 .roomgrid{display:grid;gap:8px;margin-top:9px;
   grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
-.roomcell{padding:11px 8px;border:1px solid var(--line);border-radius:8px;
+.roomcell{padding:12px 8px;border:1px solid var(--line);border-radius:8px;
   background:transparent;cursor:pointer;text-align:center;font:inherit;
   color:inherit;min-height:64px}
 .roomcell:hover{border-color:var(--ink-deep)}
@@ -1206,7 +1206,7 @@ nav button[aria-current="page"]{
 /* TWO NUMBERS ABREAST, each under its own word. Side by side rather than
    stacked, because they are the same kind of fact about one person and a
    column of four lines reads as four. */
-.rc-two{display:flex;gap:10px;justify-content:center;margin-top:5px}
+.rc-two{display:flex;gap:8px;justify-content:center;margin-top:5px}
 .rc-two > div{min-width:0}
 .rc-s{margin-top:3px;font-size:12px;color:var(--mute)}
 .rc-d{margin-top:8px;display:flex;gap:8px;justify-content:center;
@@ -1245,14 +1245,14 @@ nav button[aria-current="page"]{
    the line - it gets padding instead, which grows the target without
    moving the text. */
 /* 36px TALL WITHOUT MOVING THE TEXT. My first attempt put padding at the
-   top of this rule and a later `padding:4px 9px` in the SAME rule
-   overrode it - last declaration wins, and the chip stayed 17px. An
+   top of this rule and a later `padding:4px 8px` in the SAME rule
+   overrode it - last declaration wins, and the chip stayed 16px. An
    explicit min-height cannot be undone by a shorthand further down. */
 .portveto{min-height:40px;display:inline-flex;align-items:center;
   vertical-align:middle;margin-left:9px;
   font-family:'IBM Plex Sans',sans-serif;font-weight:500;
   font-size:12px;letter-spacing:.07em;text-transform:uppercase;
-  line-height:1;padding:4px 9px;border-radius:999px;cursor:pointer;
+  line-height:1;padding:4px 8px;border-radius:999px;cursor:pointer;
   /* The portrait's own light ink: muted grey on its dark green read at
      1.92:1 (review, 2026-09-15). */
   color:var(--felt-ink);background:transparent;
@@ -1263,7 +1263,7 @@ nav button[aria-current="page"]{
 .brand .portveto{color:var(--ink);border-color:var(--line)}
 .brand .portveto:hover{color:var(--ink-deep);border-color:var(--mute)}
 @media (max-width:560px){
-  .portveto{font-size:12px;padding:3px 8px;margin-left:7px}
+  .portveto{font-size:12px;padding:4px 8px;margin-left:7px}
 }
 
 /* A TICKED ROW IN THE BULK PICKER. The tick is in the text as well as the
@@ -1283,7 +1283,7 @@ nav button[aria-current="page"]{
    close enough to look fine and not close enough to be right. One pixel of
    padding each way, which changes nothing visually and puts every button
    in the app over the line. */
-.btn{padding:11px 15px;border:1px solid var(--ink-deep);border-radius:7px;
+.btn{padding:12px 16px;border:1px solid var(--ink-deep);border-radius:8px;
   background:var(--ink-deep);color:#fff;font-size:14px;font-weight:500;
   min-height:44px}
 .btn.ghost{background:transparent;color:var(--ink-deep)}
@@ -1291,7 +1291,7 @@ nav button[aria-current="page"]{
 
 /* ---------- bottle rows ---------- */
 .list{display:flex;flex-direction:column;gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  border:1px solid var(--line);border-radius:8px;overflow:hidden}
 /* THE SUMMARY CARDS ARE A STACK, NOT BOTTLE ROWS. A .list is the hairline
    row container above: gap:1px over a --line background, so .item rows
    butt together with the line showing between them. The Shelf's summary
@@ -1338,7 +1338,7 @@ nav button[aria-current="page"]{
    A ROW IS NOW A THING AND WHAT YOU CAN DO TO IT: the first track takes the
    space, the rest size to their content. The rows that really are shelf rows
    say so with `cols7`. */
-.shelfgrid,.item.cols7{display:grid;gap:10px;
+.shelfgrid,.item.cols7{display:grid;gap:8px;
   grid-template-columns:1fr 96px 52px 58px 52px 32px 58px;
   padding-left:15px;padding-right:11px}
 /* FLEX, NOT A SECOND GRID. Two tracks broke any row holding THREE things -
@@ -1349,7 +1349,7 @@ nav button[aria-current="page"]{
    runs off the edge. Not wrapping - the walk asks that a card row hold one
    line, and pills that fall under the name are as wrong as pills that spill
    past it (2026-10-06). */
-.item{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;
+.item{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;
   padding-left:15px;padding-right:11px}
 .item > :first-child{flex:1 1 auto;min-width:0}
 .item > :not(:first-child){flex:0 0 auto}
@@ -1376,11 +1376,11 @@ nav button[aria-current="page"]{
 /* THE ONE THE APP WOULD BUY. Gold, because that is what this app uses for
    the thing it is pointing at, and small, because the row's own name is
    still the thing being read. */
-.pickmark{margin-left:7px;padding:1px 6px;border-radius:9px;font-size:12px;
+.pickmark{margin-left:7px;padding:4px 8px;border-radius:8px;font-size:12px;
   font-weight:600;letter-spacing:.04em;text-transform:uppercase;
   background:var(--gold);color:var(--paper);vertical-align:middle}
 .axislist{max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  border-radius:10px}
+  border-radius:8px}
 .item.stack{display:block}
 .item.stack .nm{overflow-wrap:normal;word-break:keep-all;margin-bottom:2px}
 .item.stack .sub{text-align:left}
@@ -1404,8 +1404,8 @@ nav button[aria-current="page"]{
 /* Findability, beside the name. On the shelf is the quiet default; a hunt
    is worth noticing; allocated is the one that changes whether the
    suggestion is a suggestion at all. */
-.findtag{display:inline-block;margin-left:7px;padding:1px 7px;
-  border-radius:9px;font-size:12px;letter-spacing:.04em;
+.findtag{display:inline-block;margin-left:7px;padding:4px 8px;
+  border-radius:8px;font-size:12px;letter-spacing:.04em;
   text-transform:uppercase;vertical-align:middle;font-weight:500}
 .findtag.f-shelf{background:#E4EDE4;color:#2E6B4F}
 .findtag.f-allocated{background:#F1DFD8;color:var(--rust)}
@@ -1438,7 +1438,7 @@ nav button[aria-current="page"]{
      line of their own: 118 to 136px a row, four rows to a phone screen. Flex
      puts them back on one line beside the name, which is what the columns
      were for. */
-  .item{display:flex;align-items:center;gap:9px;padding-top:8px;
+  .item{display:flex;align-items:center;gap:8px;padding-top:8px;
     padding-bottom:8px}
   .item > div:first-child{flex:1 1 auto;min-width:0}
   /* Two lines, then stop. "A. Overholt Monongahela Mash Straight Rye
@@ -1468,7 +1468,7 @@ nav button[aria-current="page"]{
      resolved to 0px and every bottle read as just its house (BZ,
      2026-10-06: "Which bunni?"). Sized to what each cell holds at 12px, so
      the columns still line up down the list and the name keeps the rest. */
-  .item.cols7{gap:5px;
+  .item.cols7{gap:4px;
     grid-template-columns:minmax(0,1fr) 38px 36px 18px 34px 52px}
   .item .pf,.item .money,.item .have{flex:0 0 auto;text-align:right}
   .item .money,.item .have{font-size:12px}
@@ -1579,7 +1579,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
      measuring what was on top of it. The sides stay negative so the bar
      still bleeds to both edges, and top:-20px with 20px of padding still
      covers the scroller's top edge once it sticks. */
-  margin:0 -16px 8px;padding:20px 16px 0}
+  margin:0 -16px 8px;padding:16px 16px 0}
 /* Four short labels across a phone. They scroll sideways rather than
    wrapping onto a second line, because a wrapped row costs vertical space
    on the screen where space matters most — and the scroll is contained, so
@@ -1608,14 +1608,14 @@ button.respline:hover{opacity:1;text-decoration:underline}
    content came to 440px in a 362px bar — and Sort, which is the last thing
    on the row, sat in the 78px nobody can see. */
 .sortrow{display:flex;gap:8px;align-items:center;margin-top:7px;
-  flex-wrap:wrap;row-gap:7px}
+  flex-wrap:wrap;row-gap:8px}
 .sortrow .chip{flex:none}
 .sortrow .chip[data-on="true"]{background:var(--gold-lit);border-color:var(--gold-lit);color:#1A1613}
 /* Sort keeps its own line when the chips have taken the first one, rather
    than being squeezed to nothing beside them. */
-.sortpick{flex:1 0 auto;display:flex;align-items:center;gap:6px;
+.sortpick{flex:1 0 auto;display:flex;align-items:center;gap:8px;
   font-size:12px;color:var(--mute);white-space:nowrap}
-.sortpick select{padding:6px 26px 6px 9px;font-size:14px}
+.sortpick select{padding:8px 26px 8px 8px;font-size:14px}
 .facet{margin-top:8px}
 .facet .fh{font-size:12px;letter-spacing:.05em;color:var(--gold);
   text-transform:uppercase;margin-bottom:4px}
@@ -1624,7 +1624,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 /* A pour that is not a bottle on the shelf reads differently. */
 .rung.wish .b, .item.wish{opacity:.72}
 .pourtag{display:inline-block;font-size:12px;letter-spacing:.06em;
-  text-transform:uppercase;padding:1px 5px;border-radius:3px;margin-left:6px;
+  text-transform:uppercase;padding:4px 4px;border-radius:4px;margin-left:6px;
   vertical-align:2px}
 .pourtag.wish{background:#EDE0C4;color:#6E5320}
 /* A tag for an ABSENCE, which must not look like the tags that mark a
@@ -1642,7 +1642,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 /* Setup you touch once. Closed by default so Settings shows what changes. */
 .advanced{margin-top:4px}
 .advanced summary{font-size:12px;color:var(--mute);cursor:pointer;
-  letter-spacing:.03em;list-style:none;padding:11px 2px}
+  letter-spacing:.03em;list-style:none;padding:12px 4px}
 .advanced summary::-webkit-details-marker{display:none}
 .advanced summary::before{content:'\25b8 ';color:var(--gold)}
 .advanced[open] summary::before{content:'\25be '}
@@ -1663,7 +1663,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
    middle, the verdict held at the bottom where it can always be read. */
 /* The dimension chips: the axis you are exploring, and it narrows a
    search as readily as it shapes a suggestion. */
-.dimrow{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 11px;flex:none}
+.dimrow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 11px;flex:none}
 .dimrow .chip[aria-pressed="true"]{background:var(--felt);
   color:var(--felt-ink);border-color:var(--felt)}
 .searchrow{display:flex;gap:8px;align-items:center;flex:none}
@@ -1696,16 +1696,16 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .dimcap{font-size:12px;color:var(--mute);margin:0 0 5px;line-height:1.3}
 /* The shop form sits under the bottle now rather than behind a fold, so it
    has to cost less height: smaller labels, tighter gaps, shorter rows. */
-.shopform{gap:6px}
-.shopform .two{gap:7px}
+.shopform{gap:8px}
+.shopform .two{gap:8px}
 .shopform label{font-size:12px}
-.shopform .field,.shopform select.field{padding:6px 9px;font-size:14px}
+.shopform .field,.shopform select.field{padding:8px 8px;font-size:14px}
 .shopform label .field,.shopform label select{margin-top:1px}
-.picklist{background:var(--card);border:1px solid var(--line);border-radius:9px;
+.picklist{background:var(--card);border:1px solid var(--line);border-radius:8px;
   margin-top:7px;box-shadow:0 6px 18px rgba(26,22,19,.14);
   max-height:52vh;overflow-y:auto}
 .pickrow{display:grid;grid-template-columns:20px 1fr auto;gap:8px;width:100%;
-  align-items:center;padding:9px 12px;background:none;border:0;
+  align-items:center;padding:8px 12px;background:none;border:0;
   border-top:1px solid var(--line);text-align:left;font-size:14px}
 .pickrow:first-child{border-top:0}
 .pickrow.on{background:#FBF4E2}
@@ -1720,9 +1720,9 @@ button.respline:hover{opacity:1;text-decoration:underline}
    #DFD8C8, barely off the paper, so the folder read as one flat beige
    shape and the front tab had nothing to stand in front of. A folder's
    depth comes from the ones behind being in shadow. */
-.ftab{flex:none;padding:10px 17px 11px;min-height:40px;
+.ftab{flex:none;padding:8px 16px 12px;min-height:40px;
   border:1px solid var(--line);border-bottom:none;
-  border-radius:10px 10px 0 0;background:#CFC5AF;color:#5A5147;
+  border-radius:8px 10px 0 0;background:#CFC5AF;color:#5A5147;
   font-size:14px;letter-spacing:.01em;cursor:pointer;
   margin-bottom:-1px;position:relative;top:3px;max-width:46vw;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -1735,11 +1735,11 @@ button.respline:hover{opacity:1;text-decoration:underline}
 /* The same gold edge the mastheads carry, so the front tab is marked the
    way every other leading surface in the app is. */
 .ftab[aria-selected="true"]::before{content:'';position:absolute;
-  left:-1px;right:-1px;top:-1px;height:2px;border-radius:9px 9px 0 0;
+  left:-1px;right:-1px;top:-1px;height:2px;border-radius:8px 9px 0 0;
   background:linear-gradient(90deg,var(--t-bourbon),var(--gold),var(--t-scotch));
   z-index:-1}
 .folderbody{background:var(--card);border:1px solid var(--line);
-  border-radius:0 11px 11px 11px;padding:18px 16px 8px;
+  border-radius:0 11px 11px 11px;padding:16px 16px 8px;
   box-shadow:0 2px 6px -3px rgba(36,27,19,.18)}
 /* ROOM TO READ. BZ: the words seem crowded. They were — 13px of padding
    with sheets sitting flush against each other and a heading landing a few
@@ -1757,7 +1757,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .folderbody .find{margin-bottom:7px}
 .folderbody .find:last-child{margin-bottom:0}
 
-.scroller{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;
+.scroller{display:flex;gap:8px;overflow-x:auto;padding-bottom:5px;
   scrollbar-width:none}
 .scroller::-webkit-scrollbar{display:none}
 .scroller .chip{flex:none}
@@ -1782,13 +1782,13 @@ button.respline:hover{opacity:1;text-decoration:underline}
    anything to read. The sides keep 14px, because text that starts at the
    border reads as broken; vertical room is the scarce one on a phone. */
 .sheet{background:var(--card);border:1px solid var(--line);
-  box-shadow:0 1px 0 rgba(36,27,19,.045);border-radius:10px;
-  padding:10px 14px;margin-bottom:8px}
-.kv{display:grid;grid-template-columns:104px 1fr;gap:6px 10px;font-size:14px}
+  box-shadow:0 1px 0 rgba(36,27,19,.045);border-radius:8px;
+  padding:8px 12px;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:104px 1fr;gap:8px 10px;font-size:14px}
 .kv dt{color:var(--mute)}
 .kv dd{margin:0}
 .kv.tn{grid-template-columns:64px 1fr;margin-top:8px;font-size:14px;line-height:1.4}
-.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;
+.tag{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;
   background:#EDE9DF;color:var(--gold);margin:0 4px 4px 0}
 .tag.wine{background:#F3E4E4;color:var(--rust)}
 .tag.wood{background:#E6EAE6;color:var(--ok)}
@@ -1806,36 +1806,36 @@ button.respline:hover{opacity:1;text-decoration:underline}
 /* ---------- proof ladder: the signature element ---------- */
 .ladder{position:relative;margin:14px 0 6px;padding-left:52px}
 .ladder .axis{position:absolute;left:42px;top:0;bottom:0;width:1px;background:var(--line)}
-.rung{position:relative;display:grid;grid-template-columns:1fr;padding:3px 0}
+.rung{position:relative;display:grid;grid-template-columns:1fr;padding:4px 0}
 .rung .pin{position:absolute;left:-52px;width:40px;text-align:right;
   font-size:14px;color:var(--ink-deep);font-weight:600}
 .rung .tick{position:absolute;left:-11px;top:50%;width:11px;height:1px;background:var(--line)}
-.rung .body{border-left:3px solid var(--line);padding:4px 0 4px 10px}
+.rung .body{border-left:3px solid var(--line);padding:4px 0 4px 8px}
 .rung.spot .body{border-left-color:var(--gold)}
 .rung.blind .body{border-left-color:var(--rust)}
 .rung .b{font-size:14px;font-weight:500}
 .rung .w{font-size:12px;color:var(--mute)}
 
 /* ---------- flights ---------- */
-.fcard{background:var(--card);border:1px solid var(--line);border-radius:10px;
-  padding:12px 13px;margin-bottom:9px;width:100%;text-align:left}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:12px 12px;margin-bottom:9px;width:100%;text-align:left}
 .fcard h3{font-size:16px;color:var(--ink-deep);letter-spacing:.02em}
 .fcard .var{font-size:12px;color:var(--gold);margin-top:2px}
 .fcard .meta{font-size:12px;color:var(--mute);margin-top:6px}
 .done{border-left:3px solid var(--ok)}
-.warn{background:#FBF5EC;border:1px solid #E3D3B4;border-radius:8px;padding:9px 11px;
+.warn{background:#FBF5EC;border:1px solid #E3D3B4;border-radius:8px;padding:8px 12px;
   font-size:14px;margin-bottom:8px}
 .warn b{color:var(--gold)}
 .ok{background:#EFF5F1;border-color:#CBDFD2}
 .ok b{color:var(--ok)}
 .snack{font-size:14px;color:var(--mute);margin-top:8px}
-.note{font-size:14px;padding:7px 0;border-top:1px solid var(--line);line-height:1.4}
+.note{font-size:14px;padding:8px 0;border-top:1px solid var(--line);line-height:1.4}
 .note:first-of-type{border-top:0}
 .nsrc{font-size:12px;letter-spacing:.05em;color:var(--gold);text-transform:uppercase;
   margin-bottom:2px}
 textarea.field{font:inherit;resize:vertical;min-height:56px}
-.empty{color:var(--mute);font-size:14px;padding:20px 4px;text-align:center}
-footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
+.empty{color:var(--mute);font-size:14px;padding:16px 4px;text-align:center}
+footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 4px}
 
 /* ---------- wider screens ----------
    The app is laid out for a phone. On a desktop the same single column
@@ -1881,7 +1881,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
   #homeCharts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
     gap:12px;align-items:start}
   .homemap{height:46vh}
-  .payline{gap:14px}
+  .payline{gap:12px}
   .glass svg{max-width:118px}
   .reel .rv{font-size:16px}
 }
@@ -1898,14 +1898,14 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    flush against the felt it read as part of the machine (BZ, 2026-09-17). */
 #pourQ{margin:10px 0}
 #pourFind{margin-bottom:10px}
-.machine{background:var(--felt);border-radius:14px;padding:13px 12px 15px;
+.machine{background:var(--felt);border-radius:12px;padding:12px 12px 16px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 2px 10px rgba(26,22,19,.22);
   min-height:440px;display:flex;flex-direction:column}
 .machine #payline{flex:none}
 /* One line of room, kept even when there is nothing to say. */
 .machine #payMsg{flex:none}
-.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.reel{background:#F7F2E7;border-radius:8px;padding:9px 4px 8px;text-align:center;
+.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.reel{background:#F7F2E7;border-radius:8px;padding:8px 4px 8px;text-align:center;
   border:2px solid transparent;cursor:pointer;overflow:hidden}
 .reel[data-held="true"]{border-color:var(--gold);background:#FBF4E2}
 /* In ordinary case, not capitals: at the 12px floor "RECOGNITION" was wider
@@ -1935,12 +1935,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
   margin-top:13px}
 /* And whose shelf counts, under it. One pick list, so the control is the
    same width whether you have one buddy or six. */
-.matchpick{display:flex;flex-direction:column;align-items:center;gap:6px;
+.matchpick{display:flex;flex-direction:column;align-items:center;gap:8px;
   margin-top:9px}
 .matchsel{max-width:260px;text-align:center;text-align-last:center}
 .spin{background:var(--gold);border:2px solid var(--gold);border-radius:999px;
   color:#1A1613;font-family:'Cinzel',Georgia,serif;font-weight:700;
-  font-size:20px;letter-spacing:.06em;padding:14px 46px;
+  font-size:20px;letter-spacing:.06em;padding:12px 46px;
   box-shadow:0 3px 0 #6E5320, 0 5px 14px rgba(26,22,19,.3)}
 .spin:active{transform:translateY(2px);box-shadow:0 1px 0 #6E5320}
 .holdhint{text-align:center;font-size:12px;color:rgba(237,228,210,.6);
@@ -1957,12 +1957,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    and a fifth would not need this touched again. */
 /* TWO ACROSS, ALWAYS. BZ: maybe tiles 2x2 with color in the icons. */
 .modegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;margin-top:10px}
+  gap:8px;margin-top:10px}
 /* THE DRAWING IS THE SETTING, NOT THE SUBJECT. At 64px wide the art came
    out 70px tall against a 15px label - four tiles spent 234px of a 786px
    screen on pictures (measured 2026-09-20). Smaller art, same drawings. */
 .modetile{background:var(--card);border:1px solid var(--line);border-radius:12px;
-  padding:8px 8px 7px;cursor:pointer;font:inherit;color:inherit;
+  padding:8px 8px 8px;cursor:pointer;font:inherit;color:inherit;
   text-align:center;display:flex;flex-direction:column;align-items:center;
   transition:border-color .12s,transform .12s}
 .modetile:hover{border-color:var(--gold);transform:translateY(-1px)}
@@ -1976,7 +1976,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
 @media (max-width:430px){
   .modegrid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .modetile .sub{display:none}
-  .modetile{padding:7px 5px 6px}
+  .modetile{padding:8px 4px 8px}
   .modetile .nm{font-size:12px}
 }
 .artwrap{width:100%;max-width:44px}
@@ -2004,7 +2004,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
 .modeart .gap{fill:none;stroke:var(--gold);stroke-width:2;stroke-dasharray:3 3}
 
 /* ---------- the payout: three Glencairns ---------- */
-.payline{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}
+.payline{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
 .glass{background:transparent;border:0;padding:0;text-align:center;cursor:pointer}
 .glass svg{width:100%;height:auto;max-width:96px;display:block;margin:0 auto}
 /* Three lines of space, whether the name uses them or not. */
@@ -2025,11 +2025,11 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    in the app looked live. There are 40-odd of them. */
 .btn:disabled, .chip:disabled{opacity:.45;cursor:not-allowed}
 .btn:disabled:hover, .chip:disabled:hover{border-color:var(--line)}
-.machine .empty{color:rgba(237,228,210,.72);font-size:14px;padding:12px 4px 2px}
+.machine .empty{color:rgba(237,228,210,.72);font-size:14px;padding:12px 4px 4px}
 
 /* ---------- modal ---------- */
 .overlay{position:fixed;inset:0;z-index:200;background:rgba(26,22,19,.55);
-  display:none;align-items:center;justify-content:center;padding:14px}
+  display:none;align-items:center;justify-content:center;padding:12px}
 /* Confirm dialogs sit above the nav, since they are a decision that has to
    be answered before anything else happens. */
 .overlay.confirm{z-index:300}
@@ -2041,18 +2041,18 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    not sit against the nav and a long one is not read from the floor up. */
 .modal{background:var(--paper);width:100%;max-width:560px;
   max-height:calc(100dvh - var(--nav-h) - 48px);
-  overflow-y:auto;border-radius:14px;
+  overflow-y:auto;border-radius:12px;
   box-shadow:0 12px 40px rgba(26,22,19,.32);
   /* 26 at the foot so the last button clears the rounded edge and reads as
      inside the sheet rather than pressed against it. */
-  padding:16px 15px 26px;margin-bottom:var(--nav-h)}
+  padding:16px 16px 26px;margin-bottom:var(--nav-h)}
 /* The title row STICKS. A drill-down from a chart can be a hundred rows,
    and the only way out was the browser back gesture or scrolling all the
    way down — on a full-screen sheet that looks exactly like a screen, with
    no visible way off it. The close travels with the title. */
 .modal .modalhd{position:sticky;top:-16px;z-index:1;
-  display:flex;align-items:flex-start;gap:10px;
-  background:var(--paper);margin:-16px -15px 11px;padding:16px 15px 9px;
+  display:flex;align-items:flex-start;gap:8px;
+  background:var(--paper);margin:-16px -15px 11px;padding:16px 16px 8px;
   border-bottom:1px solid var(--line)}
 .modal .modalhd h2{flex:1;margin:0}
 /* 34px drawn, 44px reachable. The close is the control somebody reaches
@@ -2061,22 +2061,22 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:14px 0 4px}
    34 so it does not shout; the button around it is 44. */
 .modal .modalclose{position:relative;z-index:0;
   flex:none;width:44px;height:44px;margin:-9px -9px 0 0;
-  padding:0;font-size:20px;line-height:1;border-radius:9px;
+  padding:0;font-size:20px;line-height:1;border-radius:8px;
   background:none;border:0;color:var(--mute);
   display:flex;align-items:center;justify-content:center}
 .modal .modalclose::before{content:'';position:absolute;z-index:-1;
-  width:34px;height:34px;border-radius:9px;border:1px solid var(--line)}
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--line)}
 .modal .modalclose:active{background:var(--card)}
 .modal h2{font-size:20px;color:var(--ink-deep);margin-bottom:11px}
-.form{display:grid;gap:9px}
+.form{display:grid;gap:8px}
 .form label{font-size:12px;color:var(--mute);display:block}
 .form label .field,.form label select{margin-top:3px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 select.field{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%);
   background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;
   background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-.lookrow{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.lookrow .btn{flex:none;padding:7px 12px;font-size:14px}
+.lookrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lookrow .btn{flex:none;padding:8px 12px;font-size:14px}
 .looknote{font-size:12px;color:var(--mute);flex:1;min-width:150px;line-height:1.35}
 /* ON A BUTTON: the same drawing, the same animation, a size that suits a
    control. Nothing here redraws the bottle or redefines how it moves —
@@ -2112,7 +2112,7 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
 .looknote.warn2{color:var(--rust)}
 /* The name and its star on one line, the star holding its own space so a
    long name wraps against it rather than under it. */
-.titlerow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;
+.titlerow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
   align-items:start}
 .favstar.big{font-size:24px;line-height:1;background:none;border:0;padding:0;
   cursor:pointer;color:var(--gold)}
@@ -2128,9 +2128,9 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
    phone, and an odd last button takes the whole width, so every row is
    full and every target is the same size under a thumb. Above 560px there
    is room to lay them out as they come. */
-.sectionacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;
+.sectionacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;
   padding-top:9px;border-top:1px solid var(--line)}
-.sectionacts .btn{flex:none;padding:7px 12px}
+.sectionacts .btn{flex:none;padding:8px 12px}
 @media (max-width:560px){
   .sectionacts{display:grid;grid-template-columns:1fr 1fr}
   .sectionacts .btn{width:100%;text-align:center}
@@ -2153,24 +2153,24 @@ select.field{appearance:none;background-image:linear-gradient(45deg,transparent 
 /* A field somebody else filled in reads differently from one you typed. */
 .field.looked{background:#FBF6E9;border-color:#DCCB9F}
 .errs{background:#FBECEA;border:1px solid #E4C4BE;color:var(--rust);
-  border-radius:8px;padding:8px 10px;font-size:14px}
+  border-radius:8px;padding:8px 8px;font-size:14px}
 .danger{border-color:var(--rust);color:var(--rust);background:transparent}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 16px);
-  z-index:400;background:var(--ink-deep);color:#F7F2E7;padding:9px 15px;border-radius:8px;
+  z-index:400;background:var(--ink-deep);color:#F7F2E7;padding:8px 16px;border-radius:8px;
   font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s}
 .toast.on{opacity:1}
 .pourrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
   align-items:center;
-  padding:6px 0;border-top:1px solid var(--line)}
+  padding:8px 0;border-top:1px solid var(--line)}
 .pourrow .mv{display:flex;gap:4px}
 /* The host's line for this pour, under the pour it belongs to. Full width
    because it is a sentence, not a value, and spanning both tracks keeps it
    out of the arrow buttons. minmax(0,1fr) above, or a long bottle name
    would push the row wider than the modal. */
-.pourrow .pnote{grid-column:1 / -1;font-size:12px;padding:6px 9px;
+.pourrow .pnote{grid-column:1 / -1;font-size:12px;padding:8px 8px;
   margin-top:2px}
 .pourrow .mv button{border:1px solid var(--line);background:var(--card);
-  border-radius:6px;width:30px;height:28px;font-size:14px}
+  border-radius:8px;width:30px;height:28px;font-size:14px}
 
 /* ---------- map ---------- */
 .mapwrap{position:relative;background:#DCE6E4;border:1px solid var(--line);
@@ -2190,7 +2190,7 @@ button.mapwrap:hover{border-color:var(--gold)}
   paint-order:stroke;stroke:#F2EDE3;stroke-width:2.4px;stroke-linejoin:round;
   vector-effect:non-scaling-stroke}
 .pin.dim circle{opacity:.22} .pin.dim text{opacity:.28}
-.mapctl{position:absolute;right:9px;top:9px;display:flex;flex-direction:column;gap:5px}
+.mapctl{position:absolute;right:9px;top:9px;display:flex;flex-direction:column;gap:4px}
 /* 40px, not 33. The sweep of every screen found exactly one control
    under the size at which people start missing, and it is the pair
    somebody presses repeatedly while pinching about a map. */
@@ -2200,21 +2200,21 @@ button.mapwrap:hover{border-color:var(--gold)}
    column of links: 60 terms as one link per line is a second scroll
    problem wearing a different hat. */
 .reftoc h3{font-size:16px;color:var(--ink-deep)}
-.toclist{display:flex;flex-direction:column;gap:2px;margin-top:6px}
-.toclist.inner{flex-direction:row;flex-wrap:wrap;gap:5px;margin:6px 0 10px}
+.toclist{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.toclist.inner{flex-direction:row;flex-wrap:wrap;gap:4px;margin:6px 0 10px}
 a.reflink{color:var(--ink-deep);text-decoration:none;font-size:14px}
 a.reflink:hover{text-decoration:underline}
 a.tocrow{display:flex;justify-content:space-between;align-items:center;
-  gap:10px;padding:9px 2px;min-height:36px;
+  gap:8px;padding:8px 4px;min-height:36px;
   border-bottom:1px solid rgba(0,0,0,.06)}
 a.tocrow .tocn{color:var(--mute);font-size:12px;flex:none}
 a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
-  padding:8px 11px;min-height:36px;display:inline-flex;align-items:center;
+  padding:8px 12px;min-height:36px;display:inline-flex;align-items:center;
   font-size:12px;background:rgba(255,255,255,.5)}
 /* The two questions a shop screen answers, side by side on a phone that
    has room and stacked on one that does not. */
 .twoways{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
-@media (min-width:520px){ .twoways{grid-template-columns:1fr 1fr;gap:14px} }
+@media (min-width:520px){ .twoways{grid-template-columns:1fr 1fr;gap:12px} }
 .twoway .rs{font-size:12px;letter-spacing:.08em;margin-bottom:2px}
 .refsec h3{font-size:16px;color:var(--ink-deep)}
 .refsec .snote{font-size:12px;color:var(--mute);font-style:italic;margin:3px 0 4px}
@@ -2246,11 +2246,11 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    say and it was body-weight text on cream, indistinguishable from the
    reasoning beneath it. */
 .verdict{background:var(--felt);color:var(--felt-ink);
-  padding:14px 16px;border-radius:10px;margin:-2px 0 6px;
+  padding:12px 16px;border-radius:8px;margin:-2px 0 6px;
   font-family:'Cinzel',Georgia,serif;font-size:20px;line-height:1.22;
   letter-spacing:.005em}
-.find{font-size:14px;padding:6px 0;border-top:1px solid var(--line);line-height:1.4;
-  display:grid;grid-template-columns:16px 1fr;gap:7px;align-items:start}
+.find{font-size:14px;padding:8px 0;border-top:1px solid var(--line);line-height:1.4;
+  display:grid;grid-template-columns:16px 1fr;gap:8px;align-items:start}
 .find:first-of-type{border-top:0}
 .find .m{font-weight:600}
 .find.f-ok .m{color:var(--ok)}
@@ -2294,10 +2294,10 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .portrait .porthd{display:flex;align-items:flex-start;gap:12px;
   flex-wrap:wrap}
 .portrait .porthd-l{flex:1 1 240px;min-width:0}
-.portrait .porthd-r{display:flex;flex-wrap:wrap;gap:6px;
+.portrait .porthd-r{display:flex;flex-wrap:wrap;gap:8px;
   justify-content:flex-end;align-items:center;padding-top:14px}
 @media (max-width:560px){
-  .portrait .porthd-r{justify-content:flex-start;padding-top:2px;gap:5px}
+  .portrait .porthd-r{justify-content:flex-start;padding-top:2px;gap:4px}
   /* ONE ROW, AND THE WORDS WRAP INSIDE THE PILL (BZ, 2026-09-20, and he
      was right when I said otherwise). Measured, all four titles, at 390 and
      360: one line each over two rows is 57px; the same pills allowed to
@@ -2325,7 +2325,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .portrait .portstory{margin-top:12px;font-size:16px;line-height:1.5;
   color:var(--ink-deep)}
 @media (min-width:700px){ .portrait .portstory{font-size:16px} }
-.portrait .portlines{margin-top:11px;display:grid;gap:7px}
+.portrait .portlines{margin-top:11px;display:grid;gap:8px}
 .portrait .radarwrap{margin:14px auto 2px;max-width:330px}
 .portrait .radar{width:100%;height:auto;display:block;overflow:visible}
 .portrait .radar .web{fill:none;stroke:var(--line);stroke-width:1}
@@ -2357,7 +2357,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    two short lines this was always meant to be rather than taking a quarter of the
    card on one - and when a font makes the words wider than the cap, the column
    still grows rather than clipping them. */
-.portrait .quad{display:grid;grid-template-columns:fit-content(84px) 1fr 1fr;gap:6px;
+.portrait .quad{display:grid;grid-template-columns:fit-content(84px) 1fr 1fr;gap:8px;
   margin-top:10px;align-items:stretch}
 .portrait .quad .qhead{font-size:12px;letter-spacing:.5px;
   text-transform:uppercase;color:var(--mute);text-align:center;
@@ -2380,7 +2380,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    centered and as a truncated paragraph when they are not — the same reason
    the six stat tiles are centered. Prose stays left, because a centered
    sentence is harder to read than a left-aligned one. */
-.portrait .quadcell{text-align:center;padding:12px 10px;border-radius:10px;
+.portrait .quadcell{text-align:center;padding:12px 8px;border-radius:8px;
   border:1px solid var(--line);background:var(--paper);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center}
 .portrait .quadcell:active{background:var(--card)}
@@ -2399,7 +2399,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 @media (max-width:430px){
   /* THE PHONE KEEPS THE SAME RULE: a column that fits its words, not a number
      chosen against one device's fonts. */
-  .portrait .quad{gap:5px;grid-template-columns:fit-content(72px) 1fr 1fr}
+  .portrait .quad{gap:4px;grid-template-columns:fit-content(72px) 1fr 1fr}
   .portrait .quad .qhead{font-size:12px}
   .portrait .quad .qside{font-size:12px;width:100%;letter-spacing:.2px}
 }
@@ -2407,7 +2407,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
   border-top:1px solid var(--line)}
 .portrait .portstep{font-size:14px;line-height:1.45;color:var(--ink);
   margin-top:6px;display:block;width:100%;text-align:left;
-  background:none;border:0;padding:5px 0;cursor:pointer}
+  background:none;border:0;padding:4px 0;cursor:pointer}
 .portrait .portstep:active{color:var(--gold)}
 .portrait .portline{font-size:14px;line-height:1.45;color:var(--ink);
   padding-left:11px;border-left:2px solid var(--line)}
@@ -2431,7 +2431,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    a small huddle of books in the left third of a very empty page. */
 .tiles.books{--scale:1;--row:170;
   display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-start;
-  gap:0 5px;padding:0 6px;margin-bottom:14px;
+  gap:0 5px;padding:0 8px;margin-bottom:14px;
   background-image:repeating-linear-gradient(to bottom,
     transparent 0 calc((var(--row) - 5) * 1px * var(--scale)),
     var(--wood,#6b4b2a) calc((var(--row) - 5) * 1px * var(--scale))
@@ -2446,7 +2446,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
   height:calc(var(--row) * 1px * var(--scale));
   display:flex;align-items:flex-end;justify-content:center}
 .tiles.books .bk{display:flex;flex-direction:column;justify-content:space-between;
-  align-items:center;padding:9px 3px 6px;border-radius:3px 3px 1px 1px;
+  align-items:center;padding:8px 4px 8px;border-radius:4px 3px 1px 1px;
   border:1px solid rgba(0,0,0,.28);margin-bottom:5px;
   width:calc(var(--bw) * 1px * var(--scale));
   height:calc(var(--bh) * 1px * var(--scale));
@@ -2474,8 +2474,8 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
   color:rgba(253,246,230,.82);line-height:1;margin-top:5px}
 /* Narrow phones: spines get thinner rather than wrapping to four rows. */
 @media (max-width:380px){ .tiles.books{gap:0 3px} }
-.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;
-  padding:10px 11px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px}
 .tile .v{font-family:'Cinzel',Georgia,serif;font-size:20px;font-weight:600;
   color:var(--ink-deep);line-height:1.1}
 .tile .l{font-size:12px;color:var(--mute);margin-top:3px;line-height:1.25}
@@ -2500,12 +2500,12 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    to be where five of them genuinely fit, not where they nearly do. */
 @media (min-width:700px){
   #homeBody > .tiles{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:6px}
+    gap:8px}
 }
 /* Centered, like the quadrant cells. A number over a label is a badge and
    reads as one when it sits in the middle of its box; left-aligned in a
    narrow column it reads as text that ran out of room. */
-#homeBody > .tiles > .tile{padding:7px 4px;text-align:center}
+#homeBody > .tiles > .tile{padding:8px 4px;text-align:center}
 /* A tile you can press looks like the tiles beside it and behaves like a
    button: no border of its own, because six outlined boxes in a row is a
    toolbar rather than a summary. */
@@ -2525,17 +2525,17 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .bars{display:grid;gap:0}
 .bar{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;
   font-size:12px;width:100%;text-align:left;background:none;border:0;
-  padding:1px 0;min-height:28px}
+  padding:4px 0;min-height:28px}
 button.bar.tappable{cursor:pointer;border-radius:4px}
 button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
   box-shadow:0 0 0 1px var(--gold)}
 .bar .t{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar .track{background:#E7E0D2;border-radius:3px;height:14px;overflow:hidden}
-.bar .fill{height:100%;border-radius:3px;background:var(--gold)}
+.bar .track{background:#E7E0D2;border-radius:4px;height:14px;overflow:hidden}
+.bar .fill{height:100%;border-radius:4px;background:var(--gold)}
 .bar .n{text-align:right;color:var(--mute);font-size:12px}
 .homemap{height:38vh;min-height:210px}
 .recent{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
-  border-radius:9px;overflow:hidden}
+  border-radius:8px;overflow:hidden}
 /* The LOG rows, not the shelf. A different list with a different shape —
    a name and a control — and it has no header to line up with, so it
    overrides the shelf grid deliberately rather than by drift. */
@@ -2550,7 +2550,7 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
    two-line row — a bottle name and the count under it — left the text
    nearly touching the rule above and below, so a list of fourteen read as
    one block rather than fourteen things. */
-.recent .item{padding:10px 13px;align-items:center;
+.recent .item{padding:8px 12px;align-items:center;
   grid-template-columns:minmax(0,1fr);
   grid-auto-flow:column;grid-auto-columns:auto}
 /* A long bottle name is three lines on a phone. Where a row is a shortcut
@@ -3094,8 +3094,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.42';
-const BUILD_TIME  = '2026-10-12 11:34 PM ET';
+const APP_VERSION = '2.8.43';
+const BUILD_TIME  = '2026-10-12 11:53 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -17528,25 +17528,6 @@ L.parseMash = function (text) {
 /* The mash bill as a row of tags, the way a finish is drawn. In L because
    it is arithmetic and naming, not templating, and the same row belongs on
    the shop screen and flight cards too. */
-/* IS THE PRINTED SENTENCE JUST THE TAGS AGAIN? (BZ, 2026-09-27.)
- *
- * The tags are this app's reading of the bill and the sentence is the label's
- * own words, which is why both are shown: when they disagree the label wins and
- * a reader should see it. On a bill as plain as "72% corn, 18% rye, 10% malted
- * barley" they cannot disagree, and the page stutters.
- *
- * Compared as words rather than as characters, so punctuation, order of
- * spacing and capitals do not make two identical things look different. Only a
- * bill the producer published can echo: the category's requirement carries a
- * sentence of explanation the tags could never hold. */
-L.mashEcho = function (mash) {
-  const m = mash || {};
-  if (!m.say || m.byLaw) return false;
-  const flat = t => String(t || '').toLowerCase().replace(/[^a-z0-9.]+/g, ' ')
-    .trim().split(' ').filter(Boolean).sort().join(' ');
-  return flat(L.mashTags(m.bill).map(t => t.label).join(' ')) === flat(m.say);
-};
-
 L.mashTags = function (text) {
   const bill = L.parseMash(text);
   if (!bill) return [];
@@ -19370,10 +19351,19 @@ L.mashSay = function (entry) {
   return {
     bill: bill,
     byLaw: !!law,
+    /* THE SHAPE ON ITS OWN. It was glued in front of the published
+       bill and printed UNDER tags that already carried that bill, so
+       a card showed the grains twice - once as tags, once as a
+       sentence - with only the shape new (BZ, 2026-10-12:
+       "Repetitive mash bill. Thought we solved this a while ago").
+       L.mashEcho was meant to catch it and could not: the sentence
+       carried one word the tags did not, so they never compared
+       equal. */
+    shape: shape ? L.titleCase(shape) : null,
     say: law
       ? 'What the category requires, not a bill this producer published '
         + '\u2014 ' + law.why
-      : (shape ? L.titleCase(shape) + ' \u00b7 ' : '') + said
+      : said
   };
 };
 
@@ -35502,15 +35492,7 @@ function showBottle(k) {
      the sentence underneath. Which fact it is, and what that sentence says,
      is L.mashSay's - the printed sentence stays visible even when it parsed
      cleanly, because the tags are our reading and the label is the fact. */
-  const mash = L.mashSay(p);
-  if (mash) {
-    const mb = el('div'); mb.style.marginTop = '10px';
-    L.mashTags(mash.bill).forEach(t => mb.appendChild(el('span',
-      'tag grain' + (mash.byLaw ? ' bylaw' : ''), t.label)));
-    /* The label's own words, unless they are the tags again (L.mashEcho). */
-    if (!L.mashEcho(mash)) mb.appendChild(el('div', 'src', mash.say));
-    h.appendChild(mb);
-  }
+  grainBill(h, p);
 
   const dl2 = el('dl', 'kv'); dl2.style.marginTop = '10px';
   const add2 = (a, b2) => { if (b2 === null || b2 === undefined || b2 === '') return;
@@ -35555,7 +35537,7 @@ function showBottle(k) {
   mine.forEach((b, i) => {
     const r = el('div'); r.style.cssText =
       'display:flex;justify-content:space-between;align-items:center;'
-      + 'padding:6px 0;border-top:1px solid var(--line)';
+      + 'padding:8px 0;border-top:1px solid var(--line)';
     /* Not the internal key (B199): what tells your bottles apart is whether
        each is open, when it turned up, and which one it is. */
     const lab = el('span', null, L.bottleLabel(b, i, mine.length));
@@ -35623,7 +35605,7 @@ function showBottle(k) {
       String(b2.exitDate || '').localeCompare(String(a2.exitDate || '')))
       .forEach(b => {
         const r = el('div');
-        r.style.cssText = 'padding:5px 0;border-top:1px solid var(--line)';
+        r.style.cssText = 'padding:4px 0;border-top:1px solid var(--line)';
         r.appendChild(el('div', 'src', L.exitLine(b)));
         bs.appendChild(r);
       });
@@ -37847,7 +37829,7 @@ function levelRows(host, lv, onCount) {
 
       const sel = document.createElement('select');
       sel.className = 'inp';
-      sel.style.cssText = 'width:auto;margin:0 8px 0 0;padding:4px 6px';
+      sel.style.cssText = 'width:auto;margin:0 8px 0 0;padding:4px 8px';
       L.FILL_NOTCHES.forEach(v => {
         const o = document.createElement('option');
         o.value = String(v);
@@ -37930,7 +37912,7 @@ function shelfBuildSheet(plan, levels) {
     const lv = (levels || []).slice();
     if (S.showFill && lv.length) {
       const card = el('div');
-      card.style.cssText = 'margin:10px 0;padding:10px 0;'
+      card.style.cssText = 'margin:10px 0;padding:8px 0;'
         + 'border-top:1px solid var(--line)';
       card.appendChild(el('div', 'nm', lv.length === 1
         ? 'One level read from the photo'
@@ -38084,7 +38066,7 @@ function inventoryScreen() {
       }
       const row = el('div', 'item');
       row.style.cssText = 'display:grid;'
-        + 'grid-template-columns:minmax(0,1fr) auto;gap:10px;'
+        + 'grid-template-columns:minmax(0,1fr) auto;gap:8px;'
         + 'align-items:center';
       const left = el('div');
       left.style.minWidth = '0';
@@ -39778,6 +39760,30 @@ function runImport(prep) {
    function had reached its ceiling and a row is a thing in its own right:
    a name with a tick when it is picked, and a line saying who made it and
    whether it is open. */
+/* THE GRAIN BILL: the shape and the grains as tags, and the label's own
+   words only where the tags are not the bill. Its own function because
+   showBottle sits on its ceiling and this is a thing in itself. */
+function grainBill(h, p) {
+  const mash = L.mashSay(p);
+  if (!mash) return;
+  const mb = el('div');
+  mb.style.marginTop = '10px';
+  const tags = L.mashTags(mash.bill);
+  /* THE SHAPE IS A TAG, not small print under the tags: it is the same kind
+     of fact as the grains and reads as one. */
+  if (mash.shape && tags.length) {
+    mb.appendChild(el('span', 'tag grain', mash.shape));
+  }
+  tags.forEach(t => mb.appendChild(el('span',
+    'tag grain' + (mash.byLaw ? ' bylaw' : ''), t.label)));
+  /* A bill that did not parse has no tags, and the law sentence is not a
+     bill at all - those are the only times the sentence is worth printing. */
+  if (!tags.length || mash.byLaw) {
+    mb.appendChild(el('div', 'src', mash.say));
+  }
+  h.appendChild(mb);
+}
+
 function bulkRow(p, on, pick) {
   /* THE SAME QUESTION THE FILTER ASKS, so a row cannot say sealed while the
      Sealed filter leaves it out. */
@@ -45692,7 +45698,7 @@ function contribPicker(card, list) {
 function selectRows(card, list, opts) {
   const picked = list.map(() => !!opts.picked);
   const bar = el('div');
-  bar.style.cssText = 'display:flex;gap:6px;align-items:center;'
+  bar.style.cssText = 'display:flex;gap:8px;align-items:center;'
     + 'flex-wrap:wrap;margin:6px 0';
   const count = el('div', 'sub');
   const acts = opts.actions.map(([label, run]) => {
@@ -47884,7 +47890,7 @@ function renderDiag() {
         /* A log LINE, not a tile: `.item` is the padded shelf row. */
         const line = el('div', 'src', v);
         line.style.cssText = 'font-family:ui-monospace,monospace;'
-          + 'font-size:12px;line-height:1.45;padding:1px 0;'
+          + 'font-size:12px;line-height:1.45;padding:4px 0;'
           + 'word-break:break-word;white-space:pre-wrap';
         (card.__body || card).appendChild(line);
         return;
@@ -48160,7 +48166,7 @@ function renderBuddies() {
           /* THE PAIR SITS TOGETHER in a flex row. In the column track the second
              button wrapped onto its own line and No outgrew Let in. */
           const acts = el('div', 'lookrow');
-          acts.style.cssText = 'display:flex;gap:7px;flex:none';
+          acts.style.cssText = 'display:flex;gap:8px;flex:none';
           acts.appendChild(yes);
           const no = el('button', 'chip', 'No');
           no.onclick = guardTap(no, () => fbDecline(r.from).then(renderBuddies));
@@ -51367,7 +51373,7 @@ function renderAway() {
   };
 
   const askRow = el('div', 'lookrow');
-  askRow.style.cssText = 'margin:10px 0 12px;display:flex;gap:6px;'
+  askRow.style.cssText = 'margin:10px 0 12px;display:flex;gap:8px;'
     + 'flex-wrap:wrap';
   /* ONE place that draws a verdict, for both routes to it: a bottle the
      library already knew, and one the service had to be asked about. */
@@ -52066,7 +52072,7 @@ function latelyBlock(host) {
     again.type = 'button';
     again.title = 'Write it up again';
     again.setAttribute('aria-label', 'Write it up again');
-    again.style.cssText = 'margin-left:auto;padding:2px 9px';
+    again.style.cssText = 'margin-left:auto;padding:4px 8px';
     again.onclick = ev => {
       ev.stopPropagation();
       S.lately = Object.assign({}, kept, { stamp: '' });
@@ -56124,8 +56130,8 @@ function labelPick(onFiles, opts) {
     slots.forEach(slot => {
       const b = el('button', 'btn');
       b.type = 'button';
-      b.style.cssText = 'display:flex;flex-direction:column;gap:2px;'
-        + 'align-items:flex-start;text-align:left;padding:9px 11px;'
+      b.style.cssText = 'display:flex;flex-direction:column;gap:4px;'
+        + 'align-items:flex-start;text-align:left;padding:8px 12px;'
         + 'margin:0;width:100%';
       if (slot.hint) b.title = slot.hint;
       const lab = el('div', 'nm', slot.label);
@@ -58732,7 +58738,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.42</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.43</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

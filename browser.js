@@ -3837,10 +3837,16 @@ function step(n) {
       failures.push('mash: no catalog to try it on');
     } else {
       /* The BEHAVIOR, not the wording (rule 30c): three grains in, three
-         tags out, each naming its grain. A rewrite of the labels must not
-         fail this and a parse that silently drew nothing must. */
-      if (seen.tags.length !== 3) {
-        failures.push('mash: a three-grain bill drew ' + seen.tags.length
+         GRAIN tags out, each naming its grain. A rewrite of the labels must
+         not fail this and a parse that silently drew nothing must.
+
+         THE SHAPE IS A TAG TOO since 2026-10-12 - High-Rye here - so the row
+         holds four and only three of them are grains. It used to be printed
+         under the tags as a sentence that repeated the whole bill, which is
+         what made the card say the grains twice. */
+      const grains = seen.tags.filter(t => /%/.test(t));
+      if (grains.length !== 3) {
+        failures.push('mash: a three-grain bill drew ' + grains.length
           + ' tags: ' + JSON.stringify(seen.tags));
       }
       if (!seen.tags.some(t => /corn/i.test(t))

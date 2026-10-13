@@ -3406,7 +3406,7 @@ check('no fixed svg id is emitted by a repeated drawing',
      same way a version is never edited by hand. */
   const BIG_TODAY = {
     likelyToLike: 455,
-    showBottle: 424,
+    showBottle: 417,
     productForm: 316,
     renderShelf: 309,
     openLibraryCleanUp: 286,
