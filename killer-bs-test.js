@@ -29998,6 +29998,36 @@ sec('§472 a brand learns its house from the catalogue');
     Object.keys(L.brandHouses(null, null)).length, 0);
 }
 
+sec('§473 a question has one answer, and survives being answered');
+{
+  /* BZ, 2026-10-15: "THERE SHOULD ONLY BE ONE CORRECT ANSWER". "Which of
+     these is not a whiskey?" offered Single pot still, which names the STILL
+     rather than the whiskey made in it, so it was a second defensible answer
+     beside Mezcal. Whether two answers are BOTH defensible is a judgement
+     only a person makes; what a check can hold is the mechanical half. */
+  L.QUIZ_TRICKS.forEach(q => {
+    const where = q.ask.slice(0, 40);
+    eq('the answer is one of the choices: ' + where,
+      q.choices.indexOf(q.answer) >= 0, true);
+    eq('no choice is offered twice: ' + where,
+      q.choices.length, Object.keys(q.choices.reduce((m, c) => {
+        m[String(c).toLowerCase()] = 1; return m;
+      }, {})).length);
+    eq('every choice says something: ' + where,
+      q.choices.every(c => String(c || '').trim().length > 0), true);
+  });
+
+  /* AND THE QUESTION SURVIVES BEING ANSWERED. A definition question strikes
+     its term out and `full` puts it back; a trick question hides nothing, so
+     full set to `why` replaced the question with the explanation - which the
+     verdict then printed a second time. */
+  const t = L.quizTrick ? L.quizTrick({}) : null;
+  if (t) {
+    eq('a trick question restores its ask', t.full, t.ask);
+    eq('and the explanation is not the question', t.full === t.why, false);
+  }
+}
+
 sec('§471 the rest of the house, owned or not');
 {
   /* BZ, 2026-10-12: "We should add a Same House section with owned or not

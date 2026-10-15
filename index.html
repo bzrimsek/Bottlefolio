@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.45  Build 2026-10-13 12:15 AM ET
+     Version : v2.8.46  Build 2026-10-15 04:02 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.39  2026-10-12  The rest of the house, owned or not.
 // v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
 // v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
-// v2.8.36  2026-10-12  The camera in the name field is for adding, not editing.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.45';
-const BUILD_TIME  = '2026-10-13 12:15 AM ET';
+const APP_VERSION = '2.8.46';
+const BUILD_TIME  = '2026-10-15 04:02 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -8146,7 +8146,14 @@ L.QUIZ_TRICKS = [
     choices: ['True', 'False'], answer: 'False',
     why: 'In Canada rye is a traditional name for the whole category. In the United States a rye whiskey must be at least 51% rye.' },
   { ask: 'Which of these is not a whiskey?',
-    choices: ['Bourbon', 'Mezcal', 'Single pot still', 'Light whiskey'],
+    /* "Single pot still whiskey", not "Single pot still": the short form
+       names a PROCESS, so it was a second defensible answer to a question
+       asking which is not a whiskey, and a question with two right answers
+       is not a question (BZ, 2026-10-15: "THERE SHOULD ONLY BE ONE CORRECT
+       ANSWER"). Irish single pot still whiskey is a whiskey; a single pot
+       still is how it is made. */
+    choices: ['Bourbon', 'Mezcal', 'Single pot still whiskey',
+      'Light whiskey'],
     answer: 'Mezcal',
     why: 'Mezcal is agave, not grain. It is on the shelf as inventory, and the app leaves it out of every whiskey analysis.' },
   { ask: 'A 12 year old bottled in 1995 and a 12 year old bottled last year are the same age.',
@@ -8263,7 +8270,8 @@ L.QUIZ_TRICKS = [
     choices: ['True', 'False'], answer: 'False',
     why: 'It is the sign of what was left in. The fatty acids that cause the haze are exactly what chill filtration takes out.' },
   { ask: 'Which of these is not made from grain?',
-    choices: ['Brandy', 'Bourbon', 'Single pot still', 'Light whiskey'],
+    choices: ['Brandy', 'Bourbon', 'Single pot still whiskey',
+      'Light whiskey'],
     answer: 'Brandy',
     why: 'Brandy is distilled wine or fruit. The rest are cereal spirits, which is what makes them whiskey.' },
   { ask: 'A wheated bourbon contains more wheat than corn.',
@@ -8628,7 +8636,12 @@ L.quizTrick = function (quiz) {
   const at = pick.choices.indexOf(pick.answer);
   return { kind: 'trick', key: 'trick:' + pick.ask, ask: pick.ask,
     answer: pick.answer, choices: pick.choices.slice(), at: at,
-    why: pick.why, full: pick.why, defs: {}, section: 'A question' };
+    /* `full` RESTORES WHAT THE QUESTION HID. A definition question strikes
+       its term out and puts it back once answered; a trick question hides
+       nothing, so full is the ask. Set to `why` it replaced the question
+       with the explanation, which then printed again under the verdict -
+       the question vanished and the answer was said twice. */
+    why: pick.why, full: pick.ask, defs: {}, section: 'A question' };
 };
 
 /* WHETHER TO ASK AT ALL TODAY. One a day, and the badge is the only nudge. */
@@ -58743,7 +58756,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.45</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.46</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
