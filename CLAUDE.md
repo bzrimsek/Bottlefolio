@@ -117,10 +117,10 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # ~5,300 assertions
+node killer-bs-test.js    # 7,814 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # 80 wiring checks, incl. rules copied twice
-node screens.js           # 21 screens draw
+node consistency.js       # 117 wiring checks, incl. rules copied twice
+node screens.js           # 36 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed
 node seq.js               # screens in PAIRS: what the last one left behind
@@ -266,10 +266,13 @@ re-checked against the file that day rather than copied forward.
   once more than 2.5% is added, so a flavoured whiskey is a flavored spirit
   whose base was whisky. It is stock on the shelf; it is not whiskey, and it
   is never recommended (BZ: NEVER RECOMMEND FLAVORED).
-- **The guest rules are BZ's, not derivable.** `L.ROAD_TO`,
-  `L.ROAD_NEIGHBOURS` and `L.POND_ORDER` hold them. He corrected them five
-  times in one sitting; three of five attempts to reason them out from
-  first principles were wrong. Read them, do not re-derive them.
+- **The guest rules are BZ's, not derivable.** Five things hold them, and
+  they are a ladder: `L.POUR_RUNGS` is the rungs, `L.rungOf` puts a bottle
+  on one, `L.ADJACENT_TYPES` says which types are down the road, and once a
+  pick has crossed the pond `L.POND_ORDER` and `L.pondRank` say who greets
+  it. He corrected them five times in one sitting; three of five attempts to
+  reason them out from first principles were wrong. Read them, do not
+  re-derive them.
 - **Two doors to the service, and both read through `readService`.**
   `postWithRetry` for POSTs, `askService` for questions. `readService`
   turns a stale Apps Script deployment into a sentence rather than a parser

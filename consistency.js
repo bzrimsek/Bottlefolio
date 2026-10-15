@@ -2478,6 +2478,40 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('the door index is current', bad);
 }
 
+/* THE PAPERS NAME FUNCTIONS THAT EXIST (v2.8.47).
+ *
+ * CLAUDE.md named `L.ROAD_TO` and `L.ROAD_NEIGHBOURS` as the place BZ's guest
+ * rules live, and told the reader to go and read them rather than re-derive
+ * them. Neither had been in index.html for some time, so the one instruction
+ * on this app's hardest-won rules sent the reader looking for nothing - and
+ * the step after failing to find them is the re-deriving that paragraph
+ * exists to forbid. Three of five attempts to reason those rules out were
+ * wrong, so that is a real cost rather than a tidiness point.
+ *
+ * ONLY THIS APP'S OWN PAPERS. The shared rule book belongs to the rules
+ * session, and DOORS.md is generated and guarded above.
+ */
+{
+  const PAPERS = ['CLAUDE.md', 'README.md'];
+  const bad = [];
+  PAPERS.forEach(name => {
+    let text = '';
+    try { text = fs.readFileSync(__dirname + '/' + name, 'utf8'); }
+    catch (e) { bad.push(name + ' is missing'); return; }
+    const claimed = {};
+    (text.match(/L\.[a-zA-Z_][a-zA-Z0-9_]*/g) || []).forEach(m => {
+      claimed[m.slice(2)] = true;
+    });
+    Object.keys(claimed).sort().forEach(n => {
+      if (ENGINE[n] === undefined) {
+        bad.push(name + ' names L.' + n + ', which the engine does not have');
+      }
+    });
+  });
+  check('the papers name functions that exist', bad);
+}
+
+
 /* APP USE COUNTS THE AXES CORRECTLY (v2.5.64).
  *
  * BZ: "All app use notes need to remain up to date." The radar went from seven
@@ -3539,6 +3573,41 @@ check('no fixed svg id is emitted by a repeated drawing',
     });
 
   check('the table that picks the checks covers every check', found);
+}
+
+/* THE PAPERS COUNT THESE CHECKS CORRECTLY (v2.8.47).
+ *
+ * CLAUDE.md and README.md both said "80 wiring checks" while this file ran
+ * 116, and both quoted an assertion count from three thousand assertions ago.
+ * It is the App-use fault one floor up (rule 9z): a paper that miscounts the
+ * thing in front of the reader is worse than one that says nothing, because
+ * the reader cannot tell which half of it is stale.
+ *
+ * ONLY THIS COUNT IS GUARDED HERE - it is the one number this file knows for
+ * certain without running another harness.
+ *
+ * LAST, AND IT COUNTS ITSELF. `checks` is final only once every check above
+ * has run, so this sits at the bottom - and the number the papers have to
+ * quote includes this check, which is not counted yet while it reads them.
+ */
+{
+  const mine = checks + 1;
+  const bad = [];
+  ['CLAUDE.md', 'README.md'].forEach(name => {
+    let text = '';
+    try { text = fs.readFileSync(__dirname + '/' + name, 'utf8'); }
+    catch (e) { bad.push(name + ' is missing'); return; }
+    const m = text.match(/node consistency\.js +# *([0-9,]+) wiring checks/);
+    if (!m) {
+      bad.push(name + ' no longer says how many wiring checks there are');
+      return;
+    }
+    const said = Number(m[1].replace(/,/g, ''));
+    if (said !== mine) {
+      bad.push(name + ' says ' + said + ' wiring checks; there are ' + mine);
+    }
+  });
+  check('the papers count these checks correctly', bad);
 }
 
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'

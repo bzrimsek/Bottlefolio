@@ -72,6 +72,21 @@ function reference() {
   for (let i = 0; i < 400; i++) {
     corpus.push("Angel's Envy Bottled-in-Bond Cask Strength Bourbon " + i);
   }
+  /* ONE SAMPLE, ON PURPOSE - AND IT CANNOT BE A MEDIAN OF NINE.
+     Tried on 2026-10-15, on the reasoning that rule 13e holds every operation
+     below to nine runs and a median while the divisor they are all expressed
+     in took one. It is not the same measurement. L.shopNorm CACHES, so the
+     corpus above is cold exactly once: nine passes over it measured 2.80 ms
+     then 0.50, 0.34, 0.34, 0.34 - the median read the cache and collapsed to
+     the 0.5 ms floor below, which tightened every allowance at once and took
+     seven of the nine operations OVER in a single run.
+     A fresh corpus per sample keeps each one cold (1.38 - 2.08 ms, median
+     ~1.7) but is a DIFFERENT number from the one the table was calibrated
+     against: at 1.7 the five-shelf overlap sits at 89% of its allowance
+     instead of 52%, so the steadier reference makes a random red likelier,
+     not rarer. Changing this divisor means re-deriving every budget, and the
+     ratchet only turns down (rule 28a).
+     Run before the fixtures are built, so a cold cache does not flatter it. */
   const t = process.hrtime.bigint();
   for (let r = 0; r < 25; r++) corpus.forEach(x => L.shopNorm(x));
   return Number(process.hrtime.bigint() - t) / 1e6;

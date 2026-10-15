@@ -55,10 +55,10 @@ Individually, in gate order:
 
 ```
 python audit.py index.html   # the named lock file matches index.html
-node killer-bs-test.js       # 5,344 assertions against the engine
+node killer-bs-test.js       # 7,814 assertions against the engine
 node lint.js                 # nothing undefined, duplicated, unreachable
-node consistency.js          # 80 wiring checks
-node screens.js              # 21 screens draw
+node consistency.js          # 117 wiring checks
+node screens.js              # 36 screens draw
 node answers.js              # what the answers SAY, on a real shelf
 node shots.js                # every screen at 390px, photographed
 node seq.js                  # screens in pairs, for what one leaves behind

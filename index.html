@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.46  Build 2026-10-15 04:02 PM ET
+     Version : v2.8.47  Build 2026-10-15 04:27 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
 // v2.8.39  2026-10-12  The rest of the house, owned or not.
 // v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
-// v2.8.37  2026-10-12  Your note comes before what the app worked out, and the camera is for adding.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.46';
-const BUILD_TIME  = '2026-10-15 04:02 PM ET';
+const APP_VERSION = '2.8.47';
+const BUILD_TIME  = '2026-10-15 04:27 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -58756,7 +58756,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.46</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.47</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
