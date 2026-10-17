@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1044 |
+| functions | 1045 |
 | tables | 249 |
 | carrying a stated purpose | 838 |
 
@@ -344,7 +344,7 @@ QUESTION, not the name you were going to use.
 - **`L.bottleIdentity`** — _no comment above it_
 - **`L.bottleLabel`** — How a bottle is named to the person who owns it.
 - **`L.bottleMarks`** — THE MARKS THIS BOTTLE CARRIES, from its fields first and its name second
-- **`L.bottleOrigin`** — HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED
+- **`L.bottleOrigin`** — _no comment above it_
 - **`L.bottlePick`** — _no comment above it_
 - **`L.bottleScore`** — A BOTTLE AGAINST A SHELF'S FINGERPRINT, nought to one, with the reason it
 - **`L.bottlesHeading`** — THE HEADING OVER YOUR BOTTLES OF A WHISKEY, which must not say "Your
@@ -1298,6 +1298,7 @@ QUESTION, not the name you were going to use.
 - **`L.wishAdd`** — you can act on in a shop.
 - **`L.wishEntry`** — What goes into the wishlist, with a reason you can act on in a shop:
 - **`L.wishFromFlights`** — flights a bottle would unlock
+- **`L.wishFulfilled`** — A WISH IS OVER WHEN YOU OWN IT (BZ, 2026-10-17
 - **`L.wishLine`** — THE WISHLIST
 - **`L.wishRemove`** — _no comment above it_
 - **`L.wishRows`** — The wishlist, newest first

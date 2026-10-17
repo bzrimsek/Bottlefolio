@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.64  Build 2026-10-17 11:46 AM ET
+     Version : v2.8.65  Build 2026-10-17 12:17 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
-// v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.64';
-const BUILD_TIME  = '2026-10-17 11:46 AM ET';
+const APP_VERSION = '2.8.65';
+const BUILD_TIME  = '2026-10-17 12:17 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -11119,6 +11119,29 @@ L.discoveryFor = function (name, wish) {
 
 /* HOW A BOTTLE BEING BOUGHT CAME TO BE WANTED: the wishlist entry for it,
    and the suggestion that opened it. Read BEFORE the wish entry is removed. */
+/* A WISH IS OVER WHEN YOU OWN IT (BZ, 2026-10-17: "If we add a bottle that is
+ * on the wish list, the wish should clear").
+ *
+ * WHY THIS IS THE FIX AND NOT A SCREEN MESSAGE. BZ asked why a wish list of
+ * five showed four on a gift page: L.giftList drops a bottle already on the
+ * shelf, and "a wishlist outlives the wanting" was written as the reason. It
+ * does not have to. He owns Michter's US-1 Single Barrel Rye and still wanted
+ * "Michter's Rye", so the list was stale rather than filtered.
+ *
+ * ASKED THROUGH L.discoveryFor, which is the door that already decides an
+ * added bottle is the one that was wished for - it is what stamps a bottle
+ * with where it came from. A second way of matching a wish to a shelf would
+ * be the fault 30d exists to catch.
+ */
+L.wishFulfilled = function (wish, catalog, bottles) {
+  const held = L.ownedCounts(bottles || []);
+  const owned = Object.keys(catalog || {}).filter(k => held[k])
+    .map(k => (catalog[k] || {}).name || k);
+  if (!owned.length) return [];
+  return (wish || []).map(w => (w && w.name) || '').filter(Boolean)
+    .filter(name => owned.some(o => L.discoveryFor(o, [{ name: name }])));
+};
+
 L.bottleOrigin = function (name, wish, tag) {
   const found = L.discoveryFor(name, wish);
   return { found: found && found.why ? found : null,
@@ -33878,6 +33901,10 @@ let _saveFailed = false;
 let _pushSoon = null;
 /* localOnly: write to this device and do NOT push. */
 function save_(localOnly) {
+  /* A FULFILLED WISH CLEARS ITSELF. Seven places push a bottle onto the
+     shelf; hooking each one would be seven chances to forget, so it is
+     asked here, where every one of them ends up. */
+  clearFulfilledWishes();
   _shelfGen++;             // what shelfMemo holds is out of date now
   // When this device last changed something. Stamped BEFORE the push, so
   // the value that goes to the account is the one the next first-load
@@ -35252,11 +35279,12 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    /* AFTER THE WISH LIST (BZ, 2026-10-17: "after Wish List"). Drawn in
-       the Wanted view here and in the main view above the map, by the one
-       builder - taking it out of either is how it went missing twice. */
-    if (giftCard) card(giftCard);
+    /* DIRECTLY UNDER THE WISH LIST (BZ, 2026-10-17: "just below the wish
+       list"), which puts it ABOVE the card that texts that list. Drawn
+       here and in the main view above the map, by the one builder -
+       taking it out of either is how it went missing twice. */
     giftLinksCard(list);
+    if (giftCard) card(giftCard);
     return;
   }
 
@@ -41099,6 +41127,17 @@ const SHOP_MODES = [
 
 /* OFF THE WISHLIST, remembered as removed, or the next sync merges it
    straight back in. */
+/* THE WISHES NOW OWNED, TAKEN OFF THE LIST. Through unwish, so the tombstone
+   is written and the next merge cannot push them back from the account. */
+function clearFulfilledWishes() {
+  if (!(S.wish || []).length) return;
+  const done = L.wishFulfilled(S.wish, S.catalog, S.bottles);
+  if (!done.length) return;
+  done.forEach(name => unwish(name));
+  appLog('wish: ' + done.length + ' now on the shelf, taken off the list');
+}
+
+
 function unwish(name) {
   const id = L.recordId('wish', { name: name });
   S.removed = L.tombstone(S.removed, id);
@@ -45716,39 +45755,47 @@ function giftLinksCard(box) {
        small text on the right, the way a list row reads everywhere
        else in this app. */
     const g = links[tok] || {};
+    /* ONE LINE: the name, then Copy, the on/off slider and an X (BZ,
+       2026-10-17). The slider is the same `.sw` the Buddies switches use, so
+       on and off look the same everywhere; Delete was a word that only
+       appeared once a link was already off, which read as the Shelf and
+       Settings cards being different things. They are one function. */
     const row = el('div', 'item');
     const left = el('div');
     const name = el('div', 'nm oneline', g.label || 'Untitled');
     if (g.off) name.style.opacity = '0.45';
     left.appendChild(name);
-    left.appendChild(el('div', 'sub', (g.off ? 'Switched off'
-      : 'Live') + ' · ' + L.showDate(g.day || '')));
+    left.appendChild(el('div', 'sub', 'made ' + L.showDate(g.day || '')));
     row.appendChild(left);
     const acts = el('div');
     acts.style.whiteSpace = 'nowrap';
-    if (!g.off) {
-      const copy = el('button', 'chip', 'Copy');
-      copy.onclick = () => {
-        const url = giftUrl(tok);
-        try { navigator.clipboard.writeText(url); toast('Link copied'); }
-        catch (e) { toast(url); }
-      };
-      acts.appendChild(copy);
-    }
-    const kill = el('button', 'chip', g.off ? 'Turn on' : 'Turn off');
-    kill.style.marginLeft = '12px';
-    kill.onclick = () => giftSetOff(tok, !g.off);
-    acts.appendChild(kill);
-    /* DELETE ONLY ONCE IT IS OFF (BZ, 2026-10-17: "turning one off also
-       needs a delete or we build a list that only gets longer"). Off is
-       reversible and delete is not, so the reversible step comes first
-       and the end of a link is a decision taken twice. */
-    if (g.off) {
-      const gone = el('button', 'chip', 'Delete');
-      gone.style.marginLeft = '12px';
-      gone.onclick = () => giftForget(tok, g.label || 'that link');
-      acts.appendChild(gone);
-    }
+    acts.style.display = 'flex';
+    acts.style.alignItems = 'center';
+    acts.style.gap = '12px';
+    const copy = el('button', 'chip', 'Copy');
+    copy.onclick = () => {
+      const url = giftUrl(tok);
+      try { navigator.clipboard.writeText(url); toast('Link copied'); }
+      catch (e) { toast(url); }
+    };
+    acts.appendChild(copy);
+    const sw = el('button', null);
+    sw.type = 'button';
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-checked', g.off ? 'false' : 'true');
+    sw.setAttribute('aria-label', g.off ? 'Switched off' : 'Live');
+    sw.title = g.off ? 'Switched off' : 'Live';
+    sw.style.background = 'none';
+    sw.style.border = '0';
+    sw.style.padding = '0';
+    sw.appendChild(el('span', 'sw'));
+    sw.onclick = () => giftSetOff(tok, !g.off);
+    acts.appendChild(sw);
+    const gone = el('button', 'chip', '\u2715');
+    gone.title = 'Delete this link';
+    gone.setAttribute('aria-label', 'Delete this link');
+    gone.onclick = () => giftForget(tok, g.label || 'that link');
+    acts.appendChild(gone);
     row.appendChild(acts);
     list.appendChild(row);
   });
@@ -45810,8 +45857,9 @@ async function giftMake() {
  * leaves a row that still points at a live link rather than a live link with
  * nothing pointing at it. */
 async function giftForget(token, label) {
-  confirmAsk('Delete ' + label + '? It is already switched off, and '
-    + 'deleting removes it for good.', async () => {
+  /* The wording no longer assumes it was switched off first. */
+  confirmAsk('Delete ' + label + '? The link stops working for '
+    + 'whoever has it, and cannot be brought back.', async () => {
     try {
       await firebase.database()
         .ref('bz-apps/whisky/gift/' + token).remove();
@@ -59683,10 +59731,28 @@ function giftDraw(token, gift, host) {
   go.onclick = () => giftAsk(token, gift, field.value, answer);
   field.onkeydown = e => { if (e.key === 'Enter') go.onclick(); };
   ask.appendChild(go);
-  const shot = el('button', 'chip', 'Photograph a shelf');
+  /* A BOTTLE OR A SHELF, through the pills every other screen uses (BZ,
+     2026-10-17: "Should we photo a bottle or a shelf? Separate
+     buttons?"). Not two buttons: L.SUBJECT_SCREENS already has a `shop`
+     entry holding exactly these two, and L.ACTIONS declares that
+     photographing a subject goes through subjectPills. A shopper in a
+     shop is usually holding ONE bottle, which reads far better than a
+     shelf, so it leads. */
+  const pills = el('div');
+  ask.appendChild(pills);
+  let subject = 'bottle';
+  const drawPills = () => {
+    pills.innerHTML = '';
+    subject = subjectPills(pills, 'shop', subject, s => {
+      subject = s;
+      drawPills();
+    });
+  };
+  drawPills();
+  const shot = el('button', 'chip', 'Photograph it');
   shot.style.marginTop = '7px';
   shot.style.marginLeft = '5px';
-  shot.onclick = () => giftShoot(token, gift, answer);
+  shot.onclick = () => giftShoot(token, gift, answer, subject);
   ask.appendChild(shot);
   ask.appendChild(answer);
   host.appendChild(ask);
@@ -59705,15 +59771,20 @@ function giftDraw(token, gift, host) {
  * THE CAP IS THE SERVICE'S, not this page's: a cap enforced here would belong
  * to whoever opened the link.
  */
-async function giftShoot(token, gift, into) {
+async function giftShoot(token, gift, into, subject) {
   pickShelfPhotos('a shelf', async images => {
     into.innerHTML = '';
-    working('Reading what is on the shelf');
+    const one = subject === 'bottle';
+    working(one ? 'Reading the label' : 'Reading what is on the shelf');
     let seen = null;
     try {
       const res = await fetch(gift.url, { method: 'POST',
-        body: JSON.stringify({ mode: 'shelf', where: 'bar',
-                               images: [images[0]], gift: token }) });
+        /* `shop` is what this is: somebody in a shop, not a bar. One
+           bottle or a shelf of them, and never the owner's shelf as
+           context - they must not see it. */
+        body: JSON.stringify({ mode: 'shelf', where: 'shop',
+                               images: images.slice(0, one ? 3 : 1),
+                               gift: token }) });
       seen = await res.json();
     } catch (e) {
       seen = null;
@@ -59745,8 +59816,13 @@ async function giftShoot(token, gift, into) {
       row.appendChild(el('div', 'sub', r.a.say));
       into.appendChild(row);
     });
-  }, { face: true, title: 'Photograph the shelf', go: 'Read it',
-       sub: 'One shot. It will say which of these are already there.' });
+  }, { face: true,
+       title: subject === 'bottle' ? 'Photograph the bottle'
+         : 'Photograph the shelf',
+       go: 'Read it',
+       sub: subject === 'bottle'
+         ? 'Front and back if the label is busy.'
+         : 'One shot. It will say which of these are already there.' });
 }
 
 
@@ -59846,7 +59922,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.64</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.65</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

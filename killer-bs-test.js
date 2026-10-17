@@ -30031,6 +30031,32 @@ sec('§475 one proof band under the floor, not seven');
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
 }
 
+sec('§480 a wish is over when you own it');
+{
+  /* BZ, 2026-10-17: "If we add a bottle that is on the wish list, the wish
+     should clear." He asked first why a list of five showed four on a gift
+     page - L.giftList drops what is already on the shelf - and the real
+     answer was that the list had gone stale, not that it was filtered. */
+  const cat = {
+    A: { k: 'A', name: "Michter's US-1 Single Barrel Kentucky Straight Rye" },
+    B: { k: 'B', name: 'Pappy Van Winkle 15 Year' } };
+  const held = [{ id: 'x1', k: 'A' }];
+  const wish = [{ name: "Michter's Rye" },
+                { name: 'Pappy Van Winkle 15 Year' }];
+  const done = L.wishFulfilled(wish, cat, held);
+  eq('the one now owned is over', done.length, 1);
+  eq('and it is the right one', done[0], "Michter's Rye");
+  /* A QUALIFIER ON ONE SIDE ONLY IS NOT A DIFFERENCE, which is BZ's own name
+     rule: US-1 Single Barrel is the Michter's Rye he wanted. */
+  eq('the one still wanted stays',
+    done.indexOf('Pappy Van Winkle 15 Year'), -1);
+  /* AN EMPTY SHELF CLEARS NOTHING, rather than everything. */
+  eq('nothing owned, nothing cleared',
+    L.wishFulfilled(wish, cat, []).length, 0);
+  eq('and no wish list is no work',
+    L.wishFulfilled([], cat, held).length, 0);
+}
+
 sec('§479 a gift link answers without handing over the shelf');
 {
   /* BZ, 2026-10-17: a link you send to somebody buying you a bottle. They
