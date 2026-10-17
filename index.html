@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.55  Build 2026-10-17 09:18 AM ET
+     Version : v2.8.56  Build 2026-10-17 10:00 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
-// v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -31,6 +31,23 @@ CHANGELOG
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <title>Bottlefolio</title>
+<!-- WHAT A TEXT MESSAGE SHOWS (BZ, 2026-10-17, holding a MadGolf link beside
+     a Bottlefolio one: MadGolf gets artwork and a title, this got a favicon
+     and a bare domain). A link preview is read by the messaging app from
+     these tags alone - it never runs the page - so without them there was
+     nothing to show. One set serves every link, the gift link included,
+     because a query string cannot change a page's tags. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bottlefolio">
+<meta property="og:title" content="Bottlefolio">
+<meta property="og:description" content="Less about your shelf and more about yourself.">
+<meta property="og:image" content="https://bzrimsek.github.io/Bottlefolio/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bottlefolio">
+<meta name="twitter:description" content="Less about your shelf and more about yourself.">
+<meta name="twitter:image" content="https://bzrimsek.github.io/Bottlefolio/icon-512.png">
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2569,6 +2586,18 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
   /* break-word, not anywhere: a name breaks between words, and inside one
      only when a single word cannot fit (BZ's friend, 2026-09-20). */
   overflow-wrap:break-word;min-width:0}
+/* A GIFT LINK IS NOT THE APP (BZ, 2026-10-17: he texted himself one and
+   got the nav bar, the tabs and an error card underneath). The class was
+   set from the first build and never styled, which is the whole of that
+   fault. Everything the owner uses goes; only #giftScreen stays. */
+body.giftonly > *:not(#giftScreen){display:none}
+body.giftonly{padding:0}
+#giftScreen{max-width:620px;margin:0 auto;padding:16px 16px 48px}
+/* ON THE SHELF'S GUTTER, not the screen's. Every other card there sits
+   inside a .list, whose 1px border insets it to 17px; this host is a
+   sibling, so it landed at 16 and shots.js called out the one card out of
+   line with the other eight. */
+#shelfGift{padding:0 1px}
 </style>
 </head>
 <body>
@@ -2683,6 +2712,12 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
     class="sorthead" data-col="msrp">Price</button><button
     class="sorthead" data-col="have">Have</button><b></b><b></b></div>
   <div class="list" id="shelfList"></div>
+  <!-- THE GIFT LINK SITS UNDER THE SHELF, WHATEVER IS FILTERED.
+       It lived inside the Wanted branch of renderShelf and so appeared
+       only when the Wanted filter was on - BZ could not find it
+       (2026-10-17). A fixed host is filled on every draw instead, which
+       also keeps it out of renderShelf, a function at its line ceiling. -->
+  <div id="shelfGift"></div>
 </section>
 
 <!-- ======================= TIME FOR A TASTE ======================= -->
@@ -3099,8 +3134,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.55';
-const BUILD_TIME  = '2026-10-17 09:18 AM ET';
+const APP_VERSION = '2.8.56';
+const BUILD_TIME  = '2026-10-17 10:00 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -35092,7 +35127,7 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    wantedShareCards(list, giftCard, card);
+    if (giftCard) card(giftCard);
     return;
   }
 
@@ -35371,6 +35406,10 @@ function shelfNarrowed() {
 
 function shelfHeaderFollows() {
   try { labelBacks(); } catch (e) { /* boot order, before the header exists */ }
+  /* AND THE GIFT CARD, for the same reason this function exists: renderShelf
+     has seven early returns and is at its line ceiling, so the one call that
+     runs on every exit is the one already made here. */
+  shelfGiftHost();
 }
 
 /* --- bottle detail -------------------------------------------------- */
@@ -45486,13 +45525,18 @@ function settingsPanel(tab, host) {
  * only record there is - the rules refuse a listing of gift/, deliberately,
  * so a token is readable only by somebody who already has it.
  */
-/* WHAT SITS UNDER THE WANTED LIST: what he wants, and then the link that
-   answers about anything else. Two lines in renderShelf, which is at its
-   ceiling and may not grow (rule 30f), and they belong together anyway. */
-function wantedShareCards(list, giftCard, card) {
-  if (giftCard) card(giftCard);
-  giftLinksCard(list);
+/* THE GIFT LINK CARD, UNDER THE SHELF AND OUTSIDE EVERY FILTER (BZ,
+ * 2026-10-17: "Can't find the share on Shelf"). It was drawn inside the
+ * Wanted branch, so it existed only when that filter was on. Its own host,
+ * filled on every draw, and not a line inside renderShelf - which is at its
+ * ceiling and may not grow (rule 30f). */
+function shelfGiftHost() {
+  const host = $('#shelfGift');
+  if (!host) return;
+  host.innerHTML = '';
+  giftLinksCard(host);
 }
+
 
 /* DRAWN IN TWO PLACES, ONE BUILDER (BZ, 2026-10-17: "shelf and settings,
  * not buddies - not buddies with my wife and kids"). On the Shelf it sits
@@ -45507,13 +45551,14 @@ function giftLinksCard(box) {
   /* SAID AGAINST THE CARD ABOVE IT on the Shelf, which sends the wish
      list: that one tells them what he WANTS, this one answers about a
      bottle nobody listed, which is most of what is in a shop. */
-  card.appendChild(el('div', 'sub', 'For somebody buying you a bottle. '
-    + 'They can hold up anything — not just what is on your list — '
-    + 'and be told whether you have it and whether it is your kind of '
-    + 'thing. They never see your shelf.'));
+  /* TWO LINES, NOT SIX. The first cut explained the whole feature before it
+     offered anything to press, and on a phone that is the card (BZ,
+     2026-10-17: "the UI is ugly"). */
+  card.appendChild(el('div', 'sub', 'For whoever is buying you a bottle. '
+    + 'They can check any bottle against your shelf and your taste, and '
+    + 'never see either.'));
   if (!FB.user) {
-    card.appendChild(el('div', 'sub', 'Sign in to make one \u2014 a link is '
-      + 'published to your account.'));
+    card.appendChild(el('div', 'sub', 'Sign in to make one.'));
     box.appendChild(card);
     return;
   }
@@ -45527,27 +45572,36 @@ function giftLinksCard(box) {
     list.appendChild(el('div', 'sub', 'None yet.'));
   }
   tokens.forEach(tok => {
-    const row = el('div', 'list');
-    row.style.padding = '8px 0';
+    /* ONE LINE PER LINK, not a filled box with two stacked pills
+       (BZ, 2026-10-17: "the UI is ugly and I hate the pills"). The
+       name and when it was made on the left, the two actions as plain
+       small text on the right, the way a list row reads everywhere
+       else in this app. */
     const g = links[tok] || {};
-    const name = el('div', null, g.label || 'Untitled');
-    if (g.off) name.style.opacity = '0.5';
-    row.appendChild(name);
-    row.appendChild(el('div', 'sub', (g.off ? 'Switched off' : 'Live')
-      + ' · made ' + L.showDate(g.day || '')));
+    const row = el('div', 'item');
+    const left = el('div');
+    const name = el('div', 'nm oneline', g.label || 'Untitled');
+    if (g.off) name.style.opacity = '0.45';
+    left.appendChild(name);
+    left.appendChild(el('div', 'sub', (g.off ? 'Switched off'
+      : 'Live') + ' · ' + L.showDate(g.day || '')));
+    row.appendChild(left);
+    const acts = el('div');
+    acts.style.whiteSpace = 'nowrap';
     if (!g.off) {
-      const copy = el('button', 'chip', 'Copy link');
+      const copy = el('button', 'chip', 'Copy');
       copy.onclick = () => {
         const url = giftUrl(tok);
         try { navigator.clipboard.writeText(url); toast('Link copied'); }
         catch (e) { toast(url); }
       };
-      row.appendChild(copy);
+      acts.appendChild(copy);
     }
-    const kill = el('button', 'chip', g.off ? 'Switch back on' : 'Switch off');
-    kill.style.marginLeft = '5px';
+    const kill = el('button', 'chip', g.off ? 'Turn on' : 'Turn off');
+    kill.style.marginLeft = '12px';
     kill.onclick = () => giftSetOff(tok, !g.off);
-    row.appendChild(kill);
+    acts.appendChild(kill);
+    row.appendChild(acts);
     list.appendChild(row);
   });
   card.appendChild(list);
@@ -59369,11 +59423,17 @@ function giftMode() {
 async function giftLoad(token, host) {
   host.appendChild(el('div', 'sub', 'Opening\u2026'));
   let gift = null;
+  /* OVER REST, NOT THE SDK. "The SDK is only fetched when you ask to
+     sign in" - and a gift shopper never signs in, so firebase was
+     undefined here and EVERY link answered "not working" (BZ, 2026-10-17,
+     texting himself the first one). The node is public by its rule, so a
+     plain fetch reads it with no SDK, no account and no wait. */
   try {
-    const snap = await firebase.database()
-      .ref('bz-apps/whisky/gift/' + token).once('value');
-    gift = snap.val();
+    const r = await fetch(FB.config.databaseURL
+      + '/bz-apps/whisky/gift/' + token + '.json');
+    gift = r.ok ? await r.json() : null;
   } catch (e) {
+    appLog('gift: could not read the link — ' + ((e && e.message) || e));
     gift = null;
   }
   host.innerHTML = '';
@@ -59572,7 +59632,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.55</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.56</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
