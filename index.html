@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.47  Build 2026-10-15 04:27 PM ET
+     Version : v2.8.48  Build 2026-10-16 09:16 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
 // v2.8.39  2026-10-12  The rest of the house, owned or not.
-// v2.8.38  2026-10-12  Your note before ours, the camera only for adding, and a likely note where nobody has written one.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.47';
-const BUILD_TIME  = '2026-10-15 04:27 PM ET';
+const APP_VERSION = '2.8.48';
+const BUILD_TIME  = '2026-10-16 09:16 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -7018,6 +7018,19 @@ L.shopNorm = function (s, brands) {
     .replace(/[\u2019']/g, '')
     /* A PROOF IN THE NAME IS NOT PART OF THE NAME, for matching. */
     .replace(/\b\d{2,3}(\.\d)?\s*%?\s*(proof|abv)\b/g, ' ')
+    /* AN AGE GLUED TO ITS UNIT IS STILL AN AGE (BZ, 2026-10-16). A bar
+       menu writes 'Lagavulin 16yr'; the shelf says 'Lagavulin 16 Year Old
+       Single Malt Scotch Whisky', which normalises to 'lagavulin 16'. With
+       no separator there is nothing for the strip below to turn into a
+       space, so '16yr' stayed one token, the overlap came out at 0.50
+       against a bar of 0.80, and the app told him he did not own a bottle
+       standing open on his shelf. Spaced forms ('16 yr', '16-year-old',
+       'aged 16 years') all scored 1.00 already - only the glued ones fell
+       through, which is why it survived this long.
+       NOTHING STORED CHANGES: all 359 names in the shelf and the catalogue
+       spell the age out, so this reaches only text read off a photograph,
+       which is the only place the glued form comes from. */
+    .replace(/\b(\d{1,2})\s*(?:yrs?|yos?)\b/g, '$1 year')
     .replace(/[^a-z0-9 ]/g, ' ')
     .split(/\s+/).filter(Boolean);
   /* THE LONGEST FILED BRAND THIS NAME OPENS WITH, kept whole. */
@@ -9890,11 +9903,34 @@ L.recentPlaces = function (history, limit) {
  * only real evidence about these servers is BZ's own log. The order below
  * is therefore a reasonable guess, and the log line says which one answered
  * so the next real use settles it rather than another guess. */
+/* MEASURED 2026-10-16, FROM A BROWSER AT THE LIVE ORIGIN, which is the only
+   place this can be measured: Node sends no Origin and enforces no CORS, so
+   it cannot see the failure at all. Two passes against the same query:
+     overpass.osm.ch          200 in 0.9s   200 in 0.6s
+     overpass.kumi.systems    200 in 1.0s   failed (rate-limited by then)
+     overpass.private.coffee  failed        failed
+     overpass-api.de          failed        200 in 28.9s
+   The order below is no longer a guess. overpass-api.de was FIRST and is the
+   worst of the four, which is why BZ's lookup failed on 2026-10-16 with
+   every server named in the log: the app spent its first attempt on the one
+   that reliably fails, and the others were briefly busy.
+
+   WHY A FAILURE READS AS 'Failed to fetch' AND NEVER AS A STATUS. Overpass
+   error pages - 406, 429, 500, 504 - carry no Access-Control-Allow-Origin,
+   so the browser refuses the response before the app sees it and reports a
+   network error. A log line saying 'Failed to fetch' therefore means the
+   server answered and said no, NOT that the phone had no signal. */
 L.OVERPASS_SERVERS = [
-  'https://overpass-api.de/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter'
 ];
+
+/* ONE SERVER MAY NOT EAT THE WHOLE ATTEMPT. overpass-api.de answered in 28.9
+   seconds on the pass above; with no client timeout the person stands in a
+   bar watching a spinner while three working mirrors sit unasked. */
+L.OVERPASS_WAIT = 8000;
 
 /* The first, for anything that wants one address. */
 L.OVERPASS = L.OVERPASS_SERVERS[0];
@@ -51092,8 +51128,17 @@ function askTheMap(onRows, onStart, done) {
     const ask = i => {
       const at = L.OVERPASS_SERVERS[i];
       const began = Date.now();
-      return fetch(at, { method: 'POST',
+      /* A WAIT PER SERVER, not for the chain: a mirror having a bad day is
+         skipped in eight seconds instead of holding the whole lookup for
+         half a minute (L.OVERPASS_WAIT, measured 2026-10-16). The catch
+         below already moves to the next one, so an abort behaves exactly
+         like the refusals it sits beside. */
+      const bell = new AbortController();
+      const ring = setTimeout(() => bell.abort(), L.OVERPASS_WAIT);
+      return fetch(at, { method: 'POST', signal: bell.signal,
         headers: { 'Content-Type': 'text/plain' }, body: body })
+        .then(r => { clearTimeout(ring); return r; },
+              e => { clearTimeout(ring); throw e; })
         .then(r => r.ok ? r.json()
           : Promise.reject(new Error('HTTP ' + r.status)))
         .then(j => {
@@ -58756,7 +58801,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.47</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.48</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

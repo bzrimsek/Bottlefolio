@@ -152,7 +152,7 @@ QUESTION, not the name you were going to use.
 - **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
 - **`L.OSM_KINDS`** — THE OSM TAGS THAT ARE PLACES A POUR HAPPENS, each mapped onto a kind the
-- **`L.OVERPASS_SERVERS`** — MORE THAN ONE SERVER, because the first one said 504.
+- **`L.OVERPASS_SERVERS`** — WHY A FAILURE READS AS 'Failed to fetch' AND NEVER AS A STATUS
 - **`L.PAIR_CLAIMS`** — WHICH FINDINGS CLAIM THAT TWO ENTRIES ARE ONE BOTTLE
 - **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]

@@ -29998,6 +29998,34 @@ sec('§472 a brand learns its house from the catalogue');
     Object.keys(L.brandHouses(null, null)).length, 0);
 }
 
+sec('§474 an age glued to its unit still names the same bottle');
+{
+  /* BZ, 2026-10-16, looking at a bar menu on the Out screen: "Also I do own
+     the 16. Something is not right." The write-up named the four Lagavulins
+     he owns and called the 16 the gap worth filling - with the 16 standing
+     open on his shelf. A menu writes an age as "16yr"; with no separator
+     there was nothing to split, so the overlap scored 0.50 against a bar of
+     0.80. An owned bottle must never be invisible. */
+  const owned16 = 'Lagavulin 16 Year Old Single Malt Scotch Whisky';
+  ['Lagavulin 16', 'Lagavulin 16yr', 'Lagavulin 16YR', 'Lagavulin 16yo',
+   'Lagavulin 16 yr', 'Lagavulin 16 yrs', 'Lagavulin 16-Year-Old',
+   'Lagavulin Aged 16 Years'].forEach(form => {
+    eq(form + ' is the bottle he owns',
+      L.nameOverlap(form, owned16) >= 0.8, true);
+  });
+  /* AND THE GLUED FORM NORMALISES TO THE SPACED ONE, so every door through
+     shopNorm agrees rather than only the one that was fixed. */
+  eq('the glued age normalises like the spelled one',
+    L.shopNorm('Lagavulin 16yr'), L.shopNorm('Lagavulin 16 Year Old'));
+  /* A DIFFERENT AGE IS STILL A DIFFERENT BOTTLE: the split must not make
+     every Lagavulin one whisky. */
+  eq('the 8 is not the 16', L.nameOverlap('Lagavulin 8yr', owned16) >= 0.8,
+    false);
+  /* NOTHING STORED MOVES: a number that is not an age keeps its shape. */
+  eq('a year in a name is not an age',
+    L.shopNorm('Old Forester 1920'), 'old forester 1920');
+}
+
 sec('§473 a question has one answer, and survives being answered');
 {
   /* BZ, 2026-10-15: "THERE SHOULD ONLY BE ONE CORRECT ANSWER". "Which of
