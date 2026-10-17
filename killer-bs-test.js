@@ -30031,6 +30031,31 @@ sec('§475 one proof band under the floor, not seven');
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
 }
 
+sec('§481 why a bottle is wanted, whichever way it was written');
+{
+  /* BZ, 2026-10-17, from a screenshot of the Shop: "Added undefined".
+     A wish comes in two shapes - L.wishAdd writes reason and added, a
+     bottle wished after a pour writes why and at - and three screens read
+     only the first. The row printed Added undefined AND threw away the
+     best line it had. */
+  eq('the shape wishAdd writes',
+    L.wishSays({ reason: 'completes Peat night', forFlight: 'PEAT NIGHT' }),
+    'completes Peat night');
+  eq('the shape a pour writes',
+    L.wishSays({ why: 'Poured at Flight Club, and you would again',
+                 at: '2026-10-07' }),
+    'Poured at Flight Club, and you would again');
+  /* A FLIGHT IS NAMED ONCE: the reason already carries it. */
+  eq('a flight with no reason still says so',
+    L.wishSays({ forFlight: 'PEAT NIGHT' }), 'for Peat night');
+  /* AND NEVER A WORD FOLLOWED BY UNDEFINED. */
+  eq('nothing known says nothing', L.wishSays({ name: 'x' }), '');
+  eq('a date alone is a last resort',
+    L.wishSays({ at: '2026-10-16' }).indexOf('undefined'), -1);
+  eq('and it reads as a date',
+    L.wishSays({ at: '2026-10-16' }).indexOf('Added ') , 0);
+}
+
 sec('§480 a wish is over when you own it');
 {
   /* BZ, 2026-10-17: "If we add a bottle that is on the wish list, the wish

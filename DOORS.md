@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1045 |
+| functions | 1046 |
 | tables | 249 |
 | carrying a stated purpose | 838 |
 
@@ -1295,13 +1295,14 @@ QUESTION, not the name you were going to use.
 - **`L.wholeValue`** — A LIST TAKEN WHOLE FROM THE OTHER SIDE, or an empty one when the account
 - **`L.whyPt`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.wikidataDistilleriesQuery`** — Q1251750 is "distillery" (whisky distilleries are a subclass of it).
-- **`L.wishAdd`** — you can act on in a shop.
+- **`L.wishAdd`** — _no comment above it_
 - **`L.wishEntry`** — What goes into the wishlist, with a reason you can act on in a shop:
 - **`L.wishFromFlights`** — flights a bottle would unlock
 - **`L.wishFulfilled`** — A WISH IS OVER WHEN YOU OWN IT (BZ, 2026-10-17
 - **`L.wishLine`** — THE WISHLIST
 - **`L.wishRemove`** — _no comment above it_
 - **`L.wishRows`** — The wishlist, newest first
+- **`L.wishSays`** — WHY A BOTTLE IS ON THE WISH LIST, whichever way it was written (BZ,
 - **`L.withIdToken`** — EVERY PAID CALL CARRIES PROOF OF SIGN-IN (BZ, 2026-09-15)
 - **`L.withOrigin`** — _no comment above it_
 - **`L.woodFamily`** — _no comment above it_

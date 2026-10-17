@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.66  Build 2026-10-17 01:04 PM ET
+     Version : v2.8.67  Build 2026-10-17 01:19 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
-// v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.66';
-const BUILD_TIME  = '2026-10-17 01:04 PM ET';
+const APP_VERSION = '2.8.67';
+const BUILD_TIME  = '2026-10-17 01:19 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -32563,6 +32563,38 @@ L.directoryEntry = function (uid, name, findable) {
 // Why a bottle is on the list matters more than that it is. A name alone is
 // a note to self; a name with "completes Who's Your Daddy?" is a decision
 // you can act on in a shop.
+/* WHY A BOTTLE IS ON THE WISH LIST, whichever way it was written (BZ,
+ * 2026-10-17, from a screenshot of the Shop: "Added undefined").
+ *
+ * A WISH COMES IN TWO SHAPES and three screens only read one of them.
+ * L.wishAdd writes `reason` and `added`; a bottle wished after a pour writes
+ * `why` and `at` - L.discoveryFor already says so and reads both. The Shop
+ * row read `reason || 'Added ' + added`, so an entry of the second shape
+ * printed Added undefined AND threw away the best line it had: "Poured at
+ * Flight Club, and you would again".
+ *
+ * ONE READER, so the Shop and both Shelf lists cannot say different things
+ * about one wish. A date with nothing else is the last resort, and nothing
+ * at all is said rather than a word followed by undefined.
+ */
+L.wishSays = function (entry) {
+  const w = entry || {};
+  const bits = [];
+  const why = w.reason || w.why;
+  if (why) bits.push(String(why));
+  /* AND NOT THE FLIGHT TWICE. L.wishAdd writes a reason that already names
+     it - "completes Who's your daddy?" - so appending the flight gave
+     "completes Who's your daddy? for Who's your daddy?". */
+  const flight = w.forFlight ? L.sentenceCase(w.forFlight) : '';
+  if (flight && String(why || '').toLowerCase()
+      .indexOf(flight.toLowerCase()) < 0) {
+    bits.push('for ' + flight);
+  }
+  if (bits.length) return bits.join(' \u00b7 ');
+  const when = w.added || w.at;
+  return when ? 'Added ' + L.showDate(when) : '';
+};
+
 L.wishAdd = function (list, entry) {
   const out = (list || []).slice();
   const key = L.shopNorm(entry.name || '');
@@ -34617,9 +34649,7 @@ function renderShelfCharts(box) {
         const row = el('button', 'item');
         const left = el('div');
         left.appendChild(el('div', 'nm oneline', w.name));
-        const why = [w.reason, w.forFlight
-          ? 'for ' + L.sentenceCase(w.forFlight) : null]
-          .filter(Boolean).join(' \u00b7 ');
+        const why = L.wishSays(w);
         if (why) left.appendChild(el('div', 'sub', why));
         row.appendChild(left);
         if (w.est) row.appendChild(el('div', 'pf', '$' + w.est));
@@ -35236,8 +35266,7 @@ function renderShelf() {
       const r = el('button', 'item');
       const left = el('div');
       left.appendChild(el('div', 'nm oneline', w.name));
-      const why = [w.reason, w.forFlight ? 'for ' + L.sentenceCase(w.forFlight)
-        : null].filter(Boolean).join(' \u00b7 ');
+      const why = L.wishSays(w);
       if (why) left.appendChild(el('div', 'sub', why));
       r.appendChild(left);
       if (w.est) r.appendChild(el('div', 'pf', '$' + w.est));
@@ -44432,9 +44461,7 @@ function wishCard(after) {
     const r = el('div', 'item');
     const left = el('div');
     left.appendChild(el('div', 'nm', x.name));
-    left.appendChild(el('div', 'sub', x.forFlight
-      ? 'For ' + L.sentenceCase(x.forFlight)
-      : (x.reason || 'Added ' + x.added)));
+    left.appendChild(el('div', 'sub', L.wishSays(x)));
     r.appendChild(left);
     // Tapping the row opens the bottle, as everywhere else.
     r.style.cursor = 'pointer';
@@ -59949,7 +59976,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.66</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.67</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
