@@ -30112,6 +30112,20 @@ sec('§479 a gift link answers without handing over the shelf');
   /* AND NOTHING NAMES A DISTILLERY. "Plenty from one distillery already"
      was true and useless - a shopper cannot act on it without the name,
      and the name is not what a hint is for. */
+  /* AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17: "Rarely goes
+     for earthy and oaky ones - is bourbon oaky?"). It is, by law, and oak
+     is on 206 of his 370 bottles - the second commonest flavour he owns -
+     while the card was telling a shopper he rarely goes for oaky ones. */
+  const deepInOak = { flavour: [{ value: 'oak', n: 200 },
+                                { value: 'earthy', n: 2 }] };
+  eq('a family his shelf is deep in is never an avoid',
+    L.giftAvoidable(['woody'], deepInOak).length, 0);
+  eq('but a rare one still is',
+    L.giftAvoidable(['earthy'], deepInOak).length, 1);
+  /* WITH NOTHING TO CHECK AGAINST it keeps what it was given rather than
+     silently dropping every avoid. */
+  eq('no shelf, no filtering',
+    L.giftAvoidable(['woody'], {}).length, 1);
   eq('the house hint is gone', L.GIFT_PLAIN.house, undefined);
   eq('and so are the ones that imply one',
     [L.GIFT_PLAIN.repeat, L.GIFT_PLAIN.sealed].join(''), '');

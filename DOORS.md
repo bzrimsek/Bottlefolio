@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1043 |
+| functions | 1044 |
 | tables | 249 |
-| carrying a stated purpose | 837 |
+| carrying a stated purpose | 838 |
 
 ## Tables
 
@@ -92,7 +92,7 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
 - **`L.GAPS_ON_THE_LABEL`** — This is the list the shelf's fill queue asks about
 - **`L.GIFT_PLAIN`** — WHAT TO TELL A SHOPPER, IN A VOICE THEY CAN ACT ON (BZ, 2026-10-17:
-- **`L.GIFT_PLAIN_TASTE`** — THE FLAVOUR FAMILIES, in words a shop assistant would use
+- **`L.GIFT_PLAIN_TASTE`** — KEYED BY THE FAMILY ID, which is lowercase
 - **`L.GUIDE_CALLED`** — WHAT HE IS TOLD TO CALL SOMEBODY
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
 - **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens
@@ -540,6 +540,7 @@ QUESTION, not the name you were going to use.
 - **`L.gapsFromWish`** — a reason; the reason was recorded.
 - **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
+- **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
 - **`L.giftFromLink`** — _no comment above it_
 - **`L.giftHash`** — _no comment above it_
 - **`L.giftHints`** — _no comment above it_

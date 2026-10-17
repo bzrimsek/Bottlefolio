@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.62  Build 2026-10-17 11:25 AM ET
+     Version : v2.8.64  Build 2026-10-17 11:46 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.64  2026-10-17  IS BOURBON OAKY?
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
-// v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.62';
-const BUILD_TIME  = '2026-10-17 11:25 AM ET';
+const APP_VERSION = '2.8.64';
+const BUILD_TIME  = '2026-10-17 11:46 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30720,10 +30720,14 @@ L.GIFT_PLAIN = {
 
 /* THE FLAVOUR FAMILIES, in words a shop assistant would use. Winey is the
    dangerous one and half the reason this exists. */
+/* KEYED BY THE FAMILY ID, which is lowercase. L.tasteWantAxes answers both
+   an id and a label; keying this by the capitalised label made
+   L.giftAvoidable compare "Woody" with "woody" and match nothing - which
+   is how oak survived a check written to catch it. */
 L.GIFT_PLAIN_TASTE = {
-  Winey: 'sherried', Fruity: 'fruity', Peaty: 'smoky', Woody: 'oaky',
-  Spicy: 'spicy', Sweet: 'sweet', Floral: 'floral', Herbal: 'herbal',
-  Nutty: 'nutty', Cereal: 'grainy', Earthy: 'earthy', Dairy: 'creamy'
+  winey: 'sherried', fruity: 'fruity', peaty: 'smoky', woody: 'oaky',
+  spicy: 'spicy', sweet: 'sweet', floral: 'floral', herbal: 'herbal',
+  nutty: 'nutty', cereal: 'grainy', earthy: 'earthy', lactic: 'creamy'
 };
 
 L.giftPlainWords = function (list, table) {
@@ -30736,6 +30740,42 @@ L.giftPlainWords = function (list, table) {
   return out;
 };
 
+/* AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17: "Rarely goes for
+ * earthy and oaky ones - is bourbon oaky?").
+ *
+ * It is, by law: bourbon has to be aged in new charred oak, and 132 of his
+ * bottles are bourbon. Measured the same day, oak is on 206 of them - the
+ * SECOND most common flavour on his own shelf - while the card was telling a
+ * shopper he rarely goes for oaky ones. Earthy, by contrast, is 40th of 43
+ * and the claim holds.
+ *
+ * THE QUIZ MEASURES WHICH WORD HE PICKS, not what he drinks. Forced to choose
+ * between two tasting notes he never picks the oak one, which is a real
+ * preference and not an instruction to avoid a third of his collection. So an
+ * avoid is checked against the shelf before it is spoken, and dropped when
+ * the shelf says otherwise - the same discipline answers.js applies to a
+ * screen that contradicts itself.
+ */
+L.giftAvoidable = function (families, prof) {
+  const flav = (prof || {}).flavour || [];
+  if (!flav.length) return families || [];
+  const ix = L.palateIndex();
+  const per = {};
+  let most = 0;
+  flav.forEach(f => {
+    const fam = ix.family[f.value];
+    if (!fam) return;
+    per[fam] = (per[fam] || 0) + (Number(f.n) || 0);
+    if (per[fam] > most) most = per[fam];
+  });
+  if (!most) return families || [];
+  /* A FIFTH OF THE COMMONEST is the line, derived rather than typed: a family
+     carrying that much of his own shelf is not one he avoids, whatever the
+     answers say about the word for it. */
+  const bar = most / 5;
+  return (families || []).filter(fam => (per[fam] || 0) < bar);
+};
+
 L.giftHints = function (prof, portrait) {
   const p = prof || {};
   const said = L.giftPlainWords((portrait || {}).from, L.GIFT_PLAIN);
@@ -30745,9 +30785,10 @@ L.giftHints = function (prof, portrait) {
   const axes = L.tasteWantAxes(p.ab || {});
   if (axes.length >= 4) {
     const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
-    const likes = L.giftPlainWords(byPct.slice(0, 3).map(a => a.label),
+    const likes = L.giftPlainWords(byPct.slice(0, 3).map(a => a.id),
       L.GIFT_PLAIN_TASTE);
-    const avoid = L.giftPlainWords(byPct.slice(-2).map(a => a.label),
+    const avoid = L.giftPlainWords(
+      L.giftAvoidable(byPct.slice(-3).map(a => a.id), p),
       L.GIFT_PLAIN_TASTE);
     if (likes.length) out.push('Likes it ' + L.andList(likes) + '.');
     if (avoid.length) {
@@ -35211,8 +35252,9 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    /* AFTER THE WISH LIST (BZ, 2026-10-17: "on Shelf, it should go
-       after the wish list. Not at the top of the page"). */
+    /* AFTER THE WISH LIST (BZ, 2026-10-17: "after Wish List"). Drawn in
+       the Wanted view here and in the main view above the map, by the one
+       builder - taking it out of either is how it went missing twice. */
     if (giftCard) card(giftCard);
     giftLinksCard(list);
     return;
@@ -35430,6 +35472,13 @@ function shelfTwoByTwo(into) {
   const grid = el('div');
   renderBuyVsDrink(grid);
   if (grid.childNodes.length) into.appendChild(grid);
+  /* THE GIFT LINK, ABOVE THE MAP AND BELOW THE SHELF ITSELF. It has
+     been under the map (the foot of everything), inside the Wanted
+     filter (invisible unless that pill is on) and the second card on
+     the page (BZ: "Not at the top of the page. OMG."). This is the
+     main shelf flow, so it is always there, and it is the last thing
+     before the map rather than after it. */
+  giftLinksCard(into);
   shelfOriginMap(into);
 }
 
@@ -45634,7 +45683,9 @@ function settingsPanel(tab, host) {
 function giftLinksCard(box) {
   const card = el('div', 'sheet');
   card.appendChild(el('h3', null, 'Gift links'));
-  card.style.marginTop = '12px';
+  /* NO MARGIN OF ITS OWN: .sheet already carries the gap, and adding one
+     put this card 24px from its neighbour where every other sits at 12
+     (browser.js, 2026-10-17). */
   /* SAID AGAINST THE CARD ABOVE IT on the Shelf, which sends the wish
      list: that one tells them what he WANTS, this one answers about a
      bottle nobody listed, which is most of what is in a shop. */
@@ -59795,7 +59846,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.62</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.64</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
