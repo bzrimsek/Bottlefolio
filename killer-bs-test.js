@@ -25417,7 +25417,10 @@ sec('\u00a7391 a sentence becomes the pills the shelf already has');
     q('over 100 proof').set.proofs.join(','),
     'p100,p110,p120,p130,p140,p150,p160');
   eq('and under 90 into the ones below',
-    q('under 90 proof').set.proofs.join(','), 'p70,p80');
+    q('under 90 proof').set.proofs.join(','), 'p0,p80');
+  /* p0, NOT p70: below 80 proof is one band now, so a sentence asking for
+     under 90 reaches it and the dead 70-79 chip no longer exists
+     (BZ, 2026-10-16). */
 
   /* FILLER GOES, because the leftover is matched as ONE substring: on
      BZ's shelf "smoky" finds 29 bottles and "something smoky" found none,
@@ -29996,6 +29999,36 @@ sec('§472 a brand learns its house from the catalogue');
     Object.keys(L.brandHouses({ x: { name: 'Nameless' } }, reg)).length, 0);
   eq('nothing in does not throw',
     Object.keys(L.brandHouses(null, null)).length, 0);
+}
+
+sec('§475 one proof band under the floor, not seven');
+{
+  /* BZ, 2026-10-16: "No proof filters needed below 80 other than 1 for
+     below 80." 80 proof is the floor under whiskey, so below it a spirit
+     is not whiskey at all, and splitting 40-49 from 70-79 offers a reader
+     a choice between two kinds of nothing. */
+  const cat = { A: { k: 'A', name: 'A', proof: 40 },
+                B: { k: 'B', name: 'B', proof: 60 },
+                C: { k: 'C', name: 'C', proof: 75 },
+                D: { k: 'D', name: 'D', proof: 94 } };
+  const held = [{ id: 'x1', k: 'A' }, { id: 'x2', k: 'B' },
+                { id: 'x3', k: 'C' }, { id: 'x4', k: 'D' }];
+  const chips = L.proofTens(cat, held);
+  const under = chips.filter(c => c[0] === 'p0');
+  eq('everything under the floor is one chip', under.length, 1);
+  eq('and it counts all three', under[0][2], 3);
+  eq('and it says what it is', under[0][1], 'under 80');
+  eq('no other chip sits below the floor',
+    chips.filter(c => Number(c[0].slice(1)) > 0
+      && Number(c[0].slice(1)) < 80).length, 0);
+
+  /* THE CHIP AND THE FILTER BEHIND IT MUST AGREE, or pressing it shows
+     something other than what it counted. */
+  eq('79 is under the floor', L.proofInTen('p0', 79), true);
+  eq('80 is not', L.proofInTen('p0', 80), false);
+  eq('and no proof at all is not a band', L.proofInTen('p0', 0), false);
+  /* A SAVED FILTER FROM BEFORE THIS CHANGE STILL WORKS. */
+  eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
 }
 
 sec('§474 an age glued to its unit still names the same bottle');

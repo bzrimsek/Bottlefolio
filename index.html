@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.48  Build 2026-10-16 09:16 PM ET
+     Version : v2.8.49  Build 2026-10-16 09:29 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
-// v2.8.39  2026-10-12  The rest of the house, owned or not.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.48';
-const BUILD_TIME  = '2026-10-16 09:16 PM ET';
+const APP_VERSION = '2.8.49';
+const BUILD_TIME  = '2026-10-16 09:29 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -13935,18 +13935,33 @@ L.proofTens = function (catalog, bottles) {
   const counts = {};
   Object.values(catalog || {}).forEach(p => {
     if (!p.proof || !L.ownedCount(p.k, bottles || [])) return;
-    const lo = Math.floor(p.proof / 10) * 10;
+    /* Everything under the floor is ONE bucket, keyed 0 - the same
+       answer L.proofInTen gives, so the chip and the filter behind it
+       cannot disagree. */
+    const lo = p.proof < L.PROOF_FLOOR ? 0
+      : Math.floor(p.proof / 10) * 10;
     counts[lo] = (counts[lo] || 0) + 1;
   });
   // Only the bands with something in them: an empty range is a chip
   // somebody can press to see nothing.
   return Object.keys(counts).map(Number).sort((a, b) => a - b)
-    .map(lo => ['p' + lo, lo + '\u2013' + (lo + 9), counts[lo]]);
+    .map(lo => ['p' + lo,
+      lo ? lo + '–' + (lo + 9) : 'under ' + L.PROOF_FLOOR,
+      counts[lo]]);
 };
 
 L.proofInTen = function (band, proof) {
   const lo = parseInt(String(band).replace(/^p/, ''), 10);
-  if (!lo && lo !== 0) return false;
+  if (isNaN(lo)) return false;
+  /* 80 IS THE FLOOR UNDER WHISKEY, so it is the floor under the
+     filters too (BZ, 2026-10-16: "No proof filters needed below 80
+     other than 1 for below 80"). Below it a spirit is not whiskey at
+     all, by this app's own definitions, so splitting 40-49 from 70-79
+     offers a choice between two kinds of nothing.
+     `p0` IS THAT BAND AND IS NOT TEN WIDE. The id keeps the p<lo>
+     shape so saved filters and the search parser still read it, and an
+     older saved `p70` goes on matching 70-79 rather than breaking. */
+  if (lo === 0) return proof > 0 && proof < L.PROOF_FLOOR;
   return proof >= lo && proof < lo + 10;
 };
 
@@ -28524,12 +28539,15 @@ L.parseQuery = function (text) {
   /* A NUMBER WITH A COMPARISON: "over 100 proof", "under 90 proof". Expanded
      into the ten-proof bands the shelf filters by, capped at the range a
      whisky can be. */
-  const TENS = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160];
+  /* 0 IS THE UNDER-80 BAND, not 0-9, so its top is the floor (see
+     L.proofInTen). 70 has gone: no chip carries it now. */
+  const TENS = [0, 80, 90, 100, 110, 120, 130, 140, 150, 160];
+  const topOf = t => (t ? t + 10 : L.PROOF_FLOOR);
   const overProof = /\bover (\d{2,3})\s*(proof)?\b/.exec(rest);
   const underProof = /\bunder (\d{2,3})\s*proof\b/.exec(rest);
   if (overProof) {
     const lo = Number(overProof[1]);
-    TENS.filter(t => t + 10 > lo).forEach(t => {
+    TENS.filter(t => topOf(t) > lo).forEach(t => {
       if (set.proofs.indexOf('p' + t) < 0) set.proofs.push('p' + t);
     });
     if (set.proofs.length) said.push('over ' + lo + ' proof');
@@ -58801,7 +58819,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.48</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.49</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
