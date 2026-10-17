@@ -30082,23 +30082,37 @@ sec('§479 a gift link answers without handing over the shelf');
      shop counter - BZ's shelf leads on oak while his answers put Woody at 0
      and Fruity at 93. */
   eq('nothing to say, no hints', L.giftHints({ ab: {} }, {}), null);
-  /* THE SHELF IS DESCRIBED, NOT COUNTED (BZ, 2026-10-17: "more of a
-     description than a hard count"). The portrait already answers what a
-     shelf IS, so the title and its line are what travel. */
-  const port = { title: 'The Sherry Cellar',
+
+  /* A NOVICE MUST NOT BE SENT TO THE WRONG AISLE (BZ, 2026-10-17: "If you
+     say sherry cellar to a novice, we run the risk of them buying
+     sherry"). Every word this app uses is written for somebody who already
+     knows - the portrait titles are PX Lover, Sherry Bomb, Islay Regular,
+     and the taste family is Winey - and a gift link goes to the person
+     LEAST likely to know them. */
+  const port = { title: 'The Sherry Cellar', from: ['px', 'sherry'],
                  line: 'The wood does the talking here.',
                  story: 'You buy strength on purpose.' };
-  const described = L.giftHints({ ab: {} }, port);
-  eq('the portrait title travels', described.title, 'The Sherry Cellar');
-  eq('and its line', described.line, 'The wood does the talking here.');
-  /* AND ITS STORY DOES NOT: the portrait writes that one TO the owner,
-     and 'You buy strength on purpose' reads wrong to a shopper. */
-  eq('the owner-facing story stays behind',
-    JSON.stringify(described).indexOf('You buy'), -1);
-  /* NO COUNTS, and no bottle named anywhere in it. */
-  eq('no bottle count travels', described.owned, undefined);
+  const plain = L.giftHints({ ab: {} }, port);
+  /* THE TRANSLATOR ITSELF: an id nobody has written plain words for is
+     dropped rather than shown raw, which is how an insider word would
+     reach a shopper. */
+  eq('a word with no plain version is dropped',
+    L.giftPlainWords(['px', 'nosuchthing'], L.GIFT_PLAIN).length, 1);
+  eq('and the same word twice is said once',
+    L.giftPlainWords(['px', 'sherry'], L.GIFT_PLAIN).length, 1);
+  eq('the cask is never mistaken for the drink',
+    plain.shelf[0].indexOf('not the sherry') > 0, true);
+  /* AND NONE OF THE INSIDER WORDS TRAVEL. */
+  const said = JSON.stringify(plain).toLowerCase();
+  ['sherry cellar', 'sherry bomb', 'px lover', 'islay regular',
+   'winey', 'peat head'].forEach(word => {
+    eq('a shopper is never shown "' + word + '"', said.indexOf(word), -1);
+  });
+  /* THE OWNER-FACING STORY STAYS BEHIND, as it did before. */
+  eq('and nor is the story written to the owner',
+    JSON.stringify(plain).indexOf('You buy'), -1);
   eq('the hints name no bottle',
-    JSON.stringify(described).toLowerCase().indexOf('lagavulin'), -1);
+    JSON.stringify(plain).toLowerCase().indexOf('lagavulin'), -1);
 
   /* AND THE NAME REPLACES EVERY PRONOUN (BZ, 2026-10-17). */
   const named = { who: 'BZ', own: {}, wish: {}, taste: { weights: {} } };

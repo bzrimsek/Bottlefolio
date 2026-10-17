@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.60  Build 2026-10-17 11:00 AM ET
+     Version : v2.8.61  Build 2026-10-17 11:10 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
-// v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2596,9 +2596,6 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
 body.giftonly > *:not(#giftScreen):not(#working){display:none}
 body.giftonly{padding:0}
 #giftScreen{max-width:620px;margin:0 auto;padding:16px 16px 48px}
-/* ON THE SHELF'S GUTTER, not the screen's: every other card there sits
-   inside a .list, whose 1px border insets it to 17px. */
-#shelfGift{padding:0 1px}
 </style>
 </head>
 <body>
@@ -2673,12 +2670,6 @@ body.giftonly{padding:0}
       <div class="wm">Your shelf<span class="src" id="shelfSum"></span></div>
     </div>
   </div>
-  <!-- THE GIFT LINK, IN THE MAIN SHELF VIEW. It lived under the origin
-       map (wrong: the foot of everything) and then inside the Wanted
-       filter (wrong: a sub-view), and BZ could not find it either time.
-       Here it is the first thing under the masthead, on every shelf
-       view, with no filter to turn on first. -->
-  <div id="shelfGift"></div>
   <div class="filterbar" id="shelfFilterBar">
     <input id="q" class="field" type="search" placeholder="Search, or describe what you want" aria-label="Search bottles">
     <div class="sortrow" style="margin-top:8px">
@@ -3135,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.60';
-const BUILD_TIME  = '2026-10-17 11:00 AM ET';
+const APP_VERSION = '2.8.61';
+const BUILD_TIME  = '2026-10-17 11:10 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30702,30 +30693,70 @@ L.giftLookupUrl = function (gift, token, name) {
  * AND THE BOTTOM AS WELL AS THE TOP. "Not oak-forward, not peated" saves a
  * shopper more money than a list of things to like.
  */
+/* THE SHOPPER'S VOCABULARY (BZ, 2026-10-17: "If you say sherry cellar to a
+ * novice, we run the risk of them buying sherry").
+ *
+ * EVERY WORD THIS APP USES IS WRITTEN FOR SOMEBODY WHO ALREADY KNOWS. The
+ * portrait calls his shelf The Sherry Cellar; its other titles are PX Lover,
+ * Sherry Bomb, Islay Regular, Full Proof, Big Smoke. The taste families are no
+ * better: Winey sends the same person to the wine aisle. Reusing the portrait
+ * here was the right door for the question and the wrong one for the reader -
+ * a gift link goes to the person LEAST likely to know the words.
+ *
+ * SO IT IS SAID TWICE, PLAINLY, AND THE CASK IS NEVER THE DRINK. "Aged in
+ * sherry casks - the whisky, not the sherry" is the whole point of this
+ * table.
+ */
+L.GIFT_PLAIN = {
+  px: 'whisky aged in sherry casks \u2014 the whisky, not the sherry',
+  sherry: 'whisky aged in sherry casks \u2014 the whisky, not the sherry',
+  peat: 'smoky whisky',
+  region: 'smoky single malts from Islay',
+  proof: 'whisky bottled at full strength',
+  house: 'plenty from one distillery already',
+  repeat: 'the same favourites, bought again',
+  sealed: 'a spare of what gets drunk',
+  rare: 'bottles that are hard to find',
+  obscure: 'names most shops do not carry',
+  breadth: 'a bit of everywhere'
+};
+
+/* AND THE FLAVOUR FAMILIES, in words a shop assistant would use. Winey is the
+   dangerous one and the reason this exists. */
+L.GIFT_PLAIN_TASTE = {
+  Winey: 'sherried', Fruity: 'fruity', Peaty: 'smoky', Woody: 'oaky',
+  Spicy: 'spicy', Sweet: 'sweet', Floral: 'floral', Herbal: 'herbal',
+  Nutty: 'nutty', Cereal: 'grainy', Earthy: 'earthy', Dairy: 'creamy'
+};
+
+L.giftPlainWords = function (list, table) {
+  const t = table || {};
+  const out = [];
+  (list || []).forEach(k => {
+    const say = t[k];
+    if (say && out.indexOf(say) < 0) out.push(say);
+  });
+  return out;
+};
+
 L.giftHints = function (prof, portrait) {
   const p = prof || {};
-  /* WHAT THE SHELF IS, NOT WHAT IT COUNTS (BZ, 2026-10-17: "Not sure we need
-     the bottle counts. More of a description than a hard count."). The
-     portrait already answers exactly that - L.PORTRAIT_SETS is written as
-     "what a shelf IS, rather than what it has most of" - so the title and its
-     line come straight from it: "The Sherry Cellar. The wood does the talking
-     here."
-     ONLY THOSE TWO. The portrait's `story` and `lines` are written TO the
-     owner - "You buy strength on purpose" - and read wrong to anybody else,
-     the same trap L.giftList's reasons set. */
   const port = portrait || {};
   const out = {};
-  if (port.title) out.title = String(port.title);
-  if (port.line) out.line = String(port.line);
-  /* AND WHAT THE ANSWERS SAY, when there are enough of them to mean
-     anything. L.tasteWantAxes holds that bar, not this. */
+  /* WHAT THE SHELF IS, in the shopper's words and never the portrait's own
+     title. `from` is the ids the portrait was built on, which is the part
+     that survives translation. */
+  const says = L.giftPlainWords(port.from, L.GIFT_PLAIN);
+  if (says.length) out.shelf = says.slice(0, 2);
   const axes = L.tasteWantAxes(p.ab || {});
   if (axes.length >= 4) {
     const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
-    out.likes = byPct.slice(0, 3).map(a => a.label);
-    out.avoid = byPct.slice(-2).map(a => a.label);
+    out.likes = L.giftPlainWords(byPct.slice(0, 3).map(a => a.label),
+      L.GIFT_PLAIN_TASTE);
+    out.avoid = L.giftPlainWords(byPct.slice(-2).map(a => a.label),
+      L.GIFT_PLAIN_TASTE);
   }
-  return (out.title || out.likes) ? out : null;
+  return (out.shelf || out.likes) ? out : null;
 };
 
 L.giftHash = function (name) {
@@ -35182,7 +35213,10 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
+    /* AFTER THE WISH LIST (BZ, 2026-10-17: "on Shelf, it should go
+       after the wish list. Not at the top of the page"). */
     if (giftCard) card(giftCard);
+    giftLinksCard(list);
     return;
   }
 
@@ -35461,10 +35495,6 @@ function shelfNarrowed() {
 
 function shelfHeaderFollows() {
   try { labelBacks(); } catch (e) { /* boot order, before the header exists */ }
-  /* AND THE GIFT CARD: renderShelf has seven early returns and is at
-     its line ceiling, so the call that runs on every exit is this one. */
-  const gh = $('#shelfGift');
-  if (gh) { gh.innerHTML = ''; giftLinksCard(gh); }
 }
 
 /* --- bottle detail -------------------------------------------------- */
@@ -45749,7 +45779,7 @@ async function giftForget(token, label) {
     renderSettings();
     renderShelf();
     toast('Deleted');
-  });
+  }, 'Delete it');
 }
 
 
@@ -59560,14 +59590,20 @@ function giftHintCard(gift, host) {
   const who = String((gift || {}).who || '').trim();
   card.appendChild(el('h3', null, who ? 'What ' + who + ' goes for'
     : 'What to look for'));
-  if (h && h.title) {
-    const t = el('div', null, h.title + (h.line ? ' — '
-      + h.line.charAt(0).toLowerCase() + h.line.slice(1) : ''));
-    card.appendChild(t);
+  if (h && h.shelf) {
+    /* ONE SENTENCE EACH. Joined by `and`, the clarification that matters
+       most - the whisky, not the sherry - got swallowed mid-sentence. */
+    card.appendChild(el('div', null, 'Buys ' + h.shelf[0] + '.'));
+    if (h.shelf[1]) {
+      card.appendChild(el('div', 'sub',
+        h.shelf[1].charAt(0).toUpperCase() + h.shelf[1].slice(1) + '.'));
+    }
   }
   if (h && h.likes) {
-    card.appendChild(el('div', null, 'Leans ' + L.andList(h.likes) + '.'));
-    card.appendChild(el('div', 'sub', 'Rarely ' + L.andList(h.avoid) + '.'));
+    card.appendChild(el('div', null, 'Likes it '
+      + L.andList(h.likes) + '.'));
+    card.appendChild(el('div', 'sub', 'Rarely '
+      + L.andList(h.avoid) + '.'));
   }
   if (picks.length) {
     const want = el('div');
@@ -59586,8 +59622,8 @@ function giftDraw(token, gift, host) {
   /* THEIR NAME WHERE THERE IS ONE, and no guess where there is not. */
   const who = String((gift || {}).who || '').trim();
   head.appendChild(el('div', 'rs', who
-    ? 'BUYING A BOTTLE FOR ' + who.toUpperCase()
-    : 'BUYING A BOTTLE'));
+    ? 'BUYING A WHISKY FOR ' + who.toUpperCase()
+    : 'BUYING A WHISKY'));
   head.appendChild(el('div', 'porttitle', gift.label || 'A gift'));
   head.appendChild(el('div', 'portwhy', 'Name a bottle and it will say '
     + 'whether it is already on the shelf, and whether it is the right '
@@ -59772,7 +59808,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.60</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.61</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
