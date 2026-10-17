@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.59  Build 2026-10-17 10:51 AM ET
+     Version : v2.8.60  Build 2026-10-17 11:00 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
-// v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3135,8 +3135,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.59';
-const BUILD_TIME  = '2026-10-17 10:51 AM ET';
+const APP_VERSION = '2.8.60';
+const BUILD_TIME  = '2026-10-17 11:00 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30702,18 +30702,21 @@ L.giftLookupUrl = function (gift, token, name) {
  * AND THE BOTTOM AS WELL AS THE TOP. "Not oak-forward, not peated" saves a
  * shopper more money than a list of things to like.
  */
-L.giftHints = function (prof) {
+L.giftHints = function (prof, portrait) {
   const p = prof || {};
-  /* THE SHELF AS NUMBERS, NEVER AS NAMES (BZ, 2026-10-17: "can we add a bit
-     of shelf data to the page as well?"). How many, from how many houses, and
-     which styles run deepest - a shopper then knows it is a serious
-     collection and which aisle is already covered. A count is not an
-     inventory: the owned bottles themselves stay hashed. */
-  const out = { owned: Number(p.owned) || 0,
-                houses: Object.keys(p.houses || {}).length,
-                styles: (p.styles || []).slice(0, 3)
-                  .map(s => [String(s.value || ''), Number(s.n) || 0])
-                  .filter(s => s[0] && s[1]) };
+  /* WHAT THE SHELF IS, NOT WHAT IT COUNTS (BZ, 2026-10-17: "Not sure we need
+     the bottle counts. More of a description than a hard count."). The
+     portrait already answers exactly that - L.PORTRAIT_SETS is written as
+     "what a shelf IS, rather than what it has most of" - so the title and its
+     line come straight from it: "The Sherry Cellar. The wood does the talking
+     here."
+     ONLY THOSE TWO. The portrait's `story` and `lines` are written TO the
+     owner - "You buy strength on purpose" - and read wrong to anybody else,
+     the same trap L.giftList's reasons set. */
+  const port = portrait || {};
+  const out = {};
+  if (port.title) out.title = String(port.title);
+  if (port.line) out.line = String(port.line);
   /* AND WHAT THE ANSWERS SAY, when there are enough of them to mean
      anything. L.tasteWantAxes holds that bar, not this. */
   const axes = L.tasteWantAxes(p.ab || {});
@@ -30722,7 +30725,7 @@ L.giftHints = function (prof) {
     out.likes = byPct.slice(0, 3).map(a => a.label);
     out.avoid = byPct.slice(-2).map(a => a.label);
   }
-  return (out.owned || out.styles.length) ? out : null;
+  return (out.title || out.likes) ? out : null;
 };
 
 L.giftHash = function (name) {
@@ -30758,7 +30761,7 @@ L.giftToken = function (bytes) {
 /* WHAT GETS PUBLISHED FOR ONE LINK. The palate rides along so the page can
    judge without a call; the names never do. */
 L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
-    now, url, who, picks) {
+    now, url, who, picks, portrait) {
   const held = L.ownedCounts(bottles || []);
   const own = {};
   Object.keys(catalog || {}).forEach(k => {
@@ -30795,7 +30798,7 @@ L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
               else. */
            picks: (picks || []).slice(0, 5)
              .map(p => String((p || {}).name || '')).filter(Boolean),
-           hints: L.giftHints(prof) || null,
+           hints: L.giftHints(prof, portrait) || null,
            off: false, cap: L.GIFT_CAP,
            own: own, wish: want,
            taste: { weights: (prof || {}).weights || {},
@@ -45697,7 +45700,8 @@ async function giftMake() {
   const payload = L.giftPayload(S.catalog, S.bottles, S.wish,
     shelfProfileNow(), label, FB.user.uid, Date.now(), S.lookupUrl,
     S.displayName,
-    L.giftList(S.wish, S.catalog, S.bottles, allFlights(), 5));
+    L.giftList(S.wish, S.catalog, S.bottles, allFlights(), 5),
+    L.shelfPortrait(S.catalog, S.bottles, S.favs));
   try {
     await firebase.database().ref('bz-apps/whisky/gift/' + token).set(payload);
   } catch (e) {
@@ -59556,12 +59560,10 @@ function giftHintCard(gift, host) {
   const who = String((gift || {}).who || '').trim();
   card.appendChild(el('h3', null, who ? 'What ' + who + ' goes for'
     : 'What to look for'));
-  if (h && h.owned) {
-    const deep = (h.styles || [])
-      .map(s => L.sentenceCase(s[0]) + ' ' + s[1]).join(' \u00b7 ');
-    card.appendChild(el('div', null, h.owned + ' bottles'
-      + (h.houses ? ' from ' + h.houses + ' distilleries' : '') + '.'));
-    if (deep) card.appendChild(el('div', 'sub', 'Deepest in ' + deep + '.'));
+  if (h && h.title) {
+    const t = el('div', null, h.title + (h.line ? ' — '
+      + h.line.charAt(0).toLowerCase() + h.line.slice(1) : ''));
+    card.appendChild(t);
   }
   if (h && h.likes) {
     card.appendChild(el('div', null, 'Leans ' + L.andList(h.likes) + '.'));
@@ -59770,7 +59772,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.59</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.60</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

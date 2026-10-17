@@ -30081,19 +30081,24 @@ sec('§479 a gift link answers without handing over the shelf');
      A/B answers and not the shelf: what somebody HAS is the wrong half at a
      shop counter - BZ's shelf leads on oak while his answers put Woody at 0
      and Fruity at 93. */
-  eq('no answers, no hints', L.giftHints({ ab: {} }), null);
-  const hinted = L.giftHints(L.tasteProfile(cat, held, {}, {
-    'apple|oak': 'apple>apple>apple>apple>apple>apple',
-    'cherry|oak': 'cherry>cherry>cherry>cherry>cherry>cherry',
-    'apple|cherry': 'cherry>cherry>cherry' }));
-  /* THIN ANSWERS GIVE NO LEANINGS - but the shelf numbers still travel,
-     because a count needs no quiz (BZ, 2026-10-17). */
-  eq('thin answers give no leanings', hinted.likes, undefined);
-  eq('but the shelf still counts', hinted.owned, 1);
-  /* AND THE NUMBERS ARE NUMBERS, never names: the owned bottles stay
-     hashed and nothing here spells one out. */
+  eq('nothing to say, no hints', L.giftHints({ ab: {} }, {}), null);
+  /* THE SHELF IS DESCRIBED, NOT COUNTED (BZ, 2026-10-17: "more of a
+     description than a hard count"). The portrait already answers what a
+     shelf IS, so the title and its line are what travel. */
+  const port = { title: 'The Sherry Cellar',
+                 line: 'The wood does the talking here.',
+                 story: 'You buy strength on purpose.' };
+  const described = L.giftHints({ ab: {} }, port);
+  eq('the portrait title travels', described.title, 'The Sherry Cellar');
+  eq('and its line', described.line, 'The wood does the talking here.');
+  /* AND ITS STORY DOES NOT: the portrait writes that one TO the owner,
+     and 'You buy strength on purpose' reads wrong to a shopper. */
+  eq('the owner-facing story stays behind',
+    JSON.stringify(described).indexOf('You buy'), -1);
+  /* NO COUNTS, and no bottle named anywhere in it. */
+  eq('no bottle count travels', described.owned, undefined);
   eq('the hints name no bottle',
-    JSON.stringify(hinted).toLowerCase().indexOf('lagavulin'), -1);
+    JSON.stringify(described).toLowerCase().indexOf('lagavulin'), -1);
 
   /* AND THE NAME REPLACES EVERY PRONOUN (BZ, 2026-10-17). */
   const named = { who: 'BZ', own: {}, wish: {}, taste: { weights: {} } };
