@@ -30031,6 +30031,47 @@ sec('§475 one proof band under the floor, not seven');
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
 }
 
+sec('§477 the shortlist is what a lookup is worth spending on');
+{
+  /* BZ, 2026-10-16: "Look up the top three, not just the winner." Real notes
+     let the palate strike a bottle out rather than only guess at it. */
+  const cat = {};
+  const seen = { items: [
+    { name: 'Ardbeg Ten', sub: 'scotch', sure: 'high' },
+    { name: 'Glenfarclas 15', sub: 'scotch', sure: 'high' },
+    { name: 'Redbreast 12', sub: 'irish', sure: 'high' },
+    { name: 'Nikka Coffey Grain', sub: 'japanese', sure: 'high' }], take: '' };
+  /* A REAL profile, not {}: an empty object is truthy and used to reach
+     L.judgeListing looking for axes that were not there. */
+  const prof0 = L.tasteProfile({}, [], {});
+  const pick = L.readPick(seen, cat, [], [], prof0);
+  if (pick) {
+    /* THE PICK LEADS IT. `top` is not always the top of the ranking - the
+       prose may name the pick - and a shortlist off the ranking alone spent
+       three lookups without judging the bottle on the card. */
+    eq('the pick is first in the shortlist', pick.shortlist[0], pick.name);
+    /* THE DOOR ITSELF, asked directly as well as through the pick. */
+    eq('the shortlist door leads with the pick',
+      L.pickShortlist({ name: 'A' }, [{ name: 'B' }, { name: 'C' }], {})[0],
+      'A');
+    eq('and never returns more than three',
+      L.pickShortlist({ name: 'A' },
+        [{ name: 'B' }, { name: 'C' }, { name: 'D' }], {}).length, 3);
+    eq('and it asks for no more than three', pick.shortlist.length <= 3, true);
+    /* NOTHING IS ASKED TWICE. */
+    const once = {};
+    let dupe = false;
+    pick.shortlist.forEach(n => { if (once[n]) dupe = true; once[n] = 1; });
+    eq('and never asks for the same bottle twice', dupe, false);
+    /* WHAT CAME BACK IS NOT ASKED AGAIN. */
+    const found = {};
+    found[pick.name] = { tn: { nose: 'peat smoke', palate: 'ash' } };
+    const again = L.readPick(seen, cat, [], [], prof0, found);
+    eq('a bottle already looked up drops off the list',
+      (again.shortlist || []).indexOf(pick.name), -1);
+  }
+}
+
 sec('§476 the palate gates and says so');
 {
   /* BZ, 2026-10-16: the bar pick ranked on four keys and every one was

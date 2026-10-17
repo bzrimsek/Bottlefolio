@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1035 |
+| functions | 1036 |
 | tables | 246 |
-| carrying a stated purpose | 828 |
+| carrying a stated purpose | 830 |
 
 ## Tables
 
@@ -884,6 +884,7 @@ QUESTION, not the name you were going to use.
 - **`L.permitNames`** — The spirits producers list
 - **`L.pickLine`** — _no comment above it_
 - **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
+- **`L.pickShortlist`** — WHO IS WORTH SPENDING A LOOKUP ON (BZ, 2026-10-16
 - **`L.pickSpread`** — `used` is the set of keys the last run poured, and it only decides ties
 - **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time (BZ
 - **`L.pinRadius`** — _no comment above it_
@@ -989,7 +990,7 @@ QUESTION, not the name you were going to use.
 - **`L.readBackup`** — rather than half-applied.
 - **`L.readFailSays`** — _no comment above it_
 - **`L.readNumber`** — A number as a person or a spreadsheet actually writes it.
-- **`L.readPick`** — _no comment above it_
+- **`L.readPick`** — `found` IS WHAT THE SERVICE SAID about particular bottles, keyed by the
 - **`L.readProof`** — certainly an ABV, and doubling it is the only sensible reading.
 - **`L.readShelfQuestion`** — _no comment above it_
 - **`L.readShopText`** — usually gives one of them.

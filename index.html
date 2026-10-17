@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.50  Build 2026-10-16 11:08 PM ET
+     Version : v2.8.51  Build 2026-10-16 11:31 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
-// v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.50';
-const BUILD_TIME  = '2026-10-16 11:08 PM ET';
+const APP_VERSION = '2.8.51';
+const BUILD_TIME  = '2026-10-16 11:31 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -10319,7 +10319,14 @@ L.wouldILike = function (name, catalog, bottles, axes, found, profIn) {
      because `known` already means something else in this scope. */
   const guessed = L.offerFacts(nm, catalog || {}) || {};
   const facts = Object.assign({}, guessed);
-  ['dist', 'sub', 'region', 'fin', 'proof', 'age'].forEach(k => {
+  /* `tn` AND `flavours` ARE WHY THE LOOKUP IS WORTH SPENDING. This list
+     carried six fields and not the notes, so a bottle looked up at a bar
+     came back with its proof and its cask and was still judged on a guess:
+     L.judgeListing scores taste off f.tn, which never arrived. Found
+     2026-10-16 by handing readPick a peated note and watching the card go
+     on saying what it EXPECTED of the category. */
+  ['dist', 'sub', 'region', 'fin', 'proof', 'age', 'tn',
+   'flavours'].forEach(k => {
     const v = found && found[k];
     if (v !== undefined && v !== null && v !== '') facts[k] = v;
   });
@@ -10332,7 +10339,13 @@ L.wouldILike = function (name, catalog, bottles, axes, found, profIn) {
      answered pairs went on weighing nothing at a bar. Measured the same
      day: the quiz halves oak, vanilla, nutty, peat and grain and lifts
      orchard fruit from 0.53 to 0.79. */
-  const prof = profIn || L.tasteProfile(catalog || {}, bottles || [], {});
+  /* A HALF-BUILT PROFILE IS NOT A PROFILE. An empty object is truthy, so
+     `profIn ||` accepted {} and L.judgeListing went looking for axes
+     that were not there and threw - at a bar, on the one screen that
+     exists for being away from home. Asking for the weights is asking
+     whether it was actually built. */
+  const prof = (profIn && profIn.weights) ? profIn
+    : L.tasteProfile(catalog || {}, bottles || [], {});
   const fit = L.judgeListing(facts, L.offerTitle([nm], facts) || nm,
     catalog || {}, bottles || [], axes || [], prof);
   if (!fit) return null;
@@ -19011,7 +19024,11 @@ L.houseInterest = function (name, catalog, bottles) {
   return 0;
 };
 
-L.readPick = function (seen, catalog, bottles, axes, prof) {
+/* `found` IS WHAT THE SERVICE SAID about particular bottles, keyed by the
+   name the reader saw. The bar pick is the bottle the catalogue is least
+   likely to know - it is chosen for being unlike the shelf - so without
+   this the palate can only ever guess at it (BZ, 2026-10-16). */
+L.readPick = function (seen, catalog, bottles, axes, prof, found) {
   const items = ((seen || {}).items) || [];
   if (!items.length) return null;
   const held = L.ownedCounts(bottles || []);
@@ -19037,15 +19054,15 @@ L.readPick = function (seen, catalog, bottles, axes, prof) {
        three that reaches a bottle the app has never met. A back bar is full
        of those, and one of them was Crown Royal Apple (BZ, 2026-09-24).
        L.neverOffer is the one question; do not write a second. */
-    const facts0 = L.offerFacts(nm, catalog || {}) || {};
+    const got = (found || {})[nm] || null;
+    const facts0 = Object.assign(L.offerFacts(nm, catalog) || {}, got || {});
     if (L.neverOffer({ sub: (it && it.sub) || facts0.sub, name: nm })) return;
     /* L.wouldILike, NOT judgeListing. At a BAR the shop's reasoning is upside
        down: a house you own three of is a glass spent on something you
        could have poured at home. */
     const judged = L.wouldILike(nm, catalog || {}, bottles || [],
-      axes || [], null, prof);
+      axes || [], got, prof);
     if (!judged || judged.verdict === 'you own this') return;
-    /* THE PALATE GATES, THE SHELF RANKS (BZ, 2026-10-16). */
     if (L.tasteBlocks(judged.taste, prof)) return;
     const rank = { 'order it': 3, 'worth trying': 2 }[judged.verdict] || 1;
     /* THE TIEBREAK IS FAMILIARITY, INVERTED. The shop's score measures how
@@ -19062,8 +19079,7 @@ L.readPick = function (seen, catalog, bottles, axes, prof) {
                   taste: judged.taste,
                   /* WHAT THE READER SAW: the only handle on a bottle
                      the catalogue has never met, which is most picks. */
-                  sub: (it && it.sub) || facts0.sub || null,
-                  fin: facts0.fin || null,
+                  sub: (it && it.sub) || facts0.sub, fin: facts0.fin,
                   adds: L.houseInterest(nm, catalog || {}, bottles || []),
                   why: judged.why || '', verdict: judged.verdict });
   });
@@ -19110,6 +19126,7 @@ L.readPick = function (seen, catalog, bottles, axes, prof) {
        novelty alone. */
     taste: L.pickTaste(top, prof),
     outOf: scored.length,
+    shortlist: L.pickShortlist(top, scored, found),
     /* A runner-up only when it shares the top verdict: a second name is
        useful when the first is a coin toss and noise when it is not. */
     /* A runner-up is the next one that ADDS something, not the next that
@@ -30545,6 +30562,27 @@ L.pickTaste = function (top, prof) {
   return L.tasteSays((top || {}).taste, (prof || {}).weights,
     L.tasteExpect({ name: (top || {}).name, sub: (top || {}).sub,
       fin: (top || {}).fin }, (prof || {}).ab));
+};
+
+/* WHO IS WORTH SPENDING A LOOKUP ON (BZ, 2026-10-16: "Look up the top three,
+ * not just the winner"). With real notes the palate can STRIKE a bottle out
+ * rather than only guess at it, so the runners-up are worth asking about too:
+ * the ranking can move, not just the sentence. It also reaches peat, which a
+ * category cannot - peating is not a wood family, so an Islay reads like any
+ * other scotch until something asks.
+ *
+ * THE PICK LEADS IT, ALWAYS. `top` is not always the top of the ranking - the
+ * prose gets to name the pick, and on BZ's read of 2026-10-16 it did - so a
+ * shortlist taken off the ranking alone spent three lookups and never judged
+ * the bottle actually on the card.
+ *
+ * AND NOTHING IS ASKED TWICE: what came back last time is already in `found`. */
+L.pickShortlist = function (top, scored, found) {
+  return [(top || {}).name].concat((scored || []).map(x => x.name))
+    .filter(Boolean)
+    .filter((n, ix, all) => all.indexOf(n) === ix)
+    .filter(n => !(found || {})[n])
+    .slice(0, 3);
 };
 
 L.tasteMid = function (weights) {
@@ -50830,7 +50868,11 @@ function renderPourWhere() {
 /* `problem` is what went wrong on the last read, kept until the next
    attempt, because a toast is indistinguishable from nothing happening. */
 const AWAY = { where: 'bar', result: null, busy: false, problem: null,
-               fresh: false };
+               fresh: false,
+               /* WHAT THE SERVICE SAID about particular bottles, keyed
+                  by the name the reader saw. Cleared with every fresh
+                  read, because it is about THAT bar. */
+               found: {}, detailing: false };
 
 /* WHAT IS IN FRONT OF YOU, wherever you are. A WHOLE SHELF is a different
    mode from one label: readShelf_ reads many bottles at low confidence and
@@ -51100,6 +51142,7 @@ function readTheShelf(where, card, after) {
       AWAY.busy = false;
       if (!seen) { (after || renderAway)(); return; }
       AWAY.result = seen;
+      AWAY.found = {};          // a new bar, not the last one
       /* KEPT, so walking back to the table does not pay twice. Labelled by WHAT
          was read, not where: a read carries no place name, and keying on the
          kind would collapse two bars into one and lose the earlier. */
@@ -51112,6 +51155,16 @@ function readTheShelf(where, card, after) {
       /* NO SUMMARY AT THE END (BZ): the ticker has already named every bottle.
          Only nothing readable needs saying, because then there is no list. */
       if (!seen.items.length) toast('Nothing readable on that shelf');
+      /* AND THEN DETAIL THE TOP THREE, BEHIND THE CARD (BZ, 2026-10-16:
+         "If the bar shelf or menu takes 30 seconds to process, can we
+         detail out a winner quickly in the same horizon?"). Measured on
+         his own 156 service calls: a photo read is 10.3s median and a
+         lookup 7.4s, so a lookup cannot hide inside the read - the
+         winner is not known until the read lands. It hides behind him
+         READING the card instead: the pick is on screen at the usual
+         moment and the taste line sharpens from what the category
+         suggests to what the bottle actually is. */
+      detailTheShortlist();
       (after || renderAway)();
     } catch (e) {
       AWAY.busy = false;
@@ -51135,6 +51188,60 @@ function readTheShelf(where, card, after) {
 /* WHAT CAME BACK. Prose first, because it is the half the app cannot
    produce itself; the list under it, capped, with the ones you already own
    marked - the most useful fact, and the one the app knows for free. */
+/* THE TOP THREE, LOOKED UP BEHIND THE CARD (BZ, 2026-10-16: "Look up the top
+ * three, not just the winner").
+ *
+ * WHY THREE AND NOT ONE. With real notes the palate can STRIKE a bottle out
+ * rather than only guess at it, so looking up the runners-up lets the ranking
+ * move, not just the sentence. It also reaches peat, which a category cannot:
+ * peating is not a wood family, so an Islay reads like any other scotch until
+ * something asks.
+ *
+ * NOTHING BLOCKS. The card is already on screen; this runs after it and
+ * redraws when the answers land. A failure is silent on purpose - the card is
+ * correct without this, and a bar is the worst place to be shown a network
+ * complaint about a thing nobody asked for.
+ *
+ * IT SPENDS THE SAME BUDGET AS EVERYTHING ELSE (L.intakeBudgetLeft), so three
+ * bar lookups cannot quietly eat the library's day. */
+async function detailTheShortlist() {
+  if (AWAY.detailing || !AWAY.result || !S.lookupUrl) return;
+  const pick = L.readPick(AWAY.result, S.catalog, S.bottles,
+    L.shelfAxes ? shelfAxesNow() : [], shelfProfileNow(), AWAY.found);
+  const want = (pick && pick.shortlist) || [];
+  if (!want.length) return;
+  /* THE COUNTED DOOR DOES THE BUDGET. askLookup spends the day's tally,
+     refuses when it is gone and offers what comes back to the shared
+     library; askService does none of the three, and consistency.js fails
+     a caller that goes round it. Counting here as well would be the same
+     decision in two places. */
+  AWAY.detailing = true;
+  const ask = want.slice(0, 3);
+  appLog('detail: asking about ' + ask.length + ' of ' + want.length);
+  let got = 0;
+  for (const name of ask) {
+    try {
+      const answer = await askLookup(name, null, 'tn');
+      const facts = L.parseLookup(answer, { name: name });
+      if (facts && (facts.tn || facts.flavours)) {
+        AWAY.found[name] = facts;
+        got++;
+      }
+    } catch (e) {
+      appLog('detail: ' + name.slice(0, 30) + ' \u2014 '
+        + ((e && e.message) || e));
+    }
+  }
+  AWAY.detailing = false;
+  appLog('detail: ' + got + ' of ' + ask.length + ' came back with notes');
+  /* ONLY REDRAW IF SOMETHING CHANGED, and only if he is still looking at it. */
+  /* Redraw regardless of where he has wandered: renderAway only rebuilds
+     its own screen, and guessing at a tab name is how a redraw silently
+     stops happening. */
+  if (got) renderAway();
+}
+
+
 function awayResultBox(r) {
   const box = el('div');
   box.style.marginTop = '12px';
@@ -51145,7 +51252,7 @@ function awayResultBox(r) {
   /* THE PROFILE THE REST OF THE APP READS, not a blind one: it carries
      his favourites and his A/B answers (shelfProfileNow). */
   const pick = L.readPick(r, S.catalog, S.bottles,
-    L.shelfAxes ? shelfAxesNow() : [], shelfProfileNow());
+    L.shelfAxes ? shelfAxesNow() : [], shelfProfileNow(), AWAY.found);
   if (pick) {
     const pc = el('div', 'sheet portrait');
     pc.style.margin = '0 0 10px';
@@ -58979,7 +59086,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.50</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.51</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
