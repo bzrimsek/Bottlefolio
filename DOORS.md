@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1030 |
+| functions | 1035 |
 | tables | 246 |
-| carrying a stated purpose | 825 |
+| carrying a stated purpose | 828 |
 
 ## Tables
 
@@ -885,6 +885,7 @@ QUESTION, not the name you were going to use.
 - **`L.pickLine`** — _no comment above it_
 - **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
 - **`L.pickSpread`** — `used` is the set of keys the last run poured, and it only decides ties
+- **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time (BZ
 - **`L.pinRadius`** — _no comment above it_
 - **`L.pinsInView`** — against Speyside, not bottles off screen.
 - **`L.placeKind`** — A kind is either one of ours or whatever somebody typed instead.
@@ -1190,14 +1191,17 @@ QUESTION, not the name you were going to use.
 - **`L.tasteAxisFloor`** — DERIVED FROM THE POOL, never typed
 - **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE (BZ, 2026-09-27).
 - **`L.tasteBetween`** — _no comment above it_
+- **`L.tasteBlocks`** — WHAT THE PALATE STRIKES OUT (BZ, 2026-10-16
 - **`L.tasteCandidates`** — _no comment above it_
 - **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
+- **`L.tasteExpect`** — WHAT TO EXPECT OF A BOTTLE NOTHING HAS NOTES FOR (BZ, 2026-10-16
 - **`L.tasteFamilies`** — WHICH GROUPS GET DRAWN, AND IN WHAT ORDER - both out of one list.
 - **`L.tasteFromFacts`** — WHAT THE BOTTLE ITSELF SAYS, beside what its notes say (BZ, 2026-09-28:
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
 - **`L.tasteLayer`** — THE LAYER UNDER A SPOKE (BZ, 2026-09-27
 - **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
+- **`L.tasteMid`** — _no comment above it_
 - **`L.tasteOnPool`** — ONLY THE ANSWERS THAT ARE STILL ON THE POOL.
 - **`L.tasteOrder`** — THE ORDER THE ANSWERS ARGUE FOR
 - **`L.tastePair`** — _no comment above it_
@@ -1206,7 +1210,8 @@ QUESTION, not the name you were going to use.
 - **`L.tasteProfile`** — _no comment above it_
 - **`L.tasteProgress`** — HOW FAR ALONG, AND WHEN TO STOP (BZ, 2026-09-27
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is
-- **`L.tasteScore`** — A BOTTLE AGAINST THOSE WEIGHTS, nought to one.
+- **`L.tasteSays`** — HOW IT SITS WITH THE PALATE, in one sentence (BZ, 2026-10-16, asked
+- **`L.tasteScore`** — _no comment above it_
 - **`L.tasteSeen`** — How many times each flavour has been asked about.
 - **`L.tasteSettled`** — _no comment above it_
 - **`L.tasteShare`** — WHAT A SHELF TASTES OF, TERM BY TERM, as a share of its described bottles.

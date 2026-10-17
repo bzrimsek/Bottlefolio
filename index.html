@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.49  Build 2026-10-16 09:29 PM ET
+     Version : v2.8.50  Build 2026-10-16 11:08 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // v2.8.41  2026-10-12  One type scale: 12, 14, 16, 20, 24, 30.
-// v2.8.40  2026-10-12  A brand learns its house from the catalogue, and the expected card is Behind the notes.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.49';
-const BUILD_TIME  = '2026-10-16 09:29 PM ET';
+const APP_VERSION = '2.8.50';
+const BUILD_TIME  = '2026-10-16 11:08 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -6538,8 +6538,7 @@ L.judgeListing = function (facts, title, catalog, bottles, axes, profile) {
        for" - one answer contradicting itself, which is the fault answers.js
        exists to catch. Only the top half of the weights count as reaching. */
     const w = (t || {}).weights || {};
-    const ws = Object.keys(w).map(k => w[k]).sort((x, y) => y - x);
-    const mid = ws.length ? ws[Math.floor(ws.length / 2)] : 0;
+    const mid = L.tasteMid(w);
     const shared = (f.flavours || []).filter(x => w[x] && w[x] >= mid)
       .sort((a, b) => w[b] - w[a]);
     if (shared.length && tasteFit >= 0.33) {
@@ -6572,6 +6571,11 @@ L.judgeListing = function (facts, title, catalog, bottles, axes, profile) {
          every offer row, so it says what was looked for. */
       : 'No house, wood or style you drink points at it.',
     effect: L.axisEffectLine(eff),
+    /* THE TASTE SCORE IT ALREADY WORKED OUT. The bar pick gates on it
+       (BZ, 2026-10-16: taste gates, novelty ranks) and recomputing it
+       there would be a second opinion about one thing. null when the
+       bottle carries nothing to judge. */
+    taste: tasteFit,
     facts: f
   };
 };
@@ -10305,7 +10309,7 @@ L.verdictRows = function (r) {
   return L.VERDICT_ROWS.filter(x => v[x[0]]).map(x => [x[1], v[x[0]]]);
 };
 
-L.wouldILike = function (name, catalog, bottles, axes, found) {
+L.wouldILike = function (name, catalog, bottles, axes, found, profIn) {
   const nm = String(name || '').trim();
   if (nm.length < 3) return null;
   /* WHAT THE LOOKUP FOUND OUT BEATS WHAT THE NAME SPELLS. A name like
@@ -10319,13 +10323,25 @@ L.wouldILike = function (name, catalog, bottles, axes, found) {
     const v = found && found[k];
     if (v !== undefined && v !== null && v !== '') facts[k] = v;
   });
-  const prof = L.tasteProfile(catalog || {}, bottles || [], {});
+  /* THE CALLER'S PROFILE WHERE THERE IS ONE. This built a blind one
+     unconditionally until 2026-10-16 - no favourites, no A/B answers -
+     which is the same fault the comment on shelfProfileNow records
+     being found on 2026-09-27 and fixed THERE: "everything BZ answered
+     was written down, saved and synced, and then weighed nothing
+     anywhere". This is the door the bar pick judges through, so his 104
+     answered pairs went on weighing nothing at a bar. Measured the same
+     day: the quiz halves oak, vanilla, nutty, peat and grain and lifts
+     orchard fruit from 0.53 to 0.79. */
+  const prof = profIn || L.tasteProfile(catalog || {}, bottles || [], {});
   const fit = L.judgeListing(facts, L.offerTitle([nm], facts) || nm,
     catalog || {}, bottles || [], axes || [], prof);
   if (!fit) return null;
   /* ONE VERDICT, THE SHOP'S SENTENCE, here too (BZ, 2026-09-15), with a line
      under it that makes it a bar's. The words below still rank a back bar,
      where novelty is the virtue, but are not what the screen says. */
+  /* WHAT THE PALATE MADE OF IT, carried up so the bar pick can gate on
+     the number judgeListing already worked out. */
+  const taste = fit.taste === undefined ? null : fit.taste;
   const ways = L.fitTwoWays(Object.assign({ name: nm }, facts),
     catalog || {}, bottles || [], [], axes || [], prof);
 
@@ -10340,7 +10356,7 @@ L.wouldILike = function (name, catalog, bottles, axes, found) {
   /* Already on your shelf is the one answer the shop never has to give, and
      at a bar it is the most useful of all: you can drink this at home. */
   if (mine) {
-    return { verdict: 'you own this', name: fit.name,
+    return { verdict: 'you own this', name: fit.name, taste: taste,
       say: 'On your shelf.', bar: '',
       why: 'It is on your shelf at home. Nothing wrong with it \u2014 but '
         + 'there is a whole list here you cannot pour later.' };
@@ -10385,7 +10401,8 @@ L.wouldILike = function (name, catalog, bottles, axes, found) {
           + 'house does — order something you cannot pour '
           + 'at home.'
         : fit.why,
-    effect: null
+    effect: null,
+    taste: taste
   };
 };
 
@@ -18994,7 +19011,7 @@ L.houseInterest = function (name, catalog, bottles) {
   return 0;
 };
 
-L.readPick = function (seen, catalog, bottles, axes) {
+L.readPick = function (seen, catalog, bottles, axes, prof) {
   const items = ((seen || {}).items) || [];
   if (!items.length) return null;
   const held = L.ownedCounts(bottles || []);
@@ -19026,8 +19043,10 @@ L.readPick = function (seen, catalog, bottles, axes) {
        down: a house you own three of is a glass spent on something you
        could have poured at home. */
     const judged = L.wouldILike(nm, catalog || {}, bottles || [],
-      axes || []);
+      axes || [], null, prof);
     if (!judged || judged.verdict === 'you own this') return;
+    /* THE PALATE GATES, THE SHELF RANKS (BZ, 2026-10-16). */
+    if (L.tasteBlocks(judged.taste, prof)) return;
     const rank = { 'order it': 3, 'worth trying': 2 }[judged.verdict] || 1;
     /* THE TIEBREAK IS FAMILIARITY, INVERTED. The shop's score measures how
        LIKE the shelf a bottle is, so at a bar the lowest wins: least like
@@ -19040,6 +19059,11 @@ L.readPick = function (seen, catalog, bottles, axes) {
        recommendation should get the better bottle). */
     const years = Number((facts0 || {}).age) || L.ageFromName(nm);
     scored.push({ name: nm, score: rank, familiar: shopScore, years: years,
+                  taste: judged.taste,
+                  /* WHAT THE READER SAW: the only handle on a bottle
+                     the catalogue has never met, which is most picks. */
+                  sub: (it && it.sub) || facts0.sub || null,
+                  fin: facts0.fin || null,
                   adds: L.houseInterest(nm, catalog || {}, bottles || []),
                   why: judged.why || '', verdict: judged.verdict });
   });
@@ -19081,6 +19105,10 @@ L.readPick = function (seen, catalog, bottles, axes) {
     name: top.name,
     why: top.why,
     verdict: top.verdict,
+    /* NAMED ON EVERY PICK (BZ, 2026-10-16: "Always name the taste
+       fit"), so the card carries both halves rather than arguing from
+       novelty alone. */
+    taste: L.pickTaste(top, prof),
     outOf: scored.length,
     /* A runner-up only when it shares the top verdict: a second name is
        useful when the first is a coin toss and noise when it is not. */
@@ -27795,6 +27823,8 @@ L.tasteProfile = function (catalog, bottles, favs, answers) {
   ownedProducts.forEach(p => { peat[L.peatLevel(p)]++; });
 
   return {
+    /* Carried, not re-fetched: L.tasteExpect needs them as axes. */
+    ab: answers || {},
     owned: mine.length,
     repeats: repeats,
     starred: starred,
@@ -30396,6 +30426,133 @@ L.tasteWeights = function (catalog, bottles, answers) {
  * the heaviest weight so a full mark means "everything this bottle tastes of
  * is what you reach for". Null, never nought, when there are no notes: nought
  * is a judgment and this has none to make. */
+/* THE TOP HALF OF THE WEIGHTS, which is where "what you reach for"
+ * starts. Lived inside L.judgeListing as three lines until 2026-10-16,
+ * when the bar pick needed the same bar to gate on and copying it would
+ * have been the decision written twice (30d). Lifted, not re-derived:
+ * same median, same meaning, one place. */
+/* HOW IT SITS WITH THE PALATE, in one sentence (BZ, 2026-10-16, asked
+ * whether the taste half should be spoken: "Always name the taste fit"). The
+ * card now says both halves - what a bottle adds to the shelf, and what his
+ * own answers make of it.
+ * THE SAME NUMBER THE GATE USED, so the card cannot praise a bottle the gate
+ * let through on sufferance. null is not a bad score: it means the catalogue
+ * knows nothing about how this one tastes, and saying so is honest where
+ * inventing a verdict is not. */
+L.tasteSays = function (taste, weights, expect) {
+  if (taste === null || taste === undefined) {
+    /* NO NOTES IS NOT NO ANSWER. L.tasteExpect reads the category and the
+       cask against his own axes, which is coarser than a note and still
+       true - and it is why this line stopped saying nothing on every pick
+       (BZ, 2026-10-16: "You know general taste profiles"). It is phrased as
+       an expectation, because that is what it is. */
+    if (expect && expect.pct !== undefined) {
+      const fams = L.andList((expect.families || [])
+        .map(f => L.familyLabel(f)).slice(0, 3));
+      if (expect.pct >= expect.mid + 10) {
+        return 'Expect ' + fams + ' \u2014 close to what you answered for.';
+      }
+      if (expect.pct >= expect.mid - 10) {
+        return 'Expect ' + fams + ', which is middling for you.';
+      }
+      return 'Expect ' + fams + ' \u2014 not what you answered for.';
+    }
+    return 'Nothing known about how this one tastes.';
+  }
+  const mid = L.tasteMid(weights);
+  if (taste >= mid * 2) return 'Squarely what you reach for.';
+  if (taste >= mid) return 'It sits with your palate.';
+  return 'Not where your palate usually sits.';
+};
+
+/* WHAT TO EXPECT OF A BOTTLE NOTHING HAS NOTES FOR (BZ, 2026-10-16: "You
+ * know general taste profiles and you can look up a bottle").
+ *
+ * THIS EXISTS BECAUSE THE PICK IS THE BOTTLE LEAST LIKELY TO BE KNOWN. The
+ * shared catalogue is mostly what people OWN, and the bar pick is chosen for
+ * being unlike his shelf - so on all three of his real reads the winner had
+ * no notes and the taste line said nothing at all.
+ *
+ * FAMILIES, NOT FLAVOURS, AND IT RANKS RATHER THAN GATES. Two measurements
+ * on 2026-10-16 decided both halves of that:
+ *   - Feeding L.originBase into L.tasteScore struck EVERYTHING - bourbon
+ *     0.115, rye 0.120, scotch 0.109, all under a 0.134 floor - because that
+ *     scorer rewards a DISTINCTIVE flavour and a category baseline is the
+ *     undistinctive part by definition. Wrong input for that scorer.
+ *   - At family level it discriminates properly: plain bourbon and rye 29%,
+ *     scotch 35%, a sherried scotch 50%, a port-finished bourbon 47% - which
+ *     is his Winey 93% and Fruity 93% doing the work.
+ * But his axis mean is ~46%, so gating on this would strike every plain
+ * bourbon and rye and answer NO PICK at an American bar. A guess may order
+ * the candidates; only a real note may strike one out.
+ *
+ * PEAT IS NOT REACHED HERE and that is known rather than overlooked: peating
+ * is not a wood family, so an Islay reads the same as any other scotch. It
+ * needs ppm or the region, and a lookup answers it properly.
+ */
+L.tasteExpect = function (p, answers) {
+  const axes = L.tasteWantAxes(answers || {});
+  if (!axes.length) return null;
+  const pct = {};
+  axes.forEach(a => { pct[a.id] = a.pct; });
+  const base = L.originBase(p) || [];
+  const fin = (p || {}).fin || '';
+  const wood = fin ? (L.ORIGIN.wood[L.woodFamily(fin)] || []) : [];
+  const ix = L.palateIndex();
+  const fams = {};
+  base.concat(wood).forEach(term => {
+    const fam = ix.family[term];
+    if (fam && pct[fam] !== undefined) fams[fam] = 1;
+  });
+  /* HIS ORDER, NOT INSERTION ORDER. Naming the first three put "Cereal,
+     Earthy and Herbal" on a sherried scotch, when the wine cask is the
+     whole reason it scored - the card named the dullest part of its own
+     answer. Sorted by what he actually wants, the sentence leads with the
+     thing that moved it. */
+  const keys = Object.keys(fams).sort((x, y) => pct[y] - pct[x]);
+  if (!keys.length) return null;
+  /* THE MIDPOINT IS HIS, NOT A TYPED 50. His twelve axes average 46,
+     so judging a bottle against a round number would call almost
+     everything poor - which is what two typed thresholds did on the
+     first cut, and every pick came back "not what you answered for".
+     Against his OWN average the same bottles separate properly. */
+  const all = axes.map(a => a.pct);
+  const mid = all.reduce((s, n) => s + n, 0) / all.length;
+  return { pct: Math.round(keys.reduce((s, k) => s + pct[k], 0) / keys.length),
+           mid: Math.round(mid),
+           families: keys };
+};
+
+
+/* WHAT THE PALATE STRIKES OUT (BZ, 2026-10-16: taste gates, novelty ranks).
+ * Every other key the bar pick sorts on is shelf-derived; this is the one
+ * that asks what he LIKES, and it removes rather than reorders, so a bottle
+ * his palate declines can never be crowned however novel it is.
+ * NULL IS UNJUDGED, AND UNJUDGED PASSES. L.tasteScore answers null for a
+ * bottle carrying nothing to judge - 10 of the 23 names on his real read of
+ * that day - and striking those out would be concluding from silence.
+ * THE BAR IS L.tasteMid, the same one the Shop verdict calls "what you reach
+ * for", so the two cannot drift apart. */
+L.tasteBlocks = function (taste, prof) {
+  if (taste === null || taste === undefined) return false;
+  return taste < L.tasteMid((prof || {}).weights);
+};
+
+/* THE LINE THE CARD PRINTS, every time (BZ: "Always name the taste fit").
+ * The expectation reaches the sentence and never the order: novelty ranks,
+ * and a guess about taste is no reason to move a bottle up the list. */
+L.pickTaste = function (top, prof) {
+  return L.tasteSays((top || {}).taste, (prof || {}).weights,
+    L.tasteExpect({ name: (top || {}).name, sub: (top || {}).sub,
+      fin: (top || {}).fin }, (prof || {}).ab));
+};
+
+L.tasteMid = function (weights) {
+  const w = weights || {};
+  const ws = Object.keys(w).map(k => w[k]).sort((x, y) => y - x);
+  return ws.length ? ws[Math.floor(ws.length / 2)] : 0;
+};
+
 L.tasteScore = function (p, weights) {
   const w = weights || {};
   /* SCORED ON THE LABELS, NOT THE FINE TERMS, because the fine ones punish a
@@ -50985,14 +51142,17 @@ function awayResultBox(r) {
   /* THE ANSWER FIRST, THE WORKING UNDER IT (BZ): one best-recommendation
      line above the full list, so somebody who wants one name can stop there
      and nothing is removed for somebody who wants it all. */
+  /* THE PROFILE THE REST OF THE APP READS, not a blind one: it carries
+     his favourites and his A/B answers (shelfProfileNow). */
   const pick = L.readPick(r, S.catalog, S.bottles,
-    L.shelfAxes ? shelfAxesNow() : []);
+    L.shelfAxes ? shelfAxesNow() : [], shelfProfileNow());
   if (pick) {
     const pc = el('div', 'sheet portrait');
     pc.style.margin = '0 0 10px';
     pc.appendChild(el('div', 'rs', 'IF YOU POUR ONE'));
     pc.appendChild(el('div', 'porttitle', pick.name));
     if (pick.why) pc.appendChild(el('div', 'portwhy', pick.why));
+    if (pick.taste) pc.appendChild(el('div', 'src', pick.taste));
     if (pick.also) {
       pc.appendChild(el('div', 'src',
         'Close behind: ' + pick.also + '.'));
@@ -58819,7 +58979,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.49</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.50</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

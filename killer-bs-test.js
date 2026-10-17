@@ -30031,6 +30031,53 @@ sec('§475 one proof band under the floor, not seven');
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
 }
 
+sec('§476 the palate gates and says so');
+{
+  /* BZ, 2026-10-16: the bar pick ranked on four keys and every one was
+     shelf-derived. Taste gates, novelty ranks; and the fit is always named. */
+  const w = { oak: 0.1, vanilla: 0.1, cream: 0.1, honey: 0.5,
+              'dried fruit': 0.6, 'orchard fruit': 0.8 };
+  const mid = L.tasteMid(w);
+  eq('the bar is the middle of the weights', mid, 0.1);
+
+  /* THE SCORE AND THE BAR COME FROM ONE PLACE, so the Shop verdict and the
+     bar gate cannot drift apart. */
+  const low = L.tasteScore({ flavours: ['oak', 'vanilla', 'cream'] }, w);
+  const high = L.tasteScore({ flavours: ['orchard fruit', 'dried fruit'] }, w);
+  eq('a bottle of what he likes scores above one that is not', high > low, true);
+
+  /* AN UNJUDGED BOTTLE IS NOT A REJECTED ONE. */
+  eq('nothing to judge answers null', L.tasteScore({ flavours: [] }, w), null);
+
+  /* THE SENTENCE IS ALWAYS THERE. */
+  eq('a strong fit says so', typeof L.tasteSays(0.9, w), 'string');
+  eq('a weak fit says so too', typeof L.tasteSays(0.01, w), 'string');
+  eq('and so does one it cannot judge',
+    L.tasteSays(null, w, null), 'Nothing known about how this one tastes.');
+  eq('a weak fit is not praised',
+    L.tasteSays(0.01, w).indexOf('Not where') === 0, true);
+
+  /* WITHOUT ANSWERS THERE IS NO EXPECTATION - it never guesses from nothing. */
+  eq('no quiz, no expectation', L.tasteExpect({ sub: 'bourbon' }, {}), null);
+
+  /* THE GATE ITSELF: it removes, and it never removes what it cannot see. */
+  const prof = { weights: w };
+  eq('a palate the bottle misses is struck out',
+    L.tasteBlocks(0.01, prof), true);
+  eq('a palate it meets is not', L.tasteBlocks(0.9, prof), false);
+  eq('and an unjudged bottle is never struck',
+    L.tasteBlocks(null, prof), false);
+  eq('nor is one with no profile at all',
+    L.tasteBlocks(0.01, {}), false);
+
+  /* AND THE CARD ALWAYS GETS A SENTENCE. */
+  eq('every pick carries a taste line',
+    typeof L.pickTaste({ name: 'x', taste: 0.9 }, prof), 'string');
+  eq('including one nothing is known about',
+    L.pickTaste({ name: 'x', taste: null }, prof).length > 0, true);
+}
+
+
 sec('§474 an age glued to its unit still names the same bottle');
 {
   /* BZ, 2026-10-16, looking at a bar menu on the Out screen: "Also I do own
