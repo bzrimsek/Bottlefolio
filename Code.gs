@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.8';
+var GS_BUILD = '2.6.9';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
@@ -274,7 +274,16 @@ function doPost(e) {
        disagree. */
     /* Everything but `version` spends the key, so everything but
        `version` has to say who is asking. */
-    if (body.mode !== 'version' && !signedIn_(body.idToken)) {
+    /* A GIFT LINK MAY PHOTOGRAPH TOO (BZ, 2026-10-17, choosing photos with
+       a cap). The same check and the same counter as the GET door, so a
+       shopper cannot get a free read by posting instead of asking. The
+       shelf context is NOT sent on this path and must not be: the whole
+       point is that they cannot see what he owns. */
+    if (body.gift) {
+      if (!giftOk_(body.gift)) {
+        return json({ error: 'that link is spent or closed' });
+      }
+    } else if (body.mode !== 'version' && !signedIn_(body.idToken)) {
       return needSignIn_();
     }
     /* THE BUILD, AND ON REQUEST WHETHER THE MODELS ARE STILL REAL. Asked for
@@ -500,10 +509,62 @@ function designFlight(req) {
 }
 
 /** One bottle, for the Add a bottle form. */
+/* THE DATABASE THIS SERVICE READS A GIFT LINK FROM.
+ *
+ * ITS OWN CONSTANT, NEVER A URL FROM THE CALLER: taking an address from a
+ * request is how a service is talked into fetching something it should not.
+ * The address is public anyway - it is in the app's own Firebase config - and
+ * gift/$token is readable without auth by design.
+ */
+var GIFT_DB_ = 'https://bottlefolio-default-rtdb.firebaseio.com';
+
+/**
+ * Is this gift link real, live, and still inside its allowance for today?
+ *
+ * WHY THE SERVICE COUNTS AND NOT THE PAGE. The page belongs to whoever opened
+ * the link; a cap it enforces is a cap they can edit. This is the thing that
+ * spends the money, so it is the thing that says no (BZ, 2026-10-17, choosing
+ * photographs WITH a cap: a public link that could drain the day's lookups
+ * would leave his own library with nothing).
+ */
+function giftOk_(token) {
+  var t = String(token || '');
+  if (!/^[0-9a-f]{32}$/.test(t)) return false;
+  var node;
+  try {
+    var r = UrlFetchApp.fetch(
+      GIFT_DB_ + '/bz-apps/whisky/gift/' + t + '.json',
+      { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return false;
+    node = JSON.parse(r.getContentText() || 'null');
+  } catch (err) {
+    return false;
+  }
+  /* A SWITCHED-OFF LINK READS AS NOTHING, because the rule refuses it. */
+  if (!node || node.off) return false;
+  var cap = Number(node.cap);
+  if (!(cap > 0)) cap = 20;
+  var day = Utilities.formatDate(new Date(), 'Etc/UTC', 'yyyy-MM-dd');
+  var key = 'gift:' + t + ':' + day;
+  var props = PropertiesService.getScriptProperties();
+  var used = Number(props.getProperty(key) || 0);
+  if (used >= cap) return false;
+  props.setProperty(key, String(used + 1));
+  return true;
+}
+
+
 function doGet(e) {
   var name = (e && e.parameter && e.parameter.name) || '';
   if (!name || name.length < 3) return json({ error: 'name required' });
-  if (!signedIn_((e && e.parameter && e.parameter.idToken) || '')) {
+  /* A GIFT LINK INSTEAD OF A SIGN-IN (BZ, 2026-10-17). Somebody shopping
+     for a present has no account, so the link's token is what they have.
+     It is checked against the published node and counted before anything
+     is spent - see giftOk_. */
+  var gift = (e && e.parameter && e.parameter.gift) || '';
+  if (gift) {
+    if (!giftOk_(gift)) return json({ error: 'that link is spent or closed' });
+  } else if (!signedIn_((e && e.parameter && e.parameter.idToken) || '')) {
     return needSignIn_();
   }
   try {

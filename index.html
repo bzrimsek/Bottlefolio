@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.52  Build 2026-10-17 08:23 AM ET
+     Version : v2.8.55  Build 2026-10-17 09:18 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
-// v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.52';
-const BUILD_TIME  = '2026-10-17 08:23 AM ET';
+const APP_VERSION = '2.8.55';
+const BUILD_TIME  = '2026-10-17 09:18 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -13501,6 +13501,11 @@ L.SYNC_KEYS = ['askStats', 'bottles', 'history', 'edits', 'custom', 'deleted',
   'reads',
   // Settings that describe the person rather than the device.
   'wishShared', 'fxRate',
+  /* THE GIFT LINKS HE HAS MADE. Kept here because the rules deliberately
+     refuse a listing of gift/ - a token is readable only if you already
+     have it - so this is the only record of what he has sent, and the
+     only way the kill switch has something to kill. */
+  'giftLinks',
   /* How much of a day's lookups the offered-library queue may spend vetting
      on its own. A choice made once, on whichever device. */
   'intakeBudget',
@@ -13556,6 +13561,11 @@ L.SYNC_KEYS = ['askStats', 'bottles', 'history', 'edits', 'custom', 'deleted',
   'resets'];
 
 L.SYNC_MERGE = ['deadGaps', 'favs',
+  /* A LINK MADE ON THE PHONE AND ONE MADE ON THE LAPTOP ARE TWO LINKS.
+     Replacing would lose whichever device pushed second, and the list is
+     the ONLY record there is - the rules refuse a listing of gift/ on
+     purpose, so a lost row is a live link nothing can ever switch off. */
+  'giftLinks',
   /* Answered on the phone and again on the laptop: the longer record wins per
      pair, because every answer is kept and the longer one has seen more. */
   'tasteAB',
@@ -30616,6 +30626,137 @@ L.pickShortlist = function (top, scored, found) {
     .slice(0, 3);
 };
 
+/* A LINK FOR SOMEBODY SHOPPING FOR A PRESENT (BZ, 2026-10-17: "the ability to
+ * send a link to someone who would shop for a gift for you - it would allow
+ * them to check bottles against your shelf and your taste profile").
+ *
+ * WHAT IS PUBLISHED, AND WHAT IS NOT. The shopper has no account, and
+ * anonymous sign-in is off on this project, so gift/$token is the one path in
+ * the app readable without signing in and the token is the credential. What
+ * sits there is HASHES of what he owns and wants, never the names: the page
+ * hashes what the shopper types and compares, so they can confirm a bottle
+ * they already had in mind without being handed a list of his cellar.
+ *
+ * THIS IS OBFUSCATION, NOT SECRECY, and BZ chose it knowing that (2026-10-17,
+ * asked twice): the library holds some 738 known names, so somebody determined
+ * can hash all of them and learn the shelf. It stops the link being forwarded
+ * as a ready-made inventory, which is the threat he cares about. If that ever
+ * stops being true the answer is the service answering one question at a time,
+ * not a longer hash.
+ */
+/* WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES. The token rides along
+ * so the service can check the link is real and still live, and count the call
+ * against that link's daily cap before it spends anything. */
+L.giftLookupUrl = function (gift, token, name) {
+  const base = (gift || {}).url;
+  if (!base || !token) return null;
+  return L.lookupUrl(base, name, 'tn')
+    + '&gift=' + encodeURIComponent(token);
+};
+
+L.giftHash = function (name) {
+  /* THROUGH L.nameSig, so "Lagavulin 16yr" and "Lagavulin 16 Year Old" hash
+     alike - the same door that already decides two names are one bottle. A
+     hash of the raw string would answer no to every bottle spelled slightly
+     differently, which is every bottle a shopper types. */
+  const sig = L.nameSig(name);
+  if (!sig) return '';
+  /* FNV-1a, 64 bits as two 32-bit halves. Not a cryptographic digest and not
+     pretending to be one (see above); it is here to make the published node
+     unreadable at a glance and collision-free across a few thousand names. */
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i = 0; i < sig.length; i++) {
+    const c = sig.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 + c, 0x85ebca6b) >>> 0;
+  }
+  return ('00000000' + h1.toString(16)).slice(-8)
+       + ('00000000' + h2.toString(16)).slice(-8);
+};
+
+/* THE TOKEN, FROM BYTES THE CALLER SUPPLIES, so the engine stays pure and a
+   test can hand it known bytes. 16 bytes is 128 bits: guessing one is not a
+   route in, which is what lets the rule read it without any auth at all. */
+L.giftToken = function (bytes) {
+  const b = Array.prototype.slice.call(bytes || []);
+  if (b.length < 16) return '';
+  return b.slice(0, 16)
+    .map(n => ('0' + (Number(n) & 255).toString(16)).slice(-2)).join('');
+};
+
+/* WHAT GETS PUBLISHED FOR ONE LINK. The palate rides along so the page can
+   judge without a call; the names never do. */
+L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
+    now, url) {
+  const held = L.ownedCounts(bottles || []);
+  const own = {};
+  Object.keys(catalog || {}).forEach(k => {
+    if (!held[k]) return;
+    const h = L.giftHash((catalog[k] || {}).name || k);
+    if (h) own[h] = 1;
+  });
+  const want = {};
+  (wish || []).forEach(w => {
+    const h = L.giftHash(typeof w === 'string' ? w : (w || {}).name);
+    if (h) want[h] = 1;
+  });
+  /* THE SERVICE ADDRESS TRAVELS WITH THE LINK, because the shopper's
+     browser has no settings of its own to read it from. It is a public
+     web app endpoint, so publishing it means anybody holding a gift link
+     can call it - which is exactly why the service checks the token
+     against this node and counts every call against `cap` before it
+     spends anything. */
+  return { owner: String(owner || ''), at: Number(now) || 0,
+           url: String(url || ''),
+           label: String(label || '').slice(0, 40),
+           off: false, cap: L.GIFT_CAP,
+           own: own, wish: want,
+           taste: { weights: (prof || {}).weights || {},
+                    ab: (prof || {}).ab || {} } };
+};
+
+/* HOW MANY PHOTOGRAPHS ONE LINK MAY COST HIM IN A DAY. BZ, 2026-10-17, chose
+   photographs WITH a cap: a public link that could spend the whole lookup
+   budget would leave his own intake with nothing. Counted by the service,
+   which is the thing that actually spends the money. */
+L.GIFT_CAP = 20;
+
+/* WHAT THE SHOPPER IS TOLD. `found` is what the service said about this
+   bottle, when it was asked; without it only ownership can be answered, and
+   saying so is better than guessing. */
+L.giftAnswer = function (name, gift, found) {
+  const nm = String(name || '').trim();
+  if (nm.length < 2) return null;
+  const g = gift || {};
+  const h = L.giftHash(nm);
+  if (h && (g.own || {})[h]) {
+    return { verdict: 'owned', say: 'He already has this one.',
+      more: 'Worth finding something he cannot pour at home.' };
+  }
+  if (h && (g.wish || {})[h]) {
+    return { verdict: 'wished', say: 'It is on his list.',
+      more: 'He has written this one down as one he wants.' };
+  }
+  const weights = (g.taste || {}).weights || {};
+  const score = found ? L.tasteScore({ tn: found.tn, flavours: found.flavours },
+    weights) : null;
+  if (score === null || score === undefined) {
+    const guess = found
+      ? L.tasteExpect({ name: nm, sub: found.sub, fin: found.fin },
+          (g.taste || {}).ab)
+      : null;
+    return { verdict: 'unknown', say: 'Not one he owns.',
+      more: L.tasteSays(null, weights, guess) };
+  }
+  if (score < L.tasteMid(weights)) {
+    return { verdict: 'unlike', say: 'Not one he owns \u2014 but not his thing.',
+      more: L.tasteSays(score, weights) };
+  }
+  return { verdict: 'like', say: 'Not one he owns, and he would like it.',
+    more: L.tasteSays(score, weights) };
+};
+
+
 L.tasteMid = function (weights) {
   const w = weights || {};
   const ws = Object.keys(w).map(k => w[k]).sort((x, y) => y - x);
@@ -32864,7 +33005,7 @@ L.flightPoured = function (entry) {
    Code.gs states its own build and the two are compared rather than
    assumed. Bump BOTH whenever Code.gs changes; consistency.js fails the
    build if they disagree. */
-L.GS_BUILD = '2.6.8';
+L.GS_BUILD = '2.6.9';
 
 /* What the comparison means, in the words somebody can act on. */
 L.serviceBuildVerdict = function (expected, got) {
@@ -33334,6 +33475,7 @@ const S = { base: {}, catalog: {}, bottles: [], flights: [], history: [],
             // shelf is what sharing means, and a wishlist is a different
             // disclosure.
             wishShared: false,
+            giftLinks: {},
             /* The fill slider: opt-in, and a gauge rather than data entry (BZ). A
                bottle's level defaults to absent, not empty, or every bottle
                would read as drained. NULL, NOT FALSE: false is
@@ -33469,6 +33611,7 @@ const KEYS = ['tasteAB',
                  only - it describes this device and nothing else. */
               'sentPrints',
               'tastingsSeen', 'wishShared', 'fxRate', 'showFill',
+              'giftLinks',
               'pushedAt', 'removed',
               'asked', 'noteLedger', 'reviewed',
               'toolsSeen',
@@ -34949,7 +35092,7 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    if (giftCard) card(giftCard);
+    wantedShareCards(list, giftCard, card);
     return;
   }
 
@@ -45334,8 +45477,150 @@ function settingsPanel(tab, host) {
   accountPanel(host);
 }
 
+/* LINKS FOR SOMEBODY SHOPPING FOR A PRESENT (BZ, 2026-10-17).
+ *
+ * NO EXPIRY, AND THAT IS HIS CALL: "assuming most links go to close friends
+ * and family, would I want the admin of having to send them again - no
+ * surprise gifts that way. i think a list of sent links in settings with a
+ * kill switch." So a link lives until he kills it, and the list below is the
+ * only record there is - the rules refuse a listing of gift/, deliberately,
+ * so a token is readable only by somebody who already has it.
+ */
+/* WHAT SITS UNDER THE WANTED LIST: what he wants, and then the link that
+   answers about anything else. Two lines in renderShelf, which is at its
+   ceiling and may not grow (rule 30f), and they belong together anyway. */
+function wantedShareCards(list, giftCard, card) {
+  if (giftCard) card(giftCard);
+  giftLinksCard(list);
+}
+
+/* DRAWN IN TWO PLACES, ONE BUILDER (BZ, 2026-10-17: "shelf and settings,
+ * not buddies - not buddies with my wife and kids"). On the Shelf it sits
+ * under the card that sends his wish list; in Settings it sits with the
+ * other controls over what of his is published. Two copies of a sharing
+ * control would drift (30d) - the Buddies tab sets the same precedent by
+ * reusing nameCard rather than writing a second one. */
+function giftLinksCard(box) {
+  const card = el('div', 'sheet');
+  card.appendChild(el('h3', null, 'Gift links'));
+  card.style.marginTop = '12px';
+  /* SAID AGAINST THE CARD ABOVE IT on the Shelf, which sends the wish
+     list: that one tells them what he WANTS, this one answers about a
+     bottle nobody listed, which is most of what is in a shop. */
+  card.appendChild(el('div', 'sub', 'For somebody buying you a bottle. '
+    + 'They can hold up anything — not just what is on your list — '
+    + 'and be told whether you have it and whether it is your kind of '
+    + 'thing. They never see your shelf.'));
+  if (!FB.user) {
+    card.appendChild(el('div', 'sub', 'Sign in to make one \u2014 a link is '
+      + 'published to your account.'));
+    box.appendChild(card);
+    return;
+  }
+
+  const list = el('div');
+  list.style.marginTop = '9px';
+  const links = S.giftLinks || {};
+  const tokens = Object.keys(links)
+    .sort((a, b) => (links[b].at || 0) - (links[a].at || 0));
+  if (!tokens.length) {
+    list.appendChild(el('div', 'sub', 'None yet.'));
+  }
+  tokens.forEach(tok => {
+    const row = el('div', 'list');
+    row.style.padding = '8px 0';
+    const g = links[tok] || {};
+    const name = el('div', null, g.label || 'Untitled');
+    if (g.off) name.style.opacity = '0.5';
+    row.appendChild(name);
+    row.appendChild(el('div', 'sub', (g.off ? 'Switched off' : 'Live')
+      + ' · made ' + L.showDate(g.day || '')));
+    if (!g.off) {
+      const copy = el('button', 'chip', 'Copy link');
+      copy.onclick = () => {
+        const url = giftUrl(tok);
+        try { navigator.clipboard.writeText(url); toast('Link copied'); }
+        catch (e) { toast(url); }
+      };
+      row.appendChild(copy);
+    }
+    const kill = el('button', 'chip', g.off ? 'Switch back on' : 'Switch off');
+    kill.style.marginLeft = '5px';
+    kill.onclick = () => giftSetOff(tok, !g.off);
+    row.appendChild(kill);
+    list.appendChild(row);
+  });
+  card.appendChild(list);
+
+  const make = el('button', 'chip', 'Make a link');
+  make.style.marginTop = '9px';
+  make.onclick = () => giftMake();
+  card.appendChild(make);
+  box.appendChild(card);
+}
+
+/* The address the shopper opens: this same app, told which link it is. */
+function giftUrl(token) {
+  return location.origin + location.pathname + '?gift=' + token;
+}
+
+async function giftMake() {
+  const label = (prompt('What is this link for? (Christmas, Dad, ...)')
+    || '').trim();
+  if (!label) return;
+  /* THE TOKEN IS THE CREDENTIAL, so it comes from the browser's own
+     cryptographic source and never from Math.random. */
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const token = L.giftToken(bytes);
+  if (!token) { toast('Could not make a link'); return; }
+  const payload = L.giftPayload(S.catalog, S.bottles, S.wish,
+    shelfProfileNow(), label, FB.user.uid, Date.now(), S.lookupUrl);
+  try {
+    await firebase.database().ref('bz-apps/whisky/gift/' + token).set(payload);
+  } catch (e) {
+    appLog('gift: could not publish \u2014 ' + ((e && e.message) || e));
+    toast('That did not publish \u2014 try again');
+    return;
+  }
+  S.giftLinks = Object.assign({}, S.giftLinks);
+  /* THE LOCAL DAY, through the door that already answers it: L.todayISO is
+     the LOCAL calendar day on purpose, and deriving one from a timestamp
+     with toISOString would show yesterday all evening. */
+  S.giftLinks[token] = { label: label, at: Date.now(),
+    day: L.todayISO(), off: false };
+  save_();
+  if (FB.user && FB.loaded) fbPushShared();
+  appLog('gift: published a link for ' + label);
+  renderSettings();
+  try { navigator.clipboard.writeText(giftUrl(token)); toast('Link copied'); }
+  catch (e) { toast('Link made'); }
+}
+
+/* THE KILL SWITCH IS A WRITE, not a local flag: the rule reads `off` and
+   refuses the whole node, so switching it here stops it working for somebody
+   already holding the link. */
+async function giftSetOff(token, off) {
+  try {
+    await firebase.database()
+      .ref('bz-apps/whisky/gift/' + token + '/off').set(!!off);
+  } catch (e) {
+    toast('That did not go through');
+    return;
+  }
+  S.giftLinks = Object.assign({}, S.giftLinks);
+  S.giftLinks[token] = Object.assign({}, S.giftLinks[token], { off: !!off });
+  save_();
+  if (FB.user && FB.loaded) fbPushShared();
+  appLog('gift: ' + (off ? 'switched off' : 'switched back on') + ' a link');
+  renderSettings();
+  toast(off ? 'That link no longer works' : 'That link works again');
+}
+
+
 function accountPanel(box) {
   box.appendChild(accountCard());
+  giftLinksCard(box);
   yourDataCard(box);
   /* AND ADMIN MODE LAST (BZ, 2026-10-02). It belongs on this tab - it is the one
      place a switch that REVEALS the advanced half can live, since you would
@@ -59057,7 +59342,177 @@ function showGiftLink(gift) {
   });
 }
 
+/* THE PAGE SOMEBODY SHOPPING FOR A PRESENT SEES (BZ, 2026-10-17).
+ *
+ * They have no account, so nothing here signs in and nothing here reads the
+ * owner's shelf: gift/$token is public by its rule, holds HASHES rather than
+ * names, and carries his palate so the judging can happen in their browser.
+ *
+ * WHAT IS FREE AND WHAT COSTS. Ownership is a hash comparison and answers
+ * instantly for nothing. A taste verdict needs to know how the bottle tastes,
+ * which the catalogue cannot tell them - they are holding a bottle he does not
+ * own - so it asks the service, and the service counts it against this link's
+ * daily cap. Typed or photographed, the cost is the same.
+ */
+function giftMode() {
+  const token = new URLSearchParams(location.search).get('gift');
+  if (!token || !/^[0-9a-f]{32}$/.test(token)) return false;
+  document.body.classList.add('giftonly');
+  const host = document.createElement('div');
+  host.id = 'giftScreen';
+  host.className = 'wrap';
+  document.body.appendChild(host);
+  giftLoad(token, host);
+  return true;
+}
+
+async function giftLoad(token, host) {
+  host.appendChild(el('div', 'sub', 'Opening\u2026'));
+  let gift = null;
+  try {
+    const snap = await firebase.database()
+      .ref('bz-apps/whisky/gift/' + token).once('value');
+    gift = snap.val();
+  } catch (e) {
+    gift = null;
+  }
+  host.innerHTML = '';
+  if (!gift) {
+    /* A KILLED LINK AND A WRONG ONE LOOK THE SAME ON PURPOSE: the rule
+       refuses a switched-off node, so there is nothing here to tell them
+       apart, and nothing worth telling them apart either. */
+    const card = el('div', 'sheet');
+    card.appendChild(el('h3', null, 'This link is not working'));
+    card.appendChild(el('div', 'sub', 'It may have been switched off. Ask '
+      + 'whoever sent it for a new one.'));
+    host.appendChild(card);
+    return;
+  }
+  giftDraw(token, gift, host);
+}
+
+function giftDraw(token, gift, host) {
+  host.innerHTML = '';
+  const head = el('div', 'sheet portrait');
+  head.appendChild(el('div', 'rs', 'BUYING A BOTTLE FOR SOMEBODY'));
+  head.appendChild(el('div', 'porttitle', gift.label || 'A gift'));
+  head.appendChild(el('div', 'portwhy', 'Type a bottle and it will tell you '
+    + 'whether he already has it, and whether it is his kind of thing. You '
+    + 'cannot see his shelf, and he cannot see what you asked.'));
+  host.appendChild(head);
+
+  const ask = el('div', 'sheet');
+  const field = document.createElement('input');
+  field.className = 'field';
+  field.id = 'giftAsk';
+  field.placeholder = 'Lagavulin 16, Redbreast 12\u2026';
+  ask.appendChild(field);
+  const answer = el('div');
+  answer.style.marginTop = '9px';
+  const go = el('button', 'chip', 'Ask');
+  go.style.marginTop = '7px';
+  go.onclick = () => giftAsk(token, gift, field.value, answer);
+  field.onkeydown = e => { if (e.key === 'Enter') go.onclick(); };
+  ask.appendChild(go);
+  const shot = el('button', 'chip', 'Photograph a shelf');
+  shot.style.marginTop = '7px';
+  shot.style.marginLeft = '5px';
+  shot.onclick = () => giftShoot(token, gift, answer);
+  ask.appendChild(shot);
+  ask.appendChild(answer);
+  host.appendChild(ask);
+}
+
+/* OWNERSHIP FIRST AND FREE. Only a bottle he does NOT own is worth paying a
+   lookup to judge, which is also the only case where the answer is useful. */
+/* A SHOPPER PHOTOGRAPHING A SHELF (BZ, 2026-10-17: photos too, with a cap).
+ *
+ * NOT readShelf. That one sends the OWNER'S shelf to the service as context so
+ * the write-up can compare, and a gift shopper must never have it - the whole
+ * promise is that they cannot see what he owns. This sends the photograph and
+ * nothing else, and the comparing happens here, in their browser, against the
+ * hashes the link carries.
+ *
+ * THE CAP IS THE SERVICE'S, not this page's: a cap enforced here would belong
+ * to whoever opened the link.
+ */
+async function giftShoot(token, gift, into) {
+  pickShelfPhotos('a shelf', async images => {
+    into.innerHTML = '';
+    into.appendChild(el('div', 'sub', 'Reading what is on the shelf\u2026'));
+    let seen = null;
+    try {
+      const res = await fetch(gift.url, { method: 'POST',
+        body: JSON.stringify({ mode: 'shelf', where: 'bar',
+                               images: [images[0]], gift: token }) });
+      seen = await res.json();
+    } catch (e) {
+      seen = null;
+    }
+    into.innerHTML = '';
+    if (!seen || seen.error || !Array.isArray(seen.items)) {
+      into.appendChild(el('div', 'sub', (seen && seen.error)
+        || 'That did not go through \u2014 try again.'));
+      return;
+    }
+    /* EVERY BOTTLE IT READ, ANSWERED HERE. Ownership is a hash comparison and
+       costs nothing, so the whole shelf can be answered for one read. */
+    const rows = seen.items.map(it => {
+      const a = L.giftAnswer((it || {}).name, gift,
+        (it && it.sub) ? { sub: it.sub, fin: it.fin } : null);
+      return a ? { name: it.name, a: a } : null;
+    }).filter(Boolean);
+    if (!rows.length) {
+      into.appendChild(el('div', 'sub', 'Nothing readable on that shelf.'));
+      return;
+    }
+    /* WHAT HE DOES NOT HAVE, FIRST: that is the half worth buying. */
+    const order = { like: 0, wished: 1, unknown: 2, unlike: 3, owned: 4 };
+    rows.sort((x, y) => order[x.a.verdict] - order[y.a.verdict]);
+    rows.forEach(r => {
+      const row = el('div', 'list');
+      row.style.padding = '7px 0';
+      row.appendChild(el('div', null, r.name));
+      row.appendChild(el('div', 'sub', r.a.say));
+      into.appendChild(row);
+    });
+  }, { face: true, title: 'Photograph the shelf', go: 'Read it',
+       sub: 'One shot. It will say which of these he already has.' });
+}
+
+
+async function giftAsk(token, gift, typed, into) {
+  const name = String(typed || '').trim();
+  into.innerHTML = '';
+  if (name.length < 2) return;
+  const first = L.giftAnswer(name, gift, null);
+  if (!first) return;
+  const show = a => {
+    into.innerHTML = '';
+    into.appendChild(el('div', null, a.say));
+    if (a.more) into.appendChild(el('div', 'sub', a.more));
+  };
+  show(first);
+  if (first.verdict === 'owned' || first.verdict === 'wished') return;
+  /* HOW IT TASTES IS THE PART THAT COSTS. */
+  into.appendChild(el('div', 'sub', 'Looking up how it tastes\u2026'));
+  try {
+    const r = await fetch(L.giftLookupUrl(gift, token, name));
+    const found = await r.json();
+    show(L.giftAnswer(name, gift, found && found.name ? found : null));
+  } catch (e) {
+    show(Object.assign({}, first,
+      { more: 'Could not find out how this one tastes.' }));
+  }
+}
+
+
 function boot(data) {
+  /* A GIFT LINK IS A DIFFERENT APP (BZ, 2026-10-17). Somebody shopping
+     for a present has no account and no shelf, and showing them a sign-in
+     and a nav bar would be showing them somebody else's app. It takes
+     over before anything else draws. */
+  if (giftMode()) return;
   // Derived fields recomputed on the way in, not trusted: the wine verdict
   // follows from the cask, so a hand-edited cask cannot leave it stale.
   Object.values(data.catalog || {}).forEach(p => {
@@ -59117,7 +59572,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.52</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.55</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

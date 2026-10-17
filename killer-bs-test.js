@@ -27992,7 +27992,7 @@ sec('§441 a lookup asks who is asking');
      Same one."). A word the app can read and the service is never offered is
      a word no answer will ever carry. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.8');
+    L.GS_BUILD, '2.6.9');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
@@ -30029,6 +30029,53 @@ sec('§475 one proof band under the floor, not seven');
   eq('and no proof at all is not a band', L.proofInTen('p0', 0), false);
   /* A SAVED FILTER FROM BEFORE THIS CHANGE STILL WORKS. */
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
+}
+
+sec('§479 a gift link answers without handing over the shelf');
+{
+  /* BZ, 2026-10-17: a link you send to somebody buying you a bottle. They
+     have no account, so gift/$token is the one path readable without signing
+     in and the token is the credential. What is published is HASHES, so a
+     shopper can confirm a bottle they already had in mind without being
+     handed a list of his cellar. */
+  const cat = { A: { k: 'A', name: 'Lagavulin 16 Year Old Single Malt Scotch Whisky' },
+                B: { k: 'B', name: 'Ardbeg Ten' } };
+  const held = [{ id: 'x1', k: 'A' }];
+  const prof = L.tasteProfile(cat, held, {});
+  const gift = L.giftPayload(cat, held, ['Redbreast 12'], prof,
+    'Christmas', 'uid1', 1700000000000, 'https://example.test/exec');
+
+  /* NO NAME IS PUBLISHED, ANYWHERE IN IT. */
+  const blob = JSON.stringify(gift).toLowerCase();
+  eq('the shelf is not in the link', blob.indexOf('lagavulin'), -1);
+  eq('nor is the wish list', blob.indexOf('redbreast'), -1);
+
+  /* THE SAME BOTTLE SPELLED ANY WAY STILL MATCHES, through L.nameSig. */
+  ['Lagavulin 16', 'Lagavulin 16yr', 'lagavulin 16 year old'].forEach(n => {
+    eq(n + ' is one he owns', L.giftAnswer(n, gift).verdict, 'owned');
+  });
+  eq('a bottle he wants says so',
+    L.giftAnswer('Redbreast 12', gift).verdict, 'wished');
+  eq('and one he has neither is not claimed as owned',
+    L.giftAnswer('Ardbeg Ten', gift).verdict === 'owned', false);
+
+  /* A HASH IS NOT A NAME: it must not be reversible by reading it. */
+  eq('the hash does not contain the name',
+    L.giftHash('Ardbeg Ten').indexOf('ardbeg'), -1);
+  eq('two different bottles hash differently',
+    L.giftHash('Ardbeg Ten') === L.giftHash('Lagavulin 16'), false);
+
+  /* THE TOKEN IS THE CREDENTIAL, so it is 128 bits and never short. */
+  eq('a token is 32 hex characters',
+    L.giftToken(new Array(16).fill(1)).length, 32);
+  eq('and too few bytes make no token at all',
+    L.giftToken([1, 2, 3]), '');
+
+  /* THE LINK CARRIES WHERE TO ASK, and the token rides with every ask so the
+     service can count it. */
+  const url = L.giftLookupUrl(gift, 'a'.repeat(32), 'Ardbeg Ten');
+  eq('the ask carries the token', url.indexOf('gift=' + 'a'.repeat(32)) > 0, true);
+  eq('and no link means no ask', L.giftLookupUrl({}, 'a'.repeat(32), 'x'), null);
 }
 
 sec('§478 a brewery is not a pour, and neither is a winery');

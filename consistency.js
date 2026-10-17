@@ -565,6 +565,13 @@ const askBlock = (() => {
    relabels or clamps - but they are listed rather than reasoned about,
    because the point is to catch the NEXT one. */
 const TWO_DOORS_OK = [
+  /* A CALLER, NOT A SECOND ANSWER. L.lookupUrl stays the one place that
+     knows how to address the service; giftLookupUrl adds the one thing a
+     gift link needs on top - the token, so the service can check the link
+     is live and count the call against its daily cap before spending
+     anything. Building the address a second way is exactly what would let
+     the shopper's path quietly skip the counter (BZ, 2026-10-17). */
+  'giftLookupUrl>lookupUrl',
   /* A LAYER, NOT A SECOND ANSWER. searchLibrary stays the one matcher - the
      shelf's box, the library screen and this all ask it, so none of them can
      give a different answer to one search. addCandidates asks it for a wider

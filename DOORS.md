@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1036 |
+| functions | 1041 |
 | tables | 247 |
-| carrying a stated purpose | 831 |
+| carrying a stated purpose | 835 |
 
 ## Tables
 
@@ -537,10 +537,15 @@ QUESTION, not the name you were going to use.
 - **`L.gapsFromThinness`** — THE SHELF, NOT THE CATALOG
 - **`L.gapsFromWish`** — a reason; the reason was recorded.
 - **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
+- **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
 - **`L.giftFromLink`** — _no comment above it_
+- **`L.giftHash`** — _no comment above it_
 - **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
+- **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES
+- **`L.giftPayload`** — WHAT GETS PUBLISHED FOR ONE LINK
 - **`L.giftText`** — The same list as a message
+- **`L.giftToken`** — THE TOKEN, FROM BYTES THE CALLER SUPPLIES, so the engine stays pure and a
 - **`L.goesSay`** — IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
 - **`L.groupOf`** — _no comment above it_

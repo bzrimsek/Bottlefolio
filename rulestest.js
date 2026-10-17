@@ -209,6 +209,38 @@ async function suite(env) {
   await check('a person cannot write the shared barcodes', 'refused', () => set(r('alice', 'upc/012345678905'), { name: 'Ardbeg Ten', at: at() }));
   await check('an admin can', 'ok', () => set(r('admin', 'upc/012345678905'), { name: 'Ardbeg Ten', at: at() }));
 
+
+  /* THE GIFT LINK - the one path readable without signing in.
+     BZ, 2026-10-17: a link you send to somebody shopping for a present,
+     so they can check a bottle against your shelf and your palate. They
+     have no account and anonymous auth is off on this project, so the
+     token IS the credential. That makes these the most important checks
+     in this file: a mistake here is public. */
+  await seed('gift/tok1', { owner: 'alice', at: at(), label: 'Christmas',
+    own: { abc123: 1 }, taste: { weights: { oak: 0.1 } } });
+  await check('a stranger with the token can read the gift link', 'ok',
+    () => get(r(null, 'gift/tok1')));
+  await check('a stranger cannot list the gift links', 'refused',
+    () => get(r(null, 'gift')));
+  await check('a stranger cannot write a gift link', 'refused',
+    () => set(r(null, 'gift/tok2'), { owner: 'alice', at: at() }));
+  await check('somebody else cannot write your gift link', 'refused',
+    () => set(r('bob', 'gift/tok1'), { owner: 'bob', at: at() }));
+  await check('you can write your own gift link', 'ok',
+    () => set(r('alice', 'gift/tok3'), { owner: 'alice', at: at() }));
+  await check('a gift link cannot be claimed by somebody else', 'refused',
+    () => set(r('bob', 'gift/tok3'), { owner: 'alice', at: at() }));
+  /* THE KILL SWITCH IS IN THE RULE, not on the screen: switching a link
+     off has to stop it working for somebody already holding it. */
+  await seed('gift/tok4', { owner: 'alice', at: at(), off: true });
+  await check('a killed gift link refuses everyone', 'refused',
+    () => get(r(null, 'gift/tok4')));
+  /* AND NOTHING ELSE LEAKED WITH IT. */
+  await check('a stranger still cannot read a shelf', 'refused',
+    () => get(r(null, 'alice')));
+  await check('a stranger still cannot read the library', 'refused',
+    () => get(r(null, 'shared/catalog/products')));
+
   return results;
 }
 
@@ -229,6 +261,16 @@ function mutants() {
   d = base();
   delete w(d).contrib.$uid.$slug.vetted;
   out.push(['an offer may carry its own verdict', d, 'an offer cannot carry its own verdict']);
+  /* A GIFT LINK THAT IGNORES ITS KILL SWITCH. */
+  d = base();
+  w(d).gift.$token['.read'] = 'true';
+  out.push(['a killed gift link still reads', d,
+    'a killed gift link refuses everyone']);
+  /* AND ONE THAT LETS ANYBODY WRITE ONE. */
+  d = base();
+  w(d).gift.$token['.write'] = 'true';
+  out.push(['anybody may write a gift link', d,
+    'a stranger cannot write a gift link']);
   return out;
 }
 

@@ -256,6 +256,47 @@
             ".read": "auth != null",
             ".write": false
           }
+        },
+        "gift": {
+          "$token": {
+            ".read": "data.child('off').val() != true",
+            ".write": "auth != null && newData.child('owner').val() === auth.uid && (!data.exists() || data.child('owner').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['owner', 'at'])",
+            "owner": {
+              ".validate": "newData.isString()"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "label": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "off": {
+              ".validate": "newData.isBoolean()"
+            },
+            "cap": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+            },
+            "own": {
+              "$h": {
+                ".validate": "newData.isNumber()"
+              }
+            },
+            "wish": {
+              "$h": {
+                ".validate": "newData.isNumber()"
+              }
+            },
+            "taste": {
+              ".validate": "newData.hasChildren()"
+            },
+            "url": {
+              ".validate": "newData.isString() && newData.val().length <= 300"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
         }
       }
     }

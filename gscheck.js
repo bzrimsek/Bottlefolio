@@ -193,6 +193,32 @@ if (failures.length) {
     + 'Script files\n');
   process.exit(1);
 }
+/* AND THEY PARSE AT ALL (2026-10-17).
+ *
+ * Everything above reads these files as TEXT - which names they define,
+ * which they call, which modes are wired - so a stray brace sailed through
+ * every check in the gate and was caught by Google at the DEPLOY step,
+ * after the whole suite had passed: Illegal return statement, line 572 of
+ * Code.gs. A .gs file is plain JavaScript, so parsing it costs nothing and
+ * moves that failure from the end of a four-minute cloud run to the start
+ * of a local one. */
+{
+  const bad = [];
+  FILES.concat(['Code.gs']).forEach(f => {
+    try {
+      new Function(fs.readFileSync(path.join(HERE, f), 'utf8'));
+    } catch (e) {
+      bad.push(f + ': ' + ((e && e.message) || e));
+    }
+  });
+  if (bad.length) {
+    bad.forEach(b => console.log('  ✗ ' + b));
+    console.log('');
+    console.log('  ✖ an Apps Script file does not parse');
+    process.exit(1);
+  }
+}
+
 console.log('  \u2713 ' + FILES.length + ' Apps Script files: no name '
   + 'defined twice, nothing called that is missing, all '
   + MODES.length + ' modes wired\n');
