@@ -293,6 +293,17 @@
             "url": {
               ".validate": "newData.isString() && newData.val().length <= 300"
             },
+            "who": {
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            },
+            "picks": {
+              "$i": {
+                ".validate": "newData.isString() && newData.val().length <= 120"
+              }
+            },
+            "hints": {
+              ".validate": "newData.hasChildren()"
+            },
             "$other": {
               ".validate": false
             }

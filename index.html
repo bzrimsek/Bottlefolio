@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.56  Build 2026-10-17 10:00 AM ET
+     Version : v2.8.57  Build 2026-10-17 10:19 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
-// v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2590,14 +2590,12 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
    got the nav bar, the tabs and an error card underneath). The class was
    set from the first build and never styled, which is the whole of that
    fault. Everything the owner uses goes; only #giftScreen stays. */
-body.giftonly > *:not(#giftScreen){display:none}
+/* #working STAYS: it is the filling bottle this app already shows while it
+   waits (BZ, 2026-10-17: "when doing the lookup, can we have the filling
+   bottle?"), and it is a direct child of body like everything else here. */
+body.giftonly > *:not(#giftScreen):not(#working){display:none}
 body.giftonly{padding:0}
 #giftScreen{max-width:620px;margin:0 auto;padding:16px 16px 48px}
-/* ON THE SHELF'S GUTTER, not the screen's. Every other card there sits
-   inside a .list, whose 1px border insets it to 17px; this host is a
-   sibling, so it landed at 16 and shots.js called out the one card out of
-   line with the other eight. */
-#shelfGift{padding:0 1px}
 </style>
 </head>
 <body>
@@ -2712,12 +2710,6 @@ body.giftonly{padding:0}
     class="sorthead" data-col="msrp">Price</button><button
     class="sorthead" data-col="have">Have</button><b></b><b></b></div>
   <div class="list" id="shelfList"></div>
-  <!-- THE GIFT LINK SITS UNDER THE SHELF, WHATEVER IS FILTERED.
-       It lived inside the Wanted branch of renderShelf and so appeared
-       only when the Wanted filter was on - BZ could not find it
-       (2026-10-17). A fixed host is filled on every draw instead, which
-       also keeps it out of renderShelf, a function at its line ceiling. -->
-  <div id="shelfGift"></div>
 </section>
 
 <!-- ======================= TIME FOR A TASTE ======================= -->
@@ -3134,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.56';
-const BUILD_TIME  = '2026-10-17 10:00 AM ET';
+const APP_VERSION = '2.8.57';
+const BUILD_TIME  = '2026-10-17 10:19 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30553,9 +30545,9 @@ L.tasteSays = function (taste, weights, expect) {
     return 'Nothing known about how this one tastes.';
   }
   const mid = L.tasteMid(weights);
-  if (taste >= mid * 2) return 'Squarely what you reach for.';
-  if (taste >= mid) return 'It sits with your palate.';
-  return 'Not where your palate usually sits.';
+  if (taste >= mid * 2) return 'Squarely the right kind of thing.';
+  if (taste >= mid) return 'It sits with the palate here.';
+  return 'Not where this palate usually sits.';
 };
 
 /* WHAT TO EXPECT OF A BOTTLE NOTHING HAS NOTES FOR (BZ, 2026-10-16: "You
@@ -30689,6 +30681,26 @@ L.giftLookupUrl = function (gift, token, name) {
     + '&gift=' + encodeURIComponent(token);
 };
 
+/* WHAT TO TELL A SHOPPER BEFORE THEY START (BZ, 2026-10-17: "give a few
+ * hints to the shopper based on shelf and profile. So they are not going in
+ * cold").
+ *
+ * FROM THE A/B ANSWERS, NOT THE SHELF. The shelf says what somebody HAS,
+ * which at a shop counter is the wrong half: BZ's own shelf leads on oak and
+ * baking spice while his answers put Woody at 0 and Fruity at 93. Measured
+ * 2026-10-16, and it is the whole reason this is worth saying out loud.
+ *
+ * AND THE BOTTOM AS WELL AS THE TOP. "Not oak-forward, not peated" saves a
+ * shopper more money than a list of things to like.
+ */
+L.giftHints = function (prof) {
+  const axes = L.tasteWantAxes((prof || {}).ab || {});
+  if (axes.length < 4) return null;
+  const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
+  return { likes: byPct.slice(0, 3).map(a => a.label),
+           avoid: byPct.slice(-2).map(a => a.label) };
+};
+
 L.giftHash = function (name) {
   /* THROUGH L.nameSig, so "Lagavulin 16yr" and "Lagavulin 16 Year Old" hash
      alike - the same door that already decides two names are one bottle. A
@@ -30722,7 +30734,7 @@ L.giftToken = function (bytes) {
 /* WHAT GETS PUBLISHED FOR ONE LINK. The palate rides along so the page can
    judge without a call; the names never do. */
 L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
-    now, url) {
+    now, url, who, picks) {
   const held = L.ownedCounts(bottles || []);
   const own = {};
   Object.keys(catalog || {}).forEach(k => {
@@ -30744,6 +30756,22 @@ L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
   return { owner: String(owner || ''), at: Number(now) || 0,
            url: String(url || ''),
            label: String(label || '').slice(0, 40),
+           /* WHOSE SHELF IT IS (BZ, 2026-10-17: "can we replace
+              Somebody with their name?"). It also settles the pronoun
+              question properly: a name says who without guessing what
+              to call them. Whoever holds the link was sent it by this
+              person, so it tells them nothing they did not know. */
+           who: String(who || '').trim().slice(0, 40),
+           /* THE WISH LIST BY NAME, not by hash. The owned list is
+              hashed because it is private; a wish list is the opposite,
+              it exists to be shown - the Shelf already texts it to
+              people. L.giftList picks the five worth asking for, and
+              only the names travel: its reasons are written to the
+              owner ("and you would again") and read wrong to anybody
+              else. */
+           picks: (picks || []).slice(0, 5)
+             .map(p => String((p || {}).name || '')).filter(Boolean),
+           hints: L.giftHints(prof) || null,
            off: false, cap: L.GIFT_CAP,
            own: own, wish: want,
            taste: { weights: (prof || {}).weights || {},
@@ -30763,14 +30791,18 @@ L.giftAnswer = function (name, gift, found) {
   const nm = String(name || '').trim();
   if (nm.length < 2) return null;
   const g = gift || {};
+  /* NAMED WHERE A NAME WAS GIVEN, and plain where it was not - never a
+     guessed pronoun (BZ, 2026-10-17). */
+  const who = String(g.who || '').trim();
+  const mine = who ? 'on ' + who + "'s shelf" : 'on the shelf';
   const h = L.giftHash(nm);
   if (h && (g.own || {})[h]) {
-    return { verdict: 'owned', say: 'He already has this one.',
-      more: 'Worth finding something he cannot pour at home.' };
+    return { verdict: 'owned', say: 'Already ' + mine + '.',
+      more: 'Worth finding something that is not.' };
   }
   if (h && (g.wish || {})[h]) {
-    return { verdict: 'wished', say: 'It is on his list.',
-      more: 'He has written this one down as one he wants.' };
+    return { verdict: 'wished', say: 'On the wish list.',
+      more: 'Written down as one to want.' };
   }
   const weights = (g.taste || {}).weights || {};
   const score = found ? L.tasteScore({ tn: found.tn, flavours: found.flavours },
@@ -30780,14 +30812,14 @@ L.giftAnswer = function (name, gift, found) {
       ? L.tasteExpect({ name: nm, sub: found.sub, fin: found.fin },
           (g.taste || {}).ab)
       : null;
-    return { verdict: 'unknown', say: 'Not one he owns.',
+    return { verdict: 'unknown', say: 'Not ' + mine + '.',
       more: L.tasteSays(null, weights, guess) };
   }
   if (score < L.tasteMid(weights)) {
-    return { verdict: 'unlike', say: 'Not one he owns \u2014 but not his thing.',
+    return { verdict: 'unlike', say: 'Not ' + mine + ', and not a fit.',
       more: L.tasteSays(score, weights) };
   }
-  return { verdict: 'like', say: 'Not one he owns, and he would like it.',
+  return { verdict: 'like', say: 'Not ' + mine + ', and a good fit.',
     more: L.tasteSays(score, weights) };
 };
 
@@ -35127,7 +35159,7 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    if (giftCard) card(giftCard);
+    wantedShareCards(list, giftCard, card);
     return;
   }
 
@@ -35406,10 +35438,6 @@ function shelfNarrowed() {
 
 function shelfHeaderFollows() {
   try { labelBacks(); } catch (e) { /* boot order, before the header exists */ }
-  /* AND THE GIFT CARD, for the same reason this function exists: renderShelf
-     has seven early returns and is at its line ceiling, so the one call that
-     runs on every exit is the one already made here. */
-  shelfGiftHost();
 }
 
 /* --- bottle detail -------------------------------------------------- */
@@ -45525,18 +45553,21 @@ function settingsPanel(tab, host) {
  * only record there is - the rules refuse a listing of gift/, deliberately,
  * so a token is readable only by somebody who already has it.
  */
-/* THE GIFT LINK CARD, UNDER THE SHELF AND OUTSIDE EVERY FILTER (BZ,
- * 2026-10-17: "Can't find the share on Shelf"). It was drawn inside the
- * Wanted branch, so it existed only when that filter was on. Its own host,
- * filled on every draw, and not a line inside renderShelf - which is at its
- * ceiling and may not grow (rule 30f). */
-function shelfGiftHost() {
-  const host = $('#shelfGift');
-  if (!host) return;
-  host.innerHTML = '';
-  giftLinksCard(host);
-}
 
+/* WHAT SITS UNDER THE WANTED LIST: the card that sends what he wants, and
+ * then the link that answers about anything else.
+ *
+ * BZ, 2026-10-17: "Think that new stuff really belongs under the map?" It did
+ * not. Chasing discoverability I had put it at the foot of the whole Shelf -
+ * which is under shelfOriginMap, "the foot of every shelf view" - so a
+ * sharing control was the last thing after a geography chart. Beside the card
+ * that already asks somebody to buy him a bottle is where it reads.
+ *
+ * Two lines, here rather than in renderShelf, which is at its ceiling (30f). */
+function wantedShareCards(list, giftCard, card) {
+  if (giftCard) card(giftCard);
+  giftLinksCard(list);
+}
 
 /* DRAWN IN TWO PLACES, ONE BUILDER (BZ, 2026-10-17: "shelf and settings,
  * not buddies - not buddies with my wife and kids"). On the Shelf it sits
@@ -45629,7 +45660,9 @@ async function giftMake() {
   const token = L.giftToken(bytes);
   if (!token) { toast('Could not make a link'); return; }
   const payload = L.giftPayload(S.catalog, S.bottles, S.wish,
-    shelfProfileNow(), label, FB.user.uid, Date.now(), S.lookupUrl);
+    shelfProfileNow(), label, FB.user.uid, Date.now(), S.lookupUrl,
+    S.displayName,
+    L.giftList(S.wish, S.catalog, S.bottles, allFlights(), 5));
   try {
     await firebase.database().ref('bz-apps/whisky/gift/' + token).set(payload);
   } catch (e) {
@@ -59451,15 +59484,46 @@ async function giftLoad(token, host) {
   giftDraw(token, gift, host);
 }
 
+/* SO THEY ARE NOT GOING IN COLD. What this palate leans toward, what it does
+   not, and the bottles already asked for by name. */
+function giftHintCard(gift, host) {
+  const h = (gift || {}).hints || null;
+  const picks = (gift || {}).picks || [];
+  if (!h && !picks.length) return;
+  const card = el('div', 'sheet');
+  const who = String((gift || {}).who || '').trim();
+  card.appendChild(el('h3', null, who ? 'What ' + who + ' goes for'
+    : 'What to look for'));
+  if (h) {
+    card.appendChild(el('div', null, 'Leans ' + L.andList(h.likes) + '.'));
+    card.appendChild(el('div', 'sub', 'Rarely ' + L.andList(h.avoid) + '.'));
+  }
+  if (picks.length) {
+    const want = el('div');
+    want.style.marginTop = '9px';
+    want.appendChild(el('div', 'rs', 'ALREADY ASKED FOR'));
+    picks.forEach(n => want.appendChild(el('div', null, n)));
+    card.appendChild(want);
+  }
+  host.appendChild(card);
+}
+
+
 function giftDraw(token, gift, host) {
   host.innerHTML = '';
   const head = el('div', 'sheet portrait');
-  head.appendChild(el('div', 'rs', 'BUYING A BOTTLE FOR SOMEBODY'));
+  /* THEIR NAME WHERE THERE IS ONE, and no guess where there is not. */
+  const who = String((gift || {}).who || '').trim();
+  head.appendChild(el('div', 'rs', who
+    ? 'BUYING A BOTTLE FOR ' + who.toUpperCase()
+    : 'BUYING A BOTTLE'));
   head.appendChild(el('div', 'porttitle', gift.label || 'A gift'));
-  head.appendChild(el('div', 'portwhy', 'Type a bottle and it will tell you '
-    + 'whether he already has it, and whether it is his kind of thing. You '
-    + 'cannot see his shelf, and he cannot see what you asked.'));
+  head.appendChild(el('div', 'portwhy', 'Name a bottle and it will say '
+    + 'whether it is already on the shelf, and whether it is the right '
+    + 'kind of thing. You cannot see the shelf, and nobody sees what '
+    + 'you asked.'));
   host.appendChild(head);
+  giftHintCard(gift, host);
 
   const ask = el('div', 'sheet');
   const field = document.createElement('input');
@@ -59499,7 +59563,7 @@ function giftDraw(token, gift, host) {
 async function giftShoot(token, gift, into) {
   pickShelfPhotos('a shelf', async images => {
     into.innerHTML = '';
-    into.appendChild(el('div', 'sub', 'Reading what is on the shelf\u2026'));
+    working('Reading what is on the shelf');
     let seen = null;
     try {
       const res = await fetch(gift.url, { method: 'POST',
@@ -59537,7 +59601,7 @@ async function giftShoot(token, gift, into) {
       into.appendChild(row);
     });
   }, { face: true, title: 'Photograph the shelf', go: 'Read it',
-       sub: 'One shot. It will say which of these he already has.' });
+       sub: 'One shot. It will say which of these are already there.' });
 }
 
 
@@ -59555,12 +59619,17 @@ async function giftAsk(token, gift, typed, into) {
   show(first);
   if (first.verdict === 'owned' || first.verdict === 'wished') return;
   /* HOW IT TASTES IS THE PART THAT COSTS. */
-  into.appendChild(el('div', 'sub', 'Looking up how it tastes\u2026'));
+  /* THE FILLING BOTTLE, which is what this app shows everywhere else it
+     waits on the service (BZ, 2026-10-17). A line of grey text was a
+     second idea of what waiting looks like. */
+  working('Looking up how it tastes');
   try {
     const r = await fetch(L.giftLookupUrl(gift, token, name));
     const found = await r.json();
+    working();
     show(L.giftAnswer(name, gift, found && found.name ? found : null));
   } catch (e) {
+    working();
     show(Object.assign({}, first,
       { more: 'Could not find out how this one tastes.' }));
   }
@@ -59632,7 +59701,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.56</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.57</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

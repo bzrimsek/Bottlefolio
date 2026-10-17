@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1041 |
+| functions | 1042 |
 | tables | 247 |
-| carrying a stated purpose | 835 |
+| carrying a stated purpose | 836 |
 
 ## Tables
 
@@ -540,6 +540,7 @@ QUESTION, not the name you were going to use.
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
 - **`L.giftFromLink`** — _no comment above it_
 - **`L.giftHash`** — _no comment above it_
+- **`L.giftHints`** — WHAT TO TELL A SHOPPER BEFORE THEY START (BZ, 2026-10-17
 - **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
 - **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES

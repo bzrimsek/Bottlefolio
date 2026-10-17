@@ -30076,6 +30076,26 @@ sec('§479 a gift link answers without handing over the shelf');
   const url = L.giftLookupUrl(gift, 'a'.repeat(32), 'Ardbeg Ten');
   eq('the ask carries the token', url.indexOf('gift=' + 'a'.repeat(32)) > 0, true);
   eq('and no link means no ask', L.giftLookupUrl({}, 'a'.repeat(32), 'x'), null);
+
+  /* THE HINTS, so a shopper is not going in cold (BZ, 2026-10-17). From the
+     A/B answers and not the shelf: what somebody HAS is the wrong half at a
+     shop counter - BZ's shelf leads on oak while his answers put Woody at 0
+     and Fruity at 93. */
+  eq('no answers, no hints', L.giftHints({ ab: {} }), null);
+  const hinted = L.giftHints(L.tasteProfile(cat, held, {}, {
+    'apple|oak': 'apple>apple>apple>apple>apple>apple',
+    'cherry|oak': 'cherry>cherry>cherry>cherry>cherry>cherry',
+    'apple|cherry': 'cherry>cherry>cherry' }));
+  eq('thin answers still give no hints', hinted, null);
+
+  /* AND THE NAME REPLACES EVERY PRONOUN (BZ, 2026-10-17). */
+  const named = { who: 'BZ', own: {}, wish: {}, taste: { weights: {} } };
+  named.own[L.giftHash('Ardbeg Ten')] = 1;
+  eq('an owned bottle names whose shelf it is',
+    L.giftAnswer('Ardbeg Ten', named).say, "Already on BZ's shelf.");
+  eq('and with no name it says neither he nor she',
+    L.giftAnswer('Ardbeg Ten', Object.assign({}, named, { who: '' })).say,
+    'Already on the shelf.');
 }
 
 sec('§478 a brewery is not a pour, and neither is a winery');
