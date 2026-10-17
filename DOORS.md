@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1036 |
-| tables | 246 |
-| carrying a stated purpose | 830 |
+| tables | 247 |
+| carrying a stated purpose | 831 |
 
 ## Tables
 
@@ -144,6 +144,7 @@ QUESTION, not the name you were going to use.
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
 - **`L.NOT_FILTERS`** — Not filters, named so the check can tell "not a filter" from "somebody
 - **`L.NOT_GUESSED`** — A TYPE A PERSON MAY CHOOSE AND THE APP MAY NOT GUESS
+- **`L.NOT_SPIRITS`** — WHAT A BAR SELLS THAT IS NOT A SPIRIT AT ALL (BZ, 2026-10-17:
 - **`L.NOT_WHISKY`** — 'flavored' joined on 2026-09-24
 - **`L.NOTE_WORDS_MEMO`** — THE WORDS OF A NOTE, split once
 - **`L.OAK_BY_LAW`** — DELIBERATELY NARROWER THAN IT LOOKS, and the exclusions are the point.

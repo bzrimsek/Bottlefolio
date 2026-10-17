@@ -27992,7 +27992,7 @@ sec('§441 a lookup asks who is asking');
      Same one."). A word the app can read and the service is never offered is
      a word no answer will ever carry. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.7');
+    L.GS_BUILD, '2.6.8');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
@@ -30029,6 +30029,40 @@ sec('§475 one proof band under the floor, not seven');
   eq('and no proof at all is not a band', L.proofInTen('p0', 0), false);
   /* A SAVED FILTER FROM BEFORE THIS CHANGE STILL WORKS. */
   eq('an older saved p70 still matches 75', L.proofInTen('p70', 75), true);
+}
+
+sec('§478 a brewery is not a pour, and neither is a winery');
+{
+  /* BZ, 2026-10-17: "breweries shouldn't cost lookups" and "nor should
+     wineries". L.NOT_WHISKY is a list of SPIRITS that are not whisky,
+     written for a shelf where every bottle is a spirit; a MENU lists beer
+     and wine, which were in nobody's vocabulary and fell through every
+     guard. A real read tagged Great Lakes Brewing Co as beer - the reader
+     had worked it out correctly - and the app offered it as a whisky. */
+  ['beer', 'ale', 'lager', 'stout', 'cider', 'wine', 'champagne', 'sake',
+   'mead', 'seltzer', 'vermouth'].forEach(sub => {
+    eq(sub + ' is never offered', L.neverOffer({ sub: sub, name: 'x' }), true);
+  });
+
+  /* COGNAC IS BRANDY, through the alias door rather than a second list.
+     Three came back from real reads and every one was offered as a whisky. */
+  ['cognac', 'armagnac', 'calvados'].forEach(sub => {
+    eq(sub + ' is refused as the brandy it is',
+      L.neverOffer({ sub: sub, name: 'x' }), true);
+  });
+
+  /* AND THE WHISKIES STILL GET THROUGH, including the spellings a reader
+     actually uses. `american` is not a type and must NOT be refused for it:
+     to a reader it means American whiskey. */
+  ['bourbon', 'rye', 'scotch', 'irish', 'japanese', 'tennessee', 'canadian',
+   'single malt scotch', 'islay', 'american'].forEach(sub => {
+    eq(sub + ' is still offered', L.neverOffer({ sub: sub, name: 'x' }), false);
+  });
+
+  /* A BLANK CATEGORY STILL PASSES: a back bar is full of bottles the app has
+     never met, and that is the whole point of the feature. */
+  eq('a bottle with no category is not refused',
+    L.neverOffer({ sub: '', name: 'Kavalan Solist' }), false);
 }
 
 sec('§477 the shortlist is what a lookup is worth spending on');

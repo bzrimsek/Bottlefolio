@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.51  Build 2026-10-16 11:31 PM ET
+     Version : v2.8.52  Build 2026-10-17 08:23 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.45  2026-10-13  One heading SIZE, not just one heading tag.
 // v2.8.44  2026-10-13  One heading style: a card titles itself with an h3.
 // v2.8.43  2026-10-12  The mash bill is drawn once, and corners, gaps and padding are on one scale.
-// v2.8.42  2026-10-12  One title style on the bottle, and no flight prompt masquerading as a note.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3099,8 +3099,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.51';
-const BUILD_TIME  = '2026-10-16 11:31 PM ET';
+const APP_VERSION = '2.8.52';
+const BUILD_TIME  = '2026-10-17 08:23 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5231,6 +5231,23 @@ L.readProof = function (raw) {
   return Math.round(n * 10) / 10;
 };
 
+/* WHAT A BAR SELLS THAT IS NOT A SPIRIT AT ALL (BZ, 2026-10-17:
+ * "breweries shouldn't cost lookups", and "nor should wineries").
+ *
+ * L.NOT_WHISKY is a list of SPIRITS that are not whisky, written for a
+ * shelf where every bottle is a spirit. A MENU is the other thing: it
+ * lists beer and wine, which were in nobody's vocabulary, so they fell
+ * through every guard. "Great Lakes Brewing Co" came back from a real
+ * read tagged `beer`, by a reader that had correctly worked out what it
+ * was - and the app offered it as a whisky worth crossing the room for.
+ *
+ * THE READER ALREADY KNOWS. Nothing here guesses from a name; it refuses
+ * what the photograph itself reported. */
+L.NOT_SPIRITS = ['beer', 'ale', 'lager', 'stout', 'ipa', 'cider',
+  'wine', 'red wine', 'white wine', 'rose', 'champagne', 'prosecco',
+  'sparkling', 'port wine', 'sherry wine', 'vermouth', 'sake', 'mead',
+  'seltzer', 'hard seltzer', 'cocktail', 'soda', 'water'];
+
 L.SUB_ALIASES = {
   'bourbon': 'bourbon', 'straight bourbon': 'bourbon', 'american whiskey': 'bourbon',
   'rye': 'rye', 'straight rye': 'rye', 'rye whiskey': 'rye',
@@ -5244,7 +5261,14 @@ L.SUB_ALIASES = {
   'japanese': 'japanese', 'japanese whisky': 'japanese',
   'world': 'world', 'world whisky': 'world', 'other': 'world',
   'flavored': 'flavored', 'flavoured': 'flavored',
-  'tequila': 'tequila', 'anejo': 'tequila', 'reposado': 'tequila'
+  'tequila': 'tequila', 'anejo': 'tequila', 'reposado': 'tequila',
+  /* BRANDY BY ANOTHER NAME. A bar menu says cognac, and `brandy` is
+     already a type and already not whisky - so the alias is all that was
+     missing. Three cognacs came back from BZ's real reads and every one
+     was offered to him as a whisky to order: Hennessy VS reached a
+     shortlist on 2026-10-16 and would have cost a lookup. */
+  'cognac': 'brandy', 'armagnac': 'brandy', 'calvados': 'brandy',
+  'eau de vie': 'brandy', 'pisco': 'brandy'
 };
 
 L.readSub = function (raw) {
@@ -24966,7 +24990,14 @@ L.neverOffer = function (prod, onShelf) {
      category is normal - the feature exists for bottles the app has never
      met, and Kavalan Solist came back from one with nothing filled in. */
   if (onShelf && L.WHISKY_SUBS.indexOf(sub) < 0) return true;
-  if (sub && L.NOT_WHISKY.indexOf(sub) >= 0) return true;
+  /* NOT A SPIRIT, so not a pour this app has an opinion about. */
+  if (sub && L.NOT_SPIRITS.indexOf(sub) >= 0) return true;
+  /* THROUGH THE ALIAS DOOR FIRST, so cognac is refused as the brandy it
+     is rather than passing because nothing spelled it `brandy`. An
+     unrecognised word keeps its own spelling: `american` means American
+     whiskey to a reader and must not be refused for failing a lookup. */
+  const said = L.readSub(sub) || sub;
+  if (said && L.NOT_WHISKY.indexOf(said) >= 0) return true;
   /* AND A STRENGTH NOBODY IS SENT LOOKING FOR. BZ, 2026-10-02: "Below 80 and
      above 150 is valid but not recommended" - valid, so it is kept and counted
      and never reported as a fault; not recommended, so it is refused here, which
@@ -32833,7 +32864,7 @@ L.flightPoured = function (entry) {
    Code.gs states its own build and the two are compared rather than
    assumed. Bump BOTH whenever Code.gs changes; consistency.js fails the
    build if they disagree. */
-L.GS_BUILD = '2.6.7';
+L.GS_BUILD = '2.6.8';
 
 /* What the comparison means, in the words somebody can act on. */
 L.serviceBuildVerdict = function (expected, got) {
@@ -59086,7 +59117,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.51</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.52</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
