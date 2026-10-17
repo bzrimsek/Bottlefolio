@@ -30086,7 +30086,14 @@ sec('§479 a gift link answers without handing over the shelf');
     'apple|oak': 'apple>apple>apple>apple>apple>apple',
     'cherry|oak': 'cherry>cherry>cherry>cherry>cherry>cherry',
     'apple|cherry': 'cherry>cherry>cherry' }));
-  eq('thin answers still give no hints', hinted, null);
+  /* THIN ANSWERS GIVE NO LEANINGS - but the shelf numbers still travel,
+     because a count needs no quiz (BZ, 2026-10-17). */
+  eq('thin answers give no leanings', hinted.likes, undefined);
+  eq('but the shelf still counts', hinted.owned, 1);
+  /* AND THE NUMBERS ARE NUMBERS, never names: the owned bottles stay
+     hashed and nothing here spells one out. */
+  eq('the hints name no bottle',
+    JSON.stringify(hinted).toLowerCase().indexOf('lagavulin'), -1);
 
   /* AND THE NAME REPLACES EVERY PRONOUN (BZ, 2026-10-17). */
   const named = { who: 'BZ', own: {}, wish: {}, taste: { weights: {} } };

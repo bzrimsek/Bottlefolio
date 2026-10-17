@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.58  Build 2026-10-17 10:43 AM ET
+     Version : v2.8.59  Build 2026-10-17 10:51 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
-// v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3135,8 +3135,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.58';
-const BUILD_TIME  = '2026-10-17 10:43 AM ET';
+const APP_VERSION = '2.8.59';
+const BUILD_TIME  = '2026-10-17 10:51 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30703,11 +30703,26 @@ L.giftLookupUrl = function (gift, token, name) {
  * shopper more money than a list of things to like.
  */
 L.giftHints = function (prof) {
-  const axes = L.tasteWantAxes((prof || {}).ab || {});
-  if (axes.length < 4) return null;
-  const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
-  return { likes: byPct.slice(0, 3).map(a => a.label),
-           avoid: byPct.slice(-2).map(a => a.label) };
+  const p = prof || {};
+  /* THE SHELF AS NUMBERS, NEVER AS NAMES (BZ, 2026-10-17: "can we add a bit
+     of shelf data to the page as well?"). How many, from how many houses, and
+     which styles run deepest - a shopper then knows it is a serious
+     collection and which aisle is already covered. A count is not an
+     inventory: the owned bottles themselves stay hashed. */
+  const out = { owned: Number(p.owned) || 0,
+                houses: Object.keys(p.houses || {}).length,
+                styles: (p.styles || []).slice(0, 3)
+                  .map(s => [String(s.value || ''), Number(s.n) || 0])
+                  .filter(s => s[0] && s[1]) };
+  /* AND WHAT THE ANSWERS SAY, when there are enough of them to mean
+     anything. L.tasteWantAxes holds that bar, not this. */
+  const axes = L.tasteWantAxes(p.ab || {});
+  if (axes.length >= 4) {
+    const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
+    out.likes = byPct.slice(0, 3).map(a => a.label);
+    out.avoid = byPct.slice(-2).map(a => a.label);
+  }
+  return (out.owned || out.styles.length) ? out : null;
 };
 
 L.giftHash = function (name) {
@@ -59541,7 +59556,14 @@ function giftHintCard(gift, host) {
   const who = String((gift || {}).who || '').trim();
   card.appendChild(el('h3', null, who ? 'What ' + who + ' goes for'
     : 'What to look for'));
-  if (h) {
+  if (h && h.owned) {
+    const deep = (h.styles || [])
+      .map(s => L.sentenceCase(s[0]) + ' ' + s[1]).join(' \u00b7 ');
+    card.appendChild(el('div', null, h.owned + ' bottles'
+      + (h.houses ? ' from ' + h.houses + ' distilleries' : '') + '.'));
+    if (deep) card.appendChild(el('div', 'sub', 'Deepest in ' + deep + '.'));
+  }
+  if (h && h.likes) {
     card.appendChild(el('div', null, 'Leans ' + L.andList(h.likes) + '.'));
     card.appendChild(el('div', 'sub', 'Rarely ' + L.andList(h.avoid) + '.'));
   }
@@ -59748,7 +59770,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.58</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.59</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
