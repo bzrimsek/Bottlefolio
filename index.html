@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.67  Build 2026-10-17 01:19 PM ET
+     Version : v2.8.68  Build 2026-10-17 01:41 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
-// v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.67';
-const BUILD_TIME  = '2026-10-17 01:19 PM ET';
+const APP_VERSION = '2.8.68';
+const BUILD_TIME  = '2026-10-17 01:41 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -33104,34 +33104,6 @@ L.giftText = function (rows, who) {
    database requires an account for every read. The names ride in the URL
    fragment, which is never sent to the host. Names only: no prices, and no
    reasons, which belong to whoever wrote them. */
-L.giftLink = function (rows, origin, when) {
-  const list = (rows || []).filter(r => r && r.name);
-  if (!list.length) return '';
-  const payload = { v: 1, at: when || L.todayISO(),
-                    n: list.map(r => String(r.name).slice(0, 80)) };
-  let packed;
-  try {
-    /* encodeURIComponent first, so an accented name survives btoa - which
-       throws on anything outside Latin-1 and would otherwise fail on
-       exactly the bottles worth asking for. */
-    packed = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-  } catch (e) { return ''; }
-  const base = String(origin || '').replace(/[#?].*$/, '');
-  return base + '#gift=' + packed.replace(/=+$/, '');
-};
-
-L.giftFromLink = function (hash) {
-  const m = /[#&]gift=([A-Za-z0-9+/=_-]+)/.exec(String(hash || ''));
-  if (!m) return null;
-  let raw = m[1].replace(/-/g, '+').replace(/_/g, '/');
-  while (raw.length % 4) raw += '=';
-  try {
-    const obj = JSON.parse(decodeURIComponent(escape(atob(raw))));
-    if (!obj || !Array.isArray(obj.n) || !obj.n.length) return null;
-    return { at: obj.at || '', names: obj.n.map(x => String(x)).slice(0, 20) };
-  } catch (e) { return null; }
-};
-
 L.tastingRecord = function (f, poured, catalog, who, host, when) {
   const cat = catalog || {};
   const keys = (poured || []).filter(Boolean);
@@ -35210,21 +35182,6 @@ function renderShelf() {
         };
         gift.appendChild(send);
 
-        const link = el('button', 'btn btn-sm wide', 'Text a link');
-        link.onclick = () => {
-          const url = L.giftLink(picks, location.href);
-          if (!url) { toast('Nothing to link to'); return; }
-          location.href = 'sms:?&body=' + encodeURIComponent(
-            'A few whiskies I would be happy with: ' + url);
-          appLog('gift link sent, ' + picks.length + ' bottles');
-        };
-        gift.appendChild(link);
-        const why = el('div', 'src');
-        why.style.margin = '7px 0 9px';
-        why.textContent =
-          'The list reads right in the message. The link says more, but it is a '
-          + 'snapshot of today and will not follow later changes.';
-        gift.appendChild(why);
         const cp = el('button', 'btn btn-sm ghost wide', 'Copy it instead');
         cp.onclick = () => {
           const txt = L.giftText(picks, '');
@@ -35253,6 +35210,12 @@ function renderShelf() {
         };
         gift.appendChild(vis);
       }
+      /* AND THE LIVE LINK, IN THE SAME CARD. Two messages, which is the
+         rule written at the top of this one: the list itself, readable in
+         a text with no app to open, or a link that answers about any
+         bottle and can be switched off. */
+      gift.appendChild(el('div', 'rs', 'OR SEND A GIFT LINK'));
+      giftLinksBody(gift);
       /* Held and appended after the rows (BZ): the bottles are what the Wanted
          view is for, so the share buttons go under them. */
       giftCard = gift;
@@ -35312,7 +35275,6 @@ function renderShelf() {
        list"), which puts it ABOVE the card that texts that list. Drawn
        here and in the main view above the map, by the one builder -
        taking it out of either is how it went missing twice. */
-    giftLinksCard(list);
     if (giftCard) card(giftCard);
     return;
   }
@@ -45746,24 +45708,20 @@ function settingsPanel(tab, host) {
  * other controls over what of his is published. Two copies of a sharing
  * control would drift (30d) - the Buddies tab sets the same precedent by
  * reusing nameCard rather than writing a second one. */
-function giftLinksCard(box) {
-  const card = el('div', 'sheet');
-  card.appendChild(el('h3', null, 'Gift links'));
-  /* NO MARGIN OF ITS OWN: .sheet already carries the gap, and adding one
-     put this card 24px from its neighbour where every other sits at 12
-     (browser.js, 2026-10-17). */
-  /* SAID AGAINST THE CARD ABOVE IT on the Shelf, which sends the wish
-     list: that one tells them what he WANTS, this one answers about a
-     bottle nobody listed, which is most of what is in a shop. */
-  /* TWO LINES, NOT SIX. The first cut explained the whole feature before it
-     offered anything to press, and on a phone that is the card (BZ,
-     2026-10-17: "the UI is ugly"). */
-  card.appendChild(el('div', 'sub', 'For whoever is buying you a bottle. '
-    + 'They can check any bottle against your shelf and your taste, and '
-    + 'never see either.'));
+/* ONE CARD, TWO MESSAGES (BZ, 2026-10-17: "we need to rationalize
+ * the new feature with the old"). The Wanted view had two sharing
+ * cards back to back and three ways to send something, two of them
+ * links - against his own rule written into the older card: "Two
+ * messages (a link, or the list itself), not two ways of sending
+ * one." The snapshot link is gone, because the live one carries the
+ * same five bottles under ALREADY ASKED FOR and can be switched off.
+ *
+ * SPLIT SO IT CAN BE HOSTED. On the Shelf the rows sit INSIDE the
+ * card that sends the list; in Settings they need a card of their
+ * own. One body, two hosts - not two builders (30d). */
+function giftLinksBody(card) {
   if (!FB.user) {
     card.appendChild(el('div', 'sub', 'Sign in to make one.'));
-    box.appendChild(card);
     return;
   }
 
@@ -45838,6 +45796,16 @@ function giftLinksCard(box) {
   make.style.marginTop = '9px';
   make.onclick = () => giftMake();
   card.appendChild(make);
+}
+
+/* ITS OWN CARD, for Settings and anywhere with no card to sit inside. */
+function giftLinksCard(box) {
+  const card = el('div', 'sheet');
+  card.appendChild(el('h3', null, 'Gift links'));
+  card.appendChild(el('div', 'sub', 'For whoever is buying you a bottle. '
+    + 'They can check any bottle against your shelf and your taste, and '
+    + 'never see either.'));
+  giftLinksBody(card);
   box.appendChild(card);
 }
 
@@ -59630,31 +59598,6 @@ function clearInherited() {
 /* SOMEBODY ELSE'S LIST, ARRIVING BY LINK. Needs no account: the names ride
    in the URL fragment, which never reaches a server. Read-only, and it
    shows its date, since it is a snapshot. */
-function showGiftLink(gift) {
-  openModal('A few whiskies they would be happy with', m => {
-    (gift.names || []).forEach(n => {
-      const r = el('div', 'item');
-      r.appendChild(el('div', 'nm', n));
-      m.appendChild(r);
-    });
-    m.appendChild(el('div', 'src',
-      'Any one of them, no need for more than that.'
-      + (gift.at ? ' This list was sent on ' + gift.at
-        + ', and is a snapshot of that day rather than a live list.' : '')));
-    const close = el('button', 'btn wide btn-gold', 'Close');
-    close.style.marginTop = '11px';
-    close.onclick = () => {
-      closeModal();
-      /* Cleared from the address bar, or a reload reopens somebody else's
-         list over the top of your own shelf. */
-      try {
-        history.replaceState(null, '', location.pathname + location.search);
-      } catch (e) { /* nothing to do */ }
-    };
-    m.appendChild(close);
-  });
-}
-
 /* THE PAGE SOMEBODY SHOPPING FOR A PRESENT SEES (BZ, 2026-10-17).
  *
  * They have no account, so nothing here signs in and nothing here reads the
@@ -59956,13 +59899,6 @@ function boot(data) {
   /* Straight away if anything goes wrong with the scheduling, because a
      screen that never draws is far worse than a boot that is 67ms slower. */
   try { setTimeout(rest, 0); } catch (e) { rest(); }
-  /* A gift link opens what it carries, ahead of anything else on the
-     screen: whoever followed it came for that and nothing else. */
-  const gift = L.giftFromLink(location.hash);
-  if (gift) {
-    appLog('opened a gift link, ' + gift.names.length + ' bottles');
-    setTimeout(() => showGiftLink(gift), 60);
-  }
   // Someone who has signed in before should not have to do it again on
   // every load, so the SDK is fetched at boot in that case only.
   if (localStorage.getItem('kb_signedin') === '1') {
@@ -59976,7 +59912,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.67</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.68</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

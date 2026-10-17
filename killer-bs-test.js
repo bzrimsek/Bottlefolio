@@ -22591,69 +22591,12 @@ sec('\u00a7352 a calendar is pours, not bottles');
     mine.away, undefined);
 }
 
-sec('\u00a7353 the same list, as a link');
-{
-  /* BZ: send wish list via text, but link or content. Both, because they
-     are different messages rather than two ways of sending one. */
-  const rows = [{ name: 'Ardbeg Uigeadail', unlocks: true },
-                { name: 'F\u00e8is \u00ccle 2024' },
-                { name: 'Redbreast 12', why: 'pot still' }];
-  const url = L.giftLink(rows, 'https://example.com/app/', '2026-09-09');
-  eq('a link is made', url.indexOf('https://example.com/app/#gift=') === 0,
-    true);
-  eq('and it is short enough to text', url.length < 400, true);
-
-  const back = L.giftFromLink(url);
-  eq('every bottle survives the trip', back.names.length, 3);
-  eq('in order', back.names[0], 'Ardbeg Uigeadail');
-  /* btoa throws on anything outside Latin-1, which is exactly the bottles
-     worth asking for, so the payload is percent-encoded first. */
-  eq('an accented name survives', back.names[1], 'F\u00e8is \u00ccle 2024');
-  eq('and the date it was taken travels', back.at, '2026-09-09');
-
-  /* NAMES ONLY. The short list deliberately carries no prices, and the
-     reasons are for the person who wrote them. */
-  eq('no reason is carried', /pot still/.test(url), false);
-  eq('and nothing says a bottle finishes a flight',
-    /finishes/.test(url), false);
-
-  /* A fragment, so it never reaches a server. */
-  eq('the payload rides in the fragment', url.indexOf('#gift=') > 0, true);
-  eq('and nothing is in the query string',
-    url.indexOf('?') < 0, true);
-  /* Any query or fragment already on the address is dropped rather than
-     doubled. */
-  eq('an existing fragment is replaced, not appended',
-    (L.giftLink(rows, 'https://example.com/app/#shelf', '2026-09-09')
-      .match(/#/g) || []).length, 1);
-
-  eq('an empty list makes no link', L.giftLink([], 'https://x/'), '');
-  eq('and neither does nothing at all', L.giftLink(null, 'https://x/'), '');
-  eq('a nameless row is not a bottle',
-    L.giftLink([{ why: 'x' }], 'https://x/'), '');
-
-  /* THE READING END REFUSES RUBBISH rather than throwing: this runs on a
-     stranger's phone, from a URL anybody can edit. */
-  eq('no hash is nothing', L.giftFromLink(''), null);
-  eq('a hash with no gift in it is nothing',
-    L.giftFromLink('#shelf'), null);
-  eq('and something that is not base64 is nothing',
-    L.giftFromLink('#gift=not!base64'), null);
-  eq('valid base64 that is not a gift is nothing',
-    L.giftFromLink('#gift=' + Buffer.from('{"v":1}').toString('base64')),
-    null);
-  eq('an empty name list is nothing',
-    L.giftFromLink('#gift='
-      + Buffer.from('{"v":1,"n":[]}').toString('base64')), null);
-  /* A link found among other fragment parameters still reads. */
-  eq('it is found beside other fragment parts',
-    L.giftFromLink('#tab=shelf&gift='
-      + Buffer.from('{"v":1,"n":["A"]}').toString('base64')).names[0], 'A');
-  /* And a very long list is capped rather than trusted. */
-  const many = Array.from({ length: 40 }, (_, i) => ({ name: 'B' + i }));
-  eq('a link cannot open forty bottles on somebody',
-    L.giftFromLink(L.giftLink(many, 'https://x/')).names.length, 20);
-}
+/* §353 tested L.giftLink and L.giftFromLink - the snapshot link that
+   packed five names into a #gift= fragment. Removed with them on
+   2026-10-17: the live ?gift= link carries the same five under ALREADY
+   ASKED FOR, follows later changes and can be switched off, and two
+   things both called a gift link was the confusion BZ asked to
+   rationalize. What replaced it is tested in §479. */
 
 sec('\u00a7355 what the library contradicts');
 {

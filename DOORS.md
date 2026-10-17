@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1046 |
+| functions | 1044 |
 | tables | 249 |
 | carrying a stated purpose | 838 |
 
@@ -541,10 +541,8 @@ QUESTION, not the name you were going to use.
 - **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
 - **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
-- **`L.giftFromLink`** — _no comment above it_
 - **`L.giftHash`** — _no comment above it_
 - **`L.giftHints`** — _no comment above it_
-- **`L.giftLink`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.giftList`** — A wishlist somebody could actually buy from
 - **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES
 - **`L.giftPayload`** — WHAT GETS PUBLISHED FOR ONE LINK
@@ -1236,7 +1234,7 @@ QUESTION, not the name you were going to use.
 - **`L.tasteWord`** — IS THIS A FLAVOUR THE APP CAN TASTE? Asked of the palate index, which is the
 - **`L.tastingForGuest`** — What a guest's device does with one
 - **`L.tastingNotes`** — _no comment above it_
-- **`L.tastingRecord`** — _no comment above it_
+- **`L.tastingRecord`** — A link carries a SNAPSHOT and says when it was taken
 - **`L.tastingStep`** — One step by its id, for everything that reads them.
 - **`L.tellApart`** — _no comment above it_
 - **`L.templateCSV`** — _no comment above it_
