@@ -91,8 +91,8 @@ QUESTION, not the name you were going to use.
 - **`L.GAP_SAY`** — WHERE A ROW ON THE STILL MISSING LIST STANDS, and what it is short of.
 - **`L.GAP_WORTH`** — How complete an entry is, as a score rather than a yes or no.
 - **`L.GAPS_ON_THE_LABEL`** — This is the list the shelf's fill queue asks about
-- **`L.GIFT_PLAIN`** — THE SHOPPER'S VOCABULARY (BZ, 2026-10-17
-- **`L.GIFT_PLAIN_TASTE`** — AND THE FLAVOUR FAMILIES, in words a shop assistant would use
+- **`L.GIFT_PLAIN`** — WHAT TO TELL A SHOPPER, IN A VOICE THEY CAN ACT ON (BZ, 2026-10-17:
+- **`L.GIFT_PLAIN_TASTE`** — THE FLAVOUR FAMILIES, in words a shop assistant would use
 - **`L.GUIDE_CALLED`** — WHAT HE IS TOLD TO CALL SOMEBODY
 - **`L.GUIDE_FACTS`** — THE FACTS OF ONE BOTTLE, and only the facts
 - **`L.GUIDE_PRICE`** — Sonnet 5, per million tokens

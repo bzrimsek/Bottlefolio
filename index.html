@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.61  Build 2026-10-17 11:10 AM ET
+     Version : v2.8.62  Build 2026-10-17 11:25 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // v2.8.52  2026-10-17  A BREWERY IS NOT A POUR, AND NEITHER IS A WINERY.
 // v2.8.51  2026-10-16  THE TOP THREE GET LOOKED UP, BEHIND THE CARD.
-// v2.8.50  2026-10-16  THE PALATE GATES AND THE CARD SAYS SO.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.61';
-const BUILD_TIME  = '2026-10-17 11:10 AM ET';
+const APP_VERSION = '2.8.62';
+const BUILD_TIME  = '2026-10-17 11:25 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30693,36 +30693,33 @@ L.giftLookupUrl = function (gift, token, name) {
  * AND THE BOTTOM AS WELL AS THE TOP. "Not oak-forward, not peated" saves a
  * shopper more money than a list of things to like.
  */
-/* THE SHOPPER'S VOCABULARY (BZ, 2026-10-17: "If you say sherry cellar to a
- * novice, we run the risk of them buying sherry").
+/* WHAT TO TELL A SHOPPER, IN A VOICE THEY CAN ACT ON (BZ, 2026-10-17:
+ * "favors this, likes that, prefers this, rarely does that").
  *
- * EVERY WORD THIS APP USES IS WRITTEN FOR SOMEBODY WHO ALREADY KNOWS. The
- * portrait calls his shelf The Sherry Cellar; its other titles are PX Lover,
- * Sherry Bomb, Islay Regular, Full Proof, Big Smoke. The taste families are no
- * better: Winey sends the same person to the wine aisle. Reusing the portrait
- * here was the right door for the question and the wrong one for the reader -
- * a gift link goes to the person LEAST likely to know the words.
+ * EVERY LINE IS A PREFERENCE, NOT A STATISTIC. The first cut said "Buys
+ * whisky aged in sherry casks" - weak - and "Plenty from one distillery
+ * already", which he called horrible and was: a shopper cannot act on it
+ * without the distillery's name, and naming one is not what a hint is for.
+ * `house`, `repeat` and `sealed` are gone from this table for that reason -
+ * nothing here can be true and useless at the same time.
  *
- * SO IT IS SAID TWICE, PLAINLY, AND THE CASK IS NEVER THE DRINK. "Aged in
- * sherry casks - the whisky, not the sherry" is the whole point of this
- * table.
+ * AND THE CASK IS NEVER THE DRINK: say "sherry cellar" to a novice and they
+ * buy sherry, so it is spelled out every time.
  */
 L.GIFT_PLAIN = {
-  px: 'whisky aged in sherry casks \u2014 the whisky, not the sherry',
-  sherry: 'whisky aged in sherry casks \u2014 the whisky, not the sherry',
-  peat: 'smoky whisky',
-  region: 'smoky single malts from Islay',
-  proof: 'whisky bottled at full strength',
-  house: 'plenty from one distillery already',
-  repeat: 'the same favourites, bought again',
-  sealed: 'a spare of what gets drunk',
-  rare: 'bottles that are hard to find',
-  obscure: 'names most shops do not carry',
-  breadth: 'a bit of everywhere'
+  px: 'Favors whisky aged in sherry casks \u2014 the whisky, not the sherry.',
+  sherry: 'Favors whisky aged in sherry casks \u2014 the whisky, not the '
+    + 'sherry.',
+  peat: 'Favors smoky whisky.',
+  region: 'Favors smoky single malts from Islay.',
+  proof: 'Prefers bottles at full strength, not the standard ones.',
+  rare: 'Likes bottles that are hard to find.',
+  obscure: 'Likes names most shops do not carry.',
+  breadth: 'Likes trying somewhere new.'
 };
 
-/* AND THE FLAVOUR FAMILIES, in words a shop assistant would use. Winey is the
-   dangerous one and the reason this exists. */
+/* THE FLAVOUR FAMILIES, in words a shop assistant would use. Winey is the
+   dangerous one and half the reason this exists. */
 L.GIFT_PLAIN_TASTE = {
   Winey: 'sherried', Fruity: 'fruity', Peaty: 'smoky', Woody: 'oaky',
   Spicy: 'spicy', Sweet: 'sweet', Floral: 'floral', Herbal: 'herbal',
@@ -30741,22 +30738,23 @@ L.giftPlainWords = function (list, table) {
 
 L.giftHints = function (prof, portrait) {
   const p = prof || {};
-  const port = portrait || {};
-  const out = {};
-  /* WHAT THE SHELF IS, in the shopper's words and never the portrait's own
-     title. `from` is the ids the portrait was built on, which is the part
-     that survives translation. */
-  const says = L.giftPlainWords(port.from, L.GIFT_PLAIN);
-  if (says.length) out.shelf = says.slice(0, 2);
+  const said = L.giftPlainWords((portrait || {}).from, L.GIFT_PLAIN);
+  const out = [];
+  /* THE SHELF FIRST - two at most, or it stops being a hint. */
+  said.slice(0, 2).forEach(s => out.push(s));
   const axes = L.tasteWantAxes(p.ab || {});
   if (axes.length >= 4) {
     const byPct = axes.slice().sort((a, b) => b.pct - a.pct);
-    out.likes = L.giftPlainWords(byPct.slice(0, 3).map(a => a.label),
+    const likes = L.giftPlainWords(byPct.slice(0, 3).map(a => a.label),
       L.GIFT_PLAIN_TASTE);
-    out.avoid = L.giftPlainWords(byPct.slice(-2).map(a => a.label),
+    const avoid = L.giftPlainWords(byPct.slice(-2).map(a => a.label),
       L.GIFT_PLAIN_TASTE);
+    if (likes.length) out.push('Likes it ' + L.andList(likes) + '.');
+    if (avoid.length) {
+      out.push('Rarely goes for ' + L.andList(avoid) + ' ones.');
+    }
   }
-  return (out.shelf || out.likes) ? out : null;
+  return out.length ? { lines: out } : null;
 };
 
 L.giftHash = function (name) {
@@ -59585,26 +59583,15 @@ async function giftLoad(token, host) {
 function giftHintCard(gift, host) {
   const h = (gift || {}).hints || null;
   const picks = (gift || {}).picks || [];
-  if (!h && !picks.length) return;
+  const say = (h && h.lines) || [];
+  if (!say.length && !picks.length) return;
   const card = el('div', 'sheet');
   const who = String((gift || {}).who || '').trim();
   card.appendChild(el('h3', null, who ? 'What ' + who + ' goes for'
     : 'What to look for'));
-  if (h && h.shelf) {
-    /* ONE SENTENCE EACH. Joined by `and`, the clarification that matters
-       most - the whisky, not the sherry - got swallowed mid-sentence. */
-    card.appendChild(el('div', null, 'Buys ' + h.shelf[0] + '.'));
-    if (h.shelf[1]) {
-      card.appendChild(el('div', 'sub',
-        h.shelf[1].charAt(0).toUpperCase() + h.shelf[1].slice(1) + '.'));
-    }
-  }
-  if (h && h.likes) {
-    card.appendChild(el('div', null, 'Likes it '
-      + L.andList(h.likes) + '.'));
-    card.appendChild(el('div', 'sub', 'Rarely '
-      + L.andList(h.avoid) + '.'));
-  }
+  /* ONE PREFERENCE PER LINE. Run together they read as a paragraph about
+     somebody; on their own lines they read as instructions. */
+  say.forEach(s => card.appendChild(el('div', null, s)));
   if (picks.length) {
     const want = el('div');
     want.style.marginTop = '9px';
@@ -59808,7 +59795,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.61</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.62</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

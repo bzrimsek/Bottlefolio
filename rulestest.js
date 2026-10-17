@@ -235,6 +235,20 @@ async function suite(env) {
   await seed('gift/tok4', { owner: 'alice', at: at(), off: true });
   await check('a killed gift link refuses everyone', 'refused',
     () => get(r(null, 'gift/tok4')));
+
+  /* AND A LINK CAN BE ENDED. This was the gap that let a broken rule
+     ship: the suite seeded, read and wrote a gift link and never tried
+     to DELETE one. A delete carries no newData, so a rule that asks
+     newData for an owner is asking a node that is not there - the
+     answer was always no and deleting was impossible, which BZ found by
+     pressing the button (2026-10-17). */
+  await seed('gift/tok5', { owner: 'alice', at: at() });
+  await check('somebody else cannot delete your gift link', 'refused',
+    () => set(r('bob', 'gift/tok5'), null));
+  await check('a stranger cannot delete one either', 'refused',
+    () => set(r(null, 'gift/tok5'), null));
+  await check('you can delete your own gift link', 'ok',
+    () => set(r('alice', 'gift/tok5'), null));
   /* AND NOTHING ELSE LEAKED WITH IT. */
   await check('a stranger still cannot read a shelf', 'refused',
     () => get(r(null, 'alice')));
@@ -271,6 +285,14 @@ function mutants() {
   w(d).gift.$token['.write'] = 'true';
   out.push(['anybody may write a gift link', d,
     'a stranger cannot write a gift link']);
+  /* AND THE RULE THAT MADE DELETING IMPOSSIBLE, kept as a mutant so the
+     check above is proven able to fail. This is the rule that shipped. */
+  d = base();
+  w(d).gift.$token['.write'] = "auth != null"
+    + " && newData.child('owner').val() === auth.uid"
+    + " && (!data.exists() || data.child('owner').val() === auth.uid)";
+  out.push(['a delete is judged by the data it is removing', d,
+    'you can delete your own gift link']);
   return out;
 }
 

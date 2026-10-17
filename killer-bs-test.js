@@ -30101,14 +30101,26 @@ sec('§479 a gift link answers without handing over the shelf');
   eq('and the same word twice is said once',
     L.giftPlainWords(['px', 'sherry'], L.GIFT_PLAIN).length, 1);
   eq('the cask is never mistaken for the drink',
-    plain.shelf[0].indexOf('not the sherry') > 0, true);
+    plain.lines[0].indexOf('not the sherry') > 0, true);
+  /* EVERY LINE IS A PREFERENCE, in the voice BZ asked for (2026-10-17:
+     "favors this, likes that, prefers this, rarely does that"). */
+  plain.lines.forEach(l => {
+    eq('a hint opens with a preference: ' + l,
+      ['Favors', 'Likes', 'Prefers', 'Rarely']
+        .indexOf(l.split(' ')[0]) >= 0, true);
+  });
+  /* AND NOTHING NAMES A DISTILLERY. "Plenty from one distillery already"
+     was true and useless - a shopper cannot act on it without the name,
+     and the name is not what a hint is for. */
+  eq('the house hint is gone', L.GIFT_PLAIN.house, undefined);
+  eq('and so are the ones that imply one',
+    [L.GIFT_PLAIN.repeat, L.GIFT_PLAIN.sealed].join(''), '');
   /* AND NONE OF THE INSIDER WORDS TRAVEL. */
   const said = JSON.stringify(plain).toLowerCase();
   ['sherry cellar', 'sherry bomb', 'px lover', 'islay regular',
    'winey', 'peat head'].forEach(word => {
     eq('a shopper is never shown "' + word + '"', said.indexOf(word), -1);
   });
-  /* THE OWNER-FACING STORY STAYS BEHIND, as it did before. */
   eq('and nor is the story written to the owner',
     JSON.stringify(plain).indexOf('You buy'), -1);
   eq('the hints name no bottle',
