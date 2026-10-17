@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.57  Build 2026-10-17 10:19 AM ET
+     Version : v2.8.58  Build 2026-10-17 10:43 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
 // v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.49  2026-10-16  ONE PROOF BAND UNDER THE FLOOR, NOT SEVEN.
 // v2.8.48  2026-10-16  AN OWNED BOTTLE WAS INVISIBLE, AND THE MAP ASKED THE WORST SERVER FIRST.
 // v2.8.47  2026-10-15  TWO GUARDS FOR THE PAPERS, AND TWO OPEN ITEMS CLOSED - ONE OF THEM AS A NON-FINDING.
-// v2.8.46  2026-10-15  A question has one right answer, and the question survives being answered.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2596,6 +2596,9 @@ button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
 body.giftonly > *:not(#giftScreen):not(#working){display:none}
 body.giftonly{padding:0}
 #giftScreen{max-width:620px;margin:0 auto;padding:16px 16px 48px}
+/* ON THE SHELF'S GUTTER, not the screen's: every other card there sits
+   inside a .list, whose 1px border insets it to 17px. */
+#shelfGift{padding:0 1px}
 </style>
 </head>
 <body>
@@ -2670,6 +2673,12 @@ body.giftonly{padding:0}
       <div class="wm">Your shelf<span class="src" id="shelfSum"></span></div>
     </div>
   </div>
+  <!-- THE GIFT LINK, IN THE MAIN SHELF VIEW. It lived under the origin
+       map (wrong: the foot of everything) and then inside the Wanted
+       filter (wrong: a sub-view), and BZ could not find it either time.
+       Here it is the first thing under the masthead, on every shelf
+       view, with no filter to turn on first. -->
+  <div id="shelfGift"></div>
   <div class="filterbar" id="shelfFilterBar">
     <input id="q" class="field" type="search" placeholder="Search, or describe what you want" aria-label="Search bottles">
     <div class="sortrow" style="margin-top:8px">
@@ -3126,8 +3135,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.57';
-const BUILD_TIME  = '2026-10-17 10:19 AM ET';
+const APP_VERSION = '2.8.58';
+const BUILD_TIME  = '2026-10-17 10:43 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -35126,6 +35135,14 @@ function renderShelf() {
         openShopFor(w.name);
       };
       r.appendChild(got);
+      /* AND OFF THE LIST, ON THE ROW (BZ, 2026-10-17: "cant remove
+         bottles from the wish list"). It was already possible and only
+         reachable by tapping the row, whose obvious action reads as
+         going to look at the bottle - so the one destructive-ish choice
+         was the one nothing showed. The modal keeps it too. */
+      const off = el('button', 'chip', 'Remove');
+      off.onclick = ev => { ev.stopPropagation(); dropFromWish(w); };
+      r.appendChild(off);
       /* Three answers, not one: going to look at it, or going off it, are more
          likely than the irreversible delete a tap used to open. */
       r.onclick = () => openModal(w.name, m => {
@@ -35138,20 +35155,8 @@ function renderShelf() {
         };
         m.appendChild(go);
         const drop = el('button', 'btn ghost wide danger', 'Remove from wishlist');
-        drop.onclick = () => {
-          closeModal();
-          const removed = w;
-          /* A tombstone, or the next merge pushes it back from the account. */
-          unwish(w.name);
-          save_(); renderShelfFilters(); renderShelf();
-          toast('Off your wishlist', { label: 'Undo', action: () => {
-            /* Wanted again: the tombstone has to go, or the merge keeps
-               deleting it. */
-            if (S.removed) delete S.removed[L.recordId('wish', removed)];
-            S.wish = L.wishAdd(S.wish, removed);
-            save_(); renderShelfFilters(); renderShelf();
-          } });
-        };
+        /* THE SAME DOOR THE ROW ASKS (30d): one tombstone, one undo. */
+        drop.onclick = () => { closeModal(); dropFromWish(w); };
         m.appendChild(drop);
         const no = el('button', 'btn ghost wide', 'Cancel');
         no.onclick = closeModal;
@@ -35159,7 +35164,7 @@ function renderShelf() {
       });
       list.appendChild(r);
     });
-    wantedShareCards(list, giftCard, card);
+    if (giftCard) card(giftCard);
     return;
   }
 
@@ -35438,6 +35443,10 @@ function shelfNarrowed() {
 
 function shelfHeaderFollows() {
   try { labelBacks(); } catch (e) { /* boot order, before the header exists */ }
+  /* AND THE GIFT CARD: renderShelf has seven early returns and is at
+     its line ceiling, so the call that runs on every exit is this one. */
+  const gh = $('#shelfGift');
+  if (gh) { gh.innerHTML = ''; giftLinksCard(gh); }
 }
 
 /* --- bottle detail -------------------------------------------------- */
@@ -41016,6 +41025,22 @@ function suggestShop(label, name, extra) {
   openShopFor(name, extra);
 }
 
+/* OFF THE WISH LIST, from wherever it is asked (the row, or the row's modal).
+   One door, so the tombstone and the undo cannot come to differ. */
+function dropFromWish(w) {
+  const removed = w;
+  /* A tombstone, or the next merge pushes it back from the account. */
+  unwish(w.name);
+  save_(); renderShelfFilters(); renderShelf();
+  toast('Off your wishlist', { label: 'Undo', action: () => {
+    /* Wanted again: the tombstone has to go, or the merge keeps deleting it. */
+    if (S.removed) delete S.removed[L.recordId('wish', removed)];
+    S.wish = L.wishAdd(S.wish, removed);
+    save_(); renderShelfFilters(); renderShelf();
+  } });
+}
+
+
 function openShopFor(name, extra) {
   S.shopMode = 'store';
   S.shopFromPage = false;
@@ -45554,21 +45579,6 @@ function settingsPanel(tab, host) {
  * so a token is readable only by somebody who already has it.
  */
 
-/* WHAT SITS UNDER THE WANTED LIST: the card that sends what he wants, and
- * then the link that answers about anything else.
- *
- * BZ, 2026-10-17: "Think that new stuff really belongs under the map?" It did
- * not. Chasing discoverability I had put it at the foot of the whole Shelf -
- * which is under shelfOriginMap, "the foot of every shelf view" - so a
- * sharing control was the last thing after a geography chart. Beside the card
- * that already asks somebody to buy him a bottle is where it reads.
- *
- * Two lines, here rather than in renderShelf, which is at its ceiling (30f). */
-function wantedShareCards(list, giftCard, card) {
-  if (giftCard) card(giftCard);
-  giftLinksCard(list);
-}
-
 /* DRAWN IN TWO PLACES, ONE BUILDER (BZ, 2026-10-17: "shelf and settings,
  * not buddies - not buddies with my wife and kids"). On the Shelf it sits
  * under the card that sends his wish list; in Settings it sits with the
@@ -45632,6 +45642,16 @@ function giftLinksCard(box) {
     kill.style.marginLeft = '12px';
     kill.onclick = () => giftSetOff(tok, !g.off);
     acts.appendChild(kill);
+    /* DELETE ONLY ONCE IT IS OFF (BZ, 2026-10-17: "turning one off also
+       needs a delete or we build a list that only gets longer"). Off is
+       reversible and delete is not, so the reversible step comes first
+       and the end of a link is a decision taken twice. */
+    if (g.off) {
+      const gone = el('button', 'chip', 'Delete');
+      gone.style.marginLeft = '12px';
+      gone.onclick = () => giftForget(tok, g.label || 'that link');
+      acts.appendChild(gone);
+    }
     row.appendChild(acts);
     list.appendChild(row);
   });
@@ -45687,6 +45707,33 @@ async function giftMake() {
 /* THE KILL SWITCH IS A WRITE, not a local flag: the rule reads `off` and
    refuses the whole node, so switching it here stops it working for somebody
    already holding the link. */
+/* THE END OF A LINK. Removing the node is what actually revokes it; dropping
+ * the row is only tidying. Both, in that order, so a failure to reach Firebase
+ * leaves a row that still points at a live link rather than a live link with
+ * nothing pointing at it. */
+async function giftForget(token, label) {
+  confirmAsk('Delete ' + label + '? It is already switched off, and '
+    + 'deleting removes it for good.', async () => {
+    try {
+      await firebase.database()
+        .ref('bz-apps/whisky/gift/' + token).remove();
+    } catch (e) {
+      toast('That did not go through');
+      return;
+    }
+    const next = Object.assign({}, S.giftLinks);
+    delete next[token];
+    S.giftLinks = next;
+    save_();
+    if (FB.user && FB.loaded) fbPushShared();
+    appLog('gift: deleted a link');
+    renderSettings();
+    renderShelf();
+    toast('Deleted');
+  });
+}
+
+
 async function giftSetOff(token, off) {
   try {
     await firebase.database()
@@ -59701,7 +59748,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.57</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.58</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
