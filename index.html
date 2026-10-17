@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.65  Build 2026-10-17 12:17 PM ET
+     Version : v2.8.66  Build 2026-10-17 01:04 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // v2.8.57  2026-10-17  THE GIFT LINK SAYS WHO, AND SENDS THE SHOPPER IN WARM.
 // v2.8.56  2026-10-17  THE GIFT LINK ACTUALLY WORKS NOW.
-// v2.8.55  2026-10-17  A LINK FOR SOMEBODY SHOPPING FOR A PRESENT.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.65';
-const BUILD_TIME  = '2026-10-17 12:17 PM ET';
+const APP_VERSION = '2.8.66';
+const BUILD_TIME  = '2026-10-17 01:04 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -45779,14 +45779,20 @@ function giftLinksCard(box) {
       catch (e) { toast(url); }
     };
     acts.appendChild(copy);
-    const sw = el('button', null);
+    /* `swrow` IS THE CLASS THE STATE HANGS ON: the fill and the knob's
+       travel are written as .swrow[aria-checked="true"] .sw, so a button
+       without it shows a pale track and a knob that never moves - which is
+       exactly what it did (BZ, 2026-10-17, from a screenshot). The only
+       thing to undo is its width:100%, meant for a full-width settings
+       row and not for a switch at the end of a line. */
+    const sw = el('button', 'swrow');
     sw.type = 'button';
     sw.setAttribute('role', 'switch');
     sw.setAttribute('aria-checked', g.off ? 'false' : 'true');
     sw.setAttribute('aria-label', g.off ? 'Switched off' : 'Live');
     sw.title = g.off ? 'Switched off' : 'Live';
-    sw.style.background = 'none';
-    sw.style.border = '0';
+    sw.style.width = 'auto';
+    sw.style.minHeight = '0';
     sw.style.padding = '0';
     sw.appendChild(el('span', 'sw'));
     sw.onclick = () => giftSetOff(tok, !g.off);
@@ -59719,41 +59725,47 @@ function giftDraw(token, gift, host) {
   giftHintCard(gift, host);
 
   const ask = el('div', 'sheet');
+  /* THE SHOP SCREEN'S PATTERN, EXACTLY (BZ, 2026-10-17: "Why not the same
+     pattern as shop"). It is the same situation - somebody standing in a
+     store with a bottle in their hand - and that screen already answers it:
+     a heading, the subject pills, one big Photograph it, the hint for the
+     subject chosen, and the typing underneath. My own arrangement had the
+     pills, a small Photograph button and an Ask stacked four deep with
+     nothing saying which belonged to which. */
+  ask.appendChild(el('div', 'nm', 'Shopping in a store'));
+  const cams = el('div');
+  cams.style.cssText = 'margin:10px 0 14px';
+  const answer = el('div');
+  answer.style.marginTop = '9px';
+  let subject = 'bottle';
+  const drawCams = () => {
+    cams.innerHTML = '';
+    subject = subjectPills(cams, 'shop', subject, id => {
+      subject = id;
+      drawCams();
+    });
+    const go = el('button', 'btn wide btn-gold', 'Photograph it');
+    go.style.marginTop = '10px';
+    go.onclick = () => giftShoot(token, gift, answer, subject);
+    cams.appendChild(go);
+    cams.appendChild(el('div', 'src',
+      (AWAY_SUBJECTS.filter(x => x.id === subject)[0] || {}).hint || ''));
+  };
+  drawCams();
+  ask.appendChild(cams);
+
   const field = document.createElement('input');
   field.className = 'field';
   field.id = 'giftAsk';
-  field.placeholder = 'Lagavulin 16, Redbreast 12\u2026';
-  ask.appendChild(field);
-  const answer = el('div');
-  answer.style.marginTop = '9px';
-  const go = el('button', 'chip', 'Ask');
-  go.style.marginTop = '7px';
-  go.onclick = () => giftAsk(token, gift, field.value, answer);
-  field.onkeydown = e => { if (e.key === 'Enter') go.onclick(); };
-  ask.appendChild(go);
-  /* A BOTTLE OR A SHELF, through the pills every other screen uses (BZ,
-     2026-10-17: "Should we photo a bottle or a shelf? Separate
-     buttons?"). Not two buttons: L.SUBJECT_SCREENS already has a `shop`
-     entry holding exactly these two, and L.ACTIONS declares that
-     photographing a subject goes through subjectPills. A shopper in a
-     shop is usually holding ONE bottle, which reads far better than a
-     shelf, so it leads. */
-  const pills = el('div');
-  ask.appendChild(pills);
-  let subject = 'bottle';
-  const drawPills = () => {
-    pills.innerHTML = '';
-    subject = subjectPills(pills, 'shop', subject, s => {
-      subject = s;
-      drawPills();
-    });
+  field.placeholder = 'Or type what you are considering';
+  field.onkeydown = e => {
+    if (e.key === 'Enter') giftAsk(token, gift, field.value, answer);
   };
-  drawPills();
-  const shot = el('button', 'chip', 'Photograph it');
-  shot.style.marginTop = '7px';
-  shot.style.marginLeft = '5px';
-  shot.onclick = () => giftShoot(token, gift, answer, subject);
-  ask.appendChild(shot);
+  ask.appendChild(field);
+  const go2 = el('button', 'chip', 'Ask');
+  go2.style.marginTop = '8px';
+  go2.onclick = () => giftAsk(token, gift, field.value, answer);
+  ask.appendChild(go2);
   ask.appendChild(answer);
   host.appendChild(ask);
 }
@@ -59809,11 +59821,26 @@ async function giftShoot(token, gift, into, subject) {
     /* WHAT HE DOES NOT HAVE, FIRST: that is the half worth buying. */
     const order = { like: 0, wished: 1, unknown: 2, unlike: 3, owned: 4 };
     rows.sort((x, y) => order[x.a.verdict] - order[y.a.verdict]);
+    /* AND EACH ONE CAN BE JUDGED PROPERLY (BZ, 2026-10-17: "could we judge
+       a bottle they select in some way?"). The read answers ownership for
+       the whole shelf for nothing, because that is a hash comparison; how a
+       bottle TASTES needs the service, so it is spent on the one they tap
+       rather than on everything they photographed.
+       NOT L.likelyToLike, which he asked about: that reads a shelf and
+       invents things to go looking for. The question here is about a bottle
+       already in somebody's hand, which giftAnswer and the lookup behind it
+       already answer - the same path typing a name runs, so a tapped bottle
+       and a typed one cannot give different answers. */
     rows.forEach(r => {
-      const row = el('div', 'list');
-      row.style.padding = '7px 0';
-      row.appendChild(el('div', null, r.name));
-      row.appendChild(el('div', 'sub', r.a.say));
+      const row = el('button', 'item');
+      const left = el('div');
+      left.appendChild(el('div', 'nm oneline', r.name));
+      left.appendChild(el('div', 'sub', r.a.say));
+      row.appendChild(left);
+      if (r.a.verdict !== 'owned' && r.a.verdict !== 'wished') {
+        row.appendChild(el('div', 'pill', 'Judge it'));
+        row.onclick = () => giftAsk(token, gift, r.name, into);
+      }
       into.appendChild(row);
     });
   }, { face: true,
@@ -59922,7 +59949,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.65</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.66</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
