@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.68  Build 2026-10-17 01:41 PM ET
+     Version : v2.8.69  Build 2026-10-18 01:27 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
-// v2.8.58  2026-10-17  FINDABLE, DELETABLE, AND THE WISH LIST LETS GO.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.68';
-const BUILD_TIME  = '2026-10-17 01:41 PM ET';
+const APP_VERSION = '2.8.69';
+const BUILD_TIME  = '2026-10-18 01:27 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30558,12 +30558,12 @@ L.tasteSays = function (taste, weights, expect) {
       const fams = L.andList((expect.families || [])
         .map(f => L.familyLabel(f)).slice(0, 3));
       if (expect.pct >= expect.mid + 10) {
-        return 'Expect ' + fams + ' \u2014 close to what you answered for.';
+        return 'Expect ' + fams + ' — close to what they go for.';
       }
       if (expect.pct >= expect.mid - 10) {
-        return 'Expect ' + fams + ', which is middling for you.';
+        return 'Expect ' + fams + ', which is middling for them.';
       }
-      return 'Expect ' + fams + ' \u2014 not what you answered for.';
+      return 'Expect ' + fams + ' — not their usual.';
     }
     return 'Nothing known about how this one tastes.';
   }
@@ -30844,6 +30844,49 @@ L.giftHash = function (name) {
 /* THE TOKEN, FROM BYTES THE CALLER SUPPLIES, so the engine stays pure and a
    test can hand it known bytes. 16 bytes is 128 bits: guessing one is not a
    route in, which is what lets the rule read it without any auth at all. */
+/* EVERY WAY A SHOPPER MIGHT SAY IT (BZ, 2026-10-18, testing the live link:
+ * he typed "Angel's envy rye" and was told it was not on his shelf, holding
+ * SIXTEEN Angel's Envy bottles, one of them Angel's Envy Finished Rye
+ * Whiskey).
+ *
+ * A HASH IS ALL OR NOTHING AND THE REST OF THIS APP IS NOT. Everywhere else
+ * two names meet at L.nameOverlap >= 0.8, which forgives a missing word;
+ * L.nameSig sorts and strips, so one extra word - "finished" - produces a
+ * completely different digest and the comparison fails. That is a flaw in
+ * the design I chose, not a threshold to tune: the page holds hashes, so it
+ * cannot measure overlap at all.
+ *
+ * SO THE SHELF PUBLISHES THE SHORTER FORMS TOO. For each owned bottle, the
+ * full signature and every subset of its words that keeps the LEADING word -
+ * angel envy rye, angel envy, angel rye - so a shopper naming a bottle more
+ * briefly than the label still lands on it. Anchored on the lead so
+ * "finished rye" alone, which belongs to no house, matches nothing.
+ *
+ * STILL ONLY HASHES: nothing here spells a bottle out, and the limit BZ
+ * accepted on 2026-10-17 is unchanged - somebody determined can hash the
+ * catalogue. It is wider than before, which is the point.
+ */
+L.giftKeys = function (name) {
+  const sig = L.nameSig(name);
+  if (!sig) return [];
+  const words = sig.split(' ').filter(Boolean);
+  const lead = (L.shopNorm(name).split(' ')[0] || words[0] || '').trim();
+  const rest = words.filter(w => w !== lead);
+  const out = [L.giftHash(name)];
+  const add = list => {
+    const h = L.giftHash([lead].concat(list).join(' '));
+    if (h && out.indexOf(h) < 0) out.push(h);
+  };
+  if (!lead) return out;
+  add([]);
+  rest.forEach(w => add([w]));
+  /* PAIRS AS WELL, because three words is how most people name a bottle. */
+  for (let i = 0; i < rest.length; i++) {
+    for (let j = i + 1; j < rest.length; j++) add([rest[i], rest[j]]);
+  }
+  return out;
+};
+
 L.giftToken = function (bytes) {
   const b = Array.prototype.slice.call(bytes || []);
   if (b.length < 16) return '';
@@ -30859,13 +30902,12 @@ L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
   const own = {};
   Object.keys(catalog || {}).forEach(k => {
     if (!held[k]) return;
-    const h = L.giftHash((catalog[k] || {}).name || k);
-    if (h) own[h] = 1;
+    L.giftKeys((catalog[k] || {}).name || k).forEach(h => { own[h] = 1; });
   });
   const want = {};
   (wish || []).forEach(w => {
-    const h = L.giftHash(typeof w === 'string' ? w : (w || {}).name);
-    if (h) want[h] = 1;
+    L.giftKeys(typeof w === 'string' ? w : (w || {}).name)
+      .forEach(h => { want[h] = 1; });
   });
   /* THE SERVICE ADDRESS TRAVELS WITH THE LINK, because the shopper's
      browser has no settings of its own to read it from. It is a public
@@ -59912,7 +59954,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.68</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.69</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

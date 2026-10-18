@@ -30025,6 +30025,29 @@ sec('§480 a wish is over when you own it');
     L.wishFulfilled([], cat, held).length, 0);
 }
 
+sec('§482 a shopper may name a bottle more briefly than its label');
+{
+  /* BZ, 2026-10-18, testing the live link: he typed "Angel's envy rye" and
+     was told it was not on his shelf - holding SIXTEEN Angel's Envy
+     bottles, one of them Angel's Envy Finished Rye Whiskey. A hash is all
+     or nothing where the rest of the app meets names at nameOverlap 0.8,
+     so one extra word broke it. The shelf publishes the shorter forms. */
+  const full = "Angel's Envy Finished Rye Whiskey";
+  const keys = L.giftKeys(full);
+  const has = n => keys.indexOf(L.giftHash(n)) >= 0;
+  eq('the label itself', has(full), true);
+  eq('how somebody would actually say it', has("Angel's Envy Rye"), true);
+  eq('the house alone', has("Angel's Envy"), true);
+  /* ANCHORED ON THE LEADING WORD, so a fragment belonging to no house
+     matches nothing - otherwise every rye on earth would be on the shelf. */
+  eq('a fragment with no house', has('Finished Rye'), false);
+  eq('and a different house entirely', has('Lagavulin 16'), false);
+  /* AND IT IS STILL ONLY HASHES. */
+  eq('no name is published',
+    JSON.stringify(keys).toLowerCase().indexOf('angel'), -1);
+  eq('an empty name makes no keys', L.giftKeys('').length, 0);
+}
+
 sec('§479 a gift link answers without handing over the shelf');
 {
   /* BZ, 2026-10-17: a link you send to somebody buying you a bottle. They

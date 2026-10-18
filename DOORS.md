@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1044 |
+| functions | 1045 |
 | tables | 249 |
 | carrying a stated purpose | 838 |
 
@@ -543,12 +543,13 @@ QUESTION, not the name you were going to use.
 - **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
 - **`L.giftHash`** — _no comment above it_
 - **`L.giftHints`** — _no comment above it_
+- **`L.giftKeys`** — EVERY WAY A SHOPPER MIGHT SAY IT (BZ, 2026-10-18, testing the live link:
 - **`L.giftList`** — A wishlist somebody could actually buy from
 - **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES
 - **`L.giftPayload`** — WHAT GETS PUBLISHED FOR ONE LINK
 - **`L.giftPlainWords`** — _no comment above it_
 - **`L.giftText`** — The same list as a message
-- **`L.giftToken`** — THE TOKEN, FROM BYTES THE CALLER SUPPLIES, so the engine stays pure and a
+- **`L.giftToken`** — _no comment above it_
 - **`L.goesSay`** — IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:
 - **`L.goneKeys`** — WHAT YOU HAVE DRUNK
 - **`L.groupOf`** — _no comment above it_
