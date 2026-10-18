@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.72  ·  2026-10-18 01:01 PM ET
+
+The shared message drops the occasion. BZ, testing the gift link: the name of a link is how he tells his own apart in the list, and the person opening one does not need telling it is Christmas. L.giftShare takes a url and nothing else, and a test asserts the occasion is absent rather than merely not added, so nobody puts it back. Make a link still names the link in his own list, which is the job that label was always doing.
+
 ## v2.8.71  ·  2026-10-18 12:00 PM ET
 
 Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one. A link alone in a text says nothing about what it is for, and the preview card cannot say it either: the token travels as a query string, but GitHub Pages is a static host that serves the same page whatever the query says, and a crawler reads the preview tags before any code runs. A card naming the recipient would need a server, so the per-link half goes in the message. The button is named for what the device will actually do, Share or Copy. Separately, the gift link had no App use entry at all after a dozen builds: there are now two, one for making a link and one for the shopper who opens it, and Make a link is a guarded control so the next feature cannot ship undocumented the same way. The comment claiming a gift token never reaches the server was wrong and now states the real reason.

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.71  Build 2026-10-18 12:00 PM ET
+     Version : v2.8.72  Build 2026-10-18 01:01 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.72  2026-10-18  The shared message drops the occasion.
 // v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
 // v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
 // v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
-// v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.71';
-const BUILD_TIME  = '2026-10-18 12:00 PM ET';
+const APP_VERSION = '2.8.72';
+const BUILD_TIME  = '2026-10-18 01:01 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30935,15 +30935,17 @@ L.giftKeys = function (name) {
  * need a server to render it. He chose to put it in the message instead,
  * which is the half that is actually per-link.
  *
- * TWO LINES, and the second is the URL so a phone makes it tappable. The
- * label is his word for the occasion and leads when there is one.
+ * TWO LINES, and the second is the URL so a phone makes it tappable.
+ *
+ * NO OCCASION IN IT (BZ, 2026-10-18: "don't need occasion"). The label is
+ * how HE tells his own links apart in the list; the person opening one does
+ * not need telling it is Christmas, and a message saying so is a line
+ * longer for nothing.
  */
-L.giftShare = function (url, label) {
+L.giftShare = function (url) {
   if (!url) return '';
-  const what = String(label || '').trim();
-  return (what ? what + '. ' : '')
-    + 'Check a bottle against my shelf before you buy it \u2014 this says '
-    + 'whether I already own it, and whether I would like it.\n' + url;
+  return 'Check a bottle against my shelf before you buy it — this '
+    + 'says whether I already own it, and whether I would like it.\n' + url;
 };
 
 L.giftToken = function (bytes) {
@@ -45869,7 +45871,7 @@ function giftLinksBody(card) {
          either - see L.giftShare. Share sheet where there is one, so it
          lands in a message already written; clipboard otherwise. */
       const url = giftUrl(tok);
-      const msg = L.giftShare(url, g.label);
+      const msg = L.giftShare(url);
       if (navigator.share) {
         navigator.share({ text: msg }).catch(() => {});
         return;
@@ -60026,7 +60028,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.71</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.72</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

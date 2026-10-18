@@ -30056,27 +30056,27 @@ sec('§484 what goes in the message, since the card cannot say it');
      says, and a crawler reads the og: tags before any code runs. He chose
      to put it in the message instead. */
   const u = 'https://example.test/#gift=abc';
-  const m = L.giftShare(u, 'Christmas');
-  eq('the occasion leads', m.indexOf('Christmas'), 0);
+  const m = L.giftShare(u);
   eq('it says what the shopper can do with it',
-    m.indexOf('Check a bottle against my shelf') > 0, true);
-  eq('the url is the last line', m.split('\n').pop(), u);
+    m.indexOf('Check a bottle against my shelf'), 0);
+  eq('the url is the last line', m.split(String.fromCharCode(10)).pop(), u);
   eq('two lines, so a phone makes the url tappable',
-    m.split('\n').length, 2);
+    m.split(String.fromCharCode(10)).length, 2);
 
-  /* A LABEL IS OPTIONAL - the gift card lets him leave it blank. */
-  const bare = L.giftShare(u, '');
-  eq('no occasion, no leading full stop', bare.charAt(0), 'C');
-  eq('and the url still ends it', bare.split('\n').pop(), u);
-  eq('a blank label and a missing one read alike',
-    L.giftShare(u, null), bare);
+  /* NO OCCASION (BZ, 2026-10-18: "don't need occasion"). The label names
+     the link in HIS list; the person opening it does not need telling it
+     is Christmas. Asserted, not just dropped, so nobody puts it back. */
+  eq('the occasion is not in the message',
+    L.giftShare(u).indexOf('Christmas'), -1);
+  eq('and a label passed anyway changes nothing',
+    L.giftShare(u, 'Christmas'), L.giftShare(u));
 
-  /* NO URL, NO MESSAGE: a half-written sentence with no link is worse than
-     nothing, because it looks sent. */
-  eq('nothing to share without a link', L.giftShare('', 'Christmas'), '');
+  /* NO URL, NO MESSAGE: a half-written sentence with no link is worse
+     than nothing, because it looks sent. */
+  eq('nothing to share without a link', L.giftShare(''), '');
 
-  /* AND IT STILL GIVES NOTHING AWAY. The sentence is the same for every
-     shelf - what the shopper learns, they learn by asking the link. */
+  /* AND IT GIVES NOTHING AWAY. The sentence is the same for every shelf
+     - what the shopper learns, they learn by asking the link. */
   eq('no bottle is named in it', /whisk|bourbon|rye/i.test(m), false);
 }
 
