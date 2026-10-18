@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1046 |
+| functions | 1047 |
 | tables | 250 |
-| carrying a stated purpose | 840 |
+| carrying a stated purpose | 841 |
 
 ## Tables
 
@@ -549,6 +549,7 @@ QUESTION, not the name you were going to use.
 - **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES
 - **`L.giftPayload`** — WHAT GETS PUBLISHED FOR ONE LINK
 - **`L.giftPlainWords`** — _no comment above it_
+- **`L.giftShare`** — WHAT GOES IN THE MESSAGE, because the card cannot say it.
 - **`L.giftText`** — The same list as a message
 - **`L.giftToken`** — _no comment above it_
 - **`L.goesSay`** — IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:

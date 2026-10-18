@@ -30048,6 +30048,38 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§484 what goes in the message, since the card cannot say it');
+{
+  /* BZ, 2026-10-17: "Can the link carry more info other than the app name
+     and logo. Like what it is and who it's for?" It cannot, and the reason
+     is the host: GitHub Pages serves the same index.html whatever ?gift=
+     says, and a crawler reads the og: tags before any code runs. He chose
+     to put it in the message instead. */
+  const u = 'https://example.test/#gift=abc';
+  const m = L.giftShare(u, 'Christmas');
+  eq('the occasion leads', m.indexOf('Christmas'), 0);
+  eq('it says what the shopper can do with it',
+    m.indexOf('Check a bottle against my shelf') > 0, true);
+  eq('the url is the last line', m.split('\n').pop(), u);
+  eq('two lines, so a phone makes the url tappable',
+    m.split('\n').length, 2);
+
+  /* A LABEL IS OPTIONAL - the gift card lets him leave it blank. */
+  const bare = L.giftShare(u, '');
+  eq('no occasion, no leading full stop', bare.charAt(0), 'C');
+  eq('and the url still ends it', bare.split('\n').pop(), u);
+  eq('a blank label and a missing one read alike',
+    L.giftShare(u, null), bare);
+
+  /* NO URL, NO MESSAGE: a half-written sentence with no link is worse than
+     nothing, because it looks sent. */
+  eq('nothing to share without a link', L.giftShare('', 'Christmas'), '');
+
+  /* AND IT STILL GIVES NOTHING AWAY. The sentence is the same for every
+     shelf - what the shopper learns, they learn by asking the link. */
+  eq('no bottle is named in it', /whisk|bourbon|rye/i.test(m), false);
+}
+
 sec('§483 the gift link is never stricter than the app itself');
 {
   /* THE STRUCTURAL VERSION OF §482, and the guard that would have caught it

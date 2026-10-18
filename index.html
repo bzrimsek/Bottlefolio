@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.70  Build 2026-10-18 11:49 AM ET
+     Version : v2.8.71  Build 2026-10-18 12:00 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
 // v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
 // v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
-// v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.70';
-const BUILD_TIME  = '2026-10-18 11:49 AM ET';
+const APP_VERSION = '2.8.71';
+const BUILD_TIME  = '2026-10-18 12:00 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9383,6 +9383,10 @@ L.FEATURES = [
     def: 'Sign in, your display name and whether others can find you, your buddies, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Advanced, at the bottom, holds the lookup service address, the version and update checks, and Admin mode, which adds a Diagnostics screen with the app\u2019s own log.' },
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
+  { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
+    def: 'A link for whoever is buying you a bottle. Make a link names the occasion; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
+  { term: 'Shopping for someone', src: 'a gift link somebody sent you',
+    def: 'You need nothing — no account, no install. Photograph the label or type the name. It says owned, wished for, or neither, and how well it fits their taste. A bottle it cannot place is not a bottle they lack: it is a bottle nobody could match, which is why it says so rather than guessing. The hints at the top are the safe general direction when you have nothing particular in mind.' },
   { term: 'Install', src: 'the arrow',
     def: 'Adds the app to your home screen so it opens without a browser and works offline. On iPhone use Share, then Add to Home Screen.' } ] },
 
@@ -30920,6 +30924,28 @@ L.giftKeys = function (name) {
   return out;
 };
 
+/* WHAT GOES IN THE MESSAGE, because the card cannot say it.
+ *
+ * BZ asked whether the link could carry what it is and who it is for
+ * (2026-10-17). It cannot, and the reason is the HOST, not the link: the
+ * token does travel as ?gift=, but GitHub Pages is a static host and serves
+ * the same index.html byte for byte whatever the query says - and a crawler
+ * reads the og: tags before any of this code runs. So one static card has to
+ * do for the app and for every gift link; a card naming the recipient would
+ * need a server to render it. He chose to put it in the message instead,
+ * which is the half that is actually per-link.
+ *
+ * TWO LINES, and the second is the URL so a phone makes it tappable. The
+ * label is his word for the occasion and leads when there is one.
+ */
+L.giftShare = function (url, label) {
+  if (!url) return '';
+  const what = String(label || '').trim();
+  return (what ? what + '. ' : '')
+    + 'Check a bottle against my shelf before you buy it \u2014 this says '
+    + 'whether I already own it, and whether I would like it.\n' + url;
+};
+
 L.giftToken = function (bytes) {
   const b = Array.prototype.slice.call(bytes || []);
   if (b.length < 16) return '';
@@ -45832,10 +45858,23 @@ function giftLinksBody(card) {
     acts.style.display = 'flex';
     acts.style.alignItems = 'center';
     acts.style.gap = '12px';
-    const copy = el('button', 'chip', 'Copy');
+    /* NAMED FOR WHAT THIS DEVICE WILL DO. A button saying Copy that
+       opens a share sheet is the kind of unlabelled surprise BZ has
+       called out before (2026-10-17, on the gift buttons). */
+    const copy = el('button', 'chip',
+      navigator.share ? 'Share' : 'Copy');
     copy.onclick = () => {
+      /* THE SENTENCE, NOT THE BARE URL. A link on its own in a text says
+         nothing about what it is for, and the preview card cannot say it
+         either - see L.giftShare. Share sheet where there is one, so it
+         lands in a message already written; clipboard otherwise. */
       const url = giftUrl(tok);
-      try { navigator.clipboard.writeText(url); toast('Link copied'); }
+      const msg = L.giftShare(url, g.label);
+      if (navigator.share) {
+        navigator.share({ text: msg }).catch(() => {});
+        return;
+      }
+      try { navigator.clipboard.writeText(msg); toast('Message copied'); }
       catch (e) { toast(url); }
     };
     acts.appendChild(copy);
@@ -59987,7 +60026,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.70</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.71</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

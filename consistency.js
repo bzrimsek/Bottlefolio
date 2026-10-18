@@ -1365,7 +1365,13 @@ check('no fixed svg id is emitted by a repeated drawing',
     /* v2.8.31: flipping ONE bottle between open, sealed and do not
        open. The old control drew only where a not-open bottle
        already existed, so most of his shelf had none. */
-    'Open or sealed'];
+    'Open or sealed',
+    /* Added 2026-10-18, AFTER the fact. The gift link shipped across a
+       dozen builds with no App use entry at all and this check said
+       nothing, because it reads a list of names and nobody had added
+       these. Rule 9z is the rule; this is the half of it a machine can
+       hold. */
+    'Make a link'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
