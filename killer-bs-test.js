@@ -30048,6 +30048,33 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§485 a gift token belongs after the #, not in a server log');
+{
+  /* A GIFT TOKEN IS A CREDENTIAL - the only thing authorising a read of that
+     node. As ?gift= it travelled in the HTTP request and into GitHub Pages'
+     access logs and any proxy between. After the # the browser never sends
+     it at all. BZ, 2026-10-18: "Why switch? Fine to switch."
+
+     THE OLD SHAPE IS REFUSED, not merely unwritten. A build read both so an
+     already-sent link would keep working; BZ said use is limited and the
+     risk small, so it went - reading ?gift= for ever leaves the leaking
+     shape valid for ever, which is most of what the switch was for. */
+  const T = new Array(33).join('a');
+  eq('a link works', L.giftFromUrl('#gift=' + T), T);
+  eq('a hash carrying other keys too',
+    L.giftFromUrl('#tab=shop&gift=' + T), T);
+
+  /* AND A TOKEN IS 32 HEX CHARACTERS AND NOTHING ELSE, because whatever
+     comes back is used to address a public node. */
+  eq('nothing to find', L.giftFromUrl(''), '');
+  eq('not a token', L.giftFromUrl('#gift=nope'), '');
+  eq('too short', L.giftFromUrl('#gift=abc'), '');
+  eq('uppercase is not the shape the app writes',
+    L.giftFromUrl('#gift=' + new Array(33).join('A')), '');
+  eq('a key that merely ends in gift is not the key',
+    L.giftFromUrl('#notgift=' + T), '');
+}
+
 sec('§484 what goes in the message, since the card cannot say it');
 {
   /* BZ, 2026-10-17: "Can the link carry more info other than the app name

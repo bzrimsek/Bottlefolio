@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.74  ·  2026-10-18 01:33 PM ET
+
+A gift token now travels after the #, not in the query string. The token is the credential for that node, and as a query parameter it went into the HTTP request and so into GitHub Pages' access logs and any proxy on the way; after the # the browser never sends it at all. A link made before this build stops working and making another is one press. The first version of this read both shapes so an already-sent link would keep working, and that went the same day: BZ said use is limited and the risk of change small, and reading the old shape for ever would leave the shape that leaks permanently valid, which is most of what the switch was for. L.giftFromUrl is the one door that turns a link into a token, and it refuses anything that is not 32 hex characters.
+
 ## v2.8.73  ·  2026-10-18 01:17 PM ET
 
 Make a link asks nothing and makes a link. BZ: I don't understand Make a Link. It opened a raw browser prompt asking what is this link for, and printed the answer as the title of the shopper's page, which the prompt never said, so there was no way to know what it was asking. The label is gone from the prompt, the published link, the shopper's page and the payload; links are listed by the day they were made. Two faults of mine went with it: a comment and an App use entry both claimed the label was how he told his own links apart in a list, which was wrong, and Make a link copied the bare URL while Share copied the sentence. Both now go through one door, giftSend. A link already sent keeps working and keeps its name in the list, and the rules still allow a label so an old node still validates.

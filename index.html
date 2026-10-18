@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.73  Build 2026-10-18 01:17 PM ET
+     Version : v2.8.74  Build 2026-10-18 01:33 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
 // v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
 // v2.8.72  2026-10-18  The shared message drops the occasion.
 // v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
-// v2.8.64  2026-10-17  IS BOURBON OAKY?
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.73';
-const BUILD_TIME  = '2026-10-18 01:17 PM ET';
+const APP_VERSION = '2.8.74';
+const BUILD_TIME  = '2026-10-18 01:33 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -30946,6 +30946,26 @@ L.giftKeys = function (name) {
  * and that is exactly why he could not tell what the button was for. The
  * whole label is gone; a link is named by the day it was made.
  */
+/* THE TOKEN OUT OF A LINK.
+ *
+ * A GIFT TOKEN IS A CREDENTIAL - it is the only thing authorising a read of
+ * that node - so it goes after the #, which the browser never puts in the
+ * HTTP request. As ?gift= it travelled to GitHub Pages and into its access
+ * logs, and through any proxy on the way.
+ *
+ * THE OLD SHAPE IS NOT READ. It was, for one build, so that a link already
+ * sent would keep working - dropped the same day because BZ said use is
+ * limited and the risk of change small (2026-10-18). Reading ?gift= for ever
+ * would have left the shape that leaks permanently valid, which is most of
+ * what the switch was for. A link made before v2.8.74 stops working; making
+ * another is one press.
+ */
+L.giftFromUrl = function (hash) {
+  const m = String(hash || '').replace(/^#/, '')
+    .match(/(?:^|&)gift=([0-9a-f]{32})(?:&|$)/);
+  return m ? m[1] : '';
+};
+
 L.giftShare = function (url) {
   if (!url) return '';
   return 'Check a bottle against my shelf before you buy it — this '
@@ -45941,7 +45961,9 @@ function giftSend(token) {
 }
 
 function giftUrl(token) {
-  return location.origin + location.pathname + '?gift=' + token;
+  /* AFTER THE #, so the token never reaches a server log. L.giftFromUrl
+     still reads the old ?gift= shape for links already sent. */
+  return location.origin + location.pathname + '#gift=' + token;
 }
 
 /* NO QUESTION FIRST (BZ, 2026-10-18: "I don't understand Make a Link").
@@ -59746,8 +59768,8 @@ function clearInherited() {
  * daily cap. Typed or photographed, the cost is the same.
  */
 function giftMode() {
-  const token = new URLSearchParams(location.search).get('gift');
-  if (!token || !/^[0-9a-f]{32}$/.test(token)) return false;
+  const token = L.giftFromUrl(location.hash);
+  if (!token) return false;
   document.body.classList.add('giftonly');
   const host = document.createElement('div');
   host.id = 'giftScreen';
@@ -60051,7 +60073,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.73</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.74</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

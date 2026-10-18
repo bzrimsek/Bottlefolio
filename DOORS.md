@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1047 |
+| functions | 1048 |
 | tables | 250 |
 | carrying a stated purpose | 841 |
 
@@ -542,6 +542,7 @@ QUESTION, not the name you were going to use.
 - **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
 - **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
+- **`L.giftFromUrl`** — THE TOKEN OUT OF A LINK.
 - **`L.giftHash`** — _no comment above it_
 - **`L.giftHints`** — _no comment above it_
 - **`L.giftKeys`** — EVERY WAY A SHOPPER MIGHT SAY IT (BZ, 2026-10-18, testing the live link:
@@ -549,7 +550,7 @@ QUESTION, not the name you were going to use.
 - **`L.giftLookupUrl`** — WHERE THE SHOPPER'S BROWSER ASKS HOW A BOTTLE TASTES
 - **`L.giftPayload`** — WHAT GETS PUBLISHED FOR ONE LINK
 - **`L.giftPlainWords`** — _no comment above it_
-- **`L.giftShare`** — WHAT GOES IN THE MESSAGE, because the card cannot say it.
+- **`L.giftShare`** — _no comment above it_
 - **`L.giftText`** — The same list as a message
 - **`L.giftToken`** — _no comment above it_
 - **`L.goesSay`** — IT ANSWERS NULL WITH NO TERMS, which is how the stock excludes itself:
