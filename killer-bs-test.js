@@ -30048,6 +30048,67 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§483 the gift link is never stricter than the app itself');
+{
+  /* THE STRUCTURAL VERSION OF §482, and the guard that would have caught it
+     before BZ left the house. He had found the same class of fault three
+     times in a sitting - "feel like we are uncovering and not reusing
+     effectively" (2026-10-18) - and he was right about the cause: the link
+     folded names through L.nameSig while the app matched them through
+     L.nameOverlap, which folds a spelled age and drops an initial and
+     nameSig does neither. Two rules for one question, written differently,
+     which is the duplicate rule 30d cannot see.
+
+     ONE-DIRECTIONAL ON PURPOSE. The link may be LOOSER - "Blanton's" alone
+     scores 0.33 because nameOverlap will not merge a library entry on a
+     bare house word, but a shopper holding a Blanton's wants to hear yes.
+     It must never be TIGHTER: if the app says these two names are one
+     bottle, a link that says "not on the shelf" is lying about what he
+     owns. */
+  const PAIRS = [
+    ['Lagavulin 16 Year Old Single Malt', 'Lagavulin 16yr'],
+    ["Angel's Envy Finished Rye Whiskey", "Angel's envy rye"],
+    ["Michter's US*1 Straight Rye Whiskey", 'Michters Rye'],
+    ['W.L. Weller 12 Year Old Bourbon', 'Weller 12'],
+    ['Ardbeg 10 Years Old Islay Single Malt', 'Ardbeg Ten'],
+    ['Knob Creek Straight Rye Whiskey', 'Knob Creek Rye'],
+    ['Redbreast 12 Year Old Single Pot Still', 'Redbreast Twelve'],
+    ['Elijah Craig Small Batch Bourbon 750ml', 'Elijah Craig Small Batch'],
+  ];
+  /* BOTH HALVES ASSERTED, never one guarded by the other. Written first as
+     `if (!nearlyNamed) { eq(true, true); return; }` - a tautology, so a
+     pair the app stopped matching would have gone green instead of red,
+     which is the "check that cannot fail" this project has been bitten by
+     before. The premise is now its own assertion. */
+  PAIRS.forEach(([shelf, typed]) => {
+    eq('the app itself calls these one bottle: ' + typed,
+      L.nearlyNamed(shelf, typed), true);
+    eq('so the link must too: ' + typed,
+      L.giftKeys(shelf).indexOf(L.giftHash(typed)) >= 0, true);
+  });
+
+  /* AND THE OTHER WAY STILL HOLDS: a different bottle of the same house is
+     not on the shelf because its sibling is. */
+  const APART = [
+    ['Lagavulin 16 Year Old', 'Lagavulin 8 Year Old'],
+    ['Redbreast 27 Year Old', 'Redbreast 12 Year Old'],
+    ['Macallan 18 Sherry Oak', 'Macallan 12 Double Cask'],
+    ['Ardbeg Ten', 'Ardbeg Uigeadail'],
+  ];
+  APART.forEach(([shelf, typed]) => {
+    eq('a different bottling is not owned: ' + typed,
+      L.giftKeys(shelf).indexOf(L.giftHash(typed)) >= 0, false);
+  });
+
+  /* ONE TOKENISER, which is the fix. If a second one appears the pairs
+     above go quiet again, so name it here. */
+  eq('the app and the link fold a spelled age the same way',
+    L.matchWords('Ardbeg Ten').join(' '), L.matchWords('Ardbeg 10').join(' '));
+  eq('and drop an initial the same way',
+    L.matchWords('W.L. Weller 12').join(' '),
+    L.matchWords('Weller 12').join(' '));
+}
+
 sec('§479 a gift link answers without handing over the shelf');
 {
   /* BZ, 2026-10-17: a link you send to somebody buying you a bottle. They

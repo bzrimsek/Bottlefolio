@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1045 |
-| tables | 249 |
-| carrying a stated purpose | 838 |
+| functions | 1046 |
+| tables | 250 |
+| carrying a stated purpose | 840 |
 
 ## Tables
 
@@ -131,6 +131,7 @@ QUESTION, not the name you were going to use.
 - **`L.MASH_BY_LAW`** — A MASH BILL FIXED BY LAW IS STILL A MASH BILL
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
 - **`L.MASH_WORDS`** — _no comment above it_
+- **`L.MATCH_NUM`** — A SIZE is not part of a name
 - **`L.MINE_FIELDS`** — `k` is where the row is filed and `src` is where it came from
 - **`L.MISS_REST`** — How long a bottle rests after a lookup came back with nothing.
 - **`L.NAME_SMALL`** — Only ALL CAPS or all lower case are tidied
@@ -770,6 +771,7 @@ QUESTION, not the name you were going to use.
 - **`L.matchesSearch`** — A WHOLE SEARCH, and every search box asks this
 - **`L.matchFacts`** — WHAT A SIDE STATES, PLUS WHAT ITS NAME IMPLIES, so a bare name (read off
 - **`L.matchReceipts`** — _no comment above it_
+- **`L.matchWords`** — The words two names are compared by
 - **`L.mayReplace`** — MAY A LOOKUP WRITE HERE? A blank, or something a model put there
 - **`L.median`** — _no comment above it_
 - **`L.mergeCatalog`** — _no comment above it_

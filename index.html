@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.69  Build 2026-10-18 01:27 AM ET
+     Version : v2.8.70  Build 2026-10-18 11:49 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
 // v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // v2.8.61  2026-10-17  DELETE ACTUALLY DELETES, THE BUTTON SAYS SO, AND THE CARD MOVED AGAIN.
 // v2.8.60  2026-10-17  THE SHELF, DESCRIBED RATHER THAN COUNTED.
-// v2.8.59  2026-10-17  THE SHELF, AS NUMBERS, ON THE GIFT PAGE.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.69';
-const BUILD_TIME  = '2026-10-18 01:27 AM ET';
+const APP_VERSION = '2.8.70';
+const BUILD_TIME  = '2026-10-18 11:49 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5936,25 +5936,39 @@ L.nameInside = function (a, b) {
   return small.every(w => big.indexOf(w) >= 0);
 };
 
-L.nameOverlap = function (a, b) {
-  /* A SIZE is not part of a name: a retailer's "750ml" would dilute the
-     score against a library name.
-     NUMBERS ARE KEPT, even short ones: they are age statements, and without
-     them Redbreast 27 and Redbreast 12 are the same word set.
-     A SPELLED-OUT age is the same age: "Ardbeg Ten" is "Ardbeg 10". */
-  const NUM = { ten: '10', eleven: '11', twelve: '12', thirteen: '13',
-    fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17',
-    eighteen: '18', nineteen: '19', twenty: '20', twentyone: '21',
-    twentyfive: '25', thirty: '30' };
-  const words = x => L.shopNorm(x).split(' ')
-    .map(w => NUM[w] || w)
+/* THE WORDS A NAME IS MATCHED BY - ONE TOKENISER, because there were two.
+   nameOverlap kept this pipeline privately and the gift link built its own
+   on L.nameSig, which stems and sorts but neither folds a spelled age nor
+   drops an initial. So the LINK WAS STRICTER THAN THE APP that matched for
+   it: BZ owns 16 Angel's Envy bottles and a link told him "Not on BZ's
+   shelf" (2026-10-18). Rule 30d fails a rule written twice; this one was
+   written DIFFERENTLY twice, which is the version no check can see.
+
+   A SIZE is not part of a name: a retailer's "750ml" would dilute the
+   score against a library name.
+   NUMBERS ARE KEPT, even short ones: they are age statements, and without
+   them Redbreast 27 and Redbreast 12 are the same word set.
+   A SPELLED-OUT age is the same age: "Ardbeg Ten" is "Ardbeg 10".
+   AN INITIAL IS DROPPED: "W.L. Weller 12" is the house written out
+   properly, and what a shopper types is "Weller 12".
+   EACH WORD ONCE. A name repeating its grain ("Rye ... RYE Whiskey")
+   counted the word twice, so one shared word could score 1.00, or even
+   1.25, which is not a proportion of anything. */
+L.MATCH_NUM = { ten: '10', eleven: '11', twelve: '12', thirteen: '13',
+  fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17',
+  eighteen: '18', nineteen: '19', twenty: '20', twentyone: '21',
+  twentyfive: '25', thirty: '30' };
+/* The words two names are compared by. ONE TOKENISER - see above. */
+L.matchWords = function (x) {
+  return L.shopNorm(x).split(' ')
+    .map(w => L.MATCH_NUM[w] || w)
     .filter(w => /^\d+$/.test(w)
-      || (w.length > 2 && !/^\d+(ml|cl)$/.test(w) && w !== 'ml'));
-  /* EACH WORD ONCE. A name repeating its grain ("Rye ... RYE Whiskey")
-     counted the word twice, so one shared word could score 1.00, or even
-     1.25, which is not a proportion of anything. */
-  const at = words(a).filter((w, i, all) => all.indexOf(w) === i);
-  const bt = words(b).filter((w, i, all) => all.indexOf(w) === i);
+      || (w.length > 2 && !/^\d+(ml|cl)$/.test(w) && w !== 'ml'))
+    .filter((w, i, all) => all.indexOf(w) === i);
+};
+
+L.nameOverlap = function (a, b) {
+  const at = L.matchWords(a), bt = L.matchWords(b);
   if (!at.length || !bt.length) return 0;
   const shared = at.filter(w => bt.indexOf(w) >= 0).length;
   if (!shared) return 0;
@@ -30822,11 +30836,17 @@ L.giftHints = function (prof, portrait) {
 };
 
 L.giftHash = function (name) {
-  /* THROUGH L.nameSig, so "Lagavulin 16yr" and "Lagavulin 16 Year Old" hash
-     alike - the same door that already decides two names are one bottle. A
-     hash of the raw string would answer no to every bottle spelled slightly
-     differently, which is every bottle a shopper types. */
-  const sig = L.nameSig(name);
+  /* THROUGH L.matchWords, SORTED - the same tokeniser L.nameOverlap matches
+     with, so the shopper's spelling and the owner's published one fold the
+     same way. A hash of the raw string would answer no to every bottle
+     spelled slightly differently, which is every bottle a shopper types.
+
+     IT WAS L.nameSig UNTIL 2026-10-18, which stems and sorts but neither
+     folds a spelled age nor drops an initial - so the shopper side folded
+     differently from the owner side AND from the app, and "Ardbeg Ten"
+     missed "Ardbeg 10 Years Old". Sorted here rather than in matchWords
+     because nameOverlap needs the order to find the lead word. */
+  const sig = L.matchWords(name).slice().sort().join(' ');
   if (!sig) return '';
   /* FNV-1a, 64 bits as two 32-bit halves. Not a cryptographic digest and not
      pretending to be one (see above); it is here to make the published node
@@ -30867,20 +30887,33 @@ L.giftHash = function (name) {
  * catalogue. It is wider than before, which is the point.
  */
 L.giftKeys = function (name) {
-  const sig = L.nameSig(name);
-  if (!sig) return [];
-  const words = sig.split(' ').filter(Boolean);
-  const lead = (L.shopNorm(name).split(' ')[0] || words[0] || '').trim();
-  const rest = words.filter(w => w !== lead);
-  const out = [L.giftHash(name)];
+  /* EVERY SPELLING THE APP WOULD CALL THIS BOTTLE, hashed. The owner
+     publishes these; the shopper hashes only what they typed. That split is
+     deliberate - the shelf never leaves in the clear, so the shopper learns
+     yes or no and nothing else - but it means a hash set cannot match
+     loosely the way L.nameOverlap does. The owner has to enumerate, and
+     ENUMERATE THROUGH THE SAME TOKENISER, or the link answers no to a
+     bottle the app itself calls owned.
+
+     The lead is the FIRST MATCH WORD, not the first word of the raw name:
+     "W.L. Weller 12 Year Old" leads on "weller", because the initials are
+     not words a shopper types. Then the lead alone, the lead with each
+     other word, and the lead with each PAIR - three words is how most
+     people name a bottle. */
+  const words = L.matchWords(name);
+  if (!words.length) return [];
+  const lead = words[0];
+  const rest = words.slice(1);
+  const out = [];
   const add = list => {
     const h = L.giftHash([lead].concat(list).join(' '));
     if (h && out.indexOf(h) < 0) out.push(h);
   };
-  if (!lead) return out;
+  const full = L.giftHash(name);
+  if (full) out.push(full);
+  add(rest);
   add([]);
   rest.forEach(w => add([w]));
-  /* PAIRS AS WELL, because three words is how most people name a bottle. */
   for (let i = 0; i < rest.length; i++) {
     for (let j = i + 1; j < rest.length; j++) add([rest[i], rest[j]]);
   }
@@ -59954,7 +59987,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.69</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.70</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
