@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.76  Build 2026-10-18 02:21 PM ET
+     Version : v2.8.77  Build 2026-10-18 02:31 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.77  2026-10-18  Make a link asks for a name again.
 // v2.8.76  2026-10-18  Gift links sits directly under the wish list on Shelf.
 // v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
 // v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
 // v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
-// v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.76';
-const BUILD_TIME  = '2026-10-18 02:21 PM ET';
+const APP_VERSION = '2.8.77';
+const BUILD_TIME  = '2026-10-18 02:31 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9384,7 +9384,7 @@ L.FEATURES = [
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
-    def: 'A link for whoever is buying you a bottle. Make a link asks nothing and makes one; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. Tap a link’s name to name it — Christmas, Dad — which is for your own list only and is never shown to whoever opens it; unnamed, it reads as the day you made it. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
+    def: 'A link for whoever is buying you a bottle. Make a link asks for a name — Christmas, Dad — so you can tell your links apart; it is for your own list only and whoever opens the link never sees it, and you can leave it blank or change it later by tapping it. Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. Unnamed, a link reads as the day you made it. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
   { term: 'Shopping for someone', src: 'a gift link somebody sent you',
     def: 'You need nothing — no account, no install. Photograph the label or type the name. It says owned, wished for, or neither, and how well it fits their taste. A bottle it cannot place is not a bottle they lack: it is a bottle nobody could match, which is why it says so rather than guessing. The hints at the top are the safe general direction when you have nothing particular in mind.' },
   { term: 'Install', src: 'the arrow',
@@ -46061,7 +46061,41 @@ function giftUrl(token) {
  * makes a link, which is what it says.
  *
  * A link is named in his own list by the day it was made. */
-async function giftMake() {
+/* NAMED WHEN IT IS MADE, which is how it worked and how he wants it.
+ *
+ * BZ, 2026-10-18: "I still can't name a link like I could. So all links
+ * would look the same." Naming moved into a tap on the row, which is
+ * undiscoverable, and undiscoverable is the same as absent - a list of
+ * links all reading "Link of Oct 18" is what he got.
+ *
+ * WHAT HE OBJECTED TO EARLIER WAS NOT BEING ASKED. It was a raw browser
+ * prompt saying "What is this link for?" while printing the answer as the
+ * TITLE OF THE SHOPPER'S PAGE, which it never mentioned. A field that
+ * says plainly who the name is for is a different thing. The name is his
+ * alone: L.giftPayload carries none and the shopper's page draws none. */
+function giftMake() {
+  openModal('Make a gift link', m => {
+    m.appendChild(el('div', 'sub', 'Name it so you can tell your links apart — Christmas, Dad, Kevrin. Just for your own list: whoever opens the link never sees it.'));
+    const inp = document.createElement('input');
+    inp.className = 'field';
+    inp.style.marginTop = '9px';
+    inp.placeholder = 'Christmas';
+    m.appendChild(inp);
+    const ok = el('button', 'btn wide btn-gold', 'Make it');
+    ok.style.marginTop = '9px';
+    ok.onclick = () => {
+      const v = inp.value.trim().slice(0, 40);
+      closeModal();
+      giftPublish(v);
+    };
+    m.appendChild(ok);
+    setTimeout(() => { try { inp.focus(); } catch (e) { /* no focus */ } }, 50);
+  });
+}
+
+/* The link itself. Split from giftMake so the naming sheet has something
+   to call and the publishing is written once. */
+async function giftPublish(label) {
   /* THE TOKEN IS THE CREDENTIAL, so it comes from the browser's own
      cryptographic source and never from Math.random. */
   const bytes = new Uint8Array(16);
@@ -46084,7 +46118,8 @@ async function giftMake() {
   /* THE LOCAL DAY, through the door that already answers it: L.todayISO is
      the LOCAL calendar day on purpose, and deriving one from a timestamp
      with toISOString would show yesterday all evening. */
-  S.giftLinks[token] = { at: Date.now(), day: L.todayISO(), off: false };
+  S.giftLinks[token] = { at: Date.now(), day: L.todayISO(), off: false,
+    label: label || null };
   save_();
   if (FB.user && FB.loaded) fbPushShared();
   appLog('gift: published a link');
@@ -60160,7 +60195,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.76</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.77</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

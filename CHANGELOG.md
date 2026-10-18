@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.77  ·  2026-10-18 02:31 PM ET
+
+Make a link asks for a name again. BZ: I still can't name a link like I could, so all links would look the same. Naming had moved to a tap on the row, which is undiscoverable, and undiscoverable is the same as absent: a list of links all reading Link of Oct 18. What he objected to two builds ago was not being asked, it was a raw browser prompt saying what is this link for while printing the answer as the title of the shopper's page, which it never mentioned. Make a link now opens a sheet with a name field that says plainly the name is for his own list and whoever opens the link never sees it. The name is still never published: the payload carries none and the shopper's page draws none. Blank is allowed and a link can still be renamed by tapping it. Publishing is split into giftPublish so the sheet has something to call.
+
 ## v2.8.76  ·  2026-10-18 02:21 PM ET
 
 Gift links sits directly under the wish list on Shelf. It was drawn after the buy-and-drink square, which put that square between the two cards BZ asked three times to have together. The fix is the order inside shelfTwoByTwo: the card is drawn before the 2x2 rather than after it. It stays in that function, which is the only one both shelf views end with; moving the call up beside the wish card put it in renderShelfCharts, which the list view never calls, and the card vanished from the shelf altogether. The walk now also makes a link and counts the rows, so a card that does not appear after an action is a red check.
