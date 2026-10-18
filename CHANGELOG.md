@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.76  ·  2026-10-18 02:21 PM ET
+
+Gift links sits directly under the wish list on Shelf. It was drawn after the buy-and-drink square, which put that square between the two cards BZ asked three times to have together. The fix is the order inside shelfTwoByTwo: the card is drawn before the 2x2 rather than after it. It stays in that function, which is the only one both shelf views end with; moving the call up beside the wish card put it in renderShelfCharts, which the list view never calls, and the card vanished from the shelf altogether. The walk now also makes a link and counts the rows, so a card that does not appear after an action is a red check.
+
 ## v2.8.75  ·  2026-10-18 01:57 PM ET
 
 Naming a gift link is back, and a new one appears where you made it. Two faults, both reported by BZ: on creating a more useful text message I created a less useful feature. The ability to name a link was removed, which is a feature removed rather than a question answered, rule 5. What he objected to a build earlier was a browser prompt asking for a word without saying it would be printed as the title of the shopper's page, and those are two separate things that I bundled into one choice. Make a link still asks nothing; the name is now edited by tapping it in the list, where it is plainly his label for his own link, and it is never published. Unnamed, a link reads as the day it was made. The second fault: the list is drawn in three places, the Wanted view, the Shelf card and Settings, and the three functions that change it each refreshed their own way, so a link made from Shelf did not appear until you left the screen and came back. All three now redraw through one door, giftRedraw, which reads the screen carrying the on class rather than the nav button, which carries nothing. The walk drives this after an action, which no check did, and both faults were reproduced with the fix removed.

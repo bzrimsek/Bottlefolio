@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.75  Build 2026-10-18 01:57 PM ET
+     Version : v2.8.76  Build 2026-10-18 02:21 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.76  2026-10-18  Gift links sits directly under the wish list on Shelf.
 // v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
 // v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
 // v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
-// v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.75';
-const BUILD_TIME  = '2026-10-18 01:57 PM ET';
+const APP_VERSION = '2.8.76';
+const BUILD_TIME  = '2026-10-18 02:21 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -35607,6 +35607,17 @@ function shelfCardStack(list) {
 /* THE 2x2 AT THE FOOT OF THE SHELF. One function because renderShelf has
    several ends (books, wanted, full list), and each must append it. */
 function shelfTwoByTwo(into) {
+  /* GIFT LINKS FIRST, so it lands directly under the wish list. BZ asked
+     for that twice - "just below the wish list", "after Wish List" - and
+     it was drawn AFTER the 2x2, which put the buy/drink square between
+     them (2026-10-18, from a screenshot).
+
+     IT STAYS IN THIS FUNCTION. Both shelf views end here and only this
+     one; moving the call up beside the wish card put it in
+     renderShelfCharts, which the list view never calls, and the card
+     disappeared from the shelf altogether. "It was in the correct place."
+     The order inside was the fault, not the home. */
+  giftLinksCard(into);
   if (!into) return;
   /* A PLAIN BOX, NOT A CARD. This exists to catch whatever renderBuyVsDrink
      draws so the empty case appends nothing - a presence test, which had been
@@ -35623,7 +35634,6 @@ function shelfTwoByTwo(into) {
      the page (BZ: "Not at the top of the page. OMG."). This is the
      main shelf flow, so it is always there, and it is the last thing
      before the map rather than after it. */
-  giftLinksCard(into);
   shelfOriginMap(into);
 }
 
@@ -60150,7 +60160,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.75</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.76</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
