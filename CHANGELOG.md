@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.73  ·  2026-10-18 01:17 PM ET
+
+Make a link asks nothing and makes a link. BZ: I don't understand Make a Link. It opened a raw browser prompt asking what is this link for, and printed the answer as the title of the shopper's page, which the prompt never said, so there was no way to know what it was asking. The label is gone from the prompt, the published link, the shopper's page and the payload; links are listed by the day they were made. Two faults of mine went with it: a comment and an App use entry both claimed the label was how he told his own links apart in a list, which was wrong, and Make a link copied the bare URL while Share copied the sentence. Both now go through one door, giftSend. A link already sent keeps working and keeps its name in the list, and the rules still allow a label so an old node still validates.
+
 ## v2.8.72  ·  2026-10-18 01:01 PM ET
 
 The shared message drops the occasion. BZ, testing the gift link: the name of a link is how he tells his own apart in the list, and the person opening one does not need telling it is Christmas. L.giftShare takes a url and nothing else, and a test asserts the occasion is absent rather than merely not added, so nobody puts it back. Make a link still names the link in his own list, which is the job that label was always doing.

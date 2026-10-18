@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.72  Build 2026-10-18 01:01 PM ET
+     Version : v2.8.73  Build 2026-10-18 01:17 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
 // v2.8.72  2026-10-18  The shared message drops the occasion.
 // v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
 // v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
 // v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // v2.8.64  2026-10-17  IS BOURBON OAKY?
-// v2.8.62  2026-10-17  HINTS A SHOPPER CAN ACT ON, AND A DELETE THE RULES SUITE WATCHES.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.72';
-const BUILD_TIME  = '2026-10-18 01:01 PM ET';
+const APP_VERSION = '2.8.73';
+const BUILD_TIME  = '2026-10-18 01:17 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9384,7 +9384,7 @@ L.FEATURES = [
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
-    def: 'A link for whoever is buying you a bottle. Make a link names the occasion; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
+    def: 'A link for whoever is buying you a bottle. Make a link asks nothing and makes one; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. Your links are listed by the day you made them. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
   { term: 'Shopping for someone', src: 'a gift link somebody sent you',
     def: 'You need nothing — no account, no install. Photograph the label or type the name. It says owned, wished for, or neither, and how well it fits their taste. A bottle it cannot place is not a bottle they lack: it is a bottle nobody could match, which is why it says so rather than guessing. The hints at the top are the safe general direction when you have nothing particular in mind.' },
   { term: 'Install', src: 'the arrow',
@@ -30937,10 +30937,14 @@ L.giftKeys = function (name) {
  *
  * TWO LINES, and the second is the URL so a phone makes it tappable.
  *
- * NO OCCASION IN IT (BZ, 2026-10-18: "don't need occasion"). The label is
- * how HE tells his own links apart in the list; the person opening one does
- * not need telling it is Christmas, and a message saying so is a line
- * longer for nothing.
+ * NO OCCASION IN IT (BZ, 2026-10-18: "don't need occasion"), and no label
+ * anywhere any more: pressing Make a link just makes one.
+ *
+ * A CORRECTION KEPT ON PURPOSE. This comment first said the label was how
+ * he told his own links apart in a list. It was not - it was printed as the
+ * TITLE OF THE SHOPPER'S PAGE, which the prompt asking for it never said,
+ * and that is exactly why he could not tell what the button was for. The
+ * whole label is gone; a link is named by the day it was made.
  */
 L.giftShare = function (url) {
   if (!url) return '';
@@ -30957,7 +30961,7 @@ L.giftToken = function (bytes) {
 
 /* WHAT GETS PUBLISHED FOR ONE LINK. The palate rides along so the page can
    judge without a call; the names never do. */
-L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
+L.giftPayload = function (catalog, bottles, wish, prof, owner,
     now, url, who, picks, portrait) {
   const held = L.ownedCounts(bottles || []);
   const own = {};
@@ -30978,7 +30982,6 @@ L.giftPayload = function (catalog, bottles, wish, prof, label, owner,
      spends anything. */
   return { owner: String(owner || ''), at: Number(now) || 0,
            url: String(url || ''),
-           label: String(label || '').slice(0, 40),
            /* WHOSE SHELF IT IS (BZ, 2026-10-17: "can we replace
               Somebody with their name?"). It also settles the pronoun
               question properly: a name says who without guessing what
@@ -45850,10 +45853,19 @@ function giftLinksBody(card) {
        Settings cards being different things. They are one function. */
     const row = el('div', 'item');
     const left = el('div');
-    const name = el('div', 'nm oneline', g.label || 'Untitled');
+    /* NAMED BY THE DAY IT WAS MADE, since a link no longer carries a word
+       he typed. An old link may still have one - show it, so a list he
+       already has does not lose its names. */
+    const name = el('div', 'nm oneline',
+      g.label || ('Link of ' + L.showDate(g.day || '')));
     if (g.off) name.style.opacity = '0.45';
     left.appendChild(name);
-    left.appendChild(el('div', 'sub', 'made ' + L.showDate(g.day || '')));
+    /* THE DAY IS THE NAME NOW, so printing it twice was two lines saying
+       one thing. An old link that still carries a word keeps the made-on
+       line underneath it, where it is not a repeat. */
+    if (g.label) {
+      left.appendChild(el('div', 'sub', 'made ' + L.showDate(g.day || '')));
+    }
     row.appendChild(left);
     const acts = el('div');
     acts.style.whiteSpace = 'nowrap';
@@ -45865,20 +45877,7 @@ function giftLinksBody(card) {
        called out before (2026-10-17, on the gift buttons). */
     const copy = el('button', 'chip',
       navigator.share ? 'Share' : 'Copy');
-    copy.onclick = () => {
-      /* THE SENTENCE, NOT THE BARE URL. A link on its own in a text says
-         nothing about what it is for, and the preview card cannot say it
-         either - see L.giftShare. Share sheet where there is one, so it
-         lands in a message already written; clipboard otherwise. */
-      const url = giftUrl(tok);
-      const msg = L.giftShare(url);
-      if (navigator.share) {
-        navigator.share({ text: msg }).catch(() => {});
-        return;
-      }
-      try { navigator.clipboard.writeText(msg); toast('Message copied'); }
-      catch (e) { toast(url); }
-    };
+    copy.onclick = () => giftSend(tok);
     acts.appendChild(copy);
     /* `swrow` IS THE CLASS THE STATE HANGS ON: the fill and the knob's
        travel are written as .swrow[aria-checked="true"] .sw, so a button
@@ -45926,14 +45925,33 @@ function giftLinksCard(box) {
 }
 
 /* The address the shopper opens: this same app, told which link it is. */
+/* SENDING A LINK, THE ONE WAY. Share sheet where the device has one, so it
+ * lands in a message already written; clipboard otherwise. Both Make a link
+ * and Share come through here - they used to differ, one copying the bare
+ * URL and one the sentence (v2.8.71, found by reading). */
+function giftSend(token) {
+  const url = giftUrl(token);
+  const msg = L.giftShare(url);
+  if (navigator.share) {
+    navigator.share({ text: msg }).catch(() => {});
+    return;
+  }
+  try { navigator.clipboard.writeText(msg); toast('Message copied'); }
+  catch (e) { toast(url); }
+}
+
 function giftUrl(token) {
   return location.origin + location.pathname + '?gift=' + token;
 }
 
+/* NO QUESTION FIRST (BZ, 2026-10-18: "I don't understand Make a Link").
+ * It opened a browser prompt asking "What is this link for?" and printed
+ * the answer as the title of the shopper's page - which the prompt never
+ * said, so there was no way to know what it was asking. Pressing it now
+ * makes a link, which is what it says.
+ *
+ * A link is named in his own list by the day it was made. */
 async function giftMake() {
-  const label = (prompt('What is this link for? (Christmas, Dad, ...)')
-    || '').trim();
-  if (!label) return;
   /* THE TOKEN IS THE CREDENTIAL, so it comes from the browser's own
      cryptographic source and never from Math.random. */
   const bytes = new Uint8Array(16);
@@ -45941,29 +45959,30 @@ async function giftMake() {
   const token = L.giftToken(bytes);
   if (!token) { toast('Could not make a link'); return; }
   const payload = L.giftPayload(S.catalog, S.bottles, S.wish,
-    shelfProfileNow(), label, FB.user.uid, Date.now(), S.lookupUrl,
+    shelfProfileNow(), FB.user.uid, Date.now(), S.lookupUrl,
     S.displayName,
     L.giftList(S.wish, S.catalog, S.bottles, allFlights(), 5),
     L.shelfPortrait(S.catalog, S.bottles, S.favs));
   try {
     await firebase.database().ref('bz-apps/whisky/gift/' + token).set(payload);
   } catch (e) {
-    appLog('gift: could not publish \u2014 ' + ((e && e.message) || e));
-    toast('That did not publish \u2014 try again');
+    appLog('gift: could not publish — ' + ((e && e.message) || e));
+    toast('That did not publish — try again');
     return;
   }
   S.giftLinks = Object.assign({}, S.giftLinks);
   /* THE LOCAL DAY, through the door that already answers it: L.todayISO is
      the LOCAL calendar day on purpose, and deriving one from a timestamp
      with toISOString would show yesterday all evening. */
-  S.giftLinks[token] = { label: label, at: Date.now(),
-    day: L.todayISO(), off: false };
+  S.giftLinks[token] = { at: Date.now(), day: L.todayISO(), off: false };
   save_();
   if (FB.user && FB.loaded) fbPushShared();
-  appLog('gift: published a link for ' + label);
+  appLog('gift: published a link');
   renderSettings();
-  try { navigator.clipboard.writeText(giftUrl(token)); toast('Link copied'); }
-  catch (e) { toast('Link made'); }
+  /* THE SAME MESSAGE THE SHARE BUTTON SENDS. It used to copy the bare URL
+     and say "Link copied" while Share copied the sentence - two answers to
+     one question, introduced in v2.8.71 and found by reading. */
+  giftSend(token);
 }
 
 /* THE KILL SWITCH IS A WRITE, not a local flag: the rule reads `off` and
@@ -59802,7 +59821,11 @@ function giftDraw(token, gift, host) {
   head.appendChild(el('div', 'rs', who
     ? 'BUYING A WHISKY FOR ' + who.toUpperCase()
     : 'BUYING A WHISKY'));
-  head.appendChild(el('div', 'porttitle', gift.label || 'A gift'));
+  /* NO MIDDLE LINE (BZ, 2026-10-18). It used to print the word typed into
+     a browser prompt - "Christmas", "Dad" - as the page's title, which is
+     why nobody could tell what Make a link was asking for. The two lines
+     left say who it is for and what to do, which is the whole page. An old
+     link may still carry a label; it is simply not drawn. */
   head.appendChild(el('div', 'portwhy', 'Name a bottle and it will say '
     + 'whether it is already on the shelf, and whether it is the right '
     + 'kind of thing. You cannot see the shelf, and nobody sees what '
@@ -60028,7 +60051,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.72</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.73</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

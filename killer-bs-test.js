@@ -30153,12 +30153,18 @@ sec('§479 a gift link answers without handing over the shelf');
   const held = [{ id: 'x1', k: 'A' }];
   const prof = L.tasteProfile(cat, held, {});
   const gift = L.giftPayload(cat, held, ['Redbreast 12'], prof,
-    'Christmas', 'uid1', 1700000000000, 'https://example.test/exec');
+    'uid1', 1700000000000, 'https://example.test/exec');
 
   /* NO NAME IS PUBLISHED, ANYWHERE IN IT. */
   const blob = JSON.stringify(gift).toLowerCase();
   eq('the shelf is not in the link', blob.indexOf('lagavulin'), -1);
   eq('nor is the wish list', blob.indexOf('redbreast'), -1);
+
+  /* AND NO LABEL. A link used to publish a word typed into a browser
+     prompt, drawn as the title of the shopper's page - which is why BZ
+     could not tell what Make a link was asking (2026-10-18). Asserted as
+     absent, not merely unused, so it cannot come back unnoticed. */
+  eq('a link carries no label', 'label' in gift, false);
 
   /* THE SAME BOTTLE SPELLED ANY WAY STILL MATCHES, through L.nameSig. */
   ['Lagavulin 16', 'Lagavulin 16yr', 'lagavulin 16 year old'].forEach(n => {
