@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.75  ·  2026-10-18 01:57 PM ET
+
+Naming a gift link is back, and a new one appears where you made it. Two faults, both reported by BZ: on creating a more useful text message I created a less useful feature. The ability to name a link was removed, which is a feature removed rather than a question answered, rule 5. What he objected to a build earlier was a browser prompt asking for a word without saying it would be printed as the title of the shopper's page, and those are two separate things that I bundled into one choice. Make a link still asks nothing; the name is now edited by tapping it in the list, where it is plainly his label for his own link, and it is never published. Unnamed, a link reads as the day it was made. The second fault: the list is drawn in three places, the Wanted view, the Shelf card and Settings, and the three functions that change it each refreshed their own way, so a link made from Shelf did not appear until you left the screen and came back. All three now redraw through one door, giftRedraw, which reads the screen carrying the on class rather than the nav button, which carries nothing. The walk drives this after an action, which no check did, and both faults were reproduced with the fix removed.
+
 ## v2.8.74  ·  2026-10-18 01:33 PM ET
 
 A gift token now travels after the #, not in the query string. The token is the credential for that node, and as a query parameter it went into the HTTP request and so into GitHub Pages' access logs and any proxy on the way; after the # the browser never sends it at all. A link made before this build stops working and making another is one press. The first version of this read both shapes so an already-sent link would keep working, and that went the same day: BZ said use is limited and the risk of change small, and reading the old shape for ever would leave the shape that leaks permanently valid, which is most of what the switch was for. L.giftFromUrl is the one door that turns a link into a token, and it refuses anything that is not 32 hex characters.

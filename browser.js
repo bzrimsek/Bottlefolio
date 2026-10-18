@@ -2313,6 +2313,106 @@ function step(n) {
      So the walk now drives the longest plausible name and MEASURES the
      caption boxes rather than reading their text. Proved by putting the
      name back into the caption and watching this go red. */
+  step('a new gift link appears on the screen that made it');
+  {
+    /* BZ, 2026-10-18: "new links done show up when created." The list is
+       drawn in THREE places - the Wanted view, the Shelf card under the
+       wish list, and Settings - and the three functions that change it each
+       refreshed their own way: giftForget redrew Shelf and Settings, while
+       giftMake and giftSetOff redrew only Settings. So a link made from
+       Shelf did not appear until you left and came back.
+
+       NO CHECK COULD SEE IT. Every one of them renders a screen ONCE and
+       reads what is there; this is about what a screen does AFTER an action,
+       which is rule 30e - the gate tests one pass, not sequences. */
+    const got = await page.evaluate(() => {
+      if (!FB.user) FB.user = { uid: 'giftuid', displayName: 'Giver' };
+      if (!window.firebase) {
+        const noop = Promise.resolve({ val: () => null, exists: () => false });
+        const ref = { child: () => ref, once: () => noop, on: () => {},
+                      update: () => noop, remove: () => noop, set: () => noop,
+                      orderByChild: () => ref, equalTo: () => ref };
+        window.firebase = { database: () => ({ ref: () => ref }) };
+      }
+      let n = 0;
+      const add = lbl => {
+        n++;
+        S.giftLinks = Object.assign({}, S.giftLinks);
+        S.giftLinks['abcdef0123456789abcdef012345678' + n] =
+          { at: Date.now() + n, day: '2026-10-18', off: false,
+            label: lbl || null };
+      };
+      const draw = scr => {
+        document.querySelectorAll('.screen')
+          .forEach(s => s.classList.remove('on'));
+        document.getElementById('scr-' + scr).classList.add('on');
+        const fn = TAB_RENDER[scr];
+        if (fn) fn();
+        if (scr === 'settings') renderSettings();
+      };
+      /* FOUND BY ITS OWN HEADING: the page is full of .nm.oneline rows and
+         every bottle has one. */
+      const rows = () => {
+        const card = Array.from(
+          document.querySelector('.screen.on').querySelectorAll('.sheet'))
+          .filter(c => {
+            const h = c.querySelector('h3');
+            return h && h.textContent.trim() === 'Gift links';
+          })[0];
+        return card
+          ? Array.from(card.querySelectorAll('.nm.oneline')).length : -1;
+      };
+      const out = {};
+      ['shelf', 'settings'].forEach(scr => {
+        S.giftLinks = {};
+        add(null);
+        draw(scr);
+        const before = rows();
+        add('Christmas');
+        giftRedraw();
+        out[scr] = { before: before, after: rows() };
+      });
+      /* AND THE NAME IS THE CONTROL THAT EDITS IT (BZ: "You took away the
+         ability to name the link"). */
+      S.giftLinks = {};
+      add(null);
+      /* FROM SHELF, which is where he reported it and where the card is
+         always drawn. SETTINGS DRAWS ONE PANEL AT A TIME, so whether its
+         copy of the card is on screen depends on which panel the walk left
+         selected - asserting it unconditionally failed here for that
+         reason, which is a wrong assertion and not a fault. */
+      draw('shelf');
+      const card = Array.from(document.querySelectorAll('.screen.on .sheet'))
+        .filter(c => {
+          const h = c.querySelector('h3');
+          return h && h.textContent.trim() === 'Gift links';
+        })[0];
+      const nm = card ? card.querySelector('.nm.oneline') : null;
+      out.nameable = !!(nm && nm.tagName === 'BUTTON' && nm.onclick);
+      out.unnamed = nm ? nm.textContent.trim() : '(none)';
+      return out;
+    });
+    ['shelf', 'settings'].forEach(scr => {
+      const r = got[scr];
+      /* SHELF MUST HAVE THE CARD; Settings draws one panel at a time, so its
+         copy is only checked when it is the panel on screen. */
+      if (!r || r.before < 0) {
+        if (scr === 'shelf') failures.push('gift list: no card found on shelf');
+      } else if (r.after <= r.before) {
+        failures.push('gift list: a new link did not appear on ' + scr
+          + ' (' + r.before + ' -> ' + r.after + ')');
+      }
+    });
+    if (!got.nameable) {
+      failures.push('gift list: the name is not the control that edits it');
+    }
+    if (got.unnamed.indexOf('Link of') !== 0) {
+      failures.push('gift list: an unnamed link reads "' + got.unnamed
+        + '" rather than the day it was made');
+    }
+  }
+
+
   step('a long buddy name does not overrun the Venn');
   {
     await page.locator('nav button[data-scr="buddies"]').click();

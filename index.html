@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.74  Build 2026-10-18 01:33 PM ET
+     Version : v2.8.75  Build 2026-10-18 01:57 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
 // v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
 // v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
 // v2.8.72  2026-10-18  The shared message drops the occasion.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.68  2026-10-17  ONE CARD, TWO MESSAGES: THE OLD SHARE AND THE NEW ONE, RATIONALIZED.
 // v2.8.67  2026-10-17  ADDED UNDEFINED, AND THE REASON IT WAS THROWING AWAY.
 // v2.8.66  2026-10-17  THE GIFT PAGE BORROWS THE SHOP SCREEN, AND THE SLIDER IS A SLIDER.
-// v2.8.65  2026-10-17  A WISH ENDS WHEN YOU OWN IT, AND THE LINK ROW IS ONE LINE.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.74';
-const BUILD_TIME  = '2026-10-18 01:33 PM ET';
+const APP_VERSION = '2.8.75';
+const BUILD_TIME  = '2026-10-18 01:57 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9384,7 +9384,7 @@ L.FEATURES = [
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
-    def: 'A link for whoever is buying you a bottle. Make a link asks nothing and makes one; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. Your links are listed by the day you made them. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
+    def: 'A link for whoever is buying you a bottle. Make a link asks nothing and makes one; Share puts a message on the clipboard, or opens your phone’s share sheet, with the link on its own line. Tap a link’s name to name it — Christmas, Dad — which is for your own list only and is never shown to whoever opens it; unnamed, it reads as the day you made it. They open it with no account and no app: they photograph a label or type a name, and it answers whether you already own it, whether it is on your wish list, and whether you would likely like it — with a few hints drawn from your shelf and your taste so they are not going in cold. THEY NEVER SEE YOUR SHELF: what is published is hashes, so a name they already had in mind can be confirmed, and nothing can be read back out. The switch turns a link off without deleting it; the ✕ removes it for good. A link off is a link that answers nothing.' },
   { term: 'Shopping for someone', src: 'a gift link somebody sent you',
     def: 'You need nothing — no account, no install. Photograph the label or type the name. It says owned, wished for, or neither, and how well it fits their taste. A bottle it cannot place is not a bottle they lack: it is a bottle nobody could match, which is why it says so rather than guessing. The hints at the top are the safe general direction when you have nothing particular in mind.' },
   { term: 'Install', src: 'the arrow',
@@ -45876,13 +45876,26 @@ function giftLinksBody(card) {
     /* NAMED BY THE DAY IT WAS MADE, since a link no longer carries a word
        he typed. An old link may still have one - show it, so a list he
        already has does not lose its names. */
-    const name = el('div', 'nm oneline',
+    /* THE NAME IS THE CONTROL that edits it - tapping it names the link.
+       Unnamed, it reads as the day it was made, so a list of several is
+       still telling them apart. Styled as a button so it is plainly
+       pressable rather than a line of text that happens to react. */
+    const name = el('button', 'nm oneline',
       g.label || ('Link of ' + L.showDate(g.day || '')));
+    name.style.background = 'none';
+    name.style.border = '0';
+    name.style.padding = '0';
+    name.style.textAlign = 'left';
+    name.style.font = 'inherit';
+    name.style.color = 'inherit';
+    name.style.cursor = 'pointer';
+    name.title = 'Name this link';
+    name.onclick = () => giftRename(tok);
     if (g.off) name.style.opacity = '0.45';
     left.appendChild(name);
-    /* THE DAY IS THE NAME NOW, so printing it twice was two lines saying
-       one thing. An old link that still carries a word keeps the made-on
-       line underneath it, where it is not a repeat. */
+    /* ONLY UNDER A NAMED LINK. An unnamed one reads as the day it was
+       made, so printing the day again below it was two lines saying one
+       thing. */
     if (g.label) {
       left.appendChild(el('div', 'sub', 'made ' + L.showDate(g.day || '')));
     }
@@ -45949,6 +45962,71 @@ function giftLinksCard(box) {
  * lands in a message already written; clipboard otherwise. Both Make a link
  * and Share come through here - they used to differ, one copying the bare
  * URL and one the sentence (v2.8.71, found by reading). */
+/* THE LIST CHANGED, SO REDRAW IT WHEREVER IT IS - and it is in THREE
+ * places: the Wanted view, the Shelf card under the wish list, and
+ * Settings. Each of the three functions that change the list used to
+ * refresh its own way: giftForget redrew Shelf and Settings, while
+ * giftMake and giftSetOff redrew only Settings. So a link made from Shelf
+ * did not appear until you left the screen and came back (BZ, 2026-10-18:
+ * "new links done show up when created").
+ *
+ * The current tab through TAB_RENDER rather than a named render, so a
+ * fourth place to draw this list cannot be missed the same way; Settings
+ * as well, because it is a screen rather than a tab.
+ */
+/* NAMING A LINK, WHICH IS HIS AND NOT THE SHOPPER'S.
+ *
+ * BZ, 2026-10-18: "You took away the ability to name the link." He is
+ * right, and it was a feature removed rather than a question answered -
+ * rule 5. What he actually objected to a build earlier was a browser
+ * prompt that asked for a word WITHOUT SAYING it would be printed as the
+ * title of the shopper's page. Those are two things and I had bundled
+ * them into one choice: "On creating a more useful text message you
+ * created a less useful feature."
+ *
+ * So: Make a link still asks nothing, and the name is edited here, in the
+ * list, where it is plainly HIS label for HIS link. It is never published
+ * - L.giftPayload carries no label and the shopper's page draws no title.
+ */
+function giftRename(token) {
+  const g = (S.giftLinks || {})[token];
+  if (!g) return;
+  openModal('Name this link', m => {
+    m.appendChild(el('div', 'sub', 'Just for your own list. Whoever opens the link never sees it.'));
+    const inp = document.createElement('input');
+    inp.className = 'field';
+    inp.style.marginTop = '9px';
+    inp.placeholder = 'Christmas, Dad, ...';
+    inp.value = g.label || '';
+    m.appendChild(inp);
+    const ok = el('button', 'btn wide btn-gold', 'Save');
+    ok.style.marginTop = '9px';
+    ok.onclick = () => {
+      const v = inp.value.trim().slice(0, 40);
+      S.giftLinks = Object.assign({}, S.giftLinks);
+      S.giftLinks[token] = Object.assign({}, g, { label: v || null });
+      save_();
+      if (FB.user && FB.loaded) fbPushShared();
+      closeModal();
+      giftRedraw();
+      toast(v ? 'Named' : 'Name cleared');
+    };
+    m.appendChild(ok);
+  });
+}
+
+function giftRedraw() {
+  /* THE SCREEN carries the `on` class, not the nav button - show() sets it
+     on #scr-<name>. Written against the nav button first, which matches
+     nothing, so the redraw silently did nothing: the same shape of fault
+     as the one it is here to fix. */
+  const on = document.querySelector('.screen.on');
+  const name = on ? on.id.replace(/^scr-/, '') : '';
+  const fn = TAB_RENDER[name];
+  if (fn) fn();
+  if (name === 'settings') renderSettings();
+}
+
 function giftSend(token) {
   const url = giftUrl(token);
   const msg = L.giftShare(url);
@@ -46000,7 +46078,7 @@ async function giftMake() {
   save_();
   if (FB.user && FB.loaded) fbPushShared();
   appLog('gift: published a link');
-  renderSettings();
+  giftRedraw();
   /* THE SAME MESSAGE THE SHARE BUTTON SENDS. It used to copy the bare URL
      and say "Link copied" while Share copied the sentence - two answers to
      one question, introduced in v2.8.71 and found by reading. */
@@ -46031,8 +46109,7 @@ async function giftForget(token, label) {
     save_();
     if (FB.user && FB.loaded) fbPushShared();
     appLog('gift: deleted a link');
-    renderSettings();
-    renderShelf();
+    giftRedraw();
     toast('Deleted');
   }, 'Delete it');
 }
@@ -46051,7 +46128,7 @@ async function giftSetOff(token, off) {
   save_();
   if (FB.user && FB.loaded) fbPushShared();
   appLog('gift: ' + (off ? 'switched off' : 'switched back on') + ' a link');
-  renderSettings();
+  giftRedraw();
   toast(off ? 'That link no longer works' : 'That link works again');
 }
 
@@ -60073,7 +60150,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.74</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.75</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
