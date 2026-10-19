@@ -30125,7 +30125,7 @@ sec('§487 what a flight holds and what it varies');
      two, and what matters is that L.dimSpread counts by the same rule the
      builder filters by - within the band of a candidate, not rounded into
      a bin, which put 80 and 81 on opposite sides of a 2 point band. */
-  eq('a band rounds to its step', L.dimValue('proof', cat.c, true), 82);
+  eq('a band rounds to its step', L.dimValue('proof', cat.c, true), 81);
   eq('a dimension nothing answers is null',
     L.dimValue('region', cat.a), null);
   eq('and so is a dimension that does not exist',
@@ -30173,7 +30173,7 @@ sec('§487 what a flight holds and what it varies');
   /* PROOF IS HELD, so the ladder ties and the ring orders the run. */
   eq('and a beginner starts on the Irish', made.pours[0].k, 'a');
   eq('it writes its own premise',
-    /within 2 points of 80/.test(made.premise), true);
+    /within 3 points of 80/.test(made.premise), true);
 
   /* EXACTLY, OR WITHIN A TOLERANCE. BZ, 2026-10-18: "maybe we need a
      choice for age and proof, equal to a value or a value plus a
@@ -30188,6 +30188,8 @@ sec('§487 what a flight holds and what it varies');
   const band = L.designFlight(
     { hold: [{ dim: 'proof', value: 80, tol: 2 }], vary: 'type' }, cat, bots);
   eq('within two takes it', band.pours.some(p => p.k === 'c'), true);
+  /* THIS ONE NAMES ITS OWN TOLERANCE, so it stays two whatever the
+     dimension's default band becomes. */
   eq('and says that instead', /within 2 points of 80/.test(band.premise),
     true);
   /* ZERO IS AN ANSWER, NOT AN ABSENCE: naming no tolerance keeps the
@@ -30256,7 +30258,7 @@ sec('§487 what a flight holds and what it varies');
   /* THE PREMISE WRITES ITSELF when he leaves the field blank - BZ: "I
      thought the premise was only needed w/o user input." */
   const said = L.designPremise([{ dim: 'proof', value: 92 }], 'type', {});
-  eq('it states what is held', /within 2 points of 92/.test(said), true);
+  eq('it states what is held', /within 3 points of 92/.test(said), true);
   eq('and what moves', /type/.test(said), true);
   eq('a flag says its own name, not its value',
     /bottled in bond held at/.test(
@@ -30362,10 +30364,84 @@ sec('§487 what a flight holds and what it varies');
     L.holdLine(L.dimOf('proof'), null), 'how strong');
   eq('held exactly', L.holdLine(L.dimOf('proof'), { value: 92, tol: 0 }),
     'at exactly 92');
-  eq('held in a band', L.holdLine(L.dimOf('proof'), { value: 92, tol: 2 }),
-    'within 2 of 92');
+  eq('held in a band', L.holdLine(L.dimOf('proof'), { value: 92, tol: 3 }),
+    'within 3 of 92');
   eq('a word says itself, because scotch is not a quantity',
     L.holdLine(L.dimOf('type'), 'scotch'), 'scotch');
+
+  /* EIGHTY IS THE FLOOR AND IT IS THE LAW. 27 CFR 5.22 puts whisky at 40%
+     alcohol by volume, which is 80 proof, so nothing below it is whisky
+     and no candidate may sit there (BZ, 2026-10-19: "we should never go
+     below 80 proof (legal defn)"). The candidates were built from the
+     lowest value on the shelf, so one bad row could have offered 74. */
+  const low = { x: { k: 'x', name: 'Odd 74', proof: 74, sub: 'bourbon' },
+                y: { k: 'y', name: 'A 80', proof: 80, sub: 'bourbon' },
+                z: { k: 'z', name: 'B 86', proof: 86, sub: 'rye' },
+                w: { k: 'w', name: 'C 90', proof: 90, sub: 'scotch' },
+                v: { k: 'v', name: 'D 92', proof: 92, sub: 'irish' } };
+  eq('no candidate sits below the legal floor',
+    L.dimSpread('proof', Object.keys(low).map(k => low[k]))
+      .options.every(o => o.value >= 80), true);
+  eq('and the dimension says where its floor is',
+    L.dimOf('proof').floor, 80);
+  /* THE CANDIDATES ARE STRENGTHS THAT EXIST, not a walk across the range.
+     Stepping by the band produced 89, 101, 119 and 128, and "exactly 89"
+     reached nothing, because nobody bottles at 89. */
+  eq('a strength nothing is sold at is not offered',
+    L.dimSteps(L.dimOf('proof'), [80, 86, 92],
+      { 80: 1, 86: 1, 92: 1 }).indexOf('89'), -1);
+  eq('and the real ones are',
+    L.dimSteps(L.dimOf('proof'), [80, 86, 92],
+      { 80: 1, 86: 1, 92: 1 }).sort().join(','), '80,86,92');
+  /* A ROUND STRENGTH IS WORTH BOTTLES. 102 reaches more than 100 on his
+     shelf, but 100 is the bonded strength and the one anybody asks a room
+     for; and 86.4 is a real proof of a real bottle that nobody asks for. */
+  eq('a ten is worth a quarter again', L.roundWeight(100), 1.25);
+  eq('a five a tenth', L.roundWeight(95), 1.1);
+  eq('an even number nothing extra', L.roundWeight(92), 1);
+  eq('and a fraction loses a little', L.roundWeight(86.4) < 1, true);
+  eq('so 100 beats 102 even reaching fewer',
+    49 * L.roundWeight(100) > 57 * L.roundWeight(102), true);
+
+  eq('nothing below the legal floor survives',
+    L.dimSteps(L.dimOf('proof'), [74, 80],
+      { 74: 1, 80: 1 }).join(','), '80');
+  eq('a declared value needs no steps either',
+    L.dimSteps(L.dimOf('age'), [10], { 10: 1 }).join(','), '10');
+  eq('and nor does a word',
+    L.dimSteps(L.dimOf('type'), []).length, 0);
+
+  /* AND THE BAND IS FIVE, not the two I guessed: his own flights hold proof
+     inside six points and inside one, so a narrow band served half of
+     them. BZ: "why a 2 point tolerance? seems tight - 5 might be better." */
+  /* THREE BY DEFAULT - exactly his widest proof-held flight - and he picks
+     0, 2, 3 or 5 per flight, each shown with what it would reach. */
+  eq('proof is held within three by default', L.dimOf('proof').band, 3);
+  eq('and four widths are offered',
+    L.dimOf('proof').tols.join(','), '0,2,3,5');
+
+  /* AN AGE IS DECLARED, NOT MEASURED. BZ, 2026-10-19: "the age filter is
+     not correct - we know ages by law or by label." A stated age is a fact
+     off the label, so holding one means exactly it - a 10 and a 15 are two
+     statements, not one give or take - and the values offered are ages he
+     actually owns rather than round steps that invented a 9. */
+  eq('age is held exactly', L.dimOf('age').band, 0);
+  eq('and is a declared value', L.dimOf('age').discrete, true);
+  const aged = { a1: { k: 'a1', age: 10, name: 'A', sub: 'scotch' },
+                 a2: { k: 'a2', age: 10, name: 'B', sub: 'irish' },
+                 a3: { k: 'a3', age: 10, name: 'C', sub: 'rye' },
+                 a4: { k: 'a4', age: 10, name: 'D', sub: 'bourbon' },
+                 a5: { k: 'a5', age: 12, name: 'E', sub: 'scotch' },
+                 a6: { k: 'a6', age: 15, name: 'F', sub: 'scotch' } };
+  const aopts = L.dimSpread('age', Object.keys(aged).map(k => aged[k]))
+    .options.map(o => o.value);
+  eq('only ages he owns are offered',
+    aopts.every(v => [10, 12, 15].indexOf(v) >= 0), true);
+  eq('and nothing between them is invented',
+    aopts.indexOf(11) >= 0 || aopts.indexOf(13) >= 0, false);
+  eq('holding 10 does not sweep up the 12',
+    L.applyHold(Object.keys(aged).map(k => aged[k]),
+      [{ dim: 'age', value: 10 }]).length, 4);
 
   /* A COUNT HE CANNOT HAVE IS NOT A COUNT. BZ, 2026-10-19, from a
      screenshot: holding exactly 80 proof AND bourbon leaves five bottles,
@@ -33246,6 +33322,13 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
+
+
+
+
+
 
 
 

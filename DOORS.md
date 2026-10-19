@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1068 |
+| functions | 1070 |
 | tables | 251 |
-| carrying a stated purpose | 856 |
+| carrying a stated purpose | 858 |
 
 ## Tables
 
@@ -433,6 +433,7 @@ QUESTION, not the name you were going to use.
 - **`L.deviceName`** — _no comment above it_
 - **`L.dimOf`** — ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
 - **`L.dimSpread`** — _no comment above it_
+- **`L.dimSteps`** — THE NUMBERS WORTH OFFERING FOR A MEASURED DIMENSION
 - **`L.dimValue`** — _no comment above it_
 - **`L.directoryEntry`** — what everyone can see.
 - **`L.dirtyEntries`** — WHAT THIS DEVICE HAS THAT THE ACCOUNT DOES NOT, entry by entry
@@ -1088,6 +1089,7 @@ QUESTION, not the name you were going to use.
 - **`L.roomNotes`** — _no comment above it_
 - **`L.roomTop`** — _no comment above it_
 - **`L.rotate`** — _no comment above it_
+- **`L.roundWeight`** — HOW MUCH A NUMBER IS WORTH BEYOND THE BOTTLES IT REACHES.
 - **`L.rowCost`** — What the money column says on a shelf row
 - **`L.rowFaults`** — _no comment above it_
 - **`L.rowHave`** — How many you have and how they stand
