@@ -5093,15 +5093,20 @@ eq('and a score', cands.every(c => typeof c.score === 'number'), true);
 eq('a sealed shelf offers nothing',
   L.flightCandidates('finish', fbCat, []).length, 0);
 
-const built = L.buildFlight('finish', 'A premise.', fbCat, fbBot);
-eq('it builds', built.ok, true);
+/* L.buildFlight is gone (2026-10-19). It was the last caller of the
+   retired variable path and the designer replaced it everywhere - the
+   pooled sheet was the final one. What it did is asserted through
+   L.designFlight in §487. */
+const built = L.designFlight({ hold: [{ dim: 'house' }], vary: 'cask',
+  premise: 'A premise.', ext: 0 }, fbCat, fbBot);
+eq('the designer builds from the same shelf', built.ok, true);
 eq('the premise is carried', built.premise, 'A premise.');
 eq('pours come back in proof order',
   built.pours.map(p => fbCat[p.k].proof),
   built.pours.map(p => fbCat[p.k].proof).slice().sort((a, b) => a - b));
-eq('an impossible variable fails cleanly',
-  L.buildFlight('age', '', fbCat, fbBot).ok, false);
-eq('and says why', /holds still/.test(L.buildFlight('age', '', fbCat, fbBot).why), true);
+eq('an impossible hold fails cleanly',
+  L.designFlight({ hold: [{ dim: 'age', value: 99 }], vary: 'cask' },
+    fbCat, fbBot).ok, false);
 
 // The one to buy has to be something you cannot already pour.
 const cast = built.pours.map(p => fbCat[p.k]);
@@ -5397,8 +5402,14 @@ eq('every lesson states its question', L.LESSONS.every(l => !!l.ask), true);
 eq('and what it holds still', L.LESSONS.every(l => (l.hold || []).length), true);
 // The variables the shipped flights actually vary must all be covered, or
 // the mining lost something.
-eq('the mined variables are all represented',
-  ['proof', 'finish', 'house', 'region', 'age', 'grain', 'price']
+/* THE SHAPES, in the designer's vocabulary since 2026-10-19. `finish`
+   became `cask` (hold the type, let the cask move) and the old `cask`
+   became `hands` (hold the cask, let the house move) so the two read as
+   what they are. The old `house` lesson varied a field that meant three
+   different things and is now `grain`: hold the house, let type move. */
+eq('every shape is represented',
+  ['proof', 'cask', 'hands', 'region', 'age', 'grain', 'price',
+   'smoke', 'bonded']
     .filter(v => !L.LESSONS.some(l => l.id === v)), []);
 
 // A shelf of four bourbons from one house at four strengths can teach proof
@@ -5413,7 +5424,7 @@ const ladderBot = [];
 const taught = L.lessonsFor(ladder, ladderBot, []);
 eq('proof is buildable', taught.find(l => l.id === 'proof').ready, true);
 // Nothing varies the cask, so that lesson is not offered.
-eq('the cask is not', taught.find(l => l.id === 'finish').ready, false);
+eq('the cask is not', taught.find(l => l.id === 'cask').ready, false);
 eq('ready lessons come first',
   taught.findIndex(l => !l.ready) > taught.findIndex(l => l.ready), true);
 
@@ -5427,14 +5438,21 @@ eq('and names a number or a shape',
 eq('two bottles cannot teach anything',
   L.lessonsFor({ a: { k: 'a', sub: 'bourbon', proof: 90 } },
     [{ id: 'x', k: 'a', status: 'open' }], []).every(l => !l.ready), true);
-eq('and says why',
-  /Fewer than four/.test(L.lessonsFor({ a: { k: 'a', sub: 'bourbon', proof: 90 } },
+/* THE BLOCKER SAYS HOW MANY FIT, which is what tells him whether to
+   loosen a hold or open a bottle. It used to say "Fewer than four
+   bottles open" whatever the reason. */
+eq('and says how little fits',
+  /open bottle/.test(L.lessonsFor({ a: { k: 'a', sub: 'bourbon', proof: 90 } },
     [{ id: 'x', k: 'a', status: 'open' }], [])[0].blocked), true);
 
 // Lessons already built are marked, so a shelf with 36 flights does not
 // keep offering the same ones first.
+/* COUNTED OFF THE POURS, not off the tag. A tag is prose somebody typed;
+   the pours are the flight. So the fixture needs real pours - one house,
+   one type, four strengths holds BOTH the type and the house. */
 const withFlights = L.lessonsFor(ladder, ladderBot,
-  [{ title: 'X', tag: 'ONE VARIABLE: PROOF', core: [] }]);
+  [{ title: 'X', tag: 'ONE VARIABLE: PROOF',
+     core: Object.keys(ladder).map(k => ({ k: k })) }]);
 eq('an already-built lesson is counted',
   withFlights.find(l => l.id === 'proof').have, 1);
 }
@@ -6315,7 +6333,11 @@ eq('a combined cask stands in its own group only',
     cs.some(c => c.key === 'port'), false);
   /* And the proposal carries it, so a kept flight arrives with its bench
      filled rather than empty. */
-  const built = L.buildFlight('cask', '', withDual, dualBot);
+  /* THE BENCH COMES FROM THE COUNT NOW, not from the cask flight's own
+     special case: ask for four and four more of the same shape are
+     brought out if the night has legs. */
+  const built = L.designFlight({ hold: [{ dim: 'cask' }],
+    vary: 'house', ext: 4 }, withDual, dualBot);
   eq('the proposal carries a bench', built.bench.length > 0, true);
   eq('and nothing on it is already poured',
     built.bench.some(b => built.pours.some(x => x.k === b.k)), false);
@@ -22433,22 +22455,19 @@ sec('\u00a7350 the last thirteen');
   eq('and an unnamed candidate unlocks nothing',
     L.fitUnlocks({}, cat2, bots, flights).length, 0);
 
-  /* --- lessonBlocker: why a lesson cannot be poured -------------------- */
-  const few = { A: { k: 'A', sub: 'scotch' } };
-  eq('too few open bottles is said plainly',
-    L.lessonBlocker({ id: 'proof', hold: ['sub'] }, few,
-      [{ k: 'A', status: 'open' }]),
-    'Fewer than four bottles open.');
-  const four = {};
-  ['A', 'B', 'C', 'D'].forEach((k, i) => {
-    four[k] = { k: k, sub: i < 2 ? 'scotch' : 'bourbon' };
-  });
-  const open4 = ['A', 'B', 'C', 'D'].map(k => ({ k: k, status: 'open' }));
-  const msg = L.lessonBlocker({ id: 'proof', hold: ['sub'] }, four, open4);
-  eq('four open but split two and two names the largest group',
-    /largest group you have is 2/.test(msg), true);
-  eq('and says what they would need to share',
-    /category/.test(msg), true);
+  /* --- why a lesson cannot be poured ---------------------------------- */
+  /* L.lessonBlocker is gone (2026-10-19). It read the retired variable ids
+     through L.holdKey and could not answer for a lesson written in
+     dimensions at all; the blocker now comes from L.designFlight, which
+     says how many bottles fit and what to do about it. The thing it did
+     better - naming the missing SHAPE rather than a count - is worth
+     having back, and is not here. */
+  const thin = L.lessonsFor({ a: { k: 'a', sub: 'bourbon', proof: 90 } },
+    [{ id: 'x', k: 'a', status: 'open' }], []);
+  eq('a blocked lesson says how little fits',
+    /open bottle/.test(thin[0].blocked), true);
+  eq('and what to do about it',
+    /Loosen|open a few/.test(thin[0].blocked), true);
 
   /* --- flavourOptions / flavourFlight: a flavor worth pouring -------- */
   const word = L.FLAVOUR_WORDS[0];
@@ -30055,6 +30074,102 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§489 a suggestion is a shape, not a name');
+{
+  /* BZ, 2026-10-19: "the Get Suggestions feature needs updated to be more
+     consistent with the update - less about names and more about concepts."
+
+     EVERY LESSON WAS ALREADY A HOLD AND A VARY. The old list carried
+     `hold: ['sub']` - raw field names - and took its variable from the
+     retired L.VARIABLES, and the two disagreed: the proof lesson DECLARED
+     the type and the builder USED the distillery, which L.holdKey carried a
+     comment about and refused to pick a side on. His own flights settle it:
+     FOUR WHISKEYS OR ONE is one distillery climbing. */
+  const cat = {};
+  const bots = [];
+  const put = (k, dist, sub, proof, fin) => {
+    cat[k] = { k: k, name: k, dist: dist, sub: sub, proof: proof, fin: fin,
+               obsc: 'known', msrp: 50 };
+    bots.push({ id: 'b' + k, k: k, status: 'open' });
+  };
+  [80, 90, 100, 110, 120, 126].forEach((p, i) =>
+    put('h' + i, 'One House', 'bourbon', p, null));
+
+  /* A HOLD WITH NO VALUE IS A SHAPE: which house is a question about the
+     shelf, not about the lesson. */
+  const resolved = L.resolveHold([{ dim: 'house' }],
+    Object.keys(cat).map(k => cat[k]), 6, 'proof');
+  eq('it chooses a value', resolved.length, 1);
+  eq('and chooses the one that lets proof move',
+    resolved[0].value, 'one house');
+
+  /* AND IT IS JUDGED ON WHAT IT LETS MOVE, not on how many bottles sit
+     behind it. "Hold the house, let smoke move" landed on the house with
+     the most bottles, which had no peated bottling at all, so his own
+     HOUSE ON FIRE could not be suggested. */
+  const mixed = {};
+  const mbot = [];
+  const mput = (k, dist, name) => {
+    mixed[k] = { k: k, name: name, dist: dist, sub: 'scotch', proof: 92 };
+    mbot.push({ id: 'm' + k, k: k, status: 'open' });
+  };
+  ['a', 'b', 'c', 'd', 'e'].forEach(k => mput(k, 'Big House', 'Plain ' + k));
+  mput('p1', 'Small House', 'Small Unpeated');
+  mput('p2', 'Small House', 'Small Peated Islay');
+  const forSmoke = L.resolveHold([{ dim: 'house' }],
+    Object.keys(mixed).map(k => mixed[k]), 6, 'smoke');
+  eq('the big house holds more bottles',
+    L.dimSpread('house', Object.keys(mixed).map(k => mixed[k]))
+      .options[0].value, 'big house');
+  eq('but the one with both sides is chosen',
+    forSmoke[0].value, 'small house');
+
+  /* A PAIRED HOLD STAYS OPEN, because it is the pairing key: three houses
+     each poured twice is the flight, and pinning all six to one house
+     leaves a single pair. */
+  const paired = L.resolveHold([{ dim: 'house' }],
+    Object.keys(mixed).map(k => mixed[k]), 6, 'smoke', true);
+  eq('a paired hold is kept', paired.length, 1);
+  eq('and is not pinned to a value',
+    paired[0].value === undefined || paired[0].value === null, true);
+
+  /* THE LINE IS THE SHAPE. */
+  eq('it reads as hold this, let that move',
+    L.lessonSay([{ dim: 'house', value: 'ardbeg' }], 'cask'),
+    'Hold the house at ardbeg, let the cask move');
+  eq('a flag says only itself',
+    L.lessonSay([{ dim: 'bonded', value: 'bonded' }], 'type'),
+    'Hold bottled in bond, let type move');
+  eq('and pairs are said out loud',
+    /in matched pairs$/.test(L.lessonSay([{ dim: 'house' }], 'smoke', true)),
+    true);
+  eq('holding nothing says so',
+    L.lessonSay([], 'proof').indexOf('Hold nothing'), 0);
+
+  /* WHAT A BUILT FLIGHT HOLDS, read off its POURS rather than off a tag,
+     because a tag is prose somebody typed and the pours are the flight. */
+  const flight = { core: Object.keys(cat).map(k => ({ k: k })) };
+  const holds = L.flightHolds(flight, cat);
+  eq('one house, one type, six strengths holds the house',
+    holds.indexOf('house') >= 0, true);
+  eq('and the type', holds.indexOf('type') >= 0, true);
+  eq('but not the proof, which is what moves',
+    holds.indexOf('proof') >= 0, false);
+  eq('a dimension nothing answers is not held',
+    holds.indexOf('region') >= 0, false);
+  eq('and a flight of two pours holds nothing worth saying',
+    L.flightHolds({ core: [{ k: 'h0' }, { k: 'h1' }] }, cat).length, 0);
+
+  /* HOW MANY WAYS IT CAN BE BUILT. One distillery that climbs is one way;
+     two are two. Counting pours cannot see that, because both cast six. */
+  eq('one house is one way',
+    L.lessonWays({ hold: [{ dim: 'house' }], vary: 'proof' }, cat, bots), 1);
+  [80, 90, 100, 110].forEach((p, i) =>
+    put('t' + i, 'Other House', 'bourbon', p, null));
+  eq('two houses are two ways',
+    L.lessonWays({ hold: [{ dim: 'house' }], vary: 'proof' }, cat, bots), 2);
+}
+
 sec('§488 what went wrong, as a kind');
 {
   /* L.errorKind was split out of L.plainError so a caller that RECOVERED
@@ -33369,6 +33484,15 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
+
+
+
+
+
+
+
 
 
 

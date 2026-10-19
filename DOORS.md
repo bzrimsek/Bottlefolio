@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1070 |
+| functions | 1072 |
 | tables | 251 |
-| carrying a stated purpose | 858 |
+| carrying a stated purpose | 862 |
 
 ## Tables
 
@@ -116,7 +116,7 @@ QUESTION, not the name you were going to use.
 - **`L.KIND_ALONE`** — SOURCES THAT STAND ALONE
 - **`L.LABEL_FILLABLE`** — WHAT A LABEL COULD NOT TELL US, AND THE VERDICT NEEDS (single-bottle
 - **`L.LABEL_NAMES`** — How a field reads on the confirmation sheet
-- **`L.LESSONS`** — _no comment above it_
+- **`L.LESSONS`** — THE SHAPES A SHELF CAN TEACH, said the way the designer says them.
 - **`L.LIB_IMPORT_FIELDS`** — THE EXPORT, READ BACK IN
 - **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT (BZ, 2026-09-19
 - **`L.LIBRARY_COLS`** — THE LIBRARY, AS A SPREADSHEET
@@ -363,7 +363,6 @@ QUESTION, not the name you were going to use.
 - **`L.buddyLink`** — _no comment above it_
 - **`L.buddyPlaces`** — A pour at somebody's house, where the somebody is on the app.
 - **`L.buddyRows`** — WHO IS IN THE ROOM, BOTH DIRECTIONS AT ONCE
-- **`L.buildFlight`** — _no comment above it_
 - **`L.bulkRowSay`** — WHAT A ROW SAYS UNDER ITS NAME
 - **`L.bulkSaid`** — AND WHAT THE MARKING DID, once it is done
 - **`L.bulkSay`** — WHAT THE SHEET SAYS IT IS HOLDING
@@ -519,6 +518,7 @@ QUESTION, not the name you were going to use.
 - **`L.flavourSpread`** — _no comment above it_
 - **`L.flightCandidates`** — _no comment above it_
 - **`L.flightDrinks`** — The arithmetic for a whole flight
+- **`L.flightHolds`** — WHAT A BUILT FLIGHT HOLDS STILL
 - **`L.flightIdeasFor`** — THE FLIGHT THIS BOTTLE MAKES
 - **`L.flightIsMine`** — WHOSE FLIGHT IS THIS, and so what may be done to it.
 - **`L.flightMissing`** — `sealed` is the shelf's own answer (L.ownedCount against L.pourable), so
@@ -717,8 +717,9 @@ QUESTION, not the name you were going to use.
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
 - **`L.leansTo`** — _no comment above it_
-- **`L.lessonBlocker`** — the shape that is missing is what tells somebody what to buy.
-- **`L.lessonsFor`** — offered only when a real flight could be cast from what is open.
+- **`L.lessonSay`** — ONE LINE THAT IS THE SHAPE
+- **`L.lessonsFor`** — WHAT EACH SHAPE WOULD ACTUALLY POUR, off the bottles that are open.
+- **`L.lessonWays`** — HOW MANY HELD VALUES WOULD EACH BUILD THIS SHAPE.
 - **`L.libKey`** — Whiskey" are two bottles a keyed store would silently merge.
 - **`L.libKeysNamed`** — _no comment above it_
 - **`L.libraryAccepts`** — MAY THIS ENTRY BE WRITTEN TO THE SHARED LIBRARY? One answer for every
@@ -1080,6 +1081,7 @@ QUESTION, not the name you were going to use.
 - **`L.reservedIn`** — _no comment above it_
 - **`L.reservedWord`** — _no comment above it_
 - **`L.resetSide`** — WHO HAS THE LAST WORD ON ONE KEY AFTER A REPLACEMENT.
+- **`L.resolveHold`** — EVERY HOLD WITH A VALUE ON IT.
 - **`L.resolveLibKey`** — _no comment above it_
 - **`L.resolveUpc`** — cannot be searched by name, so the barcode store comes first.
 - **`L.restDays`** — _no comment above it_
