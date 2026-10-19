@@ -30314,6 +30314,68 @@ sec('§487 what a flight holds and what it varies');
     L.openProducts(cat, bots.map(b =>
       Object.assign({}, b, { status: 'sealed' }))).length, 0);
 
+  /* HOLDING ONE THING NARROWS WHAT THE OTHERS CAN REACH. BZ, 2026-10-19,
+     from a screenshot: holding 80 proof and then opening Type still said
+     "rye - 40 bottles", which is every rye he owns and not the ryes at 80.
+     The builder filtered this way inline; now the picker asks the same
+     door, and `except` leaves a dimension out so its own choices are
+     counted against everything else held. */
+  const all = Object.keys(cat).map(k => cat[k]);
+  eq('holding nothing leaves everything',
+    L.applyHold(all, []).length, all.length);
+  eq('holding 80 proof keeps only what is within two',
+    L.applyHold(all, [{ dim: 'proof', value: 80 }])
+      .every(p => Math.abs(p.proof - 80) <= 2), true);
+  eq('and exactly 80 is tighter still',
+    L.applyHold(all, [{ dim: 'proof', value: 80, tol: 0 }]).length
+      < L.applyHold(all, [{ dim: 'proof', value: 80 }]).length, true);
+  eq('two holds narrow more than one',
+    L.applyHold(all, [{ dim: 'proof', value: 80 },
+                      { dim: 'type', value: 'rye' }]).length
+      <= L.applyHold(all, [{ dim: 'proof', value: 80 }]).length, true);
+  eq('and a dimension is not counted against itself',
+    L.applyHold(all, [{ dim: 'proof', value: 80 }], 'proof').length,
+    all.length);
+
+  /* THE OPTIONS NARROW WITH THEM, which is what he actually saw wrong. */
+  const wide = L.designOptions(cat, bots, 0, []);
+  const tight = L.designOptions(cat, bots, 0,
+    [{ dim: 'proof', value: 80, tol: 0 }]);
+  const reach = (set, id) => set.filter(o => o.id === id)[0].have;
+  eq('holding a proof shrinks what type can reach',
+    reach(tight, 'type') <= reach(wide, 'type'), true);
+
+  /* WHAT IS HELD, SAID WHILE THE SERVICE THINKS - and it used to name the
+     VARYING dimension instead, so it announced the opposite of the truth. */
+  eq('holding nothing says so',
+    L.holdSay([]).indexOf('Nothing held'), 0);
+  eq('one hold reads properly',
+    L.holdSay([{ dim: 'house' }]).indexOf('Holding the house steady'), 0);
+  eq('two read properly too',
+    L.holdSay([{ dim: 'proof' }, { dim: 'house' }])
+      .indexOf('Holding proof and the house steady'), 0);
+  eq('and never doubles an article',
+    /the the/.test(L.holdSay([{ dim: 'house' }])), false);
+
+  /* THE LINE UNDER A SWITCH. */
+  eq('unheld, it says what the dimension means',
+    L.holdLine(L.dimOf('proof'), null), 'how strong');
+  eq('held exactly', L.holdLine(L.dimOf('proof'), { value: 92, tol: 0 }),
+    'at exactly 92');
+  eq('held in a band', L.holdLine(L.dimOf('proof'), { value: 92, tol: 2 }),
+    'within 2 of 92');
+  eq('a word says itself, because scotch is not a quantity',
+    L.holdLine(L.dimOf('type'), 'scotch'), 'scotch');
+
+  /* HOW MANY POURS, AND HOW MANY ON THE BENCH. */
+  const six = L.designFlight({ hold: [], size: 4, ext: 2 }, cat, bots);
+  eq('it pours what was asked for', six.pours.length <= 4, true);
+  eq('and benches what was asked for', six.bench.length <= 2, true);
+  eq('no bench when none is wanted',
+    L.designFlight({ hold: [], ext: 0 }, cat, bots).bench.length, 0);
+  eq('nothing is on the bench twice',
+    six.bench.some(b => six.pours.some(p => p.k === b.k)), false);
+
   /* ANYTHING NOT HELD IS FREE TO MOVE. BZ, 2026-10-18: "and if it's not
      held, it's a variable by default." So naming no variable is not a
      mistake - the app takes the widest thing left and says which it took,
@@ -33134,6 +33196,8 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
 
 
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.83  Build 2026-10-18 11:52 PM ET
+     Version : v2.8.84  Build 2026-10-19 12:13 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.84  2026-10-19  Four faults in the flight designer, all of them his.
 // v2.8.83  2026-10-18  The message when the service fails and the app designs the flight itself.
 // v2.8.82  2026-10-18  The flight designer is nine switches.
 // v2.8.81  2026-10-18  The flight designer, corrected from his own screenshots.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.77  2026-10-18  Make a link asks for a name again.
 // v2.8.76  2026-10-18  Gift links sits directly under the wish list on Shelf.
 // v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
-// v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.83';
-const BUILD_TIME  = '2026-10-18 11:52 PM ET';
+const APP_VERSION = '2.8.84';
+const BUILD_TIME  = '2026-10-19 12:13 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9380,7 +9380,7 @@ L.FEATURES = [
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
-    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose exactly that value or within a tolerance of it, with both counts shown, because insisting on dead equal costs bottles: exactly 92 is 47 of them and within two is 89. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. The premise writes itself from what you picked; type one only to say something the pickers cannot.' },
+    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose exactly that value or within a tolerance of it, with both counts shown, because insisting on dead equal costs bottles: exactly 92 is 47 of them and within two is 89. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
   { term: 'Hold a flavor still', src: 'the flight designer',
     def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
@@ -14692,10 +14692,16 @@ L.openProducts = function (catalog, bottles) {
     .map(k => catalog[k]).filter(p => p && L.isWhisky(p));
 };
 
-L.designOptions = function (catalog, bottles, size) {
+L.designOptions = function (catalog, bottles, size, hold) {
   const products = L.openProducts(catalog, bottles);
+  /* EACH DIMENSION AGAINST WHAT IS ALREADY HELD, and not
+     against itself: the choices for Proof are counted over the
+     bottles that survived every OTHER hold, so holding 80 proof
+     makes Type say how many ryes are at 80 rather than how many
+     ryes exist. */
   return L.DIMS.map(d => {
-    const s = L.dimSpread(d.id, products, size);
+    const s = L.dimSpread(d.id,
+      L.applyHold(products, hold, d.id), size);
     s.label = d.label;
     s.hint = d.hint;
     s.unit = d.unit || '';
@@ -14708,6 +14714,43 @@ L.designOptions = function (catalog, bottles, size) {
 /* THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank. BZ: "I
    thought the premise was only needed w/o user input" - so the pickers say
    what the flight IS and the premise is only the words for the room. */
+/* THE LINE UNDER ONE DIMENSION'S SWITCH: what it is held at, or what the
+ * dimension means when it is not held. A number says whether it is exact
+ * or a band, because that is the choice he made on the row above. */
+L.holdLine = function (d, h) {
+  if (!d) return '';
+  if (h === null || h === undefined) return d.hint || '';
+  const val = (h && typeof h === 'object') ? h.value : h;
+  if (val === null || val === undefined) return d.hint || '';
+  const tol = (h && typeof h === 'object'
+               && h.tol !== undefined && h.tol !== null)
+    ? h.tol : (d.numeric ? d.band : 0);
+  /* EXACTLY BELONGS TO A NUMBER. A word is just itself - "at exactly
+     scotch" was the first reading, and scotch is not a quantity. */
+  if (!d.numeric) return String(val);
+  return tol ? 'within ' + tol + ' of ' + val : 'at exactly ' + val;
+};
+
+/* WHAT IS BEING HELD, SAID WHILE THE SERVICE THINKS.
+ *
+ * The line used to read 'Holding ' + vLabel, and vLabel is the dimension
+ * the flight VARIES - so it announced the opposite of the truth, and with
+ * a label like "The house" it read "Holding The house steady" (BZ,
+ * 2026-10-19: "a toast that said Holding the house steady but I'd not
+ * selected house").
+ *
+ * HOLDING NOTHING IS A REAL ANSWER and says so rather than naming
+ * something at random.
+ */
+L.holdSay = function (hold) {
+  const names = (hold || []).map(h =>
+    ((L.dimOf(h.dim) || {}).label || h.dim || '').toLowerCase())
+    .filter(Boolean);
+  return names.length
+    ? 'Holding ' + L.andList(names) + ' steady\u2026'
+    : 'Nothing held but the question\u2026';
+};
+
 L.designPremise = function (hold, varyId, opts) {
   const o = opts || {};
   const vd = L.dimOf(varyId);
@@ -15138,6 +15181,42 @@ L.holdSpec = function (held) {
   });
 };
 
+/* THE BOTTLES THAT SURVIVE WHAT IS HELD. Written inline inside the builder
+ * at first, which meant the PICKER could not ask the same question: it
+ * counted every dimension against the whole open shelf, so holding 80 proof
+ * and then opening Type still offered "rye - 40 bottles" when forty is
+ * every rye he owns and not the ryes at 80 (BZ, 2026-10-19, from a
+ * screenshot: "if I choose a second thing to hold, the available count
+ * should diminish, right?").
+ *
+ * `except` leaves one dimension out, which is what the picker needs: the
+ * choices for Proof are counted against everything held EXCEPT proof.
+ *
+ * EXACTLY, OR WITHIN A TOLERANCE. A tolerance the caller names wins; naming
+ * none keeps the dimension's own band, which is what the picker suggests.
+ * Zero means exactly, and zero is not absent.
+ */
+L.applyHold = function (products, hold, except) {
+  let out = (products || []).slice();
+  (hold || []).forEach(h => {
+    if (!h || !h.dim || h.dim === except) return;
+    const d = L.dimOf(h.dim);
+    if (!d) return;
+    out = out.filter(p => {
+      const raw = d.get(p);
+      if (raw === null || raw === undefined || raw === '') return false;
+      if (h.value === null || h.value === undefined) return true;
+      if (d.numeric) {
+        const tol = (h.tol === undefined || h.tol === null)
+          ? (d.band || 0) : Number(h.tol);
+        return Math.abs(Number(raw) - Number(h.value)) <= tol;
+      }
+      return String(raw).toLowerCase() === String(h.value).toLowerCase();
+    });
+  });
+  return out;
+};
+
 /* WHAT MOVES, WHEN HE HAS ONLY SAID WHAT IS HELD.
  *
  * BZ, 2026-10-18: "and if it's not held, it's a variable by default." That
@@ -15184,32 +15263,20 @@ L.pickAxis = function (products, holdDims, size) {
 L.designFlight = function (spec, catalog, bottles, opts) {
   let s = spec || {};
   const o = opts || {};
-  const size = o.size || L.CORE_TARGET;
+  /* HOW MANY POURS, AND HOW MANY ON THE BENCH. Measured across his own
+     forty on 2026-10-19: the core is six in thirty-eight of them, and the
+     bench runs two to eleven with four the commonest. So six and four are
+     the defaults because that is what he builds, and both move because the
+     bench plainly does. */
+  const size = s.size || o.size || L.CORE_TARGET;
+  const extN = (s.ext === undefined || s.ext === null)
+    ? L.BENCH_TARGET : Number(s.ext);
   const open = L.openKeys(bottles);
   let pool = Object.keys(catalog || {}).filter(k => open[k])
     .map(k => catalog[k]).filter(p => p && L.isWhisky(p));
 
   const hold = (s.hold || []).filter(h => h && h.dim);
-  hold.forEach(h => {
-    const d = L.dimOf(h.dim);
-    if (!d) return;
-    pool = pool.filter(p => {
-      const raw = d.get(p);
-      if (raw === null || raw === undefined || raw === '') return false;
-      if (h.value === null || h.value === undefined) return true;
-      if (d.numeric) {
-        /* EXACTLY, OR WITHIN A TOLERANCE - BZ, 2026-10-18: "maybe we need
-           a choice for age and proof, equal to a value or a value plus a
-           tolerance." A tolerance the caller names wins; naming none
-           keeps the dimension's own band, which is what the picker
-           suggests. Zero means exactly, and zero is not absent. */
-        const tol = (h.tol === undefined || h.tol === null)
-          ? (d.band || 0) : Number(h.tol);
-        return Math.abs(Number(raw) - Number(h.value)) <= tol;
-      }
-      return String(raw).toLowerCase() === String(h.value).toLowerCase();
-    });
-  });
+  pool = L.applyHold(pool, hold);
 
   /* WHAT HE DID NOT SAY, the app answers: anything not held is free to
      move, and the widest of them is the flight's axis. Measured on the
@@ -15269,7 +15336,13 @@ L.designFlight = function (spec, catalog, bottles, opts) {
     score: L.flightScore(s.vary, full),
     load: L.flightDrinks(full, L.POUR_OZ),
     trimmed: sorted.length - pours.length,
-    bench: []
+    /* THE BENCH: more of the same flight, brought out if the night has
+       legs. Chosen from what the hold left over once the core is out, so
+       it answers the same question rather than wandering off it. */
+    bench: extN > 0
+      ? L.pickSpread(s.vary, pool.filter(p =>
+          !pours.some(x => x.k === p.k)), extN, o.used, valueOf)
+      : []
   };
 };
 
@@ -33388,6 +33461,9 @@ L.flightShape = function (f, catalog, bottles) {
 /* --- flight design -------------------------------------------------- */
 
 L.CORE_TARGET = 6;
+/* AND THE BENCH. Four is the commonest across his forty, which run two
+   to eleven; the core is six in thirty-eight of them. */
+L.BENCH_TARGET = 4;
 
 // Validate a flight instance against BZ's own build rules. Failing a check
 // is a warning with a reason, never a block: the proof rule has been
@@ -56605,8 +56681,13 @@ function holdValue(box, d, held, redraw) {
     d.options.forEach(o => {
       const op = document.createElement('option');
       op.value = String(o.value);
-      op.textContent = o.value + '  \u2014  ' + o.n + ' bottles'
-        + (d.numeric && d.band ? '  (\u00b1' + d.band + ')' : '');
+      /* THE VALUE ALONE, for a number. It used to carry the band and the
+         banded count - "80 - 27 bottles (+/-2)" - which is exactly what
+         the tolerance select underneath says, so the two read as one
+         question asked twice (BZ, 2026-10-19: "we have a nested select
+         issue"). The count belongs to the tolerance, not to the value. */
+      op.textContent = d.numeric ? String(o.value)
+        : o.value + '  \u2014  ' + o.n + ' bottles';
       sel.appendChild(op);
     });
     sel.value = String(val);
@@ -56656,8 +56737,29 @@ function dimRow(box, d, state, act) {
   box.appendChild(switchRow(state.held, d.label, state.sub, act.hold));
 }
 
+/* A NUMBER PICKER, from and to. Its own function because flightPickers is
+   at the 100-line ceiling and a screen lays things out (rule 30). */
+function countSel(box, label, from, to, now) {
+  const wrap = el('label', null, label);
+  wrap.style.flex = '1';
+  const s2 = document.createElement('select');
+  s2.className = 'field';
+  for (let n = from; n <= to; n++) {
+    const op = document.createElement('option');
+    op.value = String(n);
+    op.textContent = String(n);
+    s2.appendChild(op);
+  }
+  s2.value = String(now);
+  wrap.appendChild(s2);
+  box.appendChild(wrap);
+  return s2;
+}
+
 function flightPickers(form, fromCat, fromBot) {
-  const dims = L.designOptions(fromCat, fromBot);
+  /* RECOMPUTED ON EVERY DRAW, because holding one thing changes what
+     the others can reach. */
+  let dims = L.designOptions(fromCat, fromBot);
   const held = {};        // dim id -> chosen value
   let varyId = null;
 
@@ -56672,17 +56774,10 @@ function flightPickers(form, fromCat, fromBot) {
   const draw = () => {
     box.innerHTML = '';
     const spec = L.holdSpec(held);
+    dims = L.designOptions(fromCat, fromBot, 0, spec);
     dims.filter(d => d.canHold).forEach(d => {
       const isHeld = Object.prototype.hasOwnProperty.call(held, d.id);
-      const h = isHeld ? held[d.id] : null;
-      const val = (h && typeof h === 'object') ? h.value : h;
-      const tol = (h && typeof h === 'object'
-                   && h.tol !== undefined && h.tol !== null)
-        ? h.tol : (d.numeric ? d.band : 0);
-      const sub = isHeld && val !== null
-        ? (d.numeric && tol ? 'within ' + tol + ' of ' + val
-                            : 'at exactly ' + val)
-        : (d.hint || '');
+      const sub = L.holdLine(d, isHeld ? held[d.id] : null);
       dimRow(box, d, { held: isHeld, sub: sub }, {
         hold: () => {
           if (isHeld) { delete held[d.id]; } else {
@@ -56704,6 +56799,17 @@ function flightPickers(form, fromCat, fromBot) {
       ? L.designPremise(spec, varyId, { pairs: pairs.checked })
       : 'Nothing is left to vary — hold fewer things.';
   };
+
+  /* HOW MANY POURS, AND HOW MANY ON THE BENCH. Six and four are what he
+     builds - the core is six in thirty-eight of his forty, and the bench
+     runs two to eleven with four the commonest - so they are defaults
+     rather than rules (BZ, 2026-10-19: "should we have a default but
+     changeable flight quantity? With a secondary count as well?"). */
+  const counts = el('div');
+  counts.style.cssText = 'display:flex;gap:12px;margin-top:4px';
+  const sizeSel = countSel(counts, 'Pours', 4, 8, L.CORE_TARGET);
+  const extSel = countSel(counts, 'On the bench', 0, 8, L.BENCH_TARGET);
+  form.appendChild(counts);
 
   form.appendChild(box);
 
@@ -56755,7 +56861,9 @@ function flightPickers(form, fromCat, fromBot) {
 
   draw();
   return { held: held, varyOf: () => varyId, pairsOn: () => pairs.checked,
-           flavOf: () => flavWord };
+           flavOf: () => flavWord,
+           sizeOf: () => Number(sizeSel.value),
+           extOf: () => Number(extSel.value) };
 }
 
 function flightBuilder(preset, pool) {
@@ -56769,9 +56877,10 @@ function flightBuilder(preset, pool) {
     const fromCat = (pool && pool.catalog) || S.catalog;
     const fromBot = (pool && pool.bottles) || S.bottles;
     m.appendChild(el('div', 'sub',
-      'Say what is HELD and what VARIES. Everything here is read off your '
-      + 'open bottles, so a dimension only appears when it can fill a '
-      + 'flight.'));
+      /* BZ's own words, 2026-10-19. Mine was also stale: it still said
+         "and what VARIES" a build after the vary picker went, because
+         anything not held already varies. */
+      'Select what variable(s) to hold constant as the theme of the Flight.'));
 
     const form = el('div', 'form');
 
@@ -56818,7 +56927,8 @@ function flightBuilder(preset, pool) {
       const typed = prem.value.trim();
       const hold = L.holdSpec(pick.held);
       const varyId = pick.varyOf();
-      const spec = { hold: hold, vary: varyId, pairs: pick.pairsOn() };
+      const spec = { hold: hold, vary: varyId, pairs: pick.pairsOn(),
+        size: pick.sizeOf(), ext: pick.extOf() };
       const premise = typed || (varyId
         ? L.designPremise(hold, varyId, { pairs: pick.pairsOn() }) : '');
       /* A flavour flight is cast on this device (flavour held still,
@@ -56843,11 +56953,10 @@ function flightBuilder(preset, pool) {
       status.textContent = 'Designing against your shelf\u2026';
       /* The bottle fills while it waits; this takes about 40 seconds. */
       working('Designing against your shelf\u2026');
-      /* Names the chosen variable. Every option here is a variable, so "looking
-         for a variable" belongs to the chooser, not this builder (BZ). */
+      const heldSay = L.holdSay(hold);
       const stopSaying = workingPhrases([
         'Reading what is open\u2026',
-        'Holding ' + vLabel + ' steady\u2026',
+        heldSay,
         'Ordering the pours\u2026',
         'Checking every name against your shelf\u2026',
         'Writing it up\u2026'
@@ -60994,7 +61103,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.83</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.84</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1063 |
+| functions | 1066 |
 | tables | 251 |
-| carrying a stated purpose | 852 |
+| carrying a stated purpose | 854 |
 
 ## Tables
 
@@ -295,6 +295,7 @@ QUESTION, not the name you were going to use.
 - **`L.alreadyRun`** — Was this flight already logged today?
 - **`L.andList`** — _no comment above it_
 - **`L.appleDevice`** — AN APPLE HANDHELD, WHICH TWO QUESTIONS NEED
+- **`L.applyHold`** — THE BOTTLES THAT SURVIVE WHAT IS HELD
 - **`L.applyLibraryMoves`** — Removals and renames must travel
 - **`L.article`** — "A Amontillado" is what happens when a reason is assembled from parts.
 - **`L.askableHouse`** — Whether this entry is worth asking about, given what its house has
@@ -425,7 +426,7 @@ QUESTION, not the name you were going to use.
 - **`L.describeCorrection`** — A correction in words
 - **`L.designFlight`** — BUILD WHAT THE TWO PICKERS DESCRIBE.
 - **`L.designOptions`** — _no comment above it_
-- **`L.designPremise`** — THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank
+- **`L.designPremise`** — _no comment above it_
 - **`L.detailAt`** — _no comment above it_
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
@@ -604,6 +605,8 @@ QUESTION, not the name you were going to use.
 - **`L.histRestore`** — _no comment above it_
 - **`L.histRestoreRun`** — the whole of what the X did.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
+- **`L.holdLine`** — THE LINE UNDER ONE DIMENSION'S SWITCH
+- **`L.holdSay`** — WHAT IS BEING HELD, SAID WHILE THE SERVICE THINKS.
 - **`L.holdsFor`** — flight answers neither.
 - **`L.holdSpec`** — THE PICKERS' STATE AS THE BUILDER WANTS IT
 - **`L.hostCard`** — _no comment above it_
