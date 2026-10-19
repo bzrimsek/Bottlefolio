@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1048 |
+| functions | 1049 |
 | tables | 250 |
-| carrying a stated purpose | 841 |
+| carrying a stated purpose | 842 |
 
 ## Tables
 
@@ -934,6 +934,7 @@ QUESTION, not the name you were going to use.
 - **`L.pourKinship`** — _no comment above it_
 - **`L.pourLabel`** — What to call it on a card or a ladder.
 - **`L.pourOptions`** — _no comment above it_
+- **`L.pourOrder`** — THE ORDER A FLIGHT IS POURED IN
 - **`L.pourProof`** — _no comment above it_
 - **`L.pourScore`** — carries a reason so the UI can say WHY - an unexplained pick is a shuffle.
 - **`L.pourSearch`** — WHEN YOU ALREADY KNOW WHAT YOU WANT (BZ, 2026-09-17)
@@ -1165,7 +1166,7 @@ QUESTION, not the name you were going to use.
 - **`L.smsBody`** — after the reveal, so it is the answer key people keep.
 - **`L.snacksFor`** — _no comment above it_
 - **`L.snapHouse`** — _no comment above it_
-- **`L.sortByProof`** — Order the pours by ascending proof -- the house rule, applied in one call.
+- **`L.sortByProof`** — Weakest first and nothing else
 - **`L.sortFlights`** — _no comment above it_
 - **`L.sortMark`** — The mark a header carries
 - **`L.speciesOf`** — _no comment above it_

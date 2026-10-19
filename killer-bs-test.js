@@ -30048,6 +30048,61 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§486 smoke is poured last, because nothing clean can follow it');
+{
+  /* BZ, 2026-10-18, testing an 80-proof introduction across all types: it
+     "keeps putting smoke in the middle of the run - that is not
+     appropriate", and then the rule - "we can't put smoke on the palate if
+     non-smoke follows". A flight was ordered by proof alone, so a gentle
+     Islay landed second and everything after it tasted of phenol. */
+  const cat = {
+    glen:  { k: 'glen',  name: 'The Glenlivet 12 Year Old', proof: 80 },
+    lag:   { k: 'lag',   name: 'Lagavulin 16 Year Old', proof: 86,
+             dist: 'Lagavulin' },
+    bt:    { k: 'bt',    name: 'Buffalo Trace Bourbon', proof: 90 },
+    lap:   { k: 'lap',   name: 'Laphroaig 10 Year', proof: 96,
+             dist: 'Laphroaig' },
+    red:   { k: 'red',   name: 'Redbreast 12 Cask Strength', proof: 112 }
+  };
+  const rows = ['glen', 'lag', 'bt', 'lap', 'red'].map(k => ({ k: k }));
+
+  /* THE OLD ORDER IS THE FAULT, kept here so the two are visible together. */
+  const byProof = L.sortByProof(rows, cat).map(x => x.k);
+  eq('sorting by proof alone puts smoke second', byProof[1], 'lag');
+
+  const order = L.pourOrder(rows, cat).map(x => x.k);
+  eq('the gentlest unpeated pour opens', order[0], 'glen');
+  eq('and the two smoky ones close it',
+    order.slice(-2).sort().join(','), 'lag,lap');
+
+  /* THE RULE ITSELF, not a fixed list: once smoke starts, nothing clean
+     follows. Written this way so a different shelf cannot pass it by
+     accident. */
+  let seen = false, after = 0;
+  L.pourOrder(rows, cat).forEach(x => {
+    if (L.peatLevel(cat[x.k]) > 0) seen = true;
+    else if (seen) after++;
+  });
+  eq('nothing clean is poured after smoke', after, 0);
+
+  /* PEAT BEATS PROOF, which is the whole point: this is about what coats
+     the mouth, not about strength. */
+  const gentleSmoke = { s: { k: 's', name: 'Ardbeg Ten', proof: 80,
+                             dist: 'Ardbeg' },
+                        h: { k: 'h', name: 'Booker\'s Bourbon', proof: 125 } };
+  eq('a weak peated pour still follows a strong clean one',
+    L.pourOrder([{ k: 's' }, { k: 'h' }], gentleSmoke).map(x => x.k).join(','),
+    'h,s');
+
+  /* AND WITHIN ONE LEVEL the old order stands: weakest first. */
+  eq('unpeated pours keep their proof order',
+    L.pourOrder([{ k: 'red' }, { k: 'glen' }, { k: 'bt' }], cat)
+      .map(x => x.k).join(','), 'glen,bt,red');
+  eq('and so do the smoky ones',
+    L.pourOrder([{ k: 'lap' }, { k: 'lag' }], cat)
+      .map(x => x.k).join(','), 'lag,lap');
+}
+
 sec('§485 a gift token belongs after the #, not in a server log');
 {
   /* A GIFT TOKEN IS A CREDENTIAL - the only thing authorising a read of that
