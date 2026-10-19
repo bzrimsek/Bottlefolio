@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.96  Build 2026-10-19 01:58 PM ET
+     Version : v2.8.98  Build 2026-10-19 02:29 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.98  2026-10-19  Standing still is not a theme.
+// v2.8.97  2026-10-19  The tonight sheet has a row for each thing the designer can hold, and the tabs read one glass, two, three.
 // v2.8.96  2026-10-19  A flight's topic is a sentence, not the facts in a row.
 // v2.8.95  2026-10-19  The tonight list is topics, not titles.
 // v2.8.94  2026-10-19  The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
 // v2.8.90  2026-10-19  What your shelf can teach you speaks the designer's language.
 // v2.8.89  2026-10-19  The flight designer no longer calls the service.
-// v2.8.88  2026-10-19  A number is typed now, not picked from a list.
-// v2.8.87  2026-10-19  The four widths now reach the screen, and age has them too.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3070,12 +3070,14 @@ body.giftonly{padding:0}
        a flag stuck on the neck. -->
   <button data-scr="shop"><span class="g"><svg viewBox="0 0 22 26" aria-hidden="true" class="ni"><path d="M9.4 2.2h3.2v5.4c0 1.5 2.4 2.6 2.4 5v9.6a1.7 1.7 0 0 1-1.7 1.7H8.7A1.7 1.7 0 0 1 7 22.2v-9.6c0-2.4 2.4-3.5 2.4-5Z"/><path d="M7 13.9h8"/><path d="M7 18.6h8"/></svg></span>Shop</button>
   <button data-scr="pour"><span class="g"><svg viewBox="0 0 22 26" aria-hidden="true" class="ni"><path d="M6 3h10l-1.2 9a4.3 4.3 0 0 1-7.6 0Z"/><path d="M10 15h2l.5 4h-3Z"/><ellipse cx="11" cy="21" rx="4.4" ry="1.5"/></svg></span>Taste</button>
-  <button data-scr="flights"><span class="g"><svg viewBox="0 0 34 26" aria-hidden="true" class="ni"><path d="M2 5h7l-.9 6.5A3 3 0 0 1 2.9 11.5Z"/><path d="M4.6 14h1.8l.4 3h-2.6Z"/><ellipse cx="5.5" cy="19" rx="3.2" ry="1.2"/><path d="M13.5 3h7l-.9 7.5a3 3 0 0 1-5.2 0Z"/><path d="M16.1 13h1.8l.4 4h-2.6Z"/><ellipse cx="17" cy="19" rx="3.2" ry="1.2"/><path d="M25 5h7l-.9 6.5a3 3 0 0 1-5.2 0Z"/><path d="M27.6 14h1.8l.4 3h-2.6Z"/><ellipse cx="28.5" cy="19" rx="3.2" ry="1.2"/></svg></span>Flights</button>
-  <!-- Two glasses tilted toward each other. The vessel family already says
-       what a tab is about: Taste is one glass, Flights is three, and this
-       is two people drinking the same thing. Same glass path as Flights,
-       reused rather than redrawn. -->
+  <!-- Two glasses tilted toward each other, and SECOND OF THE THREE
+       (BZ, 2026-10-19: "swapping flight and buddies - then we go 1 glass
+       for taste, 2 for buddies and 3 for flights - more of a visual
+       progression thing"). The vessel family already said what a tab was
+       about; now the ORDER says it too, one glass to three along the bar.
+       Same glass path as Flights, reused rather than redrawn. -->
   <button data-scr="buddies"><span class="g"><svg viewBox="0 0 30 26" aria-hidden="true" class="ni"><g transform="rotate(-13 9 12)"><path d="M3 4h7l-.9 6.5A3 3 0 0 1 3.9 10.5Z"/><path d="M5.6 13h1.8l.4 3H5.2Z"/><ellipse cx="6.5" cy="18" rx="3.2" ry="1.2"/></g><g transform="rotate(13 21 12)"><path d="M17 4h7l-.9 6.5a3 3 0 0 1-5.2 0Z"/><path d="M19.6 13h1.8l.4 3h-2.6Z"/><ellipse cx="20.5" cy="18" rx="3.2" ry="1.2"/></g></svg></span>Buddies</button>
+  <button data-scr="flights"><span class="g"><svg viewBox="0 0 34 26" aria-hidden="true" class="ni"><path d="M2 5h7l-.9 6.5A3 3 0 0 1 2.9 11.5Z"/><path d="M4.6 14h1.8l.4 3h-2.6Z"/><ellipse cx="5.5" cy="19" rx="3.2" ry="1.2"/><path d="M13.5 3h7l-.9 7.5a3 3 0 0 1-5.2 0Z"/><path d="M16.1 13h1.8l.4 4h-2.6Z"/><ellipse cx="17" cy="19" rx="3.2" ry="1.2"/><path d="M25 5h7l-.9 6.5a3 3 0 0 1-5.2 0Z"/><path d="M27.6 14h1.8l.4 3h-2.6Z"/><ellipse cx="28.5" cy="19" rx="3.2" ry="1.2"/></svg></span>Flights</button>
   <!-- MAP IS NOT A TAB ANY MORE. BZ: Map is not needed as a full tab, just
        a page the home page calls. Right, and it already was one — the
        mini-map on Home opens this very screen, so the tab was a second door
@@ -3096,7 +3098,7 @@ body.giftonly{padding:0}
        beat it: every word he says to a question is a Learn entry read back,
        so those two are one family in the sense somebody hunting a tab cares
        about; and seventh is the only slot that splits nothing, where fifth
-       prised Taste apart from Flights. Switching him on now inserts a tab
+       prised the run of glasses apart. Switching him on now inserts a tab
        rather than rearranging six that are already known. -->
   <button data-scr="guide" id="guideTab" hidden><span class="g"><svg viewBox="0 0 22 26" aria-hidden="true" class="ni"><path d="M5.2 2.4h11.6l-1.4 11a4.8 4.8 0 0 1-8.8 0Z"/><path d="M10 16.4h2l.5 3.4h-3Z"/><ellipse cx="11" cy="21.6" rx="4.4" ry="1.4"/><path d="M9.2 5.6a1.9 1.9 0 1 1 2 2.2c-.6.2-.8.7-.8 1.3"/><path d="M10.4 11.4h.02"/></svg></span>Guide</button>
   <button data-scr="ref"><span class="g" aria-hidden="true">◈</span>Learn</button>
@@ -3126,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.96';
-const BUILD_TIME  = '2026-10-19 01:58 PM ET';
+const APP_VERSION = '2.8.98';
+const BUILD_TIME  = '2026-10-19 02:29 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9010,10 +9012,10 @@ L.FEATURES = [
     def: 'It opens by asking where you are: in a store holding a bottle, deciding what to buy next, or looking at one on a website. The answer shapes the screen and is remembered; Back, at the top, returns to the question. The header counts what one bottle would close rather than naming an axis and a percentage — a percentage cannot be compared across axes, because fifty per cent of six buckets is not fifty per cent of eighteen. Deciding what to buy next shops along the same nine axes the chart draws, the pills ordered by what it costs to move them and the covered ones collapsed into one chip; a distillery and a price have their own row, because they move no axis. Gaps on the chart lists every gap with the axis it belongs to and what it costs, taking the cheapest from each axis before a second from any, so the widest axis cannot crowd out the rest. A gap is only listed where the library holds a bottling you do not own that would fill it: saying one short is a promise that one exists, and a class nobody bottles — blended grain, a country the library has never held — is not a gap in a shelf. The chart still counts it; the shopping list does not offer it. The suggestions under it come from what you buy again and the houses you go deep on; they say so, because they move no axis either.' },
   { term: 'Taste', src: 'deciding what to pour',
     def: 'Four reels: proof band, type, how well known, and occasion. Tap a reel to choose a value, or tap Spin and let it pick. It fills up to three glasses from what is open and never lands on a combination nothing satisfies. Tap a glass to see the bottle or log the pour. At home is the reels; Out is a bar, a shop or a friend’s kitchen, where you photograph what is in front of you and log what you drank.' },
-  { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, grouped by WHAT THEY HOLD STILL rather than listed by name: five or six rows instead of thirty-eight titles, and tapping one opens its flights. Each flight is listed by WHAT IT IS rather than what it is called — bourbon, angels envy, 4 casks — read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
+  { term: 'Flights', src: 'your flights',
+    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its flights. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
     def: 'Cooper walks you through a tasting: a measured pour, then color, '
       + 'nose, body, palate and finish, teaching each one as it comes from the '
@@ -15337,6 +15339,37 @@ L.pairPick = function (pool, hold, varyId, size, catalog) {
  * and everything else as the value itself. In the engine so the screen
  * lays things out and nothing else (rule 30).
  */
+/* WHAT A FRESH HOLD HOLDS AT - the value a switch takes the moment it is
+ * turned on. The picker wrote this inline, and then the tonight sheet
+ * needed it too: its empty rows offer to build the flight that would fill
+ * them, which means opening the designer with that switch already on.
+ * Two spellings of one rule is what rule 30d is about, so there is one.
+ *
+ * THE FIRST OPTION, because L.designOptions sorts them by how much of the
+ * shelf each reaches - so a fresh hold lands on the one he can actually
+ * build from rather than on whatever is alphabetically first.
+ */
+L.holdDefault = function (d) {
+  if (!d) return null;
+  const first = (d.options || []).length ? d.options[0].value : null;
+  return d.numeric ? { value: first, tol: d.band || 0 } : first;
+};
+
+/* THE HOLD A SHEET ARRIVES WITH. The tonight sheet's empty rows offer to
+ * build the flight that would fill them, so "Same age · build one" opens
+ * the designer with Age held. Seeded through L.holdDefault, so an arrived-at
+ * hold and a pressed one are the same hold, and a dimension this shelf
+ * cannot hold is skipped rather than set to nothing.
+ */
+L.presetHold = function (dims, preset) {
+  const held = {};
+  (preset || []).forEach(id => {
+    const d = (dims || []).filter(x => x.id === id && x.canHold)[0];
+    if (d) held[id] = L.holdDefault(d);
+  });
+  return held;
+};
+
 L.holdSpec = function (held) {
   return Object.keys(held || {}).map(k => {
     const v = held[k];
@@ -25056,6 +25089,97 @@ L.flightHolds = function (flight, catalog) {
     return vals.every(v => v === vals[0]);
   }).map(d => d.id);
 };
+/* WHAT A FLIGHT HELD BY CHOICE, which is not everything it holds.
+ *
+ * BZ, 2026-10-19: "only count smoke when it was a choice." Same smoke topped
+ * his sheet at 28 of 34 - a true row that helped him choose nothing, because
+ * most of his shelf is unpeated and the smoke never had a chance to move.
+ * Standing still is not a theme; being KEPT still is.
+ *
+ * THE SHELF DECIDES, NOT A THRESHOLD. A dimension was a choice when the open
+ * bottles that satisfy everything ELSE the flight holds offer more than one
+ * answer for it. Six bourbons from Jim Beam: there is no peated Jim Beam
+ * bourbon open, so the smoke was never on the table and the row does not
+ * claim it. Six Islay scotches: the smoke came with the island, and the
+ * island was the choice.
+ *
+ * L.applyHold with `except` is exactly this question and is what the
+ * designer's pickers ask to shrink their counts as he holds more (rule 2).
+ */
+L.choiceHolds = function (flight, catalog, open) {
+  const ids = L.flightHolds(flight, catalog);
+  /* NO SHELF, NO JUDGEMENT. Without the open bottles there is nothing to
+     say what could have moved, and guessing makes the answer BIGGER - it
+     would call every hold deliberate. */
+  if (!ids.length || !open || !open.length) return ids;
+  const got = ((flight || {}).core || [])
+    .map(x => (catalog || {})[x.k]).filter(Boolean);
+  const spec = ids.map(id => ({ dim: id, value: L.dimValue(id, got[0]),
+                                tol: (L.dimOf(id) || {}).band }));
+  return ids.filter(id =>
+    L.dimValues(id, L.applyHold(open, spec, id)).length > 1);
+};
+
+/* WHAT TO POUR TONIGHT, AS ROWS - one per thing the designer can hold.
+ *
+ * BZ, 2026-10-19: "how can I only have 1 same house?!?!?! Same type should
+ * not conflate house, type, age and proof - actually this is conflated
+ * across most of the options." He was reading a bug. The row key was
+ * holds[0] - the FIRST dimension of L.DIMS that a flight held - so a flight
+ * holding the type AND the house AND the proof landed under whichever of
+ * them L.DIMS happens to list first, and the other two buckets lost it. He
+ * has ten flights holding a house and one of them said so.
+ *
+ * A FLIGHT HOLDS SEVERAL THINGS, SO IT SITS UNDER EACH (BZ, same message:
+ * "why not use these options to drive 1 each and then suggest Build for
+ * others"). The rows are the designer's own nine switches, in the designer's
+ * own order, so the sheet and the sheet that builds one use one vocabulary.
+ * The counts OVERLAP on purpose - they are what each row can offer, not a
+ * division of the forty - and the heading above still counts the flights.
+ *
+ * AND AN EMPTY ROW IS AN OFFER, not a row left out. Nothing on this shelf
+ * holds an age or the bond, and a row saying so with a way to build one is
+ * worth more than a row that is not drawn.
+ */
+L.tonightRows = function (list, flights, catalog, open) {
+  const all = flights || [];
+  const held = {};
+  (list || []).forEach(f => {
+    const full = all.filter(x => x.title === f.title)[0];
+    if (!full) return;
+    /* HELD BY CHOICE, not merely standing still (BZ, 2026-10-19: "only
+       count smoke when it was a choice"). */
+    const h = L.choiceHolds(full, catalog, open);
+    if (!h.length) {
+      /* BZ, 2026-10-19: "nothing held but the question is also odd words".
+         These are the ones with no single thread, and they belong to no
+         dimension - so they are their own row rather than missing. */
+      (held.__none = held.__none || []).push(f);
+      return;
+    }
+    h.forEach(id => { (held[id] = held[id] || []).push(f); });
+  });
+  const rows = L.DIMS.map(d => ({
+    id: d.id,
+    /* SAME, not one: "One smoke" reads as a quantity of smoke, and what
+       these flights share is that the smoke does not change. A flag is not
+       a quantity either way, so it says All. */
+    label: (d.flag ? 'All ' : 'Same ')
+      + String(d.label).toLowerCase().replace(/^the /, ''),
+    flights: held[d.id] || []
+  }));
+  /* BIGGEST FIRST AMONG THE ONES HE CAN POUR, then the offers. L.DIMS order
+     is the designer's and is kept inside each half, so an empty row does not
+     jump about as the shelf changes. */
+  const got = rows.filter(r => r.flights.length)
+    .sort((a, b) => b.flights.length - a.flights.length);
+  const none = rows.filter(r => !r.flights.length);
+  if (held.__none) {
+    got.push({ id: null, label: 'Everything moves', flights: held.__none });
+  }
+  return got.concat(none);
+};
+
 /* WHAT A FLIGHT IS ABOUT, in a line, read off its own pours.
  *
  * BZ, 2026-10-19, of his own titles in a list of what to pour tonight:
@@ -37498,7 +37622,8 @@ function showBottle(k) {
       inner.appendChild(el('div', 'sub', idea.why));
       fb.appendChild(el('div', 'm', '\u2605'));
       fb.appendChild(inner);
-      fb.onclick = () => flightBuilder(idea.varId);
+      /* Nothing to preset: anything not held varies, and `preset` holds. */
+      fb.onclick = () => flightBuilder();
       cc.appendChild(fb);
     });
 
@@ -44359,49 +44484,44 @@ function renderTonight(box) {
   /* The label stays put and the flights scroll under it, so the rest of the
      card - the flavour chips, Design one, Close - is still reachable on a
      phone however many are ready. */
-  /* GROUPED BY WHAT THEY HOLD, not listed by name (BZ, 2026-10-19: "less
-     about names and more about concepts"). Thirty-eight titles is a list
-     to read; a handful of shapes is a thing to choose from. The titles
-     are still there, under the shape they belong to. */
+  /* THE ROWS ARE THE DESIGNER'S OWN SWITCHES (BZ, 2026-10-19: "why not use
+     these options to drive 1 each and then suggest Build for others"). One
+     row per thing the designer can hold, a flight under EACH thing it holds
+     rather than under whichever one came first, and an empty row offering to
+     build the flight that would fill it. L.tonightRows is the whole rule. */
   const roll = el('div', 'scrollbox');
-  const byShape = {};
   const all = allFlights();
-  list.forEach(f => {
-    const full = all.filter(x => x.title === f.title)[0];
-    const holds = full ? L.flightHolds(full, S.catalog) : [];
-    const key = holds.length
-      /* SAME, not one: "One smoke" reads as a quantity of smoke, and
-         what these flights share is that the smoke does not change. */
-      ? 'Same ' + ((L.dimOf(holds[0]) || {}).label || '')
-          .toLowerCase().replace(/^the /, '')
-      /* BZ, 2026-10-19: "nothing held but the question is also odd
-         words". It is what the premise says when nothing is held, and as
-         a heading over a list of flights it reads as a riddle. These are
-         the ones with no single thread. */
-      : 'Everything moves';
-    (byShape[key] = byShape[key] || []).push(f);
-  });
-  /* THE SHAPE IS THE ROW, and its flights open under it. Grouping alone
-     changed nothing he could feel: thirty-eight titles were still
-     thirty-eight titles with headings sprinkled through them (BZ,
-     2026-10-19, from a screenshot: "so no changes?"). Five rows is a
-     thing to choose from. */
-  Object.keys(byShape).sort((x, y) => byShape[y].length - byShape[x].length)
-    .forEach(key => {
+  const rows = L.tonightRows(list, all, S.catalog,
+    L.openProducts(S.catalog, S.bottles));
+  /* THE COUNTS OVERLAP AND THE SHEET SAYS SO. A flight holding the type and
+     the house is offered by both rows, so the row counts add up to more than
+     the number above them - which looks like a fault unless it is stated. */
+  wrap.appendChild(el('div', 'src', 'A flight holds more than one thing, so '
+    + 'it is offered under each of them — and only where the shelf could '
+    + 'have moved it.'));
+  rows.forEach(row => {
       const open = { on: false };
       const under = el('div');
       under.hidden = true;
       const head = el('button', 'portstep');
       head.type = 'button';
+      /* AN EMPTY ROW IS AN OFFER. Nothing here holds an age or the bond;
+         saying so with a way to build one beats leaving the row out. */
+      if (!row.flights.length) {
+        head.textContent = row.label + '  \u00b7  build one';
+        head.onclick = () => { closeModal(); flightBuilder([row.id]); };
+        roll.appendChild(head);
+        return;
+      }
       const draw = () => {
-        head.textContent = (open.on ? '−  ' : '+  ') + key
-          + '  ·  ' + byShape[key].length;
+        head.textContent = (open.on ? '\u2212  ' : '+  ') + row.label
+          + '  \u00b7  ' + row.flights.length;
         under.hidden = !open.on;
       };
       head.onclick = () => { open.on = !open.on; draw(); };
       draw();
       roll.appendChild(head);
-      byShape[key].forEach(f => {
+      row.flights.forEach(f => {
         const r = el('button', 'portstep');
         r.type = 'button';
         r.style.paddingLeft = '18px';
@@ -57192,8 +57312,7 @@ function holdRow(box, d, held, redraw) {
       if (isHeld) {
         delete held[d.id];
       } else {
-        const first = d.options.length ? d.options[0].value : null;
-        held[d.id] = d.numeric ? { value: first, tol: d.band || 0 } : first;
+        held[d.id] = L.holdDefault(d);
       }
       redraw();
     } });
@@ -57228,11 +57347,12 @@ function countSel(box, label, from, to, now) {
   return s2;
 }
 
-function flightPickers(form, fromCat, fromBot) {
+function flightPickers(form, fromCat, fromBot, preset) {
   /* RECOMPUTED ON EVERY DRAW, because holding one thing changes what
      the others can reach. */
   let dims = L.designOptions(fromCat, fromBot);
-  const held = {};        // dim id -> chosen value
+  // dim id -> chosen value, seeded with whatever the caller arrived holding.
+  const held = L.presetHold(dims, preset);
   let varyId = null;
 
   const box = el('div');
@@ -57342,12 +57462,12 @@ function flightPickers(form, fromCat, fromBot) {
            extOf: () => Number(extSel.value) };
 }
 
+/* `preset` is dimensions to HOLD, from the tonight sheet's empty rows. It
+ * meant the VARIABLE until the vary dropdown went, and was then assigned and
+ * read by nobody for a build. */
 function flightBuilder(preset, pool) {
   // Named for the tile that opens it: design, not build.
   openModal('Design a flight', m => {
-    // Arrived from a lesson: the variable is already chosen, so do not ask
-    // again.
-    const chosen = preset || null;
     // Casting from the room rather than one shelf. Everything downstream is
     // unchanged: a pool is a catalog like any other.
     const fromCat = (pool && pool.catalog) || S.catalog;
@@ -57373,7 +57493,7 @@ function flightBuilder(preset, pool) {
     /* THE PICKERS ARE THEIR OWN FUNCTION (rule 30). They are 110 lines of
        DOM and flightBuilder was already at its ceiling; the allowance does
        not go up. `pick` is the handle the Design it button reads. */
-    const pick = flightPickers(form, fromCat, fromBot);
+    const pick = flightPickers(form, fromCat, fromBot, preset);
 
     const prem = document.createElement('textarea');
     prem.className = 'field'; prem.rows = 2;
@@ -61443,7 +61563,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.96</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.98</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

@@ -25,7 +25,7 @@ const dir = path.dirname(file);
    it, so the tab was a second door to the same room. Buddies went on.
    The Map SCREEN is still there and still drawn; it is reached from Home,
    which is checked separately below. */
-const TABS = ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref'];
+const TABS = ['home', 'shelf', 'shop', 'pour', 'buddies', 'flights', 'ref'];
 
 /* Reporter state lives here, not inside the walk: the catch that reports a
    crash sits outside the async function and has to be able to name the
@@ -4299,7 +4299,7 @@ function step(n) {
   {
     const empties = await page.evaluate(() => {
       const out = [];
-      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+      ['home', 'shelf', 'shop', 'pour', 'buddies', 'flights', 'ref']
         .forEach(t => {
           const nb = document.querySelector('nav button[data-scr="' + t + '"]');
           if (nb) nb.click();
@@ -4383,7 +4383,7 @@ function step(n) {
     await page.waitForTimeout(100);
     const clash = await page.evaluate(() => {
       const out = [];
-      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+      ['home', 'shelf', 'shop', 'pour', 'buddies', 'flights', 'ref']
         .forEach(t => {
           const nb = document.querySelector('nav button[data-scr="' + t + '"]');
           if (nb) nb.click();
@@ -4954,7 +4954,7 @@ function step(n) {
     await page.setViewportSize({ width: 390, height: 844 });
     const bad = await page.evaluate(() => {
       const out = [];
-      ['home', 'shelf', 'shop', 'pour', 'flights', 'buddies', 'ref']
+      ['home', 'shelf', 'shop', 'pour', 'buddies', 'flights', 'ref']
         .forEach(t => {
           const nb = document.querySelector('nav button[data-scr="' + t + '"]');
           if (nb) nb.click();

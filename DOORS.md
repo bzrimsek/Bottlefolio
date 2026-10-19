@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1075 |
+| functions | 1079 |
 | tables | 252 |
-| carrying a stated purpose | 865 |
+| carrying a stated purpose | 868 |
 
 ## Tables
 
@@ -393,6 +393,7 @@ QUESTION, not the name you were going to use.
 - **`L.catFault`** — WHAT IS WRONG WITH A RECORD
 - **`L.catKeyFor`** — _no comment above it_
 - **`L.changedKeys`** — _no comment above it_
+- **`L.choiceHolds`** — WHAT A FLIGHT HELD BY CHOICE, which is not everything it holds.
 - **`L.choroStep`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.clampView`** — on a phone and disorienting.
 - **`L.clampZoom`** — _no comment above it_
@@ -612,11 +613,12 @@ QUESTION, not the name you were going to use.
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.
 - **`L.histRestore`** — _no comment above it_
 - **`L.histRestoreRun`** — the whole of what the X did.
+- **`L.holdDefault`** — WHAT A FRESH HOLD HOLDS AT - the value a switch takes the moment it is
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdLine`** — THE LINE UNDER ONE DIMENSION'S SWITCH
 - **`L.holdReach`** — HOW MANY BOTTLES A TYPED HOLD WOULD REACH.
 - **`L.holdsFor`** — flight answers neither.
-- **`L.holdSpec`** — THE PICKERS' STATE AS THE BUILDER WANTS IT
+- **`L.holdSpec`** — _no comment above it_
 - **`L.hostCard`** — _no comment above it_
 - **`L.houseCanon`** — UNKNOWN IS NOT WRONG
 - **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
@@ -968,6 +970,7 @@ QUESTION, not the name you were going to use.
 - **`L.premium`** — _no comment above it_
 - **`L.premiumText`** — UNDER retail, a discount, and must not read as a premium.
 - **`L.prepareImport`** — _no comment above it_
+- **`L.presetHold`** — THE HOLD A SHEET ARRIVES WITH
 - **`L.priceBand`** — Occasion, said the way a host says it rather than the way a receipt does.
 - **`L.priceVerdict`** — Is this a good price, for THIS shelf.
 - **`L.probeCandidates`** — _no comment above it_
@@ -1283,6 +1286,7 @@ QUESTION, not the name you were going to use.
 - **`L.todayISO`** — _no comment above it_
 - **`L.tombstone`** — _no comment above it_
 - **`L.tonight`** — _no comment above it_
+- **`L.tonightRows`** — WHAT TO POUR TONIGHT, AS ROWS - one per thing the designer can hold.
 - **`L.toNum`** — A number, or nothing — never NaN.
 - **`L.topGap`** — _no comment above it_
 - **`L.topOf`** — _no comment above it_
