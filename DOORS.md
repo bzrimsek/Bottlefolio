@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1072 |
+| functions | 1075 |
 | tables | 251 |
-| carrying a stated purpose | 862 |
+| carrying a stated purpose | 865 |
 
 ## Tables
 
@@ -432,9 +432,11 @@ QUESTION, not the name you were going to use.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
 - **`L.dimOf`** — ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
+- **`L.dimReadings`** — THE DISTINCT VALUES OF ONE DIMENSION among some bottles, in the order
 - **`L.dimSpread`** — _no comment above it_
 - **`L.dimSteps`** — THE NUMBERS WORTH OFFERING FOR A MEASURED DIMENSION
 - **`L.dimValue`** — _no comment above it_
+- **`L.dimValues`** — AND THE DISTINCT ONES, in the order they appear
 - **`L.directoryEntry`** — what everyone can see.
 - **`L.dirtyEntries`** — WHAT THIS DEVICE HAS THAT THE ACCOUNT DOES NOT, entry by entry
 - **`L.dirtyRecords`** — NO RECORD OF A PUSH MEANS NOTHING IS KNOWN, not that nothing changed
@@ -534,6 +536,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightRunAt`** — _no comment above it_
 - **`L.flightRunRecord`** — _no comment above it_
 - **`L.flightRuns`** — _no comment above it_
+- **`L.flightSays`** — WHAT A BUILT FLIGHT IS, in a line, read off its own pours.
 - **`L.flightScore`** — How good a flight this set would make, by the rules BZ actually uses.
 - **`L.flightShape`** — cannot run yet, which is a different thing from a broken one.
 - **`L.flightsLine`** — FLIGHTS: how many are one bottle short of being an evening.

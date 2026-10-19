@@ -30146,6 +30146,35 @@ sec('§489 a suggestion is a shape, not a name');
   eq('holding nothing says so',
     L.lessonSay([], 'proof').indexOf('Hold nothing'), 0);
 
+  /* READING ONE DIMENSION OFF A SET OF BOTTLES, which three places were
+     each doing their own way. */
+  eq('every reading, duplicates and all',
+    L.dimReadings('type', [cat.h0, cat.h1, cat.h2]).length, 3);
+  eq('and a bottle that cannot answer is left out',
+    L.dimReadings('region', [cat.h0, cat.h1]).length, 0);
+  eq('the distinct ones, in the order they appear',
+    L.dimValues('type', [cat.h0, cat.h1]).join(','), 'bourbon');
+
+  /* WHAT A FLIGHT IS, in a line. BZ, 2026-10-19, of his own titles in a
+     list of what to pour tonight: "these names are fun, but meaningless".
+     They are his and they are good, but a name is not what you choose a
+     flight BY. */
+  const said2 = L.flightSays({ core: Object.keys(cat).map(k => ({ k: k })) },
+    cat);
+  eq('it says what is held', /bourbon/.test(said2), true);
+  eq('and what moves, with how far',
+    /proof 80→126/.test(said2), true);
+  eq('a flight of one pour says nothing',
+    L.flightSays({ core: [{ k: 'h0' }] }, cat), '');
+
+  /* THE CORE ONLY. The bench goes BEYOND the flight on purpose, so
+     counting it turned every range into the whole shelf: a six-pour
+     flight inside three proof points read 86.6 to 130.1. */
+  eq('the bench is not part of what the flight is',
+    L.flightSays({ core: [{ k: 'h0' }, { k: 'h1' }, { k: 'h2' }],
+      ext: [{ k: 'g' }] }, cat),
+    L.flightSays({ core: [{ k: 'h0' }, { k: 'h1' }, { k: 'h2' }] }, cat));
+
   /* WHAT A BUILT FLIGHT HOLDS, read off its POURS rather than off a tag,
      because a tag is prose somebody typed and the pours are the flight. */
   const flight = { core: Object.keys(cat).map(k => ({ k: k })) };
@@ -33484,6 +33513,7 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
 
 
 

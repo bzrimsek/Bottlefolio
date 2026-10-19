@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.92  Build 2026-10-19 10:51 AM ET
+     Version : v2.8.93  Build 2026-10-19 01:07 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.93  2026-10-19  A flight says what it is, under what it is called.
 // v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
 // v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
 // v2.8.90  2026-10-19  What your shelf can teach you speaks the designer's language.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.86  2026-10-19  Proof and age, corrected against the law and against his own forty.
 // v2.8.85  2026-10-19  The designer says when it cannot pour what was asked for.
 // v2.8.84  2026-10-19  Four faults in the flight designer, all of them his.
-// v2.8.83  2026-10-18  The message when the service fails and the app designs the flight itself.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.92';
-const BUILD_TIME  = '2026-10-19 10:51 AM ET';
+const APP_VERSION = '2.8.93';
+const BUILD_TIME  = '2026-10-19 01:07 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9011,7 +9011,7 @@ L.FEATURES = [
   { term: 'Taste', src: 'deciding what to pour',
     def: 'Four reels: proof band, type, how well known, and occasion. Tap a reel to choose a value, or tap Spin and let it pick. It fills up to three glasses from what is open and never lands on a combination nothing satisfies. Tap a glass to see the bottle or log the pour. At home is the reels; Out is a bar, a shop or a friend’s kitchen, where you photograph what is in front of you and log what you drank.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, grouped by WHAT THEY HOLD STILL rather than listed by name: five or six rows instead of thirty-eight titles, and tapping one opens its flights. Holding a flavor still is a row like any other and says how far it reaches. More ideas opens the same language: every suggestion reads as hold this, let that move, with what it would pour off your open bottles, and pressing one opens the designer already set to that shape. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'What you could pour tonight leads — flights with every bottle already open, grouped by WHAT THEY HOLD STILL rather than listed by name: five or six rows instead of thirty-eight titles, and tapping one opens its flights. Each one says WHAT IT IS under what it is called — bourbon, angels envy, 4 casks — read off its own pours, because a name is not what you choose a flight by. Holding a flavor still is a row like any other and says how far it reaches. More ideas opens the same language: every suggestion reads as hold this, let that move, with what it would pour off your open bottles, and pressing one opens the designer already set to that shape. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
@@ -14552,6 +14552,28 @@ L.dimValue = function (id, p, banded) {
   return d.numeric ? Number(v) : String(v).toLowerCase();
 };
 
+/* THE DISTINCT VALUES OF ONE DIMENSION among some bottles, in the order
+   they appear. Three places were building the same little map of what
+   exists - how far a dimension spreads is the question every one of them
+   is really asking. */
+L.dimReadings = function (id, products) {
+  const out = [];
+  (products || []).forEach(p => {
+    const v = L.dimValue(id, p);
+    if (v !== null) out.push(v);
+  });
+  return out;
+};
+
+/* AND THE DISTINCT ONES, in the order they appear. How far a dimension
+   spreads is the question three places were asking, each with its own
+   little map of what exists. */
+L.dimValues = function (id, products) {
+  const seen = {};
+  return L.dimReadings(id, products)
+    .filter(v => (seen[v] ? false : (seen[v] = 1)));
+};
+
 /* WHAT IS WORTH HOLDING, AND WHAT IS WORTH VARYING, on THIS shelf.
  *
  * BZ chose "only when they can fill six" (2026-10-18): a dimension the open
@@ -14630,14 +14652,10 @@ L.dimSteps = function (d, vals, counts) {
 L.dimSpread = function (id, products, size) {
   const want = size || L.CORE_TARGET;
   const d = L.dimOf(id);
-  const vals = [];
+  /* EVERY READING, and how many bottles sit on each. */
+  const vals = L.dimReadings(id, products);
   const counts = {};
-  (products || []).forEach(p => {
-    const v = L.dimValue(id, p);
-    if (v === null) return;
-    vals.push(v);
-    counts[v] = (counts[v] || 0) + 1;
-  });
+  vals.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
   const distinct = Object.keys(counts);
   /* A NUMBER OFFERS ROUND NUMBERS, not whatever a bottle happened to be.
      The candidates were the observed values, so the list offered 108.6 and
@@ -15429,12 +15447,7 @@ L.resolveHold = function (hold, products, size, varyId, pairs) {
         const left = L.applyHold(pool, [{ dim: h.dim, value: v,
           tol: h.tol === undefined ? (d ? d.band : 0) : h.tol }]);
         if (!varyId) return [left.length, left.length];
-        const seen = {};
-        left.forEach(p => {
-          const x = L.dimValue(varyId, p);
-          if (x !== null) seen[x] = (seen[x] || 0) + 1;
-        });
-        const vals = Object.keys(seen);
+        const vals = L.dimValues(varyId, left);
         /* A PAIRED FLIGHT NEEDS BOTH SIDES, so a value that leaves only
            one of them is worth nothing to it. */
         if (pairs && vals.length < 2) return [0, left.length];
@@ -25027,7 +25040,10 @@ L.lessonSay = function (hold, varyId, pairs) {
  * held - six bottles with no region recorded do not share a region, they
  * share a gap. */
 L.flightHolds = function (flight, catalog) {
-  const pours = ((flight || {}).core || []).concat((flight || {}).ext || []);
+  /* THE CORE ONLY. The bench is chosen to go BEYOND the flight - a
+     six-pour flight inside three proof points has extensions at 80 and
+     130, so counting them said it held nothing at all. */
+  const pours = ((flight || {}).core || []);
   const got = pours.map(x => (catalog || {})[x.k]).filter(Boolean);
   if (got.length < 3) return [];
   return L.DIMS.filter(d => {
@@ -25040,6 +25056,81 @@ L.flightHolds = function (flight, catalog) {
     return vals.every(v => v === vals[0]);
   }).map(d => d.id);
 };
+/* WHAT A BUILT FLIGHT IS, in a line, read off its own pours.
+ *
+ * BZ, 2026-10-19, of his own titles in a list of what to pour tonight:
+ * "these names are fun, but meaningless." They are his and they are good -
+ * CAN YOU FIND THE FOREST IN THE TREES? is a better name than anything this
+ * app could write - but a name is not what you choose a flight BY. What is
+ * held and what moves is.
+ *
+ * READ OFF THE POURS, not the tag: a tag is prose somebody typed and the
+ * pours are the flight. What moves is the unheld dimension with the most
+ * distinct values among them, which is the same rule L.pickAxis uses on a
+ * shelf.
+ */
+L.flightSays = function (flight, catalog) {
+  /* THE CORE ONLY. The extensions are brought out if the night has legs
+     and are chosen to go BEYOND the flight - counting them turned every
+     proof range into the whole shelf, 86.6 to 130.1 for a flight whose
+     six sit inside three points. */
+  const pours = ((flight || {}).core || []);
+  const got = pours.map(x => (catalog || {})[x.k]).filter(Boolean);
+  if (got.length < 2) return '';
+  const holds = L.flightHolds(flight, catalog);
+  const held = {};
+  holds.forEach(h => { held[h] = 1; });
+
+  /* WHAT IS HELD, said as the value rather than the dimension: "bourbon"
+     tells him more than "one type". A number says its own range. */
+  const says = [];
+  holds.forEach(id => {
+    const d = L.dimOf(id);
+    if (!d || d.id === 'smoke') return;
+    const v = L.dimValue(id, got[0]);
+    if (v === null) return;
+    if (d.numeric) {
+      const all = got.map(p => L.dimValue(id, p)).filter(x => x !== null);
+      const lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+      says.push(lo === hi ? lo + ' ' + (d.measure || '').toLowerCase()
+        : lo + '\u2013' + hi + ' ' + (d.measure || '').toLowerCase());
+    } else if (d.flag) {
+      says.push(d.label.toLowerCase());
+    } else {
+      says.push(String(v));
+    }
+  });
+
+  /* AND WHAT MOVES, with how far. */
+  /* WHAT MOVES - AND NOT SIMPLY WHAT MOVES MOST. The house varies in
+     almost every flight whether or not it is the point, so counting
+     values made nine of his forty say "10 houses", which tells him
+     nothing about what he would be pouring. The order below is how
+     deliberately a thing is usually varied: nobody builds a flight to
+     show off a spread of distilleries, but plenty are built on a type, a
+     cask or an age. The first one that actually moves wins. */
+  const WORTH = ['type', 'cask', 'region', 'age', 'smoke', 'bonded',
+                 'proof', 'price', 'house'];
+  let best = null, bestN = 1;
+  WORTH.forEach(id => {
+    if (best || held[id]) return;
+    const d = L.dimOf(id);
+    if (!d) return;
+    const n = L.dimValues(id, got).length;
+    if (n > 1) { best = d; bestN = n; }
+  });
+  if (best) {
+    if (best.numeric) {
+      const all = got.map(p => L.dimValue(best.id, p)).filter(x => x !== null);
+      says.push((best.measure || best.label).toLowerCase() + ' '
+        + Math.min.apply(null, all) + '\u2192' + Math.max.apply(null, all));
+    } else {
+      says.push(bestN + ' ' + (best.unit || best.label.toLowerCase()));
+    }
+  }
+  return says.join(', ');
+};
+
 
 
 /* --- the tasting night papers ------------------------------------------ */
@@ -44259,7 +44350,11 @@ function renderTonight(box) {
          what these flights share is that the smoke does not change. */
       ? 'Same ' + ((L.dimOf(holds[0]) || {}).label || '')
           .toLowerCase().replace(/^the /, '')
-      : 'Nothing held but the question';
+      /* BZ, 2026-10-19: "nothing held but the question is also odd
+         words". It is what the premise says when nothing is held, and as
+         a heading over a list of flights it reads as a riddle. These are
+         the ones with no single thread. */
+      : 'Everything moves';
     (byShape[key] = byShape[key] || []).push(f);
   });
   /* THE SHAPE IS THE ROW, and its flights open under it. Grouping alone
@@ -44286,8 +44381,14 @@ function renderTonight(box) {
         const r = el('button', 'portstep');
         r.type = 'button';
         r.style.paddingLeft = '18px';
-        r.textContent = f.title + '  ·  ' + f.pours + ' pours'
-          + (f.lastRun ? '' : ', never run');
+        /* WHAT IT IS, UNDER WHAT IT IS CALLED. BZ, 2026-10-19: "these
+           names are fun, but meaningless" - they are his and they are
+           good, but a name is not what you choose a flight BY. */
+        const full2 = all.filter(x => x.title === f.title)[0];
+        const said = full2 ? L.flightSays(full2, S.catalog) : '';
+        r.appendChild(el('div', 'nm', f.title));
+        r.appendChild(el('div', 'src', (said ? said + '  ·  ' : '')
+          + f.pours + ' pours' + (f.lastRun ? '' : ', never run')));
         r.onclick = () => {
           const full = all.filter(x => x.title === f.title)[0];
           if (!full) return;
@@ -61377,7 +61478,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.92</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.93</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
