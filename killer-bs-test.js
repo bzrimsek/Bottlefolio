@@ -30438,6 +30438,27 @@ sec('§487 what a flight holds and what it varies');
     L.applyHold([{ age: 15 }, { age: 18 }, { age: 23 }, { age: 30 }],
       [{ dim: 'age', value: 18, tol: 5 }]).length, 3);
 
+  /* A NUMBER IS TYPED, NOT PICKED FROM A LIST. BZ, 2026-10-19: "i still
+     can't get to a 20 year flight with an age list capped at 12." The list
+     was the six values with the most bottles behind them, so 18, 20, 21
+     and 33 - all on his shelf - were never offered, and no tolerance
+     reaches a value the picker will not show. The count now follows what
+     he types, so it cannot be precomputed with the options. */
+  const ageD = L.designOptions(cat, bots, 0, [])
+    .filter(o => o.id === 'age')[0];
+  eq('every value is carried, not just the six suggested',
+    ageD.all.length >= ageD.options.length, true);
+  eq('a value nobody suggested can still be counted',
+    typeof L.holdReach(ageD, 20, 3), 'number');
+  eq('exactly counts only itself',
+    L.holdReach({ all: [10, 12, 12, 15] }, 12, 0), 2);
+  eq('and a tolerance reaches either side',
+    L.holdReach({ all: [10, 12, 12, 15] }, 12, 3), 4);
+  eq('nothing typed reaches nothing',
+    L.holdReach({ all: [10] }, '', 3), 0);
+  eq('and nonsense reaches nothing',
+    L.holdReach({ all: [10] }, 'zz', 3), 0);
+
   /* AND EVERY WIDTH REACHES THE PICKER. `tols` was set on the dimension
      and designOptions copied label, hint, unit, numeric and band but not
      it - so four widths went into the engine and two reached the screen,
@@ -33349,6 +33370,7 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
 
 
 

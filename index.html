@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.87  Build 2026-10-19 09:10 AM ET
+     Version : v2.8.88  Build 2026-10-19 09:22 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.88  2026-10-19  A number is typed now, not picked from a list.
 // v2.8.87  2026-10-19  The four widths now reach the screen, and age has them too.
 // v2.8.86  2026-10-19  Proof and age, corrected against the law and against his own forty.
 // v2.8.85  2026-10-19  The designer says when it cannot pour what was asked for.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.81  2026-10-18  The flight designer, corrected from his own screenshots.
 // v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
 // v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
-// v2.8.78  2026-10-18  A flight pours smoke last.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.87';
-const BUILD_TIME  = '2026-10-19 09:10 AM ET';
+const APP_VERSION = '2.8.88';
+const BUILD_TIME  = '2026-10-19 09:22 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9380,7 +9380,7 @@ L.FEATURES = [
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
-    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose how wide to hold it — exactly, or within 2, 3 or 5 — with what each would reach beside it, because the cost of a wider one is the whole question. Three is the default, which is exactly as wide as your widest proof-held flight. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. An AGE offers the same four widths and only the ages you own, since an age is declared on a label rather than measured: exactly is the default because a 10 and a 15 are two statements, and within 5 of 18 is how you build a twenty year flight. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
+    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a NUMBER gives you three boxes: type the value, pick = or ±, and type how wide. It says how many bottles fit as you type, because the cost of a wider hold is the whole question. It opens on the value most of your bottles sit on, ±3, which is exactly as wide as your widest proof-held flight — but you are not held to any list, so age 20 ±5 is a twenty year flight even though almost nothing on your shelf says 20. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. Nothing below 80 proof can be typed, because 80 is where the law says whisky starts. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
   { term: 'Hold a flavor still', src: 'the flight designer',
     def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
@@ -14706,6 +14706,10 @@ L.dimSpread = function (id, products, size) {
   return {
     id: id,
     have: vals.length,
+    /* EVERY VALUE, so a typed hold can be counted live against them.
+       The options are six suggestions; what he types is not limited
+       to them. */
+    all: vals.slice(),
     values: distinct.length,
     /* VARY: three distinct values at the very least - two bottles that
        differ is a comparison, not a flight - and enough bottles to reach
@@ -14790,6 +14794,21 @@ L.designOptions = function (catalog, bottles, size, hold) {
 /* THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank. BZ: "I
    thought the premise was only needed w/o user input" - so the pickers say
    what the flight IS and the premise is only the words for the room. */
+/* HOW MANY BOTTLES A TYPED HOLD WOULD REACH.
+ *
+ * The number is typed now rather than picked from a list, so the count
+ * cannot be precomputed with the options - it has to follow what he is
+ * typing. `d.all` is every value of this dimension among the bottles the
+ * OTHER holds left, which is what L.dimSpread measured over.
+ */
+L.holdReach = function (d, value, tol) {
+  if (!d || value === null || value === undefined || value === '') return 0;
+  const v = Number(value);
+  if (isNaN(v)) return 0;
+  const t = Math.max(0, Number(tol) || 0);
+  return (d.all || []).filter(x => Math.abs(Number(x) - v) <= t).length;
+};
+
 /* THE LINE UNDER ONE DIMENSION'S SWITCH: what it is held at, or what the
  * dimension means when it is not held. A number says whether it is exact
  * or a band, because that is the choice he made on the row above. */
@@ -56784,79 +56803,104 @@ function castFlavour(word, fromCat, fromBot, premise, status) {
   return true;
 }
 
-/* THE VALUE A HELD DIMENSION IS HELD AT, and for a number the choice between
- * dead equal and a band. Drawn UNDER its row, which dimRow has already put on
- * the sheet - this used to draw the row as well, and once the two lists
- * became one that made a second row under the first.
+/* WHAT A HELD DIMENSION IS HELD AT.
  *
- * THE APP SUGGESTS, HE OVERRIDES - his choice - and an override without the
- * numbers beside it is a guess, so every value carries how many bottles sit
- * inside its band, and the exact/within choice carries both counts, because
- * the cost of insisting on dead equal is the whole reason to offer a band.
+ * A NUMBER IS TYPED, NOT PICKED FROM A LIST (BZ, 2026-10-19: "i still can't
+ * get to a 20 year flight with an age list capped at 12... cant we have some
+ * simple inputs '= or +/-' as a pick and then a number?").
+ *
+ * The list was the six values with the most bottles behind them, so his high
+ * ages never made it: 18, 20, 21 and 33 are all on his shelf and none were
+ * offered, and no amount of widening a tolerance reaches a value the picker
+ * will not show. A list of fixed widths is not a tolerance either - it is
+ * four more things to read.
+ *
+ * SO: a box for the number, = or +/- beside it, and a box for the tolerance
+ * when it is +/-. The count follows what he typed, live, because the whole
+ * reason to show it is to let him feel the cost of a wider hold.
+ *
+ * A WORD STILL GETS A LIST, because there is nothing to type: scotch is one
+ * of ten, not a point on a line.
  */
 function holdValue(box, d, held, redraw) {
   const h = held[d.id];
   const val = (h && typeof h === 'object') ? h.value : h;
   const tol = (h && typeof h === 'object' && h.tol !== undefined
                && h.tol !== null) ? h.tol : (d.numeric ? d.band : 0);
+  if (!d.numeric) return holdWord(box, d, held, redraw);
 
-  if (d.options.length > 1) {
-    const sel = document.createElement('select');
-    sel.className = 'field';
-    sel.style.margin = '0 0 8px 0';
-    d.options.forEach(o => {
-      const op = document.createElement('option');
-      op.value = String(o.value);
-      /* THE VALUE ALONE, for a number. It used to carry the band and the
-         banded count - "80 - 27 bottles (+/-2)" - which is exactly what
-         the tolerance select underneath says, so the two read as one
-         question asked twice (BZ, 2026-10-19: "we have a nested select
-         issue"). The count belongs to the tolerance, not to the value. */
-      op.textContent = d.numeric ? String(o.value)
-        : o.value + '  \u2014  ' + o.n + ' bottles';
-      sel.appendChild(op);
-    });
-    sel.value = String(val);
-    sel.onchange = () => {
-      const v = d.numeric ? Number(sel.value) : sel.value;
-      held[d.id] = d.numeric ? { value: v, tol: tol } : v;
-      redraw();
-    };
-    box.appendChild(sel);
-  }
-
-  /* AND NO TOLERANCE PICKER WHERE THERE IS NO TOLERANCE: an age is held
-     exactly, so "within 0 of 12" is not a second choice. */
-  /* THE WIDTHS THIS DIMENSION OFFERS. An age has a band of nought by
-     default and still offers 2, 3 and 5, so the test is whether there
-     is a choice to make - not whether the default happens to be wide. */
-  if (!d.numeric || !(d.tols && d.tols.length > 1)) return;
-  const opt = d.options.filter(o => String(o.value) === String(val))[0]
-    || { n: 0, exact: 0 };
-  /* HOW WIDE, HIS CHOICE PER FLIGHT. Nine of his forty hold proof and they
-     run 0, 0, 0, 0, 1.4, 2, 3, 5.4 and 6 points wide, so no single band
-     fits them. Each width carries what it would reach, because the cost of
-     a wider one is the whole question: at five, holding 90 sweeps in a
-     third of his open shelf. */
-  const tsel = document.createElement('select');
-  tsel.className = 'field';
-  tsel.style.margin = '0 0 8px 0';
-  (d.tols || [0, d.band]).forEach(t => {
+  const row = el('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin:0 0 4px';
+  const num = document.createElement('input');
+  num.type = 'number';
+  num.className = 'field';
+  num.style.cssText = 'flex:1;margin:0';
+  num.value = String(val === null || val === undefined ? '' : val);
+  if (d.floor !== undefined) num.min = String(d.floor);
+  const how = document.createElement('select');
+  how.className = 'field';
+  how.style.cssText = 'flex:none;width:5.5em;margin:0';
+  [['0', '='], ['1', '\u00b1']].forEach(([v, label]) => {
     const op = document.createElement('option');
-    op.value = String(t);
-    const n = (opt.tols && opt.tols[t] !== undefined) ? opt.tols[t]
-      : (t ? opt.n : opt.exact);
-    op.textContent = (t ? 'within ' + t + ' of ' + val
-                        : 'exactly ' + val)
-      + '  \u2014  ' + n + ' bottles';
-    tsel.appendChild(op);
+    op.value = v;
+    op.textContent = label;
+    how.appendChild(op);
   });
-  tsel.value = String(tol);
-  tsel.onchange = () => {
-    held[d.id] = { value: val, tol: Number(tsel.value) };
-    redraw();
+  how.value = tol ? '1' : '0';
+  const within = document.createElement('input');
+  within.type = 'number';
+  within.className = 'field';
+  within.style.cssText = 'flex:none;width:5em;margin:0';
+  within.min = '0';
+  within.value = String(tol || d.band || 1);
+  within.hidden = !tol;
+  const says = el('div', 'src');
+  says.style.marginBottom = '8px';
+
+  const hold = () => {
+    /* THE FLOOR IS THE LAW'S, so a typed number cannot go under it. */
+    let v = Number(num.value);
+    if (d.floor !== undefined && v < d.floor) { v = d.floor; num.value = String(v); }
+    const t = how.value === '1' ? Math.max(0, Number(within.value) || 0) : 0;
+    within.hidden = how.value !== '1';
+    held[d.id] = { value: v, tol: t };
+    return { v: v, t: t };
   };
-  box.appendChild(tsel);
+  const count = () => {
+    const now = hold();
+    says.textContent = L.holdReach(d, now.v, now.t) + ' bottles fit that.';
+  };
+  num.oninput = count;
+  within.oninput = count;
+  how.onchange = () => { count(); };
+  num.onchange = redraw;
+  within.onchange = redraw;
+  how.onblur = redraw;
+
+  row.appendChild(num);
+  row.appendChild(how);
+  row.appendChild(within);
+  box.appendChild(row);
+  count();
+  box.appendChild(says);
+}
+
+/* A WORD IS ONE OF A FEW, so it keeps its list - and the list carries how
+   many bottles each one reaches. */
+function holdWord(box, d, held, redraw) {
+  if (d.options.length < 2) return;
+  const sel = document.createElement('select');
+  sel.className = 'field';
+  sel.style.margin = '0 0 8px 0';
+  d.options.forEach(o => {
+    const op = document.createElement('option');
+    op.value = String(o.value);
+    op.textContent = o.value + '  \u2014  ' + o.n + ' bottles';
+    sel.appendChild(op);
+  });
+  sel.value = String(held[d.id]);
+  sel.onchange = () => { held[d.id] = sel.value; redraw(); };
+  box.appendChild(sel);
 }
 
 /* ONE ROW PER DIMENSION, AND ONE SWITCH ON IT.
@@ -61274,7 +61318,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.87</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.88</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

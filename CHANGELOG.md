@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.88  ·  2026-10-19 09:22 AM ET
+
+A number is typed now, not picked from a list. BZ: I still can't get to a 20 year flight with an age list capped at 12, and having multiple choices is not providing an input for tolerance, can't we have some simple inputs, equals or plus-minus as a pick and then a number. Both halves were right. The value list was the six values with the most bottles behind them, so eighteen, twenty, twenty-one and thirty-three are all on his shelf and none were offered, and no tolerance can reach a value the picker will not show. And four fixed widths are not a tolerance input, they are four more things to read. A held number is three boxes now: the value, equals or plus-minus, and how wide. It says how many bottles fit as he types, because the cost of a wider hold is the whole question, and nothing below eighty proof can be typed because eighty is where the law says whisky starts. Age twenty plus or minus five reaches twenty-five bottles on his shelf, which is the flight he could not build. A word keeps its list, because scotch is one of ten rather than a point on a line.
+
 ## v2.8.87  ·  2026-10-19 09:10 AM ET
 
 The four widths now reach the screen, and age has them too. Two faults, both mine and both his to find. The widths were set on the dimension and L.designOptions copied its label, hint, unit, numeric and band but not its tolerances, so nought two three and five went into the engine and only two reached the picker. I reported four because I read the engine data and never drove the control, which is the same mistake as trusting a check that never ran. A dimension is carried whole now, tolerances, floor and all. And I over-corrected on age: declared means the VALUES are ages somebody printed on a label, not that a flight cannot span a few years, and without a tolerance he could never build a fifteen plus or a twenty year flight. Exactly stays the default because an age statement is a statement, and within five of eighteen reaches thirteen to twenty-three.

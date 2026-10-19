@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1070 |
+| functions | 1071 |
 | tables | 251 |
-| carrying a stated purpose | 858 |
+| carrying a stated purpose | 859 |
 
 ## Tables
 
@@ -609,6 +609,7 @@ QUESTION, not the name you were going to use.
 - **`L.histRestoreRun`** — the whole of what the X did.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdLine`** — THE LINE UNDER ONE DIMENSION'S SWITCH
+- **`L.holdReach`** — HOW MANY BOTTLES A TYPED HOLD WOULD REACH.
 - **`L.holdSay`** — WHAT IS BEING HELD, SAID WHILE THE SERVICE THINKS.
 - **`L.holdsFor`** — flight answers neither.
 - **`L.holdSpec`** — THE PICKERS' STATE AS THE BUILDER WANTS IT
