@@ -30055,41 +30055,33 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
-sec('§488 a failure the app recovered from is one sentence');
+sec('§488 what went wrong, as a kind');
 {
-  /* BZ, 2026-10-18, reading his own screen: "That did not go through. The
-     detail is in Running this. — designed it here instead." Three faults in
-     one line - it says nothing went through when the flight did, it sends
-     him to look up a detail he does not need, and the fragment on the end
-     contradicts the sentence in front of it.
+  /* L.errorKind was split out of L.plainError so a caller that RECOVERED
+     could say so in its own words without the advice meant for one that did
+     not - "try again when you have signal" is wrong once the work is already
+     done.
 
-     THE CLASSIFIER IS SHARED, the words are not: a caller that RECOVERED
-     must not repeat the advice meant for one that did not, and "try again
-     when you have signal" is wrong once the flight is already on screen. */
+     THE ONE CALLER THAT NEEDED IT IS GONE. The flight sheet used to fall
+     back to a local design when the service failed; BZ dropped the service
+     from that screen on 2026-10-19 ("why is this needed?"), so there is no
+     recovery left to announce and L.serviceFellBack went with it. The
+     classifier stays, because L.plainError is built on it. */
   eq('a network failure is known', L.errorKind(new Error('failed to fetch')),
     'offline');
   eq('so is a refusal', L.errorKind(new Error('permission_denied')), 'denied');
   eq('and a rate limit', L.errorKind(new Error('quota exceeded')), 'busy');
   eq('anything else is unknown', L.errorKind(new Error('zzz')), 'unknown');
 
-  const back = L.serviceFellBack(new Error('failed to fetch'),
-    'this flight was designed here');
-  eq('it says what happened and what was done anyway',
-    back, 'No connection just now, so this flight was designed here.');
-  eq('and never tells him to try again, because it already worked',
-    /try again/.test(back), false);
-  eq('nor sends him to a log for a detail he does not need',
-    /Running this/.test(back), false);
-  eq('an unknown failure still reads as one sentence',
-    L.serviceFellBack(new Error('zzz'), 'this flight was designed here'),
-    'The service did not answer, so this flight was designed here.');
-  eq('it is one sentence, not two',
-    back.replace(/\.$/, '').indexOf('.'), -1);
-
-  /* AND THE OLD DOOR IS UNCHANGED for callers that did NOT recover. */
-  eq('a caller that failed still gets the advice',
+  /* AND THE WORDS STILL READ, for the callers that did fail. */
+  eq('a caller that failed gets the advice',
     L.plainError(new Error('failed to fetch')),
     'No connection just now — try again when you have signal.');
+  eq('a refusal says who refused',
+    L.plainError(new Error('permission_denied')),
+    'Your account is not allowed to do that.');
+  eq('and an unknown one takes the caller’s own words',
+    L.plainError(new Error('zzz'), 'That did not save.'), 'That did not save.');
 }
 
 
@@ -30347,17 +30339,24 @@ sec('§487 what a flight holds and what it varies');
   eq('holding a proof shrinks what type can reach',
     reach(tight, 'type') <= reach(wide, 'type'), true);
 
-  /* WHAT IS HELD, SAID WHILE THE SERVICE THINKS - and it used to name the
-     VARYING dimension instead, so it announced the opposite of the truth. */
-  eq('holding nothing says so',
-    L.holdSay([]).indexOf('Nothing held'), 0);
-  eq('one hold reads properly',
-    L.holdSay([{ dim: 'house' }]).indexOf('Holding the house steady'), 0);
-  eq('two read properly too',
-    L.holdSay([{ dim: 'proof' }, { dim: 'house' }])
-      .indexOf('Holding proof and the house steady'), 0);
-  eq('and never doubles an article',
-    /the the/.test(L.holdSay([{ dim: 'house' }])), false);
+
+  /* AND IT NAMES ITSELF, because the service used to do that and BZ took
+     the service off this screen (2026-10-19: "why is this needed?"). His
+     forty are named as questions and nothing here can write one of those,
+     so it says what is held and what moves, in his capitals. */
+  eq('a held number names its measure, not its label',
+    L.designTitle([{ dim: 'age', value: 20, tol: 5 }], 'house'),
+    '20 YEAR ±5 — HOUSE BY HOUSE');
+  eq('exactly held says no tolerance',
+    L.designTitle([{ dim: 'proof', value: 100, tol: 0 }], 'type'),
+    '100 PROOF — TYPE BY TYPE');
+  eq('a flag says its own name',
+    L.designTitle([{ dim: 'bonded', value: 'bonded' }], 'type'),
+    'BOTTLED IN BOND — TYPE BY TYPE');
+  eq('the moving noun loses its article',
+    /HOUSE BY HOUSE/.test(L.designTitle([], 'house')), true);
+  eq('and holding nothing names only what moves',
+    L.designTitle([], 'type'), 'TYPE BY TYPE');
 
   /* THE LINE UNDER A SWITCH. */
   eq('unheld, it says what the dimension means',
@@ -33370,6 +33369,9 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
+
 
 
 

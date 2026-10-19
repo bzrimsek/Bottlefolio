@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.88  Build 2026-10-19 09:22 AM ET
+     Version : v2.8.89  Build 2026-10-19 09:44 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.89  2026-10-19  The flight designer no longer calls the service.
 // v2.8.88  2026-10-19  A number is typed now, not picked from a list.
 // v2.8.87  2026-10-19  The four widths now reach the screen, and age has them too.
 // v2.8.86  2026-10-19  Proof and age, corrected against the law and against his own forty.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.82  2026-10-18  The flight designer is nine switches.
 // v2.8.81  2026-10-18  The flight designer, corrected from his own screenshots.
 // v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
-// v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.88';
-const BUILD_TIME  = '2026-10-19 09:22 AM ET';
+const APP_VERSION = '2.8.89';
+const BUILD_TIME  = '2026-10-19 09:44 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5929,22 +5929,6 @@ L.errorKind = function (e) {
   return 'unknown';
 };
 
-/* THE SERVICE DID NOT ANSWER, AND THE APP DID THE WORK ITSELF. ONE
- * SENTENCE, not a general failure with a clause stuck on the end.
- *
- * BZ, 2026-10-18, reading his own screen: "That did not go through. The
- * detail is in Running this. - designed it here instead" - a sentence
- * sending him to look up a detail he does not need, followed by a
- * fragment telling him nothing went wrong after all.
- */
-L.serviceFellBack = function (e, didWhat) {
-  const kind = L.errorKind(e);
-  const why = kind === 'offline' ? 'No connection just now'
-    : kind === 'busy' ? 'The service is busy just now'
-    : kind === 'denied' ? 'The service would not take that'
-    : 'The service did not answer';
-  return why + ', so ' + (didWhat || 'this was done here') + '.';
-};
 
 L.plainError = function (e, fallback) {
   const kind = L.errorKind(e);
@@ -9380,7 +9364,7 @@ L.FEATURES = [
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
-    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a NUMBER gives you three boxes: type the value, pick = or ±, and type how wide. It says how many bottles fit as you type, because the cost of a wider hold is the whole question. It opens on the value most of your bottles sit on, ±3, which is exactly as wide as your widest proof-held flight — but you are not held to any list, so age 20 ±5 is a twenty year flight even though almost nothing on your shelf says 20. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. Nothing below 80 proof can be typed, because 80 is where the law says whisky starts. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
+    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a NUMBER gives you three boxes: type the value, pick = or ±, and type how wide. It says how many bottles fit as you type, because the cost of a wider hold is the whole question. It opens on the value most of your bottles sit on, ±3, which is exactly as wide as your widest proof-held flight — but you are not held to any list, so age 20 ±5 is a twenty year flight even though almost nothing on your shelf says 20. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. Nothing below 80 proof can be typed, because 80 is where the law says whisky starts. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot. IT IS ALL BUILT HERE — no service call, no wait, no lookup spent, and the flight cannot come back as something other than what you set. It names itself from what is held — 92 PROOF ±3 — TYPE BY TYPE — and you rename it when you keep it, because a flight of yours is called a question and nothing here can write one of those.' },
   { term: 'Hold a flavor still', src: 'the flight designer',
     def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
@@ -14489,6 +14473,8 @@ L.DIMS = [
        "strength". Three is the default because it is exactly his widest,
        and 0, 2, 3 and 5 are all offered with what each would reach. */
     numeric: true, band: 3, floor: 80, tols: [0, 2, 3, 5],
+    /* WHAT THE NUMBER COUNTS, for a title: 20 YEAR, not 20 AGE. */
+    measure: 'PROOF',
     get: p => (p && p.proof) || null },
   /* TYPE, not kind. The app already says Type in eight places for this
      same field and Kind in none, and so does BZ - "80 proof intro across
@@ -14527,6 +14513,7 @@ L.DIMS = [
        on a label, not that a flight cannot span a few years. Exactly is
        still the default, because an age statement is a statement. */
     numeric: true, band: 0, discrete: true, tols: [0, 2, 3, 5],
+    measure: 'YEAR',
     get: p => (p && p.age) || null },
   { id: 'region', label: 'Region', hint: 'where it is from',
     unit: 'regions',
@@ -14791,6 +14778,40 @@ L.designOptions = function (catalog, bottles, size, hold) {
   });
 };
 
+/* WHAT TO CALL IT, from the design itself.
+ *
+ * BZ, 2026-10-19, on the service: "why is this needed?" It was sent the
+ * varying dimension's label and a sentence - not the hold set, not the
+ * values, not the tolerances, not the pairs switch, not the counts - so
+ * everything the pickers compute reached the model as prose it might ignore,
+ * and it picked its own bottles. He dropped it from this screen.
+ *
+ * SO THE FLIGHT NAMES ITSELF, plainly and from what it actually is. His own
+ * forty are named as questions - WHY IS THIS ONE HOT, CAN YOU PROOF IT - and
+ * nothing here can write one of those, so this does not pretend to: it says
+ * what is held and what moves, in his house style of capitals, and he
+ * renames it in a press.
+ */
+L.designTitle = function (hold, varyId) {
+  const vd = L.dimOf(varyId);
+  /* WITHOUT ITS ARTICLE. "The house" doubled reads THE HOUSE BY THE
+     HOUSE; the pattern wants the bare noun. */
+  const bare = vd ? vd.label.toUpperCase().replace(/^THE /, '') : '';
+  const moves = vd ? bare + ' BY ' + bare : 'A FLIGHT';
+  const parts = (hold || []).map(h => {
+    const d = L.dimOf(h.dim);
+    if (!d) return null;
+    if (d.flag) return d.label.toUpperCase();
+    if (d.numeric) {
+      return h.value + ' ' + (d.measure || d.label.toUpperCase())
+        + (h.tol ? ' \u00b1' + h.tol : '');
+    }
+    return String(h.value || '').toUpperCase();
+  }).filter(Boolean);
+  if (!parts.length) return moves;
+  return parts.join(', ') + ' \u2014 ' + moves;
+};
+
 /* THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank. BZ: "I
    thought the premise was only needed w/o user input" - so the pickers say
    what the flight IS and the premise is only the words for the room. */
@@ -14876,25 +14897,6 @@ L.fitSay = function (fit, wantSize, wantExt) {
     + L.andList(short) + '.';
 };
 
-/* WHAT IS BEING HELD, SAID WHILE THE SERVICE THINKS.
- *
- * The line used to read 'Holding ' + vLabel, and vLabel is the dimension
- * the flight VARIES - so it announced the opposite of the truth, and with
- * a label like "The house" it read "Holding The house steady" (BZ,
- * 2026-10-19: "a toast that said Holding the house steady but I'd not
- * selected house").
- *
- * HOLDING NOTHING IS A REAL ANSWER and says so rather than naming
- * something at random.
- */
-L.holdSay = function (hold) {
-  const names = (hold || []).map(h =>
-    ((L.dimOf(h.dim) || {}).label || h.dim || '').toLowerCase())
-    .filter(Boolean);
-  return names.length
-    ? 'Holding ' + L.andList(names) + ' steady\u2026'
-    : 'Nothing held but the question\u2026';
-};
 
 L.designPremise = function (hold, varyId, opts) {
   const o = opts || {};
@@ -15472,6 +15474,7 @@ L.designFlight = function (spec, catalog, bottles, opts) {
   return {
     ok: true,
     variable: s.vary,
+    title: L.designTitle(hold, s.vary),
     hold: hold, vary: s.vary, pairs: !!s.pairs,
     premise: s.premise || L.designPremise(hold, s.vary, { pairs: s.pairs }),
     holds: hold.map(h => h.dim),
@@ -56777,16 +56780,6 @@ function showPooled(pool, gain, who) {
  * and the allowance does not go up (rule 30f).
  *
  * Answers whether it took the press, so the caller stops. */
-/* THE SERVICE FAILED AND THE APP DESIGNED THE FLIGHT HERE. One sentence on
- * the screen (L.serviceFellBack) and the raw failure in the log, where it
- * belongs - the screen used to carry both, as a general failure with a
- * contradicting fragment stuck on the end. Its own function because
- * flightBuilder is at its ceiling and the allowance does not go up. */
-function flightFellBack(status, e) {
-  status.className = 'looknote warn2';
-  status.textContent = L.serviceFellBack(e, 'this flight was designed here');
-  appLog('flight: the service failed - ' + sayError(e));
-}
 
 function castFlavour(word, fromCat, fromBot, premise, status) {
   if (!word) return false;
@@ -57157,55 +57150,19 @@ function flightBuilder(preset, pool) {
         status.textContent = 'Pick one thing for the flight to vary.';
         return;
       }
-      const vLabel = (L.dimOf(varyId) || {}).label || varyId;
-      if (!S.lookupUrl) {
-        renderProposal(out, L.designFlight(spec, fromCat, fromBot),
-          varyId, premise, pool);
-        return;
-      }
-      ask.disabled = true;
-      status.className = 'looknote';
-      status.textContent = 'Designing against your shelf\u2026';
-      /* The bottle fills while it waits; this takes about 40 seconds. */
-      working('Designing against your shelf\u2026');
-      const heldSay = L.holdSay(hold);
-      const stopSaying = workingPhrases([
-        'Reading what is open\u2026',
-        heldSay,
-        'Ordering the pours\u2026',
-        'Checking every name against your shelf\u2026',
-        'Writing it up\u2026'
-      ]);
-      // The last caller that reaches the service directly. Gated with the
-      // rest, or the cap would only apply to some of the spending.
-      if (!spendLookups(1)) {
-        status.textContent = L.LOOKUP_LIMIT_SAY;
-        return;
-      }
-      try {
-        const r = await postWithRetry(S.lookupUrl,
-          JSON.stringify(L.flightRequestBody(vLabel, premise,
-            fromCat, fromBot)), 45000);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const res = L.verifyProposal(await readService(r, 'flight'),
-          fromCat, fromBot);
-        if (!res.ok) throw new Error(res.why);
-        status.className = 'looknote ok';
-        status.textContent = 'Designed for your shelf.'
-          + (res.rejected.length ? '  ' + res.rejected.length
-            + ' suggestion(s) dropped \u2014 see below.' : '');
-        renderAIProposal(out, res, premise, pool);
-      } catch (e) {
-        status.className = 'looknote warn2';
-        // Not "falling back to your shelf" — the shelf was always the
-        flightFellBack(status, e);
-        renderProposal(out, L.designFlight(spec, fromCat, fromBot),
-          varyId, premise, pool);
-      } finally {
-        stopSaying();
-        working();
-        ask.disabled = false;
-      }
+      /* NO SERVICE HERE (BZ, 2026-10-19: "why is this needed?"). It was
+         sent the varying dimension's label and one sentence - not the
+         hold set, the values, the tolerances, the pairs switch or the
+         counts - so everything these pickers compute reached it as prose
+         it was free to ignore, and the bottles that came back were its
+         own, checked only for existing on the shelf. It cost forty
+         seconds and a lookup to maybe undo the design.
+
+         The flight is built here, instantly, from exactly what he set,
+         and names itself from what is held. He writes the words, as he
+         did for all forty. */
+      renderProposal(out, L.designFlight(spec, fromCat, fromBot),
+        varyId, premise, pool);
     };
     m.appendChild(ask);
 
@@ -57233,106 +57190,6 @@ function flightBuilder(preset, pool) {
 
 // A designed flight, with the reasoning it came with and everything that
 // was thrown out for not being on the shelf.
-function renderAIProposal(out, res, premise, pool) {
-  out.innerHTML = '';
-  if (res.title) {
-    const t = el('h3', null, L.sentenceCase(res.title));
-    t.style.marginTop = '11px';
-    out.appendChild(t);
-  }
-  if (res.variable) out.appendChild(el('div', 'var', 'One variable: ' + res.variable));
-  if (res.premise) {
-    const p = el('p'); p.style.cssText = 'font-size:14px;margin:7px 0 0';
-    p.textContent = res.premise;
-    out.appendChild(p);
-  }
-
-  const list = el('div', 'recent');
-  list.style.marginTop = '9px';
-  res.pours.forEach((x, i) => {
-    const p = prod(x.k);
-    if (!p) return;
-    const r = flightPourRow(p, i, { sub: x.note });
-    list.appendChild(r);
-  });
-  out.appendChild(list);
-
-  (res.notes || []).forEach(n => {
-    const w = el('div', 'find f-' + (n.level === 'ok' ? 'ok' : 'warn'));
-    w.appendChild(el('div', 'm', n.level === 'ok' ? '\u2713' : '!'));
-    w.appendChild(el('div', null, n.msg));
-    out.appendChild(w);
-  });
-
-  // Anything it named that is not on the shelf is shown, not hidden: it is
-  // the difference between a proposal and a fact.
-  if (res.rejected && res.rejected.length) {
-    const rj = el('div');
-    rj.style.marginTop = '9px';
-    rj.appendChild(el('div', 'rs', 'Dropped'));
-    res.rejected.forEach(x => rj.appendChild(el('div', 'sub',
-      x.name + ' \u2014 ' + x.why)));
-    out.appendChild(rj);
-  }
-
-  if (res.why.length) {
-    const w = el('div', 'sheet');
-    w.style.marginTop = '10px';
-    w.appendChild(el('h3', null, 'Why it is built this way'));
-    res.why.forEach(x => {
-      const p = el('p');
-      p.style.cssText = 'font-size:14px;margin:7px 0 0';
-      p.textContent = x;
-      w.appendChild(p);
-    });
-    out.appendChild(w);
-  }
-
-  if (res.buy) {
-    const b = el('div', 'sheet');
-    b.style.marginTop = '10px';
-    b.appendChild(el('h3', null, res.buy.onShelf ? 'Open this' : 'One to buy'));
-    b.appendChild(el('div', 'nm', res.buy.name));
-    if (res.buy.why) b.appendChild(el('div', 'rd', res.buy.why));
-    if (!res.buy.onShelf) {
-      b.appendChild(el('div', 'src', 'Not on your shelf \u2014 check it before you buy.'));
-    }
-    out.appendChild(b);
-  }
-
-  // Cast from the room, so it can be proposed to it.
-  if (pool) {
-    const prop = el('button', 'btn wide btn-gold', 'Propose it to the room');
-    prop.style.marginTop = '11px';
-    prop.onclick = () => {
-      proposeToRoom({ title: (premise || 'An evening').split(/[.?!]/)[0]
-        .slice(0, 48), premise: premise, variable: res.variable || '' },
-        res.pours, pool);
-      closeModal();
-      renderBuddiesTab();
-    };
-    out.appendChild(prop);
-  }
-
-  const keep = el('button', 'btn wide ' + (pool ? '' : 'btn-gold'),
-    pool ? 'Or keep it for yourself' : 'Keep it and edit');
-  keep.style.marginTop = pool ? '0' : '11px';
-  keep.onclick = () => {
-    const f = L.newFlight(res.title || 'New flight');
-    f.core = L.relabel(res.pours.map(x => ({ k: x.k })));
-    f.premise = res.premise || premise;
-    f.tag = res.variable ? 'One variable: ' + res.variable : '';
-    f.why = res.why.slice();
-    f.cards = f.core.map((p, i) => {
-      const pd = prod(p.k) || {};
-      return { letter: p.letter, bottle: pd.name || '', proof: pd.proof || '',
-               wood: pd.fin || '' };
-    });
-    closeModal();
-    flightEditor(f);
-  };
-  out.appendChild(keep);
-}
 
 function renderProposal(out, res, varId, premise, pool) {
   out.innerHTML = '';
@@ -61318,7 +61175,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.88</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.89</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

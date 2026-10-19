@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1071 |
+| functions | 1070 |
 | tables | 251 |
-| carrying a stated purpose | 859 |
+| carrying a stated purpose | 858 |
 
 ## Tables
 
@@ -427,6 +427,7 @@ QUESTION, not the name you were going to use.
 - **`L.designFlight`** — BUILD WHAT THE TWO PICKERS DESCRIBE.
 - **`L.designOptions`** — _no comment above it_
 - **`L.designPremise`** — _no comment above it_
+- **`L.designTitle`** — WHAT TO CALL IT, from the design itself.
 - **`L.detailAt`** — _no comment above it_
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
@@ -610,7 +611,6 @@ QUESTION, not the name you were going to use.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdLine`** — THE LINE UNDER ONE DIMENSION'S SWITCH
 - **`L.holdReach`** — HOW MANY BOTTLES A TYPED HOLD WOULD REACH.
-- **`L.holdSay`** — WHAT IS BEING HELD, SAID WHILE THE SERVICE THINKS.
 - **`L.holdsFor`** — flight answers neither.
 - **`L.holdSpec`** — THE PICKERS' STATE AS THE BUILDER WANTS IT
 - **`L.hostCard`** — _no comment above it_
@@ -1124,7 +1124,6 @@ QUESTION, not the name you were going to use.
 - **`L.sentEntriesAfterLoad`** — THE SAME, FOR A MAP, which keeps its prints by entry key.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
-- **`L.serviceFellBack`** — THE SERVICE DID NOT ANSWER, AND THE APP DID THE WORK ITSELF
 - **`L.setState`** — _no comment above it_
 - **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES
