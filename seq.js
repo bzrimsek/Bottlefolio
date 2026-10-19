@@ -169,91 +169,47 @@ function faultsOf() {
     found.forEach(f => failures.push(one + ' twice: ' + f));
   }
 
-  /* A BUTTON THAT DOES NOTHING. Both faults in the suggestions modal were
-     of this kind (BZ, 2026-09-24): More ideas redrew the screen BEHIND the
-     modal, and choosing a flight opened it behind the modal too, which on a
-     phone reads as a dead button. Nothing threw and nothing drew wrong. */
+  /* A BUTTON THAT DOES NOTHING. Both faults in this sheet were of that
+     kind (BZ, 2026-09-24): More ideas redrew the screen BEHIND the modal,
+     and choosing a flight opened it behind the modal too, which on a phone
+     reads as a dead button. Nothing threw and nothing drew wrong.
+
+     IT PRESSES A SUGGESTION NOW. The flights he has built came off this
+     sheet on 2026-10-19 (BZ: "why keep both") and Run one has them, so
+     what is left to press is one of the seven - which closes this sheet
+     and opens the flight it proposes. Same fault, same shape: the proposal
+     must be in front, not behind. */
   const modalFaults = await (async () => {
     const out = [];
     await p.evaluate(() => { show('flights'); renderFlights(); showLessons(); });
-    await p.waitForTimeout(250);
+    await p.waitForTimeout(350);
     const look = () => p.evaluate(() => ({
       open: document.getElementById('overlay').classList.contains('on'),
-      rows: document.querySelectorAll('#overlay .portstep').length,
+      rows: document.querySelectorAll('#sevenRoll .portstep').length,
+      title: (document.querySelector('#overlay h2, #overlay .mtitle')
+        || {}).textContent || '',
+      pours: document.querySelectorAll('#overlay .prow, #overlay .pourrow')
+        .length,
       screen: (document.querySelector('.screen.on') || {}).id
     }));
     const first = await look();
     if (!first.open || !first.rows) {
-      out.push('the suggestions modal did not open with anything to pour');
+      out.push('the suggestions sheet did not open with anything to pour');
       return out;
     }
-    const more = () => p.evaluate(() => {
-      const c = [...document.querySelectorAll('#overlay .chip')]
-        .filter(x => /More ideas/.test(x.textContent))[0];
-      if (c) c.click();
-      return !!c;
+    const pressed = await p.evaluate(() => {
+      const r = document.querySelector('#sevenRoll .portstep');
+      if (r) r.click();
+      return !!r;
     });
-    if (await more()) {
-      await p.waitForTimeout(250);
-      const after = await look();
-      if (after.rows <= first.rows) {
-        out.push('More ideas changed nothing: still ' + after.rows + ' rows');
-      }
-      if (!after.open) out.push('More ideas closed the modal');
-    }
-    /* THE SHEET IS TWO FOLDS DEEP NOW (2026-10-19). A dimension opens its
-       VALUES - Same type opens Bourbon, Scotch, Rye - and a value opens its
-       flights, which is BZ's "make it nested, not a long list". So this
-       opens folds until a flight appears rather than assuming one level,
-       and never presses a "build one" row, which opens the designer and
-       would make this step pass for the wrong reason.
-
-       The fault it guards against is unchanged: choosing a flight must
-       close the modal, not open the flight behind it. It caught this very
-       change: with one level assumed, the press landed on "Same price -
-       build one" and the step reported the modal left up. */
-    /* THE FLIGHTS HE HAS BUILT, not the seven the app just made.
-       Both are lists of .portstep on one sheet, and the seven open a
-       PROPOSAL rather than a saved flight - so an unscoped press
-       landed on one and reported the modal left standing. */
-    const FOLD = '#tonightRoll .portstep';
-    const dig = () => p.evaluate(sel => {
-      const head = [...document.querySelectorAll(sel)]
-        .filter(x => x.offsetParent !== null
-          /* A CLOSED one. An open fold still shows its header, with a
-             minus, so taking the first fold head reopened - and closed -
-             the one just opened, three times over. */
-          && /^\+/.test(x.textContent.trim()))[0];
-      if (head) { head.click(); return true; }
-      return false;
-    }, FOLD);
-    const press = () => p.evaluate(sel => {
-      const row = [...document.querySelectorAll(sel)]
-        .filter(x => x.offsetParent !== null
-          && !/^[+\u2212]/.test(x.textContent.trim())
-          && !/build one/.test(x.textContent))[0];
-      if (row) row.click();
-      return !!row;
-    }, FOLD);
-    let pressed = false;
-    let depth = 0;
-    while (depth < 3 && !pressed) {
-      if (!await dig()) break;
-      await p.waitForTimeout(150);
-      depth++;
-      pressed = await press();
-    }
-    if (!depth) out.push('no shape to open on the suggestions sheet');
-    else if (!pressed) {
-      out.push('opened ' + depth + ' fold(s) and found no flight to press');
-    }
-    await p.waitForTimeout(300);
-    const chosen = await look();
-    if (chosen.open) {
-      out.push('choosing a flight left the modal up, with the flight behind it');
-    }
-    if (chosen.screen !== 'scr-detail') {
-      out.push('choosing a flight landed on ' + chosen.screen);
+    if (!pressed) { out.push('nothing to press on the sheet'); return out; }
+    await p.waitForTimeout(350);
+    const after = await look();
+    /* THE PROPOSAL IS A SHEET OF ITS OWN, so the overlay stays up - what
+       must not happen is the SUGGESTIONS list still being the thing on it. */
+    if (!after.open) out.push('pressing a suggestion closed everything');
+    if (after.rows) {
+      out.push('the suggestion list is still up behind the flight it opened');
     }
     return out;
   })();

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1083 |
+| functions | 1081 |
 | tables | 253 |
-| carrying a stated purpose | 872 |
+| carrying a stated purpose | 869 |
 
 ## Tables
 
@@ -394,7 +394,6 @@ QUESTION, not the name you were going to use.
 - **`L.catFault`** — WHAT IS WRONG WITH A RECORD
 - **`L.catKeyFor`** — _no comment above it_
 - **`L.changedKeys`** — _no comment above it_
-- **`L.choiceHolds`** — WHAT A FLIGHT HELD BY CHOICE, which is not everything it holds.
 - **`L.choroStep`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.clampView`** — on a phone and disorienting.
 - **`L.clampZoom`** — _no comment above it_
@@ -529,6 +528,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightHolds`** — WHAT A BUILT FLIGHT HOLDS STILL
 - **`L.flightIdeasFor`** — THE FLIGHT THIS BOTTLE MAKES
 - **`L.flightIsMine`** — WHOSE FLIGHT IS THIS, and so what may be done to it.
+- **`L.flightLine`** — THE LINE UNDER A FLIGHT'S NAME.
 - **`L.flightMissing`** — `sealed` is the shelf's own answer (L.ownedCount against L.pourable), so
 - **`L.flightMissingSay`** — Said in one line, because the card above it already says the count.
 - **`L.flightNoteQueue`** — Notes written for a flight card, not for the bottle
@@ -974,7 +974,6 @@ QUESTION, not the name you were going to use.
 - **`L.premium`** — _no comment above it_
 - **`L.premiumText`** — UNDER retail, a discount, and must not read as a premium.
 - **`L.prepareImport`** — _no comment above it_
-- **`L.presetHold`** — THE HOLD A SHEET ARRIVES WITH
 - **`L.priceBand`** — Occasion, said the way a host says it rather than the way a receipt does.
 - **`L.priceVerdict`** — Is this a good price, for THIS shelf.
 - **`L.probeCandidates`** — _no comment above it_
@@ -1291,7 +1290,6 @@ QUESTION, not the name you were going to use.
 - **`L.todayISO`** — _no comment above it_
 - **`L.tombstone`** — _no comment above it_
 - **`L.tonight`** — _no comment above it_
-- **`L.tonightRows`** — WHAT TO POUR TONIGHT, AS ROWS - one per thing the designer can hold.
 - **`L.toNum`** — A number, or nothing — never NaN.
 - **`L.topGap`** — _no comment above it_
 - **`L.topOf`** — _no comment above it_
@@ -1313,7 +1311,7 @@ QUESTION, not the name you were going to use.
 - **`L.validate`** — deliberately overridden before.
 - **`L.validateProduct`** — _no comment above it_
 - **`L.validDate`** — _no comment above it_
-- **`L.variableOf`** — The tag line carries "ONE VARIABLE
+- **`L.variableOf`** — _no comment above it_
 - **`L.variableOfId`** — _no comment above it_
 - **`L.varInText`** — tag only when the title says nothing.
 - **`L.vennLabel`** — A label a person can read, given who is in a region.

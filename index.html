@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.0  Build 2026-10-19 04:48 PM ET
+     Version : v2.9.1  Build 2026-10-19 07:15 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
 // v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
 // v2.8.99  2026-10-19  A dimension opens its values, not a long list.
 // v2.8.98  2026-10-19  Standing still is not a theme.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.94  2026-10-19  The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port.
 // v2.8.93  2026-10-19  A flight says what it is, under what it is called.
 // v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
-// v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.0';
-const BUILD_TIME  = '2026-10-19 04:48 PM ET';
+const APP_VERSION = '2.9.1';
+const BUILD_TIME  = '2026-10-19 07:15 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5928,6 +5928,12 @@ L.errorKind = function (e) {
   if (/quota|resource.?exhausted|too many|rate.?limit/i.test(raw)) {
     return 'busy';
   }
+  /* AN ABORT IS A TIMEOUT HERE, ALWAYS. Every AbortController in this app is
+     wired to a setTimeout and nothing else calls abort(), so there is no user
+     cancel to mistake it for - read, not assumed. Six times in one day the
+     browser's own words for it, "signal is aborted without reason", were
+     shown to somebody as the explanation (log, 2026-10-19). */
+  if (/abort/i.test(raw)) return 'slow';
   return 'unknown';
 };
 
@@ -5940,6 +5946,9 @@ L.plainError = function (e, fallback) {
   }
   if (kind === 'busy') {
     return 'Too many at once just now — try again in a minute.';
+  }
+  if (kind === 'slow') {
+    return 'That took too long to answer — try again.';
   }
   return fallback || 'That did not go through. The detail is in Running this.';
 };
@@ -9015,7 +9024,7 @@ L.FEATURES = [
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its VALUES — Same type opens Bourbon, Scotch, Rye — and a value opens its flights, so you pick what you want rather than read a list. Where there is nothing to pick between, a value with one flight or a row with one value, the flight is there straight away. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Under your own flights sit Seven to pour: seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'Run one lists every flight you have, with a Fully pourable filter, a Most ready sort, a search and a type filter; each card says what the flight IS — Bourbon from Angel’s Envy across four casks — along with its core and bench, the drinking arithmetic, how many of its core are open and when you last ran it. Get suggestions holds Seven to pour, seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
     def: 'Cooper walks you through a tasting: a measured pour, then color, '
       + 'nose, body, palate and finish, teaching each one as it comes from the '
@@ -15355,21 +15364,6 @@ L.holdDefault = function (d) {
   return d.numeric ? { value: first, tol: d.band || 0 } : first;
 };
 
-/* THE HOLD A SHEET ARRIVES WITH. The tonight sheet's empty rows offer to
- * build the flight that would fill them, so "Same age · build one" opens
- * the designer with Age held. Seeded through L.holdDefault, so an arrived-at
- * hold and a pressed one are the same hold, and a dimension this shelf
- * cannot hold is skipped rather than set to nothing.
- */
-L.presetHold = function (dims, preset) {
-  const held = {};
-  (preset || []).forEach(id => {
-    const d = (dims || []).filter(x => x.id === id && x.canHold)[0];
-    if (d) held[id] = L.holdDefault(d);
-  });
-  return held;
-};
-
 L.holdSpec = function (held) {
   return Object.keys(held || {}).map(k => {
     const v = held[k];
@@ -15719,9 +15713,21 @@ L.verifyProposal = function (raw, catalog, bottles) {
   }
 
   if (out.pours.length < 3) {
+    /* AND WHY, NOT ONLY HOW MANY. Twice in the log on 2026-10-19, on
+       somebody else's account: "Only 0 of the suggested pours are open on
+       your shelf", full stop. Every rejection already carries its reason -
+       not on the shelf, listed twice, not open - and the sentence threw all
+       of them away, so the reader learnt nothing and could do nothing.
+       Those are different problems: bottles that are not there at all mean
+       the service named things he does not own, and bottles that are there
+       but sealed mean open one (rule 13d, and BZ's own "a hint with no
+       detail and no way to act is not a finding"). */
+    const by = {};
+    out.rejected.forEach(r => { by[r.why] = (by[r.why] || 0) + 1; });
+    const said = Object.keys(by).map(w => by[w] + ' ' + w).join(', ');
     return { ok: false, rejected: out.rejected,
       why: 'Only ' + out.pours.length + ' of the suggested pours are open on '
-        + 'your shelf.' };
+        + 'your shelf' + (said ? ' — ' + said + '.' : '.') };
   }
   out.pours = L.pourOrder(out.pours, catalog);
   out.notes = L.validate(out.pours, catalog, { bottles: bottles });
@@ -25140,37 +25146,6 @@ L.dimSpanSay = function (id, products) {
   return (lo === hi ? String(lo) : lo + '–' + hi) + L.dimUnit(d);
 };
 
-/* WHAT A FLIGHT HELD BY CHOICE, which is not everything it holds.
- *
- * BZ, 2026-10-19: "only count smoke when it was a choice." Same smoke topped
- * his sheet at 28 of 34 - a true row that helped him choose nothing, because
- * most of his shelf is unpeated and the smoke never had a chance to move.
- * Standing still is not a theme; being KEPT still is.
- *
- * THE SHELF DECIDES, NOT A THRESHOLD. A dimension was a choice when the open
- * bottles that satisfy everything ELSE the flight holds offer more than one
- * answer for it. Six bourbons from Jim Beam: there is no peated Jim Beam
- * bourbon open, so the smoke was never on the table and the row does not
- * claim it. Six Islay scotches: the smoke came with the island, and the
- * island was the choice.
- *
- * L.applyHold with `except` is exactly this question and is what the
- * designer's pickers ask to shrink their counts as he holds more (rule 2).
- */
-L.choiceHolds = function (flight, catalog, open) {
-  const ids = L.flightHolds(flight, catalog);
-  /* NO SHELF, NO JUDGEMENT. Without the open bottles there is nothing to
-     say what could have moved, and guessing makes the answer BIGGER - it
-     would call every hold deliberate. */
-  if (!ids.length || !open || !open.length) return ids;
-  const got = ((flight || {}).core || [])
-    .map(x => (catalog || {})[x.k]).filter(Boolean);
-  const spec = ids.map(id => ({ dim: id, value: L.dimValue(id, got[0]),
-                                tol: (L.dimOf(id) || {}).band }));
-  return ids.filter(id =>
-    L.dimValues(id, L.applyHold(open, spec, id)).length > 1);
-};
-
 /* THE SEVEN FLIGHTS, AND WHY THESE SEVEN.
  *
  * BZ, 2026-10-19: "we should just have some number of the most common types
@@ -25259,98 +25234,6 @@ L.suggestFlights = function (catalog, bottles, round, used) {
              said: L.flightSays({ core: made.pours, holds: made.holds,
                                   vary: made.vary }, catalog) };
   }).filter(Boolean);
-};
-
-/* WHAT TO POUR TONIGHT, AS ROWS - one per thing the designer can hold.
- *
- * BZ, 2026-10-19: "how can I only have 1 same house?!?!?! Same type should
- * not conflate house, type, age and proof - actually this is conflated
- * across most of the options." He was reading a bug. The row key was
- * holds[0] - the FIRST dimension of L.DIMS that a flight held - so a flight
- * holding the type AND the house AND the proof landed under whichever of
- * them L.DIMS happens to list first, and the other two buckets lost it. He
- * has ten flights holding a house and one of them said so.
- *
- * A FLIGHT HOLDS SEVERAL THINGS, SO IT SITS UNDER EACH (BZ, same message:
- * "why not use these options to drive 1 each and then suggest Build for
- * others"). The rows are the designer's own nine switches, in the designer's
- * own order, so the sheet and the sheet that builds one use one vocabulary.
- * The counts OVERLAP on purpose - they are what each row can offer, not a
- * division of the forty - and the heading above still counts the flights.
- *
- * AND AN EMPTY ROW IS AN OFFER, not a row left out. Nothing on this shelf
- * holds an age or the bond, and a row saying so with a way to build one is
- * worth more than a row that is not drawn.
- */
-L.tonightRows = function (list, flights, catalog, open) {
-  const all = flights || [];
-  const held = {};
-  (list || []).forEach(f => {
-    const full = all.filter(x => x.title === f.title)[0];
-    if (!full) return;
-    /* HELD BY CHOICE, not merely standing still (BZ, 2026-10-19: "only
-       count smoke when it was a choice"). */
-    const h = L.choiceHolds(full, catalog, open);
-    if (!h.length) {
-      /* BZ, 2026-10-19: "nothing held but the question is also odd words".
-         These are the ones with no single thread, and they belong to no
-         dimension - so they are their own row rather than missing. */
-      const n = (held.__none = held.__none
-        || { flights: [], by: {} });
-      n.flights.push(f);
-      (n.by.__flat = n.by.__flat || []).push(f);
-      return;
-    }
-    /* AND UNDER WHICH VALUE OF IT. BZ, 2026-10-19: "I expect to select the
-       types and nothing else - if you want to have a nested selection fine
-       but make it nested, not a long list." Pressing Same type offered
-       twenty sentences; it offers the types now, and a type offers its
-       flights. The pour carries the label (L.dimLabel), and a number is
-       BANDED so 110 and 112 are one strength rather than two rows. */
-    const got = (full.core || []).map(x => (catalog || {})[x.k])
-      .filter(Boolean);
-    h.forEach(id => {
-      /* A NUMBER SAYS ITS SPAN, because one pour's reading is not the
-         flight's strength: six bottles at 110 to 113 are one row saying
-         so, not a row called 110. */
-      const lab = (L.dimOf(id) || {}).numeric
-        ? L.dimSpanSay(id, got) : L.dimLabel(id, got[0]);
-      if (!lab) return;
-      const row = (held[id] = held[id] || { flights: [], by: {} });
-      row.flights.push(f);
-      (row.by[lab] = row.by[lab] || []).push(f);
-    });
-  });
-  /* THE VALUES UNDER A ROW, biggest first, so the type he has most
-     flights for is the first thing under Same type. */
-  const spread = bag => Object.keys((bag || {}).by || {})
-    .map(k => ({ label: k, flights: bag.by[k] }))
-    .sort((a, b) => b.flights.length - a.flights.length);
-  const rows = L.DIMS.map(d => ({
-    id: d.id,
-    /* SAME, not one: "One smoke" reads as a quantity of smoke, and what
-       these flights share is that the smoke does not change. A flag is not
-       a quantity either way, so it says All. */
-    label: (d.flag ? 'All ' : 'Same ')
-      + String(d.label).toLowerCase().replace(/^the /, ''),
-    flights: (held[d.id] || {}).flights || [],
-    values: spread(held[d.id])
-  }));
-  /* BIGGEST FIRST AMONG THE ONES HE CAN POUR, then the offers. L.DIMS order
-     is the designer's and is kept inside each half, so an empty row does not
-     jump about as the shelf changes. */
-  const got = rows.filter(r => r.flights.length)
-    .sort((a, b) => b.flights.length - a.flights.length);
-  const none = rows.filter(r => !r.flights.length);
-  if (held.__none) {
-    /* NO DIMENSION, SO NO SECOND LEVEL: there is nothing to pick between.
-       One empty value row carries them, and the screen opens straight to
-       the flights. */
-    got.push({ id: null, label: 'Everything moves',
-      flights: held.__none.flights,
-      values: [{ label: '', flights: held.__none.flights }] });
-  }
-  return got.concat(none);
 };
 
 /* WHAT A FLIGHT IS ABOUT, in a line, read off its own pours.
@@ -35037,6 +34920,21 @@ L.smsBody = function (flight, prods) {
 };
 
 // The tag line carries "ONE VARIABLE: WHICH SHERRY" on most cards.
+/* THE LINE UNDER A FLIGHT'S NAME.
+ *
+ * L.variableOf says "proof ladder"; L.flightSays says "Bourbon from Angel's
+ * Envy across four casks", which is what you choose a flight BY. The tonight
+ * rows carried the sentence and the cards carried the dimension, and when
+ * those rows went (BZ, 2026-10-19: "why keep both") this is the list that
+ * kept their job.
+ *
+ * THE OLD LINE IS THE FALLBACK, not a second answer: a flight of two pours
+ * has no sentence, because L.flightHolds needs three to say anything.
+ */
+L.flightLine = function (flight, catalog) {
+  return L.flightSays(flight, catalog) || L.variableOf(flight);
+};
+
 L.variableOf = function (flight) {
   const m = /ONE VARIABLE:\s*([^·]+)/i.exec(flight.tag || '');
   if (m) return 'One variable: ' + m[1].trim().toLowerCase();
@@ -42547,9 +42445,12 @@ const FLIGHT_MODES = [
     go: () => { FLIGHTS_OPEN = true; S.fflt.state = 'all';
                 renderFlightFilters(); renderFlights(); } },
   { id: 'ideas', label: 'Get suggestions',
-    hint: (n, ran, ready) => ready
-      ? ready + ' ready to pour tonight'
-      : 'What your shelf can teach you next',
+    /* IT STOPPED ADVERTISING THE READY ONES (BZ, 2026-10-19: "why keep
+       both"). They are behind Run one, beside this, and the sheet does not
+       list them any more - so a tile saying "38 ready to pour tonight"
+       sent him to the wrong one of two tiles. It says what is actually in
+       there: seven flights the app has built from what is open. */
+    hint: () => 'Seven built from what is open',
     /* A hand under a covered tray (BZ's reference): something is brought to
        you and you do not yet know what. */
     art: '<circle cx="30" cy="9" r="2.5"/>'
@@ -44639,128 +44540,6 @@ function buddiesWants(box, uids, names, plain) {
     });
   });
   box.appendChild(wc);
-}
-
-/* A FOLD: a header that opens a body, filled the first time it is opened.
-   BZ, 2026-10-19: "if you want to have a nested selection fine but make it
-   nested, not a long list." Two of these deep is that nesting - a dimension
-   opens its values, a value opens its flights - and filling late means the
-   sheet draws one list of rows rather than every flight in the shelf. */
-function foldRow(parent, label, count, fill, indent) {
-  const state = { on: false, drawn: false };
-  const body = el('div');
-  body.hidden = true;
-  const head = el('button', 'portstep');
-  head.type = 'button';
-  if (indent) head.style.paddingLeft = indent + 'px';
-  const draw = () => {
-    head.textContent = (state.on ? '\u2212  ' : '+  ') + label
-      + '  \u00b7  ' + count;
-    body.hidden = !state.on;
-  };
-  head.onclick = () => {
-    state.on = !state.on;
-    if (state.on && !state.drawn) { state.drawn = true; fill(body); }
-    draw();
-  };
-  draw();
-  parent.appendChild(head);
-  parent.appendChild(body);
-}
-
-/* ONE FLIGHT, SAID RATHER THAN NAMED (BZ, 2026-10-19, three times: "these
-   names are fun, but meaningless", "need factual descriptions", "dont need
-   the fun name - jus the topic"). His titles are good and they are on the
-   flight itself when he opens it; in a list of what to pour they were the
-   thing in the way. */
-function tonightFlight(parent, f, all, indent) {
-  const r = el('button', 'portstep');
-  r.type = 'button';
-  r.style.paddingLeft = indent + 'px';
-  const full = all.filter(x => x.title === f.title)[0];
-  const said = full ? L.flightSays(full, S.catalog) : '';
-  r.appendChild(el('div', 'nm', (said || 'a flight') + '  \u00b7  '
-    + f.pours + ' pours' + (f.lastRun ? '' : ', never run')));
-  r.onclick = () => {
-    if (!full) return;
-    /* CLOSE FIRST. The flight opened behind the modal, which on a phone is
-       a button that appears to do nothing (BZ, 2026-09-24). */
-    closeModal();
-    showFlight(full);
-  };
-  parent.appendChild(r);
-}
-
-/* THE VALUES UNDER ONE DIMENSION. A value with a single flight shows that
-   flight instead of a fold onto one row, and so does a dimension with only
-   one value - two taps to reach something there is no choice about is the
-   long list in another shape. */
-function tonightValues(body, row, all) {
-  row.values.forEach(v => {
-    if (!v.label || row.values.length === 1 || v.flights.length === 1) {
-      v.flights.forEach(f => tonightFlight(body, f, all, 18));
-      return;
-    }
-    foldRow(body, v.label, v.flights.length,
-      b2 => v.flights.forEach(f => tonightFlight(b2, f, all, 36)), 18);
-  });
-}
-
-/* EVERY EVENING THAT IS READY, IN A BOX THAT SCROLLS (BZ, 2026-09-24: why
-   not make it a scrolling box instead of loading 3 at a time?). It used to
-   show three behind a More ideas chip, and thirty-three of his forty
-   flights are pourable right now - so the chip had to be pressed ten times
-   to see what he already owns. L.tonight ranks them, never-run first and
-   then by longest since, so the top of the box is still the best answer. */
-function renderTonight(box) {
-  const list = L.tonight(allFlights(), S.catalog, S.bottles, S.history, 99);
-  if (!list.length) return;
-  const card = el('div', 'sheet portrait');
-  const wrap = el('div', 'portsteps');
-  wrap.style.marginTop = '0';
-  wrap.style.paddingTop = '0';
-  wrap.style.borderTop = '0';
-  wrap.appendChild(el('h3', null, 'You could pour tonight · '
-    + list.length));
-  /* The label stays put and the flights scroll under it, so the rest of the
-     card - the flavour chips, Design one, Close - is still reachable on a
-     phone however many are ready. */
-  /* THE ROWS ARE THE DESIGNER'S OWN SWITCHES (BZ, 2026-10-19: "why not use
-     these options to drive 1 each and then suggest Build for others"). One
-     row per thing the designer can hold, a flight under EACH thing it holds
-     rather than under whichever one came first, and an empty row offering to
-     build the flight that would fill it. L.tonightRows is the whole rule. */
-  const roll = el('div', 'scrollbox');
-  roll.id = 'tonightRoll';
-  const all = allFlights();
-  const rows = L.tonightRows(list, all, S.catalog,
-    L.openProducts(S.catalog, S.bottles));
-  /* THE COUNTS OVERLAP AND THE SHEET SAYS SO. A flight holding the type and
-     the house is offered by both rows, so the row counts add up to more than
-     the number above them - which looks like a fault unless it is stated. */
-  wrap.appendChild(el('div', 'src', 'A flight holds more than one thing, so '
-    + 'it is offered under each of them — and only where the shelf could '
-    + 'have moved it.'));
-  rows.forEach(row => {
-    /* AN EMPTY ROW IS AN OFFER, not a row left out. Nothing on this
-       shelf holds an age or the bond; saying so with a way to build one
-       beats a row that is not drawn. It opens the designer already
-       holding that switch. */
-    if (!row.flights.length) {
-      const b = el('button', 'portstep');
-      b.type = 'button';
-      b.textContent = row.label + '  ·  build one';
-      b.onclick = () => { closeModal(); flightBuilder([row.id]); };
-      roll.appendChild(b);
-      return;
-    }
-    foldRow(roll, row.label, row.flights.length,
-      body => tonightValues(body, row, all), 0);
-  });
-  wrap.appendChild(roll);
-
-  card.appendChild(wrap);
-  box.appendChild(card);
 }
 
 /* THE RADAR ITSELF, drawn once and used twice (2026-09-27): the shape of the
@@ -57129,7 +56908,7 @@ function renderFlights() {
     const ready = L.flightReady(f, S.catalog, S.bottles);
     const c = el('button', 'fcard' + (runAt ? ' done' : ''));
     c.appendChild(el('h3', null, L.sentenceCase(f.title)));
-    c.appendChild(el('div', 'var', L.variableOf(f)));
+    c.appendChild(el('div', 'var', L.flightLine(f, S.catalog)));
     const bits = [f.core.length + ' core', f.ext.length + ' bench'];
     /* The drinking arithmetic (BZ). Core pours only; the bench is alternates.
        Said only when every proof is known, since a partial total is not a
@@ -57306,11 +57085,17 @@ function showLessons() {
    const paint = () => {
     body.innerHTML = '';
     const m = body;
-    /* Flights ready to pour tonight come first: already designed, they are
-       the best suggestion there is. Designing a new one comes after. */
-    renderTonight(m, paint);
-    /* AND SEVEN TO BUILD, under the ones already designed: a flight he
-       built beats one the app just made up, so his come first. */
+    /* THE FLIGHTS HE HAS ALREADY BUILT ARE NOT HERE ANY MORE (BZ,
+       2026-10-19: "why keep both"). Run one, the first tile on this very
+       screen, lists them with a Fully pourable filter, a Most ready sort,
+       a search and a type filter, and each card already says what varies,
+       core and bench, the drinking arithmetic, how many of its core are
+       open and when it was last run. This was a second door to that room
+       with less on the other side, which is the argument that took the Map
+       tab off the bar. The sentence those rows carried was the one thing
+       worth keeping and it has moved onto the cards.
+
+       So this sheet is the seven, and earns its title. */
     renderSeven(m, seven);
     /* THE UNBUILT SHAPES ARE GONE (BZ, 2026-10-19: "whats the point of
        the 1 I've not built? not needed"). With forty flights he has built
@@ -57617,12 +57402,11 @@ function countSel(box, label, from, to, now) {
   return s2;
 }
 
-function flightPickers(form, fromCat, fromBot, preset) {
+function flightPickers(form, fromCat, fromBot) {
   /* RECOMPUTED ON EVERY DRAW, because holding one thing changes what
      the others can reach. */
   let dims = L.designOptions(fromCat, fromBot);
-  // dim id -> chosen value, seeded with whatever the caller arrived holding.
-  const held = L.presetHold(dims, preset);
+  const held = {};        // dim id -> chosen value
   let varyId = null;
 
   const box = el('div');
@@ -57732,10 +57516,7 @@ function flightPickers(form, fromCat, fromBot, preset) {
            extOf: () => Number(extSel.value) };
 }
 
-/* `preset` is dimensions to HOLD, from the tonight sheet's empty rows. It
- * meant the VARIABLE until the vary dropdown went, and was then assigned and
- * read by nobody for a build. */
-function flightBuilder(preset, pool) {
+function flightBuilder(pool) {
   // Named for the tile that opens it: design, not build.
   openModal('Design a flight', m => {
     // Casting from the room rather than one shelf. Everything downstream is
@@ -57763,7 +57544,7 @@ function flightBuilder(preset, pool) {
     /* THE PICKERS ARE THEIR OWN FUNCTION (rule 30). They are 110 lines of
        DOM and flightBuilder was already at its ceiling; the allowance does
        not go up. `pick` is the handle the Design it button reads. */
-    const pick = flightPickers(form, fromCat, fromBot, preset);
+    const pick = flightPickers(form, fromCat, fromBot);
 
     const prem = document.createElement('textarea');
     prem.className = 'field'; prem.rows = 2;
@@ -61833,7 +61614,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.0</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.1</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

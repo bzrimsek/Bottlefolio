@@ -33525,194 +33525,33 @@ sec('\u00a7462 a bottle against a shelf\u2019s fingerprint');
     L.bottleScore({ sub: 'bourbon' }, L.shelfFingerprint(null)), null);
 }
 
-sec('\u00a7490 the tonight rows are the designer switches');
-{
-  /* BZ, 2026-10-19: "how can I only have 1 same house?!?!?! Same type should
-     not conflate house, type, age and proof - actually this is conflated
-     across most of the options."
-
-     HE WAS READING A BUG. The row key was holds[0] - the first dimension of
-     L.DIMS that a flight held - so a flight holding the type AND the house
-     AND the proof landed under whichever L.DIMS lists first and the other
-     two buckets lost it. Ten of his flights hold a house; one said so. */
-  const cat = {};
-  const put = (k, dist, sub, proof, fin) => {
-    cat[k] = { k: k, name: k, dist: dist, sub: sub, proof: proof, fin: fin,
-               obsc: 'known', msrp: 50 };
-  };
-  /* ONE HOUSE, ONE TYPE, ONE PROOF, THREE CASKS: holds house AND type AND
-     proof, which is the shape that used to land in one bucket. */
-  ['port', 'sherry', 'tokaji'].forEach((w, i) =>
-    put('h' + i, 'One House', 'bourbon', 100, w));
-  const flights = [{ title: 'F', core: ['h0', 'h1', 'h2'].map(k => ({ k: k })) }];
-  const rows = L.tonightRows([{ title: 'F', pours: 3 }], flights, cat);
-  const row = id => rows.filter(r => r.id === id)[0];
-  eq('it is offered under the house', row('house').flights.length, 1);
-  eq('and under the type', row('type').flights.length, 1);
-  eq('and under the proof', row('proof').flights.length, 1);
-  /* A ROW WITH NOTHING IS AN OFFER, not a row left out: nothing on his
-     shelf holds an age or the bond, and a way to build one beats silence. */
-  eq('a dimension it does not hold is still a row', !!row('age'), true);
-  eq('and that row is empty', row('age').flights.length, 0);
-  eq('every switch the designer has, is a row', rows.length >= L.DIMS.length,
-    true);
-  /* THE POURABLE ONES LEAD. An offer is worth less than a flight he owns
-     every bottle for, so it sorts under them. */
-  eq('the fullest row leads', rows[0].flights.length > 0, true);
-  eq('and the offers come last',
-    rows[rows.length - 1].flights.length, 0);
-  /* SAME, not one: "One smoke" reads as a quantity of smoke. A flag is not
-     a quantity either way. */
-  eq('a dimension says Same', row('type').label, 'Same type');
-  eq('the house drops its article', row('house').label, 'Same house');
-  eq('and a flag says All', row('bonded').label, 'All bottled in bond');
-  /* A FLIGHT WITH NO THREAD BELONGS TO NO DIMENSION, so it is its own row
-     rather than missing. */
-  const odd = {};
-  put('x0', 'A', 'bourbon', 80, 'port');
-  put('x1', 'Ardbeg', 'scotch', 120, 'sherry');
-  put('x2', 'C', 'rye', 100, null);
-  /* THE SMOKE AND THE PRICE HAVE TO MOVE TOO, or they hold for free: an
-     unpeated set all at one price holds both, and the flight is not loose
-     at all. That is why "Same smoke" tops his real sheet at 28 of 34 - most
-     of his shelf is unpeated, so the smoke never moves. */
-  cat.x0.msrp = 30; cat.x1.msrp = 200; cat.x2.msrp = 80;
-  ['x0', 'x1', 'x2'].forEach(k => { odd[k] = cat[k]; });
-  const loose = [{ title: 'G',
-    core: ['x0', 'x1', 'x2'].map(k => ({ k: k })) }];
-  const r2 = L.tonightRows([{ title: 'G', pours: 3 }], loose, odd);
-  eq('nothing held is its own row',
-    r2.filter(r => r.label === 'Everything moves').length, 1);
-  eq('and the flight is in it',
-    r2.filter(r => r.label === 'Everything moves')[0].flights.length, 1);
-
-  /* THE HOLD A SHEET ARRIVES WITH, which is how "build one" opens the
-     designer already holding that switch. */
-  const dims = [{ id: 'type', canHold: true, options: [{ value: 'rye' }] },
-                { id: 'proof', canHold: true, numeric: true, band: 3,
-                  options: [{ value: 100 }] },
-                { id: 'age', canHold: false, options: [{ value: 12 }] }];
-  const seeded = L.presetHold(dims, ['type', 'proof', 'age']);
-  eq('a preset switch is held', seeded.type, 'rye');
-  /* A NUMBER CARRIES ITS TOLERANCE, because holding a proof EXACTLY is a
-     flight of one bottle on most shelves. */
-  eq('a number holds with its band', seeded.proof.value, 100);
-  eq('and the band is the dimension\u2019s', seeded.proof.tol, 3);
-  /* WHAT THE SHELF CANNOT HOLD IS SKIPPED, not held at nothing - a hold
-     with no value to take would refuse every bottle. */
-  eq('a dimension the shelf cannot hold is not seeded',
-    Object.prototype.hasOwnProperty.call(seeded, 'age'), false);
-  eq('a fresh hold takes the first option',
-    L.holdDefault(dims[0]), 'rye');
-  eq('and nothing takes nothing', L.holdDefault(null), null);
-}
-
-sec('\u00a7491 standing still is not a theme');
-{
-  /* BZ, 2026-10-19: "only count smoke when it was a choice." Same smoke
-     topped his sheet at 28 of 34 - true, and no help at all, because most
-     of his shelf is unpeated so the smoke never had a chance to move.
-     Held by choice means the open bottles that satisfy everything ELSE the
-     flight holds offer more than one answer for it. */
-  const cat = {};
-  const bots = [];
-  const put = (k, dist, sub, proof, peat) => {
-    cat[k] = { k: k, name: k + (peat ? ' peated' : ''), dist: dist, sub: sub,
-               proof: proof, obsc: 'known', msrp: 50 };
-    bots.push({ id: 'b' + k, k: k, status: 'open' });
-  };
-  /* THREE BOURBONS FROM ONE HOUSE, and a peated scotch open beside them. */
-  [100, 101, 102].forEach((p, i) => put('b' + i, 'One House', 'bourbon', p));
-  put('smoky', 'Islay House', 'scotch', 100, true);
-  const open = L.openProducts(cat, bots);
-  const flight = { core: ['b0', 'b1', 'b2'].map(k => ({ k: k })) };
-
-  /* IT HOLDS THE SMOKE either way - none of the three is peated. */
-  eq('standing still counts as held',
-    L.flightHolds(flight, cat).indexOf('smoke') >= 0, true);
-  /* BUT IT WAS NOT A CHOICE. There is no peated BOURBON FROM THIS HOUSE
-     open, so the smoke was never on the table for this flight. */
-  eq('and not as a choice',
-    L.choiceHolds(flight, cat, open).indexOf('smoke') >= 0, false);
-  /* THE HOUSE WAS NOT A CHOICE EITHER, for the same reason read the other
-     way: one house is all this type and proof can reach. */
-  eq('a house the shelf cannot vary is not a choice',
-    L.choiceHolds(flight, cat, open).indexOf('house') >= 0, false);
-
-  /* GIVE THE HOUSE A PEATED BOTTLING AND THE SMOKE BECOMES A CHOICE,
-     because now the flight passed one over. */
-  const cat2 = {};
-  const bots2 = [];
-  Object.keys(cat).forEach(k => { cat2[k] = cat[k]; });
-  bots.forEach(b => bots2.push(b));
-  cat2.peaty = { k: 'peaty', name: 'One House peated', dist: 'One House',
-                 sub: 'bourbon', proof: 101, obsc: 'known', msrp: 50 };
-  bots2.push({ id: 'bpeaty', k: 'peaty', status: 'open' });
-  eq('a peated one in reach makes it a choice',
-    L.choiceHolds(flight, cat2, L.openProducts(cat2, bots2))
-      .indexOf('smoke') >= 0, true);
-
-  /* NO SHELF, NO JUDGEMENT. Judging against bottles that have not loaded
-     makes this answer BIGGER - every hold would read as deliberate - so
-     without them it says what it says today and nothing more. */
-  eq('an empty shelf judges nothing',
-    L.choiceHolds(flight, cat, []).length,
-    L.flightHolds(flight, cat).length);
-  eq('and so does no shelf at all',
-    L.choiceHolds(flight, cat, null).length,
-    L.flightHolds(flight, cat).length);
-  /* AND IT IS NEVER MORE THAN WHAT IS HELD. */
-  eq('a choice is always a hold',
-    L.choiceHolds(flight, cat, open)
-      .filter(id => L.flightHolds(flight, cat).indexOf(id) < 0).length, 0);
-
-  /* THE ROWS READ IT, which is the whole point of it. */
-  const rows = L.tonightRows([{ title: 'F', pours: 3 }],
-    [{ title: 'F', core: flight.core }], cat, open);
-  eq('so the smoke row does not claim it',
-    rows.filter(r => r.id === 'smoke')[0].flights.length, 0);
-}
+/* §490 and §491 are gone with the rows they guarded: L.tonightRows
+   and L.choiceHolds, which thing a flight was offered under and whether a
+   hold had ever been at risk. The tonight list came off the suggestions
+   sheet on 2026-10-19 (BZ: "why keep both"), Run one having done the same
+   job with a filter, a sort and a search. The rules are in CHANGELOG.md
+   if they are ever wanted back. */
 
 sec('\u00a7492 a dimension opens its values, not a long list');
 {
-  /* BZ, 2026-10-19, of twenty sentences under Same type: "I expect to
-     select the types and nothing else - if you want to have a nested
-     selection fine but make it nested, not a long list." */
-  const cat = {};
-  const bots = [];
-  const put = (k, dist, sub, proof) => {
-    cat[k] = { k: k, name: k, dist: dist, sub: sub, proof: proof,
-               obsc: 'known', msrp: 50 };
-    bots.push({ id: 'b' + k, k: k, status: 'open' });
-  };
-  /* TWO BOURBON FLIGHTS AND ONE RYE, each three pours from one house. */
-  const mk = (tag, dist, sub, base) => {
-    [0, 1, 2].forEach(i => put(tag + i, dist, sub, base + i));
-    return { title: tag, core: [0, 1, 2].map(i => ({ k: tag + i })) };
-  };
-  const fa = mk('A', 'House One', 'bourbon', 100);
-  const fb = mk('B', 'House Two', 'bourbon', 110);
-  const fc = mk('C', 'House Three', 'rye', 90);
-  const flights = [fa, fb, fc];
-  const list = [{ title: 'A', pours: 3 }, { title: 'B', pours: 3 },
-                { title: 'C', pours: 3 }];
-  const rows = L.tonightRows(list, flights, cat);
-  const type = rows.filter(r => r.id === 'type')[0];
-  eq('the type row holds all three', type.flights.length, 3);
-  /* AND BREAKS INTO THE TYPES, which is the whole of what he asked for. */
-  eq('and offers two types', type.values.length, 2);
-  eq('bourbon leads, with two', type.values[0].label, 'Bourbon');
-  eq('and it carries its own flights', type.values[0].flights.length, 2);
-  eq('rye follows, with one', type.values[1].label, 'Rye');
-  eq('every flight reaches a value',
-    type.values.reduce((n, v) => n + v.flights.length, 0),
-    type.flights.length);
-  /* A NUMBER IS BANDED, so 100, 101 and 102 are one strength and not three
-     rows - the same band the designer holds proof within. */
-  const proof = rows.filter(r => r.id === 'proof')[0];
-  eq('a proof row says a strength, not a reading',
-    /proof$/.test(proof.values[0].label), true);
-  eq('and three flights make three strengths', proof.values.length, 3);
+  /* THE NESTED ROWS THEMSELVES ARE GONE WITH THE TONIGHT LIST (BZ,
+     2026-10-19: "why keep both"). What they needed to SAY a value is
+     not gone: L.flightSays asks the same doors for the line under every
+     flight's name, which is the job those rows left behind. */
+
+  /* WHAT A FRESH HOLD HOLDS AT - the value a switch takes the moment it is
+     turned on. Its assertions went with the tonight rows; the picker still
+     asks it on every press, so they come back here. */
+  const dims = [{ id: 'type', canHold: true, options: [{ value: 'rye' }] },
+                { id: 'proof', canHold: true, numeric: true, band: 3,
+                  options: [{ value: 100 }] }];
+  eq('a fresh hold takes the first option', L.holdDefault(dims[0]), 'rye');
+  /* A NUMBER CARRIES ITS TOLERANCE, because holding a proof EXACTLY is a
+     flight of one bottle on most shelves. */
+  eq('a number holds with its band', L.holdDefault(dims[1]).value, 100);
+  eq('and the band is the dimension\u2019s', L.holdDefault(dims[1]).tol, 3);
+  eq('and nothing takes nothing', L.holdDefault(null), null);
+
 
   /* THE LABEL IS THE READER'S WORD, not the matching key. */
   const ae = { dist: "Angel's Envy", sub: 'bourbon', proof: 100 };
@@ -33828,6 +33667,84 @@ sec('\u00a7493 seven flights, and seven others on ask');
   eq('and the round moves what it can on its own',
     d.filter(y => c.some(x => x.id === y.id && sig(x) !== sig(y))).length > 0,
     true);
+}
+
+sec('\u00a7494 what the log said on 2026-10-19');
+{
+  /* Two faults, both on somebody else's account, both of the same kind: a
+     message that names the trouble and not what to do about it. */
+
+  /* 1. "Only 0 of the suggested pours are open on your shelf", full stop,
+     twice. Every rejection already carried its reason and the sentence
+     threw them all away. */
+  const cat = { a: { k: 'a', name: 'Alpha Bourbon', sub: 'bourbon',
+                     proof: 100, obsc: 'known', msrp: 50 },
+                b: { k: 'b', name: 'Beta Bourbon', sub: 'bourbon',
+                     proof: 100, obsc: 'known', msrp: 50 } };
+  /* BOTH ON THE SHELF, NEITHER OPEN. */
+  const sealed = [{ id: 'b1', k: 'a', status: 'sealed' },
+                  { id: 'b2', k: 'b', status: 'sealed' }];
+  const shut = L.verifyProposal(
+    { pours: [{ name: 'Alpha Bourbon' }, { name: 'Beta Bourbon' }] },
+    cat, sealed);
+  eq('a flight of sealed bottles is refused', shut.ok, false);
+  eq('and the refusal counts them', /Only 0 /.test(shut.why), true);
+  eq('and says they are not open', /not open/.test(shut.why), true);
+
+  /* NAMES THIS SHELF DOES NOT HAVE IS A DIFFERENT PROBLEM, and reads
+     differently: the service made them up. */
+  const made = L.verifyProposal(
+    { pours: [{ name: 'Nothing Like It' }, { name: 'Also Not Here' }] },
+    cat, sealed);
+  eq('invented bottles are refused too', made.ok, false);
+  eq('and are not called sealed',
+    /not open/.test(made.why), false);
+  eq('they are not on the shelf', /not on the shelf/.test(made.why), true);
+  /* THE COUNT IS OF THE REASON, so two of one and one of another reads as
+     two of one and one of another. */
+  eq('each reason is counted', /2 not on the shelf/.test(made.why), true);
+
+  /* 2. "signal is aborted without reason", six times in a day, shown to
+     somebody as the explanation. Every AbortController in this app is wired
+     to a setTimeout and nothing else calls abort(), so an abort is a
+     timeout and nothing else. */
+  eq('an abort is slow, not unknown',
+    L.errorKind(new Error('signal is aborted without reason')), 'slow');
+  eq('and so is the other wording',
+    L.errorKind(new Error('The user aborted a request.')), 'slow');
+  eq('and it has plain words',
+    /took too long/.test(L.plainError(
+      new Error('signal is aborted without reason'))), true);
+  eq('the browser\u2019s own words are not shown',
+    /aborted/.test(L.plainError(
+      new Error('signal is aborted without reason'))), false);
+  /* AND THE OTHER KINDS ARE WHERE THEY WERE. */
+  eq('a refusal is still denied',
+    L.errorKind(new Error('PERMISSION_DENIED')), 'denied');
+  eq('no network is still offline',
+    L.errorKind(new Error('Failed to fetch')), 'offline');
+  eq('and a quota is still busy',
+    L.errorKind(new Error('resource-exhausted')), 'busy');
+
+  /* 3. AND THE LINE UNDER A FLIGHT'S NAME, which the Run one cards took
+     over when the tonight rows went (BZ: "why keep both"). */
+  const three = {};
+  ['port', 'sherry', 'madeira'].forEach((w, i) => {
+    three['c' + i] = { k: 'c' + i, name: 'c' + i, dist: 'One House',
+                       sub: 'rye', proof: 100, fin: w, obsc: 'known',
+                       msrp: 50 };
+  });
+  const f3 = { core: Object.keys(three).map(k => ({ k: k })), ext: [] };
+  eq('a flight says what it is',
+    L.flightLine(f3, three), L.flightSays(f3, three));
+  eq('and it is a sentence', /across three casks$/.test(
+    L.flightLine(f3, three)), true);
+  /* TWO POURS HAVE NO SENTENCE - L.flightHolds needs three - so the old
+     line is the fallback rather than a blank. */
+  const f2 = { core: [{ k: 'c0' }, { k: 'c1' }], ext: [],
+               title: 'ONE VARIABLE: proof' };
+  eq('and a short one falls back rather than going blank',
+    L.flightLine(f2, three).length > 0, true);
 }
 
 queueSection()
