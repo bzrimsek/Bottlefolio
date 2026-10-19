@@ -787,7 +787,8 @@ const SCREEN_COPIES_OK = [
   /* The flight sheet became two pickers on 2026-10-18 and no longer shares
      a shape with these, so its three entries went. What is left is the pair
      that was always inside the trio. */
-  'renderShelfCharts + showLessons', 'renderCandidateList + showLessons',
+  /* showLessons dropped its unbuilt-shapes list on 2026-10-19 and no
+     longer shares a shape with either of these. */
   // Three presses refuse with the one no-service sentence.
   'labelCapture + libraryFillStart + pickShelfPhotos',
   // The service answers, and L.parseLookup reads it.
@@ -3627,4 +3628,5 @@ check('no fixed svg id is emitted by a repeated drawing',
 
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
+
 
