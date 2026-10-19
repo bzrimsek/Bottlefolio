@@ -30267,8 +30267,28 @@ sec('§487 what a flight holds and what it varies');
       [{ dim: 'house', value: null }], 'smoke', 6, lone)
       .some(p => p.k === 'c1'), false);
   eq('and says how little it found', /open bottle/.test(no.why), true);
-  eq('varying nothing fails too',
-    L.designFlight({ hold: [], vary: null }, cat, bots).ok, false);
+  /* A FLIGHT IS POURED FROM WHAT IS OPEN, and the bar stock on the shelf
+     is not whisky and never pours. */
+  eq('only open bottles count',
+    L.openProducts(cat, bots.map(b => Object.assign({}, b,
+      { status: b.k === 'a' ? 'open' : 'sealed' }))).length, 1);
+  eq('a sealed shelf offers nothing at all',
+    L.openProducts(cat, bots.map(b =>
+      Object.assign({}, b, { status: 'sealed' }))).length, 0);
+
+  /* ANYTHING NOT HELD IS FREE TO MOVE. BZ, 2026-10-18: "and if it's not
+     held, it's a variable by default." So naming no variable is not a
+     mistake - the app takes the widest thing left and says which it took,
+     measured on the pool the hold already narrowed. */
+  const auto = L.designFlight({ hold: [{ dim: 'proof', value: 80 }] },
+    cat, bots);
+  eq('naming no variable still builds', auto.ok, true);
+  eq('it picks one itself', !!auto.vary, true);
+  eq('and says which on the card',
+    auto.premise.indexOf((L.dimOf(auto.vary) || {}).label.toLowerCase()) > 0,
+    true);
+  eq('holding everything leaves nothing to move',
+    L.pickAxis([], [], 6), null);
 }
 
 sec('§486 a proof ladder, and smoke is the only thing that breaks it');
@@ -33076,6 +33096,8 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
 
 
 

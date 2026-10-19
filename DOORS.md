@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1059 |
+| functions | 1061 |
 | tables | 251 |
-| carrying a stated purpose | 849 |
+| carrying a stated purpose | 851 |
 
 ## Tables
 
@@ -860,6 +860,7 @@ QUESTION, not the name you were going to use.
 - **`L.oneSentence`** — THE FIRST SENTENCE OF SOMETHING, which is as much as a line under a
 - **`L.onWishlist`** — _no comment above it_
 - **`L.openKeys`** — Which whiskies can be poured tonight, in one pass
+- **`L.openProducts`** — THE WHISKIES THAT ARE ACTUALLY OPEN
 - **`L.originBase`** — WHAT A CATEGORY TASTES LIKE BEFORE ANYTHING IS DONE TO IT.
 - **`L.originSays`** — WHAT THIS BOTTLE TASTES OF, IN LAYERS (BZ's model, 2026-09-27).
 - **`L.originSources`** — _no comment above it_
@@ -906,6 +907,7 @@ QUESTION, not the name you were going to use.
 - **`L.peopleRows`** — ONE ROW PER PERSON, WITH EVERYTHING KNOWN ABOUT THEM
 - **`L.permitKey`** — TTB permit numbers name the same plant two ways
 - **`L.permitNames`** — The spirits producers list
+- **`L.pickAxis`** — WHAT MOVES, WHEN HE HAS ONLY SAID WHAT IS HELD.
 - **`L.pickLine`** — _no comment above it_
 - **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
 - **`L.pickShortlist`** — WHO IS WORTH SPENDING A LOOKUP ON (BZ, 2026-10-16

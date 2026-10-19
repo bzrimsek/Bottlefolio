@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.81  Build 2026-10-18 11:24 PM ET
+     Version : v2.8.82  Build 2026-10-18 11:39 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.82  2026-10-18  The flight designer is nine switches.
 // v2.8.81  2026-10-18  The flight designer, corrected from his own screenshots.
 // v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
 // v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
 // v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
 // v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
-// v2.8.72  2026-10-18  The shared message drops the occasion.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.81';
-const BUILD_TIME  = '2026-10-18 11:24 PM ET';
+const APP_VERSION = '2.8.82';
+const BUILD_TIME  = '2026-10-18 11:39 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9345,7 +9345,7 @@ L.FEATURES = [
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
-    def: 'Two pickers: what is HELD still, and the one thing that VARIES. Hold proof and vary the type for an introduction at one strength; hold the cask and vary the house; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose exactly that value or within a tolerance of it, with both counts shown, because insisting on dead equal costs bottles: exactly 92 is 47 of them and within two is 89. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. The premise writes itself from what you picked; type one only to say something the pickers cannot.' },
+    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose exactly that value or within a tolerance of it, with both counts shown, because insisting on dead equal costs bottles: exactly 92 is 47 of them and within two is 89. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. The premise writes itself from what you picked; type one only to say something the pickers cannot.' },
   { term: 'Hold a flavor still', src: 'the flight designer',
     def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
@@ -14648,10 +14648,17 @@ L.dimSpread = function (id, products, size) {
   };
 };
 
-L.designOptions = function (catalog, bottles, size) {
+/* THE WHISKIES THAT ARE ACTUALLY OPEN. Three callers wanted this and the
+   first wrote it out inline; a flight is poured from what is open, and the
+   bar stock on the shelf is not whisky and never pours. */
+L.openProducts = function (catalog, bottles) {
   const open = L.openKeys(bottles);
-  const products = Object.keys(catalog || {}).filter(k => open[k])
+  return Object.keys(catalog || {}).filter(k => open[k])
     .map(k => catalog[k]).filter(p => p && L.isWhisky(p));
+};
+
+L.designOptions = function (catalog, bottles, size) {
+  const products = L.openProducts(catalog, bottles);
   return L.DIMS.map(d => {
     const s = L.dimSpread(d.id, products, size);
     s.label = d.label;
@@ -15096,6 +15103,37 @@ L.holdSpec = function (held) {
   });
 };
 
+/* WHAT MOVES, WHEN HE HAS ONLY SAID WHAT IS HELD.
+ *
+ * BZ, 2026-10-18: "and if it's not held, it's a variable by default." That
+ * is how his forty are built - Take Your PX holds the cask and the house
+ * moves because nothing stopped it - so the sheet asks for the held set and
+ * nothing else, and this answers the rest.
+ *
+ * THE WIDEST THING LEFT, measured on the bottles that SURVIVED the hold
+ * rather than on the whole shelf: holding 100 proof leaves a pool where the
+ * kind spreads four ways and the region barely at all, and the same hold on
+ * another shelf would answer differently.
+ *
+ * A TIE GOES TO THE EARLIER DIMENSION, which is the order BZ reads them in -
+ * proof, type, house - rather than to whichever key the object handed back
+ * first.
+ */
+L.pickAxis = function (products, holdDims, size) {
+  const taken = {};
+  (holdDims || []).forEach(h => { taken[h.dim || h] = 1; });
+  let best = null, bestAt = 0, bestN = -1;
+  L.DIMS.forEach((d, at) => {
+    if (taken[d.id]) return;
+    const s = L.dimSpread(d.id, products, size);
+    if (!s.canVary && !s.canPair) return;
+    /* MORE VALUES IS A WIDER FLIGHT. The count of bottles is not the
+       question - six bourbons is one answer whatever the shelf holds. */
+    if (s.values > bestN) { best = d.id; bestN = s.values; bestAt = at; }
+  });
+  return best;
+};
+
 /* BUILD WHAT THE TWO PICKERS DESCRIBE.
  *
  * The same shape L.buildFlight returns, so renderProposal draws it without
@@ -15109,7 +15147,8 @@ L.holdSpec = function (held) {
  * left for the room to work out.
  */
 L.designFlight = function (spec, catalog, bottles, opts) {
-  const s = spec || {}, o = opts || {};
+  let s = spec || {};
+  const o = opts || {};
   const size = o.size || L.CORE_TARGET;
   const open = L.openKeys(bottles);
   let pool = Object.keys(catalog || {}).filter(k => open[k])
@@ -15137,6 +15176,10 @@ L.designFlight = function (spec, catalog, bottles, opts) {
     });
   });
 
+  /* WHAT HE DID NOT SAY, the app answers: anything not held is free to
+     move, and the widest of them is the flight's axis. Measured on the
+     pool the hold has already narrowed, not on the whole shelf. */
+  if (!s.vary) s = Object.assign({}, s, { vary: L.pickAxis(pool, hold, size) });
   const vd = L.dimOf(s.vary);
   if (!vd) {
     return { ok: false, why: 'Pick one thing for the flight to vary.' };
@@ -56493,41 +56536,22 @@ function castFlavour(word, fromCat, fromBot, premise, status) {
   return true;
 }
 
-/* ONE DIMENSION'S HOLD ROW: a switch, and the value picker that opens under
- * it when there is more than one value worth holding.
- *
- * A SWITCH, NOT A PILL. BZ said he hated the pills once already, on the gift
- * links (2026-10-17), and I used them again here - "can we not use pills,
- * can we use check boxes or switches" (2026-10-18). switchRow is the one the
- * buddies rows use, so this is the app's switch rather than a second one.
+/* THE VALUE A HELD DIMENSION IS HELD AT, and for a number the choice between
+ * dead equal and a band. Drawn UNDER its row, which dimRow has already put on
+ * the sheet - this used to draw the row as well, and once the two lists
+ * became one that made a second row under the first.
  *
  * THE APP SUGGESTS, HE OVERRIDES - his choice - and an override without the
  * numbers beside it is a guess, so every value carries how many bottles sit
- * inside its band.
+ * inside its band, and the exact/within choice carries both counts, because
+ * the cost of insisting on dead equal is the whole reason to offer a band.
  */
-function holdChip(box, d, held, redraw) {
-  const on = Object.prototype.hasOwnProperty.call(held, d.id);
-  const h = on ? held[d.id] : null;
-  const val = h && typeof h === 'object' ? h.value : h;
-  const tol = h && typeof h === 'object' && h.tol !== undefined && h.tol !== null
-    ? h.tol : (d.numeric ? d.band : 0);
-  const sub = on && val !== null
-    ? (d.numeric && tol ? 'within ' + tol + ' of ' + val
-                        : 'at exactly ' + val)
-    : d.hint || '';
-  box.appendChild(switchRow(on, d.label, sub, () => {
-    if (on) {
-      delete held[d.id];
-    } else {
-      const first = d.options.length ? d.options[0].value : null;
-      held[d.id] = d.numeric
-        ? { value: first, tol: d.band || 0 } : first;
-    }
-    redraw();
-  }));
-  if (!on) return;
+function holdValue(box, d, held, redraw) {
+  const h = held[d.id];
+  const val = (h && typeof h === 'object') ? h.value : h;
+  const tol = (h && typeof h === 'object' && h.tol !== undefined
+               && h.tol !== null) ? h.tol : (d.numeric ? d.band : 0);
 
-  /* THE VALUE. */
   if (d.options.length > 1) {
     const sel = document.createElement('select');
     sel.className = 'field';
@@ -56548,10 +56572,6 @@ function holdChip(box, d, held, redraw) {
     box.appendChild(sel);
   }
 
-  /* AND, FOR A NUMBER, EXACTLY OR WITHIN (BZ, 2026-10-18: "maybe we need a
-     choice for age and proof, equal to a value or a value plus a
-     tolerance"). Both counts are shown, because the cost of insisting on
-     dead equal is the whole reason to offer the band. */
   if (!d.numeric) return;
   const opt = d.options.filter(o => String(o.value) === String(val))[0]
     || { n: 0, exact: 0 };
@@ -56574,22 +56594,20 @@ function holdChip(box, d, held, redraw) {
   box.appendChild(tsel);
 }
 
-/* ONE DIMENSION'S VARY ROW - THE SAME SWITCH THE HOLD ROWS USE.
+/* ONE ROW PER DIMENSION, AND ONE SWITCH ON IT.
  *
- * BZ, 2026-10-18: "I prefer consistent sizes and shapes." It was drawn as
- * a radio with a round dot, which made two controls of two shapes doing one
- * kind of thing on one sheet. Every row on this sheet is now switchRow, the
- * app's own switch, at the app's own size.
+ * BZ, 2026-10-18, twice over: "since you can't hold and vary the same item,
+ * we should be able to shrink that modal in half", and then "if it's not
+ * held, it's a variable by default." The second is the bigger cut - there
+ * is nothing to pick for what varies, because everything not held already
+ * does. Seventeen rows and two lists became nine rows and one switch each.
  *
- * ONLY ONE MAY BE ON, which the behaviour says rather than the shape:
- * turning one on turns the rest off. The number under the label says what
- * it counts - "10 types" rather than a bare 10.
+ * The app takes the widest unheld dimension as the flight's axis and says
+ * which it took (L.pickAxis), so the choice is still visible - it is just
+ * not a question he has to answer.
  */
-function varyRow(box, d, chosen, choose) {
-  box.appendChild(switchRow(chosen, d.label,
-    d.values + ' ' + (d.unit || '')
-      + (d.canVary ? '' : ' · poured in matched pairs'),
-    choose));
+function dimRow(box, d, state, act) {
+  box.appendChild(switchRow(state.held, d.label, state.sub, act.hold));
 }
 
 function flightPickers(form, fromCat, fromBot) {
@@ -56597,39 +56615,51 @@ function flightPickers(form, fromCat, fromBot) {
   const held = {};        // dim id -> chosen value
   let varyId = null;
 
-  const holdBox = el('div');
-  const varyBox = el('div');
+  const box = el('div');
   const bandNote = el('div', 'src');
   bandNote.style.marginTop = '4px';
 
+  /* ONE LIST, NOT TWO. The two lists were the same nine dimensions drawn
+     twice - seventeen rows for nine choices (BZ, 2026-10-18: "we should be
+     able to shrink that modal in half"). Hold and Vary sit on the row
+     itself, and a dimension that is varying cannot also be held. */
   const draw = () => {
-    holdBox.innerHTML = '';
-    varyBox.innerHTML = '';
-    dims.filter(d => d.canHold).forEach(d =>
-      holdChip(holdBox, d, held, () => { if (varyId === d.id) varyId = null;
-        draw(); }));
-    dims.filter(d => (d.canVary || d.canPair)
-                && !Object.prototype.hasOwnProperty.call(held, d.id))
-      .forEach(d => varyRow(varyBox, d, varyId === d.id, () => {
-        varyId = (varyId === d.id ? null : d.id);
-        draw();
-      }));
+    box.innerHTML = '';
+    const spec = L.holdSpec(held);
+    dims.filter(d => d.canHold).forEach(d => {
+      const isHeld = Object.prototype.hasOwnProperty.call(held, d.id);
+      const h = isHeld ? held[d.id] : null;
+      const val = (h && typeof h === 'object') ? h.value : h;
+      const tol = (h && typeof h === 'object'
+                   && h.tol !== undefined && h.tol !== null)
+        ? h.tol : (d.numeric ? d.band : 0);
+      const sub = isHeld && val !== null
+        ? (d.numeric && tol ? 'within ' + tol + ' of ' + val
+                            : 'at exactly ' + val)
+        : (d.hint || '');
+      dimRow(box, d, { held: isHeld, sub: sub }, {
+        hold: () => {
+          if (isHeld) { delete held[d.id]; } else {
+            const first = d.options.length ? d.options[0].value : null;
+            held[d.id] = d.numeric
+              ? { value: first, tol: d.band || 0 } : first;
+          }
+          draw();
+        }
+      });
+      if (isHeld) holdValue(box, d, held, draw);
+    });
+    /* WHAT WILL MOVE, said rather than asked. */
+    varyId = L.pickAxis(L.openProducts(fromCat, fromBot), spec);
     const vd = dims.filter(d => d.id === varyId)[0];
     pairWrap.hidden = !(vd && vd.canPair);
     if (vd && vd.canPair) pairs.checked = true;
     bandNote.textContent = varyId
-      ? L.designPremise(Object.keys(held).map(k =>
-          ({ dim: k, value: held[k] })), varyId,
-          { pairs: pairs.checked })
-      : 'Pick one thing to vary.';
+      ? L.designPremise(spec, varyId, { pairs: pairs.checked })
+      : 'Nothing is left to vary — hold fewer things.';
   };
 
-  const hl = el('label', null, 'Held still');
-  hl.appendChild(holdBox);
-  form.appendChild(hl);
-  const vl2 = el('label', null, 'What varies');
-  vl2.appendChild(varyBox);
-  form.appendChild(vl2);
+  form.appendChild(box);
 
   /* MATCHED PAIRS, his own device in nine of the forty: one thing poured
      twice, changing exactly one variable. Shown only where it is the only
@@ -60919,7 +60949,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.81</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.82</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
