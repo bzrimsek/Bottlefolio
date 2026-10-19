@@ -30081,7 +30081,7 @@ sec('§487 what a flight holds and what it varies');
 
   /* ONE DOOR READS A DIMENSION, so the picker, the builder and the card
      cannot disagree about what "the kind" means. */
-  eq('a dimension is read off a bottle', L.dimValue('kind', cat.a), 'irish');
+  eq('a dimension is read off a bottle', L.dimValue('type', cat.a), 'irish');
   eq('a number comes back a number', L.dimValue('proof', cat.a), 80);
   /* THE BAND IS A TOLERANCE, not a bucket: 81 rounds to 82 at a step of
      two, and what matters is that L.dimSpread counts by the same rule the
@@ -30102,8 +30102,8 @@ sec('§487 what a flight holds and what it varies');
   /* WHAT THE SHELF CAN DO. BZ chose "only when they can fill six", so a
      dimension that cannot build a flight is not offered at all. */
   const prods = Object.keys(cat).map(k => cat[k]);
-  const kind = L.dimSpread('kind', prods);
-  eq('six kinds are open', kind.values, 6);
+  const kind = L.dimSpread('type', prods);
+  eq('six types are open', kind.values, 6);
   eq('so the kind can vary', kind.canVary, true);
   const region = L.dimSpread('region', prods);
   eq('no region is known, so region cannot vary', region.canVary, false);
@@ -30124,7 +30124,7 @@ sec('§487 what a flight holds and what it varies');
 
   /* AND THE THING HE ASKED FOR AND COULD NOT GET: hold proof, vary kind. */
   const made = L.designFlight(
-    { hold: [{ dim: 'proof', value: 80 }], vary: 'kind' }, cat, bots);
+    { hold: [{ dim: 'proof', value: 80 }], vary: 'type' }, cat, bots);
   eq('it builds', made.ok, true);
   eq('the big bourbon is outside the band',
     made.pours.some(p => p.k === 'g'), false);
@@ -30137,10 +30137,46 @@ sec('§487 what a flight holds and what it varies');
   eq('it writes its own premise',
     /within 2 points of 80/.test(made.premise), true);
 
+  /* EXACTLY, OR WITHIN A TOLERANCE. BZ, 2026-10-18: "maybe we need a
+     choice for age and proof, equal to a value or a value plus a
+     tolerance." The rye sits at 81, one point outside an exact 80 and
+     inside a band of two. */
+  const exact = L.designFlight(
+    { hold: [{ dim: 'proof', value: 80, tol: 0 }], vary: 'type' }, cat, bots);
+  eq('exactly 80 leaves the 81 out',
+    exact.ok && exact.pours.some(p => p.k === 'c'), false);
+  eq('and says so on the card',
+    /at exactly 80/.test(exact.premise), true);
+  const band = L.designFlight(
+    { hold: [{ dim: 'proof', value: 80, tol: 2 }], vary: 'type' }, cat, bots);
+  eq('within two takes it', band.pours.some(p => p.k === 'c'), true);
+  eq('and says that instead', /within 2 points of 80/.test(band.premise),
+    true);
+  /* ZERO IS AN ANSWER, NOT AN ABSENCE: naming no tolerance keeps the
+     dimension's own band, naming zero means dead equal. */
+  eq('no tolerance named keeps the band',
+    L.designFlight({ hold: [{ dim: 'proof', value: 80 }], vary: 'type' },
+      cat, bots).pours.some(p => p.k === 'c'), true);
+
+  /* THE PICKERS' STATE, as the builder wants it. */
+  eq('a number is held with its tolerance',
+    JSON.stringify(L.holdSpec({ proof: { value: 92, tol: 0 } })),
+    JSON.stringify([{ dim: 'proof', value: 92, tol: 0 }]));
+  eq('and everything else as the value itself',
+    JSON.stringify(L.holdSpec({ type: 'irish' })),
+    JSON.stringify([{ dim: 'type', value: 'irish' }]));
+  eq('holding nothing is no spec', L.holdSpec({}).length, 0);
+
+  /* AND THE OPTION CARRIES BOTH COUNTS, so the cost of insisting on dead
+     equal is visible before he insists. */
+  const po = L.dimSpread('proof', prods).options[0];
+  eq('how many sit inside the band', po.n >= po.exact, true);
+  eq('and how many sit on it exactly', typeof po.exact, 'number');
+
   /* HOLDING SOMETHING THE SHELF CANNOT FILL SAYS SO, rather than pouring
      a flight that answers nothing. */
   const no = L.designFlight(
-    { hold: [{ dim: 'proof', value: 150 }], vary: 'kind' }, cat, bots);
+    { hold: [{ dim: 'proof', value: 150 }], vary: 'type' }, cat, bots);
   eq('an impossible hold fails', no.ok, false);
 
   /* THE LIST THE PICKER DRAWS, and the sentence it writes underneath. */
@@ -30149,28 +30185,50 @@ sec('§487 what a flight holds and what it varies');
     opts.length, L.DIMS.length);
   eq('each carries its own label',
     opts.every(o => !!o.label), true);
-  eq('the kind can be varied', opts.filter(o => o.id === 'kind')[0].canVary,
+  eq('the type can be varied', opts.filter(o => o.id === 'type')[0].canVary,
     true);
   eq('region cannot, on this shelf',
     opts.filter(o => o.id === 'region')[0].canVary, false);
+
+  /* SIX CHOICES, NOT SIX NAMES FOR ONE CHOICE. BZ, from a screenshot
+     (2026-10-18): "Proof option make no sense." Every distinct proof was
+     a candidate, so the list came back 92, 91.6, 91, 94, 90, 93 - six
+     bands two points wide over the same whiskies. A later one now has to
+     clear the ones already taken by more than two bands. */
+  const near = ['92', '91.6', '91', '94', '90', '93', '100', '80'];
+  const apart = L.spreadApart(near, 2, () => 9);
+  eq('the best one stands', apart[0], '92');
+  eq('and nothing within two bands of it follows',
+    apart.filter(v => Math.abs(Number(v) - 92) <= 4).length, 1);
+  eq('the far ones survive',
+    apart.indexOf('100') >= 0 && apart.indexOf('80') >= 0, true);
+  eq('a value almost nothing sits on is not offered',
+    L.spreadApart(['92', '100'], 2, v => (v === '100' ? 1 : 9))
+      .indexOf('100'), -1);
+  eq('six at the most', L.spreadApart(
+    ['80', '90', '100', '110', '120', '130', '140'], 2, () => 9).length, 6);
+
+  /* AND A VARY PILL SAYS WHAT ITS NUMBER COUNTS - "10" is ten of what. */
+  eq('every dimension names its unit',
+    L.DIMS.filter(d => !d.flag).every(d => !!d.unit), true);
 
   eq('a dimension is found by its id', L.dimOf('proof').label, 'Proof');
   eq('and an unknown one is not invented', L.dimOf('nonsense'), null);
 
   /* THE PREMISE WRITES ITSELF when he leaves the field blank - BZ: "I
      thought the premise was only needed w/o user input." */
-  const said = L.designPremise([{ dim: 'proof', value: 92 }], 'kind', {});
+  const said = L.designPremise([{ dim: 'proof', value: 92 }], 'type', {});
   eq('it states what is held', /within 2 points of 92/.test(said), true);
-  eq('and what moves', /the kind/.test(said), true);
+  eq('and what moves', /type/.test(said), true);
   eq('a flag says its own name, not its value',
     /bottled in bond held at/.test(
-      L.designPremise([{ dim: 'bonded', value: 'bonded' }], 'kind', {})),
+      L.designPremise([{ dim: 'bonded', value: 'bonded' }], 'type', {})),
     false);
   eq('pairs are said out loud',
     /matched pairs/.test(L.designPremise([], 'smoke', { pairs: true })),
     true);
   eq('holding nothing says so',
-    /Nothing here is held still/.test(L.designPremise([], 'kind', {})), true);
+    /Nothing here is held still/.test(L.designPremise([], 'type', {})), true);
 
   /* MATCHED PAIRS, and his own HOUSE ON FIRE is the authority on how they
      are poured: Benriach 86 then Benriach Curiositas 92, Bunnahabhain 12
@@ -33018,6 +33076,8 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
 
 
 

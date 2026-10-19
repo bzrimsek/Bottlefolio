@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1057 |
+| functions | 1059 |
 | tables | 251 |
-| carrying a stated purpose | 848 |
+| carrying a stated purpose | 849 |
 
 ## Tables
 
@@ -431,7 +431,7 @@ QUESTION, not the name you were going to use.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
 - **`L.dimOf`** — ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
-- **`L.dimSpread`** — WHAT IS WORTH HOLDING, AND WHAT IS WORTH VARYING, on THIS shelf.
+- **`L.dimSpread`** — _no comment above it_
 - **`L.dimValue`** — _no comment above it_
 - **`L.directoryEntry`** — what everyone can see.
 - **`L.dirtyEntries`** — WHAT THIS DEVICE HAS THAT THE ACCOUNT DOES NOT, entry by entry
@@ -604,6 +604,7 @@ QUESTION, not the name you were going to use.
 - **`L.histRestoreRun`** — the whole of what the X did.
 - **`L.holdKey`** — One door, because the finder and the blocker each had their own copy of
 - **`L.holdsFor`** — flight answers neither.
+- **`L.holdSpec`** — THE PICKERS' STATE AS THE BUILDER WANTS IT
 - **`L.hostCard`** — _no comment above it_
 - **`L.houseCanon`** — UNKNOWN IS NOT WRONG
 - **`L.houseChoices`** — THE HOUSES SOMEBODY MAY CHOOSE FROM, in order
@@ -1181,6 +1182,7 @@ QUESTION, not the name you were going to use.
 - **`L.speciesOf`** — _no comment above it_
 - **`L.spinValid`** — the holds themselves are unsatisfiable
 - **`L.splitPours`** — More than one glass, typed the way somebody types it.
+- **`L.spreadApart`** — THE BEST FEW CANDIDATES THAT ARE NOT EACH OTHER
 - **`L.spreadBy`** — _no comment above it_
 - **`L.spreadHouses`** — _no comment above it_
 - **`L.srcFault`** — WHAT IS WRONG WITH A STAMP, as a list rather than a boolean, because a
