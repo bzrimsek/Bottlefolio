@@ -30367,6 +30367,56 @@ sec('§487 what a flight holds and what it varies');
   eq('a word says itself, because scotch is not a quantity',
     L.holdLine(L.dimOf('type'), 'scotch'), 'scotch');
 
+  /* A COUNT HE CANNOT HAVE IS NOT A COUNT. BZ, 2026-10-19, from a
+     screenshot: holding exactly 80 proof AND bourbon leaves five bottles,
+     and the sheet still offered six pours - so it would have built a five
+     pour flight after being asked for six, and said nothing. */
+  const five = L.fitCounts(5, 6, 4);
+  eq('six pours out of five bottles is five', five.size, 5);
+  eq('and the bench gets what is left, which is none', five.ext, 0);
+  eq('the picker cannot offer more than five', five.maxSize, 5);
+  eq('five is still a flight', five.enough, true);
+
+  /* AND IT SAYS SO. BZ, 2026-10-19: "should we prompt that we can't
+     fulfill the planned qty?" The first version rebuilt the picker with a
+     smaller ceiling and said nothing, so six quietly became five - a count
+     changed behind his back, which is the same fault as a rename hidden
+     behind a tap. */
+  eq('it says what it will pour instead',
+    L.fitSay(L.fitCounts(5, 6, 4), 6, 4),
+    'Only 5 open bottles fit that, so this pours 5 rather than 6 and '
+      + 'benches 0 rather than 4.');
+  eq('only the bench short, only the bench mentioned',
+    L.fitSay(L.fitCounts(10, 6, 8), 6, 8),
+    'Only 10 open bottles fit that, so this benches 4 rather than 8.');
+  eq('nothing short, nothing said',
+    L.fitSay(L.fitCounts(20, 6, 4), 6, 4), '');
+  eq('and below a flight it says that instead',
+    /not a flight/.test(L.fitSay(L.fitCounts(3, 6, 4), 6, 4)), true);
+  eq('one bottle reads as one',
+    /1 open bottle fit/.test(L.fitSay(L.fitCounts(1, 6, 4), 6, 4)), true);
+
+  /* THE BENCH COMES OUT OF WHAT IS LEFT: a bottle cannot be poured and
+     held in reserve at once. */
+  const ten = L.fitCounts(10, 6, 8);
+  eq('six poured leaves four for the bench', ten.ext, 4);
+  eq('and the bench is bounded by them', ten.maxExt, 4);
+
+  /* BELOW FOUR IS NOT A FLIGHT, and the sheet says so rather than
+     offering a number. */
+  eq('three bottles is not enough', L.fitCounts(3, 6, 4).enough, false);
+  eq('nothing at all is certainly not',
+    L.fitCounts(0, 6, 4).enough, false);
+  eq('and it never returns a negative bench',
+    L.fitCounts(0, 6, 4).ext >= 0, true);
+
+  /* AND IT HOLDS AGAINST THE REAL FILTER: whatever applyHold leaves is
+     what fitCounts may offer. */
+  const left = L.applyHold(Object.keys(cat).map(k => cat[k]),
+    [{ dim: 'proof', value: 80, tol: 0 }]).length;
+  eq('the ceiling is what the hold left',
+    L.fitCounts(left, 8, 0).maxSize, Math.min(8, left));
+
   /* HOW MANY POURS, AND HOW MANY ON THE BENCH. */
   const six = L.designFlight({ hold: [], size: 4, ext: 2 }, cat, bots);
   eq('it pours what was asked for', six.pours.length <= 4, true);
@@ -33196,6 +33246,8 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
 
 
 

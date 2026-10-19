@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1066 |
+| functions | 1068 |
 | tables | 251 |
-| carrying a stated purpose | 854 |
+| carrying a stated purpose | 856 |
 
 ## Tables
 
@@ -502,7 +502,9 @@ QUESTION, not the name you were going to use.
 - **`L.finIsWine`** — _no comment above it_
 - **`L.finNotCask`** — _no comment above it_
 - **`L.fitByGroup`** — Findings by group, in that order, skipping the empty ones.
+- **`L.fitCounts`** — HOW MANY POURS THE HOLD ACTUALLY ALLOWS.
 - **`L.fitLine`** — _no comment above it_
+- **`L.fitSay`** — AND IT SAYS SO WHEN IT CANNOT GIVE HIM WHAT HE ASKED FOR.
 - **`L.fitTwoWays`** — _no comment above it_
 - **`L.fitUnlocks`** — Completing a flight that is short is the strongest reason to buy.
 - **`L.fitVerdict`** — _no comment above it_
