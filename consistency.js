@@ -1319,6 +1319,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Put aside',
     /* Added with the location lookup on Taste, 2026-10-09. */
     'Find where I am',
+    /* Added with the seven suggested flights, 2026-10-19. */
+    'Show me seven others',
     /* Added with the drinks budget, 2026-09-13. */
     'Running a tasting',
     /* Added with the service build check, 2026-09-14. */

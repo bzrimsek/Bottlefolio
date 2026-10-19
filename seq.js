@@ -212,7 +212,11 @@ function faultsOf() {
        close the modal, not open the flight behind it. It caught this very
        change: with one level assumed, the press landed on "Same price -
        build one" and the step reported the modal left up. */
-    const FOLD = '#overlay .portstep';
+    /* THE FLIGHTS HE HAS BUILT, not the seven the app just made.
+       Both are lists of .portstep on one sheet, and the seven open a
+       PROPOSAL rather than a saved flight - so an unscoped press
+       landed on one and reported the modal left standing. */
+    const FOLD = '#tonightRoll .portstep';
     const dig = () => p.evaluate(sel => {
       const head = [...document.querySelectorAll(sel)]
         .filter(x => x.offsetParent !== null
@@ -254,6 +258,55 @@ function faultsOf() {
     return out;
   })();
   modalFaults.forEach(f => failures.push('suggestions: ' + f));
+
+  /* AND THE SEVEN, AND THAT REGENERATING THEM CHANGES ANYTHING. BZ asked
+     for "a regen of the suggestions", and a regenerate that hands back the
+     same seven is the dead button this whole block exists to catch: two of
+     the seven hold nothing that rotates, so without carrying what was
+     already poured they came back identical. */
+  const sevenFaults = await (async () => {
+    const out = [];
+    await p.evaluate(() => { show('flights'); renderFlights(); showLessons(); });
+    await p.waitForTimeout(300);
+    const read = () => p.evaluate(() =>
+      [...document.querySelectorAll('#sevenRoll .portstep')]
+        .map(x => x.textContent.trim()));
+    const before = await read();
+    if (!before.length) {
+      out.push('no suggestions on the sheet at all');
+      return out;
+    }
+    const pressed = await p.evaluate(() => {
+      const b = [...document.querySelectorAll('#overlay button')]
+        .filter(x => /Show me seven others/.test(x.textContent))[0];
+      if (b) b.click();
+      return !!b;
+    });
+    if (!pressed) { out.push('no way to ask for another seven'); return out; }
+    await p.waitForTimeout(400);
+    const after = await read();
+    if (!after.length) out.push('asking for another seven emptied the list');
+    else if (after.join('|') === before.join('|')) {
+      out.push('another seven handed back the same ' + after.length);
+    }
+    /* ROW BY ROW, AND NAMING ONE. The joined compare passes while six of
+       seven rotate, so it stayed green with the carry-over deliberately
+       removed - which is the fault it was written for. "A tour of kinds"
+       holds nothing, so the round has nothing to rotate for it and only
+       what was already poured can move it: if that row repeats, the
+       regenerate is not regenerating. */
+    const sameRows = after.filter(x => before.indexOf(x) >= 0);
+    if (sameRows.length) {
+      out.push(sameRows.length + ' of ' + after.length
+        + ' came back unchanged, first: ' + sameRows[0].slice(0, 60));
+    }
+    const stillOpen = await p.evaluate(() =>
+      document.getElementById('overlay').classList.contains('on'));
+    if (!stillOpen) out.push('asking for another seven closed the sheet');
+    return out;
+  })();
+  sevenFaults.forEach(f => failures.push('seven: ' + f));
+
 
   /* AND GOING BACK. Home has no header of its own and no way back, so a
      back button anywhere on it is a button pointing at a screen you have

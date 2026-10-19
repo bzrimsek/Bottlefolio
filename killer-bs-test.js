@@ -33740,6 +33740,96 @@ sec('\u00a7492 a dimension opens its values, not a long list');
   eq('and an unknown dimension too', L.dimLabel('nope', ae), '');
 }
 
+sec('\u00a7493 seven flights, and seven others on ask');
+{
+  /* BZ, 2026-10-19: "we should just have some number of the most common
+     types of flight pre-built - assuming they fit their shelf", then "use
+     the 7 shapes to create 7 suggestions and allow for a regen", and on
+     where it stops, "that is all we need it to do, more experienced folks
+     will build their own." */
+  const cat = {};
+  const bots = [];
+  const CASKS = ['port', 'sherry', 'madeira', 'oak', 'rum', 'tokaji'];
+  const put = (k, dist, sub, proof, age, fin) => {
+    cat[k] = { k: k, name: k, dist: dist, sub: sub, proof: proof, age: age,
+               fin: fin, obsc: 'known', msrp: 50 };
+    bots.push({ id: 'b' + k, k: k, status: 'open' });
+  };
+  /* A SHELF WIDE ENOUGH TO FILL THEM: three kinds, three houses, six casks,
+     ages and proofs spread. */
+  ['bourbon', 'rye', 'scotch'].forEach((sub, si) => {
+    ['House A', 'House B', 'House C'].forEach((h, hi) => {
+      CASKS.forEach((w, wi) => {
+        put(sub + hi + wi, h, sub, 80 + wi * 8 + hi, 4 + wi * 3 + hi, w);
+      });
+    });
+  });
+
+  /* NOT ONE VALUE IS NAMED IN THE SHAPES. A shape that says "scotch" is a
+     flight, not a shape, and would be unbuildable on a bourbon shelf. */
+  eq('every shape names a dimension and no value',
+    L.FLIGHT_SHAPES.filter(sh =>
+      (sh.hold || []).some(h => h.value !== undefined)).length, 0);
+  eq('and there are seven of them', L.FLIGHT_SHAPES.length, 7);
+  eq('each one says what it is for',
+    L.FLIGHT_SHAPES.filter(sh => !sh.title || !sh.why).length, 0);
+
+  const first = L.suggestFlights(cat, bots, 0, {});
+  eq('a wide shelf fills most of them', first.length >= 5, true);
+  eq('every one is built, not a shape',
+    first.filter(s => !s.flight || !s.flight.ok).length, 0);
+  /* IT SAYS WHAT IT IS, in the same sentence every other flight uses. */
+  eq('and says what it is', first.filter(s => !s.said).length, 0);
+  eq('and what it opens with, which is what changes on a regen',
+    first.filter(s => !s.opens).length, 0);
+
+  /* A FLIGHT THAT KNOWS ITS OWN SHAPE SAYS IT. Built to vary the AGE, it
+     came back "across three regions" - true of the pours, and not what the
+     flight is - because region outranks age in the reading order. */
+  const years = first.filter(s => s.id === 'years')[0];
+  if (years) {
+    eq('a flight built on years says years', /years$/.test(years.said), true);
+  }
+  const wood = first.filter(s => s.id === 'wood')[0];
+  if (wood) {
+    eq('and one built on casks says casks', /casks$/.test(wood.said), true);
+  }
+  /* A DECLARED HOLD COUNTS EVEN WHEN THE READING MISSES IT: holding 91
+     proof within 3 makes pours 88 to 93, a six point span, which the
+     reading test calls not held. */
+  eq('a declared hold is said',
+    /at .*proof/.test(L.flightSays({ core: [{ k: 'bourbon00' }],
+      holds: ['proof'], vary: 'type' }, cat)), false);
+
+  /* A SHAPE THE SHELF CANNOT FILL IS LEFT OUT, not shown failing. */
+  const thin = {};
+  const thinB = [];
+  [0, 1].forEach(i => {
+    thin['t' + i] = { k: 't' + i, name: 't' + i, dist: 'One', sub: 'bourbon',
+                      proof: 90 + i, obsc: 'known', msrp: 50 };
+    thinB.push({ id: 'bt' + i, k: 't' + i, status: 'open' });
+  });
+  eq('a shelf of two offers nothing it cannot pour',
+    L.suggestFlights(thin, thinB, 0, {}).length, 0);
+
+  /* AND ANOTHER SEVEN ON ASK. Two of the seven hold nothing that rotates,
+     so the round alone left them identical - what was already poured has to
+     carry across the press. */
+  const used = {};
+  const a = L.suggestFlights(cat, bots, 0, used);
+  const b = L.suggestFlights(cat, bots, 1, used);
+  const sig = x => x.flight.pours.map(y => y.k).join(',');
+  eq('asking again fills the used list', Object.keys(used).length > 0, true);
+  eq('and hands back different flights',
+    b.filter(y => a.some(x => x.id === y.id && sig(x) === sig(y))).length, 0);
+  /* THE ROUND ALONE IS NOT ENOUGH, which is the half that was missing. */
+  const c = L.suggestFlights(cat, bots, 0, {});
+  const d = L.suggestFlights(cat, bots, 1, {});
+  eq('and the round moves what it can on its own',
+    d.filter(y => c.some(x => x.id === y.id && sig(x) !== sig(y))).length > 0,
+    true);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

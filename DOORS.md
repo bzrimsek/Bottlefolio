@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1082 |
-| tables | 252 |
-| carrying a stated purpose | 870 |
+| functions | 1083 |
+| tables | 253 |
+| carrying a stated purpose | 872 |
 
 ## Tables
 
@@ -83,6 +83,7 @@ QUESTION, not the name you were going to use.
 - **`L.FLAVOUR_FORMS_MEMO`** — THE WORDS THAT COUNT AS ONE FLAVOUR WORD, worked out once per word rather
 - **`L.FLAVOUR_WORDS`** — Flights built around a FLAVOR.
 - **`L.FLIGHT_RULES`** — standard the validators check against.
+- **`L.FLIGHT_SHAPES`** — THE SEVEN FLIGHTS, AND WHY THESE SEVEN.
 - **`L.FLIGHT_SORTS`** — state and contents, sortable.
 - **`L.FP_AXES`** — `on` READS ONE BOTTLE'S VALUES on the axis, and must answer in the vocabulary
 - **`L.FP_ORD`** — THE ORDINAL TERMS, which are a position rather than a match and so have no
@@ -1224,6 +1225,7 @@ QUESTION, not the name you were going to use.
 - **`L.subFamily`** — _no comment above it_
 - **`L.subFromHouse`** — A CATEGORY FROM A STYLE PLUS A HOUSE
 - **`L.subscribeToLibrary`** — IT NEVER INVENTS AN ENTRY
+- **`L.suggestFlights`** — SEVEN SUGGESTIONS, BUILT FROM THIS SHELF.
 - **`L.suggestionFor`** — _no comment above it_
 - **`L.suggestionResults`** — WHAT THE SUGGESTIONS YOU BOUGHT CAME TO, one row per whisky, judged by the
 - **`L.suggestionSay`** — _no comment above it_

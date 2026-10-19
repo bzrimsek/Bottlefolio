@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.99  Build 2026-10-19 03:03 PM ET
+     Version : v2.9.0  Build 2026-10-19 04:48 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
 // v2.8.99  2026-10-19  A dimension opens its values, not a long list.
 // v2.8.98  2026-10-19  Standing still is not a theme.
 // v2.8.97  2026-10-19  The tonight sheet has a row for each thing the designer can hold, and the tabs read one glass, two, three.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.93  2026-10-19  A flight says what it is, under what it is called.
 // v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
 // v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
-// v2.8.90  2026-10-19  What your shelf can teach you speaks the designer's language.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.99';
-const BUILD_TIME  = '2026-10-19 03:03 PM ET';
+const APP_VERSION = '2.9.0';
+const BUILD_TIME  = '2026-10-19 04:48 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9015,7 +9015,7 @@ L.FEATURES = [
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its VALUES — Same type opens Bourbon, Scotch, Rye — and a value opens its flights, so you pick what you want rather than read a list. Where there is nothing to pick between, a value with one flight or a row with one value, the flight is there straight away. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its VALUES — Same type opens Bourbon, Scotch, Rye — and a value opens its flights, so you pick what you want rather than read a list. Where there is nothing to pick between, a value with one flight or a row with one value, the flight is there straight away. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Under your own flights sit Seven to pour: seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
     def: 'Cooper walks you through a tasting: a measured pour, then color, '
       + 'nose, body, palate and finish, teaching each one as it comes from the '
@@ -15455,7 +15455,7 @@ L.pickAxis = function (products, holdDims, size) {
  * measured against the holds already resolved, so holding two things in a
  * row narrows as it goes.
  */
-L.resolveHold = function (hold, products, size, varyId, pairs) {
+L.resolveHold = function (hold, products, size, varyId, pairs, round) {
   const out = [];
   let pool = (products || []).slice();
   (hold || []).filter(h => h && h.dim).forEach(h => {
@@ -15494,10 +15494,17 @@ L.resolveHold = function (hold, products, size, varyId, pairs) {
       const seenV = {};
       (s.all || []).forEach(v => { seenV[v] = 1; });
       const cands = Object.keys(seenV);
-      const best = cands.map(v => ({
+      const ranked = cands.map(v => ({
         v: (d && d.numeric) ? Number(v) : v,
         s: spread((d && d.numeric) ? Number(v) : v) }))
-        .sort((x, y) => y.s[0] - x.s[0] || y.s[1] - x.s[1])[0];
+        .filter(x => x.s[0] > 0)
+        .sort((x, y) => y.s[0] - x.s[0] || y.s[1] - x.s[1]);
+      /* ROUND ROTATES THE PICK, which is what Show me others is: the
+         second-best type, then the third, then round again. Without it
+         a regenerate rebuilt the same seven flights, because the best
+         held value does not change between presses. */
+      const best = ranked.length
+        ? ranked[(Math.max(0, Number(round) || 0)) % ranked.length] : null;
       if (!best) return;
       one = { dim: h.dim, value: best.v,
               tol: h.tol === undefined ? (d ? d.band : 0) : h.tol };
@@ -15540,7 +15547,8 @@ L.designFlight = function (spec, catalog, bottles, opts) {
      let proof move" is a shape, and which type is a question about this
      shelf rather than about the lesson. Resolved here so one door answers
      both callers. */
-  const hold = L.resolveHold(s.hold, pool, size, s.vary, s.pairs);
+  const hold = L.resolveHold(s.hold, pool, size, s.vary, s.pairs,
+    s.round);
   pool = L.applyHold(pool, hold);
 
   /* WHAT HE DID NOT SAY, the app answers: anything not held is free to
@@ -25163,6 +25171,96 @@ L.choiceHolds = function (flight, catalog, open) {
     L.dimValues(id, L.applyHold(open, spec, id)).length > 1);
 };
 
+/* THE SEVEN FLIGHTS, AND WHY THESE SEVEN.
+ *
+ * BZ, 2026-10-19: "we should just have some number of the most common types
+ * of flight pre-built - assuming they fit their shelf. More prescriptive and
+ * based on their shelf." And then, when the first list was compiled from his
+ * own forty: "my shelf is not the best example and I already built 40." He
+ * is right twice - this is for somebody who has built none, and his shelf is
+ * one shelf.
+ *
+ * THERE IS NO CANON TO TAKE THEM FROM. Vertical and horizontal are borrowed
+ * from wine, and even among whisky drinkers horizontal has never been pinned
+ * down for spirits, so any list of SHAPES is a judgement. What is canon is
+ * how a flight is ORDERED - proof rising, a dominant peat overriding it, the
+ * strongest last - and that is already L.pourOrder, which every one of these
+ * goes through.
+ *
+ * SO THE SEVEN ARE THE COMPARISONS A TASTING ACTUALLY MAKES: one thing held
+ * and one thing moved, in the four variables a bottle has that a drinker can
+ * taste - the grain, the wood, the years and the strength - plus the three
+ * tours: across kinds, across one maker's range, across a country.
+ *
+ * NOT ONE VALUE IS NAMED HERE. "Across the regions" does not say scotch: a
+ * hold with no value means hold it still, you choose which, and L.resolveHold
+ * picks the one that lets the other thing move furthest on THIS shelf. On a
+ * shelf of bourbon it will find Kentucky against Tennessee instead, which is
+ * the whole point of prescribing a shape rather than a flight.
+ */
+L.FLIGHT_SHAPES = [
+  { id: 'kinds',    title: 'A tour of kinds',
+    why: 'bourbon beside rye beside scotch',
+    hold: [], vary: 'type' },
+  { id: 'range',    title: 'One distillery, its whole range',
+    why: 'what one maker does with one spirit',
+    hold: [{ dim: 'house' }], vary: null },
+  { id: 'years',    title: 'One kind, years apart',
+    why: 'what time in wood does',
+    hold: [{ dim: 'type' }], vary: 'age' },
+  { id: 'climb',    title: 'One kind, climbing',
+    why: 'the same whisky at rising strength',
+    hold: [{ dim: 'type' }], vary: 'proof' },
+  { id: 'wood',     title: 'One kind, different woods',
+    why: 'what the cask put there',
+    hold: [{ dim: 'type' }], vary: 'cask' },
+  { id: 'strength', title: 'One strength, many kinds',
+    why: 'proof held still so the grain shows',
+    hold: [{ dim: 'proof' }], vary: 'type' },
+  { id: 'map',      title: 'Across the regions',
+    why: 'one kind, and where it comes from',
+    hold: [{ dim: 'type' }], vary: 'region' }
+];
+
+/* SEVEN SUGGESTIONS, BUILT FROM THIS SHELF.
+ *
+ * A shape the shelf cannot fill is LEFT OUT rather than shown failing: BZ
+ * on the old sheet, "whats the point of the 1 I've not built? not needed."
+ * Seven is the ceiling, not a promise.
+ *
+ * `round` is Show me others. It rotates which value each shape holds, so a
+ * second press gives the second-best type, a third the third. Without it a
+ * regenerate rebuilt the same seven, because the best held value does not
+ * change between presses.
+ */
+L.suggestFlights = function (catalog, bottles, round, used) {
+  const r = Math.max(0, Number(round) || 0);
+  /* AND THE POURS MOVE TOO. Rotating the hold is not enough on its own:
+     "A tour of kinds" holds nothing and "One strength, many kinds" lands
+     on the same strength every time, so two of the seven came back
+     identical and Show me others read as a dead button. `used` carries
+     what the last press poured and L.pickSpread sorts those to the back,
+     so the next press reaches further down the shelf. It is FILLED IN
+     here, so the caller keeps one object across presses and nothing else
+     has to remember anything. */
+  const seen = used || {};
+  return L.FLIGHT_SHAPES.map(sh => {
+    const made = L.designFlight({ hold: sh.hold, vary: sh.vary, round: r },
+      catalog, bottles, { used: seen });
+    if (!made || !made.ok) return null;
+    made.pours.forEach(x => { seen[x.k] = 1; });
+    const first = made.pours.length
+      ? (catalog[made.pours[0].k] || {}).name : '';
+    return { id: sh.id, title: sh.title, why: sh.why, flight: made,
+             /* THE FIRST POUR, because two builds of one shape can span the
+                same six types with six different bottles. */
+             opens: first || '',
+             /* WHAT IT IS, in the sentence every other flight uses. */
+             said: L.flightSays({ core: made.pours, holds: made.holds,
+                                  vary: made.vary }, catalog) };
+  }).filter(Boolean);
+};
+
 /* WHAT TO POUR TONIGHT, AS ROWS - one per thing the designer can hold.
  *
  * BZ, 2026-10-19: "how can I only have 1 same house?!?!?! Same type should
@@ -25286,8 +25384,17 @@ L.flightSays = function (flight, catalog) {
   const got = ((flight || {}).core || [])
     .map(x => (catalog || {})[x.k]).filter(Boolean);
   if (got.length < 2) return '';
+  /* A FLIGHT THAT KNOWS ITS OWN SHAPE SAYS IT. One the designer just built
+     carries the hold it was built on and the axis it was built to move;
+     one off the shelf carries neither, and is read off its pours as before.
+     BOTH, not one or the other: a hold of 91 proof within 3 produces pours
+     88 to 93, which is a six point span and so not "held" by the reading
+     test - true of the pours and false of the flight. And the reading
+     catches what the spec did not say, so "hold Buffalo Trace" still opens
+     with Bourbon. */
   const held = {};
   L.flightHolds(flight, catalog).forEach(id => { held[id] = 1; });
+  ((flight || {}).holds || []).forEach(id => { held[id] = 1; });
 
   /* THE SUBJECT - what every pour in it is, said as the value and not the
      dimension: "bourbon" tells him more than "one type". Nothing held is
@@ -25321,6 +25428,14 @@ L.flightSays = function (flight, catalog) {
   const WORTH = ['type', 'cask', 'region', 'age', 'smoke', 'bonded',
                  'proof', 'price', 'house'];
   let moves = null, ways = 0;
+  /* THE AXIS IT WAS BUILT ON BEATS THE GUESS. A flight built to vary the
+     AGE came back "across three regions", because the regions move too and
+     region is ranked above age - true, and not what the flight is. */
+  const axis = (flight || {}).vary;
+  if (axis && !held[axis] && L.dimValues(axis, got).length > 1) {
+    moves = L.dimOf(axis);
+    ways = L.dimValues(axis, got).length;
+  }
   WORTH.forEach(id => {
     if (moves || held[id]) return;
     const n = L.dimValues(id, got).length;
@@ -44616,6 +44731,7 @@ function renderTonight(box) {
      rather than under whichever one came first, and an empty row offering to
      build the flight that would fill it. L.tonightRows is the whole rule. */
   const roll = el('div', 'scrollbox');
+  roll.id = 'tonightRoll';
   const all = allFlights();
   const rows = L.tonightRows(list, all, S.catalog,
     L.openProducts(S.catalog, S.bottles));
@@ -57117,6 +57233,65 @@ function showRecast(f) {
 // What this shelf can teach, offered before the blank builder: which
 // questions are worth asking (proof, cask, house, region, age, grain, price)
 // and what to hold still for each.
+/* SEVEN FLIGHTS THE SHELF CAN POUR, AND ANOTHER SEVEN ON ASK.
+ *
+ * BZ, 2026-10-19: "we should just have some number of the most common types
+ * of flight pre-built - assuming they fit their shelf. More prescriptive and
+ * based on their shelf", and "use the 7 shapes to create 7 suggestions and
+ * allow for a regen of the suggestions". And on where it stops: "that is all
+ * we need it to do, more experienced folks will build their own."
+ *
+ * So no premise box, no pickers, no tolerances. Seven rows, each already
+ * built from what is open, and a button that builds another seven.
+ */
+function renderSeven(box, state) {
+  const made = L.suggestFlights(S.catalog, S.bottles, state.round, state.used);
+  if (!made.length) return;
+  box.appendChild(el('h3', null, 'Seven to pour'));
+  box.appendChild(el('div', 'src', 'Built from what is open, in the order '
+    + 'they should be poured. Nothing is saved until you keep one.'));
+  const roll = el('div', 'scrollbox');
+  roll.id = 'sevenRoll';
+  made.forEach(sg => {
+    const r = el('button', 'portstep');
+    r.type = 'button';
+    r.appendChild(el('div', 'nm', sg.title));
+    /* WHAT IT ACTUALLY IS, under what the shape is called: the shape is
+       "One kind, years apart" on every shelf, and this one is Scotch, 5 to
+       21 years. */
+    r.appendChild(el('div', 'sub', sg.said + ' \u00b7 ' + sg.why));
+    /* AND WHAT IT OPENS WITH. "A tour of kinds" holds nothing and
+       spans the same six types however it is built, so its line came
+       back word for word after Show me seven others - six different
+       bottles behind an identical row, which reads as a dead button
+       and is what seq.js caught. The first pour is the one name worth
+       printing: it changes every time, and it is what a host wants to
+       know. The concept still leads, so this is not the old list of
+       flights BY name. */
+    if (sg.opens) r.appendChild(el('div', 'src', 'Opens with ' + sg.opens));
+    r.onclick = () => {
+      closeModal();
+      openModal(sg.title, m2 => {
+        m2.appendChild(el('div', 'sub', sg.why));
+        const out = el('div');
+        out.style.marginTop = '9px';
+        m2.appendChild(out);
+        renderProposal(out, sg.flight, sg.flight.vary, sg.flight.premise);
+        const back = el('button', 'btn ghost wide', 'Close');
+        back.style.marginTop = '11px';
+        back.onclick = closeModal;
+        m2.appendChild(back);
+      });
+    };
+    roll.appendChild(r);
+  });
+  box.appendChild(roll);
+  const again = el('button', 'btn wide', 'Show me seven others');
+  again.style.marginTop = '9px';
+  again.onclick = () => { state.round++; state.repaint(); };
+  box.appendChild(again);
+}
+
 function showLessons() {
   openModal('What your shelf can teach you', m => {
    /* A BODY IT CAN REDRAW. Built once, More ideas had nothing to call and
@@ -57124,12 +57299,19 @@ function showLessons() {
       2026-09-24). */
    const body = el('div');
    m.appendChild(body);
+   /* ACROSS PRESSES, because Show me seven others is a round and what it
+      has already poured. Inside paint() both would reset on every draw and
+      the button would hand back the same seven. */
+   const seven = { round: 0, used: {}, repaint: () => paint() };
    const paint = () => {
     body.innerHTML = '';
     const m = body;
     /* Flights ready to pour tonight come first: already designed, they are
        the best suggestion there is. Designing a new one comes after. */
     renderTonight(m, paint);
+    /* AND SEVEN TO BUILD, under the ones already designed: a flight he
+       built beats one the app just made up, so his come first. */
+    renderSeven(m, seven);
     /* THE UNBUILT SHAPES ARE GONE (BZ, 2026-10-19: "whats the point of
        the 1 I've not built? not needed"). With forty flights he has built
        every shape this shelf can teach, so the list was nearly always one
@@ -61651,7 +61833,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.99</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.0</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
