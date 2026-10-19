@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1061 |
+| functions | 1063 |
 | tables | 251 |
-| carrying a stated purpose | 851 |
+| carrying a stated purpose | 852 |
 
 ## Tables
 
@@ -454,6 +454,7 @@ QUESTION, not the name you were going to use.
 - **`L.entryFor`** — WHERE resolveLibKey CANNOT SETTLE A NAME, containment is asked
 - **`L.entryPrints`** — THE SAME, FOR A MAP
 - **`L.entryScore`** — _no comment above it_
+- **`L.errorKind`** — WHAT WENT WRONG, AS A KIND
 - **`L.escHtml`** — TEXT INTO HTML, safe between tags AND inside a quoted attribute
 - **`L.exactDupes`** — _no comment above it_
 - **`L.exactHouse`** — Exact string equality on a distillery, named so it can be told apart from
@@ -917,7 +918,7 @@ QUESTION, not the name you were going to use.
 - **`L.pinsInView`** — against Speyside, not bottles off screen.
 - **`L.placeKind`** — A kind is either one of ours or whatever somebody typed instead.
 - **`L.placeLine`** — How it reads back
-- **`L.plainError`** — A FAILURE IN PLAIN WORDS, never the service's own ("PERMISSION_DENIED").
+- **`L.plainError`** — _no comment above it_
 - **`L.plural`** — _no comment above it_
 - **`L.pointPourAt`** — AND THE POUR ITSELF, RE-POINTED
 - **`L.pondRank`** — _no comment above it_
@@ -1115,6 +1116,7 @@ QUESTION, not the name you were going to use.
 - **`L.sentEntriesAfterLoad`** — THE SAME, FOR A MAP, which keeps its prints by entry key.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
+- **`L.serviceFellBack`** — THE SERVICE DID NOT ANSWER, AND THE APP DID THE WORK ITSELF
 - **`L.setState`** — _no comment above it_
 - **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES

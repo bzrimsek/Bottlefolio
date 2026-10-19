@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.82  Build 2026-10-18 11:39 PM ET
+     Version : v2.8.83  Build 2026-10-18 11:52 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.83  2026-10-18  The message when the service fails and the app designs the flight itself.
 // v2.8.82  2026-10-18  The flight designer is nine switches.
 // v2.8.81  2026-10-18  The flight designer, corrected from his own screenshots.
 // v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.76  2026-10-18  Gift links sits directly under the wish list on Shelf.
 // v2.8.75  2026-10-18  Naming a gift link is back, and a new one appears where you made it.
 // v2.8.74  2026-10-18  A gift token now travels after the #, not in the query string.
-// v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.82';
-const BUILD_TIME  = '2026-10-18 11:39 PM ET';
+const APP_VERSION = '2.8.83';
+const BUILD_TIME  = '2026-10-18 11:52 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5908,16 +5908,51 @@ L.waitSay = function (label, secs) {
 /* A FAILURE IN PLAIN WORDS, never the service's own ("PERMISSION_DENIED").
    The raw text goes to the log (sayError); the screen says what happened
    and what to do, or where the detail is. */
-L.plainError = function (e, fallback) {
-  const raw = String((e && ((e.code || '') + ' ' + (e.message || ''))) || e || '');
+/* WHAT WENT WRONG, AS A KIND. Split out of L.plainError so a caller that
+   RECOVERED can say so in its own words without the advice that belongs to
+   a caller that did not: the flight sheet designs the flight here when the
+   service fails, and "try again when you have signal" is wrong once it
+   already has. */
+L.errorKind = function (e) {
+  const raw = String((e && ((e.code || '') + ' ' + (e.message || '')))
+    || e || '');
   if (/permission[_ -]?denied|not allowed|unauthori[sz]ed/i.test(raw)) {
-    return 'Your account is not allowed to do that.';
+    return 'denied';
   }
   if (/network|failed to fetch|offline|timed? ?out|did not answer|unavailable/i
       .test(raw)) {
-    return 'No connection just now — try again when you have signal.';
+    return 'offline';
   }
   if (/quota|resource.?exhausted|too many|rate.?limit/i.test(raw)) {
+    return 'busy';
+  }
+  return 'unknown';
+};
+
+/* THE SERVICE DID NOT ANSWER, AND THE APP DID THE WORK ITSELF. ONE
+ * SENTENCE, not a general failure with a clause stuck on the end.
+ *
+ * BZ, 2026-10-18, reading his own screen: "That did not go through. The
+ * detail is in Running this. - designed it here instead" - a sentence
+ * sending him to look up a detail he does not need, followed by a
+ * fragment telling him nothing went wrong after all.
+ */
+L.serviceFellBack = function (e, didWhat) {
+  const kind = L.errorKind(e);
+  const why = kind === 'offline' ? 'No connection just now'
+    : kind === 'busy' ? 'The service is busy just now'
+    : kind === 'denied' ? 'The service would not take that'
+    : 'The service did not answer';
+  return why + ', so ' + (didWhat || 'this was done here') + '.';
+};
+
+L.plainError = function (e, fallback) {
+  const kind = L.errorKind(e);
+  if (kind === 'denied') return 'Your account is not allowed to do that.';
+  if (kind === 'offline') {
+    return 'No connection just now — try again when you have signal.';
+  }
+  if (kind === 'busy') {
     return 'Too many at once just now — try again in a minute.';
   }
   return fallback || 'That did not go through. The detail is in Running this.';
@@ -56521,6 +56556,17 @@ function showPooled(pool, gain, who) {
  * and the allowance does not go up (rule 30f).
  *
  * Answers whether it took the press, so the caller stops. */
+/* THE SERVICE FAILED AND THE APP DESIGNED THE FLIGHT HERE. One sentence on
+ * the screen (L.serviceFellBack) and the raw failure in the log, where it
+ * belongs - the screen used to carry both, as a general failure with a
+ * contradicting fragment stuck on the end. Its own function because
+ * flightBuilder is at its ceiling and the allowance does not go up. */
+function flightFellBack(status, e) {
+  status.className = 'looknote warn2';
+  status.textContent = L.serviceFellBack(e, 'this flight was designed here');
+  appLog('flight: the service failed - ' + sayError(e));
+}
+
 function castFlavour(word, fromCat, fromBot, premise, status) {
   if (!word) return false;
   const made = L.flavourFlight(word, fromCat, fromBot,
@@ -56828,8 +56874,7 @@ function flightBuilder(preset, pool) {
       } catch (e) {
         status.className = 'looknote warn2';
         // Not "falling back to your shelf" — the shelf was always the
-        // source, and saying that suggested there had been another one.
-        status.textContent = sayError(e) + ' \u2014 designed it here instead.';
+        flightFellBack(status, e);
         renderProposal(out, L.designFlight(spec, fromCat, fromBot),
           varyId, premise, pool);
       } finally {
@@ -60949,7 +60994,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.82</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.83</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

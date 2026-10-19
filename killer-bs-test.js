@@ -30055,6 +30055,44 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
+sec('§488 a failure the app recovered from is one sentence');
+{
+  /* BZ, 2026-10-18, reading his own screen: "That did not go through. The
+     detail is in Running this. — designed it here instead." Three faults in
+     one line - it says nothing went through when the flight did, it sends
+     him to look up a detail he does not need, and the fragment on the end
+     contradicts the sentence in front of it.
+
+     THE CLASSIFIER IS SHARED, the words are not: a caller that RECOVERED
+     must not repeat the advice meant for one that did not, and "try again
+     when you have signal" is wrong once the flight is already on screen. */
+  eq('a network failure is known', L.errorKind(new Error('failed to fetch')),
+    'offline');
+  eq('so is a refusal', L.errorKind(new Error('permission_denied')), 'denied');
+  eq('and a rate limit', L.errorKind(new Error('quota exceeded')), 'busy');
+  eq('anything else is unknown', L.errorKind(new Error('zzz')), 'unknown');
+
+  const back = L.serviceFellBack(new Error('failed to fetch'),
+    'this flight was designed here');
+  eq('it says what happened and what was done anyway',
+    back, 'No connection just now, so this flight was designed here.');
+  eq('and never tells him to try again, because it already worked',
+    /try again/.test(back), false);
+  eq('nor sends him to a log for a detail he does not need',
+    /Running this/.test(back), false);
+  eq('an unknown failure still reads as one sentence',
+    L.serviceFellBack(new Error('zzz'), 'this flight was designed here'),
+    'The service did not answer, so this flight was designed here.');
+  eq('it is one sentence, not two',
+    back.replace(/\.$/, '').indexOf('.'), -1);
+
+  /* AND THE OLD DOOR IS UNCHANGED for callers that did NOT recover. */
+  eq('a caller that failed still gets the advice',
+    L.plainError(new Error('failed to fetch')),
+    'No connection just now — try again when you have signal.');
+}
+
+
 sec('§487 what a flight holds and what it varies');
 {
   /* BZ, 2026-10-18, after compiling his own forty flights: "we need to
@@ -33096,6 +33134,7 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
 
 
 

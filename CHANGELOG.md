@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.83  ·  2026-10-18 11:52 PM ET
+
+The message when the service fails and the app designs the flight itself. BZ read his own screen: That did not go through. The detail is in Running this. - designed it here instead. Three faults in one line. It says nothing went through when the flight did. It sends him to look up a detail he does not need. And the fragment on the end contradicts the sentence in front of it, because the general failure text was never written to have a recovery stuck onto it. L.errorKind is split out of L.plainError so a caller that RECOVERED can say so in its own words without inheriting advice meant for one that did not: try again when you have signal is wrong once the flight is already on the screen. L.serviceFellBack writes the one sentence, which reads No connection just now, so this flight was designed here, and the raw failure goes to the log where it belongs.
+
 ## v2.8.82  ·  2026-10-18 11:39 PM ET
 
 The flight designer is nine switches. BZ, twice: since you can't hold and vary the same item we should be able to shrink that modal in half, and then, if it's not held it's a variable by default. The second is the bigger cut. There is no longer anything to pick for what varies, because everything not held already does, so seventeen rows across two lists became nine rows with one switch each. L.pickAxis takes the widest unheld dimension as the flight's axis, measured on the bottles the hold has already narrowed rather than on the whole shelf, and the sentence under the switches says which it took and updates as he holds things. Hold proof alone and the types move, which is the introduction at one strength he asked for two days ago. L.openProducts is the one door that answers which whiskies are actually open; designOptions had it written out inline and two more callers wanted it.
