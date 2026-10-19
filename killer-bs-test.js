@@ -743,9 +743,15 @@ const good = { title: 'A FLIGHT', variable: 'proof', premise: 'Testing.',
 const v = L.verifyProposal(good, aiCat, aiBot);
 eq('a good proposal verifies', v.ok, true);
 eq('all three pours resolve', v.pours.length, 3);
-// The app sorts, not the model: proof ascends whatever order came back.
-eq('pours come back in proof order',
-  v.pours.map(x => aiCat[x.k].proof), [92, 100, 110]);
+/* THE APP SORTS, NOT THE MODEL, and since 2026-10-18 it sorts round the
+   ring rather than by proof. These three are bourbon (place 3), rye (4)
+   and scotch (6), so the run is 100, 110, 92 - the strongest in the
+   middle, which is right, because this orders by what the whisky IS and
+   proof only settles a tie. BZ: "i might go irish to scotch". */
+eq('pours come back in ring order, lightest kind first',
+  v.pours.map(x => aiCat[x.k].proof), [100, 110, 92]);
+eq('which is bourbon, then rye, then scotch',
+  v.pours.map(x => aiCat[x.k].sub).join(','), 'bourbon,rye,scotch');
 eq('per-pour notes survive',
   v.pours.find(x => x.k === 'a').note, 'the control');
 eq('the reasoning survives', v.why, ['Because.']);
@@ -30048,59 +30054,75 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
-sec('§486 smoke is poured last, because nothing clean can follow it');
+sec('§486 a flight is poured round the ring, Irish to Scotch');
 {
-  /* BZ, 2026-10-18, testing an 80-proof introduction across all types: it
-     "keeps putting smoke in the middle of the run - that is not
-     appropriate", and then the rule - "we can't put smoke on the palate if
-     non-smoke follows". A flight was ordered by proof alone, so a gentle
-     Islay landed second and everything after it tasted of phenol. */
+  /* BZ, 2026-10-18, on an introduction across all types: "type varied, not
+     in any order - remember the circle we built? where would a beginner
+     start? irish", and then "i might go irish to scotch".
+
+     THE CIRCLE IS HIS OWN, set 2026-09-20 and already in the engine as
+     L.FLAVOR_ORDER / L.flavorPlace: Irish 1, American single malt 2,
+     bourbon and Tennessee and wheat 3, rye 4, Canadian 5, Scotch 6, with
+     smoke hanging off the ring at 7. Read it, do not re-derive it.
+
+     EVERY PRODUCT HERE CARRIES A `sub`, which the first version of this
+     section did not - without one every pour lands on the ring's default
+     and the whole thing degrades to a proof sort that cannot tell the ring
+     from nothing. */
   const cat = {
-    glen:  { k: 'glen',  name: 'The Glenlivet 12 Year Old', proof: 80 },
-    lag:   { k: 'lag',   name: 'Lagavulin 16 Year Old', proof: 86,
-             dist: 'Lagavulin' },
-    bt:    { k: 'bt',    name: 'Buffalo Trace Bourbon', proof: 90 },
-    lap:   { k: 'lap',   name: 'Laphroaig 10 Year', proof: 96,
-             dist: 'Laphroaig' },
-    red:   { k: 'red',   name: 'Redbreast 12 Cask Strength', proof: 112 }
+    jame: { k: 'jame', name: 'Jameson Black Barrel', proof: 80, sub: 'irish' },
+    bt:   { k: 'bt',   name: 'Buffalo Trace', proof: 90, sub: 'bourbon' },
+    knob: { k: 'knob', name: 'Knob Creek Rye', proof: 100, sub: 'rye' },
+    glen: { k: 'glen', name: 'The Glenlivet 12', proof: 80, sub: 'scotch' },
+    lag:  { k: 'lag',  name: 'Lagavulin 16', proof: 86, sub: 'scotch',
+            dist: 'Lagavulin' },
+    lap:  { k: 'lap',  name: 'Laphroaig 10', proof: 96, sub: 'scotch',
+            dist: 'Laphroaig' }
   };
-  const rows = ['glen', 'lag', 'bt', 'lap', 'red'].map(k => ({ k: k }));
+  const all = Object.keys(cat).map(k => ({ k: k }));
+  const order = L.pourOrder(all, cat).map(x => x.k);
 
-  /* THE OLD ORDER IS THE FAULT, kept here so the two are visible together. */
-  const byProof = L.sortByProof(rows, cat).map(x => x.k);
-  eq('sorting by proof alone puts smoke second', byProof[1], 'lag');
+  eq('a beginner starts on the Irish', order[0], 'jame');
+  eq('and the run ends on smoke', order[order.length - 1], 'lap');
+  eq('Irish, bourbon, rye, then the Scotch',
+    order.join(','), 'jame,bt,knob,glen,lag,lap');
 
-  const order = L.pourOrder(rows, cat).map(x => x.k);
-  eq('the gentlest unpeated pour opens', order[0], 'glen');
-  eq('and the two smoky ones close it',
-    order.slice(-2).sort().join(','), 'lag,lap');
+  /* THE RULE, not the list, so another shelf cannot pass by accident: the
+     ring never goes backwards. */
+  let last = -1, back = 0;
+  order.forEach(k => {
+    const at = L.flavorPlace(cat[k]);
+    if (at < last) back++;
+    last = at;
+  });
+  eq('the ring never steps backwards', back, 0);
 
-  /* THE RULE ITSELF, not a fixed list: once smoke starts, nothing clean
-     follows. Written this way so a different shelf cannot pass it by
-     accident. */
+  /* AND SMOKE STILL CANNOT HAVE ANYTHING CLEAN AFTER IT - BZ, the same day:
+     "we can't put smoke on the palate if non-smoke follows." The ring says
+     this by putting smoke at 7, past Scotch at 6. */
   let seen = false, after = 0;
-  L.pourOrder(rows, cat).forEach(x => {
-    if (L.peatLevel(cat[x.k]) > 0) seen = true;
+  order.forEach(k => {
+    if (L.peatLevel(cat[k]) >= 2) seen = true;
     else if (seen) after++;
   });
   eq('nothing clean is poured after smoke', after, 0);
 
-  /* PEAT BEATS PROOF, which is the whole point: this is about what coats
-     the mouth, not about strength. */
-  const gentleSmoke = { s: { k: 's', name: 'Ardbeg Ten', proof: 80,
-                             dist: 'Ardbeg' },
-                        h: { k: 'h', name: 'Booker\'s Bourbon', proof: 125 } };
-  eq('a weak peated pour still follows a strong clean one',
-    L.pourOrder([{ k: 's' }, { k: 'h' }], gentleSmoke).map(x => x.k).join(','),
-    'h,s');
+  /* PLACE BEATS PROOF: the Glenlivet at 80 still follows the rye at 100,
+     because this orders by what the whisky IS. */
+  eq('a weaker Scotch still follows a stronger rye',
+    L.pourOrder([{ k: 'glen' }, { k: 'knob' }], cat).map(x => x.k).join(','),
+    'knob,glen');
 
-  /* AND WITHIN ONE LEVEL the old order stands: weakest first. */
-  eq('unpeated pours keep their proof order',
-    L.pourOrder([{ k: 'red' }, { k: 'glen' }, { k: 'bt' }], cat)
-      .map(x => x.k).join(','), 'glen,bt,red');
-  eq('and so do the smoky ones',
-    L.pourOrder([{ k: 'lap' }, { k: 'lag' }], cat)
-      .map(x => x.k).join(','), 'lag,lap');
+  /* AND THE PROOF LADDER IS UNTOUCHED, because it holds one distillery
+     still, so every pour sits in the same place and proof settles it. */
+  const house = {
+    x1: { k: 'x1', name: 'H 1', proof: 110, sub: 'bourbon', dist: 'H' },
+    x2: { k: 'x2', name: 'H 2', proof: 90, sub: 'bourbon', dist: 'H' },
+    x3: { k: 'x3', name: 'H 3', proof: 100, sub: 'bourbon', dist: 'H' }
+  };
+  eq('one house still climbs by proof',
+    L.pourOrder([{ k: 'x1' }, { k: 'x2' }, { k: 'x3' }], house)
+      .map(x => house[x.k].proof).join(','), '90,100,110');
 }
 
 sec('§485 a gift token belongs after the #, not in a server log');
@@ -32829,3 +32851,4 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+

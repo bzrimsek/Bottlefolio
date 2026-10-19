@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.78  Build 2026-10-18 09:00 PM ET
+     Version : v2.8.79  Build 2026-10-18 09:37 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
 // v2.8.78  2026-10-18  A flight pours smoke last.
 // v2.8.77  2026-10-18  Make a link asks for a name again.
 // v2.8.76  2026-10-18  Gift links sits directly under the wish list on Shelf.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.72  2026-10-18  The shared message drops the occasion.
 // v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
 // v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
-// v2.8.69  2026-10-18  A SHOPPER MAY NAME A BOTTLE MORE BRIEFLY THAN ITS LABEL.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.78';
-const BUILD_TIME  = '2026-10-18 09:00 PM ET';
+const APP_VERSION = '2.8.79';
+const BUILD_TIME  = '2026-10-18 09:37 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -14926,29 +14926,32 @@ L.movePour = function (pours, idx, delta) {
 };
 
 // Order the pours by ascending proof -- the house rule, applied in one call.
-/* THE ORDER A FLIGHT IS POURED IN. SMOKE LAST.
+/* THE ORDER A FLIGHT IS POURED IN: ROUND THE RING, LIGHT TO LOUD.
  *
- * BZ, 2026-10-18, testing an 80-proof introduction across all types: it
- * "keeps putting smoke in the middle of the run - that is not
- * appropriate", and then the rule itself - "we can't put smoke on the
- * palate if non-smoke follows".
+ * BZ, 2026-10-18, on an introduction across all types: "type varied, not
+ * in any order - remember the circle we built? where would a beginner
+ * start? irish", and then "i might go irish to scotch".
  *
- * PEAT IS THE FIRST KEY, PROOF ONLY THE SECOND, because this is not about
- * strength. Phenols coat the mouth and everything after a peated pour
- * tastes of it, so a gentle Islay still goes after a stronger unpeated
- * bourbon - the opposite of what sorting by proof alone produced. Within
- * one level of peat the old order stands: weakest first.
+ * THAT CIRCLE IS ALREADY HERE. L.FLAVOR_ORDER is his own spectrum, set on
+ * 2026-09-20: Irish 1, American single malt 2, bourbon and Tennessee and
+ * wheat 3, rye 4, Canadian 5, Scotch 6, with smoke hanging off the ring at
+ * 7. L.flavorPlace reads it. So a run goes Irish to Scotch and ends on
+ * smoke, which is the beginner walk he described.
  *
- * L.peatLevel IS THE ONE PLACE that answers how peated something is, so
- * this asks it rather than reading names for "islay" again.
+ * IT ALSO SETTLES THE SMOKE RULE, which this function held on its own for
+ * one build: "we can't put smoke on the palate if non-smoke follows" is
+ * the ring saying 7 is past 6. One key, his, rather than two.
+ *
+ * PROOF IS ONLY THE SECOND KEY, so within one place the old order stands,
+ * weakest first - and the proof ladder is unaffected, because it holds the
+ * distillery still and every pour sits in the same place on the ring.
  */
 L.pourOrder = function (pours, catalog) {
   const cat = catalog || {};
   const out = (pours || []).slice().sort((a, b) => {
     const pa = cat[a.k], pb = cat[b.k];
-    const sa = L.peatLevel(pa) > 0 ? 1 : 0;
-    const sb = L.peatLevel(pb) > 0 ? 1 : 0;
-    if (sa !== sb) return sa - sb;
+    const fa = L.flavorPlace(pa), fb = L.flavorPlace(pb);
+    if (fa !== fb) return fa - fb;
     return ((pa && pa.proof) || 0) - ((pb && pb.proof) || 0);
   });
   return L.relabel(out);
@@ -60225,7 +60228,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.78</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.79</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

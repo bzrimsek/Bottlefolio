@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.79  ·  2026-10-18 09:37 PM ET
+
+A flight is poured round the ring, Irish to Scotch. BZ, building an introduction across all types: type varied, not in any order, remember the circle we built, where would a beginner start, irish, and then I might go irish to scotch. The circle is his own and was already in the engine, set 2026-09-20 as L.FLAVOR_ORDER and read by L.flavorPlace: Irish 1, American single malt 2, bourbon and Tennessee and wheat 3, rye 4, Canadian 5, Scotch 6, with smoke hanging off the ring at 7. L.pourOrder now keys on that place and uses proof only to settle a tie, so a run opens on a Jameson Black Barrel and closes on an Islay. It also settles yesterday's smoke rule in one key rather than two, because the ring already says 7 is past 6. The proof ladder is unaffected: it holds one distillery still, so every pour sits in the same place and proof decides. The verification assertion moved with the contract, from proof order to ring order.
+
 ## v2.8.78  ·  2026-10-18 09:00 PM ET
 
 A flight pours smoke last. BZ, testing an 80 proof introduction across all types: it keeps putting smoke in the middle of the run, and then the rule itself, we can't put smoke on the palate if non-smoke follows. A flight was ordered by proof alone, so on his shelf a Lagavulin 16 at 86 proof landed second of six and everything after it tasted of phenol. L.pourOrder is the new door: peat is the first key and proof only the second, so a gentle Islay still follows a stronger unpeated bourbon, and within one level of peat the old order stands, weakest first. It asks L.peatLevel, which is the one place that answers how peated something is, rather than reading names for Islay again. All three flight paths pour through it. The Sort by proof button is untouched, because it says what it does.
