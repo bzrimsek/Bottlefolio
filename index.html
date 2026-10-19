@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.79  Build 2026-10-18 09:37 PM ET
+     Version : v2.8.80  Build 2026-10-18 11:01 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
 // v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
 // v2.8.78  2026-10-18  A flight pours smoke last.
 // v2.8.77  2026-10-18  Make a link asks for a name again.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.73  2026-10-18  Make a link asks nothing and makes a link.
 // v2.8.72  2026-10-18  The shared message drops the occasion.
 // v2.8.71  2026-10-18  Share, on a gift link, now puts a message on the clipboard instead of a bare URL, and opens the phone's share sheet where there is one.
-// v2.8.70  2026-10-18  The gift link no longer answers no to a bottle you own.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.79';
-const BUILD_TIME  = '2026-10-18 09:37 PM ET';
+const APP_VERSION = '2.8.80';
+const BUILD_TIME  = '2026-10-18 11:01 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9344,6 +9344,10 @@ L.FEATURES = [
     def: 'In a shop, online, a gift, a trade, a lottery or an auction. A shop takes a place; a gift or a trade takes a person. It belongs to the bottle, not the whiskey, since two of one whiskey can come from two places. It is never shared with a buddy: a gift carries someone\u2019s name.' },
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
+  { term: 'Design a flight', src: 'Flights, design one from scratch',
+    def: 'Two pickers: what is HELD still, and the one thing that VARIES. Hold proof and vary the kind for an introduction at one strength; hold the cask and vary the house; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each; it is a band rather than an exact match, and the card says the spread. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. The premise writes itself from what you picked; type one only to say something the pickers cannot.' },
+  { term: 'Hold a flavor still', src: 'the flight designer',
+    def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
     def: 'A flight this bottle makes with another that is open: same house '
       + 'and same strength with a different cask, or the same make at two '
@@ -14411,6 +14415,203 @@ L.notesFor = function (p, flights, userNote) {
 // on whether they separate along the stated variable, holds everything else
 // as still as it can, and refuses to reach for a bottle that is not open.
 
+/* WHAT A FLIGHT HOLDS AND WHAT IT VARIES (BZ, 2026-10-18).
+ *
+ * He asked for a better designer after compiling his own forty flights:
+ * "What's held and what varies?" Every one of the forty is exactly that -
+ * a held set and one thing moving. Family Feud holds 92 proof AND the
+ * distillery and varies the brand; Take Your PX holds the cask and varies
+ * the house; What Grain On Your BiB lets the law hold the proof at 100.
+ *
+ * THE OLD PICKER NAMED ONLY WHAT MOVES. L.VARIABLES listed eight movers and
+ * L.holdsFor hardcoded one held set for each, so there was no way to say
+ * "hold proof, vary the kind" - which is nine of his forty, and why asking
+ * for an 80 proof introduction produced a proof ladder instead.
+ *
+ * ONLY WHAT THE SHELF CAN ANSWER IS HERE. Measured on his 351 open bottles,
+ * 2026-10-18: proof 96%, house 96%, kind 98%, price 91%, smoke 100%
+ * (derived), cask 32%, age 27%, region 22%. Mashbill reaches 1% - three
+ * bottles - so Can You Trace It cannot be built by any designer until the
+ * catalog carries mash bills, and single-barrel-against-batched is 0%, so
+ * neither can One Barrel Or Many. Offering a control the data cannot fill
+ * is how a designer lies about what it can do.
+ *
+ * `band` is for a number: BZ chose a band over dead-equal because four of
+ * his flights hold proof exactly and five hold it inside a few points, and
+ * a band finds six pours far more often. The card states the spread.
+ */
+L.DIMS = [
+  { id: 'proof', label: 'Proof', hint: 'how strong', numeric: true, band: 2,
+    get: p => (p && p.proof) || null },
+  { id: 'kind', label: 'The kind', hint: 'bourbon, rye, scotch',
+    get: p => (p && p.sub) || null },
+  { id: 'house', label: 'The house', hint: 'who made it',
+    get: p => L.houseKey((p && (p.dist || p.name)) || '') || null },
+  { id: 'price', label: 'Price', hint: 'what it cost',
+    get: p => L.priceBand(p && p.msrp) },
+  /* ALWAYS ANSWERABLE, because L.peatLevel reads a name and a house when
+     there is no measurement - so this is the one dimension that never
+     thins out, and the only one that can hold a whole shelf still. */
+  { id: 'smoke', label: 'Smoke', hint: 'peated or not',
+    get: p => (L.peatLevel(p) > 0 ? 'peated' : 'clean') },
+  { id: 'cask', label: 'The cask', hint: 'what it finished in',
+    get: p => L.caskFamily(p) },
+  { id: 'age', label: 'Age', hint: 'years in wood', numeric: true, band: 3,
+    get: p => (p && p.age) || null },
+  { id: 'region', label: 'Region', hint: 'where it is from',
+    get: p => (p && p.region) || null },
+  /* THE LAW HOLDS THE PROOF, which is what makes this worth its own
+     dimension rather than a proof band: bottled-in-bond is 100 proof, one
+     distillery, one season, four years. The flag is on 8 of his open
+     bottles and the NAME says it on 14, so both are read - a fact stated
+     in the name is still the fact. */
+  { id: 'bonded', label: 'Bottled in bond', hint: '100 proof by law', flag: true,
+    get: p => (L.isBonded(p) ? 'bonded' : null) }
+];
+
+/* BOTTLED IN BOND, from the flag or the name. One door, because the shelf
+   answers it two ways and a second reading of the name elsewhere would be
+   the duplicate rule 30d exists to stop. */
+L.BOND_WORDS = /bottled[^a-z]?in[^a-z]?bond|bonded/i;
+L.isBonded = function (p) {
+  const prod = p || {};
+  if (prod.bonded) return true;
+  return L.BOND_WORDS.test(String(prod.name || ''));
+};
+
+/* ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
+   the card cannot disagree about what "the cask" means. A held number is
+   banded here rather than by the caller. */
+L.dimOf = function (id) {
+  return L.DIMS.filter(d => d.id === id)[0] || null;
+};
+L.dimValue = function (id, p, banded) {
+  const d = L.dimOf(id);
+  if (!d) return null;
+  const v = d.get(p);
+  if (v === null || v === undefined || v === '') return null;
+  if (banded && d.numeric) return Math.round(Number(v) / d.band) * d.band;
+  return d.numeric ? Number(v) : String(v).toLowerCase();
+};
+
+/* WHAT IS WORTH HOLDING, AND WHAT IS WORTH VARYING, on THIS shelf.
+ *
+ * BZ chose "only when they can fill six" (2026-10-18): a dimension the open
+ * shelf cannot build a flight from is not offered. Region reaches 22% of
+ * his bottles and age 27%, so on a thin shelf they simply are not there,
+ * and the count travels with each one so the cost of a pick is visible
+ * before it is made.
+ *
+ * A DIMENSION IS WORTH VARYING when at least three distinct values are
+ * open - two bottles that differ is a comparison, not a flight - and worth
+ * HOLDING when some single value covers enough bottles to pour from.
+ */
+L.dimSpread = function (id, products, size) {
+  const want = size || L.CORE_TARGET;
+  const d = L.dimOf(id);
+  const vals = [];
+  const counts = {};
+  (products || []).forEach(p => {
+    const v = L.dimValue(id, p);
+    if (v === null) return;
+    vals.push(v);
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  const distinct = Object.keys(counts);
+  /* A NUMBER IS COUNTED BY ITS BAND, NOT BY ITS BUCKET. Rounding to the
+     nearest step put 80 and 81 in different buckets while the builder
+     treats anything within two points as held - so the suggestion said
+     one number and the flight poured from another. How many bottles sit
+     WITHIN the band of each candidate is the same question the builder
+     asks, which is the point. */
+  const reach = v => (d && d.numeric)
+    ? vals.filter(x => Math.abs(Number(x) - Number(v)) <= (d.band || 0)).length
+    : counts[v];
+  /* A TIE GOES TO THE VALUE MOST BOTTLES ACTUALLY SIT ON. Within a band
+     several candidates reach the same count - 79 and 80 both reach six on
+     a shelf of 80s - and an object hands back integer-like keys in
+     ascending order, so the suggestion silently became the LOWEST of the
+     tie rather than the centre of it. Four bottles at 80 and one at 79
+     is a flight held at 80. */
+  const best = distinct.slice().sort((x, y) =>
+    reach(y) - reach(x) || counts[y] - counts[x]);
+  return {
+    id: id,
+    have: vals.length,
+    values: distinct.length,
+    /* VARY: three distinct values at the very least - two bottles that
+       differ is a comparison, not a flight - and enough bottles to reach
+       the target between them.
+
+       EXCEPT WHEN THERE ARE ONLY TWO VALUES TO HAVE. Smoke is peated or
+       it is not, and bonded is or it is not; demanding three would mean
+       House On Fire - three distilleries, each poured smoked and unsmoked
+       - could never be designed. A binary varies IN PAIRS, which is why
+       BZ's pairs switch and this are the same fact: the held thing
+       supplies the three, and the binary supplies the two sides. */
+    canVary: distinct.length >= 3 && vals.length >= Math.min(4, want),
+    canPair: distinct.length === 2
+      && distinct.every(v => counts[v] >= 2),
+    /* HOLD: one value with enough bottles inside its band. */
+    canHold: best.length > 0 && reach(best[0]) >= Math.min(4, want),
+    /* THE SUGGESTION, and the runners-up with their counts - BZ chose
+       "both: it suggests, you can override", and an override without the
+       numbers beside it is a guess. */
+    options: best.slice(0, 6).map(v => ({
+      value: (d && d.numeric) ? Number(v) : v, n: reach(v) }))
+  };
+};
+
+L.designOptions = function (catalog, bottles, size) {
+  const open = L.openKeys(bottles);
+  const products = Object.keys(catalog || {}).filter(k => open[k])
+    .map(k => catalog[k]).filter(p => p && L.isWhisky(p));
+  return L.DIMS.map(d => {
+    const s = L.dimSpread(d.id, products, size);
+    s.label = d.label;
+    s.hint = d.hint;
+    s.numeric = !!d.numeric;
+    s.band = d.band || 0;
+    return s;
+  });
+};
+
+/* THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank. BZ: "I
+   thought the premise was only needed w/o user input" - so the pickers say
+   what the flight IS and the premise is only the words for the room. */
+L.designPremise = function (hold, varyId, opts) {
+  const o = opts || {};
+  const vd = L.dimOf(varyId);
+  /* A DIMENSION WHOSE VALUE REPEATS ITS OWN NAME READS AS NONSENSE -
+     "bottled in bond held at bonded" was the first draft. A flag says
+     itself, a number says its band, everything else says its value. */
+  const parts = (hold || []).map(h => {
+    const d = L.dimOf(h.dim);
+    if (!d) return null;
+    if (d.numeric) {
+      const b = d.band || 0;
+      return b ? d.label.toLowerCase() + ' within ' + b + ' points of '
+        + h.value : d.label.toLowerCase() + ' at ' + h.value;
+    }
+    const v = String(h.value || '').toLowerCase();
+    const lab = d.label.toLowerCase();
+    /* A FLAG SAYS ITSELF. Marked on the dimension rather than guessed
+       from the words - "bonded" and "bottled in bond" share no
+       substring, so a string test called them different things. */
+    if (d.flag || !v) return lab;
+    return lab + ' held at ' + v;
+  }).filter(Boolean);
+  const head = parts.length
+    ? 'Everything here shares one thing: ' + L.andList(parts) + '.'
+    : 'Nothing here is held still but the question.';
+  const tail = vd
+    ? ' What moves is ' + vd.label.toLowerCase()
+      + ', and that is the whole of the difference.'
+    : '';
+  return head + tail + (o.pairs
+    ? ' Poured in matched pairs, so each comparison is direct.' : '');
+};
+
 L.VARIABLES = [
   { id: 'proof',   label: 'Proof',            hint: 'same everything, strength climbs' },
   { id: 'finish',  label: 'The cask',         hint: 'one spirit, several finishes' },
@@ -14604,12 +14805,20 @@ L.flightCandidates = function (varId, catalog, bottles, opts) {
    between equally good bottles: the axis is still covered first and the
    most interesting bottle of each value still leads. With one grouping to
    choose from, this is what stops a recast serving the same six again. */
-L.pickSpread = function (varId, members, size, used) {
+/* `valueOf` IS THE DESIGNER'S WAY IN (2026-10-18). This already knew how
+   to spread a cast along an axis; what it did not know was how to read an
+   axis the old L.VARIABLES never had - the kind, smoke, bonded. Rather
+   than a second spreader beside it (rule 30d), the caller may say how to
+   read a bottle, and L.DIMS says whether that reading is a number. */
+L.pickSpread = function (varId, members, size, used, valueOf) {
   const fresh = p => ((used || {})[p.k] ? 1 : 0);
-  const numeric = varId === 'proof' || varId === 'age';
+  const read = valueOf || (p => L.axisOf(varId, p));
+  const dim = L.dimOf(varId);
+  const numeric = dim ? !!dim.numeric
+    : (varId === 'proof' || varId === 'age');
   if (numeric) {
     const sorted = members.slice().sort((a, b) =>
-      L.axisOf(varId, a) - L.axisOf(varId, b));
+      read(a) - read(b));
     if (sorted.length <= size) return sorted;
     const out = [];
     for (let i = 0; i < size; i++) {
@@ -14620,7 +14829,7 @@ L.pickSpread = function (varId, members, size, used) {
   // Categorical: one per value, the most interesting first, then fill.
   const byVal = {};
   members.forEach(p => {
-    const v = String(L.axisOf(varId, p));
+    const v = String(read(p));
     (byVal[v] = byVal[v] || []).push(p);
   });
   const rank = p => (p.obsc === 'obscure' ? 2 : p.obsc === 'niche' ? 1 : 0);
@@ -14731,6 +14940,148 @@ L.axisLabel = function (varId, p) {
 };
 
 // The whole proposal, ready to render or to turn into a flight.
+/* MATCHED PAIRS: one thing poured twice, changing exactly one variable.
+ * Nine of BZ's forty do this, and he asked for it as its own switch.
+ *
+ * THE PAIR IS IDENTIFIED BY WHAT IS HELD, which is why it is only offered
+ * when the varying dimension has two values: the held thing supplies the
+ * third axis the flight needs.
+ *
+ * THE PAIR IS ALSO THE ORDERING UNIT, and his own HOUSE ON FIRE says so -
+ * Benriach 86 then Benriach Curiositas 92, Bunnahabhain 12 then its
+ * Toiteach, Classic Laddie then Port Charlotte. The PAIRS climb and the
+ * clean pour leads inside each, so smoke sits mid-run on purpose: it is
+ * the one place the smoke-last rule gives way, because splitting the pair
+ * destroys the only comparison the flight exists to make.
+ *
+ * BOTH ORDERINGS ARE L.pourOrder - once inside each pair, once over the
+ * pairs by their opening pour. One door, asked twice.
+ */
+L.pairPick = function (pool, hold, varyId, size, catalog) {
+  const by = {};
+  const pairOn = (hold || []).filter(h => {
+    const d = L.dimOf(h.dim);
+    return d && !d.numeric && !d.flag;
+  })[0];
+  const key = p => (pairOn ? String(L.dimValue(pairOn.dim, p)) : 'all');
+  (pool || []).forEach(p => { (by[key(p)] = by[key(p)] || []).push(p); });
+  const sets = [];
+  Object.keys(by).forEach(k => {
+    const sides = {};
+    by[k].forEach(p => {
+      const v = String(L.dimValue(varyId, p));
+      if (!sides[v]) sides[v] = p;
+    });
+    const got = Object.keys(sides).map(v => sides[v]);
+    /* A HALF PAIR IS NOT A PAIR. A lone bottle whose opposite is not open
+       teaches nothing and takes a seat the next pair needs. */
+    if (got.length >= 2) sets.push(got.slice(0, 2));
+  });
+  sets.forEach(set => {
+    set.sorted = L.pourOrder(set.map(p => ({ k: p.k })), catalog);
+    const lead = catalog[set.sorted[0].k];
+    set.at = (lead && lead.proof) || 0;
+  });
+  sets.sort((x, y) => x.at - y.at);
+  const out = [];
+  sets.forEach(set => {
+    if (out.length >= size) return;
+    set.sorted.forEach(x => out.push(catalog[x.k]));
+  });
+  return out;
+};
+
+/* BUILD WHAT THE TWO PICKERS DESCRIBE.
+ *
+ * The same shape L.buildFlight returns, so renderProposal draws it without
+ * knowing which designer made it - and the pours come back through
+ * L.pourOrder like every other flight, so the ladder and the smoke rule
+ * apply here too.
+ *
+ * A HELD NUMBER IS A BAND. BZ chose that over dead-equal: four of his forty
+ * hold proof exactly and five hold it inside a few points, and a band finds
+ * six pours far more often. The spread is stated on the card rather than
+ * left for the room to work out.
+ */
+L.designFlight = function (spec, catalog, bottles, opts) {
+  const s = spec || {}, o = opts || {};
+  const size = o.size || L.CORE_TARGET;
+  const open = L.openKeys(bottles);
+  let pool = Object.keys(catalog || {}).filter(k => open[k])
+    .map(k => catalog[k]).filter(p => p && L.isWhisky(p));
+
+  const hold = (s.hold || []).filter(h => h && h.dim);
+  hold.forEach(h => {
+    const d = L.dimOf(h.dim);
+    if (!d) return;
+    pool = pool.filter(p => {
+      const raw = d.get(p);
+      if (raw === null || raw === undefined || raw === '') return false;
+      if (h.value === null || h.value === undefined) return true;
+      if (d.numeric) {
+        return Math.abs(Number(raw) - Number(h.value)) <= (d.band || 0);
+      }
+      return String(raw).toLowerCase() === String(h.value).toLowerCase();
+    });
+  });
+
+  const vd = L.dimOf(s.vary);
+  if (!vd) {
+    return { ok: false, why: 'Pick one thing for the flight to vary.' };
+  }
+  pool = pool.filter(p => L.dimValue(s.vary, p) !== null);
+  if (pool.length < 4) {
+    return { ok: false,
+      why: 'Only ' + pool.length + ' open bottle(s) fit that. Loosen what is '
+        + 'held, or open a few more.' };
+  }
+
+  const valueOf = p => L.dimValue(s.vary, p);
+  let picked;
+  if (s.pairs) {
+    picked = L.pairPick(pool, hold, s.vary, size, catalog);
+    if (picked.length < 4) {
+      return { ok: false,
+        why: 'Not enough matched pairs are open for that. Try holding '
+          + 'something else, or turn pairs off.' };
+    }
+  } else {
+    picked = L.pickSpread(s.vary, pool, size, o.used, valueOf);
+    if (picked.length < 4) {
+      return { ok: false, why: 'That does not reach four pours.' };
+    }
+  }
+
+  /* A PAIRED RUN IS ALREADY IN ITS ORDER - the pairs were sorted as units
+     above. Sorting the flat list again would split every pair, which is
+     the one thing a paired flight must not do. */
+  const sorted = s.pairs
+    ? L.relabel(picked.map(p => ({ k: p.k })))
+    : L.pourOrder(picked.map(p => ({ k: p.k })), catalog);
+  const pours = [];
+  sorted.forEach(x => {
+    const p = catalog[x.k];
+    const room = L.flightRoom(pours.map(y => catalog[y.k]), L.POUR_OZ,
+      p && p.proof);
+    if (room.room < 1) return;
+    pours.push(x);
+  });
+  const full = pours.map(x => catalog[x.k]);
+  return {
+    ok: true,
+    variable: s.vary,
+    hold: hold, vary: s.vary, pairs: !!s.pairs,
+    premise: s.premise || L.designPremise(hold, s.vary, { pairs: s.pairs }),
+    holds: hold.map(h => h.dim),
+    held: hold.map(h => h.dim + '=' + h.value).join(' | ') || 'all',
+    pours: pours,
+    score: L.flightScore(s.vary, full),
+    load: L.flightDrinks(full, L.POUR_OZ),
+    trimmed: sorted.length - pours.length,
+    bench: []
+  };
+};
+
 L.buildFlight = function (varId, premise, catalog, bottles, opts) {
   const o = opts || {};
   const cands = L.flightCandidates(varId, catalog, bottles, opts);
@@ -14926,33 +15277,40 @@ L.movePour = function (pours, idx, delta) {
 };
 
 // Order the pours by ascending proof -- the house rule, applied in one call.
-/* THE ORDER A FLIGHT IS POURED IN: ROUND THE RING, LIGHT TO LOUD.
+/* THE ORDER A FLIGHT IS POURED IN: A PROOF LADDER, AND SMOKE LAST.
  *
- * BZ, 2026-10-18, on an introduction across all types: "type varied, not
- * in any order - remember the circle we built? where would a beginner
- * start? irish", and then "i might go irish to scotch".
+ * BZ, 2026-10-18: "as a default, built flights must be a proof ladder.
+ * Only smoke can break that rule." Measured against his own forty, that is
+ * what they are - 27 of 40 climb, and the tags say PROOF ASCENDS outright.
  *
- * THAT CIRCLE IS ALREADY HERE. L.FLAVOR_ORDER is his own spectrum, set on
- * 2026-09-20: Irish 1, American single malt 2, bourbon and Tennessee and
- * wheat 3, rye 4, Canadian 5, Scotch 6, with smoke hanging off the ring at
- * 7. L.flavorPlace reads it. So a run goes Irish to Scotch and ends on
- * smoke, which is the beginner walk he described.
+ * THREE KEYS, AND THE THIRD IS THE ONE THAT ANSWERS HIS INTRODUCTION.
+ *   1. peated pours last. "We can't put smoke on the palate if non-smoke
+ *      follows", and it is the ONLY thing allowed to break the ladder.
+ *   2. proof ascending - the ladder itself.
+ *   3. the ring, L.FLAVOR_ORDER, his own spectrum from 2026-09-20: Irish 1,
+ *      American single malt 2, bourbon 3, rye 4, Canadian 5, Scotch 6.
  *
- * IT ALSO SETTLES THE SMOKE RULE, which this function held on its own for
- * one build: "we can't put smoke on the palate if non-smoke follows" is
- * the ring saying 7 is past 6. One key, his, rather than two.
- *
- * PROOF IS ONLY THE SECOND KEY, so within one place the old order stands,
- * weakest first - and the proof ladder is unaffected, because it holds the
- * distillery still and every pour sits in the same place on the ring.
+ * KEY 3 IS NOT A FOOTNOTE. When the flight HOLDS proof - nine of his forty
+ * do - every pour ties on key 2, so the ring is what orders the run, and an
+ * 80 proof introduction across the kinds goes Irish to Scotch, which is
+ * where he said a beginner starts. v2.8.79 had the ring FIRST, which
+ * quietly threw the ladder away on every flight that climbs.
  */
 L.pourOrder = function (pours, catalog) {
   const cat = catalog || {};
   const out = (pours || []).slice().sort((a, b) => {
     const pa = cat[a.k], pb = cat[b.k];
-    const fa = L.flavorPlace(pa), fb = L.flavorPlace(pb);
-    if (fa !== fb) return fa - fb;
-    return ((pa && pa.proof) || 0) - ((pb && pb.proof) || 0);
+    /* 1. SMOKE LAST, the one thing allowed to break the ladder. */
+    const sa = L.peatLevel(pa) >= 2 ? 1 : 0;
+    const sb = L.peatLevel(pb) >= 2 ? 1 : 0;
+    if (sa !== sb) return sa - sb;
+    /* 2. THE LADDER. */
+    const na = (pa && pa.proof) || 0, nb = (pb && pb.proof) || 0;
+    if (na !== nb) return na - nb;
+    /* 3. THE RING, which is what actually orders a flight whose proof is
+       HELD - every pour ties above, so this decides, and the run goes
+       Irish to Scotch. */
+    return L.flavorPlace(pa) - L.flavorPlace(pb);
   });
   return L.relabel(out);
 };
@@ -27705,11 +28063,22 @@ L.woodsOf = function (p) {
 };
 
 /* Peat, as a dimension rather than a guess. */
+/* A HOUSE THAT BOTTLES BOTH IS NOT A PEAT HOUSE (2026-10-18). The comment
+   below already said so - "Bunnahabhain is mostly unpeated" - while the
+   list said the opposite, and the list won: Bruichladdich's CLASSIC LADDIE,
+   which is the unpeated one and the whole point of the range, came back
+   level 3, and Bunnahabhain 12 came back level 2 - the same as its own
+   Toiteach, so the app could not tell the pair apart.
+
+   BZ's HOUSE ON FIRE is three houses each poured smoked and unsmoked, and
+   every one of its six pours read as smoked. Both houses name their peated
+   lines - Port Charlotte, Octomore, Toiteach, Moine - so the NAME rule
+   catches those and the house no longer has to guess for the rest. */
 L.PEAT_HOUSES = {
   heavy:  ['ardbeg', 'laphroaig', 'lagavulin', 'octomore', 'port charlotte',
-           'kilchoman', 'bruichladdich', 'caol ila'],
+           'kilchoman', 'caol ila'],
   medium: ['talisker', 'bowmore', 'ledaig', 'highland park', 'springbank',
-           'benromach', 'bunnahabhain', 'longrow', 'ardmore'],
+           'benromach', 'longrow', 'ardmore'],
   light:  ['jura', 'oban', 'clynelish', 'glen scotia', 'kilkerran',
            'connemara']
 };
@@ -27717,7 +28086,7 @@ L.PEAT_HOUSES = {
 // Names that say a bottle IS peated whatever its house usually makes, and
 // names that say it is not. Bunnahabhain is mostly unpeated; its Stiuireadair
 // is not the same whisky as its Moine.
-L.PEAT_WORDS = /(peat|smok|moine|mòine|charred oak smoke|islay cask)/i;
+L.PEAT_WORDS = /(peat|smok|moine|mòine|toiteach|charred oak smoke|islay cask)/i;
 L.UNPEAT_WORDS = /(unpeat|no peat)/i;
 
 /* PHENOL PARTS PER MILLION, the only real measure of peat, published by the
@@ -55985,6 +56354,172 @@ function showPooled(pool, gain, who) {
   });
 }
 
+
+/* THE TWO PICKERS: what is HELD, and what VARIES (BZ, 2026-10-18).
+ * Returns a handle the sheet reads when Design it is pressed, so the
+ * drawing lives here and the sheet stays at its size.
+ */
+/* A FLAVOUR FLIGHT IS CAST ON THIS DEVICE - the flavour is held still and
+ * everything else varies - so there is no service call and it cannot fail
+ * on a network. Its own function because flightBuilder is at its ceiling
+ * and the allowance does not go up (rule 30f).
+ *
+ * Answers whether it took the press, so the caller stops. */
+function castFlavour(word, fromCat, fromBot, premise, status) {
+  if (!word) return false;
+  const made = L.flavourFlight(word, fromCat, fromBot,
+    premise ? { premise: premise } : {});
+  if (!made) {
+    status.className = 'looknote warn2';
+    status.textContent = 'Not enough open bottles carry ' + word
+      + ' to pour six that differ.';
+    return true;
+  }
+  closeModal();
+  showFlight(made);
+  return true;
+}
+
+/* ONE DIMENSION'S HOLD CHIP, and the value picker that opens under it when
+ * there is more than one value worth holding. Its own function because
+ * flightPickers crossed the 100-line ceiling and a screen lays things out
+ * rather than growing (rule 30).
+ *
+ * THE APP SUGGESTS, HE OVERRIDES - his choice, 2026-10-18 - and an override
+ * without the numbers beside it is a guess, so every value carries how many
+ * bottles sit inside its band.
+ */
+function holdChip(box, d, held, redraw) {
+  const on = Object.prototype.hasOwnProperty.call(held, d.id);
+  const c = el('button', 'chip' + (on ? ' on' : ''),
+    d.label + (on ? ' \u00b7 ' + held[d.id] : ''));
+  c.type = 'button';
+  c.style.margin = '0 4px 4px 0';
+  c.title = d.hint || '';
+  c.onclick = () => {
+    if (on) {
+      delete held[d.id];
+    } else {
+      held[d.id] = d.options.length ? d.options[0].value : null;
+    }
+    redraw();
+  };
+  box.appendChild(c);
+  if (!on || d.options.length < 2) return;
+  const sel = document.createElement('select');
+  sel.className = 'field';
+  sel.style.margin = '0 0 4px 0';
+  d.options.forEach(o => {
+    const op = document.createElement('option');
+    op.value = String(o.value);
+    op.textContent = o.value + '  \u2014  ' + o.n + ' bottles'
+      + (d.numeric && d.band ? '  (\u00b1' + d.band + ')' : '');
+    sel.appendChild(op);
+  });
+  sel.value = String(held[d.id]);
+  sel.onchange = () => {
+    held[d.id] = d.numeric ? Number(sel.value) : sel.value;
+    redraw();
+  };
+  box.appendChild(sel);
+}
+
+function flightPickers(form, fromCat, fromBot) {
+  const dims = L.designOptions(fromCat, fromBot);
+  const held = {};        // dim id -> chosen value
+  let varyId = null;
+
+  const holdBox = el('div');
+  const varyBox = el('div');
+  const bandNote = el('div', 'src');
+  bandNote.style.marginTop = '4px';
+
+  const draw = () => {
+    holdBox.innerHTML = '';
+    varyBox.innerHTML = '';
+    dims.filter(d => d.canHold).forEach(d =>
+      holdChip(holdBox, d, held, () => { if (varyId === d.id) varyId = null;
+        draw(); }));
+    dims.filter(d => (d.canVary || d.canPair)
+                && !Object.prototype.hasOwnProperty.call(held, d.id))
+      .forEach(d => {
+        const c = el('button', 'chip' + (varyId === d.id ? ' on' : ''),
+          d.label + ' · ' + d.values);
+        c.type = 'button';
+        c.style.margin = '0 4px 4px 0';
+        c.title = d.canVary ? d.values + ' different values open'
+          : 'only two values, so this varies in matched pairs';
+        c.onclick = () => { varyId = (varyId === d.id ? null : d.id); draw(); };
+        varyBox.appendChild(c);
+      });
+    const vd = dims.filter(d => d.id === varyId)[0];
+    pairWrap.hidden = !(vd && vd.canPair);
+    if (vd && vd.canPair) pairs.checked = true;
+    bandNote.textContent = varyId
+      ? L.designPremise(Object.keys(held).map(k =>
+          ({ dim: k, value: held[k] })), varyId,
+          { pairs: pairs.checked })
+      : 'Pick one thing to vary.';
+  };
+
+  const hl = el('label', null, 'Held still');
+  hl.appendChild(holdBox);
+  form.appendChild(hl);
+  const vl2 = el('label', null, 'What varies');
+  vl2.appendChild(varyBox);
+  form.appendChild(vl2);
+
+  /* MATCHED PAIRS, his own device in nine of the forty: one thing poured
+     twice, changing exactly one variable. Shown only where it is the only
+     way the dimension CAN vary - smoke is peated or it is not, so House
+     On Fire needs the held thing to supply the third axis. */
+  const pairWrap = el('div');
+  const pairs = document.createElement('input');
+  pairs.type = 'checkbox';
+  pairs.id = 'flightPairs';
+  const plab = el('label', null, '');
+  plab.style.display = 'flex';
+  plab.style.alignItems = 'center';
+  plab.style.gap = '8px';
+  plab.appendChild(pairs);
+  plab.appendChild(el('span', null, 'Pour in matched pairs'));
+  pairs.onchange = draw;
+  pairWrap.appendChild(plab);
+  pairWrap.hidden = true;
+  form.appendChild(pairWrap);
+  form.appendChild(bandNote);
+
+  /* THE FLAVOUR FLIGHTS SURVIVE AS THEIR OWN CONTROL. In the new language
+     they are a hold - hold a flavour still, vary everything else - but
+     they are cast by L.flavourFlight on this device rather than through
+     the designer, so they keep their own picker rather than being
+     quietly dropped. */
+  const flav = L.flavourOptions(S.catalog, S.bottles);
+  let flavWord = '';
+  if (flav.length) {
+    const fsel = document.createElement('select');
+    fsel.className = 'field';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = 'No — use the pickers above';
+    fsel.appendChild(none);
+    flav.slice(0, 8).forEach(o2 => {
+      const o = document.createElement('option');
+      o.value = o2.word;
+      o.textContent = o2.word.charAt(0).toUpperCase() + o2.word.slice(1)
+        + ' — ' + o2.n + ' bottles across ' + o2.houses + ' houses';
+      fsel.appendChild(o);
+    });
+    fsel.onchange = () => { flavWord = fsel.value; };
+    const fl = el('label', null, 'Or hold a flavor still instead');
+    fl.appendChild(fsel);
+    form.appendChild(fl);
+  }
+
+  draw();
+  return { held: held, varyOf: () => varyId, pairsOn: () => pairs.checked,
+           flavOf: () => flavWord };
+}
+
 function flightBuilder(preset, pool) {
   // Named for the tile that opens it: design, not build.
   openModal('Design a flight', m => {
@@ -55996,35 +56531,26 @@ function flightBuilder(preset, pool) {
     const fromCat = (pool && pool.catalog) || S.catalog;
     const fromBot = (pool && pool.bottles) || S.bottles;
     m.appendChild(el('div', 'sub',
-      'Pick what the flight changes. Everything else is held as still as '
-      + 'your shelf allows, and only open bottles are used.'));
+      'Say what is HELD and what VARIES. Everything here is read off your '
+      + 'open bottles, so a dimension only appears when it can fill a '
+      + 'flight.'));
 
     const form = el('div', 'form');
-    const varSel = document.createElement('select');
-    varSel.className = 'field';
-    L.VARIABLES.forEach(v => {
-      const o = document.createElement('option');
-      o.value = v.id; o.textContent = v.label + ' \u2014 ' + v.hint;
-      varSel.appendChild(o);
-    });
-    /* AND THE FLAVORS. BZ: no flavor in this list. */
-    const flav = L.flavourOptions(S.catalog, S.bottles);
-    if (flav.length) {
-      const g = document.createElement('optgroup');
-      g.label = 'Or hold a flavor still, and vary everything else';
-      flav.slice(0, 8).forEach(o2 => {
-        const o = document.createElement('option');
-        o.value = 'flavor:' + o2.word;
-        o.textContent = o2.word.charAt(0).toUpperCase() + o2.word.slice(1)
-          + ' \u2014 ' + o2.n + ' bottles across ' + o2.houses + ' houses';
-        g.appendChild(o);
-      });
-      varSel.appendChild(g);
-    }
-    if (chosen) varSel.value = chosen;
-    const vl = el('label', null, 'The variable');
-    vl.appendChild(varSel);
-    form.appendChild(vl);
+
+    /* TWO PICKERS, NOT ONE DROPDOWN (BZ, 2026-10-18, after compiling his own
+       forty flights: "What's held and what varies?"). Every one of the forty
+       is a held set and one thing moving, and the old list named only the
+       mover - so "hold proof, vary the kind", which is nine of the forty,
+       could not be asked for at all.
+
+       ONLY WHAT THE SHELF CAN FILL IS OFFERED. He chose that over greying
+       things out: a dimension that cannot build six is not a choice. The
+       count travels with each one so the cost of a pick is visible before
+       it is made. */
+    /* THE PICKERS ARE THEIR OWN FUNCTION (rule 30). They are 110 lines of
+       DOM and flightBuilder was already at its ceiling; the allowance does
+       not go up. `pick` is the handle the Design it button reads. */
+    const pick = flightPickers(form, fromCat, fromBot);
 
     const prem = document.createElement('textarea');
     prem.className = 'field'; prem.rows = 2;
@@ -56047,28 +56573,32 @@ function flightBuilder(preset, pool) {
     const ask = el('button', 'btn wide btn-gold', 'Design it');
     ask.style.marginTop = '10px';
     ask.onclick = async () => {
-      const premise = prem.value.trim();
-      /* A flavor flight is cast on this device (flavor held still, everything
-         else varies): no service call, so it cannot fail on a network. */
-      if (varSel.value.indexOf('flavor:') === 0) {
-        const word = varSel.value.slice(7);
-        const made = L.flavourFlight(word, fromCat, fromBot,
-          premise ? { premise: premise } : {});
-        if (!made) {
-          status.className = 'looknote warn2';
-          status.textContent = 'Not enough open bottles carry ' + word
-            + ' to pour six that differ.';
-          return;
-        }
-        closeModal();
-        showFlight(made);
+      /* WHAT HE TYPED WINS, which is what he chose the premise field to
+         be: the pickers say what the flight IS, and the premise is the
+         escape for anything they cannot say. Blank, and the design
+         writes its own. */
+      const typed = prem.value.trim();
+      const hold = Object.keys(pick.held)
+        .map(k => ({ dim: k, value: pick.held[k] }));
+      const varyId = pick.varyOf();
+      const spec = { hold: hold, vary: varyId, pairs: pick.pairsOn() };
+      const premise = typed || (varyId
+        ? L.designPremise(hold, varyId, { pairs: pick.pairsOn() }) : '');
+      /* A flavour flight is cast on this device (flavour held still,
+         everything else varies): no service call, so it cannot fail on a
+         network. */
+      if (castFlavour(pick.flavOf(), fromCat, fromBot, premise, status)) {
         return;
       }
-      const vLabel = (L.VARIABLES.find(v => v.id === varSel.value) || {}).label
-        || varSel.value;
+      if (!varyId) {
+        status.className = 'looknote warn2';
+        status.textContent = 'Pick one thing for the flight to vary.';
+        return;
+      }
+      const vLabel = (L.dimOf(varyId) || {}).label || varyId;
       if (!S.lookupUrl) {
-        renderProposal(out, L.buildFlight(varSel.value, premise,
-          fromCat, fromBot), varSel.value, premise, pool);
+        renderProposal(out, L.designFlight(spec, fromCat, fromBot),
+          varyId, premise, pool);
         return;
       }
       ask.disabled = true;
@@ -56109,8 +56639,8 @@ function flightBuilder(preset, pool) {
         // Not "falling back to your shelf" — the shelf was always the
         // source, and saying that suggested there had been another one.
         status.textContent = sayError(e) + ' \u2014 designed it here instead.';
-        renderProposal(out, L.buildFlight(varSel.value, premise,
-          fromCat, fromBot), varSel.value, premise, pool);
+        renderProposal(out, L.designFlight(spec, fromCat, fromBot),
+          varyId, premise, pool);
       } finally {
         stopSaying();
         working();
@@ -60228,7 +60758,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.79</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.80</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

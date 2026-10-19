@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1049 |
-| tables | 250 |
-| carrying a stated purpose | 842 |
+| functions | 1057 |
+| tables | 251 |
+| carrying a stated purpose | 848 |
 
 ## Tables
 
@@ -59,6 +59,7 @@ QUESTION, not the name you were going to use.
 - **`L.DESCRIBES_NOT_NAMES`** — WORDS THAT DESCRIBE RATHER THAN NAME, which no other list of this app's
 - **`L.DETAIL`** — States fills the window
 - **`L.DIMENSIONS`** — _no comment above it_
+- **`L.DIMS`** — WHAT A FLIGHT HOLDS AND WHAT IT VARIES (BZ, 2026-10-18).
 - **`L.EXITS`** — leaves the bottle in existence elsewhere
 - **`L.EXPORT_COLS`** — ===================================================================
 - **`L.FAMILY_LABEL`** — `vegetable` shown as `Green` was the entry here until the two official
@@ -164,7 +165,7 @@ QUESTION, not the name you were going to use.
 - **`L.PALATE_LAYER`** — THE COARSE LAYER, in the words this app already shows a person.
 - **`L.PALATE_MEMO`** — READ ONCE PER SET OF NOTES
 - **`L.PEAT_EXTREME`** — Bottlings past heavy
-- **`L.PEAT_HOUSES`** — Peat, as a dimension rather than a guess.
+- **`L.PEAT_HOUSES`** — BZ's HOUSE ON FIRE is three houses each poured smoked and unsmoked, and
 - **`L.PEAT_LABELS`** — The full span, bourbon to Octomore
 - **`L.PEAT_PPM_BANDS`** — PHENOL PARTS PER MILLION, the only real measure of peat, published by the
 - **`L.PHRASES`** — on whitespace gives two words, neither of which expands.
@@ -361,7 +362,7 @@ QUESTION, not the name you were going to use.
 - **`L.buddyLink`** — _no comment above it_
 - **`L.buddyPlaces`** — A pour at somebody's house, where the somebody is on the app.
 - **`L.buddyRows`** — WHO IS IN THE ROOM, BOTH DIRECTIONS AT ONCE
-- **`L.buildFlight`** — The whole proposal, ready to render or to turn into a flight.
+- **`L.buildFlight`** — _no comment above it_
 - **`L.bulkRowSay`** — WHAT A ROW SAYS UNDER ITS NAME
 - **`L.bulkSaid`** — AND WHAT THE MARKING DID, once it is done
 - **`L.bulkSay`** — WHAT THE SHEET SAYS IT IS HOLDING
@@ -422,10 +423,16 @@ QUESTION, not the name you were going to use.
 - **`L.deaccent`** — ACCENTS OFF BEFORE ANYTHING IS MATCHED
 - **`L.deadForwards`** — REMOVING IT IS SAFE BECAUSE IT POINTS AT NOTHING
 - **`L.describeCorrection`** — A correction in words
+- **`L.designFlight`** — BUILD WHAT THE TWO PICKERS DESCRIBE.
+- **`L.designOptions`** — _no comment above it_
+- **`L.designPremise`** — THE PREMISE, WRITTEN FROM THE DESIGN when he leaves it blank
 - **`L.detailAt`** — _no comment above it_
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
+- **`L.dimOf`** — ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
+- **`L.dimSpread`** — WHAT IS WORTH HOLDING, AND WHAT IS WORTH VARYING, on THIS shelf.
+- **`L.dimValue`** — _no comment above it_
 - **`L.directoryEntry`** — what everyone can see.
 - **`L.dirtyEntries`** — WHAT THIS DEVICE HAS THAT THE ACCOUNT DOES NOT, entry by entry
 - **`L.dirtyRecords`** — NO RECORD OF A PUSH MEANS NOTHING IS KNOWN, not that nothing changed
@@ -661,6 +668,7 @@ QUESTION, not the name you were going to use.
 - **`L.inView`** — _no comment above it_
 - **`L.inviterFromUrl`** — WHO AN INVITE LINK IS FROM, as well as which account
 - **`L.inviteText`** — this, and needs to know what it does not do as much as what it does.
+- **`L.isBonded`** — BOTTLED IN BOND, from the flag or the name
 - **`L.isCaskStrength`** — not bottle at cask strength beside his Bunnahabhain 21 Cask Strength.
 - **`L.isCleanup`** — A correction to the record rather than an end to a bottle.
 - **`L.isDrain`** — _no comment above it_
@@ -871,6 +879,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownsIt`** — DO YOU OWN IT, answered once for the shop card, offers and bar
 - **`L.paidFor`** — What you paid, averaged when bottles cost different amounts.
 - **`L.pairCounts`** — THE TWO NUMBERS A BUDDY TILE SHOWS
+- **`L.pairPick`** — MATCHED PAIRS
 - **`L.pairStand`** — _no comment above it_
 - **`L.palateIndex`** — _no comment above it_
 - **`L.palateLabels`** — Every label a set of terms carries, in the order the layer declares them.
@@ -899,7 +908,7 @@ QUESTION, not the name you were going to use.
 - **`L.pickLine`** — _no comment above it_
 - **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
 - **`L.pickShortlist`** — WHO IS WORTH SPENDING A LOOKUP ON (BZ, 2026-10-16
-- **`L.pickSpread`** — `used` is the set of keys the last run poured, and it only decides ties
+- **`L.pickSpread`** — `valueOf` IS THE DESIGNER'S WAY IN (2026-10-18)
 - **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time (BZ
 - **`L.pinRadius`** — _no comment above it_
 - **`L.pinsInView`** — against Speyside, not bottles off screen.

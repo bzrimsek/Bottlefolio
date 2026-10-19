@@ -743,15 +743,13 @@ const good = { title: 'A FLIGHT', variable: 'proof', premise: 'Testing.',
 const v = L.verifyProposal(good, aiCat, aiBot);
 eq('a good proposal verifies', v.ok, true);
 eq('all three pours resolve', v.pours.length, 3);
-/* THE APP SORTS, NOT THE MODEL, and since 2026-10-18 it sorts round the
-   ring rather than by proof. These three are bourbon (place 3), rye (4)
-   and scotch (6), so the run is 100, 110, 92 - the strongest in the
-   middle, which is right, because this orders by what the whisky IS and
-   proof only settles a tie. BZ: "i might go irish to scotch". */
-eq('pours come back in ring order, lightest kind first',
-  v.pours.map(x => aiCat[x.k].proof), [100, 110, 92]);
-eq('which is bourbon, then rye, then scotch',
-  v.pours.map(x => aiCat[x.k].sub).join(','), 'bourbon,rye,scotch');
+/* THE APP SORTS, NOT THE MODEL: a proof ladder, whatever order came back.
+   None of these three is peated, so nothing may leave the ladder and the
+   run is 92, 100, 110. An earlier build put the ring first and this said
+   100, 110, 92 for a day - BZ: "as a default, built flights must be a
+   proof ladder. Only smoke can break that rule." */
+eq('pours come back in proof order',
+  v.pours.map(x => aiCat[x.k].proof), [92, 100, 110]);
 eq('per-pour notes survive',
   v.pours.find(x => x.k === 'a').note, 'the control');
 eq('the reasoning survives', v.why, ['Because.']);
@@ -19659,13 +19657,16 @@ sec('\u00a7295 a mash bill fixed by law, and a ppm that is measured');
   eq('every band lands on a real label',
     L.PEAT_PPM_BANDS.every(b => L.PEAT_LABELS[b.level] !== undefined), true);
 
-  /* A MEASURED PPM BEATS THE GUESS (rule 30d). Bruichladdich is the case:
-     the same house makes Octomore past 300ppm and the unpeated Classic
-     Laddie at nought, and the name-based guess calls the Laddie HEAVY
-     because the house is. */
-  eq('the guess gets the Laddie wrong',
-    L.peatLevel({ name: 'The Classic Laddie', dist: 'Bruichladdich' }), 3);
-  eq('and a measured zero corrects it',
+  /* A MEASURED PPM BEATS THE GUESS (rule 30d), and since 2026-10-18 the
+     guess no longer needs rescuing here. Bruichladdich bottles Octomore
+     past 300ppm AND the unpeated Classic Laddie at nought, so the house
+     is not evidence either way - it was in PEAT_HOUSES.heavy and the
+     Laddie came back HEAVY, which this section asserted as a known wrong
+     answer. A house that bottles both is out of the list now; the peated
+     lines name themselves, which is what Octomore below proves. */
+  eq('the guess gets the unpeated Laddie right',
+    L.peatLevel({ name: 'The Classic Laddie', dist: 'Bruichladdich' }), 0);
+  eq('a measured zero agrees with it',
     L.peatLevel({ name: 'The Classic Laddie', dist: 'Bruichladdich', ppm: 0 }),
     0);
   eq('the guess still answers without one',
@@ -30054,26 +30055,186 @@ sec('§482 a shopper may name a bottle more briefly than its label');
   eq('an empty name makes no keys', L.giftKeys('').length, 0);
 }
 
-sec('§486 a flight is poured round the ring, Irish to Scotch');
+sec('§487 what a flight holds and what it varies');
 {
-  /* BZ, 2026-10-18, on an introduction across all types: "type varied, not
-     in any order - remember the circle we built? where would a beginner
-     start? irish", and then "i might go irish to scotch".
+  /* BZ, 2026-10-18, after compiling his own forty flights: "we need to
+     design a better flight designer. What's held and what varies?" Every
+     one of the forty is exactly that - a held set and one thing moving -
+     and the old picker named only the mover, so "hold proof, vary the
+     kind" could not be asked for at all. That is nine of his forty, and
+     why asking for an 80 proof introduction produced a proof ladder. */
+  const cat = {
+    a: { k: 'a', name: 'An Irish 80', proof: 80, sub: 'irish', dist: 'A' },
+    b: { k: 'b', name: 'A Bourbon 80', proof: 80, sub: 'bourbon', dist: 'B' },
+    c: { k: 'c', name: 'A Rye 81', proof: 81, sub: 'rye', dist: 'C' },
+    d: { k: 'd', name: 'A Scotch 80', proof: 80, sub: 'scotch', dist: 'D' },
+    /* ALL AT 80 BUT THE RYE, so the ladder ties and the ring is what
+       orders the run - which is the case key 3 exists for. */
+    e: { k: 'e', name: 'A Canadian 80', proof: 80, sub: 'canadian',
+         dist: 'E' },
+    f: { k: 'f', name: 'A Wheat 80', proof: 80, sub: 'wheat', dist: 'F' },
+    g: { k: 'g', name: 'A Big Bourbon', proof: 120, sub: 'bourbon', dist: 'G' },
+    h: { k: 'h', name: 'Heaven Hill Bottled In Bond', proof: 100,
+         sub: 'bourbon', dist: 'H' }
+  };
+  const bots = Object.keys(cat).map(k => ({ id: 'x' + k, k: k, status: 'open' }));
 
-     THE CIRCLE IS HIS OWN, set 2026-09-20 and already in the engine as
-     L.FLAVOR_ORDER / L.flavorPlace: Irish 1, American single malt 2,
-     bourbon and Tennessee and wheat 3, rye 4, Canadian 5, Scotch 6, with
-     smoke hanging off the ring at 7. Read it, do not re-derive it.
+  /* ONE DOOR READS A DIMENSION, so the picker, the builder and the card
+     cannot disagree about what "the kind" means. */
+  eq('a dimension is read off a bottle', L.dimValue('kind', cat.a), 'irish');
+  eq('a number comes back a number', L.dimValue('proof', cat.a), 80);
+  /* THE BAND IS A TOLERANCE, not a bucket: 81 rounds to 82 at a step of
+     two, and what matters is that L.dimSpread counts by the same rule the
+     builder filters by - within the band of a candidate, not rounded into
+     a bin, which put 80 and 81 on opposite sides of a 2 point band. */
+  eq('a band rounds to its step', L.dimValue('proof', cat.c, true), 82);
+  eq('a dimension nothing answers is null',
+    L.dimValue('region', cat.a), null);
+  eq('and so is a dimension that does not exist',
+    L.dimValue('nonsense', cat.a), null);
 
-     EVERY PRODUCT HERE CARRIES A `sub`, which the first version of this
-     section did not - without one every pour lands on the ring's default
-     and the whole thing degrades to a proof sort that cannot tell the ring
-     from nothing. */
+  /* BOTTLED IN BOND, from the flag OR the name - the shelf says it both
+     ways and a fact stated in the name is still the fact. */
+  eq('the flag says so', L.isBonded({ bonded: true }), true);
+  eq('so does the name', L.isBonded(cat.h), true);
+  eq('and nothing else does', L.isBonded(cat.a), false);
+
+  /* WHAT THE SHELF CAN DO. BZ chose "only when they can fill six", so a
+     dimension that cannot build a flight is not offered at all. */
+  const prods = Object.keys(cat).map(k => cat[k]);
+  const kind = L.dimSpread('kind', prods);
+  eq('six kinds are open', kind.values, 6);
+  eq('so the kind can vary', kind.canVary, true);
+  const region = L.dimSpread('region', prods);
+  eq('no region is known, so region cannot vary', region.canVary, false);
+  eq('nor can it be held', region.canHold, false);
+
+  /* A BINARY VARIES IN PAIRS, never alone: smoke is peated or it is not,
+     and demanding three distinct values would make House On Fire - three
+     distilleries, each poured smoked and unsmoked - impossible to design. */
+  const smoke = L.dimSpread('smoke', prods);
+  eq('smoke has two sides', smoke.values <= 2, true);
+  eq('so it cannot vary on its own', smoke.canVary, false);
+
+  /* THE SUGGESTION CARRIES ITS COUNT. He chose "it suggests, you can
+     override", and an override without the numbers beside it is a guess. */
+  const proof = L.dimSpread('proof', prods);
+  eq('the commonest proof leads', proof.options[0].value, 80);
+  eq('with how many sit under it', proof.options[0].n >= 4, true);
+
+  /* AND THE THING HE ASKED FOR AND COULD NOT GET: hold proof, vary kind. */
+  const made = L.designFlight(
+    { hold: [{ dim: 'proof', value: 80 }], vary: 'kind' }, cat, bots);
+  eq('it builds', made.ok, true);
+  eq('the big bourbon is outside the band',
+    made.pours.some(p => p.k === 'g'), false);
+  eq('and so is the bonded 100',
+    made.pours.some(p => p.k === 'h'), false);
+  eq('every pour is inside two points of 80',
+    made.pours.every(p => Math.abs(cat[p.k].proof - 80) <= 2), true);
+  /* PROOF IS HELD, so the ladder ties and the ring orders the run. */
+  eq('and a beginner starts on the Irish', made.pours[0].k, 'a');
+  eq('it writes its own premise',
+    /within 2 points of 80/.test(made.premise), true);
+
+  /* HOLDING SOMETHING THE SHELF CANNOT FILL SAYS SO, rather than pouring
+     a flight that answers nothing. */
+  const no = L.designFlight(
+    { hold: [{ dim: 'proof', value: 150 }], vary: 'kind' }, cat, bots);
+  eq('an impossible hold fails', no.ok, false);
+
+  /* THE LIST THE PICKER DRAWS, and the sentence it writes underneath. */
+  const opts = L.designOptions(cat, bots);
+  eq('every dimension is offered to the picker',
+    opts.length, L.DIMS.length);
+  eq('each carries its own label',
+    opts.every(o => !!o.label), true);
+  eq('the kind can be varied', opts.filter(o => o.id === 'kind')[0].canVary,
+    true);
+  eq('region cannot, on this shelf',
+    opts.filter(o => o.id === 'region')[0].canVary, false);
+
+  eq('a dimension is found by its id', L.dimOf('proof').label, 'Proof');
+  eq('and an unknown one is not invented', L.dimOf('nonsense'), null);
+
+  /* THE PREMISE WRITES ITSELF when he leaves the field blank - BZ: "I
+     thought the premise was only needed w/o user input." */
+  const said = L.designPremise([{ dim: 'proof', value: 92 }], 'kind', {});
+  eq('it states what is held', /within 2 points of 92/.test(said), true);
+  eq('and what moves', /the kind/.test(said), true);
+  eq('a flag says its own name, not its value',
+    /bottled in bond held at/.test(
+      L.designPremise([{ dim: 'bonded', value: 'bonded' }], 'kind', {})),
+    false);
+  eq('pairs are said out loud',
+    /matched pairs/.test(L.designPremise([], 'smoke', { pairs: true })),
+    true);
+  eq('holding nothing says so',
+    /Nothing here is held still/.test(L.designPremise([], 'kind', {})), true);
+
+  /* MATCHED PAIRS, and his own HOUSE ON FIRE is the authority on how they
+     are poured: Benriach 86 then Benriach Curiositas 92, Bunnahabhain 12
+     then its Toiteach, Classic Laddie then Port Charlotte. The PAIR is
+     the unit - pairs stay adjacent, the pairs climb, and the clean pour
+     leads inside each. Smoke therefore sits mid-run, which is the one
+     place the smoke-last rule gives way. */
+  const hf = {
+    a1: { k: 'a1', name: 'Benriach 10', proof: 86, sub: 'scotch',
+          dist: 'Benriach' },
+    a2: { k: 'a2', name: 'Benriach Curiositas Peated', proof: 92,
+          sub: 'scotch', dist: 'Benriach' },
+    b1: { k: 'b1', name: 'Bruichladdich Classic', proof: 100,
+          sub: 'scotch', dist: 'Bruichladdich' },
+    b2: { k: 'b2', name: 'Port Charlotte Peated', proof: 100,
+          sub: 'scotch', dist: 'Bruichladdich' }
+  };
+  const pool = Object.keys(hf).map(k => hf[k]);
+  const paired = L.pairPick(pool, [{ dim: 'house', value: null }],
+    'smoke', 6, hf).map(p => p.k);
+  eq('both pairs are poured', paired.length, 4);
+  eq('each pair stays together, and the pairs climb',
+    paired.join(','), 'a1,a2,b1,b2');
+  eq('the clean pour leads its pair',
+    L.peatLevel(hf[paired[0]]) < 2, true);
+  eq('and smoke sits mid-run, which only a pair may do',
+    L.peatLevel(hf[paired[1]]) >= 2 && L.peatLevel(hf[paired[2]]) < 2, true);
+
+  /* A HALF PAIR IS NOT A PAIR: a house with only one side open takes no
+     seat, because the comparison is the whole flight. */
+  const lone = Object.assign({}, hf, {
+    c1: { k: 'c1', name: 'Glen Lonely', proof: 90, sub: 'scotch',
+          dist: 'Lonely' } });
+  eq('a house with one side open is left out',
+    L.pairPick(Object.keys(lone).map(k => lone[k]),
+      [{ dim: 'house', value: null }], 'smoke', 6, lone)
+      .some(p => p.k === 'c1'), false);
+  eq('and says how little it found', /open bottle/.test(no.why), true);
+  eq('varying nothing fails too',
+    L.designFlight({ hold: [], vary: null }, cat, bots).ok, false);
+}
+
+sec('§486 a proof ladder, and smoke is the only thing that breaks it');
+{
+  /* BZ, 2026-10-18: "as a default, built flights must be a proof ladder.
+     Only smoke can break that rule." Measured against his own forty, that
+     is what they are - 27 of 40 climb, and several tags say PROOF ASCENDS
+     outright.
+
+     THREE KEYS, and the third is not a footnote:
+       1. peated pours last - "we can't put smoke on the palate if non-smoke
+          follows" - and it is the ONLY licence to leave the ladder;
+       2. proof ascending;
+       3. the ring (L.FLAVOR_ORDER, his own spectrum from 2026-09-20), which
+          is what ORDERS a flight that HOLDS proof, because every pour then
+          ties on key 2. Nine of his forty hold proof.
+
+     An earlier build had the ring first, which quietly threw the ladder
+     away on every flight that climbs. */
   const cat = {
     jame: { k: 'jame', name: 'Jameson Black Barrel', proof: 80, sub: 'irish' },
+    glen: { k: 'glen', name: 'The Glenlivet 12', proof: 80, sub: 'scotch' },
     bt:   { k: 'bt',   name: 'Buffalo Trace', proof: 90, sub: 'bourbon' },
     knob: { k: 'knob', name: 'Knob Creek Rye', proof: 100, sub: 'rye' },
-    glen: { k: 'glen', name: 'The Glenlivet 12', proof: 80, sub: 'scotch' },
     lag:  { k: 'lag',  name: 'Lagavulin 16', proof: 86, sub: 'scotch',
             dist: 'Lagavulin' },
     lap:  { k: 'lap',  name: 'Laphroaig 10', proof: 96, sub: 'scotch',
@@ -30082,24 +30243,18 @@ sec('§486 a flight is poured round the ring, Irish to Scotch');
   const all = Object.keys(cat).map(k => ({ k: k }));
   const order = L.pourOrder(all, cat).map(x => x.k);
 
-  eq('a beginner starts on the Irish', order[0], 'jame');
-  eq('and the run ends on smoke', order[order.length - 1], 'lap');
-  eq('Irish, bourbon, rye, then the Scotch',
-    order.join(','), 'jame,bt,knob,glen,lag,lap');
+  /* THE LADDER CLIMBS among everything that is not smoke. */
+  const clean = order.filter(k => L.peatLevel(cat[k]) < 2);
+  let fell = 0, prev = -1;
+  clean.forEach(k => { if (cat[k].proof < prev) fell++; prev = cat[k].proof; });
+  eq('proof never falls before the smoke', fell, 0);
 
-  /* THE RULE, not the list, so another shelf cannot pass by accident: the
-     ring never goes backwards. */
-  let last = -1, back = 0;
-  order.forEach(k => {
-    const at = L.flavorPlace(cat[k]);
-    if (at < last) back++;
-    last = at;
-  });
-  eq('the ring never steps backwards', back, 0);
-
-  /* AND SMOKE STILL CANNOT HAVE ANYTHING CLEAN AFTER IT - BZ, the same day:
-     "we can't put smoke on the palate if non-smoke follows." The ring says
-     this by putting smoke at 7, past Scotch at 6. */
+  /* AND SMOKE IS AT THE END, out of proof order on purpose: the Lagavulin
+     is 86 and follows a 100 proof rye. */
+  eq('the smoky pours close it',
+    order.slice(-2).join(','), 'lag,lap');
+  eq('and an 86 proof pour sits after a 100 proof one',
+    order.indexOf('lag') > order.indexOf('knob'), true);
   let seen = false, after = 0;
   order.forEach(k => {
     if (L.peatLevel(cat[k]) >= 2) seen = true;
@@ -30107,20 +30262,32 @@ sec('§486 a flight is poured round the ring, Irish to Scotch');
   });
   eq('nothing clean is poured after smoke', after, 0);
 
-  /* PLACE BEATS PROOF: the Glenlivet at 80 still follows the rye at 100,
-     because this orders by what the whisky IS. */
-  eq('a weaker Scotch still follows a stronger rye',
-    L.pourOrder([{ k: 'glen' }, { k: 'knob' }], cat).map(x => x.k).join(','),
-    'knob,glen');
+  /* KEY 3. Two pours at 80 tie on the ladder, so the ring decides and the
+     Irish opens - which is the 80 proof introduction BZ asked for. */
+  eq('a tie on proof is broken by the ring',
+    order.indexOf('jame') < order.indexOf('glen'), true);
+  eq('so a beginner starts on the Irish', order[0], 'jame');
+  eq('the whole run', order.join(','), 'jame,glen,bt,knob,lag,lap');
 
-  /* AND THE PROOF LADDER IS UNTOUCHED, because it holds one distillery
-     still, so every pour sits in the same place and proof settles it. */
+  /* HELD PROOF IS THE RING'S CASE. Every pour at 80, nothing peated: the
+     run walks Irish, bourbon, rye, Scotch. */
+  const flat = {
+    i: { k: 'i', name: 'An Irish', proof: 80, sub: 'irish' },
+    b: { k: 'b', name: 'A Bourbon', proof: 80, sub: 'bourbon' },
+    r: { k: 'r', name: 'A Rye', proof: 80, sub: 'rye' },
+    s: { k: 's', name: 'A Scotch', proof: 80, sub: 'scotch' }
+  };
+  eq('proof held, so the ring orders the whole run',
+    L.pourOrder([{ k: 's' }, { k: 'r' }, { k: 'i' }, { k: 'b' }], flat)
+      .map(x => x.k).join(','), 'i,b,r,s');
+
+  /* AND ONE HOUSE STILL CLIMBS, which is the commonest flight he builds. */
   const house = {
     x1: { k: 'x1', name: 'H 1', proof: 110, sub: 'bourbon', dist: 'H' },
     x2: { k: 'x2', name: 'H 2', proof: 90, sub: 'bourbon', dist: 'H' },
     x3: { k: 'x3', name: 'H 3', proof: 100, sub: 'bourbon', dist: 'H' }
   };
-  eq('one house still climbs by proof',
+  eq('one house climbs by proof',
     L.pourOrder([{ k: 'x1' }, { k: 'x2' }, { k: 'x3' }], house)
       .map(x => house[x.k].proof).join(','), '90,100,110');
 }
@@ -32851,4 +33018,12 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
+
+
+
+
+
+
+
 

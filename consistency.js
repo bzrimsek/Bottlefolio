@@ -784,8 +784,10 @@ const SCREEN_COPIES_OK = [
   // shelfToolsItself joined them on 2026-10-03, asking L.shelfFaults the same way:
   // the shape is "ask the engine, draw if there is something", which is what a
   // screen is FOR - not a rule stated twice. Each asks a different door.
-  'flightBuilder + renderShelfCharts', 'flightBuilder + renderShelfCharts + showLessons',
-  'flightBuilder + showLessons', 'renderCandidateList + showLessons',
+  /* The flight sheet became two pickers on 2026-10-18 and no longer shares
+     a shape with these, so its three entries went. What is left is the pair
+     that was always inside the trio. */
+  'renderShelfCharts + showLessons', 'renderCandidateList + showLessons',
   // Three presses refuse with the one no-service sentence.
   'labelCapture + libraryFillStart + pickShelfPhotos',
   // The service answers, and L.parseLookup reads it.
@@ -3472,7 +3474,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     fbLoadAfterWipeCheck: 129,
     renderLibrary: 129,
     awayLookingCard: 128,
-    flightBuilder: 128,
+    flightBuilder: 119,
     renderOffer: 128,
     shelfFit: 128,
     renderBuddies: 125,
@@ -3625,3 +3627,4 @@ check('no fixed svg id is emitted by a repeated drawing',
 
 console.log('\n  ' + (bad ? '\u2716 ' + bad + ' of ' + checks + ' checks found something'
   : '\u2713 all ' + checks + ' consistency checks pass'));
+
