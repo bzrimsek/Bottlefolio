@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.87  ·  2026-10-19 09:10 AM ET
+
+The four widths now reach the screen, and age has them too. Two faults, both mine and both his to find. The widths were set on the dimension and L.designOptions copied its label, hint, unit, numeric and band but not its tolerances, so nought two three and five went into the engine and only two reached the picker. I reported four because I read the engine data and never drove the control, which is the same mistake as trusting a check that never ran. A dimension is carried whole now, tolerances, floor and all. And I over-corrected on age: declared means the VALUES are ages somebody printed on a label, not that a flight cannot span a few years, and without a tolerance he could never build a fifteen plus or a twenty year flight. Exactly stays the default because an age statement is a statement, and within five of eighteen reaches thirteen to twenty-three.
+
 ## v2.8.86  ·  2026-10-19 08:58 AM ET
 
 Proof and age, corrected against the law and against his own forty. Eighty proof is the floor and it is the law, 27 CFR 5.22 putting whisky at forty per cent alcohol by volume, so no candidate may sit below it however a row reads. He picks the tolerance per flight now, nought two three or five, each shown with how many bottles it would reach, because no single band fits his forty: the nine that hold proof run nought, nought, nought, nought, one point four, two, three, five point four and six points wide. Three is the default, exactly his widest. An age is declared rather than measured, so it is held exactly and offers only the ages he owns; a band of three had swept ten, eleven, twelve, thirteen, fourteen and fifteen into one choice and the candidates were round steps that invented a nine. Two faults found while fixing it: the candidates were a walk across the range rather than strengths anything is sold at, so the list offered eighty-nine and exactly eighty-nine reached nothing, and the walk began at the next multiple of the band so eighty itself was never offered.

@@ -30427,6 +30427,33 @@ sec('§487 what a flight holds and what it varies');
      actually owns rather than round steps that invented a 9. */
   eq('age is held exactly', L.dimOf('age').band, 0);
   eq('and is a declared value', L.dimOf('age').discrete, true);
+  /* AND IT STILL NEEDS A TOLERANCE. BZ, 2026-10-19: "i could never build a
+     15+ or a 20 yr flight w/o a tolerance like proof." Declared means the
+     VALUES are ages somebody printed, not that a flight cannot span a few
+     years. Exactly stays the default, because an age statement IS a
+     statement. */
+  eq('age offers the same four widths',
+    L.dimOf('age').tols.join(','), '0,2,3,5');
+  eq('so a twenty year flight can reach 15 to 23',
+    L.applyHold([{ age: 15 }, { age: 18 }, { age: 23 }, { age: 30 }],
+      [{ dim: 'age', value: 18, tol: 5 }]).length, 3);
+
+  /* AND EVERY WIDTH REACHES THE PICKER. `tols` was set on the dimension
+     and designOptions copied label, hint, unit, numeric and band but not
+     it - so four widths went into the engine and two reached the screen,
+     and I reported four because I read the engine and never drove the
+     control (BZ: "where is the proof tolerance option/setting?"). */
+  const opt = L.designOptions(cat, bots, 0, []);
+  eq('the picker is given proof’s widths',
+    opt.filter(o => o.id === 'proof')[0].tols.join(','), '0,2,3,5');
+  eq('and age’s',
+    opt.filter(o => o.id === 'age')[0].tols.join(','), '0,2,3,5');
+  eq('and the floor travels with them',
+    opt.filter(o => o.id === 'proof')[0].floor, 80);
+  eq('and whether the value is declared',
+    opt.filter(o => o.id === 'age')[0].discrete, true);
+  eq('a dimension with no widths says so',
+    opt.filter(o => o.id === 'type')[0].tols.length, 0);
   const aged = { a1: { k: 'a1', age: 10, name: 'A', sub: 'scotch' },
                  a2: { k: 'a2', age: 10, name: 'B', sub: 'irish' },
                  a3: { k: 'a3', age: 10, name: 'C', sub: 'rye' },
@@ -33322,6 +33349,7 @@ queueSection()
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
+
 
 
 

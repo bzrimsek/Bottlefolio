@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.86  Build 2026-10-19 08:58 AM ET
+     Version : v2.8.87  Build 2026-10-19 09:10 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.87  2026-10-19  The four widths now reach the screen, and age has them too.
 // v2.8.86  2026-10-19  Proof and age, corrected against the law and against his own forty.
 // v2.8.85  2026-10-19  The designer says when it cannot pour what was asked for.
 // v2.8.84  2026-10-19  Four faults in the flight designer, all of them his.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.80  2026-10-18  A flight designer built on what is held and what varies.
 // v2.8.79  2026-10-18  A flight is poured round the ring, Irish to Scotch.
 // v2.8.78  2026-10-18  A flight pours smoke last.
-// v2.8.77  2026-10-18  Make a link asks for a name again.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.86';
-const BUILD_TIME  = '2026-10-19 08:58 AM ET';
+const APP_VERSION = '2.8.87';
+const BUILD_TIME  = '2026-10-19 09:10 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9380,7 +9380,7 @@ L.FEATURES = [
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
-    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose how wide to hold it — exactly, or within 2, 3 or 5 — with what each would reach beside it, because the cost of a wider one is the whole question. Three is the default, which is exactly as wide as your widest proof-held flight. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. An AGE is held exactly and offers only the ages you own, since an age is declared on a label rather than measured — a 10 and a 15 are two statements, not one give or take. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
+    def: 'One switch per thing a flight could hold still — proof, type, the house, price, smoke, the cask, age, region, bottled in bond. Hold what you want held; ANYTHING YOU DO NOT HOLD IS FREE TO MOVE, and the app takes the widest of them as the flight’s variable and says which, under the switches, in the sentence it is writing for you. Hold proof alone and the types move, which is an introduction at one strength; hold the cask and the houses move; hold bottled-in-bond and the law holds the proof at 100 for you. Hold more than one thing if you like — proof and the house together is one distillery at one strength. A dimension only appears when your OPEN bottles can fill a flight with it, and each carries how many they are. Holding a number suggests the value most of your bottles sit on and lets you pick another, with the count beside each — the commonest strength on your shelf leads and round ones follow. Then choose how wide to hold it — exactly, or within 2, 3 or 5 — with what each would reach beside it, because the cost of a wider one is the whole question. Three is the default, which is exactly as wide as your widest proof-held flight. Nothing below 80 proof is ever offered, because 80 is where the law says whisky starts. An AGE offers the same four widths and only the ages you own, since an age is declared on a label rather than measured: exactly is the default because a 10 and a 15 are two statements, and within 5 of 18 is how you build a twenty year flight. The card says which you chose. Pour in matched pairs appears where a thing has only two sides — peated or not — and pours each held thing twice, once each way. Pours and On the bench set how many: six and four, which is what your own flights are. Both are bounded by what you have held, and IT SAYS SO rather than quietly giving you fewer — hold exactly 80 proof and bourbon and only five bottles fit, so it tells you it pours five rather than six. What you asked for is remembered, so widening the hold again brings your six back, and both are bounded by what you have held — hold exactly 80 proof AND bourbon and only five bottles fit, so Pours stops at five and the bench at none — the core is six in thirty-eight of your forty and the bench runs two to eleven. Every count shown is measured against what you have ALREADY held, so holding a proof makes the types say how many sit at that strength rather than how many exist. The premise writes itself from what you picked; type one only to say something the switches cannot.' },
   { term: 'Hold a flavor still', src: 'the flight designer',
     def: 'The other way round: one tasting word held across the pour and everything else varying. Cast on your device from the words your own bottles carry, so it needs no service and cannot fail on a network.' },
   { term: 'Pour it against', src: 'under a bottle you own',
@@ -14520,8 +14520,13 @@ L.DIMS = [
        A BAND OF THREE SWEPT 10, 11, 12, 13, 14 AND 15 INTO ONE CHOICE, and
        the candidates were round steps rather than ages anybody prints - it
        offered a 9, which nothing on his shelf but one bottle claims. The
-       values offered are now the ages he actually owns. */
-    numeric: true, band: 0, discrete: true,
+       values offered are now the ages he actually owns.
+       AND IT STILL NEEDS A TOLERANCE. BZ, 2026-10-19: "i could never build
+       a 15+ or a 20 yr flight w/o a tolerance like proof." He is right and
+       I over-corrected: declared means the VALUES are ages somebody printed
+       on a label, not that a flight cannot span a few years. Exactly is
+       still the default, because an age statement is a statement. */
+    numeric: true, band: 0, discrete: true, tols: [0, 2, 3, 5],
     get: p => (p && p.age) || null },
   { id: 'region', label: 'Region', hint: 'where it is from',
     unit: 'regions',
@@ -14770,6 +14775,14 @@ L.designOptions = function (catalog, bottles, size, hold) {
     s.unit = d.unit || '';
     s.numeric = !!d.numeric;
     s.band = d.band || 0;
+    /* AND THE REST OF WHAT THE PICKER NEEDS. `tols` was left behind, so
+       the four widths went into the engine and never reached the screen:
+       the select fell back to exactly-or-the-band and offered two (BZ,
+       2026-10-19: "where is the proof tolerance option/setting?"). A
+       dimension is copied whole now rather than field by field. */
+    s.tols = d.tols || [];
+    s.floor = d.floor;
+    s.discrete = !!d.discrete;
     return s;
   });
 };
@@ -56814,7 +56827,10 @@ function holdValue(box, d, held, redraw) {
 
   /* AND NO TOLERANCE PICKER WHERE THERE IS NO TOLERANCE: an age is held
      exactly, so "within 0 of 12" is not a second choice. */
-  if (!d.numeric || !d.band) return;
+  /* THE WIDTHS THIS DIMENSION OFFERS. An age has a band of nought by
+     default and still offers 2, 3 and 5, so the test is whether there
+     is a choice to make - not whether the default happens to be wide. */
+  if (!d.numeric || !(d.tols && d.tols.length > 1)) return;
   const opt = d.options.filter(o => String(o.value) === String(val))[0]
     || { n: 0, exact: 0 };
   /* HOW WIDE, HIS CHOICE PER FLIGHT. Nine of his forty hold proof and they
@@ -61258,7 +61274,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.86</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.87</span>'
     + ' \u00b7 <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
