@@ -201,7 +201,27 @@ function faultsOf() {
       }
       if (!after.open) out.push('More ideas closed the modal');
     }
-    await p.evaluate(() => document.querySelectorAll('#overlay .portstep')[0].click());
+    /* THE FLIGHTS SIT UNDER A SHAPE NOW (2026-10-19). The rows are what a
+       flight HOLDS - Same type, Same smoke - and the titles open
+       underneath, so this opens one shape and then presses a flight. The
+       fault it guards against is unchanged: choosing a flight must close
+       the modal, not open the flight behind it. */
+    const opened = await p.evaluate(() => {
+      const head = [...document.querySelectorAll('#overlay .portstep')]
+        .filter(x => /^[+−]/.test(x.textContent.trim()))[0];
+      if (head) head.click();
+      return !!head;
+    });
+    if (!opened) out.push('no shape to open on the suggestions sheet');
+    await p.waitForTimeout(150);
+    const pressed = await p.evaluate(() => {
+      const row = [...document.querySelectorAll('#overlay .portstep')]
+        .filter(x => x.offsetParent !== null
+          && !/^[+−]/.test(x.textContent.trim()))[0];
+      if (row) row.click();
+      return !!row;
+    });
+    if (!pressed) out.push('a shape opened with no flight under it');
     await p.waitForTimeout(300);
     const chosen = await look();
     if (chosen.open) {
@@ -258,3 +278,4 @@ function faultsOf() {
   console.log('✓ ' + pairs + ' screen sequences leave nothing behind at '
     + PHONE.width + 'px\n');
 })();
+

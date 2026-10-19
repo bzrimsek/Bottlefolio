@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.92  ·  2026-10-19 10:51 AM ET
+
+The shape is the row, and the flavour pills are gone. BZ, from a screenshot an hour after the last build: so no changes. He was right. Grouping the flights by what they hold changed nothing he could feel, because thirty-eight titles were still thirty-eight titles with headings sprinkled through them. A shape is one row now and its flights open underneath, so the sheet offers eleven rows rather than thirty-eight titles and six pills. And the flavours were still pills: he said he hated the pills on the gift links two days ago and again of the designer this morning, and these were untouched, six chips with their counts hidden in a tooltip nobody sees on a phone. Each is a row like every other now, and says how far it reaches.
+
 ## v2.8.91  ·  2026-10-19 10:28 AM ET
 
 The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone. Caught by screens.js and by nothing else: a pooled row carried a holdKey string for the old builder, and once the rows moved to the designer that string meant nothing to anybody, so pressing one drew its question and nought bottles under it. The row carries the HOLD that produced it now, on both of its branches, so the flight that appears is the one the sheet promised and the pours say who brings each. L.buildFlight went with it, the pooled sheet having been its last caller, and its assertions moved to the designer.

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.91  Build 2026-10-19 10:28 AM ET
+     Version : v2.8.92  Build 2026-10-19 10:51 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
 // v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
 // v2.8.90  2026-10-19  What your shelf can teach you speaks the designer's language.
 // v2.8.89  2026-10-19  The flight designer no longer calls the service.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.85  2026-10-19  The designer says when it cannot pour what was asked for.
 // v2.8.84  2026-10-19  Four faults in the flight designer, all of them his.
 // v2.8.83  2026-10-18  The message when the service fails and the app designs the flight itself.
-// v2.8.82  2026-10-18  The flight designer is nine switches.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3126,8 +3126,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.91';
-const BUILD_TIME  = '2026-10-19 10:28 AM ET';
+const APP_VERSION = '2.8.92';
+const BUILD_TIME  = '2026-10-19 10:51 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3394,14 +3394,14 @@ L.bulkView = function (rows, term, view, bottles) {
 L.bulkSay = function (shown, picked) {
   const n = shown || 0, p = picked || 0;
   return n + (n === 1 ? ' shown' : ' shown')
-    + ' \u00b7 ' + (p ? p + ' selected' : 'none selected');
+    + ' · ' + (p ? p + ' selected' : 'none selected');
 };
 
 /* WHAT A ROW SAYS UNDER ITS NAME: who made it, whether it is open, and how
    many of it there are when there is more than one. */
 L.bulkRowSay = function (p, isOpen, n) {
   return [(p || {}).dist, isOpen ? 'open' : 'sealed',
-    n > 1 ? n + ' bottles' : null].filter(Boolean).join(' \u00b7 ');
+    n > 1 ? n + ' bottles' : null].filter(Boolean).join(' · ');
 };
 
 /* AND WHAT THE MARKING DID, once it is done. Built here rather than in the
@@ -3527,7 +3527,7 @@ L.shelfSummaryLine = function (sum) {
     sum.sealed ? sum.sealed + ' sealed' : null,
     sum.worth ? '$' + Math.round(sum.worth).toLocaleString() + ' at list' : null,
     sum.showSpent ? '$' + sum.spent.toLocaleString() + ' paid' : null
-  ].filter(Boolean).join('  \u00b7  ');
+  ].filter(Boolean).join('  ·  ');
 };
 
 /* WHAT ON THIS SHELF CONTRADICTS ITSELF, ready to be shown (BZ, 2026-10-03: "No
@@ -3547,7 +3547,7 @@ L.shelfFaults = function (catalog, bottles) {
     const f = L.rowFaults(p);
     if (!f.length) return;
     out.push({ k: k, name: p.name || k, n: f.length,
-      says: f.map(x => x.say).join(' \u00b7 ') });
+      says: f.map(x => x.say).join(' · ') });
   });
   return out.sort((a, b) => b.n - a.n
     || String(a.name).localeCompare(String(b.name)));
@@ -3953,7 +3953,7 @@ L.listLine = function (rows, bottles, regions) {
   if (strong) bits.push(strong + ' at 100 proof or more');
   const open = whisky.filter(p => L.pourable(p.k, bottles)).length;
   if (open) bits.push(open + ' open');
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 /* THE MAP: how far the shelf reaches, and where it does not. */
@@ -3974,7 +3974,7 @@ L.mapLine = function (catalog, bottles, regions) {
   if (rn && missing.length && missing.length <= 3) {
     bits.push('nothing from ' + L.fieldList(missing));
   }
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 /* FLIGHTS: how many are one bottle short of being an evening. */
@@ -4015,7 +4015,7 @@ L.wishLine = function (wish, catalog) {
   } else if (forFlight) {
     bits.push(forFlight + ' of them to finish a flight');
   }
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 /* THE LIBRARY: what it is short of, as a sentence rather than four counts. */
@@ -4028,8 +4028,8 @@ L.libraryLine = function (lists) {
   open.forEach(r => (r.missing || []).forEach(g => { short[g] = (short[g] || 0) + 1; }));
   const said = Object.keys(short).sort((a, b) => short[b] - short[a])
     .map(g => short[g] + ' short of ' + (L.GAP_SAY[g] || g));
-  return ((l.done || []).length + open.length) + ' entries \u00b7 '
-    + L.fieldList(said) + ' \u00b7 ' + (l.score || 0) + '% complete.';
+  return ((l.done || []).length + open.length) + ' entries · '
+    + L.fieldList(said) + ' · ' + (l.score || 0) + '% complete.';
 };
 
 /* What the money column says on a shelf row. `msrp` is what the bottle
@@ -4059,7 +4059,7 @@ L.rowCost = function (paid, msrp) {
 L.rowHave = function (owned, sealed, open) {
   const n = owned || 0, s = sealed || 0;
   return {
-    text: n + (s ? ' \u00b7 ' + s + 's' : ''),
+    text: n + (s ? ' · ' + s + 's' : ''),
     title: n + (n === 1 ? ' bottle' : ' bottles')
       + (s ? ', ' + s + ' sealed' : ', all open'),
     allSealed: !open
@@ -6870,7 +6870,7 @@ L.offerNames = function (text, catalog, aliases) {
           /* Leading list furniture ONLY: a number followed by a dot or bracket,
              or a bullet. Stripping any leading digits ate "12 Year Old" and
              "1792 Small Batch". */
-          .replace(/^\s*(\d+\s*[.)\]]|[\-\*\u2013\u2014\u00b7#])\s*/, '')
+          .replace(/^\s*(\d+\s*[.)\]]|[\-\*\u2013\u2014·#])\s*/, '')
           .replace(/\s{2,}/g, ' ')
           .trim();
         // Trailing marketing tail after a dash is a sentence, not a name.
@@ -6879,8 +6879,8 @@ L.offerNames = function (text, catalog, aliases) {
         line = line.replace(/[\s\u2013\u2014-]+$/, '').trim();
         /* A pack size ("2 × 750mL") is not part of the name; the size strip
            leaves "· 2 ×" behind. */
-        line = line.replace(/[\s\u00b7,|]*\b\d+\s*[x\u00d7]\s*$/i, '')
-                   .replace(/[\s\u00b7,|]+$/, '').trim();
+        line = line.replace(/[\s·,|]*\b\d+\s*[x\u00d7]\s*$/i, '')
+                   .replace(/[\s·,|]+$/, '').trim();
         if (line.length < 4 || line.length > 90) return;
         if (L.OFFER_NOISE.test(line)) return;
         /* A line ending in a colon introduces the list, and a line reading as a
@@ -9011,7 +9011,7 @@ L.FEATURES = [
   { term: 'Taste', src: 'deciding what to pour',
     def: 'Four reels: proof band, type, how well known, and occasion. Tap a reel to choose a value, or tap Spin and let it pick. It fills up to three glasses from what is open and never lands on a combination nothing satisfies. Tap a glass to see the bottle or log the pour. At home is the reels; Out is a bar, a shop or a friend’s kitchen, where you photograph what is in front of you and log what you drank.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, grouped by WHAT THEY HOLD STILL rather than listed by name, so you choose a shape and then a title. More ideas opens the same language: every suggestion reads as hold this, let that move, with what it would pour off your open bottles, and pressing one opens the designer already set to that shape. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'What you could pour tonight leads — flights with every bottle already open, grouped by WHAT THEY HOLD STILL rather than listed by name: five or six rows instead of thirty-eight titles, and tapping one opens its flights. Holding a flavor still is a row like any other and says how far it reaches. More ideas opens the same language: every suggestion reads as hold this, let that move, with what it would pour off your open bottles, and pressing one opens the designer already set to that shape. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
@@ -10594,7 +10594,7 @@ L.CANDIDATE_FIELDS = [
   /* THE CLASS MARKS ONLY. bottleMarks also carries the proof, which is its own
      field above, and it carries it as a code (p1000) nobody reads. */
   { id: 'mark', of: h => L.bottleMarks(h)
-      .map(m => L.MARK_SAYS[m]).filter(Boolean).join(' \u00b7 ') }
+      .map(m => L.MARK_SAYS[m]).filter(Boolean).join(' · ') }
 ];
 
 L.tellApart = function (hits) {
@@ -10606,7 +10606,7 @@ L.tellApart = function (hits) {
   if (rows.length < 2) {
     /* ONE CANDIDATE SEPARATES ITSELF, so it says what it is. */
     return rows.map(r => L.CANDIDATE_FIELDS.map(f => r[f.id])
-      .filter(Boolean).slice(0, 3).join(' \u00b7 '));
+      .filter(Boolean).slice(0, 3).join(' · '));
   }
   const tells = L.CANDIDATE_FIELDS.filter(f => {
     const seen = {};
@@ -10617,7 +10617,7 @@ L.tellApart = function (hits) {
     const said = tells.map(f => r[f.id]).filter(Boolean).slice(0, 3);
     /* AND IF NOTHING SEPARATES THEM, say so rather than drawing a bare row:
        two candidates this list cannot tell apart is the finding, not a blank. */
-    return said.length ? said.join(' \u00b7 ')
+    return said.length ? said.join(' · ')
       : 'nothing here tells these apart';
   });
 };
@@ -10723,7 +10723,7 @@ L.recapLine = function (r) {
   if (r.different > 1) bits.push(r.different + ' different whiskies');
   if (r.flights) bits.push(r.flights + (r.flights === 1 ? ' flight' : ' flights'));
   if (r.away) bits.push(r.away + ' away from home');
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 /* HOW a bottle was acquired (BZ's list). A shop is a place, online is a
@@ -10804,7 +10804,7 @@ L.deviceName = function (ua, standalone, touch, width) {
   /* Installed is worth saying: the home-screen app and the same phone's
      browser tab keep separate storage. */
   return [kind, browser, standalone ? 'installed' : null]
-    .filter(Boolean).join(' \u00b7 ');
+    .filter(Boolean).join(' · ');
 };
 
 L.bottleFrom = function (kind, detail) {
@@ -10846,7 +10846,7 @@ L.pickLine = function (pick) {
   if (pick.barrel) bits.push('barrel ' + pick.barrel);
   if (pick.warehouse) bits.push('warehouse ' + pick.warehouse);
   if (pick.floor) bits.push('floor ' + pick.floor);
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 L.fromLine = function (f) {
@@ -10857,7 +10857,7 @@ L.fromLine = function (f) {
     return 'Won a lottery' + (f.shop ? ' at ' + f.shop : '');
   }
   if (f.kind === 'an auction') {
-    return 'Won at auction' + (f.shop ? ' \u00b7 ' + f.shop : '');
+    return 'Won at auction' + (f.shop ? ' · ' + f.shop : '');
   }
   if (f.kind === 'online') return 'Bought from ' + (f.shop || 'online');
   const where = L.placeLine(f);
@@ -11315,7 +11315,7 @@ L.popularLine = function (item) {
   if (!item) return '';
   const shelves = item.shelves ? 'On ' + item.shelves + ' shelves' : '';
   if (!item.poured) return shelves;
-  return shelves ? shelves + ' \u00b7 poured by ' + item.poured + ' lately'
+  return shelves ? shelves + ' · poured by ' + item.poured + ' lately'
     : 'Poured by ' + item.poured + ' lately';
 };
 
@@ -11334,13 +11334,13 @@ L.bottleStory = function (b) {
   if (!b) return [];
   const out = [];
   if (b.sugg && b.sugg.label) {
-    out.push('Suggested: ' + b.sugg.label + (b.sugg.at ? ' \u00b7 ' + b.sugg.at : ''));
+    out.push('Suggested: ' + b.sugg.label + (b.sugg.at ? ' · ' + b.sugg.at : ''));
   } else if (b.found && b.found.why) {
-    out.push(b.found.why + (b.found.at ? ' \u00b7 ' + b.found.at : ''));
+    out.push(b.found.why + (b.found.at ? ' · ' + b.found.at : ''));
   }
   const came = L.fromLine(b.from);
   if (came) {
-    out.push(came + (b.got ? ' \u00b7 ' + b.got : '')
+    out.push(came + (b.got ? ' · ' + b.got : '')
       + (b.why && b.why.length ? ' \u2014 ' + b.why.join(', ') : ''));
   } else if (b.why && b.why.length) {
     out.push(L.sentenceCase(b.why.join(', ')));
@@ -12985,7 +12985,7 @@ L.peopleLine = function (r) {
     bits.push('no sharing');
   }
   if (r.hasDiag) bits.push('diagnostic waiting');
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 L.adminPeople = function (stats, directory, now) {
@@ -13036,7 +13036,7 @@ L.adminPersonLine = function (p) {
   else if (p.daysSince === 0) bits.push('here today');
   else if (p.daysSince === 1) bits.push('yesterday');
   else bits.push(p.daysSince + ' days ago');
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 /* A WRITE IS JUDGED WHERE IT LANDS. This database's rules are written per
@@ -14226,7 +14226,7 @@ L.bottleLabel = function (b, i, total) {
   const bits = [L.titleCase(b.status || 'open')];
   if (total > 1) bits.unshift('Bottle ' + (i + 1) + ' of ' + total);
   if (b.got) bits.push('added ' + L.showDate(b.got));
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 };
 
 L.newBottle = function (bottles, k, status, paid, when) {
@@ -16105,7 +16105,7 @@ L.joinMeText = function (p, detail, who) {
   if (d.proof) bits.push(d.proof + ' proof');
   if (d.sub) bits.push(L.titleCase(d.sub));
   if (d.region) bits.push(d.region);
-  if (bits.length) lines.push(bits.join(' \u00b7 '));
+  if (bits.length) lines.push(bits.join(' · '));
   lines.push('');
   lines.push('We have all got this open. Pour about an ounce whenever suits '
     + 'you and say what you get.');
@@ -16158,7 +16158,7 @@ L.buddyRows = function (shelves, outList, names, granted) {
     r.name = ((names || {})[u])
       || (((shelves || {})[u] || {}).name)
       || r.name
-      || ('Somebody \u00b7 ' + String(u).slice(0, 6));
+      || ('Somebody · ' + String(u).slice(0, 6));
     r.both = r.theyShare && r.iShare;
     return r;
   }).sort((a, b) =>
@@ -18403,7 +18403,7 @@ L.fillProgress = function (done, total, name, elapsed) {
     parts.push('about ' + (left < 90 ? left + 's'
       : Math.round(left / 60) + ' min') + ' left');
   }
-  return parts.join('  \u00b7  ');
+  return parts.join('  ·  ');
 };
 
 L.slotOpen = function (entry, gap) {
@@ -18476,7 +18476,7 @@ L.missingSay = function (row, today) {
     when = 'next try ' + L.showDate(new Date(Date.parse(today + 'T00:00:00Z')
       + r.dueIn * 86400000).toISOString().slice(0, 10));
   }
-  return 'No ' + what + ' \u00b7 ' + when;
+  return 'No ' + what + ' · ' + when;
 };
 
 /* How long a bottle rests after a lookup came back with nothing. */
@@ -18724,7 +18724,7 @@ L.factsLine = function (p, catalog, opts) {
   if (b.fin) bits.push(b.fin);
   if (b.region) bits.push(b.region);
   if (o.price && b.msrp) bits.push('$' + b.msrp);
-  return bits.join('  \u00b7  ');
+  return bits.join('  ·  ');
 };
 
 /* The houses the catalog knows, longest name first, so a house called
@@ -19093,7 +19093,7 @@ L.shelvesSay = function (rows) {
   if (!(rows || []).length) return 'nobody shares with you';
   return rows.map(r => (r.name || String(r.uid).slice(0, 6)) + ': '
     + (r.shelf ? ((r.shelf.bottles || []).length + ' bottles') : 'granted, no shelf'))
-    .join(' \u00b7 ');
+    .join(' · ');
 };
 
 L.askState = function (asked, uid, shelvesSharedWithMe, now) {
@@ -19808,9 +19808,9 @@ L.fillSay = function (f) {
     ? 'Stopped at the daily lookup limit — it resets tomorrow. '
     : x.stopped === 'broken' ? 'Stopped: the lookup failed five times running. '
     : x.stopped ? 'Stopped. ' : x.finished ? 'Done. ' : '';
-  return head + (x.done || 0) + ' of ' + (x.total || 0) + ' asked \u00b7 '
-    + (x.wrote || 0) + ' filled in \u00b7 ' + (x.waiting || 0) + ' waiting'
-    + (x.failed ? ' \u00b7 ' + x.failed + ' failed' : '');
+  return head + (x.done || 0) + ' of ' + (x.total || 0) + ' asked · '
+    + (x.wrote || 0) + ' filled in · ' + (x.waiting || 0) + ' waiting'
+    + (x.failed ? ' · ' + x.failed + ' failed' : '');
 };
 
 /* AN EMPTY ANSWER IS NOT A FAULT. The service not knowing a bottle means
@@ -20858,8 +20858,8 @@ L.shelfJoins = function (shelves, library, graves) {
        entries disagreeing, which is a different finding (BZ, 2026-10-01: "not
        enough text to understand the issues"). */
     if (hit) out.push({ key: k, to: hit.k,
-      text: mine.name + ' \u00b7 on a shelf, in no entry  ==  '
-        + hit.name + ' \u00b7 the library entry it reads as',
+      text: mine.name + ' · on a shelf, in no entry  ==  '
+        + hit.name + ' · the library entry it reads as',
       keys: [k, hit.k] });
   });
   return out.sort((a, b) => String(a.text).localeCompare(String(b.text)));
@@ -21723,7 +21723,7 @@ L.importAudit = function (catalog, bottles, brands) {
         return {
           keys: g.map(p => p._key || p.k),
           text: same
-            ? names.map((n, i) => n + ' \u00b7 '
+            ? names.map((n, i) => n + ' · '
                 + [g[i].dist, g[i].proof ? g[i].proof + ' proof' : null,
                    g[i].sub].filter(Boolean).join(', ')).join('  ==  ')
             : names.join('  ==  ')
@@ -25140,12 +25140,12 @@ L.SHEET_PROMPTS = {
   /* No word list of its own: the strip above the table IS the vocabulary,
      and a second shorter list beside it only disagrees with the first. */
   colour: 'Match the glass to the strip above, and write the name.',
-  nose:   'WOOD oak \u00b7 toasted \u00b7 cedar \u00b7 walnut   GRAIN rye \u00b7 corn \u00b7 wheat   '
-        + 'SWEET vanilla \u00b7 caramel \u00b7 honey   FRUIT orchard \u00b7 dried \u00b7 citrus   '
-        + 'OTHER smoke \u00b7 brine \u00b7 leather \u00b7 mint',
+  nose:   'WOOD oak · toasted · cedar · walnut   GRAIN rye · corn · wheat   '
+        + 'SWEET vanilla · caramel · honey   FRUIT orchard · dried · citrus   '
+        + 'OTHER smoke · brine · leather · mint',
   palate: 'Same families as the nose \u2014 note what CHANGED between smelling and '
-        + 'tasting. FEEL thin \u00b7 oily \u00b7 creamy \u00b7 drying \u00b7 hot',
-  finish: 'LENGTH vanishes \u00b7 short \u00b7 medium \u00b7 long \u00b7 will not leave.   '
+        + 'tasting. FEEL thin · oily · creamy · drying · hot',
+  finish: 'LENGTH vanishes · short · medium · long · will not leave.   '
         + 'Wait thirty seconds before you write.'
 };
 
@@ -25209,11 +25209,11 @@ L.sheetCare = function (f, catalog, forHost) {
   if (!forHost) return { line: line, pour: L.POUR_OZ + ' oz per glass' };
   const load = L.flightDrinks(
     (f.core || []).map(p => (catalog || {})[p.k]).filter(Boolean), L.POUR_OZ);
-  let sum = L.POUR_OZ + ' oz per glass \u00b7 ' + load.glasses + ' glasses';
+  let sum = L.POUR_OZ + ' oz per glass · ' + load.glasses + ' glasses';
   if (load.known === load.of && load.of) {
-    sum += ' \u00b7 \u2248' + load.drinks + ' standard drinks each';
+    sum += ' · \u2248' + load.drinks + ' standard drinks each';
   } else if (load.known) {
-    sum += ' \u00b7 \u2248' + load.drinks + ' standard drinks from '
+    sum += ' · \u2248' + load.drinks + ' standard drinks from '
       + load.known + ' of ' + load.of + ' known proofs';
   }
   return { line: line, pour: sum, drinks: load.drinks };
@@ -25245,7 +25245,7 @@ L.blindTheme = function (f, catalog) {
 // the host and its segments differ in kind: how many pours is fine, which
 // bottles were swapped in is not.
 L.blindGiven = function (f) {
-  const parts = String(f.tag || '').split('\u00b7').map(s => s.trim());
+  const parts = String(f.tag || '').split('·').map(s => s.trim());
   const named = L.SCOTCH_REGIONS.map(r => r.toLowerCase())
     .concat(['peated', 'unpeated', 'campbeltown', 'islay', 'speyside']);
   return parts.filter(s => {
@@ -25259,7 +25259,7 @@ L.blindGiven = function (f) {
     }
     if (/one variable/i.test(s)) return true;
     return false;
-  }).join(' \u00b7 ');
+  }).join(' · ');
 };
 
 L.participantCard = function (f, catalog) {
@@ -25923,7 +25923,7 @@ L.readShopText = function (text, url) {
 L.nameFromShopPage = function (title, url) {
   let t = String(title || '').trim();
   // Everything after a separator is usually the shop.
-  t = t.split(/\s+[|\u2013\u2014\u00b7]\s+/)[0];
+  t = t.split(/\s+[|\u2013\u2014·]\s+/)[0];
   t = t.replace(/\b(buy|shop|online|for sale|in stock)\b/gi, '');
   t = t.replace(/\b\d+\s*(ml|l)\b/gi, '');
   t = t.replace(/\$\s*[\d,.]+/g, '');
@@ -30840,7 +30840,7 @@ L.portraitPick = function (earned, dismissed) {
   if (sets.length) {
     const g = sets[0];
     return { title: g.title, from: g.ids,
-      why: g.ids.map(id => have[id].why).join(' \u00b7 ') };
+      why: g.ids.map(id => have[id].why).join(' · ') };
   }
   /* Sorted HERE rather than trusted from the caller: a picker whose answer
      depends on input order is a bug waiting for a second caller. */
@@ -32437,7 +32437,7 @@ L.likelyLine = function (p, fp) {
   const all = L.FP_AXES.reduce((n, a) => n + a.lead, 0)
     + L.FP_ORD.reduce((n, o) => n + o.band, 0);
   return Math.round(s.score * 100) + '% like your shelf'
-    + (by.length ? ' \u00b7 ' + L.andList(by) : '')
+    + (by.length ? ' · ' + L.andList(by) : '')
     + (judged * 2 < all ? ' \u2014 little else known' : '');
 };
 
@@ -33673,7 +33673,7 @@ L.wishSays = function (entry) {
       .indexOf(flight.toLowerCase()) < 0) {
     bits.push('for ' + flight);
   }
-  if (bits.length) return bits.join(' \u00b7 ');
+  if (bits.length) return bits.join(' · ');
   const when = w.added || w.at;
   return when ? 'Added ' + L.showDate(when) : '';
 };
@@ -33873,7 +33873,7 @@ L.flightMissingSay = function (missing) {
   const parts = [];
   if (buy) parts.push(buy + (buy === 1 ? ' to buy' : ' to buy'));
   if (open) parts.push(open + ' you own, sealed');
-  return parts.join(' \u00b7 ');
+  return parts.join(' · ');
 };
 
 /* What you BUY against what you DRINK. "Often" is set by the shelf's own
@@ -34615,7 +34615,7 @@ L.smsBody = function (flight, prods) {
   prods.forEach((p, i) => {
     const letter = String.fromCharCode(65 + i);
     const bits = [p.name, p.fin, p.proof].filter(Boolean);
-    lines.push(letter + ' \u00b7 ' + bits.join(', '));
+    lines.push(letter + ' · ' + bits.join(', '));
   });
   lines.push('Snacks: ' + L.snacksFor(prods).join(', '));
   return lines.join('\n');
@@ -34623,9 +34623,9 @@ L.smsBody = function (flight, prods) {
 
 // The tag line carries "ONE VARIABLE: WHICH SHERRY" on most cards.
 L.variableOf = function (flight) {
-  const m = /ONE VARIABLE:\s*([^\u00b7]+)/i.exec(flight.tag || '');
+  const m = /ONE VARIABLE:\s*([^·]+)/i.exec(flight.tag || '');
   if (m) return 'One variable: ' + m[1].trim().toLowerCase();
-  return (flight.tag || '').split('\u00b7').slice(-1)[0].trim();
+  return (flight.tag || '').split('·').slice(-1)[0].trim();
 };
 
 /* AND INTO THE LEARN TAB. Pushed at the foot of the engine, not written into
@@ -35522,7 +35522,7 @@ function favStar(k, after) {
 function bookTile({ sub, n, height, width, label, size }) {
     // The button is the SLOT, one row tall; the book stands inside it.
     const t = el('button', 'tile');
-    t.title = label + ' \u00b7 ' + n;
+    t.title = label + ' · ' + n;
     const bk = el('div', 'bk');
     bk.style.setProperty('--bw', width);
     bk.style.setProperty('--bh', height);
@@ -35680,8 +35680,8 @@ function renderShelfCharts(box) {
         const left = el('div');
         left.appendChild(el('div', 'nm oneline', r.name));
         left.appendChild(el('div', 'sub', r.total + ' bought'
-          + (r.gone ? ' \u00b7 ' + r.gone + ' finished' : '')
-          + (r.here ? ' \u00b7 ' + r.here + ' here' : '')));
+          + (r.gone ? ' · ' + r.gone + ' finished' : '')
+          + (r.here ? ' · ' + r.here + ' here' : '')));
         row.appendChild(left);
         row.onclick = () => showBottle(r.k);
         kc.appendChild(row);
@@ -35840,7 +35840,7 @@ function renderShelfFilters() {
 
   const n = L.activeFacets(S.filters);
   const more = $('#moreBtn');
-  more.textContent = n ? 'Filters \u00b7 ' + n : 'More filters';
+  more.textContent = n ? 'Filters · ' + n : 'More filters';
   more.dataset.on = n > 0;
   renderMoreFilters();
 }
@@ -37194,11 +37194,11 @@ function showBottle(k) {
     dl.appendChild(el('dt', null, k2));
     const dd = el('dd', cls); dd.textContent = v; dl.appendChild(dd);
   };
-  add('Distillery', [p.dist, p.country].filter(Boolean).join(' \u00b7 '));
+  add('Distillery', [p.dist, p.country].filter(Boolean).join(' · '));
   /* A style that only repeats the category is not said twice. */
   add('Style', [p.sub ? L.typeLabel(p.sub) : null,
     p.style && String(p.style).toLowerCase() !== String(p.sub || '').toLowerCase()
-      ? L.titleCase(p.style) : null].filter(Boolean).join(' \u00b7 '));
+      ? L.titleCase(p.style) : null].filter(Boolean).join(' · '));
   add('Proof', p.proof);
   add('Age', p.age ? p.age + ' years' : 'No age stated');
   h.appendChild(dl);
@@ -38011,7 +38011,7 @@ function showQuiz() {
            term is the thing being learned, and now it can be read. */
         asked.textContent = q.full;
         said.textContent = L.quizSay(q, c);
-        why.textContent = L.quizExplain(q, c) + ' \u00b7 ' + L.quizTally(S.quiz);
+        why.textContent = L.quizExplain(q, c) + ' · ' + L.quizTally(S.quiz);
         [...row.children].forEach(x => {
           x.disabled = true;
           if (x.textContent === q.answer) x.classList.add('rightone');
@@ -38303,12 +38303,12 @@ function updateCount(z, d) {
   let txt = total + ' whiskies';
   if (M.pins.length) {
     const bottles = M.pins.reduce((n, p) => n + p.total, 0);
-    txt += ' \u00b7 ' + M.pins.length + ' distilleries in view, '
+    txt += ' · ' + M.pins.length + ' distilleries in view, '
       + bottles + ' bottles';
   } else if (d.states) {
-    txt += ' \u00b7 zoom in for distilleries';
+    txt += ' · zoom in for distilleries';
   } else if (d.usPins || d.scotPins) {
-    txt += ' \u00b7 no distilleries here \u2014 pan or zoom out';
+    txt += ' · no distilleries here \u2014 pan or zoom out';
   }
   $('#mapCount').textContent = txt;
   $('#mapLegend').innerHTML = '';
@@ -38513,7 +38513,7 @@ function theirRow(p, owner, o, fp) {
   left.appendChild(el('div', 'nm oneline', p.name));
   left.appendChild(el('div', 'sub',
     [p.dist, p.fin, openNow === null ? null : openNow ? 'open' : 'sealed']
-      .filter(Boolean).join(' \u00b7 ')));
+      .filter(Boolean).join(' · ')));
   /* HOW LIKE YOUR SHELF IT IS (BZ, 2026-10-03: "looking at buddies part of the
      venn") - and only where it is not already yours, because for a bottle in the
      crossover you own it and the question answers itself. Against YOUR shelf,
@@ -39048,7 +39048,7 @@ function colourStrip(esc) {
    footers come to disagree. */
 function careLine(care, esc) {
   return `<p class="care">${esc(care.pour)} \u2014 ${esc(care.line)}
-    \u00b7 ${esc(L.COPYRIGHT)}</p>`;
+    · ${esc(L.COPYRIGHT)}</p>`;
 }
 
 function participantSheet(part, esc) {
@@ -39175,9 +39175,9 @@ function tastingPapers(f, which) {
         // Six, then a count. Ten bottle names is a paragraph, and the card
         // is a thing you hold while pouring — the rest are on the screen.
         + esc(host.ext.slice(0, 6).map(x => L.pourLabel(x, S.catalog))
-            .join(' \u00b7 '))
+            .join(' · '))
         + (host.ext.length > 6
-            ? ' \u00b7 and ' + (host.ext.length - 6) + ' more on the app' : '')
+            ? ' · and ' + (host.ext.length - 6) + ' more on the app' : '')
         + '</p>' : ''}
       ${careLine(host.care, esc)}
     </div>`;
@@ -39287,7 +39287,7 @@ function shelfPick(what, onFiles) {
          button read as a second way to take a photo. */
       go.hidden = !shots.length;
       go.disabled = !shots.length;
-      go.textContent = 'Read ' + what + ' \u00b7 ' + shots.length
+      go.textContent = 'Read ' + what + ' · ' + shots.length
         + (shots.length === 1 ? ' photo' : ' photos');
       add.textContent = shots.length ? 'Photograph another' : 'Photograph it';
     };
@@ -39560,7 +39560,7 @@ function levelRows(host, lv, onCount) {
       L.FILL_NOTCHES.forEach(v => {
         const o = document.createElement('option');
         o.value = String(v);
-        o.textContent = v + '% \u00b7 ' + L.fillWords(v);
+        o.textContent = v + '% · ' + L.fillWords(v);
         if (v === r.now) o.selected = true;
         sel.appendChild(o);
       });
@@ -39583,7 +39583,7 @@ function levelsSheet(levels, seenCount) {
   openModal('What it saw through the glass', m => {
     const lv = (levels || []).slice();
     m.appendChild(el('div', 'sub', seenCount + ' bottle'
-      + (seenCount === 1 ? '' : 's') + ' read \u00b7 ' + lv.length
+      + (seenCount === 1 ? '' : 's') + ' read · ' + lv.length
       + ' level' + (lv.length === 1 ? '' : 's') + ' worth setting'));
     if (!lv.length) {
       /* AND THAT IS A RESULT, not a failure. Dark glass reads as nothing
@@ -39629,7 +39629,7 @@ function levelsSheet(levels, seenCount) {
 function shelfBuildSheet(plan, levels) {
   openModal('What it found', m => {
     m.appendChild(el('div', 'sub',
-      plan.read + ' read \u00b7 ' + plan.already + ' already yours \u00b7 '
+      plan.read + ' read · ' + plan.already + ' already yours · '
       + plan.add.length + ' to add'));
 
     /* WHAT IT SAW THROUGH THE GLASS. Offered rather than applied: dark
@@ -39708,7 +39708,7 @@ function shelfBuildSheet(plan, levels) {
       else bits.push('new to everyone');
       if (x.proof) bits.push(x.proof + ' proof');
       if (x.sure === 'low') bits.push('not sure it read this right');
-      t.appendChild(el('div', 'src', bits.join(' \u00b7 ')));
+      t.appendChild(el('div', 'src', bits.join(' · ')));
       row.appendChild(t);
       list.appendChild(row);
     });
@@ -39803,7 +39803,7 @@ function inventoryScreen() {
       left.appendChild(nm);
       left.appendChild(el('div', 'src',
         [r.dist, r.status === 'sealed' ? 'sealed' : null]
-          .filter(Boolean).join(' \u00b7 ')));
+          .filter(Boolean).join(' · ')));
       row.appendChild(left);
 
       const acts = el('div', 'rowacts');
@@ -39838,8 +39838,8 @@ function inventoryScreen() {
     finish.style.marginTop = '14px';
     const tally = () => {
       const res = L.inventoryResult(rows, S.invWalk, false);
-      note.textContent = res.found.length + ' found \u00b7 '
-        + res.missing.length + ' not there \u00b7 '
+      note.textContent = res.found.length + ' found · '
+        + res.missing.length + ' not there · '
         + res.untouched.length + ' still to check';
       finish.textContent = res.untouched.length
         ? 'Finish anyway \u2014 ' + res.untouched.length
@@ -40347,7 +40347,7 @@ function shelfFactsCard(box, after) {
   if (plan.clashes.length) {
     says.push(plan.clashes.length + ' disagree with the entry, and the library keeps what it has');
   }
-  card.appendChild(el('div', 'sub', says.join(' \u00b7 ')));
+  card.appendChild(el('div', 'sub', says.join(' · ')));
   if (plan.clashes.length) {
     const more = el('details');
     more.style.marginTop = '6px';
@@ -40693,7 +40693,7 @@ function shelfToolsItself(m, q) {
   const twiceSay = L.ownedTwiceLine(twice);
   if (twiceSay) {
     const names = twice.map(g => g.map(k =>
-      ((S.catalog[k] || {}).name) || k).join('  \u00b7  '));
+      ((S.catalog[k] || {}).name) || k).join('  ·  '));
     const show = el('button', 'btn btn-sm', 'Show me which');
     show.onclick = () => openModal('On the shelf twice', mm => {
       mm.appendChild(el('div', 'sub', twiceSay));
@@ -40952,7 +40952,7 @@ function showEnhance(queue) {
       left.appendChild(el('div', 'nm', name));
       left.appendChild(el('div', 'sub', what));
       r.appendChild(left);
-      r.appendChild(el('div', 'pf', ok ? '\u2713' : '\u00b7'));
+      r.appendChild(el('div', 'pf', ok ? '\u2713' : '·'));
       // Appended, not prepended: a run reads top to bottom like a log, and
       // the view follows the newest line rather than jumping to it.
       const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 24;
@@ -41142,8 +41142,8 @@ function receiptsDialog() {
         const left = el('div');
         left.appendChild(el('div', 'nm oneline', x.row.name));
         left.appendChild(el('div', 'sub', '$' + x.row.price
-          + (x.row.date ? ' \u00b7 ' + x.row.date : '')
-          + (x.row.shop ? ' \u00b7 ' + x.row.shop : '')));
+          + (x.row.date ? ' · ' + x.row.date : '')
+          + (x.row.shop ? ' · ' + x.row.shop : '')));
         left.appendChild(el('div', 'src', x.match
           ? (x.already ? 'Already priced: ' : 'Matches ') + x.match.name
             + ' (' + x.score + '%)'
@@ -41224,10 +41224,10 @@ function libraryImportDialog() {
 
 function libraryImportReview(plan, total) {
   openModal('What this file would change', m => {
-    m.appendChild(el('div', 'sub', total + ' rows read \u00b7 '
-      + plan.same + ' already match \u00b7 ' + plan.changes.length
-      + ' would change \u00b7 ' + plan.adds.length + ' new'
-      + (plan.unnamed ? ' \u00b7 ' + plan.unnamed + ' with no name'
+    m.appendChild(el('div', 'sub', total + ' rows read · '
+      + plan.same + ' already match · ' + plan.changes.length
+      + ' would change · ' + plan.adds.length + ' new'
+      + (plan.unnamed ? ' · ' + plan.unnamed + ' with no name'
          : '')));
     if (!plan.changes.length && !plan.adds.length) {
       /* A clean round trip is a result: export and re-import without edits says
@@ -41243,7 +41243,7 @@ function libraryImportReview(plan, total) {
       const row = el('div', 'item');
       const left = el('div');
       left.appendChild(el('div', 'nm', c.name));
-      left.appendChild(el('div', 'src', c.words.join(' \u00b7 ')));
+      left.appendChild(el('div', 'src', c.words.join(' · ')));
       row.appendChild(left);
       m.appendChild(row);
     });
@@ -41393,7 +41393,7 @@ function showImportPreview(out, prep) {
   lines.forEach(([n, label, lvl]) => {
     if (!n) return;
     const row = el('div', 'find f-' + lvl);
-    row.appendChild(el('div', 'm', lvl === 'ok' ? '\u2713' : lvl === 'warn' ? '!' : '\u00b7'));
+    row.appendChild(el('div', 'm', lvl === 'ok' ? '\u2713' : lvl === 'warn' ? '!' : '·'));
     row.appendChild(el('div', null, n + ' ' + label));
     box.appendChild(row);
   });
@@ -41405,7 +41405,7 @@ function showImportPreview(out, prep) {
     fl.style.marginTop = '9px';
     fl.appendChild(el('div', 'rs', 'Rows worth a look'));
     flagged.forEach(r => fl.appendChild(el('div', 'sub',
-      'line ' + r.line + ' \u00b7 ' + r.name.slice(0, 40)
+      'line ' + r.line + ' · ' + r.name.slice(0, 40)
       + ' \u2014 ' + r.issues.join(', '))));
     out.appendChild(fl);
   }
@@ -42069,7 +42069,7 @@ function renderCandidateList(out, res, g) {
     left.appendChild(nm);
     left.appendChild(el('div', 'sub',
       [b.forGap, b.dist, b.proof ? b.proof + ' proof' : null, b.why]
-        .filter(Boolean).join(' \u00b7 ')));
+        .filter(Boolean).join(' · ')));
     /* And what it would do to the shape, in the same words the chart and
        the offer screen use. A candidate arrives with a proof and a
        distillery, so this can say more here than it can about a line in an
@@ -42119,7 +42119,7 @@ function renderCandidateList(out, res, g) {
    the two screens read as one app. */
 const FLIGHT_MODES = [
   { id: 'run', label: 'Run one',
-    hint: n => n + ' flights \u00b7 search, filter and sort them',
+    hint: n => n + ' flights · search, filter and sort them',
     art: '<path d="M12 20h10l-1 14a4 4 0 0 1-8 0z"/>'
       + '<path d="M25 20h10l-1 14a4 4 0 0 1-8 0z" fill="currentColor"'
       + ' opacity=".3"/>'
@@ -42500,7 +42500,7 @@ function showQuadrant(title, sub, rows, say) {
       const left = el('div');
       left.appendChild(el('div', 'nm oneline', r.name));
       left.appendChild(el('div', 'sub', say ? say(r) :
-        r.owned + ' owned \u00b7 ' + (r.poured
+        r.owned + ' owned · ' + (r.poured
           ? r.poured + ' pour' + (r.poured === 1 ? '' : 's')
           : 'never poured')));
       row.appendChild(left);
@@ -44180,7 +44180,7 @@ function buddiesProposals(box) {
     }
     body.appendChild(nm);
     body.appendChild(el('div', 'sub', (p.byName || 'Someone')
-      + ' \u00b7 ' + p.pours.length + ' pours \u00b7 ' + p.summary));
+      + ' · ' + p.pours.length + ' pours · ' + p.summary));
     body.appendChild(el('div', 'src', asks.note));
     r.appendChild(el('div', 'm', '\u25c8'));
     r.appendChild(body);
@@ -44239,7 +44239,7 @@ function renderTonight(box) {
   wrap.style.marginTop = '0';
   wrap.style.paddingTop = '0';
   wrap.style.borderTop = '0';
-  wrap.appendChild(el('h3', null, 'You could pour tonight \u00b7 '
+  wrap.appendChild(el('h3', null, 'You could pour tonight · '
     + list.length));
   /* The label stays put and the flights scroll under it, so the rest of the
      card - the flavour chips, Design one, Close - is still reachable on a
@@ -44262,16 +44262,31 @@ function renderTonight(box) {
       : 'Nothing held but the question';
     (byShape[key] = byShape[key] || []).push(f);
   });
+  /* THE SHAPE IS THE ROW, and its flights open under it. Grouping alone
+     changed nothing he could feel: thirty-eight titles were still
+     thirty-eight titles with headings sprinkled through them (BZ,
+     2026-10-19, from a screenshot: "so no changes?"). Five rows is a
+     thing to choose from. */
   Object.keys(byShape).sort((x, y) => byShape[y].length - byShape[x].length)
     .forEach(key => {
-      const head = el('div', 'rs', key.toUpperCase() + '  \u00b7  '
-        + byShape[key].length);
-      head.style.marginTop = '8px';
+      const open = { on: false };
+      const under = el('div');
+      under.hidden = true;
+      const head = el('button', 'portstep');
+      head.type = 'button';
+      const draw = () => {
+        head.textContent = (open.on ? '−  ' : '+  ') + key
+          + '  ·  ' + byShape[key].length;
+        under.hidden = !open.on;
+      };
+      head.onclick = () => { open.on = !open.on; draw(); };
+      draw();
       roll.appendChild(head);
       byShape[key].forEach(f => {
         const r = el('button', 'portstep');
         r.type = 'button';
-        r.textContent = f.title + '  \u00b7  ' + f.pours + ' pours'
+        r.style.paddingLeft = '18px';
+        r.textContent = f.title + '  ·  ' + f.pours + ' pours'
           + (f.lastRun ? '' : ', never run');
         r.onclick = () => {
           const full = all.filter(x => x.title === f.title)[0];
@@ -44282,8 +44297,9 @@ function renderTonight(box) {
           closeModal();
           showFlight(full);
         };
-        roll.appendChild(r);
+        under.appendChild(r);
       });
+      roll.appendChild(under);
     });
   wrap.appendChild(roll);
 
@@ -44409,7 +44425,7 @@ function tasteLayerPanel(into, ax) {
   const lay = L.tasteLayer(S.catalog, S.bottles, ax.id);
   if (!lay) return;
   const card = el('div', 'sheet layer');
-  card.appendChild(el('h3', null, lay.label + ' \u00b7 ' + ax.pct + '%'));
+  card.appendChild(el('h3', null, lay.label + ' · ' + ax.pct + '%'));
   card.appendChild(el('div', 'sub', lay.rings.length
     ? 'On ' + lay.of + ', divided into ' + L.andList(lay.rings) + '.'
     : 'On ' + lay.of + '.'));
@@ -44722,7 +44738,7 @@ function renderModeLine(box) {
     /* NOT WHEN IT IS EMPTY (BZ). "Wanted · 0" opens a list of nothing on the
        busiest header in the app. */
     const want = (S.wish || []).length;
-    wish.textContent = 'Wanted \u00b7 ' + want;
+    wish.textContent = 'Wanted · ' + want;
     wish.hidden = !want;
   }
 
@@ -44824,7 +44840,7 @@ function renderOffer(box) {
           .map(k => k === 'proof' ? facts[k] + ' proof'
             : k === 'age' ? facts[k] + ' year'
             : k === 'sub' ? L.typeLabel(facts[k]) : facts[k])
-          .join(' \u00b7 ') + (facts.peated ? ' \u00b7 peated' : '') + '.'
+          .join(' · ') + (facts.peated ? ' · peated' : '') + '.'
       : ranked.length + ' names read \u2014 '
         + (worth ? worth + ' worth your attention.'
                  : 'none your shelf argues for.')));
@@ -45151,7 +45167,7 @@ function renderSuggestionResults(box) {
       const l2 = el('div');
       l2.appendChild(el('div', 'nm', r.name));
       l2.appendChild(el('div', 'sub', 'Suggested: ' + r.label
-        + (r.at ? ' \u00b7 ' + r.at : '')));
+        + (r.at ? ' · ' + r.at : '')));
       row.appendChild(l2);
       row.appendChild(el('div', 'pf', r.verdict
         ? L.sentenceCase(r.verdict) : 'Not poured yet'));
@@ -45398,7 +45414,7 @@ function renderGaps(box) {
       const band = p && p.msrp ? L.priceBand(p.msrp) : null;
       nm.appendChild(el('span', 'pourtag blend',
         band && (band === 'vault' || band === 'special')
-          ? 'sealed \u00b7 ' + band : 'sealed, and yours'));
+          ? 'sealed · ' + band : 'sealed, and yours'));
       // And the action, on the finding: this is the row where the decision is
       // made.
       if (p) {
@@ -45424,7 +45440,7 @@ function renderGaps(box) {
       g.kind === 'wish' ? '\u2661'
       : g.kind === 'flight' ? '\u2605'
       : g.kind === 'extend' ? '\u2197'
-      : g.kind === 'contrast' ? '\u21c4' : '\u00b7'));
+      : g.kind === 'contrast' ? '\u21c4' : '·'));
     r.appendChild(body);
     // Dismissable directly, rather than only after a search you already
     // knew would fail.
@@ -45647,7 +45663,7 @@ function shopBottleView(box, cand, mid) {
     g.items.forEach(x => {
       const row = el('div', 'find f-' + x.level);
       row.appendChild(el('div', 'm', x.level === 'ok' ? '\u2713'
-        : x.level === 'warn' ? '!' : '\u00b7'));
+        : x.level === 'warn' ? '!' : '·'));
       row.appendChild(el('div', null, x.msg));
       vcard.appendChild(row);
     });
@@ -45679,7 +45695,7 @@ function shopBottleView(box, cand, mid) {
       const left = el('div');
       left.appendChild(el('div', 'nm oneline', p.name));
       left.appendChild(el('div', 'sub', [n + (n === 1 ? ' bottle' : ' bottles'),
-        open ? 'open' : 'sealed'].join(' \u00b7 ')));
+        open ? 'open' : 'sealed'].join(' · ')));
       r.appendChild(left);
       r.appendChild(el('div', 'pf', L.proofCell(p)));
       r.onclick = () => showBottle(p.k);
@@ -47650,7 +47666,7 @@ function renderUsers(box) {
           /* --rust, as every other fault. --err does not exist and would fall back
              to text color. */
           bad.style.color = 'var(--rust)';
-          bad.textContent = h.faults.map(f => f.what).join(' \u00b7 ');
+          bad.textContent = h.faults.map(f => f.what).join(' · ');
           left.appendChild(bad);
         }
       }
@@ -48178,7 +48194,7 @@ function contribAutoAdded(card, auto) {
     + 'own in the last ' + L.INTAKE_HOLD_DAYS + ' days'));
   selectRows(more, auto, {
     row: (p, onPick) => pickRow(p.name || p._key, [p.dist,
-      p.proof ? p.proof + ' proof' : null].filter(Boolean).join(' \u00b7 '),
+      p.proof ? p.proof + ' proof' : null].filter(Boolean).join(' · '),
       onPick),
     actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
       + (chosen.length === 1 ? ' entry' : ' entries') + ' added on their own',
@@ -48336,7 +48352,7 @@ function libraryRemovedList(card) {
 function libraryTakeOutPicker(out, hits) {
   selectRows(out, hits, {
     row: (p, onPick) => pickRow(p.name, [p.dist, p.proof ? p.proof + ' proof'
-      : null].filter(Boolean).join(' \u00b7 '), onPick),
+      : null].filter(Boolean).join(' · '), onPick),
     actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
       + (chosen.length === 1 ? ' entry' : ' entries') + ' from the library',
       () => libraryTakeOut(chosen, b, 'removed by an admin'))]]
@@ -48439,7 +48455,7 @@ function contribRow(r, verdict, onPick) {
   left.appendChild(onPick ? pickName('nm', title) : el('div', 'nm', title));
   left.appendChild(el('div', 'sub',
     [r.entry.dist, r.entry.proof ? r.entry.proof + ' proof' : null,
-     r.entry.fin].filter(Boolean).join(' \u00b7 ')));
+     r.entry.fin].filter(Boolean).join(' · ')));
   /* ALREADY IN THE LIBRARY? Only where a decision is being asked for - the
      rows with a tick - because the lists of what went in and what was dropped
      are a record rather than a queue (BZ: "don't see how to match to an
@@ -48455,7 +48471,7 @@ function contribRow(r, verdict, onPick) {
   const mine = FB.user && r.uid === FB.user.uid;
   left.appendChild(el('div', 'src',
     'from ' + (mine ? 'you' : (r.entry.by || 'somebody'))
-    + (verdict && verdict.why ? ' \u00b7 ' + verdict.why : '')));
+    + (verdict && verdict.why ? ' · ' + verdict.why : '')));
   item.appendChild(left);
 
   return item;
@@ -48919,8 +48935,8 @@ function libraryFillStart(byKey, after) {
       m.appendChild(warn);
     }
     m.appendChild(el('div', 'sub',
-      lists.done.length + ' done \u00b7 ' + lists.todo.length + ' need '
-      + 'attention \u00b7 ' + lists.waiting.length + ' resting. The library '
+      lists.done.length + ' done · ' + lists.todo.length + ' need '
+      + 'attention · ' + lists.waiting.length + ' resting. The library '
       + 'is ' + lists.score + '% complete.'));
     m.appendChild(el('div', 'sub',
       'Each is looked up once, and only gaps are filled. '
@@ -49297,7 +49313,7 @@ function libWaitingLine() {
       + 'to accept or decline' : ' bottles offered by others, to accept or '
       + 'decline'));
   }
-  return bits.join(' \u00b7 ');
+  return bits.join(' · ');
 }
 
 function renderLibraryScreen() {
@@ -49489,7 +49505,7 @@ function renderLibrary(box) {
         left.appendChild(el('div', 'nm', p.name));
         left.appendChild(el('div', 'sub',
           [p.dist, p.proof ? p.proof + ' proof' : null, p.fin]
-            .filter(Boolean).join(' \u00b7 ') || '\u2014'));
+            .filter(Boolean).join(' · ') || '\u2014'));
         if (gaps.length) {
           left.appendChild(el('div', 'src', 'no ' + gaps.join(', no ')));
         }
@@ -50000,7 +50016,7 @@ function renderDiag() {
     if (folds) {
       const d = el('details', 'advanced');
       const sum = el('summary');
-      sum.textContent = title + ' \u00b7 this device';
+      sum.textContent = title + ' · this device';
       d.appendChild(sum);
       card.appendChild(d);
       card.__body = d;
@@ -50868,7 +50884,7 @@ function openDiagFor(uid, d) {
       [rec.version ? 'v' + rec.version : null,
        rec.at ? L.todayISO(new Date(rec.at)) : null,
        rec.bottles ? rec.bottles + ' bottles' : null]
-        .filter(Boolean).join(' \u00b7 ')
+        .filter(Boolean).join(' · ')
       || 'Published with no details.'));
     const pre = el('div', 'src');
     pre.style.cssText = 'white-space:pre-wrap;font-size:12px;'
@@ -51170,7 +51186,7 @@ function libraryCleanUpFill(box, after) {
   const rows = lists.todo.concat(lists.waiting);
   if (!rows.length) return;
   const d = el('details', 'sheet');
-  d.appendChild(el('summary', null, 'Still missing \u00b7 ' + rows.length
+  d.appendChild(el('summary', null, 'Still missing · ' + rows.length
     + (lists.stopped ? ' (' + lists.stopped + ' no longer asked)' : '')));
   d.appendChild(askAllRow(all, rows, after));
   rows.forEach(row => {
@@ -51234,7 +51250,7 @@ function libraryShelfSteps(box, all, after) {
           left.appendChild(el('div', 'nm oneline', x.name));
           // The actual words, which is the whole of the decision.
           const words = [tn.nose, tn.palate, tn.finish]
-            .filter(Boolean).join(' \u00b7 ');
+            .filter(Boolean).join(' · ');
           left.appendChild(el('div', 'sub',
             words ? '\u201c' + words.slice(0, 140) + '\u201d'
                   : '(no words on it)'));
@@ -51637,7 +51653,7 @@ function openLibraryCleanUp() {
                 nm.style.cssText = 'background:none;border:0;padding:0;'
                   + 'text-align:left;font:inherit;color:inherit;'
                   + 'cursor:pointer;white-space:normal';
-                const bits = String(sideText).split(' \u00b7 ');
+                const bits = String(sideText).split(' · ');
                 nm.textContent = bits[0];
                 const k2 = (it.keys || [])[si] || L.libKey(bits[0].trim());
                 nm.onclick = () => {
@@ -51773,7 +51789,7 @@ function openLibraryCleanUp() {
               /* THE KEYS THE CHECK FOUND, not names read back off the screen: two
                  entries differing by a stray space print identically. */
               const sides = String(it.text).split('  ==  ')
-                .map(x => x.split(' \u00b7 ')[0].trim());
+                .map(x => x.split(' · ')[0].trim());
               /* RESOLVED, not derived. Two rows printed identically derive the same key,
                  and the guard below refuses to merge a key with itself;
                  asking the library which entries they are gives two keys. */
@@ -52092,7 +52108,7 @@ function showPourChoice(p, who) {
         /* GUARDED: filter(Boolean) was the guard, and a blank category stopped
            answering '' on 2026-10-03 - so this gained a word it never had. */
         [p.dist, p.proof ? p.proof + ' proof' : null,
-          p.sub ? L.typeLabel(p.sub) : null].filter(Boolean).join(' \u00b7 ')));
+          p.sub ? L.typeLabel(p.sub) : null].filter(Boolean).join(' · ')));
     }
     if ((who || []).length) {
       const prop = el('button', 'btn wide btn-gold',
@@ -52539,7 +52555,7 @@ function renderPourFind() {
     const left = el('div');
     left.appendChild(el('div', 'nm oneline', h.name));
     left.appendChild(el('div', 'sub', [h.dist, h.open ? 'open' : 'sealed']
-      .filter(Boolean).join(' \u00b7 ')));
+      .filter(Boolean).join(' · ')));
     r.appendChild(left);
     r.appendChild(pourIcon(h.k, () => { renderPourFind(); renderPourWhere(); }));
     card.appendChild(r);
@@ -53138,8 +53154,8 @@ function awayResultBox(r) {
 
   const head = el('div', 'sub');
   head.textContent = r.items.length + ' read'
-    + (r.owned ? ' \u00b7 you own ' + r.owned : '')
-    + (r.wanted ? ' \u00b7 ' + r.wanted + ' on your wishlist' : '');
+    + (r.owned ? ' · you own ' + r.owned : '')
+    + (r.wanted ? ' · ' + r.wanted + ' on your wishlist' : '');
   box.appendChild(head);
   /* SAY THEY ARE TAPPABLE: a row that does something but looks like a list
      is a feature nobody finds. */
@@ -53164,7 +53180,7 @@ function awayResultBox(r) {
     if (it.sure && it.sure !== 'high') bits.push('read as ' + it.sure);
     const left = el('div');
     left.appendChild(nm);
-    if (bits.length) left.appendChild(el('div', 'src', bits.join(' \u00b7 ')));
+    if (bits.length) left.appendChild(el('div', 'src', bits.join(' · ')));
     row.appendChild(left);
     if (it.own) row.appendChild(el('span', 'tag wood', 'you own it'));
     else if (it.want) row.appendChild(el('span', 'tag wine', 'wishlist'));
@@ -53502,7 +53518,7 @@ function renderAway() {
       left.appendChild(el('div', 'sub',
         [p2.dist, p2.proof ? p2.proof + ' proof' : null,
           p2.sub ? L.typeLabel(p2.sub) : null]
-          .filter(Boolean).join(' \u00b7 ')));
+          .filter(Boolean).join(' · ')));
       r.appendChild(left);
       r.onclick = () => {
         parts[parts.length - 1] = p2.name;
@@ -53707,7 +53723,7 @@ function renderAway() {
     }
     openModal('Worth it?', m => {
       m.appendChild(el('div', 'sub', nm
-        + (place ? ' \u00b7 ' + place : '')));
+        + (place ? ' · ' + place : '')));
       const row = el('div', 'chiprow');
       row.style.marginTop = '10px';
       L.VERDICTS.forEach(v => {
@@ -53800,7 +53816,7 @@ function guestRungPicker() {
     const c = el('button', 'chip', L.TASTE_VIEW.label);
     c.type = 'button';
     c.dataset.on = (GUEST.rung === L.TASTE_VIEW.id);
-    c.title = L.TASTE_VIEW.hint + ' \u00b7 ' + byTaste.length;
+    c.title = L.TASTE_VIEW.hint + ' · ' + byTaste.length;
     c.onclick = () => { GUEST.rung = L.TASTE_VIEW.id; GUEST.type = null;
       renderGuest(); };
     rr.appendChild(c);
@@ -53809,7 +53825,7 @@ function guestRungPicker() {
     const c = el('button', 'chip', r.label);
     c.type = 'button';
     c.dataset.on = (GUEST.rung === r.id);
-    c.title = r.hint + ' \u00b7 ' + has[r.id];
+    c.title = r.hint + ' · ' + has[r.id];
     c.onclick = () => { GUEST.rung = r.id; GUEST.type = null; renderGuest(); };
     rr.appendChild(c);
   });
@@ -53863,8 +53879,8 @@ function guestTypeChips(out, res) {
     c.onclick = () => { GUEST.type = id; renderGuest(); };
     tr.appendChild(c);
   };
-  chip(null, 'All \u00b7 ' + res.list.length);
-  kinds.forEach(k => chip(k.sub, L.typeLabel(k.sub) + ' \u00b7 ' + k.n));
+  chip(null, 'All · ' + res.list.length);
+  kinds.forEach(k => chip(k.sub, L.typeLabel(k.sub) + ' · ' + k.n));
   out.appendChild(tr);
   return GUEST.type
     ? res.list.filter(x => String(x.sub || '').toLowerCase() === GUEST.type)
@@ -53901,7 +53917,7 @@ function guestTasteBox(box) {
     left2.appendChild(el('div', 'nm oneline', p.name));
     left2.appendChild(el('div', 'sub',
       [p.dist, p.sub ? L.typeLabel(p.sub) : null, p.proof ? p.proof + ' proof' : null]
-        .filter(Boolean).join(' \u00b7 ')));
+        .filter(Boolean).join(' · ')));
     const tn2 = L.tastingNotes(p);
     const taste2 = (tn2.filter(x => /palate/i.test(x.label))[0]
       || tn2.filter(x => /nose/i.test(x.label))[0] || {}).text;
@@ -53955,7 +53971,7 @@ function renderGuest() {
         const left = el('div');
         left.appendChild(el('div', 'nm oneline', p.name));
         left.appendChild(el('div', 'sub',
-          [p.dist, p.sub ? L.typeLabel(p.sub) : null, p.region].filter(Boolean).join(' \u00b7 ')));
+          [p.dist, p.sub ? L.typeLabel(p.sub) : null, p.region].filter(Boolean).join(' · ')));
         b.appendChild(left);
         b.onclick = () => {
           /* One answer at a time: a named bottle replaces a phrase, and
@@ -54078,7 +54094,7 @@ function renderGuest() {
     left.appendChild(el('div', 'sub',
       [p.dist, p.region || (p.sub ? L.typeLabel(p.sub) : null),
         p.proof ? p.proof + ' proof' : null]
-        .filter(Boolean).join(' \u00b7 ')));
+        .filter(Boolean).join(' · ')));
     /* WHAT IT TASTES OF, so a final choice can be judged (BZ). Palate notes
        are short enough to fit on the row; the nose stands in when there is
        no palate, and neither is invented when the bottle has nothing. */
@@ -54651,7 +54667,7 @@ function vennSvg(sets, regions, names, onPick) {
       e.setAttribute('tabindex', '0');
       e.setAttribute('role', 'button');
       const ttl = mk('title', {});
-      ttl.textContent = L.vennLabel(r, names, 'me') + ' \u00b7 ' + r.count;
+      ttl.textContent = L.vennLabel(r, names, 'me') + ' · ' + r.count;
       e.appendChild(ttl);
       e.addEventListener('click', () => onPick(r));
       e.addEventListener('keydown', ev => {
@@ -55763,7 +55779,7 @@ function searchFirst(f, nameRow, onPick, onNone) {
       b.type = 'button';
       b.appendChild(el('div', 'nm', hit.name));
       const sub = [hit.dist, hit.proof ? hit.proof + ' proof' : null]
-        .filter(Boolean).join(' \u00b7 ');
+        .filter(Boolean).join(' · ');
       if (sub) b.appendChild(el('div', 'sub', sub));
       b.onclick = () => {
         input.value = hit.name;
@@ -56676,7 +56692,7 @@ function renderFlights() {
       bits.push(ready.open + ' of its ' + ready.total + ' core open');
     }
     if (runAt) bits.push('run ' + L.showDate(runAt));
-    c.appendChild(el('div', 'meta', bits.join(' \u00b7 ')));
+    c.appendChild(el('div', 'meta', bits.join(' · ')));
     c.onclick = () => showFlight(f);
     box.appendChild(c);
   });
@@ -56808,7 +56824,7 @@ function showLessons() {
       body.appendChild(el('div', 'sub', l.ask));
       body.appendChild(el('div', 'src', l.ready
         ? l.pours + ' pours off what is open. ' + l.why : l.blocked));
-      r.appendChild(el('div', 'm', l.ready ? '\u2605' : '\u00b7'));
+      r.appendChild(el('div', 'm', l.ready ? '\u2605' : '·'));
       r.appendChild(body);
       if (l.ready) {
         r.onclick = () => { closeModal(); flightBuilder(l.id); };
@@ -56821,19 +56837,26 @@ function showLessons() {
     const flav = L.flavourOptions(S.catalog, S.bottles);
     if (flav.length) {
       box.appendChild(el('h3', null, 'Or hold a flavor still'));
-      const fr = el('div', 'actionrow');
+      /* ROWS, NOT PILLS. He said he hated the pills on the gift links
+         (2026-10-17), said it again of the designer (2026-10-19), and
+         these were still here - a row of six chips with their counts
+         hidden in a tooltip nobody sees on a phone. Each is a shape like
+         any other now, and says what it would reach. */
+      const fr = el('div');
       fr.style.marginTop = '6px';
       flav.slice(0, 6).forEach(o => {
-        const c = el('button', 'chip',
-          o.word.charAt(0).toUpperCase() + o.word.slice(1));
-        c.title = o.n + ' bottles across ' + o.houses + ' houses';
-        c.onclick = () => {
+        const r = el('button', 'portstep');
+        r.type = 'button';
+        r.textContent = 'Hold ' + o.word + ', let everything else move'
+          + '  ·  ' + o.n + ' bottles across ' + o.houses
+          + ' houses';
+        r.onclick = () => {
           const built = L.flavourFlight(o.word, S.catalog, S.bottles, {});
           if (!built) { toast('Not enough open bottles for that one'); return; }
           closeModal();
           showFlight(built);
         };
-        fr.appendChild(c);
+        fr.appendChild(r);
       });
       box.appendChild(fr);
       box.appendChild(el('div', 'src', 'Everything varies except the '
@@ -56934,7 +56957,7 @@ function showPooled(pool, gain, who) {
       body.appendChild(el('div', 'nm', l.name));
       body.appendChild(el('div', 'sub', l.note || l.ask));
       if (plan) body.appendChild(el('div', 'src', plan.summary));
-      r.appendChild(el('div', 'm', l.gain === 'new' ? '\u2605' : '\u00b7'));
+      r.appendChild(el('div', 'm', l.gain === 'new' ? '\u2605' : '·'));
       r.appendChild(body);
       r.onclick = () => { closeModal(); showPooledFlight(l, pool); };
       box.appendChild(r);
@@ -57386,7 +57409,7 @@ function renderProposal(out, res, varId, premise, pool) {
   head.style.marginTop = '11px';
   head.appendChild(el('div', 'rs', 'Holding ' + res.holds.join(' and ')
     + ' at ' + res.held + (res.alternatives
-      ? '  \u00b7  ' + res.alternatives + ' other groupings possible' : '')));
+      ? '  ·  ' + res.alternatives + ' other groupings possible' : '')));
   out.appendChild(head);
 
   const list = el('div', 'recent');
@@ -57418,7 +57441,7 @@ function renderProposal(out, res, varId, premise, pool) {
     b.appendChild(el('h3', null, res.buy.own ? 'Open this' : 'One to buy'));
     b.appendChild(el('div', 'nm', res.buy.p.name));
     b.appendChild(el('div', 'sub', [res.buy.p.dist, res.buy.p.proof,
-      res.buy.p.msrp ? '$' + res.buy.p.msrp : null].filter(Boolean).join(' \u00b7 ')));
+      res.buy.p.msrp ? '$' + res.buy.p.msrp : null].filter(Boolean).join(' · ')));
     b.appendChild(el('div', 'rd', res.buy.why));
     out.appendChild(b);
   }
@@ -57493,7 +57516,7 @@ function flightEditor(f) {
          the room wants more). */
       const tabs = el('div', 'chiprow');
       [['core', 'The pours'], ['ext', 'The bench']].forEach(([k, label]) => {
-        const c = el('button', 'chip', label + ' \u00b7 '
+        const c = el('button', 'chip', label + ' · '
           + ((f[k] || []).length));
         c.type = 'button';
         c.dataset.on = (which.key === k);
@@ -57507,7 +57530,7 @@ function flightEditor(f) {
         const pd = prod(p.k);
         const r = el('div', 'pourrow');
         r.appendChild(el('div', null, (p.letter || String.fromCharCode(65 + i))
-          + ' \u00b7 ' + (pd ? pd.name + '  ' + pd.proof : p.card)));
+          + ' · ' + (pd ? pd.name + '  ' + pd.proof : p.card)));
         const mv = el('div', 'mv');
         [['\u2191', -1], ['\u2193', 1]].forEach(([g, d]) => {
           const b = el('button', null, g);
@@ -57951,7 +57974,7 @@ function showFlight(f) {
     const b = el('div', 'body');
     const line = el('div', 'b');
     line.appendChild(document.createTextNode(
-      (p.letter || String.fromCharCode(65 + i)) + ' \u00b7 '
+      (p.letter || String.fromCharCode(65 + i)) + ' · '
       + (L.pourLabel(p, S.catalog) || p.card || '')));
     // A wish and a blend are not bottles on the shelf, and the ladder should
     // not pretend otherwise.
@@ -57985,7 +58008,7 @@ function showFlight(f) {
     e.appendChild(el('h3', null, 'On the bench'));
     f.ext.forEach(x => {
       const pd = prod(x.k);
-      e.appendChild(el('div', 'sub', (pd ? pd.name + ' \u00b7 ' + pd.proof : x.card)));
+      e.appendChild(el('div', 'sub', (pd ? pd.name + ' · ' + pd.proof : x.card)));
     });
     body.appendChild(e);
   }
@@ -58123,7 +58146,7 @@ const DEVTAG = (() => {
       window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true,
       navigator.maxTouchPoints > 0, window.innerWidth);
-    const short = n.split(' \u00b7 ')[0]
+    const short = n.split(' · ')[0]
       .replace(/[^A-Za-z]/g, '').slice(0, 3).toLowerCase();
     return '[' + (short || 'dev') + ']';
   } catch (e) { return '[dev]'; }
@@ -58223,16 +58246,16 @@ function logNavGeometry() {
     appLog('boot' + (after ? ' AFTER AN UPDATE' : '') + ': nav '
       + Math.round(r.top) + '-' + Math.round(r.bottom)
       + ' in ' + Math.round(vh)
-      + ' \u00b7 ' + n.querySelectorAll('button').length + ' buttons'
+      + ' · ' + n.querySelectorAll('button').length + ' buttons'
       /* TWO NUMBERS, EACH UNDER ITS OWN NAME. This said "safe-area" and
          printed --nav-h, the height of the bar, so every log ever written
          answered "is the bottom inset the problem" with something else and
          looked like an answer (2026-09-30). The nav resolves the real inset
          itself - it carries padding-bottom: env(safe-area-inset-bottom) - so
          its computed padding IS the number. */
-      + ' \u00b7 bar ' + (getComputedStyle(document.documentElement)
+      + ' · bar ' + (getComputedStyle(document.documentElement)
         .getPropertyValue('--nav-h') || '?').trim()
-      + ' \u00b7 safe-area ' + getComputedStyle(n).paddingBottom
+      + ' · safe-area ' + getComputedStyle(n).paddingBottom
       + (offscreen ? ' \u2014 OFF SCREEN' : ''));
   } catch (e) { /* a diagnostic must never be the thing that breaks */ }
 }
@@ -59339,7 +59362,7 @@ function showTastingOffers(offers) {
       left.appendChild(el('div', 'nm oneline', o.row.name));
       left.appendChild(el('div', 'sub', [o.row.dist,
         o.row.proof ? o.row.proof + ' proof' : null, o.row.fin]
-        .filter(Boolean).join(' \u00b7 ') || o.where));
+        .filter(Boolean).join(' · ') || o.where));
       left.appendChild(el('div', 'src', o.where));
       /* The note keeps its author. A note nobody wrote silently becoming
          yours is how a shelf fills with opinions no one holds. */
@@ -59483,7 +59506,7 @@ function popularRef() {
   return firebase.database().ref('bz-apps/whisky/popular');
 }
 
-/* "On 6 shelves \u00b7 poured by 4 lately", under a bottle's name. */
+/* "On 6 shelves · poured by 4 lately", under a bottle's name. */
 function popularNote(box, name) {
   const say = L.popularLine(L.popularOf(POP.totals, name));
   if (say) box.appendChild(el('div', 'src', say));
@@ -61354,8 +61377,8 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.91</span>'
-    + ' \u00b7 <span id="buildTime"></span>';
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.92</span>'
+    + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
   // Header sub-line and build stamp, kept in sync with the constants.
