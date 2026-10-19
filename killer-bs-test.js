@@ -30158,12 +30158,34 @@ sec('§489 a suggestion is a shape, not a name');
   /* WHAT A FLIGHT IS, in a line. BZ, 2026-10-19, of his own titles in a
      list of what to pour tonight: "these names are fun, but meaningless".
      They are his and they are good, but a name is not what you choose a
-     flight BY. */
-  const said2 = L.flightSays({ core: Object.keys(cat).map(k => ({ k: k })) },
-    cat);
-  eq('it says what is held', /bourbon/.test(said2), true);
-  eq('and what moves, with how far',
-    /proof 80→126/.test(said2), true);
+     flight BY.
+
+     AND NOT THE FACTS IN A ROW EITHER. "bourbon, one house, proof 80 to
+     126" was the first answer, and his reply was "not the literal topic -
+     a descriptive topic that explains the flight idea". So it is said as a
+     subject and a question asked of it, in that order, and the whole
+     sentence is asserted: a shape test here would pass on the crate
+     label. */
+  eq('a subject, then what is asked of it',
+    L.flightSays({ core: Object.keys(cat).map(k => ({ k: k })) }, cat),
+    'Bourbon from One House, 80 to 126 proof');
+  /* THE HOUSE IS NAMED AS WRITTEN. L.houseKey folds the apostrophe out of
+     Angel's Envy, which matching needs and a screen does not.
+
+     THREE POURS AT LEAST, because L.flightHolds answers nothing below
+     three - two bottles have everything in common and nothing to say. */
+  const casks = {};
+  ['port', 'sherry', 'tokaji'].forEach((w, i) => {
+    casks['c' + i] = { dist: "Angel's Envy", sub: 'bourbon', proof: 100,
+                       fin: w, obsc: 'known', msrp: 50 };
+  });
+  const three = { core: Object.keys(casks).map(k => ({ k: k })) };
+  eq('the house is the pour\u2019s own name, not its key',
+    L.flightSays(three, casks),
+    "Bourbon from Angel's Envy at 100 proof across three casks");
+  /* A COUNT IS A WORD. Three, not 3: it is a sentence. */
+  eq('small counts are spelled',
+    /across three casks$/.test(L.flightSays(three, casks)), true);
   eq('a flight of one pour says nothing',
     L.flightSays({ core: [{ k: 'h0' }] }, cat), '');
 

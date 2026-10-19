@@ -2,6 +2,14 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.8.96  ·  2026-10-19 01:58 PM ET
+
+A flight's topic is a sentence, not the facts in a row. BZ: not the literal topic, a descriptive topic that explains the flight idea. The line was bourbon, angels envy, 4 casks, which is true and reads like a label on a crate. A flight has a subject, which is what every pour in it IS, and a question asked of that subject, so it is said that way round: Bourbon from Angel's Envy across four casks. Rye, 90 to 125 proof. Scotch at 92 to 93.4 proof across six regions. A held number belongs to the subject because it is the thing standing still, and a tolerance means it says the range it actually holds rather than a single figure. Counts are words, since it is a sentence: across three casks, not across 3 casks. And the house is named as the pour writes it, because the dimension answers a KEY and a key is not a name, so Angels Envy and Barrell Craft Spirit were the matching forms leaking onto a screen. One door still: the old list function is gone rather than kept beside the new one.
+
+## v2.8.95  ·  2026-10-19 01:46 PM ET
+
+The tonight list is topics, not titles. BZ, twice: these names make no sense, need factual descriptions, and then, dont need the fun name, jus the topic. The name was the heading and the facts the small grey line underneath, so the row still read as a list of titles with a footnote. The row is the topic now and the name is not on it at all: bourbon, angels envy, 4 casks, six pours, never run. His titles are good and they are on the flight itself when he opens it; in a list of what to pour tonight they were the thing in the way.
+
 ## v2.8.94  ·  2026-10-19 01:37 PM ET
 
 The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port. BZ: whats the point of the 1 I've not built, not needed. With forty flights he has built every shape this shelf can teach, so the list was nearly always one card or none under a sentence counting it. The sheet answers what to pour tonight; what he has not built is a different question and not one he was asking. L.lessonsFor stays, because the pooled sheet asks it what two shelves can teach that one cannot, which is a question with an answer. And the Angel's Envy pour in Why Is This One Hot now points at the tawny port at 111.6, which is what the flight card already said, rather than the standard port finish at 86.6. He asked for the cask strength; the cask strength is 118.2 and would have broken the flight's own tag, so the card decided it. One line of his flight file changed, and the four other flights that pour the 86.6 bottle are untouched.

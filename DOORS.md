@@ -14,7 +14,7 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1075 |
-| tables | 251 |
+| tables | 252 |
 | carrying a stated purpose | 865 |
 
 ## Tables
@@ -227,6 +227,7 @@ QUESTION, not the name you were going to use.
 - **`L.SHELF_LEAN_BAND`** — THE FLAVOURS THAT SEPARATE THIS SHELF FROM ITSELF.
 - **`L.SHOP_JUNK`** — A pasted page is not a title, and was being read as one.
 - **`L.SLOT_FOR`** — ONE rule for what a library entry is short of, and whether a value may
+- **`L.SMALL_NUMBER`** — WHAT A FLIGHT IS ABOUT, in a line, read off its own pours.
 - **`L.SNACKS`** — cask, because that is what the snack has to sit beside.
 - **`L.SORT_COLUMNS`** — What a column header sorts by
 - **`L.SORT_DOWN`** — Which way each sort runs
@@ -536,7 +537,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightRunAt`** — _no comment above it_
 - **`L.flightRunRecord`** — _no comment above it_
 - **`L.flightRuns`** — _no comment above it_
-- **`L.flightSays`** — WHAT A BUILT FLIGHT IS, in a line, read off its own pours.
+- **`L.flightSays`** — _no comment above it_
 - **`L.flightScore`** — How good a flight this set would make, by the rules BZ actually uses.
 - **`L.flightShape`** — cannot run yet, which is a different thing from a broken one.
 - **`L.flightsLine`** — FLIGHTS: how many are one bottle short of being an evening.
