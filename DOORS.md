@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1079 |
+| functions | 1082 |
 | tables | 252 |
-| carrying a stated purpose | 868 |
+| carrying a stated purpose | 870 |
 
 ## Tables
 
@@ -433,10 +433,13 @@ QUESTION, not the name you were going to use.
 - **`L.detailKey`** — Geometry is redrawn only when this key changes, not on every pinch frame.
 - **`L.deviceLabel`** — WHICH DEVICE a log came from
 - **`L.deviceName`** — _no comment above it_
+- **`L.dimLabel`** — ONE DIMENSION'S VALUE, AS A SCREEN SAYS IT.
 - **`L.dimOf`** — ONE DOOR READS A DIMENSION OFF A BOTTLE, so the picker, the builder and
 - **`L.dimReadings`** — THE DISTINCT VALUES OF ONE DIMENSION among some bottles, in the order
+- **`L.dimSpanSay`** — HOW FAR ONE NUMBER REACHES ACROSS SOME BOTTLES, said
 - **`L.dimSpread`** — _no comment above it_
 - **`L.dimSteps`** — THE NUMBERS WORTH OFFERING FOR A MEASURED DIMENSION
+- **`L.dimUnit`** — _no comment above it_
 - **`L.dimValue`** — _no comment above it_
 - **`L.dimValues`** — AND THE DISTINCT ONES, in the order they appear
 - **`L.directoryEntry`** — what everyone can see.

@@ -33673,6 +33673,73 @@ sec('\u00a7491 standing still is not a theme');
     rows.filter(r => r.id === 'smoke')[0].flights.length, 0);
 }
 
+sec('\u00a7492 a dimension opens its values, not a long list');
+{
+  /* BZ, 2026-10-19, of twenty sentences under Same type: "I expect to
+     select the types and nothing else - if you want to have a nested
+     selection fine but make it nested, not a long list." */
+  const cat = {};
+  const bots = [];
+  const put = (k, dist, sub, proof) => {
+    cat[k] = { k: k, name: k, dist: dist, sub: sub, proof: proof,
+               obsc: 'known', msrp: 50 };
+    bots.push({ id: 'b' + k, k: k, status: 'open' });
+  };
+  /* TWO BOURBON FLIGHTS AND ONE RYE, each three pours from one house. */
+  const mk = (tag, dist, sub, base) => {
+    [0, 1, 2].forEach(i => put(tag + i, dist, sub, base + i));
+    return { title: tag, core: [0, 1, 2].map(i => ({ k: tag + i })) };
+  };
+  const fa = mk('A', 'House One', 'bourbon', 100);
+  const fb = mk('B', 'House Two', 'bourbon', 110);
+  const fc = mk('C', 'House Three', 'rye', 90);
+  const flights = [fa, fb, fc];
+  const list = [{ title: 'A', pours: 3 }, { title: 'B', pours: 3 },
+                { title: 'C', pours: 3 }];
+  const rows = L.tonightRows(list, flights, cat);
+  const type = rows.filter(r => r.id === 'type')[0];
+  eq('the type row holds all three', type.flights.length, 3);
+  /* AND BREAKS INTO THE TYPES, which is the whole of what he asked for. */
+  eq('and offers two types', type.values.length, 2);
+  eq('bourbon leads, with two', type.values[0].label, 'Bourbon');
+  eq('and it carries its own flights', type.values[0].flights.length, 2);
+  eq('rye follows, with one', type.values[1].label, 'Rye');
+  eq('every flight reaches a value',
+    type.values.reduce((n, v) => n + v.flights.length, 0),
+    type.flights.length);
+  /* A NUMBER IS BANDED, so 100, 101 and 102 are one strength and not three
+     rows - the same band the designer holds proof within. */
+  const proof = rows.filter(r => r.id === 'proof')[0];
+  eq('a proof row says a strength, not a reading',
+    /proof$/.test(proof.values[0].label), true);
+  eq('and three flights make three strengths', proof.values.length, 3);
+
+  /* THE LABEL IS THE READER'S WORD, not the matching key. */
+  const ae = { dist: "Angel's Envy", sub: 'bourbon', proof: 100 };
+  eq('a house keeps its apostrophe', L.dimLabel('house', ae),
+    "Angel's Envy");
+  eq('a type is capitalised', L.dimLabel('type', ae), 'Bourbon');
+  eq('a number carries what it counts', L.dimLabel('proof', ae),
+    '100 proof');
+  /* AND A ROW SAYS A SPAN, NOT ONE POUR'S READING. L.dimValue's banding
+     rounds to a multiple of the band, so a flight at 100, 101 and 102 came
+     back "99 proof" - a strength no bottle in it has. */
+  eq('a span says both ends', L.dimSpanSay('proof',
+    [{ proof: 110 }, { proof: 113 }]), '110\u2013113 proof');
+  eq('and one end when they agree', L.dimSpanSay('proof',
+    [{ proof: 100 }, { proof: 100 }]), '100 proof');
+  eq('an age says years', L.dimSpanSay('age',
+    [{ age: 12 }, { age: 18 }]), '12\u201318 years');
+  eq('a word has no span', L.dimSpanSay('type', [{ sub: 'rye' }]), '');
+  eq('and nothing to read has none', L.dimSpanSay('proof', [{}]), '');
+  /* WHAT A NUMBER COUNTS, in one place: 20 YEARS, not 20 proof. Both the
+     label and the span read it, which is why it is its own door. */
+  eq('an age counts years', L.dimUnit(L.dimOf('age')), ' years');
+  eq('and everything else is proof', L.dimUnit(L.dimOf('proof')), ' proof');
+  eq('nothing to say says nothing', L.dimLabel('type', {}), '');
+  eq('and an unknown dimension too', L.dimLabel('nope', ae), '');
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

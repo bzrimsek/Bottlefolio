@@ -201,27 +201,48 @@ function faultsOf() {
       }
       if (!after.open) out.push('More ideas closed the modal');
     }
-    /* THE FLIGHTS SIT UNDER A SHAPE NOW (2026-10-19). The rows are what a
-       flight HOLDS - Same type, Same smoke - and the titles open
-       underneath, so this opens one shape and then presses a flight. The
-       fault it guards against is unchanged: choosing a flight must close
-       the modal, not open the flight behind it. */
-    const opened = await p.evaluate(() => {
-      const head = [...document.querySelectorAll('#overlay .portstep')]
-        .filter(x => /^[+−]/.test(x.textContent.trim()))[0];
-      if (head) head.click();
-      return !!head;
-    });
-    if (!opened) out.push('no shape to open on the suggestions sheet');
-    await p.waitForTimeout(150);
-    const pressed = await p.evaluate(() => {
-      const row = [...document.querySelectorAll('#overlay .portstep')]
+    /* THE SHEET IS TWO FOLDS DEEP NOW (2026-10-19). A dimension opens its
+       VALUES - Same type opens Bourbon, Scotch, Rye - and a value opens its
+       flights, which is BZ's "make it nested, not a long list". So this
+       opens folds until a flight appears rather than assuming one level,
+       and never presses a "build one" row, which opens the designer and
+       would make this step pass for the wrong reason.
+
+       The fault it guards against is unchanged: choosing a flight must
+       close the modal, not open the flight behind it. It caught this very
+       change: with one level assumed, the press landed on "Same price -
+       build one" and the step reported the modal left up. */
+    const FOLD = '#overlay .portstep';
+    const dig = () => p.evaluate(sel => {
+      const head = [...document.querySelectorAll(sel)]
         .filter(x => x.offsetParent !== null
-          && !/^[+−]/.test(x.textContent.trim()))[0];
+          /* A CLOSED one. An open fold still shows its header, with a
+             minus, so taking the first fold head reopened - and closed -
+             the one just opened, three times over. */
+          && /^\+/.test(x.textContent.trim()))[0];
+      if (head) { head.click(); return true; }
+      return false;
+    }, FOLD);
+    const press = () => p.evaluate(sel => {
+      const row = [...document.querySelectorAll(sel)]
+        .filter(x => x.offsetParent !== null
+          && !/^[+\u2212]/.test(x.textContent.trim())
+          && !/build one/.test(x.textContent))[0];
       if (row) row.click();
       return !!row;
-    });
-    if (!pressed) out.push('a shape opened with no flight under it');
+    }, FOLD);
+    let pressed = false;
+    let depth = 0;
+    while (depth < 3 && !pressed) {
+      if (!await dig()) break;
+      await p.waitForTimeout(150);
+      depth++;
+      pressed = await press();
+    }
+    if (!depth) out.push('no shape to open on the suggestions sheet');
+    else if (!pressed) {
+      out.push('opened ' + depth + ' fold(s) and found no flight to press');
+    }
     await p.waitForTimeout(300);
     const chosen = await look();
     if (chosen.open) {

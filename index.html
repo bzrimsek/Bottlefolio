@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.8.98  Build 2026-10-19 02:29 PM ET
+     Version : v2.8.99  Build 2026-10-19 03:03 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.8.99  2026-10-19  A dimension opens its values, not a long list.
 // v2.8.98  2026-10-19  Standing still is not a theme.
 // v2.8.97  2026-10-19  The tonight sheet has a row for each thing the designer can hold, and the tabs read one glass, two, three.
 // v2.8.96  2026-10-19  A flight's topic is a sentence, not the facts in a row.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
 // v2.8.91  2026-10-19  The pooled sheet rebuilds the cast the row was judged on, and the retired builder is gone.
 // v2.8.90  2026-10-19  What your shelf can teach you speaks the designer's language.
-// v2.8.89  2026-10-19  The flight designer no longer calls the service.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.8.98';
-const BUILD_TIME  = '2026-10-19 02:29 PM ET';
+const APP_VERSION = '2.8.99';
+const BUILD_TIME  = '2026-10-19 03:03 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9015,7 +9015,7 @@ L.FEATURES = [
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Flights', src: 'your flights',
-    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its flights. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'What you could pour tonight leads — flights with every bottle already open, in a row for each thing the designer can hold still: Same type, Same house, Same proof and the rest, in the designer’s own words. A flight holds more than one thing, so it is offered under each of them and the counts overlap; the number in the heading is the flights. A row only claims a flight where the shelf could have moved that thing: six unpeated bourbons from one house are not a smoke theme, because no peated bourbon from that house is open to pass over. Tapping a row opens its VALUES — Same type opens Bourbon, Scotch, Rye — and a value opens its flights, so you pick what you want rather than read a list. Where there is nothing to pick between, a value with one flight or a row with one value, the flight is there straight away. A row with nothing yet — Same age, All bottled in bond — offers to build one, and opens the designer already holding that switch. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
     def: 'Cooper walks you through a tasting: a measured pour, then color, '
       + 'nose, body, palate and finish, teaching each one as it comes from the '
@@ -25089,6 +25089,49 @@ L.flightHolds = function (flight, catalog) {
     return vals.every(v => v === vals[0]);
   }).map(d => d.id);
 };
+/* ONE DIMENSION'S VALUE, AS A SCREEN SAYS IT.
+ *
+ * L.dimValue answers a KEY - lowercased, and for the house run through
+ * L.houseKey, which folds the apostrophe out of Angel's Envy and the s off
+ * Barrell Craft Spirits. That is what matching needs and not what a reader
+ * wants, and the rule was written inside L.flightSays until the tonight
+ * sheet needed the same words for its nested rows (rule 30d).
+ *
+ * THE POUR CARRIES THE NAME, so the house is read off the bottle rather
+ * than rebuilt from its key.
+ */
+L.dimLabel = function (id, p) {
+  const d = L.dimOf(id);
+  if (!d) return '';
+  const v = L.dimValue(id, p);
+  if (v === null || v === undefined) return '';
+  if (id === 'house') return (p && p.dist) || L.titleCase(String(v));
+  if (d.flag) return L.titleCase(String(d.label));
+  if (d.numeric) return v + L.dimUnit(d);
+  return L.titleCase(String(v));
+};
+
+L.dimUnit = function (d) {
+  return (d && d.measure === 'YEAR') ? ' years' : ' proof';
+};
+
+/* HOW FAR ONE NUMBER REACHES ACROSS SOME BOTTLES, said: "110–113 proof",
+ * or "100 proof" when they agree.
+ *
+ * NOT L.dimValue's BANDING, which rounds to a multiple of the band - so a
+ * flight at 100, 101 and 102 came back "99 proof", a strength no bottle in
+ * it has. A row must not name a number nobody poured. The flight's own
+ * readings are the honest answer and they group just as well: seven flights
+ * holding proof make five strengths either way.
+ */
+L.dimSpanSay = function (id, products) {
+  const d = L.dimOf(id);
+  const all = L.dimReadings(id, products);
+  if (!d || !d.numeric || !all.length) return '';
+  const lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+  return (lo === hi ? String(lo) : lo + '–' + hi) + L.dimUnit(d);
+};
+
 /* WHAT A FLIGHT HELD BY CHOICE, which is not everything it holds.
  *
  * BZ, 2026-10-19: "only count smoke when it was a choice." Same smoke topped
@@ -25154,11 +25197,37 @@ L.tonightRows = function (list, flights, catalog, open) {
       /* BZ, 2026-10-19: "nothing held but the question is also odd words".
          These are the ones with no single thread, and they belong to no
          dimension - so they are their own row rather than missing. */
-      (held.__none = held.__none || []).push(f);
+      const n = (held.__none = held.__none
+        || { flights: [], by: {} });
+      n.flights.push(f);
+      (n.by.__flat = n.by.__flat || []).push(f);
       return;
     }
-    h.forEach(id => { (held[id] = held[id] || []).push(f); });
+    /* AND UNDER WHICH VALUE OF IT. BZ, 2026-10-19: "I expect to select the
+       types and nothing else - if you want to have a nested selection fine
+       but make it nested, not a long list." Pressing Same type offered
+       twenty sentences; it offers the types now, and a type offers its
+       flights. The pour carries the label (L.dimLabel), and a number is
+       BANDED so 110 and 112 are one strength rather than two rows. */
+    const got = (full.core || []).map(x => (catalog || {})[x.k])
+      .filter(Boolean);
+    h.forEach(id => {
+      /* A NUMBER SAYS ITS SPAN, because one pour's reading is not the
+         flight's strength: six bottles at 110 to 113 are one row saying
+         so, not a row called 110. */
+      const lab = (L.dimOf(id) || {}).numeric
+        ? L.dimSpanSay(id, got) : L.dimLabel(id, got[0]);
+      if (!lab) return;
+      const row = (held[id] = held[id] || { flights: [], by: {} });
+      row.flights.push(f);
+      (row.by[lab] = row.by[lab] || []).push(f);
+    });
   });
+  /* THE VALUES UNDER A ROW, biggest first, so the type he has most
+     flights for is the first thing under Same type. */
+  const spread = bag => Object.keys((bag || {}).by || {})
+    .map(k => ({ label: k, flights: bag.by[k] }))
+    .sort((a, b) => b.flights.length - a.flights.length);
   const rows = L.DIMS.map(d => ({
     id: d.id,
     /* SAME, not one: "One smoke" reads as a quantity of smoke, and what
@@ -25166,7 +25235,8 @@ L.tonightRows = function (list, flights, catalog, open) {
        a quantity either way, so it says All. */
     label: (d.flag ? 'All ' : 'Same ')
       + String(d.label).toLowerCase().replace(/^the /, ''),
-    flights: held[d.id] || []
+    flights: (held[d.id] || {}).flights || [],
+    values: spread(held[d.id])
   }));
   /* BIGGEST FIRST AMONG THE ONES HE CAN POUR, then the offers. L.DIMS order
      is the designer's and is kept inside each half, so an empty row does not
@@ -25175,7 +25245,12 @@ L.tonightRows = function (list, flights, catalog, open) {
     .sort((a, b) => b.flights.length - a.flights.length);
   const none = rows.filter(r => !r.flights.length);
   if (held.__none) {
-    got.push({ id: null, label: 'Everything moves', flights: held.__none });
+    /* NO DIMENSION, SO NO SECOND LEVEL: there is nothing to pick between.
+       One empty value row carries them, and the screen opens straight to
+       the flights. */
+    got.push({ id: null, label: 'Everything moves',
+      flights: held.__none.flights,
+      values: [{ label: '', flights: held.__none.flights }] });
   }
   return got.concat(none);
 };
@@ -25213,12 +25288,6 @@ L.flightSays = function (flight, catalog) {
   if (got.length < 2) return '';
   const held = {};
   L.flightHolds(flight, catalog).forEach(id => { held[id] = 1; });
-  const span = function (id) {
-    const all = L.dimReadings(id, got);
-    if (!all.length) return null;
-    const lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
-    return { lo: lo, hi: hi, one: lo === hi };
-  };
 
   /* THE SUBJECT - what every pour in it is, said as the value and not the
      dimension: "bourbon" tells him more than "one type". Nothing held is
@@ -25230,12 +25299,7 @@ L.flightSays = function (flight, catalog) {
       : 'Bottled in bond';
   }
   if (held.house) {
-    /* THE DIMENSION ANSWERS A KEY, and a key is not a name: L.houseKey
-       folds the apostrophe out of Angel's Envy and the s off Barrell
-       Craft Spirits, which is what matching needs and not what a screen
-       wants. The pour itself carries the name as written. */
-    subject += ' from ' + (got[0].dist
-      || L.titleCase(String(L.dimValue('house', got[0]))));
+    subject += ' from ' + L.dimLabel('house', got[0]);
   } else if (held.region) {
     subject += ' from ' + L.titleCase(String(L.dimValue('region', got[0])));
   }
@@ -25243,11 +25307,8 @@ L.flightSays = function (flight, catalog) {
      thing standing still. A tolerance means held is a narrow range and not
      a single figure, so it says the range it actually holds. */
   ['proof', 'age'].forEach(id => {
-    if (!held[id]) return;
-    const s = span(id);
-    if (!s) return;
-    const unit = id === 'age' ? ' years' : ' proof';
-    subject += ' at ' + (s.one ? s.lo : s.lo + '\u2013' + s.hi) + unit;
+    const said = held[id] ? L.dimSpanSay(id, got) : '';
+    if (said) subject += ' at ' + said;
   });
 
   /* AND THE QUESTION ASKED OF IT - NOT SIMPLY WHAT MOVES MOST. The house
@@ -25268,9 +25329,9 @@ L.flightSays = function (flight, catalog) {
   const word = n => L.SMALL_NUMBER[n] || String(n);
   if (!moves) return subject + ', ' + word(got.length) + ' ways';
   if (moves.numeric) {
-    const s = span(moves.id);
-    return subject + ', ' + s.lo + ' to ' + s.hi
-      + (moves.measure === 'YEAR' ? ' years' : ' proof');
+    const all = L.dimReadings(moves.id, got);
+    return subject + ', ' + Math.min.apply(null, all) + ' to '
+      + Math.max.apply(null, all) + L.dimUnit(moves);
   }
   if (moves.id === 'smoke') return subject + ', smoked against not';
   if (moves.id === 'price') return subject + ', cheap against dear';
@@ -44465,6 +44526,71 @@ function buddiesWants(box, uids, names, plain) {
   box.appendChild(wc);
 }
 
+/* A FOLD: a header that opens a body, filled the first time it is opened.
+   BZ, 2026-10-19: "if you want to have a nested selection fine but make it
+   nested, not a long list." Two of these deep is that nesting - a dimension
+   opens its values, a value opens its flights - and filling late means the
+   sheet draws one list of rows rather than every flight in the shelf. */
+function foldRow(parent, label, count, fill, indent) {
+  const state = { on: false, drawn: false };
+  const body = el('div');
+  body.hidden = true;
+  const head = el('button', 'portstep');
+  head.type = 'button';
+  if (indent) head.style.paddingLeft = indent + 'px';
+  const draw = () => {
+    head.textContent = (state.on ? '\u2212  ' : '+  ') + label
+      + '  \u00b7  ' + count;
+    body.hidden = !state.on;
+  };
+  head.onclick = () => {
+    state.on = !state.on;
+    if (state.on && !state.drawn) { state.drawn = true; fill(body); }
+    draw();
+  };
+  draw();
+  parent.appendChild(head);
+  parent.appendChild(body);
+}
+
+/* ONE FLIGHT, SAID RATHER THAN NAMED (BZ, 2026-10-19, three times: "these
+   names are fun, but meaningless", "need factual descriptions", "dont need
+   the fun name - jus the topic"). His titles are good and they are on the
+   flight itself when he opens it; in a list of what to pour they were the
+   thing in the way. */
+function tonightFlight(parent, f, all, indent) {
+  const r = el('button', 'portstep');
+  r.type = 'button';
+  r.style.paddingLeft = indent + 'px';
+  const full = all.filter(x => x.title === f.title)[0];
+  const said = full ? L.flightSays(full, S.catalog) : '';
+  r.appendChild(el('div', 'nm', (said || 'a flight') + '  \u00b7  '
+    + f.pours + ' pours' + (f.lastRun ? '' : ', never run')));
+  r.onclick = () => {
+    if (!full) return;
+    /* CLOSE FIRST. The flight opened behind the modal, which on a phone is
+       a button that appears to do nothing (BZ, 2026-09-24). */
+    closeModal();
+    showFlight(full);
+  };
+  parent.appendChild(r);
+}
+
+/* THE VALUES UNDER ONE DIMENSION. A value with a single flight shows that
+   flight instead of a fold onto one row, and so does a dimension with only
+   one value - two taps to reach something there is no choice about is the
+   long list in another shape. */
+function tonightValues(body, row, all) {
+  row.values.forEach(v => {
+    if (!v.label || row.values.length === 1 || v.flights.length === 1) {
+      v.flights.forEach(f => tonightFlight(body, f, all, 18));
+      return;
+    }
+    foldRow(body, v.label, v.flights.length,
+      b2 => v.flights.forEach(f => tonightFlight(b2, f, all, 36)), 18);
+  });
+}
+
 /* EVERY EVENING THAT IS READY, IN A BOX THAT SCROLLS (BZ, 2026-09-24: why
    not make it a scrolling box instead of loading 3 at a time?). It used to
    show three behind a More ideas chip, and thirty-three of his forty
@@ -44500,59 +44626,21 @@ function renderTonight(box) {
     + 'it is offered under each of them — and only where the shelf could '
     + 'have moved it.'));
   rows.forEach(row => {
-      const open = { on: false };
-      const under = el('div');
-      under.hidden = true;
-      const head = el('button', 'portstep');
-      head.type = 'button';
-      /* AN EMPTY ROW IS AN OFFER. Nothing here holds an age or the bond;
-         saying so with a way to build one beats leaving the row out. */
-      if (!row.flights.length) {
-        head.textContent = row.label + '  \u00b7  build one';
-        head.onclick = () => { closeModal(); flightBuilder([row.id]); };
-        roll.appendChild(head);
-        return;
-      }
-      const draw = () => {
-        head.textContent = (open.on ? '\u2212  ' : '+  ') + row.label
-          + '  \u00b7  ' + row.flights.length;
-        under.hidden = !open.on;
-      };
-      head.onclick = () => { open.on = !open.on; draw(); };
-      draw();
-      roll.appendChild(head);
-      row.flights.forEach(f => {
-        const r = el('button', 'portstep');
-        r.type = 'button';
-        r.style.paddingLeft = '18px';
-        /* WHAT IT IS, UNDER WHAT IT IS CALLED. BZ, 2026-10-19: "these
-           names are fun, but meaningless" - they are his and they are
-           good, but a name is not what you choose a flight BY. */
-        const full2 = all.filter(x => x.title === f.title)[0];
-        const said = full2 ? L.flightSays(full2, S.catalog) : '';
-        /* THE FACTS LEAD AND THE NAME FOLLOWS (BZ, 2026-10-19, twice:
-           "these names make no sense. need factual descriptions"). The
-           name was the heading and the facts the small grey line, so the
-           row still read as a list of titles. */
-        r.appendChild(el('div', 'nm', (said || 'a flight') + '  ·  '
-          + f.pours + ' pours' + (f.lastRun ? '' : ', never run')));
-        /* AND NOT THE NAME AT ALL (BZ, 2026-10-19: "dont need the fun
-           name - jus the topic"). The titles are his and they are good,
-           and they are on the flight itself when he opens it; in a list
-           of what to pour they were the thing in the way. */
-        r.onclick = () => {
-          const full = all.filter(x => x.title === f.title)[0];
-          if (!full) return;
-          /* CLOSE FIRST. The flight opened behind the modal, which on a
-             phone is a button that appears to do nothing (BZ,
-             2026-09-24). */
-          closeModal();
-          showFlight(full);
-        };
-        under.appendChild(r);
-      });
-      roll.appendChild(under);
-    });
+    /* AN EMPTY ROW IS AN OFFER, not a row left out. Nothing on this
+       shelf holds an age or the bond; saying so with a way to build one
+       beats a row that is not drawn. It opens the designer already
+       holding that switch. */
+    if (!row.flights.length) {
+      const b = el('button', 'portstep');
+      b.type = 'button';
+      b.textContent = row.label + '  ·  build one';
+      b.onclick = () => { closeModal(); flightBuilder([row.id]); };
+      roll.appendChild(b);
+      return;
+    }
+    foldRow(roll, row.label, row.flights.length,
+      body => tonightValues(body, row, all), 0);
+  });
   wrap.appendChild(roll);
 
   card.appendChild(wrap);
@@ -61563,7 +61651,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.98</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.8.99</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
