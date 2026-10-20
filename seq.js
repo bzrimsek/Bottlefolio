@@ -197,19 +197,70 @@ function faultsOf() {
       out.push('the suggestions sheet did not open with anything to pour');
       return out;
     }
-    const pressed = await p.evaluate(() => {
-      const r = document.querySelector('#sevenRoll .portstep');
+    /* EVERY ONE OF THEM, not just the first. The first is "A tour of
+       kinds", which holds NOTHING - so its heading reads "Holding all",
+       carries no dim=value and let the debug form through green. The one
+       BZ screenshotted was "One strength, many kinds", the fourth. Seven
+       sheets cost about two seconds and no guesswork. */
+    const open = i => p.evaluate(n => {
+      const r = document.querySelectorAll('#sevenRoll .portstep')[n];
       if (r) r.click();
       return !!r;
+    }, i);
+    const scan = () => p.evaluate(() => {
+      const box = document.getElementById('overlay');
+      const bad = [];
+      if (!box) return bad;
+      /* LEAF BY LEAF, NOT THE WHOLE TEXT. textContent glues adjacent
+         elements with nothing between them, so the six nulls he saw read
+         as "Whiskeynull80" and a \b anchored test walked straight past
+         them - green on the very fault it was written for. */
+      const leaves = [...box.querySelectorAll('*')]
+        .filter(e => !e.children.length)
+        .map(e => (e.textContent || '').trim());
+      if (leaves.some(t => /^(null|undefined|NaN)$/.test(t))) {
+        bad.push('a value that failed to read is printed');
+      }
+      /* dim=value, how a hold is stored and not how it is said. */
+      if (leaves.some(t => /[a-z]+=[a-z0-9]/i.test(t))) {
+        bad.push('a debug form is printed');
+      }
+      return bad;
     });
-    if (!pressed) { out.push('nothing to press on the sheet'); return out; }
-    await p.waitForTimeout(350);
+    const said = {};
+    for (let i = 0; i < first.rows; i++) {
+      if (i) {
+        await p.evaluate(() => { closeModal(); showLessons(); });
+        await p.waitForTimeout(250);
+      }
+      if (!await open(i)) { out.push('row ' + i + ' would not press'); break; }
+      await p.waitForTimeout(250);
+      (await scan()).forEach(x => { said[x] = (said[x] || 0) + 1; });
+    }
+    Object.keys(said).forEach(x =>
+      out.push(x + ' (' + said[x] + ' of ' + first.rows + ')'));
+    await p.evaluate(() => { closeModal(); showLessons(); });
+    await p.waitForTimeout(250);
+    await open(0);
+    await p.waitForTimeout(300);
     const after = await look();
     /* THE PROPOSAL IS A SHEET OF ITS OWN, so the overlay stays up - what
        must not happen is the SUGGESTIONS list still being the thing on it. */
     if (!after.open) out.push('pressing a suggestion closed everything');
     if (after.rows) {
       out.push('the suggestion list is still up behind the flight it opened');
+    }
+    /* AND NOTHING ON IT IS A VALUE THAT FAILED TO READ. BZ, 2026-10-19,
+       from a screenshot of this very sheet: "Lots of nulls" - six pours
+       each labelled null, under a heading reading "Holding proof at
+       proof=91±3", which is the debug form of the hold. Both were on a
+       build whose seventeen checks were green: nothing threw, nothing drew
+       wrong, and the words were nonsense. A word on a screen is testable
+       and these two never were. */
+    if (process.env.SEQ_DUMP) {
+      const t = await p.evaluate(() =>
+        (document.getElementById('overlay') || {}).textContent || '');
+      console.log('  DUMP[' + t.length + ']: ' + t.slice(0, 500));
     }
     return out;
   })();

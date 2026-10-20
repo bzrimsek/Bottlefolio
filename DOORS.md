@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 1081 |
 | tables | 253 |
-| carrying a stated purpose | 869 |
+| carrying a stated purpose | 870 |
 
 ## Tables
 
@@ -328,7 +328,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisFit`** — HOW WELL A SET OF VALUES FITS A SET OF WEIGHTS, nought to one - the arithmetic
 - **`L.axisGapLine`** — _no comment above it_
 - **`L.axisGapPicks`** — EVERY GAP THE CHART CAN SEE, as rows, cheapest first
-- **`L.axisLabel`** — _no comment above it_
+- **`L.axisLabel`** — WHAT THIS BOTTLE IS ON THIS AXIS, as a reader sees it.
 - **`L.axisLabelOf`** — THE NAME A ROW SHOWS
 - **`L.axisMaths`** — _no comment above it_
 - **`L.axisMathsParts`** — THE ARITHMETIC IN ITS PARTS, so a screen can give each its own line

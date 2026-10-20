@@ -33747,6 +33747,69 @@ sec('\u00a7494 what the log said on 2026-10-19');
     L.flightLine(f2, three).length > 0, true);
 }
 
+sec('\u00a7495 two vocabularies, and which one answers');
+{
+  /* BZ, 2026-10-19, from a screenshot of a suggested flight: "Lots of
+     nulls" - six pours, each with the word null under it, and a heading
+     reading "Holding proof at proof=91\u00b13".
+
+     L.axisOf IS THE OLDER VOCABULARY and L.DIMS is the designer's. Six
+     words are in both and THREE OF THEM MEAN DIFFERENT THINGS: axisOf's
+     `house` reads the finish, its `cask` reads the distillery, and its
+     `region` falls back to the type. A flight built on the designer's
+     `type` asked the old door and got nothing. */
+  const bp = { name: 'A Bourbon', dist: "Angel's Envy", sub: 'bourbon',
+               proof: 100, age: 12, fin: 'port', region: 'kentucky',
+               msrp: 50, obsc: 'known' };
+  /* THE TWO REALLY DO DISAGREE - asserted, so the day they are merged this
+     says so rather than going quietly green. */
+  eq('the old door reads the finish for a house',
+    L.axisOf('house', bp), 'port');
+  eq('and the distillery for a cask',
+    L.axisOf('cask', bp), L.houseKey("Angel's Envy"));
+  eq("and the designer's door says the opposite",
+    L.dimValue('house', bp), L.houseKey("Angel's Envy"));
+  eq('the old door has no word for type at all',
+    L.axisOf('type', bp), null);
+
+  /* SO THE LABEL ASKS THE DESIGNER'S DOOR WHERE IT HAS ONE. */
+  eq('a type is said, not nulled', L.axisLabel('type', bp), 'Bourbon');
+  eq('and never the word null',
+    /null/.test(L.axisLabel('type', bp)), false);
+  eq('a house is the name on the bottle',
+    L.axisLabel('house', bp), "Angel's Envy");
+  /* AND THE TWO IDS DIMS HAS NO WORD FOR STILL ANSWER. */
+  eq('finish is still the old door', L.axisLabel('finish', bp), 'port');
+  eq('and grain still reads the category',
+    L.axisLabel('grain', bp), 'bourbon');
+  /* THE ONES BOTH SPELL THE SAME WAY DID NOT MOVE. */
+  eq('proof still reads as proof', L.axisLabel('proof', { proof: 92 }),
+    '92 proof');
+  eq('and age as years', L.axisLabel('age', { age: 12 }), '12 years');
+
+  /* THE SCORE READ THE SAME DEAD DOOR, so the widest flight this app can
+     build - six types - scored as though every bottle were alike. */
+  const six = ['bourbon', 'rye', 'scotch', 'irish', 'canadian', 'japanese']
+    .map((t, i) => ({ name: 'p' + i, sub: t, proof: 90 + i, dist: 'H' + i,
+                      obsc: 'known', msrp: 50 }));
+  const one = six.map(p => Object.assign({}, p, { sub: 'bourbon' }));
+  eq('six types beat one', L.flightScore('type', six)
+    > L.flightScore('type', one), true);
+
+  /* AND THE HEADING IS A SENTENCE. `res.held` is the debug form, dim=value
+     joined with pipes, and it reached the screen. */
+  const prem = L.designPremise([{ dim: 'proof', value: 91, tol: 3 }], 'type');
+  eq('the premise says what is shared',
+    /within 3 points of 91/.test(prem), true);
+  eq('and what moves', /What moves is type/.test(prem), true);
+  eq('and carries no debug form', /=|\u007c/.test(prem), false);
+  /* A HELD VALUE IS NAMED AS WRITTEN: "the house held at buffalo trace"
+     was on the same screen as the nulls. */
+  eq('a held house is title cased',
+    /Buffalo Trace/.test(L.designPremise(
+      [{ dim: 'house', value: 'buffalo trace' }], 'proof')), true);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

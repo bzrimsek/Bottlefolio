@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.1  Build 2026-10-19 07:15 PM ET
+     Version : v2.9.2  Build 2026-10-19 08:08 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
 // v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
 // v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
 // v2.8.99  2026-10-19  A dimension opens its values, not a long list.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.95  2026-10-19  The tonight list is topics, not titles.
 // v2.8.94  2026-10-19  The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port.
 // v2.8.93  2026-10-19  A flight says what it is, under what it is called.
-// v2.8.92  2026-10-19  The shape is the row, and the flavour pills are gone.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.1';
-const BUILD_TIME  = '2026-10-19 07:15 PM ET';
+const APP_VERSION = '2.9.2';
+const BUILD_TIME  = '2026-10-19 08:08 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -14951,7 +14951,9 @@ L.designPremise = function (hold, varyId, opts) {
        from the words - "bonded" and "bottled in bond" share no
        substring, so a string test called them different things. */
     if (d.flag || !v) return lab;
-    return lab + ' held at ' + v;
+    /* THE VALUE AS WRITTEN, not as matched: "the house held at buffalo
+       trace" on the same screen as the nulls (BZ, 2026-10-19). */
+    return lab + ' held at ' + L.titleCase(v);
   }).filter(Boolean);
   const head = parts.length
     ? 'Everything here shares one thing: ' + L.andList(parts) + '.'
@@ -15211,7 +15213,13 @@ L.pickSpread = function (varId, members, size, used, valueOf) {
 L.flightScore = function (varId, pours) {
   if (!pours.length) return 0;
   let s = 0;
-  const axes = pours.map(p => String(L.axisOf(varId, p)));
+  /* THE DESIGNER'S WORD WINS WHERE IT HAS ONE, the same rule L.axisLabel
+     follows. L.designFlight hands its own `vary` straight in here, and for
+     `type` the old switch answers null for every pour - so the widest
+     spread this app can build scored as though every bottle were alike. */
+  const read = L.dimOf(varId) ? (p => L.dimValue(varId, p))
+    : (p => L.axisOf(varId, p));
+  const axes = pours.map(p => String(read(p)));
   s += new Set(axes).size * 12;                       // spread along the axis
 
   const proofs = pours.map(p => p.proof);
@@ -15283,7 +15291,24 @@ L.suggestPurchase = function (varId, pours, catalog, bottles) {
     + L.axisLabel(varId, pick) + ', which nothing open covers.', own: false };
 };
 
+/* WHAT THIS BOTTLE IS ON THIS AXIS, as a reader sees it.
+ *
+ * TWO VOCABULARIES MEET HERE. L.axisOf is the older one - proof, finish,
+ * region, age, grain, house, price, cask - and L.DIMS is the designer's -
+ * proof, type, house, price, smoke, cask, age, region, bonded. Six words
+ * are in both and three of them MEAN DIFFERENT THINGS: axisOf's `house`
+ * reads the finish, its `cask` reads the distillery, and its `region` falls
+ * back to the type. So a flight built on the designer's `type` asked the
+ * old door, got nothing, and printed "null" under all six pours (BZ,
+ * 2026-10-19, from a screenshot: "lots of nulls").
+ *
+ * THE DESIGNER'S WORD WINS WHERE IT HAS ONE, because that is what built the
+ * flight; the old switch answers the two ids DIMS has no word for, `finish`
+ * and `grain`. It is not the merge those two vocabularies still need - that
+ * is a build of its own - but it stops one of them answering for the other.
+ */
 L.axisLabel = function (varId, p) {
+  if (L.dimOf(varId)) return L.dimLabel(varId, p);
   const v = L.axisOf(varId, p);
   if (varId === 'proof') return v + ' proof';
   if (varId === 'age') return v + ' years';
@@ -57644,9 +57669,17 @@ function renderProposal(out, res, varId, premise, pool) {
   const from = k => (pool && pool.catalog && pool.catalog[k]) || prod(k);
   const head = el('div');
   head.style.marginTop = '11px';
-  head.appendChild(el('div', 'rs', 'Holding ' + res.holds.join(' and ')
-    + ' at ' + res.held + (res.alternatives
-      ? '  ·  ' + res.alternatives + ' other groupings possible' : '')));
+  /* IN WORDS. `res.held` is the debug form - dim=value, joined with pipes -
+     and it reached the screen as "Holding proof at proof=91±3" (BZ,
+     2026-10-19, from a screenshot). L.designPremise is the sentence the
+     flight already carries, and it says the same thing: everything here
+     shares proof within 3 points of 91, and what moves is the type. */
+  head.appendChild(el('div', 'rs',
+    res.premise || L.designPremise(res.hold, res.vary, { pairs: res.pairs })));
+  if (res.alternatives) {
+    head.appendChild(el('div', 'src',
+      res.alternatives + ' other groupings possible'));
+  }
   out.appendChild(head);
 
   const list = el('div', 'recent');
@@ -61614,7 +61647,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.1</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.2</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
