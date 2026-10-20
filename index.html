@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.2  Build 2026-10-19 08:08 PM ET
+     Version : v2.9.3  Build 2026-10-20 08:17 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
 // v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
 // v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.8.96  2026-10-19  A flight's topic is a sentence, not the facts in a row.
 // v2.8.95  2026-10-19  The tonight list is topics, not titles.
 // v2.8.94  2026-10-19  The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port.
-// v2.8.93  2026-10-19  A flight says what it is, under what it is called.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.2';
-const BUILD_TIME  = '2026-10-19 08:08 PM ET';
+const APP_VERSION = '2.9.3';
+const BUILD_TIME  = '2026-10-20 08:17 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -14507,6 +14507,27 @@ L.DIMS = [
   { id: 'cask', label: 'The cask', hint: 'what it finished in',
     unit: 'casks',
     get: p => L.caskFamily(p) },
+  /* THE EXACT WOOD, BESIDE THE FAMILY, AND BOTH ARE NEEDED.
+   *
+   * L.caskFamily GROUPS: Fino, Pedro Ximenez+Oloroso, Cream Sherry and
+   * Manzanilla are all "sherry", Cognac and Armagnac are both "brandy".
+   * That is right for HOLDING one still - a flight of sherried whisky is a
+   * flight whatever the sherry - and wrong for VARYING it. BZ's own WHAT
+   * DOES SHERRY HAVE GOING ON? pours those five against each other, and
+   * read as families it is one value and no flight at all.
+   *
+   * So the old vocabulary was right to carry `finish` AND `cask`, and
+   * folding them together would have cost him that flight and narrowed
+   * four more (measured across his forty, 2026-10-19). Two questions, two
+   * dimensions.
+   *
+   * NO FALLBACK TO THE STYLE (BZ, 2026-10-20: "drop the style fallback").
+   * L.axisOf read `p.fin || p.style || p.name`, so a pour with no finish
+   * put "single malt" and "rye" in a list of woods.
+   */
+  { id: 'finish', label: 'The finish', hint: 'the exact wood, not the family',
+    unit: 'finishes',
+    get: p => (p && p.fin) || null },
   { id: 'age', label: 'Age', hint: 'years in wood', unit: 'ages',
     /* AN AGE IS DECLARED, NOT MEASURED. BZ, 2026-10-19: "the age filter is
        not correct - we know ages by law or by label." A stated age is the
@@ -14983,20 +15004,23 @@ L.VARIABLES = [
 
 // What the variable reads off a bottle. A candidate with no value here
 // cannot take part, because it cannot sit anywhere on the axis.
+/* ONE VOCABULARY. L.axisOf was the second one and it disagreed with
+ * L.DIMS on three of the six words they shared: its `house` read the
+ * FINISH, its `cask` read the DISTILLERY, and its `region` fell back to
+ * the type. A flight built on the designer's `type` asked it, got nothing,
+ * and printed null six times (BZ, 2026-10-19: "Lots of nulls"); the score
+ * read the same dead door, so the widest flight this app can build scored
+ * as though every bottle were alike.
+ *
+ * IT IS L.dimValue NOW, and the old ids translate on the way in. Measured
+ * across BZ's forty before the change: `grain` and `finish` come through
+ * untouched, `house` loses only the style fallback he ruled out, and
+ * nothing is tagged `cask` at all.
+ */
+L.OLD_AXIS = { grain: 'type', house: 'finish', cask: 'house' };
+
 L.axisOf = function (varId, p) {
-  switch (varId) {
-    case 'proof':  return p.proof || null;
-    case 'finish': return p.fin || null;
-    case 'region': return p.region || p.sub || null;
-    case 'house':  return p.fin || p.style || p.name || null;
-    case 'age':    return p.age || null;
-    case 'grain':  return p.sub || null;
-    case 'price':  return L.priceBand(p.msrp) || null;
-    /* The HOUSE is what moves here, asked through the one house key so a
-       distillery spelled two ways is one distillery. */
-    case 'cask':   return L.houseKey(p.dist || p.name) || null;
-    default:       return null;
-  }
+  return L.dimValue(L.OLD_AXIS[varId] || varId, p);
 };
 
 // WHAT STAYS STILL WHILE THE VARIABLE MOVES. Change two things and the
@@ -61647,7 +61671,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.2</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.3</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

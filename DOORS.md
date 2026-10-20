@@ -14,7 +14,7 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1081 |
-| tables | 253 |
+| tables | 254 |
 | carrying a stated purpose | 870 |
 
 ## Tables
@@ -154,6 +154,7 @@ QUESTION, not the name you were going to use.
 - **`L.NOTE_WORDS_MEMO`** — THE WORDS OF A NOTE, split once
 - **`L.OAK_BY_LAW`** — DELIBERATELY NARROWER THAN IT LOOKS, and the exclusions are the point.
 - **`L.OFFER_GENERIC`** — WHAT EVERY BOTTLE SHARES, and so identifies none
+- **`L.OLD_AXIS`** — ONE VOCABULARY
 - **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
 - **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
@@ -332,7 +333,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisLabelOf`** — THE NAME A ROW SHOWS
 - **`L.axisMaths`** — _no comment above it_
 - **`L.axisMathsParts`** — THE ARITHMETIC IN ITS PARTS, so a screen can give each its own line
-- **`L.axisOf`** — cannot take part, because it cannot sit anywhere on the axis.
+- **`L.axisOf`** — _no comment above it_
 - **`L.axisPourable`** — CAN THIS BOTTLE STAND ON THIS AXIS? Open, not drained, placed on the
 - **`L.axisRows`** — _no comment above it_
 - **`L.axisShort`** — THE CHEAPEST GAP ON AN AXIS, in bottles

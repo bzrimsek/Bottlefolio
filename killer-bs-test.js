@@ -577,10 +577,15 @@ sec('what a variable reads and what it holds');
 const bp = { k: 'x', name: 'X', dist: 'Ardbeg', sub: 'scotch', region: 'Islay',
              proof: 92, age: 10, fin: 'Oloroso', msrp: 60 };
 eq('proof reads the strength', L.axisOf('proof', bp), 92);
-eq('place reads the region', L.axisOf('region', bp), 'Islay');
+eq('place reads the region', L.axisOf('region', bp), 'islay');
 // A house flight varies the EXPRESSION, not the distillery: holding the
 // distillery and reading it as the axis put every bottle on one point.
-eq('house reads the expression', L.axisOf('house', bp), 'Oloroso');
+/* THE OLD IDS TRANSLATE NOW (2026-10-20). L.axisOf was a second table
+   that disagreed with L.DIMS on three of their six shared words; it is
+   a rename on the way into L.dimValue, which answers in lower case. */
+eq('house reads the finish', L.axisOf('house', bp), 'oloroso');
+eq('and never the style beside it',
+  L.axisOf('house', { style: 'single malt', sub: 'scotch' }), null);
 eq('grain reads the category', L.axisOf('grain', bp), 'scotch');
 eq('price reads the band', L.axisOf('price', bp), 'good');
 eq('an unknown variable reads nothing', L.axisOf('zzz', bp), null);
@@ -33769,8 +33774,10 @@ sec('\u00a7495 two vocabularies, and which one answers');
     L.axisOf('cask', bp), L.houseKey("Angel's Envy"));
   eq("and the designer's door says the opposite",
     L.dimValue('house', bp), L.houseKey("Angel's Envy"));
-  eq('the old door has no word for type at all',
-    L.axisOf('type', bp), null);
+  /* AND NOW IT HAS. This asserted the FAULT: a flight built on the
+     designer's `type` asked the old door, got null, and printed null
+     six times. One table answers both vocabularies. */
+  eq('the old door answers type too', L.axisOf('type', bp), 'bourbon');
 
   /* SO THE LABEL ASKS THE DESIGNER'S DOOR WHERE IT HAS ONE. */
   eq('a type is said, not nulled', L.axisLabel('type', bp), 'Bourbon');
@@ -33778,9 +33785,23 @@ sec('\u00a7495 two vocabularies, and which one answers');
     /null/.test(L.axisLabel('type', bp)), false);
   eq('a house is the name on the bottle',
     L.axisLabel('house', bp), "Angel's Envy");
-  /* AND THE TWO IDS DIMS HAS NO WORD FOR STILL ANSWER. */
-  eq('finish is still the old door', L.axisLabel('finish', bp), 'port');
-  eq('and grain still reads the category',
+  /* AND THE FINISH IS ITS OWN DIMENSION NOW, beside the family rather
+     than folded into it: L.caskFamily calls Fino, Manzanilla and Cream
+     Sherry all "sherry", which is right for holding one still and wrong
+     for pouring five against each other. */
+  eq('the exact wood is its own answer', L.dimValue('finish', bp), 'port');
+  eq('and the family is still the family', L.dimValue('cask', bp), 'port');
+  const fino = { fin: 'Fino', sub: 'scotch', proof: 90 };
+  eq('two sherries are two finishes',
+    L.dimValue('finish', fino) === L.dimValue('finish', bp), false);
+  eq('and one family', L.dimValue('cask', fino), 'sherry');
+  /* NO FALLBACK TO THE STYLE (BZ, 2026-10-20). The old door read
+     p.fin || p.style || p.name, so a pour with no finish put "single
+     malt" in a list of woods. */
+  eq('a pour with no finish has none',
+    L.dimValue('finish', { style: 'single malt', name: 'X', sub: 'scotch' }),
+    null);
+  eq('grain still reads the category',
     L.axisLabel('grain', bp), 'bourbon');
   /* THE ONES BOTH SPELL THE SAME WAY DID NOT MOVE. */
   eq('proof still reads as proof', L.axisLabel('proof', { proof: 92 }),
