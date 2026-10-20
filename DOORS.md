@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1081 |
-| tables | 254 |
-| carrying a stated purpose | 870 |
+| functions | 1082 |
+| tables | 255 |
+| carrying a stated purpose | 872 |
 
 ## Tables
 
@@ -31,6 +31,7 @@ QUESTION, not the name you were going to use.
 - **`L.AXIS_ASK`** — An axis gap as a search the finder can run
 - **`L.AXIS_CANON`** — WHICH AXIS'S DENOMINATOR IS FILED WHERE, so the arithmetic line can name
 - **`L.AXIS_DIM`** — WHICH SHOPPING DIMENSION AN AXIS DRIVES, where one exists
+- **`L.AXIS_WORTH`** — HOW DELIBERATELY A THING IS USUALLY VARIED, best first.
 - **`L.BASELINE_RANK`** — THE BOTTLE SOMEBODY MEANS WHEN THEY NAME A HOUSE
 - **`L.BODY_WORDS`** — HOW A WHISKY FEELS, which is not everything the texture ring holds
 - **`L.BOTTLE_MARKS`** — WHAT GETS TO BE ONE
@@ -524,6 +525,7 @@ QUESTION, not the name you were going to use.
 - **`L.flavourForms`** — _no comment above it_
 - **`L.flavourOptions`** — Which flavors this shelf could actually build a flight around, and how
 - **`L.flavourSpread`** — _no comment above it_
+- **`L.flightAxis`** — WHAT A SAVED FLIGHT IS ABOUT, which is not always what its tag says.
 - **`L.flightCandidates`** — _no comment above it_
 - **`L.flightDrinks`** — The arithmetic for a whole flight
 - **`L.flightHolds`** — WHAT A BUILT FLIGHT HOLDS STILL

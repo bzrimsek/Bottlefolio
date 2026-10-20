@@ -33831,6 +33831,137 @@ sec('\u00a7495 two vocabularies, and which one answers');
       [{ dim: 'house', value: 'buffalo trace' }], 'proof')), true);
 }
 
+sec('\u00a7496 a declared axis that does not move is not the axis');
+{
+  /* BZ, 2026-10-20: "read the pours."
+
+     HIS HOUSE ON FIRE? is three distilleries each poured twice, once
+     smoked and once not - its own tag says exactly that - and the app
+     called its axis the HOUSE, because L.varInText matched the word
+     "house" in the title. The old vocabulary had no word for smoke, type
+     or bonded at all, so no flight about any of those could be tagged
+     right. Sixteen of his forty declared an axis that stands still, or
+     none. */
+  const cat = {};
+  const put = (k, dist, sub, proof, fin, peat) => {
+    cat[k] = { k: k, name: k + (peat ? ' peated' : ''), dist: dist, sub: sub,
+               proof: proof, fin: fin, obsc: 'known', msrp: 50 };
+  };
+  /* ALL ONE TYPE, SO A FLIGHT CALLING ITSELF A GRAIN FLIGHT IS WRONG. */
+  ['port', 'sherry', 'madeira'].forEach((w, i) =>
+    put('r' + i, 'House ' + i, 'rye', 90 + i, w));
+  const rye = { title: 'RYE BOTHER?', tag: 'one variable: grain',
+                core: ['r0', 'r1', 'r2'].map(k => ({ k: k })) };
+  eq('the tag still says grain', L.variableOfId(rye), 'grain');
+  eq('but every pour is rye', L.dimValues('type',
+    rye.core.map(x => cat[x.k])).length, 1);
+  eq('so the pours decide', L.flightAxis(rye, cat), 'cask');
+
+  /* A DECLARATION THAT DOES MOVE IS STILL BELIEVED. It is what he wrote. */
+  const spread = { title: 'X', tag: 'one variable: proof',
+                   core: ['r0', 'r1', 'r2'].map(k => ({ k: k })) };
+  eq('a tag that holds up is kept', L.flightAxis(spread, cat), 'proof');
+
+  /* AND NOT BY WHAT MOVES MOST. Proof varies incidentally in nearly every
+     flight and would win almost every time. */
+  eq('the ranking puts the house last',
+    L.AXIS_WORTH[L.AXIS_WORTH.length - 1], 'house');
+  eq('and the type first', L.AXIS_WORTH[0], 'type');
+  eq('the family before the exact wood',
+    L.AXIS_WORTH.indexOf('cask') < L.AXIS_WORTH.indexOf('finish'), true);
+  eq('and proof below all of them',
+    L.AXIS_WORTH.indexOf('proof') > L.AXIS_WORTH.indexOf('age'), true);
+  /* AND THE RANKING IS WHAT CHOOSES, not the count. Six houses and two
+     types in one flight: the house moves three times as far and is the
+     thing nobody builds a flight to show off. */
+  const wide = {};
+  /* FOUR AND TWO, NOT THREE AND THREE. An even split is the pairs rule
+     above and would have answered before the ranking was reached - the
+     first version of this fixture was 3/3 and stayed green with the
+     ranking replaced by "whatever moves most". */
+  ['bourbon', 'bourbon', 'bourbon', 'bourbon', 'rye', 'rye']
+    .forEach((t, i) => {
+      wide['w' + i] = { k: 'w' + i, name: 'w' + i, dist: 'House ' + i,
+                        sub: t, proof: 100, obsc: 'known', msrp: 50 };
+    });
+  const many = { title: 'Z',
+    core: Object.keys(wide).map(k => ({ k: k })) };
+  eq('six houses move', L.dimValues('house',
+    Object.keys(wide).map(k => wide[k])).length, 6);
+  eq('and two types', L.dimValues('type',
+    Object.keys(wide).map(k => wide[k])).length, 2);
+  eq('the type wins anyway', L.flightAxis(many, wide), 'type');
+
+  /* A BINARY POURED IN HALVES OUTRANKS THE LIST. Smoke moves in seven of
+     his forty and is the POINT of exactly one; in the other six it drifts,
+     one peated of six or five of six. What marks the deliberate one is
+     that it is poured in HALVES - the designer's pairs, by another name. */
+  const pairs = {};
+  ['A', 'B', 'C'].forEach((h, i) => {
+    put('c' + i, h, 'scotch', 90 + i, null);
+    put('p' + i, h, 'scotch', 92 + i, null, true);
+    pairs['c' + i] = cat['c' + i];
+    pairs['p' + i] = cat['p' + i];
+  });
+  const fire = { title: 'HOUSE ON FIRE?',
+                 tag: 'THREE DISTILLERIES, EACH POURED TWICE',
+                 core: ['c0', 'p0', 'c1', 'p1', 'c2', 'p2']
+                   .map(k => ({ k: k })) };
+  eq('three and three is the smoke flight',
+    L.flightAxis(fire, pairs), 'smoke');
+  /* AND THE RULE REALLY IS THE EVEN SPLIT, not the ranking underneath it.
+     In the flight above nothing ranked higher than smoke moves, so the
+     scan would have landed on smoke anyway and deleting the rule left the
+     assertion green. This one puts a CASK across the pairs, which outranks
+     smoke, and declares no axis - so only the even split can choose it.
+
+     The first attempt at this put the casks on the flight ABOVE and broke
+     its premise instead: "HOUSE ON FIRE?" reads as the house from its
+     title, the house translates to the finish, and three woods made that
+     wrong axis move - so the tag was believed and the rule never ran. */
+  const spreadPairs = {};
+  ['D', 'E', 'F'].forEach((h, i) => {
+    const wood = ['port', 'sherry', 'madeira'][i];
+    put('sc' + i, h, 'scotch', 90 + i, wood);
+    put('sp' + i, h, 'scotch', 92 + i, wood, true);
+    spreadPairs['sc' + i] = cat['sc' + i];
+    spreadPairs['sp' + i] = cat['sp' + i];
+  });
+  const both = { title: 'Y', core: ['sc0', 'sp0', 'sc1', 'sp1', 'sc2', 'sp2']
+    .map(k => ({ k: k })) };
+  eq('three casks move across it', L.dimValues('cask',
+    both.core.map(x => spreadPairs[x.k])).length, 3);
+  eq('and the cask outranks the smoke',
+    L.AXIS_WORTH.indexOf('cask') < L.AXIS_WORTH.indexOf('smoke'), true);
+  eq('but poured in halves, the smoke is the point',
+    L.flightAxis(both, spreadPairs), 'smoke');
+  /* AND A LOPSIDED ONE IS NOT. Five peated of six is a peaty flight, not
+     a flight ABOUT smoke, and ranking smoke highly to catch the one would
+     have mislabelled the six. */
+  const drift = {};
+  /* WITH SOMETHING ELSE MOVING, the way his real ones do - five of six
+     peated on his shelf came back as an AGE flight, and one of six as a
+     finish flight, because those are what the pours actually spread on.
+     The first fixture for this had nothing moving but the smoke, so smoke
+     won honestly and the assertion was wrong, not the code. */
+  ['port', 'sherry', 'madeira', 'oak', 'rum'].forEach((w, i) => {
+    put('d' + i, 'D' + i, 'scotch', 90 + i, w, i > 0);
+    drift['d' + i] = cat['d' + i];
+  });
+  const lop = { title: 'Y', core: ['d0', 'd1', 'd2', 'd3', 'd4']
+    .map(k => ({ k: k })) };
+  eq('four of five peated is not a smoke flight',
+    L.flightAxis(lop, drift) === 'smoke', false);
+  eq('it is what the pours actually spread on',
+    L.flightAxis(lop, drift), 'cask');
+
+  /* NOTHING TO READ CHANGES NOTHING. Judging with no pours in hand would
+     make this answer bigger, not smaller. */
+  eq('no catalog keeps the tag',
+    L.flightAxis(rye, {}), 'type');
+  eq('and no flight says nothing', L.flightAxis(null, cat), null);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

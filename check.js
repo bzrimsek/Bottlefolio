@@ -250,7 +250,13 @@ const queue = run.slice().sort((a, b) => (b.secs || 0) - (a.secs || 0));
 function oneCheck(c) {
   const t = Date.now();
   return new Promise(done => {
-    execFile('node', [path.join(HERE, c.harness)],
+    /* AND ITS ARGUMENTS. The table named the harness and not how to run
+       it, so this ran `node papers.js` while gate.py ran it with
+       `index.html --all` - a sample of six here against all seventy-nine
+       there. Seventeen green locally and a red cloud gate on 2026-10-20
+       is what that costs: a sheet that refused to print was in the
+       seventy-three this never looked at. */
+    execFile('node', [path.join(HERE, c.harness)].concat(c.args || []),
       { maxBuffer: 1 << 26 }, (err, so, se) => {
         const out = String((so || '') + (se || ''));
         const secs = Math.round((Date.now() - t) / 1000);

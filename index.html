@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.3  Build 2026-10-20 08:17 AM ET
+     Version : v2.9.5  Build 2026-10-20 09:10 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.5  2026-10-20  The sheet that refused to print, and the gate hole that hid it.
+// v2.9.4  2026-10-20  A declared axis that does not move is not the axis.
 // v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
 // v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.8.98  2026-10-19  Standing still is not a theme.
 // v2.8.97  2026-10-19  The tonight sheet has a row for each thing the designer can hold, and the tabs read one glass, two, three.
 // v2.8.96  2026-10-19  A flight's topic is a sentence, not the facts in a row.
-// v2.8.95  2026-10-19  The tonight list is topics, not titles.
-// v2.8.94  2026-10-19  The unbuilt shapes are off the suggestions sheet, and the Angel's Envy pour is the tawny port.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3128,8 +3128,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.3';
-const BUILD_TIME  = '2026-10-20 08:17 AM ET';
+const APP_VERSION = '2.9.5';
+const BUILD_TIME  = '2026-10-20 09:10 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -15097,7 +15097,7 @@ L.axisPourable = function (varId, p, openNow, sub) {
 
 L.pourOptions = function (f, catalog, bottles) {
   const cat = catalog || {};
-  const varId = L.variableOfId(f);
+  const varId = L.flightAxis(f, cat);
   const core = (f && f.core) || [];
   const taken = {};
   core.forEach(p => { if (p && p.k) taken[p.k] = true; });
@@ -16110,7 +16110,7 @@ L.pouredBefore = function (f, history) {
 // toward the back.
 L.recastFlight = function (f, catalog, bottles, history, opts) {
   const o = opts || {};
-  const varId = o.variable || L.variableOfId(f);
+  const varId = o.variable || L.flightAxis(f, catalog);
   if (!varId) {
     return { ok: false, why: 'This flight does not state a single variable, '
       + 'so there is nothing to hold still while re-casting it.' };
@@ -25308,6 +25308,70 @@ L.suggestFlights = function (catalog, bottles, round, used) {
 L.SMALL_NUMBER = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
                   'eight', 'nine', 'ten', 'eleven', 'twelve'];
 
+/* HOW DELIBERATELY A THING IS USUALLY VARIED, best first.
+ *
+ * NOT HOW FAR IT VARIES. The house moves in almost every flight whether or
+ * not it is the point, so counting values made nine of BZ's forty say
+ * "10 houses", which tells him nothing about what he would be pouring.
+ * Nobody builds a flight to show off a spread of distilleries; plenty are
+ * built on a type, a cask or an age. So the house is last and proof is near
+ * it - proof moves by itself the moment anything else does.
+ *
+ * THE FAMILY BEFORE THE EXACT WOOD. A flight across wine, port, sherry and
+ * madeira is a flight across four CASKS; that it is also four finishes is
+ * the same fact said finer.
+ *
+ * ONE LIST, because L.flightSays asks it for the line under a flight's name
+ * and L.flightAxis asks it for what a flight is actually about (rule 30d).
+ */
+L.AXIS_WORTH = ['type', 'cask', 'finish', 'region', 'age', 'smoke',
+                'bonded', 'proof', 'price', 'house'];
+
+/* WHAT A SAVED FLIGHT IS ABOUT, which is not always what its tag says.
+ *
+ * BZ, 2026-10-20: "read the pours." His HOUSE ON FIRE? is three distilleries
+ * each poured twice, once smoked and once not - its own tag says so - and
+ * L.varInText matched the word "house" in the title and called the axis the
+ * house. The old vocabulary had no word for smoke, type or bonded at all,
+ * so no flight about any of those could be tagged right.
+ *
+ * A DECLARED AXIS THAT DOES NOT MOVE IS NOT THE AXIS. The tag is still
+ * believed first - it is what he wrote - and only overruled when the pours
+ * show it standing still. Then the pours decide, by L.AXIS_WORTH rather
+ * than by what varies most: proof varies incidentally in nearly every
+ * flight and would win almost every time.
+ */
+L.flightAxis = function (flight, catalog) {
+  const got = ((flight || {}).core || [])
+    .map(x => (catalog || {})[x.k]).filter(Boolean);
+  const moves = id => L.dimValues(id, got).length > 1;
+  const said = L.variableOfId(flight);
+  const asked = said ? (L.OLD_AXIS[said] || said) : null;
+  if (asked && moves(asked)) return asked;
+  /* NO GUARD FOR AN EMPTY CAST. With no pours in hand nothing moves, no
+     binary splits, and the scan below falls through to the tag anyway -
+     an early return here was the same answer written twice, and a mutant
+     that deleted it could not be seen. */
+  /* A BINARY SPLIT EVENLY OUTRANKS THE LIST. Smoke moves in seven of BZ's
+     forty and is the POINT of exactly one - his HOUSE ON FIRE?, three
+     distilleries each poured twice, once smoked and once not. In the other
+     six it drifts, one peated of six or five of six, and ranking smoke
+     highly would have mislabelled all six to get that one right.
+     What marks the deliberate one is not that the binary moves but that it
+     is POURED IN HALVES, which is the same fact as the designer's pairs
+     switch. */
+  const even = L.AXIS_WORTH.filter(id => {
+    const vals = got.map(p => L.dimValue(id, p)).filter(v => v !== null);
+    if (vals.length < 4) return false;
+    const seen = {};
+    vals.forEach(v => { seen[v] = (seen[v] || 0) + 1; });
+    const keys = Object.keys(seen);
+    return keys.length === 2 && seen[keys[0]] === seen[keys[1]];
+  })[0];
+  if (even) return even;
+  return L.AXIS_WORTH.filter(moves)[0] || asked;
+};
+
 L.flightSays = function (flight, catalog) {
   /* THE CORE ONLY. The extensions are brought out if the night has legs
      and are chosen to go BEYOND the flight - counting them turned every
@@ -25357,8 +25421,6 @@ L.flightSays = function (flight, catalog) {
      deliberately a thing is usually varied: nobody builds a flight to show
      off a spread of distilleries, but plenty are built on a type, a cask or
      an age. The first one that actually moves wins. */
-  const WORTH = ['type', 'cask', 'region', 'age', 'smoke', 'bonded',
-                 'proof', 'price', 'house'];
   let moves = null, ways = 0;
   /* THE AXIS IT WAS BUILT ON BEATS THE GUESS. A flight built to vary the
      AGE came back "across three regions", because the regions move too and
@@ -25368,7 +25430,7 @@ L.flightSays = function (flight, catalog) {
     moves = L.dimOf(axis);
     ways = L.dimValues(axis, got).length;
   }
-  WORTH.forEach(id => {
+  L.AXIS_WORTH.forEach(id => {
     if (moves || held[id]) return;
     const n = L.dimValues(id, got).length;
     if (n > 1) { moves = L.dimOf(id); ways = n; }
@@ -25514,7 +25576,7 @@ L.hostCard = function (f, catalog) {
     title: f.title,
     tag: f.tag,
     premise: f.premise,
-    variable: L.variableOfId(f),
+    variable: L.flightAxis(f, catalog),
     pours: (f.core || []).map((p, i) => {
       const kind = L.pourKind(p);
       const pd = kind === 'shelf' ? (catalog[p.k] || {}) : {};
@@ -25571,20 +25633,33 @@ L.sheetCare = function (f, catalog, forHost) {
 // so the theme is built from the flight's shape instead.
 L.blindTheme = function (f, catalog) {
   const n = (f.core || []).length;
-  const v = L.variableOfId(f);
+  const v = L.flightAxis(f, catalog);
   const subs = new Set((f.core || [])
     .map(p => (catalog[p.k] || {}).sub).filter(Boolean));
   const one = subs.size === 1 ? [...subs][0] : null;
   const what = one ? 'all ' + L.titleCase(one) : 'mixed';
+  /* ONE LINE PER DIMENSION, IN THE DIMENSIONS' OWN WORDS. This map was
+     keyed on the older vocabulary - grain, finish - and when the axis
+     started being read off the pours instead of the tag, `type`, `cask`,
+     `smoke` and `bonded` fell through to the default.
+
+     THE DEFAULT IS NOT HARMLESS. "Say what is in the glass" shares the
+     word glass with Heaven Hill Grain to Glass, which WAIT, WHEAT? pours,
+     so L.sheetLeaks called the sheet a leak and it refused to print - the
+     cloud gate caught it and the local one did not, because papers.js
+     prints a sample of six here and all seventy-nine there. */
   const ask = {
     proof: 'Guess the strength of each.',
     age: 'Guess the age of each.',
-    finish: 'Name the cask on each.',
+    cask: 'Name the cask on each.',
+    finish: 'Name the exact wood on each.',
     region: 'Say where each is from.',
-    grain: 'Say which grain leads in each.',
+    type: 'Say which grain leads in each.',
     house: 'Find the ones that share a distillery.',
-    price: 'Say what each is worth.'
-  }[v] || 'Say what is in the glass.';
+    price: 'Say what each is worth.',
+    smoke: 'Say which of them are peated.',
+    bonded: 'Find the ones bottled in bond.'
+  }[v] || 'Say what each one is.';
   return n + ' pours, ' + what + '. ' + ask;
 };
 
@@ -33526,14 +33601,17 @@ L.gapsFromFlights = function (flights, catalog, bottles) {
     const uniformSub = subs.size === 1 && known.length >= 3
       ? [...subs][0] : null;
 
+    /* THE AXIS THE POURS SHOW, in the designer's words, asked ONCE. Six
+       calls to the same function in one expression, each answering a word
+       the merge has since renamed - `grain` and `finish` are `type` and
+       `cask` now, and nothing was ever tagged `cask`. */
     const shapeName = (f.core || []).length + '-pour '
-      + (L.variableOfId(f) === 'proof' ? 'proof ladder'
-         : L.variableOfId(f) === 'finish' ? 'cask comparison'
-         : L.variableOfId(f) === 'region' ? 'regional comparison'
-         : L.variableOfId(f) === 'age' ? 'age comparison'
-         : L.variableOfId(f) === 'grain' ? 'grain comparison'
-         : L.variableOfId(f) === 'house' ? 'single-distillery flight'
-         : 'tasting');
+      + ({ proof: 'proof ladder', cask: 'cask comparison',
+           finish: 'cask comparison', region: 'regional comparison',
+           age: 'age comparison', type: 'grain comparison',
+           house: 'single-distillery flight', smoke: 'smoke comparison',
+           price: 'price comparison', bonded: 'bottled-in-bond flight'
+         }[L.flightAxis(f, catalog)] || 'tasting');
     missing.forEach(p => {
       const kind = L.pourKind(p);
       out.push({
@@ -61671,7 +61749,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.3</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.5</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

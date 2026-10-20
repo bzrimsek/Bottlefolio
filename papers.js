@@ -21,7 +21,11 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const file = path.resolve(process.argv[2] || 'index.html');
+/* A FLAG IS NOT A FILENAME. `node papers.js --all` resolved "--all" as the
+   file to open, served a 404, and died on `S is not defined` - so the one
+   way to run every paper by hand looked broken (2026-10-20). */
+const named = process.argv.slice(2).filter(a => a.charAt(0) !== '-');
+const file = path.resolve(named[0] || 'index.html');
 const dir = path.dirname(file);
 const failures = [];
 
