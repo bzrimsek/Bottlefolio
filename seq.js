@@ -492,6 +492,52 @@ function faultsOf() {
   })();
   keepFaults.forEach(f => failures.push('design: ' + f));
 
+  /* THE WAY OUT DOES NOT SCROLL AWAY. BZ, 2026-10-26, of the flights list:
+     "why is the flights back button not in the corner?" It was in the
+     corner - it had left. The .filterbar sticks and the header did not, so
+     one flick pinned the search and filters to the top and took the mark,
+     the title, the count and Back with it: measured at 390px, the header
+     sat at -304 while the bar held at -4.
+
+     EVERY SCREEN WITH A FILTER BAR, because the shelf had it too and
+     nobody had noticed. */
+  const stickFaults = await (async () => {
+    const out = [];
+    for (const scr of ['flights', 'shelf']) {
+      await p.evaluate(s => {
+        show(s);
+        if (s === 'flights') { FLIGHTS_OPEN = true; S.fflt.state = 'all';
+          renderFlightFilters(); renderFlights(); }
+        if (s === 'shelf') { renderShelfFilters(); renderShelf(); }
+      }, scr);
+      await p.waitForTimeout(260);
+      const seen = await p.evaluate(s => {
+        const box = document.getElementById('scr-' + s);
+        box.scrollTop = 320;
+        const hdr = box.querySelector(':scope > .hdr');
+        if (!hdr) return { none: true };
+        const r = hdr.getBoundingClientRect();
+        return { top: Math.round(r.top),
+                 on: r.bottom > 0 && r.top < innerHeight,
+                 scrolled: Math.round(box.scrollTop) };
+      }, scr);
+      if (seen.none) { out.push(scr + ' has no header of its own'); continue; }
+      /* A LIST TOO SHORT TO SCROLL PROVES NOTHING, so this only judges when
+         it actually moved. */
+      if (seen.scrolled < 100) continue;
+      if (!seen.on) {
+        out.push(scr + ': the header scrolled away at ' + seen.scrolled
+          + 'px - its top is ' + seen.top);
+      }
+      await p.evaluate(s => {
+        document.getElementById('scr-' + s).scrollTop = 0;
+      }, scr);
+    }
+    return out;
+  })();
+  stickFaults.forEach(f => failures.push('header: ' + f));
+
+
 
 
 

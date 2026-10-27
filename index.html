@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.10  Build 2026-10-26 10:51 PM ET
+     Version : v2.9.11  Build 2026-10-26 11:07 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.11  2026-10-26  The way out does not scroll away.
 // v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
 // v2.9.9  2026-10-26  The gate runs on a named image.
 // v2.9.8  2026-10-26  A remix comes back with a bench.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.4  2026-10-20  A declared axis that does not move is not the axis.
 // v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
-// v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -216,7 +216,19 @@ body.typing nav{display:none}
    carries a return-to-the-question AND a way out of the screen — dropped
    onto two rows and the walk caught it. Nothing wraps now; the title is the
    thing that gives, because it is the one part that can be read short. */
-.hdr{position:relative;display:flex;align-items:center;gap:8px;
+/* STICKY, SO THE WAY OUT DOES NOT SCROLL AWAY (BZ, 2026-10-26: "why is
+   the flights back button not in the corner?"). It was in the corner; it
+   had left. The .filterbar below sticks and the header did not, so one
+   flick of a list pinned the search and filters to the top and took the
+   mark, the title, the count and Back with it - measured at 390px, the
+   header sat at -304 while the filter bar held at -4. True of every
+   screen with a filter bar, so it is fixed on the header rather than on
+   one screen.
+
+   ABOVE THE FILTER BAR: z-index 21 against its 20, so the bar slides
+   under the header rather than over it. */
+.hdr{position:sticky;top:0;z-index:21;background:var(--paper);
+  display:flex;align-items:center;gap:8px;
   /* A FIXED 44, NOT A MINIMUM. Every header already measured exactly 44
      except the shelf's, which reached 44.3 once its count line changed — and
      the masthead below it rides on the header's bottom edge, so the bar
@@ -1591,7 +1603,7 @@ button.respline{display:block;width:100%;background:none;border:0;
 button.respline:hover{opacity:1;text-decoration:underline}
 .mastslot{margin:0}
 .mastslot:empty{display:none}
-.filterbar{position:sticky;top:-20px;z-index:20;background:var(--paper);
+.filterbar{position:sticky;top:44px;z-index:20;background:var(--paper);
   /* Matches the screen padding above; it bleeds to the edges by cancelling
      it exactly, so the two numbers have to agree. */
   /* NO NEGATIVE TOP MARGIN. It was -20px while the header below it only
@@ -3146,8 +3158,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.10';
-const BUILD_TIME  = '2026-10-26 10:51 PM ET';
+const APP_VERSION = '2.9.11';
+const BUILD_TIME  = '2026-10-26 11:07 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -61979,7 +61991,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.10</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.11</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
