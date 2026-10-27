@@ -1059,26 +1059,6 @@ function step(n) {
      pointer - so it is DRIVEN: click each end of the track and read the
      value back, which is the test that would have caught it the first
      time. */
-  /* ONE EVERYBODY CARD, HOWEVER MANY TIMES IT PAINTS.
-
-     BZ: and I see 2 Everybody boxes. Mine: the sharing audit and each
-     person's report arrive after the first paint and the redraw calls
-     renderUsers again, which APPENDED rather than replaced. A render
-     that cannot be called twice is a render that will be, because the
-     whole point of this screen is that its data arrives late.
-
-     Rule 30e in one line: the gate tests one pass, and this is a second
-     render. */
-  /* THE LIST SITS UNDER ITS HEADING, AFTER THE DATA LANDS.
-
-     BZ, three times: the People heading at the top with nothing under it
-     and the list at the foot of the page. Two causes, both mine - the
-     redraw appended rather than replaced, then replaced at the wrong
-     index - and my headless check passed each time because it measured
-     the FIRST paint, while what he saw was the screen after the sharing
-     audit and the diagnostics arrived.
-
-     So this renders, then redraws, and checks the position AFTER. */
   /* NOTHING RUNS OFF THE EDGE, ON ANY SCREEN.
 
      BZ: fix the text and scan every page, every modal, everything and
@@ -1229,54 +1209,6 @@ function step(n) {
     Object.values(seen).slice(0, 6).forEach(x => failures.push('wrap: ' + x));
   }
 
-  step('the people list stays under its heading when data lands');
-  {
-    const r = await page.evaluate(() => {
-      S.admin = true;
-      renderDiag();
-      const box = document.getElementById('diagBody');
-      /* What actually happens: the late data triggers a redraw. */
-      renderUsers(box);
-      renderUsers(box);
-      const kids = [...box.children];
-      const card = box.querySelector('#everybodyCard');
-      const head = box.querySelector('#peopleHead');
-      return { at: kids.indexOf(card), head: kids.indexOf(head),
-               of: kids.length };
-    });
-    if (r.at < 0) {
-      failures.push('people: no Everybody card after a redraw');
-    } else if (r.head < 0) {
-      failures.push('people: no People heading to sit under');
-    } else if (r.at !== r.head + 1) {
-      failures.push('people: the list is at position ' + r.at + ' of '
-        + r.of + ' while its heading is at ' + r.head
-        + ' — it must sit directly under it');
-    }
-  }
-
-  step('rendering the people list twice leaves one card');
-  {
-    const r = await page.evaluate(() => {
-      const host = document.createElement('div');
-      document.body.appendChild(host);
-      renderUsers(host);
-      renderUsers(host);
-      renderUsers(host);
-      const cards = host.querySelectorAll('#everybodyCard').length;
-      const heads = [...host.querySelectorAll('h3')]
-        .filter(h => /Everyone/.test(h.textContent || '')).length;
-      host.remove();
-      return { cards: cards, heads: heads };
-    });
-    if (r.cards !== 1) {
-      failures.push('people: ' + r.cards + ' Everybody cards after three '
-        + 'renders, want 1');
-    }
-    if (r.heads !== 1) {
-      failures.push('people: ' + r.heads + ' Everybody headings, want 1');
-    }
-  }
 
   step('the top of the fill gauge is full, the foot is empty');
   {

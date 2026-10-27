@@ -99,6 +99,11 @@ function kindOf(f) {
   if (f === 'sw.js') return 'worker';
   if (f === 'firebase-rules.json') return 'rules';
   if (f === 'data.json' || f === 'map.json') return 'data';
+  /* 2026-10-27: the admin page. Its own kind, so editing admin.html runs the
+     admin check without dragging in every screens check - and so a change to
+     index.html still reaches it, because the admin row also names engine and
+     screens. */
+  if (f === 'admin.html') return 'admin';
   return null;
 }
 

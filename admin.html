@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bottlefolio admin</title>
+<!--
+  THE ADMIN HALF, OUT OF THE APP (BZ, 2026-10-27: "we need to separate out
+  admin functions and solve for that").
+
+  WHY THIS FILE EXISTS. index.html shipped the admin doors to everybody who
+  installed it. The Firebase rules were never the problem - they enforce the
+  boundary properly and `admins/<uid>` is write:false, so no account can
+  promote itself - but every non-admin downloaded the admin screens and could
+  reach them by flipping a local switch, and got a refusal. A door nobody can
+  open is worse than no door. That matters more now the app is going to the
+  stores, where the people installing it are strangers.
+
+  NOT A SECOND COPY OF ANYTHING. Everything that is a decision comes out of
+  index.html at boot: the L. engine, the Firebase config, APP_VERSION and the
+  SDK urls. This file holds admin SCREENS and nothing else. The engine is
+  sliced between the same two anchors engine.js uses, which is why that slice
+  is load-bearing in two places now and why admin.js asserts it.
+
+  DESKTOP ONLY, ON PURPOSE (BZ, 2026-10-27). No manifest, no icons, no service
+  worker, no phone layout. It is a page you open on the PC to work the queue,
+  so it carries its own small shell rather than the app's phone-first one -
+  el() and $() are DOM sugar, not decisions, and nothing here restates a rule
+  that lives in the engine.
+
+  IT IS PUBLIC AND THAT IS FINE. Anyone may load it; without a uid under
+  bz-apps/whisky/admins every read it makes is refused, and nothing in
+  index.html's Firebase config was ever a secret.
+-->
+<style>
+  /* Tokens light, redefined for dark. A desktop tool: denser than the app,
+     and deliberately not the app's visual system. */
+  :root{
+    --paper:#fbfaf7; --ink:#1b1a18; --sub:#6a665e; --line:#e2ded5;
+    --card:#ffffff; --rust:#a4472b; --good:#3f6b4a; --quiet:#f1eee8;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:light dark;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#17161a; --ink:#ece9e3; --sub:#9b958a; --line:#2e2c31;
+      --card:#1f1e23; --rust:#d8755a; --good:#7faa89; --quiet:#26242a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .top{display:flex;align-items:center;gap:10px;padding:10px 16px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;
+    background:var(--paper);z-index:5}
+  .brand{font-weight:600;letter-spacing:.01em}
+  .tag{font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--rust);border:1px solid var(--rust);border-radius:3px;
+    padding:1px 5px;margin-left:6px;vertical-align:2px}
+  .top .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  main{max-width:900px;margin:0 auto;padding:16px}
+  h1{font-size:19px;margin:0 0 2px}
+  h3{font-size:15px;margin:0 0 6px}
+  .rs{font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--sub);margin:18px 0 6px}
+  .sheet{background:var(--card);border:1px solid var(--line);
+    border-radius:6px;padding:12px 14px;margin-bottom:10px}
+  .sub{color:var(--sub);font-size:13px}
+  .src{color:var(--sub);font-size:12px}
+  .nm{font-weight:600}
+  .item{display:flex;align-items:flex-start;gap:12px;
+    justify-content:space-between;padding:10px 0;
+    border-top:1px solid var(--line)}
+  .item:first-of-type{border-top:0}
+  .rowacts{display:flex;gap:6px;flex:none}
+  .btn{font:inherit;padding:7px 12px;border-radius:5px;cursor:pointer;
+    border:1px solid var(--ink);background:var(--ink);color:var(--paper)}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.wide{display:block;width:100%}
+  .btn-sm{padding:4px 9px;font-size:13px}
+  .chip{font:inherit;font-size:12px;padding:3px 9px;border-radius:11px;
+    border:1px solid var(--line);background:var(--quiet);color:var(--ink);
+    cursor:pointer}
+  .chip.quiet{color:var(--sub)}
+  .btn[disabled],.chip[disabled]{opacity:.5;cursor:default}
+  .field{font:inherit;padding:7px 9px;border:1px solid var(--line);
+    border-radius:5px;background:var(--paper);color:var(--ink);width:100%}
+  .pourtag{font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    border:1px solid var(--line);border-radius:3px;padding:0 4px;
+    margin-left:6px;color:var(--sub);vertical-align:1px;font-weight:400}
+  .pourtag.blend{color:var(--good);border-color:var(--good)}
+  .pourtag.wish{color:var(--rust);border-color:var(--rust)}
+  .lookrow{display:flex;gap:8px;align-items:center}
+  #modalWrap{position:fixed;inset:0;background:rgba(0,0,0,.45);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:40px 16px;overflow:auto;z-index:20}
+  #modalBox{background:var(--card);border:1px solid var(--line);
+    border-radius:8px;padding:16px;width:100%;max-width:460px}
+  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;
+    background:var(--ink);color:var(--paper);padding:9px 14px;
+    border-radius:5px;z-index:30;max-width:90vw}
+  [hidden]{display:none!important}
+  .mono{font-family:var(--mono);font-size:12px;word-break:break-all;
+    user-select:all;cursor:text}
+  .bad{color:var(--rust)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">Bottlefolio<span class="tag">admin</span></div>
+  <div class="right">
+    <span id="who" class="src"></span>
+    <button id="out" class="chip" hidden>Sign out</button>
+  </div>
+</header>
+
+<main>
+  <div id="gate" class="sheet"><div class="sub">Starting&hellip;</div></div>
+  <div id="body" hidden></div>
+</main>
+
+<div id="modalWrap" hidden><div id="modalBox"></div></div>
+<div id="toast" hidden></div>
+
+<script>
+/* ===================================================================
+   THE SHELL. Small on purpose: see the comment at the top of the file.
+   =================================================================== */
+const $ = s => document.querySelector(s);
+const el = (t, c, x) => { const n = document.createElement(t);
+  if (c) n.className = c; if (x !== undefined && x !== null) n.textContent = x;
+  return n; };
+
+/* The admin tool's state. A deliberately different name from the app's FB,
+   because this is not the app and a reader should not expect app behaviour. */
+const A = { L: null, user: null, version: '', config: null, admin: false };
+/* ON THE WINDOW ON PURPOSE. A top-level const in a plain script is not a
+   window property, so admin.js could not read a thing about the boot and
+   its first run passed four checks against `undefined`. It is also what
+   BZ would open the console to look at. */
+window.A = A;
+
+/* WHAT THE APP WOULD HAVE LOGGED goes to the console here. BZ reads the app's
+   log in the app; this page is driven while watching it. */
+function appLog(m) { console.log('[admin] ' + m); }
+
+let TOAST_T = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(TOAST_T);
+  TOAST_T = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+function openModal(title, fill) {
+  const box = $('#modalBox');
+  box.innerHTML = '';
+  if (title) box.appendChild(el('h3', null, title));
+  fill(box);
+  $('#modalWrap').hidden = false;
+}
+function closeModal() { $('#modalWrap').hidden = true; $('#modalBox').innerHTML = ''; }
+$('#modalWrap').onclick = e => { if (e.target.id === 'modalWrap') closeModal(); };
+
+/* THE DATABASE'S OWN WORDS, through the engine. L.plainError holds the rule;
+   this only logs the raw text beside it, exactly as index.html does. */
+function sayError(e, fallback) {
+  const raw = (e && (e.message || e.code)) || String(e);
+  appLog('failure shown in plain words: ' + String(raw).slice(0, 200));
+  return A.L.plainError(e, fallback);
+}
+
+function buttonWorking(btn, label) {
+  btn.disabled = true;
+  if (label) btn.textContent = label;
+}
+
+/* ===================================================================
+   THE NODES.
+
+   THE ONE THING THIS FILE SAYS TWICE. index.html names these paths too -
+   67 sites name a bz-apps/whisky path across 25 distinct paths, and no
+   shared table exists to read them from. They are gathered here rather than
+   scattered through the functions below so the duplication is one block a
+   reader can see, not eight call sites. The fix is ONE shared path table in
+   the engine that both files read - not named here, because naming a door
+   that does not exist yet sends the next reader hunting for it; it is its own
+   job, because half-migrating
+   67 call sites would leave two doors, which is worse than one flagged copy.
+   =================================================================== */
+const NODE = {
+  root:       'bz-apps/whisky',
+  admins:     'bz-apps/whisky/admins',
+  stats:      'bz-apps/whisky/stats',
+  directory:  'bz-apps/whisky/directory',
+  diagnostics:'bz-apps/whisky/diagnostics',
+  shares:     'bz-apps/whisky/shares',
+  sharedWith: 'bz-apps/whisky/sharedWith',
+  requests:   'bz-apps/whisky/requests'
+};
+const ref = p => firebase.database().ref(p);
+
+/* ===================================================================
+   BOOT. Everything that is a decision is read out of index.html.
+   =================================================================== */
+
+/* The same two anchors engine.js uses. If either moves, this page stops
+   booting and admin.js says so - which is the point of asserting it there. */
+const ENGINE_START = 'const L = {};';
+const ENGINE_END = '/* =====================================================================\n   STATE + RENDER';
+
+function sliceEngine(html) {
+  const a = html.indexOf(ENGINE_START);
+  const b = html.indexOf(ENGINE_END);
+  if (a < 0 || b < 0) throw new Error('the engine anchors are not in index.html');
+  return new Function(html.slice(a, b) + '\nreturn L;')();
+}
+
+/* THE CONFIG, OUT OF THE APP, so there is one copy of the project it talks
+   to. It sits inside `const FB = {...}` so it cannot be sliced on a line
+   boundary; the braces are balanced instead. Values are plain strings, so
+   nothing inside them can carry a brace. */
+function sliceConfig(html) {
+  const at = html.indexOf('config: {');
+  if (at < 0) throw new Error('the Firebase config is not in index.html');
+  const open = html.indexOf('{', at);
+  let depth = 0, end = -1;
+  for (let i = open; i < html.length; i++) {
+    if (html[i] === '{') depth++;
+    else if (html[i] === '}') { depth--; if (!depth) { end = i; break; } }
+  }
+  if (end < 0) throw new Error('the Firebase config block does not close');
+  return new Function('return ' + html.slice(open, end + 1))();
+}
+
+function sliceVersion(html) {
+  const m = html.match(/const APP_VERSION = '([^']+)'/);
+  return m ? m[1] : '';
+}
+
+/* AND THE SDK URLS, so the version is chosen in one place. index.html loads
+   these three itself; reading them from there means an SDK bump moves both. */
+function sliceSdk(html) {
+  const out = [];
+  const re = /https:\/\/www\.gstatic\.com\/firebasejs\/[0-9.]+\/firebase-[a-z-]+\.js/g;
+  let m;
+  while ((m = re.exec(html))) if (out.indexOf(m[0]) < 0) out.push(m[0]);
+  if (!out.length) throw new Error('no Firebase SDK urls in index.html');
+  return out;
+}
+
+const loadScript = src => new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = src; s.onload = res; s.onerror = () => rej(new Error('could not load ' + src));
+  document.head.appendChild(s);
+});
+
+function said(msg, sub) {
+  const g = $('#gate');
+  g.innerHTML = '';
+  g.appendChild(el('h3', null, msg));
+  if (sub) g.appendChild(el('div', 'sub', sub));
+  g.hidden = false;
+  return g;
+}
+
+async function boot() {
+  said('Reading the app…', 'The engine, the config and the build all come out of index.html.');
+  let html;
+  try {
+    const r = await fetch('index.html', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    html = await r.text();
+  } catch (e) {
+    said('Could not read index.html', 'This page is only useful beside the app: '
+      + ((e && e.message) || e));
+    return;
+  }
+  try {
+    A.L = sliceEngine(html);
+    A.config = sliceConfig(html);
+    A.version = sliceVersion(html);
+    var sdk = sliceSdk(html);
+  } catch (e) {
+    said('The app is not the shape this page expects', (e && e.message) || String(e));
+    return;
+  }
+  appLog('engine loaded: ' + Object.keys(A.L).length + ' entries, app v' + A.version);
+  $('#who').textContent = 'app v' + A.version;
+
+  try {
+    for (const u of sdk) await loadScript(u);
+    firebase.initializeApp(A.config);
+  } catch (e) {
+    said('Firebase would not start', (e && e.message) || String(e));
+    return;
+  }
+
+  firebase.auth().onAuthStateChanged(u => { A.user = u || null; gate(); });
+}
+
+/* THE GATE. Signed out, signed in and not an admin, signed in and an admin:
+   three states, each said plainly. The database decides - this only reads
+   the answer and says it. */
+function gate() {
+  const g = $('#gate');
+  $('#body').hidden = true;
+  $('#out').hidden = !A.user;
+  if (!A.user) {
+    g.innerHTML = '';
+    g.appendChild(el('h3', null, 'Sign in'));
+    g.appendChild(el('div', 'sub',
+      'This page administers the shared library and the people with accounts. '
+      + 'It only works for an account listed under admins.'));
+    const b = el('button', 'btn', 'Sign in with Google');
+    b.style.marginTop = '10px';
+    b.onclick = () => {
+      b.disabled = true;
+      firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+        .catch(e => { b.disabled = false; toast(sayError(e, 'Sign-in failed')); });
+    };
+    g.appendChild(b);
+    g.hidden = false;
+    $('#who').textContent = 'app v' + A.version;
+    return;
+  }
+  $('#who').textContent = (A.user.email || A.user.uid) + ' · app v' + A.version;
+  said('Checking…');
+  /* admins/<uid> and nothing else. A refused read is NOT an answer of false:
+     said as refused, because telling somebody they are not an admin when the
+     database would not say is a guess. */
+  ref(NODE.admins).child(A.user.uid).once('value').then(s => {
+    A.admin = s.val() === true;
+    if (!A.admin) {
+      said('Not an admin',
+        'This account is signed in but is not listed under ' + NODE.admins
+        + '. That node is write:false on purpose, so it is added in the '
+        + 'Firebase console.');
+      return;
+    }
+    $('#gate').hidden = true;
+    $('#body').hidden = false;
+    renderPeople();
+  }).catch(e => {
+    said('The database would not say', sayError(e, 'That read was refused'));
+  });
+}
+
+$('#out').onclick = () => firebase.auth().signOut().then(() => {
+  A.admin = false; toast('Signed out');
+});
+
+/* ===================================================================
+   PEOPLE. Moved out of index.html's Diagnostics screen on 2026-10-27,
+   unchanged except where it reached for something the app has and this
+   page does not; each of those is marked MOVED.
+   =================================================================== */
+
+const PEOPLE_DIAGS = {};
+/* Which way each share runs, read once per open. shareParties finds
+   records in either direction - including somebody who granted you and
+   never published a stat, precisely whose shelf will not open. */
+const PEOPLE_SHARES = { rows: [], asked: false };
+
+/* WHICH WAY EACH SHARE RUNS, THROUGH L.shareHealth AND NOTHING ELSE. That is
+   the one thing that turns an audit row into a verdict, it is in the engine
+   and it is tested. This used to be worked out again at the call site, from
+   two field names shareAudit does not write and nothing else does either,
+   so both verdicts came out false for everybody and every person in the
+   admin list read "no sharing" while sharing both ways (BZ, 2026-10-04: "no
+   sharing? yet we are buddies"). A decision asked in two places had the
+   wrong answer in one of them, which is what rule 30d is for. */
+function shareVerdicts(rows) {
+  return (rows || []).map(r => {
+    const health = A.L.shareHealth(r);
+    return Object.assign({}, r, {
+      theySeeYours: health.theyCanSeeMine,
+      youSeeTheirs: health.iCanSeeTheirs
+    });
+  });
+}
+
+function shareAudit(uids) {
+  if (!A.user) return Promise.resolve([]);
+  const me = A.user.uid;
+  const one = uid => Promise.all([
+    ref(NODE.shares).child(me).child(uid).once('value')
+      .then(s => !!s.val()).catch(() => null),
+    ref(NODE.sharedWith).child(uid).child(me).once('value')
+      .then(s => !!s.val()).catch(() => null),
+    ref(NODE.shares).child(uid).child(me).once('value')
+      .then(s => !!s.val()).catch(() => null),
+    ref(NODE.sharedWith).child(me).child(uid).once('value')
+      .then(s => !!s.val()).catch(() => null)
+  ]).then(([outGrant, outIndex, inGrant, inIndex]) => ({
+    uid: uid, outGrant: outGrant, outIndex: outIndex,
+    inGrant: inGrant, inIndex: inIndex,
+    /* null means the read was refused, which is a different thing from
+       false and must never be repaired as though it were. */
+    unreadable: [outGrant, outIndex, inGrant, inIndex]
+      .filter(v => v === null).length
+  }));
+  return Promise.all((uids || []).map(one));
+}
+
+/* Everybody this account has any sharing record with, from both
+   directions, so a person whose index went missing is still found.
+   MOVED: the app also folded in SHARED.shelves and SHARED.outList, which are
+   buddy lists it has already loaded. This page loads no shelves, so the two
+   nodes are the whole answer here - fewer sources, same question. */
+function shareParties() {
+  if (!A.user) return Promise.resolve([]);
+  const me = A.user.uid;
+  return Promise.all([
+    ref(NODE.shares).child(me).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => []),
+    ref(NODE.sharedWith).child(me).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => [])
+  ]).then(([mine, theirs]) => {
+    const all = {};
+    mine.concat(theirs).forEach(u => { if (u && u !== me) all[u] = 1; });
+    return Object.keys(all);
+  });
+}
+
+function shareRepair(row) {
+  /* MOVED: the app clears its CHILD_CACHE here. This page keeps no such
+     cache, so there is nothing to forget. */
+  const me = A.user.uid;
+  const ops = A.L.shareRepairOps(row);
+  return Promise.all(ops.map(op => {
+    const viewer = op.viewer === 'me' ? me : op.viewer;
+    const owner = op.owner === 'me' ? me : op.owner;
+    const r = ref(NODE.sharedWith).child(viewer).child(owner);
+    return op.set ? r.set({ at: Date.now() }) : r.remove();
+  })).then(() => ops.length);
+}
+
+// Suspending somebody removes the REGISTRY ENTRY, not their whisky, which
+// lives in their own account; they reappear on their next sign-in. Said
+// plainly rather than implying more power than it has. Enforced client-side
+// at sign-in: it stops use of the app, not somebody reading their own data,
+// which they are entitled to.
+function setSuspended(uid, off) {
+  return ref(NODE.stats).child(uid).child('suspended').set(!!off)
+    .then(() => { appLog((off ? 'suspended ' : 'restored ') + uid.slice(0, 8)); });
+}
+
+function renderPeople() {
+  const box = $('#body');
+  box.innerHTML = '';
+  const h = el('div', 'rs', 'People');
+  h.id = 'peopleHead';
+  box.appendChild(h);
+  renderUsers(box);
+}
+
+function renderUsers(box) {
+  /* ONE CARD, REDRAWN IN PLACE: always directly after the People heading,
+     which cannot be wrong however late anything arrives. */
+  const old = box.querySelector('#everybodyCard');
+  if (old) old.remove();
+  const putBack = node => {
+    const head = box.querySelector('#peopleHead');
+    if (head && head.parentNode) {
+      head.parentNode.insertBefore(node, head.nextSibling);
+    } else {
+      box.appendChild(node);
+    }
+  };
+  /* EVERYBODY WITH AN ACCOUNT, INLINE, on the tested logic. */
+  const card = el('div', 'sheet');
+  card.id = 'everybodyCard';
+  card.appendChild(el('h3', null, 'Everyone'));
+  card.appendChild(el('div', 'sub', A.user ? 'Loading…' : 'Sign in first.'));
+  putBack(card);
+  if (!A.user || typeof firebase === 'undefined') return;
+
+  Promise.all([
+    ref(NODE.stats).once('value').then(sn => sn.val() || {}).catch(() => null),
+    ref(NODE.directory).once('value').then(sn => sn.val() || {}).catch(() => ({}))
+  ]).then(([stats, dir]) => {
+    card.innerHTML = '';
+    card.appendChild(el('h3', null, 'Everyone'));
+    if (stats === null) {
+      card.appendChild(el('div', 'sub',
+        'The database would not let this account read them.'));
+      return;
+    }
+    /* THE DIRECTORY ARRIVES AS A MAP KEYED BY UID and L.adminPeople wants
+       rows of {uid, name}. Converted here, where the two meet, rather than
+       teaching the helper a second shape. */
+    const dirRows = Object.keys(dir || {}).map(uid =>
+      Object.assign({ uid: uid }, (dir || {})[uid] || {}));
+    /* EVERYBODY IS THE LIST, with sharing and diagnostics in it: one row per
+       person. A person has a diagnostic only once their DEVICE has
+       published, so separate cards appeared to disagree. */
+    const people = A.L.peopleRows({
+      stats: stats, directory: dirRows,
+      /* Filled by the audit below, the only thing that knows which way a
+         share runs. */
+      shares: (PEOPLE_SHARES.rows || []),
+      /* Only the ones that actually published: a recorded null means
+         asked and nothing there. */
+      diagUids: Object.keys(PEOPLE_DIAGS).filter(u => PEOPLE_DIAGS[u]),
+      me: A.user.uid, now: Date.now() });
+
+    /* THE SHARING, ONCE. shareParties is the only thing that
+       enumerates both directions, and shareAudit is the only thing
+       that says which way each one actually runs. */
+    if (!PEOPLE_SHARES.asked) {
+      PEOPLE_SHARES.asked = true;
+      shareParties().then(uids => shareAudit(uids))
+        .then(rows => {
+          PEOPLE_SHARES.rows = shareVerdicts(rows);
+          renderUsers(box);
+        })
+        .catch(() => {});
+    }
+
+    /* AND EACH PERSON'S REPORT, one node at a time: Firebase rules do not
+       cascade upward, so the collection read is refused even for an admin.
+       When one arrives, that person's row gains its button. */
+    people.forEach(pn => {
+      if (PEOPLE_DIAGS[pn.uid] !== undefined) return;
+      ref(NODE.diagnostics).child(pn.uid).once('value')
+        .then(sn => {
+          /* NULL IS AN ANSWER TOO. Storing only hits would re-ask everybody
+             without a report on each redraw, and a redraw is triggered BY an
+             answer - a loop hammering Firebase while the screen is open. */
+          PEOPLE_DIAGS[pn.uid] = sn.val() || null;
+          if (PEOPLE_DIAGS[pn.uid]) renderUsers(box);
+        })
+        .catch(() => { PEOPLE_DIAGS[pn.uid] = null; });
+    });
+    if (!people.length) {
+      card.appendChild(el('div', 'sub', 'Nobody has reported yet.'));
+      return;
+    }
+    /* ONLY SOMEBODY WHO HAS ACTUALLY REPORTED A VERSION can be on an older
+       one. This counted `x.version !== A.version`, so an account that has
+       never synced - version '' - was counted as being on an older build,
+       and the card said "3 people, 2 on an older version" while one of the
+       rows said "no report". The screen contradicted itself, which is what
+       answers.js fails a build for. Carried over from index.html on
+       2026-10-27 and found by admin.js on the way through. */
+    const stale = people.filter(x => x.version && x.version !== A.version).length;
+    card.appendChild(el('div', 'sub', people.length + ' '
+      + (people.length === 1 ? 'person' : 'people')
+      + (stale ? ', ' + stale + ' on an older version' : ', all current')
+      + '. Counts only — nobody’s bottles are read here.'));
+
+    people.forEach(pn => {
+      const item = el('div', 'item');
+      const left = el('div');
+      const nm = el('div', 'nm', pn.name || '(no name)');
+      if (pn.uid === A.user.uid) {
+        nm.appendChild(el('span', 'pourtag blend', 'you'));
+      }
+      if (pn.version && pn.version !== A.version) {
+        nm.appendChild(el('span', 'pourtag wish', 'v' + pn.version));
+      }
+      /* A MARK ON THE NAME (BZ): a tag is seen without reading, on the row an
+         admin scans for whoever reported a problem. */
+      if (pn.hasDiag) {
+        nm.appendChild(el('span', 'pourtag', 'diag'));
+      }
+      /* And a person whose device has never published says so, rather than
+         leaving a gap. */
+      if (!pn.hasDiag && pn.uid !== A.user.uid) {
+        nm.appendChild(el('span', 'pourtag quiet', 'no report'));
+      }
+      left.appendChild(nm);
+      /* Shelf size, last visit, sharing direction, diagnostic: one line. */
+      left.appendChild(el('div', 'sub', A.L.peopleLine(pn)));
+      /* THE EMAIL (BZ): a name is what somebody chose to show, an email is who
+         they are, and an admin looking at two rows with one name needs it. */
+      if (pn.email && pn.email !== pn.name) {
+        const em = el('div', 'src mono', pn.email);
+        left.appendChild(em);
+      }
+      /* THE UID, because a name does not identify an account, two rows can
+         share one, and Remove wipes a shelf with no undo (BZ).
+         THE SHARING IS ON THE ROW, not behind a press (BZ): it is one line.
+         What needs room or acts - the four records with a mend, and the
+         published report - opens from the person. */
+      const sh = (PEOPLE_SHARES.rows || []).filter(r => r.uid === pn.uid)[0];
+      if (sh) {
+        const health = A.L.shareHealth(sh);
+        if (!health.whole) {
+          const bad = el('div', 'src bad');
+          bad.textContent = health.faults.map(f => f.what).join(' · ');
+          left.appendChild(bad);
+        }
+      }
+      if (pn.hasDiag || (sh && !A.L.shareHealth(sh).whole)) {
+        const more = el('button', 'chip quiet',
+          pn.hasDiag ? 'Report and repair' : 'Repair it');
+        more.style.marginTop = '4px';
+        more.onclick = ev => { ev.stopPropagation(); openPersonSheet(pn); };
+        left.appendChild(more);
+      }
+      const idl = el('div', 'src mono', pn.uid
+        + (pn.uid === A.user.uid ? '  — this sign-in' : ''));
+      left.appendChild(idl);
+      item.appendChild(left);
+      if (pn.uid !== A.user.uid) {
+        /* SUSPEND, a live feature checked on sign-in; this is its only control. */
+        const susp = el('button', 'chip');
+        const off = !!pn.suspended;
+        susp.textContent = off ? 'Restore' : 'Suspend';
+        susp.onclick = () => {
+          susp.disabled = true;
+          setSuspended(pn.uid, !off)
+            .then(() => renderPeople())
+            .catch(e => { susp.disabled = false; toast(sayError(e)); });
+        };
+        /* ONE GROUP ON THE RIGHT (BZ: remove small and next to suspend). */
+        const acts = el('div', 'rowacts');
+        acts.appendChild(susp);
+        const rm = el('button', 'chip', 'Remove');
+        rm.onclick = () => confirmRemovePerson(pn);
+        /* Quieter than Suspend: suspending is reversible, removing is not. */
+        rm.classList.add('quiet');
+        acts.appendChild(rm);
+        item.appendChild(acts);
+      }
+      card.appendChild(item);
+    });
+  });
+}
+
+/* ONE PERSON, EVERYTHING KNOWN ABOUT THEM, including the sharing audit:
+   the only thing that can tell somebody why a shelf will not open, and it
+   can mend it. Read, never inferred: a refused read is reported as refused
+   rather than as an absence, because repairing an absence you cannot see
+   would delete somebody's access on a guess. */
+function openPersonSheet(pn) {
+  openModal(pn.name || 'Someone', m => {
+    m.appendChild(el('div', 'sub', A.L.peopleLine(pn)));
+
+    const shareBox = el('div');
+    shareBox.appendChild(el('div', 'src', 'Reading the sharing…'));
+    m.appendChild(shareBox);
+
+    shareAudit([pn.uid]).then(rows => {
+      shareBox.innerHTML = '';
+      const row = (rows || [])[0];
+      if (!row) {
+        shareBox.appendChild(el('div', 'src', 'No sharing records either way.'));
+        return;
+      }
+      const h = A.L.shareHealth(row);
+      shareBox.appendChild(el('div', 'nm',
+        h.whole ? 'Sharing is intact'
+          : (h.faults.length + ' thing'
+             + (h.faults.length === 1 ? '' : 's') + ' to mend')));
+      h.faults.forEach(f => {
+        shareBox.appendChild(el('div', 'src', f.what));
+      });
+      if (!h.whole && h.faults.some(f => f.mine)) {
+        /* ONLY WHAT THIS ACCOUNT OWNS. A uid-keyed node is writable by
+           its owner alone, so a fault on their side is theirs to fix and
+           saying so is more use than a button that fails. */
+        const fix = el('button', 'btn wide', 'Mend my side');
+        fix.style.marginTop = '8px';
+        fix.onclick = () => {
+          fix.disabled = true;
+          shareRepair(row)
+            .then(() => { toast('Mended'); closeModal(); renderPeople(); })
+            .catch(e => { fix.disabled = false; toast(sayError(e)); });
+        };
+        shareBox.appendChild(fix);
+      }
+    }).catch(e => {
+      shareBox.innerHTML = '';
+      shareBox.appendChild(el('div', 'src',
+        'Could not read the sharing records: ' + ((e && e.message) || e)));
+    });
+
+    if (PEOPLE_DIAGS[pn.uid]) {
+      const dg = el('button', 'btn wide', 'Their diagnostic');
+      dg.style.marginTop = '10px';
+      dg.onclick = () => openDiagFor(pn.uid, PEOPLE_DIAGS[pn.uid]);
+      m.appendChild(dg);
+    }
+    const close = el('button', 'btn ghost wide', 'Close');
+    close.style.marginTop = '6px';
+    close.onclick = closeModal;
+    m.appendChild(close);
+  });
+}
+
+function openDiagFor(uid, d) {
+  const rec = d || {};
+  openModal('Diagnostic', m => {
+    m.appendChild(el('div', 'sub',
+      [rec.version ? 'v' + rec.version : null,
+       rec.at ? A.L.todayISO(new Date(rec.at)) : null,
+       rec.bottles ? rec.bottles + ' bottles' : null]
+        .filter(Boolean).join(' · ')
+      || 'Published with no details.'));
+    const pre = el('div', 'src');
+    pre.style.cssText = 'white-space:pre-wrap;font-size:12px;'
+      + 'max-height:50vh;overflow:auto;margin-top:8px';
+    pre.textContent = String(rec.log || rec.lines || '') || 'No log in this report.';
+    m.appendChild(pre);
+    const copy = el('button', 'btn wide', 'Copy it');
+    copy.style.marginTop = '10px';
+    copy.onclick = () => {
+      navigator.clipboard.writeText(pre.textContent);
+      toast('Copied');
+    };
+    m.appendChild(copy);
+    const close = el('button', 'btn ghost wide', 'Close');
+    close.style.marginTop = '6px';
+    close.onclick = closeModal;
+    m.appendChild(close);
+  });
+}
+
+function confirmRemovePerson(p) {
+  openModal('Remove ' + (p.name || 'this account') + '?', m => {
+    m.appendChild(el('div', 'sub',
+      'Clears their shelf, flights, pours, directory '
+      + 'entry, every share given or received, every request '
+      + 'either way, and any offer to the library not yet '
+      + 'reviewed. There is no undo, and you cannot back up '
+      + 'their shelf from here.'));
+    m.appendChild(el('div', 'src',
+      'Their sign-in is not removed — delete it in the Firebase '
+      + 'console under '
+      + 'Authentication, or they can sign in again to an empty '
+      + 'shelf. Anything they published to the library stays.'));
+    m.appendChild(el('div', 'sub', 'Type REMOVE to confirm.'));
+    const inp = el('input', 'field');
+    inp.placeholder = 'REMOVE';
+    inp.id = 'removeConfirm';
+    m.appendChild(inp);
+
+    const go = el('button', 'btn wide', 'Remove their data');
+    go.style.marginTop = '10px';
+    go.style.background = 'var(--rust)';
+    go.style.borderColor = 'var(--rust)';
+    go.style.color = '#fff';
+    go.onclick = () => {
+      if (inp.value.trim().toUpperCase() !== 'REMOVE') {
+        toast('Type REMOVE to confirm'); return;
+      }
+      buttonWorking(go, 'Removing…');
+      removePersonData(p);
+    };
+    m.appendChild(go);
+    const no = el('button', 'btn ghost wide', 'Cancel');
+    no.onclick = closeModal;
+    m.appendChild(no);
+  });
+}
+
+function removePersonData(p) {
+  const db = firebase.database();
+  const uid = p.uid;
+  Promise.all([
+    db.ref(NODE.shares + '/' + uid).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => []),
+    db.ref(NODE.directory).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => []),
+    /* Who has asked THIS account for access. Needed BY NAME because each
+       ask must be nulled as its own child: the parent has no write rule,
+       and one refused path refuses the whole update. */
+    db.ref(NODE.requests + '/' + uid).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => []),
+    /* AND WHO SHARED WITH THEM. Those records live under the GIVER, so
+       nothing under this account points at them and the wipe walked straight
+       past: the giver's buddy list went on naming somebody with no shelf. */
+    db.ref(NODE.sharedWith + '/' + uid).once('value')
+      .then(s => Object.keys(s.val() || {})).catch(() => [])
+  ]).then(([sharedWith, everyone, askedBy, sharedFrom]) => {
+    const wipe = A.L.accountWipe(uid, sharedWith, everyone, askedBy, sharedFrom);
+    /* The tombstone goes in the SAME update as the wipe. Their device still
+       holds the shelf and would push it back on the next sign-in; the
+       tombstone tells that device to start empty instead. */
+    wipe['wiped/' + uid] = Date.now();
+    return db.ref(NODE.root).update(A.L.fbEncodePaths(wipe));
+  }).then(() => {
+    appLog('admin removed account ' + uid);
+    closeModal();
+    toast('Removed — delete their sign-in in the Firebase console');
+    /* MOVED: the app redrew Buddies here. This page has one screen. */
+    PEOPLE_SHARES.asked = false;
+    PEOPLE_SHARES.rows = [];
+    renderPeople();
+  }).catch(e => {
+    appLog('admin remove refused: ' + ((e && e.message) || e));
+    closeModal();
+    /* SAY WHAT HAPPENED: the database's own words, not a guess at the cause
+       (a hardcoded "out-of-date rules" excuse once sent BZ the wrong way). */
+    toast(sayError(e, 'That was refused'));
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -43,9 +43,12 @@ names.
 
 Two shared rules, as they apply here:
 
-- **22b, the linter:** `lint.js` is one of the seventeen checks below, and
+- **22b, the linter:** `lint.js` is one of the twenty checks below, and
   its `ALLOWED` list is empty.
-- **30f, the size ratchet:** the allowances are `BIG_TODAY` in
+- **30f, the size ratchet:** it measures `index.html` AND `admin.html` by
+  one definition since 2026-10-27 — a function that moves between them is
+  still measured, which is what stopped `renderUsers` walking out of the
+  ratchet with the admin split. The allowances are `BIG_TODAY` in
   `consistency.js`, measured 2026-09-15 with 51 functions over 100 code lines;
   39 were still over on 2026-10-03. Regenerate with `node consistency.js
   --sizes`, never by hand.
@@ -107,7 +110,7 @@ files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
 and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
 plain shelf file, a CSV, the database export or `_superseded/`.
 
-The gate, all seventeen, in this order — `gate.py` runs them in the cloud
+The gate, all twenty, in this order — `gate.py` runs them in the cloud
 with the clock pinned to UTC. Nothing depends on that any more: §351 used to
 fail on BZ's PC and pass in the cloud, because it stamped a date at midnight
 UTC and `L.todayISO` answers the LOCAL calendar day on purpose — so the one
@@ -117,7 +120,7 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 7,814 assertions
+node killer-bs-test.js    # 8,241 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
 node consistency.js       # 117 wiring checks, incl. rules copied twice
 node screens.js           # 36 screens draw
@@ -131,6 +134,9 @@ node gscheck.js           # Apps Script wiring
 node browser.js           # the walk, a real browser  (~45s)
 node sync.js              # push, load, reload, refuse (~78s)
 node ios.js               # the app in WebKit, at iPhone size (~25s)
+node says.js              # what every screen SAYS, on BZ's real shelf
+node update.js            # an old worker installed, a new build landing
+node admin.js             # the admin page, and index.html's anchors broken
 node cost.js              # what the engine COSTS, against a ratcheting budget
 node rulestest.js         # the Firebase rules, run in the emulator
 ```
@@ -139,7 +145,7 @@ node rulestest.js         # the Firebase rules, run in the emulator
 2026-09-16); on BZ's PC it prints SKIPPED, which is not a pass. It also runs
 the suite against rules broken on purpose and fails if it misses one.
 
-All seventeen must pass. Report each one as it lands rather than running the
+All twenty must pass. Report each one as it lands rather than running the
 loop silently (rule 25c) — and read the whole output of each, not the last
 line; a check once sat broken for several builds because the failure was
 thirty lines above a blank final line.
@@ -164,10 +170,56 @@ Picking checks by what changed saves less than it looks: any edit to
 expensive one. Running them at once is what actually shortened it. The cloud
 gate has run its groups in parallel since it was split.
 
-A delivery is `index.html` + `sw.js` + both named lock files (rule 25).
+A delivery is `index.html` + `sw.js` + `admin.html` + both named lock
+files. Rule 25 names the first four; `admin.html` joined on 2026-10-27 and
+the wording is the rules session's to change, not this one's.
 
 `push.py` sends a finished build to the repo and refuses to run unless
 `audit.py` has passed.
+
+---
+
+## The admin half
+
+`admin.html` is a second page beside the app, added 2026-10-27 as build 1
+of the admin split. It holds everybody with an account, each person's
+published report, the four-record sharing check and its repair, Suspend and
+Remove. All of that used to be inside `index.html`, behind `S.admin` — which
+is a local switch anybody may flip, not a permission — so every installed
+copy of the app carried screens whose every read the database refused. BZ:
+separate out admin functions. It matters more now the app is headed for the
+stores, where the people installing it are strangers.
+
+**It keeps no second copy of anything.** At boot it fetches `index.html`
+and slices four things out of it: the `L.` engine (between `const L = {};`
+and the `STATE + RENDER` banner, the same two anchors `engine.js` uses), the
+Firebase config, `APP_VERSION`, and the three SDK urls. So 32,052 engine
+lines stay written in one place and the two pages can never disagree about a
+rule — and **`index.html`'s engine anchors are now load-bearing in a second
+file**. `admin.js` breaks each of them on purpose and demands the page say it
+cannot boot; `audit.py` check 15 refuses a delivery where any of the twelve
+moved names is back in `index.html` as code, or where `admin.html` has grown
+an engine, a config or a version of its own.
+
+**Desktop only, by decision** (BZ, 2026-10-27). No manifest, no icons, no
+phone layout, and deliberately NOT in `sw.js` — a stranger's browser must
+never cache a page it can never use. It is published with the site because
+same origin is what lets it read the engine; it is public and harmless,
+since without a uid under `bz-apps/whisky/admins` every read it makes is
+refused, `admins/$uid` is `write:false`, and the Firebase web key was never
+a secret.
+
+What it does NOT hold yet is the library: the export, the contradiction
+scan, the offers queue and the entry editor are still in `index.html`, about
+2,300 lines of it, and they are build 2. Until then `LIB.admin` still exists
+in the app and still gates them.
+
+One thing it says twice on purpose: the `bz-apps/whisky` node paths. They
+are gathered in one `NODE` map at the top of `admin.html` rather than
+scattered, because `index.html` names them too — 67 sites across 25 distinct
+paths, with no shared table to read from. One shared path table in the engine is
+the fix and is its own job; half-migrating 67 call sites would leave two
+doors, which is worse than one flagged copy.
 
 ---
 
@@ -381,6 +433,8 @@ reporting it. One edit per script is the cheap way to avoid this.
 | | |
 |---|---|
 | `index.html` | the app |
+| `admin.html` | **the admin page** — a desktop page beside the app that reads the engine out of `index.html` rather than copying it. See The admin half |
+| `admin.js` | the admin page's check, including index.html's anchors broken on purpose |
 | `sw.js` | service worker, cache name bumps with the version |
 | `lookup.gs` `shelf.gs` `label.gs` `recap.gs` | the service |
 | `data.json` | the shipped catalog, ~325 products |

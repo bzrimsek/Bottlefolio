@@ -156,6 +156,19 @@ const tests = fs.readFileSync(__dirname + '/killer-bs-test.js', 'utf8');
    device may read anybody else's list. A use there is a use. */
 const JOBS = ['popular.js', 'refdata.js'].map(f => fs.existsSync(__dirname + '/' + f)
   ? fs.readFileSync(__dirname + '/' + f, 'utf8') : '').join('\n');
+/* AND THE ADMIN PAGE CALLS IT TOO (2026-10-27). admin.html holds the admin
+   screens and reaches the engine through A.L.<name>, so a use there is a use -
+   exactly as it is in the nightly jobs above. It is normalised to L. so one
+   counting rule still serves every caller, and its comments are blanked first
+   because they NAME engine doors (L.plainError, L.shareHealth, L.settingsView)
+   and would otherwise look like calls. Without this, shareHealth,
+   shareRepairOps, peopleRows and peopleLine all read as tested-but-unwired the
+   moment People left index.html. */
+const ADMIN = fs.existsSync(__dirname + '/admin.html')
+  ? blankComments(fs.readFileSync(__dirname + '/admin.html', 'utf8')
+      .replace(/<!--[\s\S]*?-->/g, ''))
+      .split('A.L.').join('L.')
+  : '';
 const dead = [], unwired = [];
 defined.forEach(fn => {
   /* AGAINST THE CODE, NOT THE SOURCE. This counted mentions in `src`, so a
@@ -165,7 +178,8 @@ defined.forEach(fn => {
      both hid here for as long as their comments existed. A checker that
      reads comments is checking the wrong file. */
   const inApp = codeOnly.split('L.' + fn).length - 1
-    + JOBS.split('L.' + fn).length - 1;
+    + JOBS.split('L.' + fn).length - 1
+    + ADMIN.split('L.' + fn).length - 1;
   if (inApp > 1) return;
   (tests.indexOf('L.' + fn) >= 0 ? unwired : dead).push(fn);
 });
@@ -3414,7 +3428,17 @@ check('no fixed svg id is emitted by a repeated drawing',
  *     because a one-line tidy should not turn the gate red.
  */
 {
-  const ls = src.split('\n');
+  /* TWO FILES, ONE RULE (2026-10-27). admin.html holds admin screens and
+     is sized by exactly the same definition below; a function that moves
+     between the two is still measured, which is the whole point of a
+     ratchet. BIG_TODAY is keyed by name and each offender records which
+     file it is in, so a message points at the right one. */
+  const SOURCES = [
+    { file: 'index.html', ls: src.split('\n') },
+    { file: 'admin.html',
+      ls: fs.readFileSync(__dirname + '/admin.html', 'utf8')
+        .split('\n') }
+  ];
   /* A top-level function: the declaration starts at column 0. Anything
      nested is measured as part of its parent, which is correct \u2014 a screen
      does not get smaller by moving its arithmetic into a closure inside
@@ -3432,25 +3456,32 @@ check('no fixed svg id is emitted by a repeated drawing',
       && !t.startsWith('*');
   };
   const sized = new Map();
-  for (let i = 0; i < ls.length; i++) {
-    const m = OPEN.exec(ls[i]);
-    if (!m) continue;
-    const name = m[1] || m[2] || m[3] || m[4];
-    let end = -1;
-    for (let j = i + 1; j < ls.length; j++) {
-      if (CLOSE.test(ls[j])) { end = j; break; }
-      if (OPEN.test(ls[j])) break;
+  SOURCES.forEach(srcf => {
+    const ls = srcf.ls;
+    for (let i = 0; i < ls.length; i++) {
+      const m = OPEN.exec(ls[i]);
+      if (!m) continue;
+      const name = m[1] || m[2] || m[3] || m[4];
+      let end = -1;
+      for (let j = i + 1; j < ls.length; j++) {
+        if (CLOSE.test(ls[j])) { end = j; break; }
+        if (OPEN.test(ls[j])) break;
+      }
+      if (end < 0) continue;
+      let n = 0;
+      for (let j = i; j <= end; j++) if (isCode(ls[j])) n++;
+      /* One name, one size. lint.js already fails a name defined twice; if
+         one ever slips through, the ratchet holds the larger of the two
+         rather than whichever came last. The same applies ACROSS the two
+         files: el, toast and sayError exist in both, both small, and the
+         larger is the one the ceiling should judge. */
+      const was = sized.get(name);
+      if (!was || n > was.n) {
+        sized.set(name, { name: name, n: n, line: i + 1, file: srcf.file });
+      }
+      i = end;
     }
-    if (end < 0) continue;
-    let n = 0;
-    for (let j = i; j <= end; j++) if (isCode(ls[j])) n++;
-    /* One name, one size. lint.js already fails a name defined twice; if
-       one ever slips through, the ratchet holds the larger of the two
-       rather than whichever came last. */
-    const was = sized.get(name);
-    if (!was || n > was.n) sized.set(name, { name, n, line: i + 1 });
-    i = end;
-  }
+  });
 
   const SIZE_CEILING = 100;
   const SIZE_SLACK = 5;
@@ -3468,7 +3499,6 @@ check('no fixed svg id is emitted by a repeated drawing',
     shopAnswer: 243,
     renderGaps: 170,
     renderShelfCharts: 163,
-    renderUsers: 160,
     shelfPortrait: 159,
     renderGuest: 157,
     showCandidates: 147,
@@ -3492,7 +3522,10 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderFromUrl: 103,
     receiptsDialog: 101,
     renderRecap: 101,
-    showImportCheck: 101
+    showImportCheck: 101,
+    /* In admin.html since 2026-10-27, and 152 rather than the 160 it
+       was in index.html - the ratchet went down on the move. */
+    renderUsers: 152
   };
 
   if (process.argv.indexOf('--sizes') >= 0) {
@@ -3510,12 +3543,12 @@ check('no fixed svg id is emitted by a repeated drawing',
     const f = sized.get(name);
     if (!f) {
       ghosts.push(name + ' is in BIG_TODAY and is not a top-level function '
-        + 'in index.html \u2014 drop the line, or the name is free to come '
-        + 'back at any size');
+        + 'in index.html or admin.html \u2014 drop the line, or the '
+        + 'name is free to come back at any size');
       return;
     }
     if (f.n > BIG_TODAY[name]) {
-      grew.push('index.html:' + f.line + '  ' + name + ' is ' + f.n
+      grew.push(f.file + ':' + f.line + '  ' + name + ' is ' + f.n
         + ' code lines, allowed ' + BIG_TODAY[name] + ' \u2014 move the '
         + (f.n - BIG_TODAY[name]) + ' new line(s) into a named L. helper '
         + '(rule 30). The allowance does not go up.');
@@ -3528,7 +3561,7 @@ check('no fixed svg id is emitted by a repeated drawing',
   const fresh = [...sized.values()]
     .filter(f => f.n > SIZE_CEILING && !(f.name in BIG_TODAY))
     .sort((a, b) => b.n - a.n)
-    .map(f => 'index.html:' + f.line + '  ' + f.name + ' is ' + f.n
+    .map(f => f.file + ':' + f.line + '  ' + f.name + ' is ' + f.n
       + ' code lines, over the ' + SIZE_CEILING + '-line ceiling \u2014 a '
       + 'screen lays things out and calls a named L. helper for the rest '
       + '(rule 30)');

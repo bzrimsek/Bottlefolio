@@ -67,6 +67,11 @@ FAST = [
     # side could see it, because every check ever written for this app
     # reads index.html.
     ('appsscript',  ['node', 'gscheck.js']),
+    # THE ADMIN PAGE, which is a second file reading the engine out of
+    # index.html (2026-10-27). It is here rather than in SLOW because it
+    # takes three seconds, and it is here at all because index.html's two
+    # engine anchors now decide whether another page can boot.
+    ('admin',       ['node', 'admin.js']),
 ]
 
 # WHAT THE ENGINE COSTS, against a budget that ratchets down (2026-10-01).

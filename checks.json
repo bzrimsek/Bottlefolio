@@ -29,6 +29,7 @@
     "script": "the .gs files and apps-script/appsscript.json",
     "data": "data.json, map.json",
     "rules": "firebase-rules.json",
+    "admin": "admin.html, the admin page",
     "harness": "a check's own file - it runs itself"
   },
 
@@ -73,6 +74,10 @@
     { "name": "update", "harness": "update.js", "secs": 12,
       "reaches": ["worker", "screens"],
       "note": "an old worker installed and a new build landing, over 127.0.0.1 - the one origin a service worker will register on, which is why no other check can drive this at all" },
+
+    { "name": "admin", "harness": "admin.js", "secs": 3,
+      "reaches": ["engine", "screens", "admin"],
+      "note": "admin.html reads the engine, the config, the version and the SDK urls out of index.html, so index.html's two engine anchors are load-bearing in a second file now - this breaks each of them on purpose and demands the page SAY it cannot boot. It also drives Remove, the one irreversible thing on that page" },
 
     { "name": "appsscript", "harness": "gscheck.js", "secs": 1,
       "reaches": ["script", "engine"],

@@ -55,7 +55,7 @@ Individually, in gate order:
 
 ```
 python audit.py index.html   # the named lock file matches index.html
-node killer-bs-test.js       # 7,814 assertions against the engine
+node killer-bs-test.js       # 8,241 assertions against the engine
 node lint.js                 # nothing undefined, duplicated, unreachable
 node consistency.js          # 117 wiring checks
 node screens.js              # 36 screens draw
@@ -69,6 +69,11 @@ node gscheck.js              # Apps Script wiring
 node browser.js              # the walk, in a real browser   (~45s)
 node sync.js                 # push, load, reload, refuse    (~78s)
 node ios.js                  # the app in WebKit, at iPhone size (~25s)
+node says.js                 # what every screen SAYS, on a real shelf
+node cost.js                 # what the engine costs, against a budget
+node update.js               # an old worker, and a new build landing
+node admin.js                # the admin page, and the anchors it reads
+node rulestest.js            # the Firebase rules, in the emulator (cloud)
 ```
 
 Report each one as it lands, and read the whole output of each rather than
@@ -76,7 +81,7 @@ the last line — a check once sat broken for several builds because the
 failure was thirty lines above a blank final line.
 
 `consistency.js` also carries the size ratchet: every top-level function in
-`index.html` is measured in code lines, today's oversized ones are allowed by
+`index.html` and `admin.html` is measured in code lines, today's oversized ones are allowed by
 name at today's size, and anything that grows fails. When one shrinks, run
 
 ```
@@ -146,7 +151,8 @@ A red gate leaves the live site, service and rules exactly as they were. The
 service goes before the site, because a page that needs a new service must
 never arrive first.
 
-**A delivery is `index.html` + `sw.js` + both named lock files.**
+**A delivery is `index.html` + `sw.js` + `admin.html` + both named lock
+files.**
 
 ---
 

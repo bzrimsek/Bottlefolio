@@ -18,8 +18,10 @@ Checks:
   12. data.json and map.json parse and hold what the app expects
   13. Storage availability is probed rather than assumed
   14. Named lock files exist AND match index.html / sw.js byte for byte
+  15. The admin split holds: no admin people surface in index.html,
+      and admin.html carries no second copy of the engine or config
 """
-import sys, re, os, json, subprocess
+import sys, re, os, json, subprocess, io
 
 KEEP_IN_HEADER = 10
 ASSETS = ['mark.png', 'icon-192.png', 'icon-512.png', 'data.json', 'map.json',
@@ -528,6 +530,94 @@ def run_audit(html_path):
     else:
         ok('line endings are LF')
 
+    # The admin split ----------------------------------------
+    # 2026-10-27: the admin people surface moved to admin.html. index.html
+    # used to ship it to everybody who installed the app, where it showed
+    # a refusal - a door nobody can open, which matters more now the app
+    # is going to the stores. A split nothing checks is a split that
+    # creeps back, so the boundary is asserted before every delivery.
+    #
+    # ABSENT, NOT HIDDEN. These names are what the surface was; any one
+    # of them reappearing in index.html means the move is coming undone.
+    gone = ['renderUsers', 'openPersonSheet', 'confirmRemovePerson',
+            'removePersonData', 'fbShareAudit', 'fbShareParties',
+            'fbShareRepair', 'fbSetSuspended', 'PEOPLE_DIAGS',
+            'PEOPLE_SHARES', 'everybodyCard', 'peopleHead']
+    # AGAINST THE CODE, NOT THE PROSE. index.html carries a changelog
+    # header, and this file's own lesson - written twice in
+    # consistency.js - is that a checker reading comments is checking
+    # the wrong file. A headline that happened to name one of these
+    # would otherwise fail a delivery for nothing.
+    html_code = re.sub(r'/\*[\s\S]*?\*/', ' ', html)
+    html_code = re.sub(r'(?m)^\s*//.*$', '', html_code)
+    html_code = re.sub(r'(?s)<!--.*?-->', ' ', html_code)
+    back = [n for n in gone if n in html_code]
+    if back:
+        fail('the admin split has come undone - index.html names '
+             + ', '.join(back) + ' again (they live in admin.html)')
+    else:
+        ok('index.html carries none of the admin people surface')
+
+    admin_path = os.path.join(base, 'admin.html')
+    if not os.path.exists(admin_path):
+        fail('admin.html is not here - the admin surface has nowhere to live')
+    else:
+        adm = io.open(admin_path, encoding='utf-8').read()
+        adm_lines = adm.split(chr(10))
+
+        def declares(prefix):
+            return any(l.startswith(prefix) for l in adm_lines)
+
+        # ONE COPY OF EVERYTHING THAT IS A DECISION. admin.html reads the
+        # engine, the config, the version and the SDK urls out of
+        # index.html at boot; a declaration of its own is a second copy,
+        # which is the fault the whole split exists to avoid. Matched at a
+        # line start because admin.html NAMES the engine anchor and the
+        # version pattern inside its own slicers.
+        copies = []
+        if declares('const L = {}'):
+            copies.append('its own L engine')
+        if declares('const APP_VERSION'):
+            copies.append('its own APP_VERSION')
+        if 'apiKey' in adm or 'databaseURL' in adm:
+            copies.append('its own Firebase config')
+        if 'gstatic.com/firebasejs' in adm:
+            copies.append('a hardcoded Firebase SDK url')
+        if copies:
+            fail('admin.html carries ' + ', '.join(copies)
+                 + ' - it must read all of that out of index.html')
+        else:
+            ok('admin.html carries no second copy of engine, config or version')
+
+        # AND THE ANCHORS IT READS MUST STILL BE THERE. If either moves,
+        # admin.html cannot boot at all; admin.js breaks them on purpose,
+        # and this says so before a delivery rather than after.
+        missing = []
+        if 'const L = {};' not in html:
+            missing.append('the engine opener')
+        if 'STATE + RENDER' not in html:
+            missing.append('the STATE + RENDER banner')
+        if 'config: {' not in html:
+            missing.append('the Firebase config block')
+        if missing:
+            fail('index.html no longer carries ' + ', '.join(missing)
+                 + ' - admin.html reads the engine and the config there')
+        else:
+            ok('index.html still carries the anchors admin.html reads')
+
+        # DESKTOP ONLY (BZ, 2026-10-27): never in the service worker, so a
+        # stranger's browser does not cache a page it can never use.
+        # sw.js is read fresh here: the sw variable above is set inside a
+        # conditional and may not exist at all.
+        sw_here = os.path.join(base, 'sw.js')
+        sw_now = ''
+        if os.path.exists(sw_here):
+            sw_now = io.open(sw_here, encoding='utf-8').read()
+        if 'admin.html' in sw_now:
+            fail('sw.js precaches admin.html - it is desktop only and must '
+                 'not be cached into a browser that can never use it')
+        else:
+            ok('admin.html is not in the service worker')
     print()
     if failures == 0:
         print('  \u2714 All checks passed — safe to deliver\n')

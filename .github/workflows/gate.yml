@@ -459,9 +459,21 @@ jobs:
       #   mark.png     the wordmark, two <img src> in index.html
       #   zxing.min.js the barcode decoder, loaded on demand
       #   data.json, map.json   fetched by the app, precached by sw.js
-      # Every one of them is in sw.js's SHELL/EXTRAS/DATA lists, which is
-      # the same question asked from the other side: a file the worker
-      # precaches and the site does not serve is an install that 404s.
+      #   admin.html   the admin page, added 2026-10-27. Served here
+      #                because it reads the engine, the Firebase config,
+      #                the version and the SDK urls out of index.html at
+      #                boot - same origin, one copy of each. It is the
+      #                ONE file in this list that sw.js does not
+      #                precache, on purpose: desktop only, so a
+      #                stranger's browser never caches a page it can
+      #                never use. audit.py check 15 fails if it ever
+      #                appears in sw.js.
+      # Every one of them EXCEPT admin.html is in sw.js's SHELL/EXTRAS/DATA
+      # lists, which is the same question asked from the other side: a file
+      # the worker precaches and the site does not serve is an install that
+      # 404s. admin.html is served and not precached, which is the only
+      # combination that is fine - it is a page BZ opens on the PC, not
+      # part of the installed app.
       #
       # The sealed shelf files are NOT here and never will be: `grep -c gpg`
       # is 0 in both index.html and sw.js, and the plain ones exist only on
@@ -476,7 +488,7 @@ jobs:
           cp index.html sw.js manifest.json mark.png \
              icon-192.png icon-512.png icon-mask-192.png icon-mask-512.png \
              zxing.min.js data.json map.json \
-             cooper.webp cooper-pour.webp site/
+             cooper.webp cooper-pour.webp admin.html site/
           touch site/.nojekyll
           echo "the artifact:"
           ls -la site

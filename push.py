@@ -82,7 +82,12 @@ APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
        # 2026-09-28: Cooper, greeting and offering a glass. 17KB each,
        # downscaled from the 1024px originals - the guide draws him at 110px.
        # No hat: "the hat was good for a wizard, no a man" (BZ).
-       'cooper.webp', 'cooper-pour.webp']
+       'cooper.webp', 'cooper-pour.webp',
+       # 2026-10-27: the admin page. Served beside index.html because
+       # that is how it reads the engine out of it - same origin, one
+       # copy. Deliberately NOT in sw.js: desktop only, so a stranger's
+       # browser never caches it.
+       'admin.html']
 # README.md added 2026-09-15 with review item 39, when HANDOVER/HANDOFF/
 # REVIEW/RECAP-SETUP were retired to _superseded (which NEVER blocks). It is
 # the front door of a public repo, so a repo without it is a repo whose only
@@ -101,6 +106,8 @@ DOCS = ['CHANGELOG.md', 'CLAUDE.md', 'DEV-RULES.md', 'BACKLOG.md',
 # build carries the rules it was made under. There is no copy in this folder.
 SOURCE = {'DEV-RULES.md': os.path.join(os.path.dirname(HERE), 'DEV-RULES.md')}
 TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
+           # 2026-10-27: the admin page's own check.
+           'admin.js',
            'render.js', 'sync.js', 'twotab.js', 'lint.js', 'gscheck.js',
            # 2026-09-15: the two checks that read what the screen SAYS and
            # how wide it is. Everything else here proves the code runs.
