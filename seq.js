@@ -332,8 +332,11 @@ function faultsOf() {
       flightBuilder();
     });
     await p.waitForTimeout(500);
+    /* THE DESIGNER IS A PAGE SINCE 2026-10-26, so Design it is on the
+       screen and Keep it and Save are in the editor's sheet over it. */
     const press = re => p.evaluate(r => {
-      const b = [...document.querySelectorAll('#overlay button')]
+      const b = [...document.querySelectorAll('#scr-design button, '
+        + '#overlay button')]
         .filter(x => new RegExp(r, 'i').test(x.textContent))[0];
       if (b) b.click();
       return !!b;
@@ -422,6 +425,73 @@ function faultsOf() {
     return out;
   })();
   bareFaults.forEach(f => failures.push('bench: ' + f));
+
+  /* A HALF-BUILT FLIGHT SURVIVES A WRONG TAP. BZ, 2026-10-26: "because the
+     designer is a modal, any errant click loses all work before the save."
+     Nothing is saved until Save flight, so the design WAS the work, and a
+     modal closes on Escape, on back and on any nav tab.
+
+     It is a page now, and a page can still be walked off - so this sets a
+     hold, presses a nav tab, comes back, and looks for the hold. */
+  const keepFaults = await (async () => {
+    const out = [];
+    await p.evaluate(() => { show('flights'); renderFlights(); flightBuilder(); });
+    await p.waitForTimeout(500);
+    /* WHICH SWITCH IS ON, not how many elements there are. The first
+       version counted `#scr-design *` before and after, and a rebuild
+       draws exactly as many things as it drew the first time - so the
+       check stayed green with the keeping deliberately removed, which is
+       the fault it exists for. */
+    const held = () => p.evaluate(() =>
+      [...document.querySelectorAll('#scr-design [role=switch]')]
+        .map(b => ((b.querySelector('.nm') || {}).textContent || '')
+          .trim()
+          + '=' + b.getAttribute('aria-checked')).join('|'));
+    const before = await held();
+    if (!before) { out.push('the designer drew no switches'); return out; }
+    const set = await p.evaluate(() => {
+      const sw = [...document.querySelectorAll('#scr-design [role=switch]')]
+        .filter(b => b.getAttribute('aria-checked') === 'false')[0];
+      if (sw) sw.click();
+      return !!sw;
+    });
+    if (!set) { out.push('nothing to hold on the designer'); return out; }
+    await p.waitForTimeout(200);
+    const after = await held();
+    if (after === before) out.push('pressing a switch held nothing');
+    /* THE WRONG TAP: a nav tab, which is what closed the sheet. */
+    await p.evaluate(() => {
+      const b = document.querySelector('nav button[data-scr="home"]');
+      if (b) b.click();
+    });
+    await p.waitForTimeout(250);
+    const left = await p.evaluate(() =>
+      (document.querySelector('.screen.on') || {}).id);
+    if (left === 'scr-design') out.push('a nav tab did not leave the page');
+    /* AND BACK. */
+    await p.evaluate(() => { show('flights'); renderFlights(); flightBuilder(); });
+    await p.waitForTimeout(400);
+    const onNow = await p.evaluate(() =>
+      (document.querySelector('.screen.on') || {}).id);
+    if (onNow !== 'scr-design') out.push('coming back did not open it');
+    const kept = await held();
+    if (kept !== after) {
+      out.push('a tab press threw the design away: held ' + after
+        + ', came back to ' + kept);
+    }
+    /* AND Start again IS THE ONE THING THAT CLEARS IT. */
+    const cleared = await p.evaluate(() => {
+      const b = [...document.querySelectorAll('#scr-design button')]
+        .filter(x => /start again/i.test(x.textContent))[0];
+      if (!b) return -1;
+      b.click();
+      return 1;
+    });
+    if (cleared === -1) out.push('no way to start again');
+    return out;
+  })();
+  keepFaults.forEach(f => failures.push('design: ' + f));
+
 
 
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.9  Build 2026-10-26 10:28 PM ET
+     Version : v2.9.10  Build 2026-10-26 10:51 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
 // v2.9.9  2026-10-26  The gate runs on a named image.
 // v2.9.8  2026-10-26  A remix comes back with a bench.
 // v2.9.7  2026-10-26  The crash behind all of it: a flight whose bench did not survive the account.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
 // v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
-// v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3033,6 +3033,23 @@ body.giftonly{padding:0}
      an answer; this is a list of fourteen decisions, each with a name, a
      recommendation and three buttons. That is a screen's worth of work and
      it was being done in a box. -->
+<!-- A PAGE, NOT A SHEET (BZ, 2026-10-26: "page in place of modal?").
+     The designer was a modal, and a modal closes on Escape, on back,
+     and on any nav tab - each of which calls closeModal and took a
+     half-built flight with it. "Any errant click loses all work before
+     the save." A screen has a Back that names where it goes and cannot
+     be tapped away by accident; it also has room for nine switches,
+     two counts and a premise, which a sheet never did. -->
+<section id="scr-design" class="screen">
+  <div class="hdr">
+    <h1>Design a flight</h1>
+    <div class="hdr-acts">
+      <button class="btn btn-sm ghost backbtn" data-to="flights">‹ Flights</button>
+    </div>
+  </div>
+  <div id="designBody"></div>
+</section>
+
 <section id="scr-scan" class="screen">
   <div class="hdr">
     <h1 id="scanTitle">Clean up</h1>
@@ -3129,8 +3146,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.9';
-const BUILD_TIME  = '2026-10-26 10:28 PM ET';
+const APP_VERSION = '2.9.10';
+const BUILD_TIME  = '2026-10-26 10:51 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -57045,6 +57062,11 @@ let FLIGHTS_OPEN = false;
    lands LAST - behind forty, on his shelf - which is no better than not
    being there at all. One draw, not a stored preference. */
 let JUST_MADE = null;
+/* WHOSE SHELF THE DESIGNER IS CASTING FROM, so a half-built design is kept
+   when he comes back to it and rebuilt when he arrives from somewhere
+   else - a flight for the room and a flight for his own shelf are not the
+   same half-built flight. */
+let DESIGN_POOL = false;
 
 /* The header's back button, where every other page puts it (BZ). */
 function setFlightsBack(on) {
@@ -57777,9 +57799,32 @@ function flightPickers(form, fromCat, fromBot) {
            extOf: () => Number(extSel.value) };
 }
 
-function flightBuilder(pool) {
+/* A PAGE, NOT A SHEET (BZ, 2026-10-26: "page in place of modal?").
+ *
+ * IT WAS A MODAL, and a modal closes on Escape, on back, and on any nav
+ * tab - each of which calls closeModal and took a half-built flight with
+ * it. BZ: "because the designer is a modal, any errant click loses all
+ * work before the save." Nothing was saved until Save flight, so a tap on
+ * the wrong part of the screen was the whole design.
+ *
+ * A SCREEN CANNOT BE TAPPED AWAY. Back names where it goes, the nav bar
+ * leaves it alone, and the page has room for nine switches, two counts and
+ * a premise - which the sheet never did.
+ */
+function flightBuilder(pool, afresh) {
   // Named for the tile that opens it: design, not build.
-  openModal('Design a flight', m => {
+  show('design');
+  {
+    const m = $('#designBody');
+    /* AND IT KEEPS WHAT WAS SET. A page cannot be tapped away, but a nav
+       tab still walks off it - and rebuilding on the way back is the same
+       loss in slower motion. The switches, the counts and the premise are
+       DOM, so leaving them alone is all it takes: come back and the design
+       is where it was. `afresh` is the one way to clear it, and Start
+       again is the only thing that passes it. */
+    if (m.childElementCount && !afresh && DESIGN_POOL === !!pool) return;
+    DESIGN_POOL = !!pool;
+    m.innerHTML = '';
     // Casting from the room rather than one shelf. Everything downstream is
     // unchanged: a pool is a catalog like any other.
     const fromCat = (pool && pool.catalog) || S.catalog;
@@ -57880,12 +57925,16 @@ function flightBuilder(pool) {
     // This one IS different: you choose the bottles rather than being
     // handed a cast.
     const manual = el('button', 'btn ghost wide', 'Pick the bottles');
-    manual.onclick = () => { closeModal(); flightEditor(L.newFlight('New flight')); };
+    manual.onclick = () => flightEditor(L.newFlight('New flight'));
     m.appendChild(manual);
-    const cancel = el('button', 'btn ghost wide', 'Cancel');
-    cancel.onclick = closeModal;
-    m.appendChild(cancel);
-  });
+    /* THE ONE WAY TO THROW IT AWAY, said out loud. Back keeps the design;
+       this is what clears it. */
+    const again = el('button', 'btn ghost wide', 'Start again');
+    again.onclick = () => flightBuilder(pool, true);
+    m.appendChild(again);
+    /* NO CANCEL. Back is in the header, it says where it goes, and a
+       second way out of a page is a second way to lose the work. */
+  }
 }
 
 // A designed flight, with the reasoning it came with and everything that
@@ -61930,7 +61979,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.9</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.10</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

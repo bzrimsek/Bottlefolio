@@ -2,6 +2,10 @@
 
 Newest first. The file header in index.html carries the headlines; the full entries live here.
 
+## v2.9.10  ·  2026-10-26 10:51 PM ET
+
+The designer is a page, and it keeps what you set. BZ: because the designer is a modal, any errant click loses all work before the save - and then, page in place of modal? Yes. Nothing is saved until Save flight, so the design WAS the work, and a modal closes on Escape, on back and on any nav tab, each of which called closeModal and took it. It is a screen now, with a Back that names where it goes and a nav bar that leaves it alone, and it has room for nine switches, two counts and a premise, which a sheet never did. A PAGE CAN STILL BE WALKED OFF, so it keeps what was set: the switches and counts are DOM and leaving them alone is the whole trick - press a tab, come back, and the design is where it was. Start again is the one thing that clears it, and it says so. Cancel is gone: a second way out of a page is a second way to lose the work. The check for it took three goes and the first two were worthless. It counted elements before and after, and a rebuild draws exactly as many things as the first draw did, so it stayed green with the keeping deliberately removed - the fault it exists for. It reads which switch is ON now, by aria-checked, and names what was lost when it goes red.
+
 ## v2.9.9  ·  2026-10-26 10:28 PM ET
 
 The gate runs on a named image. Two pushes were stopped last night by WebKit exiting 127 on libicudata.so.74 - ICU 74, which is Ubuntu 24.04's - while install-deps webkit ran for 107 seconds and did not supply it. That is what an image without ICU 74 looks like, and runs-on said ubuntu-latest, so what the gate runs on was whatever that meant this week. It is named now. And the wait for the browsers' libraries prints the image and the ICU it carries, because when ios fails on a missing library the first question is always which image this is - and finding that out should not cost a third push. Nothing in the app changed: ios.js named the library correctly both times, which is the job it was added for.
