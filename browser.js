@@ -1298,9 +1298,17 @@ function step(n) {
      rule is retired along with placeImport, so the check goes with it rather
      than being weakened into something that cannot fail.
 
-     WHAT IS STILL WORTH HOLDING is that the tab draws its four cards at all, in
-     order, with a shelf and without one. */
-  step('the shelf tab draws its four cards in order, with a shelf and without');
+     WHAT IS STILL WORTH HOLDING is that the tab draws its cards at all, in
+     order, with a shelf and without one.
+
+     FIVE SINCE 2026-10-27: Prices in another currency moved here off the
+     Diagnostics screen, where it had sat under a heading calling it Shared
+     data. It is second on purpose - the sequence reads what you have, what its
+     prices are read in, how to get more in, the files, and the one that cannot
+     be taken back, which stays last. This check is what makes that order a
+     rule rather than an intention, and it caught the new card on the build
+     that added it. */
+  step('the shelf tab draws its five cards in order, with a shelf and without');
   {
     const r = await page.evaluate(() => {
       const read = () => {
@@ -1321,7 +1329,8 @@ function step(n) {
       rebuildCatalog();
       return { withShelf: withShelf, empty: empty };
     });
-    const want = 'The shelf itself | Import a shelf | Files | Starting over';
+    const want = 'The shelf itself | Prices in another currency '
+      + '| Import a shelf | Files | Starting over';
     [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(
       ([when, got]) => {
         if (got !== want) {

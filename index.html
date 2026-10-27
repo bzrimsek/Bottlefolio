@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.12  Build 2026-10-27 11:03 AM ET
+     Version : v2.9.13  Build 2026-10-27 11:39 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
 // v2.9.11  2026-10-26  The way out does not scroll away.
 // v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.6  2026-10-26  A built flight ends in the list, and everything a flight can do is on the flight.
 // v2.9.5  2026-10-20  The sheet that refused to print, and the gate hole that hid it.
 // v2.9.4  2026-10-20  A declared axis that does not move is not the axis.
-// v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3158,8 +3158,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.12';
-const BUILD_TIME  = '2026-10-27 11:03 AM ET';
+const APP_VERSION = '2.9.13';
+const BUILD_TIME  = '2026-10-27 11:39 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9473,6 +9473,8 @@ L.FEATURES = [
    items: [
   { term: 'Add a bottle you just bought', src: '',
     def: 'Shop, Shopping in a store, then type or scan the name. Look it up, Add to wishlist and I bought it sit under it. Fill in what you know or let the lookup do it, then I bought it. A proof is wanted, not required. If you already own one, it asks whether the new one is sealed or open.' },
+  { term: 'Read a price in pounds', src: 'Settings \u203a Shelf',
+    def: 'A listing in pounds is shown in pounds and is not compared with your shelf until you say what a pound is worth. Set it once and it is used wherever a foreign price appears; it says the day you set it and tells you when that is more than three months old, because a stale rate quietly misprices everything. It is your own figure and is never shared or looked up.' },
   { term: 'Fill in one bottle', src: '',
     def: 'Open it from the shelf. If anything is missing, Look up sits under the bottle\u2019s own details and names what it would fetch \u2014 tasting notes, proof, age, price, cask, distillery. It never overwrites a note you wrote, and it needs the lookup service in Settings › Advanced › Bottle lookup. Shelf tools does the whole shelf at once.' },
   { term: 'Add a bottle without shopping for it', src: '',
@@ -41243,12 +41245,18 @@ function shelfSettingsPanel(box) {
 
 /* WHAT BOTH DRAW. One builder, so the sections cannot drift apart. */
 function shelfToolsInto(m) {
-  /* THE ORDER BZ ASKED FOR (2026-10-02): what you have, how to get more in,
-     the files, and the one that cannot be taken back. A named sequence rather
-     than one that changes with whether the shelf is empty - somebody who has
-     used this page once knows where things are. */
+  /* THE ORDER BZ ASKED FOR (2026-10-02): what you have, what its prices are
+     read in, how to get more in, the files, and the one that cannot be taken
+     back. A named sequence rather than one that changes with whether the
+     shelf is empty - somebody who has used this page once knows where things
+     are. */
   const q = shelfFillQueue();
   shelfToolsItself(m, q);
+  /* PRICES IN ANOTHER CURRENCY (BZ, 2026-10-27: "move it to Settings > Shelf").
+     It was on Diagnostics under a heading called Shared data, which it never
+     was. Here it sits with the bottles whose prices it reads, and ahead of the
+     import so the one that cannot be taken back is still last. */
+  m.appendChild(currencyCard());
   shelfToolsImport(m);
   shelfToolsFiles(m);
   shelfToolsOver(m);
@@ -50285,12 +50293,16 @@ function renderDiag() {
      the stores. S.admin stays what it was: a local switch that ORGANISES the
      advanced half, never a permission (see L.settingsView). */
   if (S.admin) {
-    const h2 = el('div', 'rs', 'Shared data');
-    h2.style.marginTop = '14px';
-    box.appendChild(h2);
-    /* The library's export, scan and queue live on the library screen, where
-       it is loaded (BZ); this screen never loads it. */
-    box.appendChild(currencyCard());
+    /* PRICES IN ANOTHER CURRENCY LEFT ON 2026-10-27, for Settings > Shelf
+       (BZ). It sets S.fxRate, which is this person's own rate for reading a
+       listing in pounds - it was never shared data, and it sat under a
+       heading saying it was. Its Set button already called renderSettings(),
+       so it only ever worked properly where it has gone.
+
+       The library's export, scan and queue live on the library screen, where
+       it is loaded (BZ); this screen never loads it. With the currency card
+       gone there is nothing shared left here at all, so the heading goes
+       rather than standing empty over the device's own report. */
     const h3 = el('div', 'rs', 'This device');
     h3.style.marginTop = '14px';
     box.appendChild(h3);
@@ -61555,7 +61567,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.12</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.13</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
