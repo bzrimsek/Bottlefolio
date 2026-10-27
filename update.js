@@ -146,7 +146,13 @@ function body(name) {
   }
 
   const keys2 = await caches_();
-  const stale = keys2.filter(k => k.indexOf(first) >= 0);
+  /* EXACTLY THE OLD ONE, not anything containing its name. The next
+     version here is 2.9.99, and when the build under test was 2.9.9 the
+     NEW cache - bottlefolio-v2.9.99 - contains the old name, so a
+     substring test called the new cache stale and failed a worker that had
+     done exactly the right thing (2026-10-26). A check that fails for the
+     wrong reason costs the same as one that passes for the wrong reason. */
+  const stale = keys2.filter(k => k === first);
   if (!stale.length) ok('and the old cache does not survive beside the new one');
   else bad('and the old cache does not survive beside the new one',
     'still holding ' + JSON.stringify(stale) + ' alongside '

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1082 |
+| functions | 1087 |
 | tables | 255 |
-| carrying a stated purpose | 872 |
+| carrying a stated purpose | 876 |
 
 ## Tables
 
@@ -340,6 +340,7 @@ QUESTION, not the name you were going to use.
 - **`L.axisShort`** — THE CHEAPEST GAP ON AN AXIS, in bottles
 - **`L.barRows`** — pies: readers compare lengths better than angles.
 - **`L.baselineOf`** — _no comment above it_
+- **`L.benchFor`** — THE BENCH: more of the same flight, brought out if the night has legs.
 - **`L.blendProof`** — rather than treating it as unknown.
 - **`L.blindGiven`** — bottles were swapped in is not.
 - **`L.blindTheme`** — so the theme is built from the flight's shape instead.
@@ -367,6 +368,7 @@ QUESTION, not the name you were going to use.
 - **`L.buddyLink`** — _no comment above it_
 - **`L.buddyPlaces`** — A pour at somebody's house, where the somebody is on the app.
 - **`L.buddyRows`** — WHO IS IN THE ROOM, BOTH DIRECTIONS AT ONCE
+- **`L.builtName`** — WHAT A FLIGHT THE DESIGNER BUILT IS CALLED.
 - **`L.bulkRowSay`** — WHAT A ROW SAYS UNDER ITS NAME
 - **`L.bulkSaid`** — AND WHAT THE MARKING DID, once it is done
 - **`L.bulkSay`** — WHAT THE SHEET SAYS IT IS HOLDING
@@ -427,7 +429,7 @@ QUESTION, not the name you were going to use.
 - **`L.deaccent`** — ACCENTS OFF BEFORE ANYTHING IS MATCHED
 - **`L.deadForwards`** — REMOVING IT IS SAFE BECAUSE IT POINTS AT NOTHING
 - **`L.describeCorrection`** — A correction in words
-- **`L.designFlight`** — BUILD WHAT THE TWO PICKERS DESCRIBE.
+- **`L.designFlight`** — _no comment above it_
 - **`L.designOptions`** — _no comment above it_
 - **`L.designPremise`** — _no comment above it_
 - **`L.designTitle`** — WHAT TO CALL IT, from the design itself.
@@ -532,6 +534,7 @@ QUESTION, not the name you were going to use.
 - **`L.flightIdeasFor`** — THE FLIGHT THIS BOTTLE MAKES
 - **`L.flightIsMine`** — WHOSE FLIGHT IS THIS, and so what may be done to it.
 - **`L.flightLine`** — THE LINE UNDER A FLIGHT'S NAME.
+- **`L.flightMeta`** — THE SMALL PRINT UNDER A FLIGHT'S NAME, as a list of phrases.
 - **`L.flightMissing`** — `sealed` is the shelf's own answer (L.ownedCount against L.pourable), so
 - **`L.flightMissingSay`** — Said in one line, because the card above it already says the count.
 - **`L.flightNoteQueue`** — Notes written for a flight card, not for the bottle
@@ -729,6 +732,7 @@ QUESTION, not the name you were going to use.
 - **`L.latelyBottle`** — WHAT A BOTTLE IS, in one line, so the writer can find what joins a
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
+- **`L.leadWith`** — ONE OF THEM FIRST, whatever the sort says - IN PLACE, because the caller
 - **`L.leansTo`** — _no comment above it_
 - **`L.lessonSay`** — ONE LINE THAT IS THE SHAPE
 - **`L.lessonsFor`** — WHAT EACH SHAPE WOULD ACTUALLY POUR, off the bottles that are open.
@@ -1334,6 +1338,7 @@ QUESTION, not the name you were going to use.
 - **`L.wheelSaid`** — WHAT THE SERVICE SAID IT FOUND, kept only where this app knows the word.
 - **`L.wheelTeach`** — _no comment above it_
 - **`L.whiskyEvidence`** — WHAT MAKES A LINE A WHISKY
+- **`L.wholeFlight`** — A FLIGHT WITH THE LISTS IT IS ENTITLED TO.
 - **`L.wholeValue`** — A LIST TAKEN WHOLE FROM THE OTHER SIDE, or an empty one when the account
 - **`L.whyPt`** — HOW BIG THE REASONING CAN BE, so the host card stays on one page
 - **`L.wikidataDistilleriesQuery`** — Q1251750 is "distillery" (whisky distilleries are a subclass of it).

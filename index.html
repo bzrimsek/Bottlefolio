@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.5  Build 2026-10-20 09:10 AM ET
+     Version : v2.9.9  Build 2026-10-26 10:28 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,16 +11,16 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.9  2026-10-26  The gate runs on a named image.
+// v2.9.8  2026-10-26  A remix comes back with a bench.
+// v2.9.7  2026-10-26  The crash behind all of it: a flight whose bench did not survive the account.
+// v2.9.6  2026-10-26  A built flight ends in the list, and everything a flight can do is on the flight.
 // v2.9.5  2026-10-20  The sheet that refused to print, and the gate hole that hid it.
 // v2.9.4  2026-10-20  A declared axis that does not move is not the axis.
 // v2.9.3  2026-10-20  One vocabulary, and the finish is its own dimension.
 // v2.9.2  2026-10-19  Lots of nulls, and the hold said in its storage form.
 // v2.9.1  2026-10-19  The suggestions sheet is the seven, and the flight cards say what a flight IS.
 // v2.9.0  2026-10-19  Seven flights, pre-built from the shelf, and seven others on ask.
-// v2.8.99  2026-10-19  A dimension opens its values, not a long list.
-// v2.8.98  2026-10-19  Standing still is not a theme.
-// v2.8.97  2026-10-19  The tonight sheet has a row for each thing the designer can hold, and the tabs read one glass, two, three.
-// v2.8.96  2026-10-19  A flight's topic is a sentence, not the facts in a row.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -1843,6 +1843,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
   padding:12px 12px;margin-bottom:9px;width:100%;text-align:left}
 .fcard h3{font-size:16px;color:var(--ink-deep);letter-spacing:.02em}
 .fcard .var{font-size:12px;color:var(--gold);margin-top:2px}
+.fcard.fresh{border-color:var(--gold)}
 .fcard .meta{font-size:12px;color:var(--mute);margin-top:6px}
 .done{border-left:3px solid var(--ok)}
 .warn{background:#FBF5EC;border:1px solid #E3D3B4;border-radius:8px;padding:8px 12px;
@@ -3128,8 +3129,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.5';
-const BUILD_TIME  = '2026-10-20 09:10 AM ET';
+const APP_VERSION = '2.9.9';
+const BUILD_TIME  = '2026-10-26 10:28 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9024,7 +9025,7 @@ L.FEATURES = [
   { term: 'Buddies', src: 'other people',
     def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Flights', src: 'your flights',
-    def: 'Run one lists every flight you have, with a Fully pourable filter, a Most ready sort, a search and a type filter; each card says what the flight IS — Bourbon from Angel’s Envy across four casks — along with its core and bench, the drinking arithmetic, how many of its core are open and when you last ran it. Get suggestions holds Seven to pour, seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. More holds Edit, Text it, Remix, Papers and, for a flight of your own, Delete this flight, which undoes from the message it leaves.' },
+    def: 'Run one lists every flight you have, with a Fully pourable filter, a Most ready sort, a search and a type filter; each card says what the flight IS — Bourbon from Angel’s Envy across four casks — along with its core and bench, the drinking arithmetic, how many of its core are open and when you last ran it. Get suggestions holds Seven to pour, seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. Everything a flight can do is on the flight, in one row under its name: Log the flight, Print papers, Edit, Text it, Remix and, for a flight of your own, Delete this flight. Remix and Delete ask first, because neither should be one stray tap from Edit on a phone; the delete undoes from the message it leaves. There is no More: it was six buttons in the HEADER that scrolled a phone sideways, and the page below wraps.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
     def: 'Cooper walks you through a tasting: a measured pour, then color, '
       + 'nose, body, palate and finish, teaching each one as it comes from the '
@@ -15570,6 +15571,28 @@ L.resolveHold = function (hold, products, size, varyId, pairs, round) {
  * six pours far more often. The spread is stated on the card rather than
  * left for the room to work out.
  */
+/* THE BENCH: more of the same flight, brought out if the night has legs.
+ *
+ * CHOSEN FROM WHAT IS LEFT ONCE THE CORE IS OUT, so it answers the same
+ * question rather than wandering off it, and spread along the same axis so
+ * a stand-in stands in for something.
+ *
+ * ONE DOOR, because the designer asks for a bench count and so does every
+ * other way of building a flight. L.designFlight had this inline and
+ * L.recastFlight had nothing at all: a remix came back with the cast
+ * replaced and the bench silently dropped, though it is the same flight
+ * asking the same question (BZ, 2026-10-26: "when we build a flight we ask
+ * for the bench count so we should build the bench too").
+ */
+L.benchFor = function (pool, varyId, core, want, used) {
+  const n = Math.max(0, Number(want) || 0);
+  if (!n || !varyId) return [];
+  const taken = {};
+  (core || []).forEach(x => { if (x && x.k) taken[x.k] = 1; });
+  return L.pickSpread(varyId, (pool || []).filter(p => p && !taken[p.k]),
+    n, used, p => L.dimValue(varyId, p));
+};
+
 L.designFlight = function (spec, catalog, bottles, opts) {
   let s = spec || {};
   const o = opts || {};
@@ -15653,13 +15676,7 @@ L.designFlight = function (spec, catalog, bottles, opts) {
     score: L.flightScore(s.vary, full),
     load: L.flightDrinks(full, L.POUR_OZ),
     trimmed: sorted.length - pours.length,
-    /* THE BENCH: more of the same flight, brought out if the night has
-       legs. Chosen from what the hold left over once the core is out, so
-       it answers the same question rather than wandering off it. */
-    bench: extN > 0
-      ? L.pickSpread(s.vary, pool.filter(p =>
-          !pours.some(x => x.k === p.k)), extN, o.used, valueOf)
-      : []
+    bench: L.benchFor(pool, s.vary, pours, extN, o.used)
   };
 };
 
@@ -15790,6 +15807,45 @@ L.flightRequestBody = function (varLabel, premise, catalog, bottles) {
 
 
 /* --- flight editing -------------------------------------------------- */
+
+/* WHAT A FLIGHT THE DESIGNER BUILT IS CALLED.
+ *
+ * L.designFlight already names it, through L.designTitle: BOURBON - PROOF
+ * BY PROOF, BUFFALO TRACE - PROOF BY PROOF, 93 PROOF ±3 - HOUSE BY
+ * HOUSE. Two screens ignored that and cut a name out of the first sentence
+ * of the PREMISE instead, which when nothing is held reads "Nothing here is
+ * held still but the question" - and that is what a guest's first designed
+ * flight was called on 2026-10-26.
+ *
+ * THE FALLBACK IS THE DIMENSION, not the old table: L.VARIABLES has no
+ * entry for type, smoke or bonded, so those came back "undefined flight".
+ */
+L.builtName = function (made, varId, premise) {
+  const d = L.dimOf(varId);
+  const title = (made && made.title)
+    || (d ? d.label + ' flight' : '')
+    || String(premise || '').split(/[.?!]/)[0].slice(0, 48)
+    || 'NEW FLIGHT';
+  /* THE TAG TRAVELS WITH IT. The screen asked L.dimOf for the tag and this
+     for the name, which is two doors onto one question - and the tag it
+     built that way read "One variable: undefined" for every dimension the
+     older table never had. */
+  return { title: title, tag: 'One variable: ' + (d ? d.label : 'mixed') };
+};
+
+/* A FLIGHT WITH THE LISTS IT IS ENTITLED TO.
+ *
+ * REPAIRED IN PLACE AND HANDED BACK, so a caller holding the object keeps
+ * holding it: S.customFlights.indexOf(f) and `f === JUST_MADE` both still
+ * answer. Idempotent, so calling it on every read costs a type check.
+ */
+L.wholeFlight = function (f) {
+  if (!f) return f;
+  if (!Array.isArray(f.core)) f.core = [];
+  if (!Array.isArray(f.ext)) f.ext = [];
+  if (!Array.isArray(f.cards)) f.cards = [];
+  return f;
+};
 
 L.newFlight = function (title) {
   return { title: (title || 'NEW FLIGHT').toUpperCase(), tag: '', premise: '',
@@ -16165,6 +16221,15 @@ L.recastFlight = function (f, catalog, bottles, history, opts) {
     run: runs.length + 1,
     previous: runs.length ? runs[runs.length - 1] : null,
     pours: pours,
+    /* AND A BENCH, as many as the flight being remixed had. A remix is the
+       same flight asking the same question of different bottles, and it
+       came back with the cast replaced and the bench silently dropped -
+       so a six-pour flight with four in reserve remixed into six and
+       nothing (BZ, 2026-10-26). Drawn from the same candidates the cast
+       came from, minus the cast. */
+    bench: L.benchFor(cands.reduce((all, c) =>
+      all.concat(c.pours || c.members || []), []), varId, pours,
+      (f.ext || []).length, used),
     repeats: pours.filter(p => used[p.k]).map(p => p.k),
     fresh: pours.filter(p => !used[p.k]).length,
     notes: L.validate(pours, catalog, { bottles: bottles }),
@@ -34976,6 +35041,46 @@ L.filterFlights = function (flights, catalog, bottles, history, opts) {
   });
 };
 
+/* THE SMALL PRINT UNDER A FLIGHT'S NAME, as a list of phrases.
+ *
+ * THE DRINKING ARITHMETIC (BZ) counts the CORE only, because the
+ * bench is alternates, and it is said only when every proof is known
+ * - a partial total is not a total. The open count says what it is
+ * OF, so it cannot read as core or bench.
+ */
+L.flightMeta = function (f, catalog, ready, runAt) {
+  const bits = [f.core.length + ' core', f.ext.length + ' bench'];
+  /* The drinking arithmetic (BZ). Core pours only; the bench is alternates.
+     Said only when every proof is known, since a partial total is not a
+     total. */
+  const load = L.flightDrinks(
+    f.core.map(p => (catalog || {})[p.k]).filter(Boolean), L.POUR_OZ);
+  if (load.known && load.known === load.of) {
+    bits.push('\u2248' + load.drinks + ' standard drinks at '
+      + L.POUR_OZ + ' oz');
+  } else if (load.known) {
+    bits.push('\u2248' + load.drinks + ' drinks from ' + load.known
+      + ' of ' + load.of + ' proofs');
+  }
+  /* Say what the count is of, so it cannot read as core or bench (BZ). */
+  if (ready.open < ready.total) {
+    bits.push(ready.open + ' of its ' + ready.total + ' core open');
+  }
+  if (runAt) bits.push('run ' + L.showDate(runAt));
+  return bits;
+};
+
+/* ONE OF THEM FIRST, whatever the sort says - IN PLACE, because the caller
+ * has already sorted and is about to draw. "Order added" is the order they
+ * were made, so a flight just built lands LAST, behind forty on BZ's shelf,
+ * which is no better than not being there at all.
+ */
+L.leadWith = function (list, one) {
+  const at = one ? (list || []).indexOf(one) : -1;
+  if (at > 0) list.unshift(list.splice(at, 1)[0]);
+  return list;
+};
+
 L.sortFlights = function (flights, catalog, bottles, history, id) {
   const a = (flights || []).slice();
   const name = (x, y) => x.title.localeCompare(y.title);
@@ -39637,6 +39742,20 @@ function showPapers(f) {
     m.appendChild(el('div', 'sub',
       'The host card carries every answer. The participant sheet carries '
       + 'none.'));
+    /* LANDSCAPE IS ASKED FOR AND APPLE DOES NOT LISTEN. The printed
+       document opens with @page { size: letter landscape }, which every
+       desktop browser honours; WebKit has ignored the size descriptor
+       since Safari 11 and caniuse still lists it unsupported on iOS. There
+       is no CSS that fixes it - the orientation lives in Safari's own
+       print sheet - so the sheet says where to find it rather than leaving
+       him to wonder why a wide table came out standing up (BZ,
+       2026-10-26: "the papers need to default to printing landscape if
+       possible"). */
+    if (L.appleDevice(navigator.userAgent, navigator.maxTouchPoints > 0)) {
+      m.appendChild(el('div', 'looknote warn2',
+        'These are built to print sideways. Safari ignores that, so pick '
+        + 'Landscape in its print sheet — under the paper size.'));
+    }
 
     const open = (which, label) => {
       const b = el('button', 'btn wide', label);
@@ -50598,7 +50717,6 @@ function renderBuddies() {
        the invite is the way IN to this card. */
     const bhd = el('div', 'hdr');
     bhd.style.marginBottom = '4px';
-    bhd.appendChild(el('h3', null, 'Buddies'));
     const invTop = el('button', 'chip');
     invTop.textContent = '+ Invite a buddy';
     invTop.style.marginLeft = 'auto';
@@ -50633,7 +50751,6 @@ function renderBuddies() {
               ? ' can see it' : ' can see it') : '');
       }
       card.innerHTML = '';
-      card.appendChild(el('h3', null, 'Buddies'));
 
       /* SAY WHICH DOOR IS SHUT, and only when something is actually missing: a
          card that nags about settings already dealt with stops being read. */
@@ -50731,7 +50848,6 @@ function renderBuddies() {
     })
     .catch(e => {
       card.innerHTML = '';
-      card.appendChild(el('h3', null, 'Buddies'));
       card.appendChild(el('div', 'errs', 'Could not load: ' + sayError(e)));
     });
 }
@@ -51449,23 +51565,35 @@ function waitingCard(box, rows, names) {
     line.appendChild(left);
     const drop = el('button', 'chip quiet', 'Give up on it');
     drop.onclick = () => {
-      const rest = Object.assign({}, S.asked);
-      delete rest[w.uid];
-      S.asked = rest;
-      save_();
-      line.remove();
-      /* AND THE RECORD UNDER THEM. The card goes either way - they pressed
-         it - but the ask itself lives under the account being asked, and
-         leaving it there is how an ask to a deleted account sat in the
-         database after the person had given up on it. A failure says so
-         rather than passing for done. */
-      /* BOTH ENDS AND THE MEMORY OF IT: the request under them, and this
-         account's own note of having asked - which is merged on load, so
-         deleting it only on the device means it comes straight back. */
+      /* THE SERVER FIRST, AND THE SCREEN AFTER IT (BZ, 2026-10-26: "I've
+         given up on that account a few times").
+
+         This removed the row, forgot the ask on the device and THEN asked
+         the account to forget it too - and both of those writes resolved
+         quietly when there was no signed-in account or no loaded base, so
+         the log said "withdrew the ask" and nothing had been withdrawn.
+         `asked` is merged from the account on every load, on purpose, so
+         it came straight back the next time the app started. Giving up
+         looked done and was not, over and over.
+
+         Nothing is forgotten here until the account has forgotten it. */
+      drop.disabled = true;
       Promise.all([fbDropRequest(w.uid), fbForgetAsked(w.uid)])
-        .then(() => appLog('withdrew the ask to ' + L.shortIds([w.uid])))
-        .catch(e => appLog('could not withdraw the ask to '
-          + L.shortIds([w.uid]) + ' \u2014 ' + ((e && e.message) || e)));
+        .then(() => {
+          const rest = Object.assign({}, S.asked);
+          delete rest[w.uid];
+          S.asked = rest;
+          save_();
+          line.remove();
+          appLog('withdrew the ask to ' + L.shortIds([w.uid]));
+        })
+        .catch(err => {
+          drop.disabled = false;
+          appLog('could not withdraw the ask to ' + L.shortIds([w.uid])
+            + ' \u2014 ' + ((err && err.message) || err));
+          toast(L.plainError(err, 'Could not give up on it yet \u2014 it '
+            + 'would come back. Try again when your shelf has loaded.'));
+        });
     };
     line.appendChild(drop);
     card.appendChild(line);
@@ -56912,6 +57040,11 @@ function renderFlightFilters() {
 /* Whether the flights list is open. Held for the session, not stored, to
    match how the shelf's own list behaves. */
 let FLIGHTS_OPEN = false;
+/* THE ONE JUST BUILT, shown first on the next draw of the list and then
+   forgotten. "Order added" is the order they were made, so a new flight
+   lands LAST - behind forty, on his shelf - which is no better than not
+   being there at all. One draw, not a stored preference. */
+let JUST_MADE = null;
 
 /* The header's back button, where every other page puts it (BZ). */
 function setFlightsBack(on) {
@@ -57005,6 +57138,7 @@ function renderFlights() {
   const hits = L.sortFlights(
     L.filterFlights(allFlights(), S.catalog, S.bottles, S.history, opts),
     S.catalog, S.bottles, S.history, S.fflt.sort);
+  L.leadWith(hits, JUST_MADE);   // the one just built leads, once
 
   $('#flightCount').textContent = hits.length === allFlights().length
     ? hits.length + ' flights'
@@ -57033,36 +57167,35 @@ function renderFlights() {
   hits.forEach(f => {
     const runAt = L.flightRunAt(f, S.history);
     const ready = L.flightReady(f, S.catalog, S.bottles);
-    const c = el('button', 'fcard' + (runAt ? ' done' : ''));
+    const c = el('button', 'fcard' + (runAt ? ' done' : '')
+      + (f === JUST_MADE ? ' fresh' : ''));   // gold edge on the new one
     c.appendChild(el('h3', null, L.sentenceCase(f.title)));
     c.appendChild(el('div', 'var', L.flightLine(f, S.catalog)));
-    const bits = [f.core.length + ' core', f.ext.length + ' bench'];
-    /* The drinking arithmetic (BZ). Core pours only; the bench is alternates.
-       Said only when every proof is known, since a partial total is not a
-       total. */
-    const load = L.flightDrinks(
-      f.core.map(p => S.catalog[p.k]).filter(Boolean), L.POUR_OZ);
-    if (load.known && load.known === load.of) {
-      bits.push('\u2248' + load.drinks + ' standard drinks at '
-        + L.POUR_OZ + ' oz');
-    } else if (load.known) {
-      bits.push('\u2248' + load.drinks + ' drinks from ' + load.known
-        + ' of ' + load.of + ' proofs');
-    }
-    /* Say what the count is of, so it cannot read as core or bench (BZ). */
-    if (ready.open < ready.total) {
-      bits.push(ready.open + ' of its ' + ready.total + ' core open');
-    }
-    if (runAt) bits.push('run ' + L.showDate(runAt));
-    c.appendChild(el('div', 'meta', bits.join(' · ')));
+    c.appendChild(el('div', 'meta',
+      L.flightMeta(f, S.catalog, ready, runAt).join(' · ')));
     c.onclick = () => showFlight(f);
     box.appendChild(c);
   });
+  JUST_MADE = null;   // that draw only; tomorrow is an ordinary list
 }
 
 // Shipped flights and the ones BZ builds live in one list; only the custom
 // ones can be deleted, and either can be edited.
-function allFlights() { return S.flights.concat(S.customFlights); }
+/* EVERY FLIGHT, WHOLE. A flight he built tonight threw on three screens at
+   once (log, 2026-10-26: "threw on flights: Cannot read properties of
+   undefined (reading 'length')"), because `f.ext.length` read a bench that
+   was not there. A new flight is saved with `ext: []`, an empty list does
+   not survive the trip to the account and back, and it returned with the
+   key simply absent - so the FIRST render of the first flight he ever
+   designed threw before it drew, on Flights, on Home and on Buddies.
+
+   Half this file already wrote `(f.ext || [])` and half did not, which is
+   the real fault: the shape was a matter of opinion. It is repaired here,
+   once, where every screen asks for flights - in place, so the identity of
+   a flight is still its object and `indexOf` still finds it. */
+function allFlights() {
+  return S.flights.concat(S.customFlights).map(L.wholeFlight);
+}
 
 // The same flight, a different cast: same question, different whisky.
 function showRecast(f) {
@@ -57116,6 +57249,7 @@ function showRecast(f) {
       const ROMAN = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII'];
       const nf = L.newFlight(f.title + (ROMAN[sibs] || ' ' + (sibs + 1)));
       nf.core = L.relabel(res.pours);
+      nf.ext = (res.bench || []).map(x => ({ k: x.k, role: 'ext' }));
       nf.premise = f.premise;
       nf.tag = f.tag;
       nf.why = (f.why || []).slice();
@@ -57824,9 +57958,8 @@ function renderProposal(out, res, varId, premise, pool) {
     const prop = el('button', 'btn wide btn-gold', 'Propose it to the room');
     prop.style.marginTop = '11px';
     prop.onclick = () => {
-      const title = premise ? premise.split(/[.?!]/)[0].slice(0, 48)
-        : (L.VARIABLES.find(v => v.id === varId) || {}).label + ' flight';
-      proposeToRoom({ title: title, premise: premise, variable: varId },
+      proposeToRoom({ title: L.builtName(res, varId, premise).title,
+        premise: premise, variable: varId },
         res.pours, pool);
       closeModal();
       renderBuddiesTab();
@@ -57838,15 +57971,14 @@ function renderProposal(out, res, varId, premise, pool) {
     pool ? 'Or keep it for yourself' : 'Keep it and edit');
   keep.style.marginTop = pool ? '0' : '11px';
   keep.onclick = () => {
-    const f = L.newFlight(premise ? premise.split(/[.?!]/)[0].slice(0, 48)
-      : (L.VARIABLES.find(v => v.id === varId) || {}).label + ' flight');
+    const named = L.builtName(res, varId, premise);
+    const f = L.newFlight(named.title);
     f.core = L.relabel(res.pours);
     /* The bench arrives filled rather than empty: a bottle in two casks is
        connected to this flight and cannot be in its six (BZ, 2026-09-24). */
     f.ext = (res.bench || []).map(x => ({ k: x.k, role: 'ext' }));
     f.premise = premise;
-    f.tag = 'One variable: ' + (L.VARIABLES.find(v => v.id === varId) || {})
-      .label;
+    f.tag = named.tag;
     f.cards = f.core.map((p, i) => {
       const pd = from(p.k) || {};
       return { letter: p.letter, bottle: pd.name || '', proof: pd.proof || '',
@@ -57856,6 +57988,67 @@ function renderProposal(out, res, varId, premise, pool) {
     flightEditor(f);
   };
   out.appendChild(keep);
+}
+
+/* WHERE SAVING A FLIGHT LEAVES YOU.
+ *
+ * BUILDING IS ITS OWN EVENT AND IT ENDS IN THE LIST (BZ, 2026-10-26, after
+ * watching a guest design one: "it did not appear in their list although it
+ * said 2 in the count"). It was never lost. Save redrew the Flights screen
+ * with the list CLOSED, so they landed on the four tiles, where the header
+ * counts their flights and no list is on the page - the count and the
+ * absence were the same screen, and their flight sat one tap behind Run one
+ * with nothing saying so.
+ *
+ * EVERY FILTER OUT OF THE WAY, because a type filter or a search left over
+ * from before hides it just as completely: "0 of 2" is the same report from
+ * the other side.
+ *
+ * AN EDIT ENDS WHERE IT STARTED, on the flight being changed. Only a NEW
+ * one goes to the list, because only a new one has somewhere to appear.
+ */
+function landAfterSave(f, fresh) {
+  if (!fresh) {
+    renderFlights();
+    showFlight(f);
+    toast('Flight saved');
+    return;
+  }
+  JUST_MADE = f;
+  FLIGHTS_OPEN = true;
+  S.fflt.state = 'all';
+  S.fflt.types = [];
+  const q = $('#fq');
+  if (q) q.value = '';
+  renderFlightFilters();
+  renderFlights();
+  toast('Flight saved — pour it when you like');
+}
+
+/* WHAT Save flight DOES, out of the editor's own body so the editor stays
+ * a form and this stays a decision. */
+function saveFlightFrom(f, form, editKey) {
+  const vals = {};
+  form.querySelectorAll('input').forEach(i => { vals[i.name] = i.value; });
+  const title = (vals.title || '').trim();
+  if (title.length < 2) { toast('Name the flight first'); return; }
+  f.title = title.toUpperCase();
+  f.tag = vals.tag;
+  f.premise = vals.premise;
+  f.cards = L.cardsFrom(f.core, S.catalog);
+  // New, or one he already had: landAfterSave says why it matters.
+  const fresh = f.custom && S.customFlights.indexOf(f) < 0;
+  if (fresh) S.customFlights.push(f);
+  /* cards as well as core: the shipped flight is merged over at load, so an
+     edited host line that lived only on core would be masked by the cards
+     data.json ships. */
+  if (!f.custom) {
+    S.edits[editKey] = { title: f.title, tag: f.tag, premise: f.premise,
+                         core: f.core, cards: f.cards };
+  }
+  save_();
+  closeModal();
+  landAfterSave(f, fresh);
 }
 
 function flightEditor(f) {
@@ -57994,22 +58187,7 @@ function flightEditor(f) {
     m.appendChild(list);
 
     const save = el('button', 'btn wide', 'Save flight');
-    save.onclick = () => {
-      const vals = {};
-      form.querySelectorAll('input').forEach(i => { vals[i.name] = i.value; });
-      const title = (vals.title || '').trim();
-      if (title.length < 2) { toast('Name the flight first'); return; }
-      f.title = title.toUpperCase();
-      f.tag = vals.tag; f.premise = vals.premise;
-      f.cards = L.cardsFrom(f.core, S.catalog);
-      if (f.custom && S.customFlights.indexOf(f) < 0) S.customFlights.push(f);
-      // cards as well as core: the shipped flight is merged over at load,
-      // so an edited host line that lived only on core would be masked by
-      // the cards data.json ships.
-      if (!f.custom) S.edits[editKey] = { title: f.title, tag: f.tag,
-        premise: f.premise, core: f.core, cards: f.cards };
-      save_(); closeModal(); renderFlights(); showFlight(f); toast('Flight saved');
-    };
+    save.onclick = () => saveFlightFrom(f, form, editKey);
     m.appendChild(save);
 
     const del = flightDeleteBtn(f, 'btn ghost wide danger');
@@ -58038,25 +58216,6 @@ function flightEditor(f) {
    wraps scrolled a 390px phone sideways, so the header keeps More and Back
    and the rest live here. Out of showFlight because building the sheet is
    not laying out the screen, and showFlight had reached its ceiling. */
-function flightMoreSheet(more) {
-  openModal('This flight', m => {
-    more.forEach(b => {
-      /* A DANGEROUS BUTTON STAYS DANGEROUS when it is copied into the
-         sheet: the clone took the label and left the colour behind. */
-      const again = el('button', 'btn wide'
-        + (b.classList.contains('danger') ? ' ghost danger' : ''),
-        b.textContent);
-      again.style.marginTop = '8px';
-      if (b.title) again.title = b.title;
-      again.onclick = () => { closeModal(); b.onclick(); };
-      m.appendChild(again);
-    });
-    const no = el('button', 'btn ghost wide', 'Close');
-    no.style.marginTop = '10px';
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
-}
 
 function flightDeleteBtn(f, cls) {
   if (!L.flightIsMine(f, S.customFlights)) return null;
@@ -58257,61 +58416,74 @@ function flightPourRow(p, i, o) {
   return r;
 }
 
+/* EVERYTHING A FLIGHT CAN DO, ON THE FLIGHT (BZ, 2026-10-26: "all with a
+ * confirm on remix and delete").
+ *
+ * MORE SOLVED A HEADER PROBLEM, NOT A PAGE ONE. Six buttons in the header
+ * never wrapped and scrolled a 390px phone sideways, so five of them went
+ * behind More - and printing the papers, which is what you do BEFORE
+ * pouring, ended up three taps inside a menu. The page below the title
+ * wraps, so the row lives there and the header keeps only Back.
+ *
+ * TWO OF THEM ASK FIRST. Remix replaces the pours of the flight you are
+ * looking at, and Delete removes it; neither should be one stray tap away
+ * from Edit on a phone. Delete says it can be undone, because it can -
+ * L.tombstone keeps it and the toast offers Undo - rather than borrowing
+ * confirmDelete's "this cannot be undone", which is true of its other
+ * callers and false here.
+ */
+function flightActions(f) {
+  const row = el('div', 'sectionacts');
+  row.style.margin = '10px 0';
+  const add = (label, cls, go) => {
+    const b = el('button', cls, label);
+    b.onclick = go;
+    row.appendChild(b);
+    return b;
+  };
+  /* A whole flight is several pours at once, so it is named for that and
+     not "Pour it" (BZ, 2026-09-15: one name per action). */
+  add('Log the flight', 'btn btn-gold', () => runFlight(f, () => showFlight(f)))
+    .style.flex = '1';
+  add('Print papers', 'btn', () => showPapers(f));
+  add('Edit', 'btn', () => flightEditor(f));
+  add('Text it', 'btn', () => { location.href = 'sms:?&body='
+    + encodeURIComponent(L.smsBody(f,
+        f.core.map(x => prod(x.k)).filter(Boolean))); });
+  /* Remix: same question, different bottles. Not gated on having run it:
+     the usual reason is an empty pour or a guest who has had one. */
+  add('Remix', 'btn', () => confirmAsk(
+    'Remix this flight? Same question, different bottles.',
+    () => showRecast(f), 'Remix it')).title = 'Same question, different bottles';
+  /* ONLY FOR HIS OWN, and last. */
+  if (L.flightIsMine(f, S.customFlights)) {
+    add('Delete this flight', 'btn danger', () => confirmAsk(
+      'Delete this flight? You can undo it straight after.',
+      () => deleteFlight(f), 'Delete it'));
+  }
+  return row;
+}
+
 function showFlight(f) {
   S.lastList = 'flights';
   const body = detailShell();
 
-  const fa = detailActs();
+  detailActs();
   /* The header says "The flight"; the markup default is for bottles. */
   $('#detailTitle').textContent = 'The flight';
-  const more = [];
-  const fEdit = el('button', 'btn btn-sm btn-gold', 'Edit');
-  fEdit.onclick = () => flightEditor(f);
-  more.push(fEdit);
-  const fSms = el('button', 'btn btn-sm', 'Text it');
-  fSms.onclick = () => { location.href = 'sms:?&body=' + encodeURIComponent(
-    L.smsBody(f, f.core.map(x => prod(x.k)).filter(Boolean))); };
-  more.push(fSms);
-  // Remix: same question, different bottles. Not gated on having run it:
-  // the usual reason is an empty pour or a guest who has had one.
-  const remix = el('button', 'btn btn-sm', 'Remix');
-  remix.title = 'Same question, different bottles';
-  remix.onclick = () => showRecast(f);
-  more.push(remix);
-
-  const papers = el('button', 'btn btn-sm', 'Papers');
-  papers.onclick = () => showPapers(f);
-  more.push(papers);
-
-  /* LAST, AND ONLY FOR HIS OWN. Under More because that is where he looked
-     for it, and because the delete that existed was three taps inside Edit
-     and invisible to every imported flight. */
-  const fDel = flightDeleteBtn(f, 'btn btn-sm danger');
-  if (fDel) more.push(fDel);
-
-  /* A whole flight is several pours at once, so it is named for that and
-     not "Pour it" (BZ, 2026-09-15: one name per action). */
-  const fRun = el('button', 'btn btn-sm btn-gold', 'Log the flight');
-  fRun.onclick = () => runFlight(f, () => showFlight(f));
-  /* Logging leads the page, under the name: in the header it squeezed the
-     title to a sliver. */
-  fRun.className = 'btn wide btn-gold';
-  fRun.style.margin = '10px 0';
-  /* The rest under More: six buttons in a header that never wraps scrolled
-     a 390px phone sideways. The header keeps More and Back. */
-  const fMore = el('button', 'btn btn-sm', 'More');
-  fMore.onclick = () => flightMoreSheet(more);
-  fa.appendChild(fMore);
   const head = el('div', 'sheet');
   const t = el('h2'); t.style.cssText = 'font-size:24px;color:var(--ink-deep)';
   t.textContent = L.sentenceCase(f.title);
   head.appendChild(t);
-  head.appendChild(el('div', 'var', L.variableOf(f)));
+  /* THE LINE THE CARDS CARRY (L.flightLine): the list says Bourbon
+     from Angel's Envy across four casks and the page said "proof
+     ladder" - one question, two answers. */
+  head.appendChild(el('div', 'var', L.flightLine(f, S.catalog)));
   const pr = el('p'); pr.style.cssText = 'font-size:14px;margin:9px 0 0';
   pr.textContent = f.premise || '';
   head.appendChild(pr);
   body.appendChild(head);
-  body.appendChild(fRun);
+  body.appendChild(flightActions(f));
 
   flightShopping(body, f);
 
@@ -60069,8 +60241,14 @@ function fbSendRequest(toUid) {
    asker to remove their own request ($fromUid === auth.uid), and until
    2026-09-30 nothing did: giving up cleared this device's note and left the
    record under the other account for ever. */
+/* A WRITE THAT CANNOT RUN IS NOT A WRITE THAT WORKED. Both of these
+   resolved quietly with no signed-in account or no loaded base, so the
+   caller logged "withdrew the ask" and the ask - merged back from the
+   account on every load - returned. They refuse now, and the screen says
+   so (BZ, 2026-10-26). */
 function fbDropRequest(toUid) {
-  if (!FB.user || !toUid) return Promise.resolve();
+  if (!toUid) return Promise.resolve();
+  if (!FB.user) return Promise.reject(new Error('not signed in'));
   return fbReqRef().child(toUid).child(FB.user.uid).remove();
 }
 
@@ -60081,7 +60259,10 @@ function fbDropRequest(toUid) {
    locally only means the account hands it back on the next open. Nulling it on
    the account leaves the merge nothing to restore. */
 function fbForgetAsked(uid) {
-  if (!FB.base || !FB.loaded || !uid) return Promise.resolve();
+  if (!uid) return Promise.resolve();
+  if (!FB.base || !FB.loaded) {
+    return Promise.reject(new Error('your shelf has not loaded yet'));
+  }
   return FB.base.child('asked').child(L.fbKey(uid)).remove();
 }
 
@@ -61749,7 +61930,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.5</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.9</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

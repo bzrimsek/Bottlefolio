@@ -314,6 +314,117 @@ function faultsOf() {
   })();
   sevenFaults.forEach(f => failures.push('seven: ' + f));
 
+  /* BUILDING A FLIGHT ENDS SOMEWHERE. BZ, 2026-10-26, watching a guest
+     design one: "it did not appear in their list although it said 2 in the
+     count." It was saved and it was fine - Save flight redrew the Flights
+     screen with the list CLOSED, so they landed on the four tiles, where
+     the header counts their flights and no list is on the page. The count
+     and the absence were the same screen.
+
+     NOTHING IS PRESSED AFTER SAVE, because that is the whole point: the
+     build has to finish by itself. */
+  const buildFaults = await (async () => {
+    const out = [];
+    await p.evaluate(() => {
+      S.customFlights = [];
+      save_();
+      show('flights'); FLIGHTS_OPEN = false; renderFlights();
+      flightBuilder();
+    });
+    await p.waitForTimeout(500);
+    const press = re => p.evaluate(r => {
+      const b = [...document.querySelectorAll('#overlay button')]
+        .filter(x => new RegExp(r, 'i').test(x.textContent))[0];
+      if (b) b.click();
+      return !!b;
+    }, re);
+    if (!await press('design it')) { out.push('no way to design one'); return out; }
+    await p.waitForTimeout(1200);
+    if (!await press('keep it')) { out.push('a design with no way to keep it'); return out; }
+    await p.waitForTimeout(600);
+    if (!await press('save flight')) { out.push('a flight with no way to save it'); return out; }
+    await p.waitForTimeout(900);
+    const end = await p.evaluate(() => ({
+      mine: (S.customFlights || []).length,
+      cards: document.querySelectorAll('#scr-flights .fcard').length,
+      fresh: document.querySelectorAll('#scr-flights .fcard.fresh').length,
+      title: ((S.customFlights || [])[0] || {}).title || '',
+      first: (document.querySelector('#scr-flights .fcard h3') || {})
+        .textContent || ''
+    }));
+    if (end.mine !== 1) out.push('saving kept ' + end.mine + ' flight(s)');
+    if (!end.cards) {
+      out.push('it was saved and the list it belongs to is not on the screen');
+    }
+    if (end.cards && !end.fresh) out.push('nothing marks the one just built');
+    /* AND IT LEADS, because "order added" puts a new flight LAST - behind
+       forty, on his shelf - which is no better than not being there. */
+    if (end.cards && end.first.toUpperCase().indexOf(
+        end.title.toUpperCase()) < 0) {
+      out.push('the one just built is not the first row: ' + end.first);
+    }
+    /* AND IT IS NOT CALLED AFTER THE PREMISE. A guest's first flight was
+       NOTHING HERE IS HELD STILL BUT THE QUESTION. */
+    if (/nothing here is held/i.test(end.title)) {
+      out.push('it is named after the premise: ' + end.title);
+    }
+    if (/undefined/i.test(end.title)) out.push('its name says undefined');
+    return out;
+  })();
+  buildFaults.forEach(f => failures.push('build: ' + f));
+
+  /* A FLIGHT BACK FROM THE ACCOUNT, WITH ITS BENCH GONE. From his own log
+     on 2026-10-26, three screens in four minutes:
+
+       threw on flights:  Cannot read properties of undefined ('length')
+       threw on buddies:  ... the same
+       threw on home:     ... the same
+
+     all at f.ext.length, and all after he designed his first flight. A new
+     flight is saved with an empty bench, an empty list does not survive the
+     trip to the account and back, and it came home with the key absent - so
+     the first render of the first flight he ever built threw before it
+     drew. Driven through the real screens, because the engine door can be
+     right while nothing calls it: a test of L.wholeFlight on its own stayed
+     green with the repair taken off allFlights. */
+  const bareFaults = await (async () => {
+    const out = [];
+    const threw = [];
+    p.on('pageerror', e => threw.push(String((e && e.message) || e)));
+    await p.evaluate(() => {
+      S.customFlights = [{ title: 'BACK FROM THE ACCOUNT',
+        premise: 'A flight that went to the account and came home.',
+        core: (S.flights[0] ? S.flights[0].core : []).slice(0, 3) }];
+      save_();
+    });
+    for (const scr of ['flights', 'home', 'buddies']) {
+      /* CAUGHT, NOT THROWN. A render that dies inside page.evaluate takes
+         the harness with it, and a crash is a worse report than a named
+         failure - seq exits 1 either way, but only one of them says which
+         screen and why. */
+      const boom = await p.evaluate(s => {
+        try {
+          show(s);
+          if (s === 'flights') { FLIGHTS_OPEN = true; S.fflt.state = 'all';
+            renderFlightFilters(); renderFlights(); }
+          if (s === 'home') renderHome();
+          if (s === 'buddies') renderBuddiesTab();
+          return '';
+        } catch (e) { return String((e && e.message) || e); }
+      }, scr);
+      if (boom) out.push(scr + ' threw: ' + boom.slice(0, 60));
+      await p.waitForTimeout(220);
+      const drew = await p.evaluate(s =>
+        (document.getElementById('scr-' + s) || {}).childElementCount || 0, scr);
+      if (!drew) out.push(scr + ' drew nothing with a bench-less flight');
+    }
+    threw.forEach(t => out.push('threw: ' + t.slice(0, 70)));
+    return out;
+  })();
+  bareFaults.forEach(f => failures.push('bench: ' + f));
+
+
+
 
   /* AND GOING BACK. Home has no header of its own and no way back, so a
      back button anywhere on it is a button pointing at a screen you have

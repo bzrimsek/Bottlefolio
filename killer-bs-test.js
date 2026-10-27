@@ -33962,6 +33962,182 @@ sec('\u00a7496 a declared axis that does not move is not the axis');
   eq('and no flight says nothing', L.flightAxis(null, cat), null);
 }
 
+sec('\u00a7497 what a built flight is called');
+{
+  /* BZ, 2026-10-26, after watching a guest design one: their first flight
+     was called NOTHING HERE IS HELD STILL BUT THE QUESTION. Two screens
+     cut a name out of the first sentence of the PREMISE, and when nothing
+     is held that sentence is exactly that. L.designFlight has named it all
+     along - BOURBON \u2014 PROOF BY PROOF - and they ignored it. */
+  eq('the designer\u2019s own name wins',
+    L.builtName({ title: 'BOURBON \u2014 PROOF BY PROOF' }, 'proof', 'x').title,
+    'BOURBON \u2014 PROOF BY PROOF');
+  eq('and the premise is not mined for one',
+    /nothing here/i.test(L.builtName({ title: 'PROOF BY PROOF' }, 'proof',
+      'Nothing here is held still but the question.')), false);
+
+  /* THE FALLBACK IS THE DIMENSION, not the older table: L.VARIABLES has no
+     entry for type, smoke or bonded, so those came back "undefined
+     flight", and its `cask` means the house, which is a different thing
+     again. */
+  eq('a type flight is named for the type',
+    L.builtName(null, 'type', '').title, 'Type flight');
+  eq('a smoke flight too', L.builtName(null, 'smoke', '').title, 'Smoke flight');
+  eq('and bottled in bond', L.builtName(null, 'bonded', '').title,
+    'Bottled in bond flight');
+  eq('never the word undefined',
+    /undefined/.test(L.builtName(null, 'type', '').title), false);
+  /* THE OLD TABLE REALLY DID NOT HAVE THEM - asserted so the day it is
+     retired this says so rather than going quietly green. */
+  eq('the old table has no type',
+    (L.VARIABLES.filter(v => v.id === 'type')[0] || {}).label, undefined);
+  eq('and reads cask as something else entirely',
+    (L.VARIABLES.filter(v => v.id === 'cask')[0] || {}).label
+      === (L.dimOf('cask') || {}).label, false);
+
+  /* AND SOMETHING RATHER THAN NOTHING when there is no dimension either. */
+  eq('a premise is the last resort',
+    L.builtName(null, 'zzz', 'A tour of the shelf. And more.').title,
+    'A tour of the shelf');
+  /* THE TAG COMES WITH IT, because asking one door for the name and
+     another for the tag is how the tag came to read "undefined". */
+  eq('the tag names the dimension',
+    L.builtName(null, 'smoke', '').tag, 'One variable: Smoke');
+  eq('and says mixed with no dimension',
+    L.builtName(null, 'zzz', 'A tour.').tag, 'One variable: mixed');
+
+  /* ONE OF THEM FIRST, whatever the sort says: "order added" is the order
+     they were made, so a flight just built lands LAST - behind forty, on
+     his shelf - which is no better than not being there at all. */
+  eq('the named one leads', L.leadWith(['a', 'b', 'c'], 'c').join(''), 'cab');
+  eq('one already first does not move',
+    L.leadWith(['a', 'b'], 'a').join(''), 'ab');
+  eq('one that is not there changes nothing',
+    L.leadWith(['a', 'b'], 'z').join(''), 'ab');
+  eq('nor does nothing at all',
+    L.leadWith(['a', 'b'], null).join(''), 'ab');
+
+  /* THE SMALL PRINT UNDER A FLIGHT'S NAME. Carved out of the card so the
+     list and the ceiling could both have what they needed. */
+  const mcat = {};
+  [90, 100, 110].forEach((pr, i) => {
+    mcat['m' + i] = { k: 'm' + i, name: 'm' + i, sub: 'rye', proof: pr,
+                      obsc: 'known', msrp: 50 };
+  });
+  const mf = { title: 'M', core: [0, 1, 2].map(i => ({ k: 'm' + i })),
+               ext: [{ k: 'm0' }] };
+  const meta = L.flightMeta(mf, mcat, { open: 3, total: 3 }, null);
+  eq('it counts the core', meta[0], '3 core');
+  eq('and the bench', meta[1], '1 bench');
+  /* THE DRINKING ARITHMETIC COUNTS THE CORE ONLY, because the bench is
+     alternates and never poured alongside. */
+  eq('the drinks are of the core',
+    /standard drinks/.test(meta.join(' ')), true);
+  /* AND IT IS SAID ONLY WHEN EVERY PROOF IS KNOWN: a partial total is not
+     a total. */
+  const half = Object.assign({}, mcat);
+  half.m1 = Object.assign({}, half.m1, { proof: null });
+  eq('a missing proof says how many it read',
+    /from 2 of 3 proofs/.test(
+      L.flightMeta(mf, half, { open: 3, total: 3 }, null).join(' ')), true);
+  /* THE OPEN COUNT SAYS WHAT IT IS OF, so it cannot read as core or bench. */
+  eq('and what is open says of what',
+    /1 of its 3 core open/.test(
+      L.flightMeta(mf, mcat, { open: 1, total: 3 }, null).join(' ')), true);
+  eq('a full flight does not say it',
+    /core open/.test(meta.join(' ')), false);
+  eq('and a run one says when',
+    /run /.test(L.flightMeta(mf, mcat, { open: 3, total: 3 },
+      '2026-10-20').join(' ')), true);
+
+
+  eq('and failing that, a name at all',
+    L.builtName(null, 'zzz', '').title, 'NEW FLIGHT');
+}
+
+sec('\u00a7498 a flight back from the account, with its bench gone');
+{
+  /* FROM HIS OWN LOG, 2026-10-26, three screens in four minutes:
+       threw on flights:  Cannot read properties of undefined ('length')
+       threw on buddies:  ... the same
+       threw on home:     ... the same
+     all at one line, `f.ext.length`, and all after he designed his first
+     flight. A new flight is saved with an empty bench; an empty list does
+     not survive the trip to the account and back, and it came home with
+     the key simply absent. The first render of the first flight he ever
+     built threw before it drew - which is also why it "did not appear in
+     the list although it said 2 in the count". */
+  const bare = { title: 'BACK FROM THE ACCOUNT', core: [{ k: 'a' }] };
+  eq('it arrives with no bench at all', bare.ext, undefined);
+  const whole = L.wholeFlight(bare);
+  eq('and is handed back with one', Array.isArray(whole.ext), true);
+  eq('empty', whole.ext.length, 0);
+  /* IN PLACE, so a caller holding the object still holds it: the list uses
+     indexOf to find a flight and === to mark the one just built. */
+  eq('the same object comes back', whole === bare, true);
+  /* AND THE READ THAT THREW NOW ANSWERS. */
+  eq('the small print reads it',
+    L.flightMeta(whole, {}, { open: 1, total: 1 }, null)[1], '0 bench');
+
+  /* THE OTHER LISTS TOO, because the shape was a matter of opinion: half
+     this file wrote (f.ext || []) and half wrote f.ext. */
+  const none = L.wholeFlight({ title: 'X' });
+  eq('a missing core is a list', Array.isArray(none.core), true);
+  eq('and missing cards', Array.isArray(none.cards), true);
+  /* AND A WHOLE ONE IS LEFT ALONE. */
+  const kept = { title: 'Y', core: [{ k: 'a' }], ext: [{ k: 'b' }],
+                 cards: [{ letter: 'A' }] };
+  const same = L.wholeFlight(kept);
+  eq('a bench that is there is kept', same.ext.length, 1);
+  eq('and the core', same.core.length, 1);
+  /* IDEMPOTENT, since every read goes through it. */
+  eq('twice is once', L.wholeFlight(L.wholeFlight(bare)).ext.length, 0);
+  eq('and nothing is nothing', L.wholeFlight(null), null);
+}
+
+sec('\u00a7499 a bench, wherever a flight is built');
+{
+  /* BZ, 2026-10-26: "when we build a flight we ask for the bench count so
+     we should build the bench too."
+
+     THE DESIGNER DOES - driven end to end it saves six and four. L.recast-
+     Flight did not: a remix came back with the cast replaced and the bench
+     silently dropped, so a six-pour flight with four in reserve remixed
+     into six and nothing. The rule lived inline inside L.designFlight and
+     nowhere else, which is how the second builder came to have none. */
+  const cat = {};
+  const pool = [];
+  ['port', 'sherry', 'madeira', 'oak', 'rum', 'tokaji', 'wine', 'brandy',
+   'beer', 'mizunara'].forEach((w, i) => {
+    cat['b' + i] = { k: 'b' + i, name: 'b' + i, dist: 'H' + i, sub: 'rye',
+                     proof: 90 + i, fin: w, obsc: 'known', msrp: 50 };
+    pool.push(cat['b' + i]);
+  });
+  const core = [0, 1, 2, 3, 4, 5].map(i => ({ k: 'b' + i }));
+
+  eq('it fills the bench it was asked for',
+    L.benchFor(pool, 'cask', core, 4, {}).length, 4);
+  /* NEVER FROM THE CAST. A stand-in that is already being poured stands in
+     for nothing. */
+  eq('and never from the core',
+    L.benchFor(pool, 'cask', core, 4, {})
+      .filter(p => core.some(c => c.k === p.k)).length, 0);
+  /* ASKED FOR NONE, GIVEN NONE - "0 on the bench" is an answer. */
+  eq('none asked for is none built',
+    L.benchFor(pool, 'cask', core, 0, {}).length, 0);
+  eq('and no axis is none either',
+    L.benchFor(pool, null, core, 4, {}).length, 0);
+  /* AND NO MORE THAN IS LEFT: four asked of a pool with two spare is two,
+     not a refusal and not a repeat. */
+  const thin = pool.slice(0, 7);
+  const some = L.benchFor(thin, 'cask', core, 4, {});
+  eq('a thin shelf gives what it has', some.length, 1);
+  eq('without doubling up',
+    some.length, new Set(some.map(p => p.k)).size);
+  eq('nothing to draw from is nothing',
+    L.benchFor([], 'cask', core, 4, {}).length, 0);
+}
+
 queueSection()
   .catch(e => {
     console.log('\n  \u2717 the queue section threw: '

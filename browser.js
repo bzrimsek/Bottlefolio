@@ -2880,19 +2880,31 @@ function step(n) {
         if (vp) await page.setViewportSize(vp);
         await page.waitForTimeout(80);
       }
-      /* EDIT LIVES UNDER MORE since the review of 2026-09-15: six buttons in
-         the flight's header ran it 576px wide on a 390px phone, with Back
-         past the edge. The header keeps Back, the pour and More. */
-      const more = page.locator('#scr-detail button', { hasText: /^More$/ }).first();
-      if (!(await more.count())) {
-        failures.push('flight: no More button in the header');
-      } else {
-        await more.click();
-        await page.waitForTimeout(140);
+      /* EDIT IS ON THE FLIGHT since 2026-10-26 (BZ: "all with a confirm on
+         remix and delete"). It lived under More from the review of
+         2026-09-15, because six buttons in the HEADER ran it 576px wide on
+         a 390px phone with Back past the edge - and the row is on the page
+         now, which wraps, so the header keeps only Back.
+
+         THE WHOLE ROW IS CHECKED, not just Edit: a control that moved out
+         of a menu and never arrived is the same fault as one that is
+         missing, and this walk is what would have caught it. */
+      for (const want of ['Log the flight', 'Print papers', 'Edit',
+                          'Text it', 'Remix']) {
+        const b = page.locator('#scr-detail button',
+          { hasText: new RegExp('^' + want + '$') }).first();
+        if (!(await b.count())) {
+          failures.push('flight: no ' + want + ' button on the page');
+        }
       }
-      const edit = page.locator('#modal button', { hasText: /^Edit$/ }).first();
+      if (await page.locator('#scr-detail button',
+          { hasText: /^More$/ }).count()) {
+        failures.push('flight: More is back, with the row already on the page');
+      }
+      const edit = page.locator('#scr-detail button',
+        { hasText: /^Edit$/ }).first();
       if (!(await edit.count())) {
-        failures.push('flight editor: no Edit button under More');
+        failures.push('flight editor: no Edit button on the flight');
       } else {
         await edit.click();
         await page.waitForTimeout(140);
@@ -2907,11 +2919,10 @@ function step(n) {
             .first().click();
           await page.waitForTimeout(200);
 
-          // Reopened the same way a person would: More, then Edit.
-          await page.locator('#scr-detail button', { hasText: /^More$/ })
-            .first().click();
-          await page.waitForTimeout(140);
-          await page.locator('#modal button', { hasText: /^Edit$/ })
+          /* Reopened the same way a person would: Edit, on the flight.
+             Saving a flight he already had ends on that flight (an edit
+             finishes where it started), so Edit is one press away. */
+          await page.locator('#scr-detail button', { hasText: /^Edit$/ })
             .first().click();
           await page.waitForTimeout(160);
           const back = await page.locator('.pourrow .pnote').first().inputValue();

@@ -41,7 +41,13 @@ permissions:
 
 jobs:
   gate:
-    runs-on: ubuntu-latest
+    # PINNED, NOT latest. Two pushes were stopped on 2026-10-26 by
+    # WebKit exiting 127 on libicudata.so.74 - ICU 74, which is Ubuntu
+    # 24.04's. `install-deps webkit` ran for 107 seconds and did not
+    # supply it, which is what an image without ICU 74 looks like. The
+    # image is named here so a change to what "latest" means cannot
+    # stop a build again without saying so.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: write   # fast-forward main to the gated build, and nothing else
@@ -249,6 +255,13 @@ jobs:
             while kill -0 "$pid" 2>/dev/null; do sleep 2; done
           fi
           tail -5 /tmp/browser-deps.log || true
+          # AND WHAT THE RUNNER ACTUALLY HAS. When ios fails on a missing
+          # library the question is always which image this is and which
+          # ICU is on it; printing it here means the next red says so
+          # rather than needing a third push to find out.
+          . /etc/os-release && echo "image: $PRETTY_NAME"
+          echo "icu: $(ldconfig -p | grep -c libicudata) present"
+          ldconfig -p | grep libicudata || echo 'icu: none at all'
 
       - name: The gate - the browsers and the rules
         run: python3 gate.py --slow
