@@ -122,8 +122,8 @@ check locally is worth removing: it teaches you to ignore red.
 python3 audit.py index.html  # the named lock matches index.html
 node killer-bs-test.js    # 8,241 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # 117 wiring checks, incl. rules copied twice
-node screens.js           # 36 screens draw
+node consistency.js       # 121 wiring checks, incl. rules copied twice
+node screens.js           # 39 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed
 node seq.js               # screens in PAIRS: what the last one left behind
@@ -181,10 +181,16 @@ the wording is the rules session's to change, not this one's.
 
 ## The admin half
 
-`admin.html` is a second page beside the app, added 2026-10-27 as build 1
-of the admin split. It holds everybody with an account, each person's
-published report, the four-record sharing check and its repair, Suspend and
-Remove. All of that used to be inside `index.html`, behind `S.admin` — which
+`admin.html` is a second page beside the app, added 2026-10-27 in two
+builds. It holds **four tabs**: People — everybody with an account, each
+person's published report, the four-record sharing check and its repair,
+Suspend and Remove — and then the whole library: **Library** (browse,
+search, the entry editor, export and import), **Offered** (the queue, with
+its count on the tab) and **Clean up** (the contradiction scan and the
+lookup fill). The automatic intake runs there too, started from the gate
+four seconds in and then on a timer; `fbCheckAdmin` used to start it and
+exists in no file now, because the gate already reads `admins/<uid>` and two
+places answering one question is the fault rule 30d is for. All of that used to be inside `index.html`, behind `S.admin` — which
 is a local switch anybody may flip, not a permission — so every installed
 copy of the app carried screens whose every read the database refused. BZ:
 separate out admin functions. It matters more now the app is headed for the
@@ -196,8 +202,9 @@ and the `STATE + RENDER` banner, the same two anchors `engine.js` uses), the
 Firebase config, `APP_VERSION`, and the three SDK urls. So 32,052 engine
 lines stay written in one place and the two pages can never disagree about a
 rule — and **`index.html`'s engine anchors are now load-bearing in a second
-file**. `admin.js` breaks each of them on purpose and demands the page say it
-cannot boot; `audit.py` check 15 refuses a delivery where any of the twelve
+file**. It slices a fifth thing since build 2: the lookup address.
+`admin.js` breaks each anchor on purpose and demands the page say it cannot
+boot; `audit.py` refuses a delivery where `LIB.admin` or any of twenty-four
 moved names is back in `index.html` as code, or where `admin.html` has grown
 an engine, a config or a version of its own.
 
@@ -209,10 +216,66 @@ since without a uid under `bz-apps/whisky/admins` every read it makes is
 refused, `admins/$uid` is `write:false`, and the Firebase web key was never
 a secret.
 
-What it does NOT hold yet is the library: the export, the contradiction
-scan, the offers queue and the entry editor are still in `index.html`, about
-2,300 lines of it, and they are build 2. Until then `LIB.admin` still exists
-in the app and still gates them.
+**Build 2, the same day, moved the library whole.** The offers queue, the
+automatic intake, the entry editor, taking entries out and putting them
+back, export and import, the lookup fill and the contradiction scan: 85
+functions, 2,819 lines out of `index.html`. It does not split — every cut
+tried duplicated a decision. `pickLibraryEntry` is wanted by the editor AND
+the queue, `libraryMergeWrite` by the editor AND the scan, and the scan is
+the only door to the fill, which is the only thing there that needs the
+lookup service. One web, or nothing.
+
+**Nothing in `index.html` reads `LIB.admin` any more**, and that is the
+acceptance test rather than a hope: `audit.py` refuses a delivery where the
+field or any of twenty-four moved names is back in the app as code. The
+field itself is gone from `LIB`, because a field nothing ever sets is a trap
+for the next reader. BZ's own rule is finally true of the code: only an
+admin writes the shared library, everybody else offers.
+
+**So two things became everybody's**, which is what made the move possible
+(BZ, 2026-10-27, asked which way it should go):
+
+- **`reviewBatch` offers where it published.** "Offer marked", not "Publish
+  marked". An admin's own corrections travel the same road as anybody
+  else's, through `offerToLibrary`, and are accepted on the admin page.
+  `publishBatch` and `publishMineIfAdmin` are gone from both files — the
+  second published on every shelf save, silently, for one account.
+- **Tidy your shelf**, on Settings › Shelf, is the shelf-crossing half of
+  the old Clean up page, drawn for every user: bottles the library has never
+  held, facts of yours that belong in it, invented flight notes that reached
+  it, and a flight asking for a bottle you own. The badge on Home counts one
+  population now — what your shelf holds that the library does not — and
+  anybody can act on it.
+
+**One finding did not survive and it is worth knowing which.**
+`shelfJoinFinding` — "this bottle is not filed under the entry it reads as"
+— has exactly one repair, and that repair writes a forwarding address in the
+library. Nothing in the app may write the library, and the admin page has no
+shelf to read. A finding with no way to act is not a finding (BZ), so rather
+than draw a dead row it went. It comes back when the admin page can read a
+shared shelf, or when the app can offer a filing for an admin to accept.
+`mergeHouseOnShelf` and `clearMineToo` went with it, for a better reason:
+both tidied an admin's own rows straight after that admin wrote the library,
+and a shelf follows the library on its own through the merge record.
+
+**The admin page has its own door to the lookup service, declared.**
+`L.ACTIONS` carries `reach the lookup service from the admin page`, through
+`adminService`, `where: 'admin.html'` — because `postWithRetry`'s retry, lane
+queue and wake lock all exist for a phone that suspends a backgrounded tab,
+and copying 135 lines of them onto a desktop page would be a second copy of
+the most-tested path in the app rather than a second door to a service. Rule
+30d got STRONGER, not waived: before that entry existed the two action
+checks read `index.html` only, so every call `admin.html` made was outside
+every guard in `consistency.js`. Three more checks followed the code there —
+the library-creation guard, the unused-constant check, and a copy check over
+`admin.html`'s own 3,000 lines of screens. That last one passed on its first
+run and a mutant proved it vacuous: `copyGroups` keeps an engine call's name
+by matching `L.`, and on that page the engine is `A.L.`
+
+**`index.html`'s lookup address is the fifth thing the page slices out**,
+beside the engine, the config, the version and the SDK urls, for the same
+reason: `DEFAULT_LOOKUP_URL` has never changed and a second spelling of it is
+how it comes to be changed in one place only.
 
 One thing it says twice on purpose: the `bz-apps/whisky` node paths. They
 are gathered in one `NODE` map at the top of `admin.html` rather than

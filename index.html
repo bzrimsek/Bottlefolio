@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.13  Build 2026-10-27 11:39 AM ET
+     Version : v2.9.14  Build 2026-10-27 02:56 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
 // v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
 // v2.9.11  2026-10-26  The way out does not scroll away.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.7  2026-10-26  The crash behind all of it: a flight whose bench did not survive the account.
 // v2.9.6  2026-10-26  A built flight ends in the list, and everything a flight can do is on the flight.
 // v2.9.5  2026-10-20  The sheet that refused to print, and the gate hole that hid it.
-// v2.9.4  2026-10-20  A declared axis that does not move is not the axis.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -1177,22 +1177,14 @@ nav button[aria-current="page"]{
 }
 /* The row-slider styles went with the row slider: the rail down the
    left of the page carries the level now. */
-/* A DUPLICATE IS A COMPARISON, so it gets three columns: this bottle,
-   that bottle, and what to do. BZ: how about a 3 column grid - bottle A,
-   bottle B, actions. Printed as one line with an == in the middle, the
-   names ran off the right edge under the buttons and the very thing you
-   are being asked to judge was the part you could not see. */
-.dupgrid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;
-  align-items:start;padding:8px 0;border-top:1px solid var(--line)}
-.dupgrid .dupside{min-width:0}
-.dupgrid .dupside .nm{white-space:normal;word-break:break-word}
-.dupgrid .rowacts{flex-direction:column;align-items:stretch}
-@media (max-width:640px){
-  /* On a phone the two bottles stack and the actions sit under them,
-     because three columns in 380px is three columns of nothing. */
-  .dupgrid{grid-template-columns:1fr}
-  .dupgrid .rowacts{flex-direction:row;flex-wrap:wrap}
-}
+/* THE DUPLICATE GRID LEFT ON 2026-10-27, with the contradiction scan that
+   was the only screen emitting it. BZ's reason for the shape - "how about a
+   3 column grid, bottle A, bottle B, actions", because printed as one line
+   with an == in the middle the names ran off the right edge under the
+   buttons and the very thing you are being asked to judge was the part you
+   could not see - is kept in admin.html beside the markup it governs, and is
+   simpler there: a desktop page has room for three columns, which is part of
+   why that page is desktop only. */
 .rowacts .chip.quiet{color:var(--mute);border-color:var(--line)}
 .rowacts .chip.quiet:hover{color:var(--rust);border-color:var(--rust)}
 
@@ -3158,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.13';
-const BUILD_TIME  = '2026-10-27 11:39 AM ET';
+const APP_VERSION = '2.9.14';
+const BUILD_TIME  = '2026-10-27 02:56 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9137,9 +9129,9 @@ L.FEATURES = [
     def: 'Your types as books on a shelf. Height and thickness both show the count, banded so a dozen types still reads as a shelf; the spine takes the type’s liquid color. The counting charts sit underneath and show the same numbers.' },
   { term: 'Enough to compare', src: 'the shape chart and the charts under the books',
     def: 'Three. One bottle from a region is a bottle, not a comparison, so the shape chart counts it as uncovered while the bar chart shows it present. That is why the region chart can show six regions while the shape says four of six.' },
-  { term: 'Read styles off their names', src: 'Library, admin only',
+  { term: 'Read styles off their names', src: 'the admin page',
     def: 'A one-off pass that costs nothing. Entries published before the app carried a style have none, so they get asked for a mash bill that no producer publishes. For most, the name says the style. This shows every row it would change, marks the ones that stop being asked, and writes only if you agree. It never overwrites a style already there.' },
-  { term: 'Fill what is missing', src: 'Library, admin only',
+  { term: 'Fill what is missing', src: 'the admin page',
     def: 'Looks up the library entries short of a proof, a distillery, a category or real tasting notes. The bill comes first; nothing is written until you review it, and it never overrules a field someone already filled. An entry that comes back empty twice is not asked about again for ninety days; an error does not count.' },
   { term: 'What a lookup teaches', src: 'nothing to do \u2014 it just happens',
     def: 'Every lookup offers its answer to the library, whether or not you buy the bottle — from a shop, a barcode, a pasted web page or the bulk fill. It is silent, and offers nothing when the library already has the bottle, the answer is too thin, or it was already offered. An admin’s lookups go straight in; everyone else’s wait in Offered to the library.' },
@@ -9147,15 +9139,15 @@ L.FEATURES = [
     def: 'A wishlist pointed outward: five bottles, a flight-finishing one first, as a message to text to someone who has never heard of this app — what to buy and why, with no prices. Anything already on your shelf is left off. A separate switch lets your buddies see the list, off by default. Turned on, it appears under What they are after, with Find it beside each one.' },
   { term: 'Sharing what was poured', src: 'nothing to do \u2014 it follows a flight',
     def: 'When you log a flight you pick who was there, and the evening travels to them. A bottle they own is logged as a pour on their shelf; being there was the consent. A bottle they do not own is offered to their wishlist with the proof, the cask and the note, still under the name of whoever wrote it. Each guest’s own device applies it, so someone not on the list has nothing to read.' },
-  { term: 'Scan the library for inconsistencies', src: 'Library, admin only',
+  { term: 'Scan the library for inconsistencies', src: 'the admin page',
     def: 'Reads the whole library and reports what contradicts itself: the same whiskey under two names, a proof or size stranded in the name, one distillery spelled two ways, entries too bare to use, a mash bill that does not total 100, a Scotch region on something that is not Scotch, a name that states one style while the row stores another, a proof outside what whiskey is bottled at, and an entry with no distillery. Nothing is changed: some findings are correct and best left alone.' },
-  { term: 'How offers are sorted', src: 'Library, admin only',
+  { term: 'How offers are sorted', src: 'the admin page',
     def: 'Everything offered is judged before you see it. Four answers. Go in: complete, contradicting nothing, and nothing like it already there. Go in and be filled: the same, short of a proof, a category or a note. Add nothing: no name, already in, removed before, or merged away. Need you: a judgment the search could not settle. Two people offering one bottle are merged, and only a field they state differently is a question.' },
-  { term: 'Look up the ones it cannot settle', src: 'Library, admin only',
+  { term: 'Look up the ones it cannot settle', src: 'the admin page',
     def: 'The questions the app could not answer on its own: which of two bottles this is, who makes it, which of two stated facts is right. Each costs one lookup, so it waits for a press, and it asks once: what comes back re-judges the offer, and what does not leaves it for you.' },
-  { term: 'Add selected, Drop selected', src: 'Library, admin only',
+  { term: 'Add selected, Drop selected', src: 'the admin page',
     def: 'The offers that still need you, worked in one press. Everything arrives selected; All and None move the lot, and tapping a row turns it on or off. Drop does not delete: the offer is held for fourteen days with the reason on it and can be put back. Taking an entry out of the library is different — that leaves a record so the next lookup cannot write it back.' },
-  { term: 'Barcodes offered', src: 'Library, admin only',
+  { term: 'Barcodes offered', src: 'the admin page',
     def: 'A barcode you pair with a name is stored on your device at once, so a scan works in a shop with no signal, and is then offered rather than published. An admin accepts or declines it before it reaches everyone.' },
   { term: 'Already on your shelf', src: 'below what you are likely to like',
     def: 'Findings whose answer you already own: a flight one pour short where the bottle is sealed upstairs. Nothing here costs money, and when there is nothing the card does not show.' },
@@ -9188,7 +9180,7 @@ L.FEATURES = [
     def: 'One chip saying whether a suggestion has to be open on your shelf alone, on yours and a buddy’s, or on everyone’s. It defaults to just you and opens the rest when tapped. It is not a reel because it changes which bottles are in the running, not which is picked.' },
   { term: 'Giving a bottle away', src: 'the bottle, Retire',
     def: 'Retire, on any bottle, sealed or open. Gifted, traded and sold ask who got it: a buddy is one tap, anyone else can be typed, or you can skip it. A sealed bottle is not offered finished or drain poured. The bottle leaves your shelf and its page says what became of it — gifted to Kevrin, Sep 10.' },
-  { term: 'Import an edited library', src: 'the Library screen',
+  { term: 'Import an edited library', src: 'the admin page, Library',
     def: 'Export the library, edit it in a spreadsheet, bring it back. It merges rather than replaces: rows left out are untouched, and a blank cell keeps what is there. A name it does not know becomes a new entry, not a rename. It shows what would change, field by field, before anything is written.' },
   { term: 'You and them, together', src: 'Buddies, each buddy',
     def: 'The two shelves read as one collection and get a title the way Home gives yours — usually a different answer from either shelf alone: a sherry-led shelf beside a peated one becomes Smoke and Sherry. A whiskey you both own counts as one whiskey and two bottles. Your Not me vetoes do not apply here.' },
@@ -9218,7 +9210,7 @@ L.FEATURES = [
     def: 'The most a single photo may be turned into. Twenty bottles on a shelf is twenty short lines; a menu page can be sixty entries with ages and prices. Set it too low and a long page is cut off and lost. The log shows what each read used, and a change applies to the next read.' },
   { term: 'Check the service', src: 'Settings, under the lookup address',
     def: 'Asks the deployed service which build it is running and compares it with the build this app needs. Apps Script serves the DEPLOYED version, not the saved one, so a pasted Code.gs changes nothing until you deploy a new version. A deployment too old to answer counts as out of date.' },
-  { term: 'Merging two library entries', src: 'Library, admin only',
+  { term: 'Merging two library entries', src: 'the admin page',
     def: 'When the library holds one whiskey under two spellings, merging keeps one and drops the other. The dropped name stays gone: it is no longer offered for publishing, cannot be added from someone\u2019s offer, and cannot be reached by renaming another entry. Your own bottle keeps the name you gave it.' },
   { term: 'Diagnostics by user', src: 'the admin page',
     def: 'Each device publishes its own report \u2014 the build, the counts, what sign-in did and what the app did recently \u2014 when it opens and right after a crash. This lists them by name, newest first. A device writes only its own, and only an admin can read someone else\u2019s.' },
@@ -9227,7 +9219,7 @@ L.FEATURES = [
   { term: 'When the answer is not a bottle', src: 'Taste › With a guest',
     def: 'The box takes two kinds of answer. A bottle, like Jack Daniel\u2019s 7, that neither your shelf nor the library has is looked up and the ladder starts from it; nothing is saved. A phrase, like dark beer or nothing peaty, brings the lower-proof, entry-level end of the shelf, and reads not as not: nothing peaty leaves smoke out of '
       + 'it.' },
-  { term: 'One house, two spellings', src: 'the library scan',
+  { term: 'One house, two spellings', src: 'the admin page, Clean up',
     def: 'A distillery filed under two names counts as two houses, so a bottle looks like the only one from a house you own six of. The scan names the odd entries, and the editor offers the spelling the rest of the library uses.' },
   { term: 'Is this a good price', src: 'Shop, after a bottle photo',
     def: 'Photograph a bottle in a store with its price tag, and the app compares that price with what you last paid, or with what it normally sells for. A tag it cannot read clearly, or one that may belong to the next bottle, comes back blank: a wrong price could make a fair one look like a bargain.' },
@@ -9244,17 +9236,25 @@ L.FEATURES = [
     def: 'One photo of the shelf, and it reads the level of every bottle it can see through, then offers them for you to accept. It adds no bottles. Dark glass comes back blank rather than guessed, so an empty answer is normal for a shelf of Islay bottles.' },
   { term: 'How much is left', src: 'Shelf tools, then each open bottle',
     def: 'Off until you turn it on. A slider beside every open bottle, matched by eye against the real one \u2014 nine notches from Empty to Full. Pours never move it. Anything at a quarter or less turns up on Shop as worth replacing before the last pour.' },
-  { term: 'A release its name disagrees with', src: 'the library scan',
+  { term: 'A release its name disagrees with', src: 'the admin page, Clean up',
     def: 'Points at entries where the name and distillery say one release and the entry says another \u2014 a Private Barrel Select filed as Standard. It only points: a store pick of a small batch is arguably either, and what you chose stands until you change it.' },
   { term: 'Release', src: 'on a bottle, and on the add form',
     def: 'Standard, batched, limited or exclusive. A photo fills it from the name and the house: an independent bottler sells one cask at a time, a distillery\u2019s own single-barrel line is limited, and a bottle picked for one shop is exclusive. Weak words like Reserve count for nothing. It only fills a blank; your choice always wins.' },
   { term: 'Add to wishlist', src: 'on a bottle',
     def: 'Puts this whiskey on your wishlist. It appears only when it would do something: not for a whiskey already on the list, or one with a sealed spare on the shelf. It is the plain way to say: this one, '
       + 'please.' },
+  { term: 'Waiting for you', src: 'Home, top right',
+    def: 'A count of the bottles on your shelf that the library has never held. Pressing it lists them, so you can look before anything is sent, and Offer marked sends the ones you keep ticked. It is not a publish: an admin accepts offers on the admin page, and until then nothing of yours changes. The number only appears once the library has actually loaded, because against a library nobody has read every bottle you own looks new.' },
+  { term: 'Tidy your shelf', src: 'Settings \u203a Shelf',
+    def: 'Where your shelf and the library disagree, with what to do about each: bottles the library has never held, offered in one go; facts of your own that belong in the library rather than on your shelf; notes written to be read aloud beside a flight that reached the library by mistake; and flights asking for a bottle you already own under another name, which can be pointed at it. Nothing here is sent without you pressing something, and nothing is sent that an admin has not accepted.' },
+  { term: 'Offer marked', src: 'the waiting list, and Tidy your shelf',
+    def: 'Sends the ticked bottles to the library as offers. Every one is shown first with what it would add, and a tick can be taken off. An offer the library already holds under any spelling is refused rather than queued, so the same bottle is not reviewed twice.' },
   { term: 'Another one?', src: 'when you retire a bottle',
     def: 'Asked once, when a bottle leaves the shelf for any reason \u2014 the moment you know whether you want it back. Yes puts it on the wishlist. It is not asked if you have another or it is already on the list.' },
-  { term: 'The library', src: 'Shelf tools, admin only',
-    def: 'The library everyone reads and adds to, with its export, its scan for contradictions and the offers waiting to go in, all on one screen. Shown only to admins.' },
+  { term: 'The library', src: 'Settings \u203a Admin mode \u203a The library',
+    def: 'Every whisky this app knows about, with what it knows: search it by name, distillery, cask or region, or pick a type to browse. Your own bottles are separate, on Shelf. Anybody signed in can read it; adding and correcting entries is done on the admin page, and what your own shelf would add is offered from Settings \u203a Shelf \u203a Tidy your shelf.' },
+  { term: 'The admin page', src: 'admin.html, beside the app',
+    def: 'Looking after the shared library \u2014 the offers people have made, the entry editor, the contradiction scan, the export and import, and everybody with an account \u2014 is a separate page at the same address as the app with /admin.html on the end. It is a desktop page and it is not part of the app: nothing in the app can change the library any more, which is why none of these controls appear here. Signing in there with an account that is not an admin says so plainly and does nothing else.' },
   { term: 'Whiskey only', src: 'Shelf › filter row',
     def: 'Hides the bar shelf \u2014 rum, vodka, gin, mezcal, tequila, liqueur and brandy \u2014 leaving the whiskey. It appears only when you own something that is not whiskey. It works like any other filter, and Clear all clears it.' },
   { term: 'What is on the shelf but not counted', src: 'the Shelf',
@@ -9507,7 +9507,7 @@ L.FEATURES = [
     def: 'Shelf, Import. Takes a CSV from Only Drams, a spreadsheet of your own, or an export from here. Column names are matched loosely, and an ABV under 60 is read as an ABV and doubled. Nothing is written until you have seen what it found.' },
   { term: 'Not me', src: 'Home, under the title',
     def: 'Rejects the title the shelf earned, and the next best title takes its place. It is a veto, not a picker. Undo puts it back, and the rejection follows your account to every device. It is offered only on a title the shelf actually earned.' },
-  { term: 'Removing a library entry', src: 'Library, admin only',
+  { term: 'Removing a library entry', src: 'the admin page',
     def: 'Removes it for everyone, including devices that already had it, and it stays removed: nothing adds it back on its own. Your own bottle is not touched \u2014 it is left and counted. Renaming an entry moves the bottles with it. Undo restores the entry in full.' },
   { term: 'Count the shelf', src: 'Shelf tools › Manage',
     def: 'A physical inventory, in shelf order \u2014 by type, then distillery \u2014 sealed bottles included. Select what you find. Stop whenever you like: it remembers where you were, and a bottle not yet looked at is not a missing one. Finishing offers to retire what is not there as an adjustment; it offers, it does not act.' },
@@ -16672,6 +16672,34 @@ L.ACTIONS = [
   {
     id: 'reach the lookup service',
     through: ['postWithRetry'],
+    /* THIS DOOR IS index.html's. Said explicitly on 2026-10-27, when a
+       second page started asking the same service: a door with no file
+       named is a door whose check only ever looked at one file and did not
+       say so. */
+    where: 'index.html',
+    pressed: [],
+    allow: {}
+  },
+  {
+    /* THE ADMIN PAGE ASKS THE SAME SERVICE AND NOT THROUGH THE SAME DOOR,
+       and that is a decision rather than an oversight (BZ, 2026-10-27).
+
+       postWithRetry carries a retry, a lane queue and a wake lock, and all
+       three exist for a phone: Apps Script answers a POST with a redirect to
+       a one-time url on script.googleusercontent.com, Android suspends a
+       backgrounded tab, the key expires before the redirect is fetched, and
+       Google serves an HTML 404 instead of the answer. admin.html is a
+       desktop page somebody is watching, with none of those failures, and a
+       copy of those 135 lines there would be a second copy of the
+       most-tested path in this app rather than a second door to a service.
+
+       WHAT KEEPS IT HONEST is that it is named here and checked there:
+       consistency.js fails any fetch in admin.html that names the lookup
+       address and does not go through adminService. Before this entry
+       existed, admin.html's calls were not checked at all. */
+    id: 'reach the lookup service from the admin page',
+    through: ['adminService'],
+    where: 'admin.html',
     pressed: [],
     allow: {}
   },
@@ -21735,7 +21763,10 @@ L.SETTINGS_TABS = [
    by the database whoever asks. That is the same reasoning that took the log out
    from behind it: hiding something behind a switch anybody can flip protects
    nothing, so the honest thing is to organise with it, not to guard with it.
-   LIB.admin stays what it has always been - what the rules will allow. */
+   WHETHER YOU MAY WRITE THE LIBRARY IS NOT ASKED HERE AT ALL any more
+   (2026-10-27): it is asked on admin.html, by the page that can act on the
+   answer. This switch was never that question and now nothing in this file
+   is. */
 L.settingsView = function (want, modeOn) {
   const tabs = L.SETTINGS_TABS.filter(t => !t.admin || !!modeOn);
   /* AND WHICH OF THEM IS OPEN, from the same list: a tab that is not on it -
@@ -35657,35 +35688,15 @@ if (CAN_STORE) {
 // layer a value came from so you always know what you are trusting.
 function prod(k) { return S.catalog[k] || null; }
 
-/* CHANGE FIELDS ON LIBRARY ENTRIES THAT ALREADY EXIST, FOR EVERYBODY, AND
-   TEACH THIS DEVICE'S COPY THE SAME VALUES. `changes` is { key: { field:
-   value } }. One door, because a forgotten mirror into LIB.products makes a
-   button offer the same fix again right after it ran. Resolves on the
-   write; the caller says what happened. */
-function libraryFieldWrite(changes) {
-  const updates = {};
-  Object.keys(changes || {}).forEach(key => {
-    Object.keys(changes[key] || {}).forEach(field => {
-      updates['catalog/products/' + key + '/' + field] = changes[key][field];
-    });
-  });
-  if (!Object.keys(updates).length) return Promise.resolve();
-  updates.stamp = Date.now();
-  return firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(updates))
-    .then(() => {
-      Object.keys(changes).forEach(key => {
-        if (LIB.products && LIB.products[key]) {
-          Object.assign(LIB.products[key], changes[key]);
-        }
-      });
-    });
-}
+/* APPLY A SCAN'S FIX TO YOUR OWN SHELF ROW. Patch this device's copy of
+   the entry, patch the shelf row, rebuild and save. Returns false when
+   there is nothing of either, which is how the caller knows to say so
+   rather than report a fix.
 
-/* APPLY A SCAN'S FIX. ONE WAY: patch the library copy, patch the shelf,
-   rebuild, save, and publish the correction - a fix kept on this device
-   alone is reported again by the next device to scan. Returns false when
-   the entry has gone. */
+   THE LIBRARY HALF LEFT ON 2026-10-27, with the admin screens: it is
+   applyLibraryFix on admin.html, beside the scan that raises it. What is
+   left is what this screen was always for - showImportCheck is a check on
+   YOUR shelf. */
 function applyAuditFix(key, fix, where) {
   const lib = (LIB.products || {})[key];
   const mine = prod(key);
@@ -35698,12 +35709,12 @@ function applyAuditFix(key, fix, where) {
   }
   save_();
   appLog(where + ': ' + key + ' \u2014 ' + fix.said);
-  /* Written for everybody too, or the next device to scan reports it again. */
-  if (lib && FB.user) {
-    libraryFieldWrite({ [key]: fix.set })
-      .catch(e2 => appLog(where + ': could not publish ' + key + ' \u2014 '
-        + ((e2 && e2.message) || e2)));
-  }
+  /* MOVED 2026-10-27: this also wrote the correction into the library, so
+     the next device to scan would not report it again. Nothing in the app
+     writes the library now. admin.html does that half, under its own name
+     (applyLibraryFix), where the scan that raises it lives.
+     THE SHELF HALF IS THE HALF THAT WAS ALWAYS THIS SCREEN'S: showImportCheck
+     is a check on YOUR shelf, and fixing your row is what it is for. */
   return true;
 }
 
@@ -35910,8 +35921,9 @@ function labelBacks() {
     map: 'home', settings: 'home',
     /* A buddy's shelf came from Buddies and goes back there. */
     theirs: 'buddies',
-    /* The scan is opened from the library and goes back to it. */
-    scan: 'library' };
+    /* Tidy your shelf is opened from Settings > Shelf and goes back there
+       (2026-10-27; it used to be the admin's library scan). */
+    scan: 'settings' };
   /* A TAB CAN BE SOMEWHERE TOO. */
   const cur = document.querySelector('.screen.on');
   const here = cur && cur.id ? cur.id.replace('scr-', '') : 'home';
@@ -40803,17 +40815,6 @@ function shelfFillQueue() {
 let REF_ASKED = false;
 let VERDICTS_ASKED = false;
 
-function needsRegistryFirst(redraw) {
-  if (LIB.ref || REF_ASKED || !FB.user) return false;
-  REF_ASKED = true;
-  libraryRefLoad().then(redraw, redraw);
-  return true;
-}
-
-/* HAS THE LIBRARY BEEN READ? Asked before anything that reports what the library
-   does NOT hold, because an empty library does not hold anything and the answer
-   becomes everything - four wrong reports in one day turned on it (2026-10-02).
-   One door because three callers had typed the same test out. */
 function libraryIsRead() {
   return !!LIB.products && !!Object.keys(LIB.products).length;
 }
@@ -40840,29 +40841,6 @@ function libraryIsRead() {
    DECODED: an id is written through L.fbKey because a library key can carry
    a dot, and read raw an escaped id never matches, which makes Leave it
    look broken. */
-function loadVerdicts() {
-  return firebase.database().ref('bz-apps/whisky/shared/reviewed')
-    .once('value')
-    .then(rs => {
-      const raw = rs.val() || {};
-      const out = {};
-      Object.keys(raw).forEach(k => { out[L.unFbKey(k)] = raw[k]; });
-      LIB.reviewed = out;
-    })
-    .catch(() => { LIB.reviewed = LIB.reviewed || {}; });
-}
-
-function needsVerdictsFirst(redraw) {
-  if (LIB.reviewed || !FB.user) return false;
-  /* ASKED ONCE, like the registry: the read is on its way and a second
-     caller must wait for it rather than start another - and must not call
-     back into the draw that sent it, which is a loop. */
-  if (VERDICTS_ASKED) return true;
-  VERDICTS_ASKED = true;
-  loadVerdicts().then(redraw, redraw);
-  return true;
-}
-
 function needsLibraryFirst(redraw) {
   if (LIB.products || !FB.user) return false;
   withLibrary(redraw);
@@ -40888,30 +40866,6 @@ function withLibrary(then) {
    Lasanta 12 Year against The Original (BZ, 2026-10-01: "none of these 12 are a
    match it should be clear from the taxonomy"). The fill on this page loads the
    registry anyway. */
-function libraryFindings() {
-  /* THE TAXONOMY DECIDES WHICH TWO ENTRIES ARE ONE, or this scan does not ask
-     (BZ, 2026-10-02). Asked once and handed to both, so the audit and the rule
-     that judges its claims cannot be looking at different registries. */
-  const brands = refBrands();
-  return L.dropPairClaims(
-    /* AND THE REFERENCE DATA, for the house check - the same read the
-       duplicate rules already wait for (needsRegistryFirst). */
-    L.libraryAudit(LIB.products || {}, LIB.reviewed || {}, null, brands,
-      LIB.ref || null),
-    brands
-  ).concat(shelfJoinFinding(), deadForwardFinding(), flightJoinFinding());
-}
-
-/* WHAT THE VENN CANNOT JOIN, as one more finding on the page that already knows
-   how to show a finding (BZ, 2026-10-01: "I need to be able to action the
-   results with ease").
-
-   EVERY SHELF THIS DEVICE CAN SEE: your own, and the ones shared with you -
-   which is exactly what the Venn compares, so it is exactly where its faults
-   are. */
-/* WHAT THIS DEVICE HOLDS THAT BELONGS TO EVERYBODY, as a plan it can show
-   before it does anything (BZ, 2026-10-01: "shelf should hold user specific
-   data ... library holds shared bottle details"). */
 function shelfFactsPlan() {
   const now = libNow();
   return L.shelfFactsPlan(S.edits, S.custom, now.products, now.graves,
@@ -40967,14 +40921,17 @@ function moveShelfFacts(btn, plan, after) {
   /* AN ADMIN WRITES, EVERYBODY ELSE OFFERS - offerToLibrary's own rule, which is
      why none of this needs an admin reading anybody's shelf. */
   const jobs = plan.fresh.map(p => offerToLibrary(p, 'a bottle fact off a shelf'));
-  if (LIB.admin && plan.fills.length) {
-    const ups = { stamp: Date.now() };
-    plan.fills.forEach(f => {
-      ups['catalog/products/' + f.key + '/' + f.field] = f.value;
-    });
-    jobs.push(firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(ups)));
-  }
+  /* THE FILLS NO LONGER TRAVEL (2026-10-27). A "fill" is one field on an
+     entry the library already holds, and writing it needed an admin - so
+     this branch only ever ran for one account, and for everybody else those
+     facts sat on the shelf saying nothing. Measured on BZ's own shelf the
+     day the admin moved out: 33 fresh, 3 fills, 5 disagreements. The 33 are
+     offered above, as they always were for everybody.
+     THE THREE ARE NOT LOST, they are just not automatic: the card names them
+     with their fields, and an admin types them into the entry on admin.html,
+     which is the page that may write. Offering a FACT about an entry that
+     already exists would need an offer kind this app has not got, and
+     inventing one inside a move is how a move becomes a rewrite. */
   Promise.all(jobs).then(() => {
     /* ONLY NOW. The other order loses them if the write is refused. */
     S.edits = L.shelfFactsKeep(S.edits);
@@ -41006,33 +40963,11 @@ function openLibraryScreen() {
   goTo('library');
 }
 
-/* FORWARDING ADDRESSES THAT POINT AT NOTHING. Listed before the joins, because
-   a bottle stranded behind one cannot be offered a join until it goes. */
-function deadForwardFinding() {
-  const now = libNow();
-  const dead = L.deadForwards(now.graves, now.products);
-  if (!dead.length) return [];
-  return [{
-    id: 'deadfwd', n: dead.length,
-    title: dead.length + (dead.length === 1
-      ? ' forwarding address points at nothing'
-      : ' forwarding addresses point at nothing'),
-    why: 'A merge leaves an address saying where an entry went. These point at '
-      + 'a key with no entry behind it, so every bottle filed under them '
-      + 'resolves to nothing and cannot even be offered a join. Removing one '
-      + 'loses nothing, because there is nothing behind it.',
-    pairs: true,
-    items: dead
-  }];
-}
-
-/* EVERY SHELF THIS DEVICE CAN SEE: mine, and anybody who has shared theirs.
-   Two findings ask the same question and a third was about to. */
-function shelvesToScan() {
-  const mine = { id: 'me', bottles: S.bottles, catalog: S.catalog };
-  return [mine].concat(Object.keys((SHARED && SHARED.shelves) || {})
-    .map(u => Object.assign({ id: u }, SHARED.shelves[u])));
-}
+/* shelvesToScan left on 2026-10-27 with shelfJoinFinding, its only reader:
+   it gathered this device's shelf and every shelf shared with it, which is
+   what that finding compared. See openShelfTidy for what the shelf half of
+   the old scan became, and the build report for the one finding that had no
+   repair anybody here may make. */
 
 /* A FLIGHT POUR NAMING A BOTTLE HE OWNS UNDER ANOTHER NAME. Fourteen of
    BZ's flights read as waiting on one bottle each, and thirteen of the
@@ -41070,67 +41005,6 @@ function flightJoinFinding() {
   }];
 }
 
-function shelfJoinFinding() {
-  const now = libNow();
-  const hits = L.shelfJoins(shelvesToScan(), now.products, now.graves);
-  if (!hits.length) return [];
-  return [{
-    id: 'shelfjoin', n: hits.length,
-    title: hits.length + (hits.length === 1
-      ? ' bottle is not filed under the entry it reads as'
-      : ' bottles are not filed under the entry they read as'),
-    why: 'Two people hold one whisky when their bottles reach the same library '
-      + 'entry. These reach none, so they read as one person\u2019s alone on '
-      + 'every Venn. Filing one at its entry fixes it for everybody holding it.',
-    pairs: true,
-    items: hits
-  }];
-}
-
-/* WHICH BULK CONTROLS A FINDING GETS, asked once. The card called three builders
-   in a row to fill one group, and that group is one question: what can be done to
-   all of these at once? (2026-10-02, with openLibraryCleanUp at its ceiling.) */
-function bulkControls(f, bulk, draw, again) {
-  mendButton(f, bulk, again);
-  bulkVerdictChips(f, bulk, draw);
-}
-
-/* THE PAIRS THAT NEED NO DECISION: identical name, house and proof, so one
-   survives and it does not matter which (BZ). Its own function because the
-   screen is at its ceiling and because a merge that needs no judgment is a
-   different thing from a list of judgments. */
-function identicalPairsButton(found, host, draw) {
-  const auto = L.exactDupes(found);
-  if (auto.length) {
-    const go2 = el('button', 'btn wide btn-gold',
-      'Merge the ' + auto.length + ' identical '
-      + (auto.length === 1 ? 'pair' : 'pairs'));
-    go2.style.marginBottom = '8px';
-    go2.onclick = () => {
-      buttonWorking(go2, 'Merging\u2026');
-      libraryMergeWrite(auto)
-        .then(() => {
-          appLog('library: auto-merged ' + auto.length + ' pair(s)');
-          toast('Merged ' + auto.length);
-          draw();
-        })
-        .catch(e2 => {
-          go2.disabled = false;
-          go2.textContent = 'Merge the ' + auto.length + ' identical '
-            + (auto.length === 1 ? 'pair' : 'pairs');
-          toast(sayError(e2));
-        });
-    };
-    host.appendChild(go2);
-    host.appendChild(el('div', 'src', 'Both rows carry the same name, '
-      + 'distillery and proof — there is nothing to choose between '
-      + 'them.'));
-  }
-}
-
-/* HOW MUCH IS LEFT: the switch, what it says, and the way to fill the levels
-   in from a photograph under it. One thing with one job, so the tools screen
-   can be a list of sections rather than the contents of them. */
 function fillGaugeRow(grid) {
   const fillBtn = el('button', 'btn btn-sm');
   fillBtn.id = 'fillToggle';
@@ -41229,6 +41103,73 @@ function putBottlesBack(btn) {
 /* AND THE TAB ITSELF. The library is read first either way: these tools judge
    what is on the shelf against it, and against an empty library every bottle
    looks unknown. */
+/* TIDY YOUR SHELF (2026-10-27).
+
+   The shelf half of what used to be the admin's Clean up page, drawn for
+   everybody. BZ chose this when the library admin moved to admin.html: the
+   shelf-crossing findings "become everybody's, in the app", because none of
+   them is a question about permission - they are questions about one
+   person's own bottles, and the person who can answer them is the person
+   whose bottles they are.
+
+   EVERY CARD HERE CAN BE ACTED ON BY WHOEVER SEES IT. That is the entry
+   condition, not a nice-to-have: a row that reports something and offers no
+   way to put it right is not a finding (BZ). Which is why the one finding
+   whose only repair was a library write is not here - see the note in
+   b7_tidy, and the report.
+
+   IT USES THE SCAN SCREEN, which the app still has and which nothing else
+   opens any more. */
+function openShelfTidy() {
+  const host = document.getElementById('scanBody');
+  if (!host) return;
+  const title = document.getElementById('scanTitle');
+  if (title) title.textContent = 'Tidy your shelf';
+  const draw = () => {
+    /* READ BEFORE JUDGING. Every card below compares the shelf with the
+       library, and against a library that has not arrived the answers all
+       grow: everything looks new, everything looks missing. */
+    if (needsLibraryFirst(draw)) {
+      host.innerHTML = '';
+      host.appendChild(el('div', 'empty', 'Reading the library\u2026'));
+      return;
+    }
+    host.innerHTML = '';
+    const all = LIB.products || {};
+    /* WHAT YOU HOLD THAT THE LIBRARY DOES NOT, and the notes written for a
+       flight card that reached it. */
+    libraryShelfSteps(host, all, draw);
+    inventedNotesCard(host, all, draw);
+    /* WHAT THIS DEVICE IS HOLDING THAT BELONGS TO EVERYBODY. */
+    shelfFactsCard(host, draw);
+    /* A FLIGHT ASKING FOR A BOTTLE YOU ALREADY OWN. Its repair writes YOUR
+       flight and nothing shared, so it needs nobody's permission. */
+    (flightJoinFinding() || []).forEach(f => {
+      const card = el('div', 'sheet');
+      card.appendChild(el('h3', null, f.title));
+      if (f.why) card.appendChild(el('div', 'sub', f.why));
+      f.items.forEach(it => {
+        const row = el('div', 'item');
+        const left = el('div');
+        left.appendChild(el('div', 'nm', it.text || it.name || it.key));
+        row.appendChild(left);
+        const acts = el('div', 'rowacts');
+        acts.appendChild(pointPourButton(it, draw));
+        row.appendChild(acts);
+        card.appendChild(row);
+      });
+      host.appendChild(card);
+    });
+    if (!host.children.length) {
+      host.appendChild(el('div', 'empty',
+        'Nothing to tidy. Your shelf and the library agree \u2014 which is '
+        + 'worth knowing rather than assuming.'));
+    }
+  };
+  draw();
+  goTo('scan');
+}
+
 function shelfSettingsPanel(box) {
   if (needsLibraryFirst(renderSettings)) return;
   /* LOOKING AT THE TOOLS IS THE ACKNOWLEDGEMENT, so the dot clears here rather
@@ -41252,11 +41193,23 @@ function shelfToolsInto(m) {
      are. */
   const q = shelfFillQueue();
   shelfToolsItself(m, q);
-  /* PRICES IN ANOTHER CURRENCY (BZ, 2026-10-27: "move it to Settings > Shelf").
-     It was on Diagnostics under a heading called Shared data, which it never
-     was. Here it sits with the bottles whose prices it reads, and ahead of the
-     import so the one that cannot be taken back is still last. */
+  /* PRICES KEEP SECOND PLACE. BZ put the currency card there on 2026-10-27
+     ("move it to Settings > Shelf") and his named sequence is what you have,
+     what its prices are read in, how to get more in, the files, and the one
+     that cannot be taken back. Tidy your shelf goes THIRD rather than
+     displacing a position he had just chosen. */
   m.appendChild(currencyCard());
+  /* TIDY YOUR SHELF, third: it is about the bottles the first card counted
+     and the prices the second one reads, and ahead of everything that moves
+     files about. */
+  {
+    const grid = settingCard(m, 'Tidy your shelf',
+      'Where your shelf and the library disagree, and what to do about it.');
+    const go = el('button', 'btn btn-sm', 'Have a look');
+    go.onclick = openShelfTidy;
+    settingRow(grid, go, 'Bottles the library has never held, facts of yours '
+      + 'that belong in it, and flights asking for a bottle you own.');
+  }
   shelfToolsImport(m);
   shelfToolsFiles(m);
   shelfToolsOver(m);
@@ -41786,127 +41739,6 @@ function receiptsDialog() {
 }
 
 /* THE LIBRARY, EDITED IN A SPREADSHEET AND BROUGHT BACK. */
-function libraryImportDialog() {
-  const file = document.createElement('input');
-  file.type = 'file';
-  file.accept = '.csv,text/csv,text/plain';
-  file.onchange = () => {
-    const f = file.files && file.files[0];
-    if (!f) return;
-    const rd = new FileReader();
-    rd.onerror = () => toast('Could not read that file');
-    rd.onload = () => {
-      let rows;
-      try { rows = L.parseCSV(rd.result); }
-      catch (e) { toast('That is not a CSV'); return; }
-      if (!rows || !rows.length) { toast('Nothing in that file'); return; }
-      /* THE LIBRARY FIRST, AND NOT AN EMPTY ONE. Every row of this CSV is
-         either a change to an entry or a new entry, and against an empty
-         library every one of them is NEW - which libraryImportApply would
-         then write, duplicating the whole library (BZ, 2026-10-02: "sweep").
-         The cache is nulled after every merge, so this is one tap away. */
-      withLibrary(() => {
-        if (!libraryIsRead()) {
-          toast('The library has not loaded — try again in a moment');
-          return;
-        }
-        libraryImportReview(L.libraryImportPlan(rows, LIB.products),
-          rows.length);
-      });
-    };
-    rd.readAsText(f);
-  };
-  document.body.appendChild(file);
-  file.click();
-  setTimeout(() => file.remove(), 0);
-}
-
-function libraryImportReview(plan, total) {
-  openModal('What this file would change', m => {
-    m.appendChild(el('div', 'sub', total + ' rows read · '
-      + plan.same + ' already match · ' + plan.changes.length
-      + ' would change · ' + plan.adds.length + ' new'
-      + (plan.unnamed ? ' · ' + plan.unnamed + ' with no name'
-         : '')));
-    if (!plan.changes.length && !plan.adds.length) {
-      /* A clean round trip is a result: export and re-import without edits says
-         nothing happened. */
-      m.appendChild(el('div', 'src', 'Nothing to do \u2014 every row in '
-        + 'the file already matches the library.'));
-      const ok = el('button', 'btn wide', 'Close');
-      ok.onclick = closeModal;
-      m.appendChild(ok);
-      return;
-    }
-    plan.changes.slice(0, 60).forEach(c => {
-      const row = el('div', 'item');
-      const left = el('div');
-      left.appendChild(el('div', 'nm', c.name));
-      left.appendChild(el('div', 'src', c.words.join(' · ')));
-      row.appendChild(left);
-      m.appendChild(row);
-    });
-    plan.adds.slice(0, 40).forEach(c => {
-      const row = el('div', 'item');
-      const left = el('div');
-      left.appendChild(el('div', 'nm', c.name));
-      left.appendChild(el('div', 'src', 'new entry'));
-      row.appendChild(left);
-      m.appendChild(row);
-    });
-    if (plan.changes.length + plan.adds.length > 100) {
-      m.appendChild(el('div', 'src', 'and '
-        + (plan.changes.length + plan.adds.length - 100) + ' more'));
-    }
-    const go = el('button', 'btn wide btn-gold',
-      'Apply ' + (plan.changes.length + plan.adds.length) + ' to the '
-      + 'library');
-    go.style.marginTop = '12px';
-    go.onclick = () => {
-      go.disabled = true;
-      libraryImportApply(plan);
-    };
-    m.appendChild(go);
-    const no = el('button', 'btn ghost wide', 'Leave it');
-    no.style.marginTop = '6px';
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
-}
-
-function libraryImportApply(plan) {
-  const ups = {};
-  const all = plan.changes.concat(plan.adds);
-  all.forEach(c => {
-    const p = (LIB.products || {})[c.key];
-    if (p) {
-      Object.assign(p, c.set);
-    } else {
-      LIB.products = LIB.products || {};
-      /* The literal LAST: assigned first it is only a suggestion, and the
-         key and the name are what this entry is filed under. */
-      LIB.products[c.key] = Object.assign({}, c.set,
-        { k: c.key, name: c.name });
-    }
-    Object.keys(c.set).forEach(f => {
-      ups['catalog/products/' + c.key + '/' + f] = c.set[f];
-    });
-    if (!p) ups['catalog/products/' + c.key + '/name'] = c.name;
-  });
-  ups.stamp = Date.now();
-  appLog('library import: ' + plan.changes.length + ' changed, '
-    + plan.adds.length + ' added');
-  closeModal();
-  toast(all.length + ' written to the library');
-  firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(ups))
-    .catch(e => {
-      appLog('library import: could not publish \u2014 '
-        + ((e && e.message) || e));
-      toast('Applied here, but not saved for everyone');
-    });
-}
-
 function importDialog() {
   openModal('Import bottles', m => {
     m.appendChild(el('div', 'sub',
@@ -44569,41 +44401,6 @@ function tastingTips() {
    bottle of yours whose distillery is the same house under another
    spelling; without it the library settles and the shelf still counts two
    houses. */
-function runHouseMerge(plan, after) {
-  const mine = mergeHouseOnShelf(plan.keep);
-  const changes = {};
-  plan.rows.forEach(r => { changes[r.k] = { dist: r.to }; });
-  /* The cache learns it through the writer, or the button offers the same
-     merge again. */
-  return libraryFieldWrite(changes)
-    .then(() => {
-      appLog('library: merged ' + plan.rows.length + ' into ' + plan.keep
-        + ', and ' + mine + ' on the shelf');
-      toast('Merged into ' + plan.keep);
-      if (after) after();
-    });
-}
-
-function mergeHouseOnShelf(keep) {
-  let mine = 0;
-  Object.keys(S.catalog || {}).forEach(k => {
-    const e = S.catalog[k];
-    if (!e || !e.dist) return;
-    if (!L.houseSame(e.dist, keep)) return;      // a different house entirely
-    /* L.exactHouse, not ===. The whole point here is the difference
-       between the two comparisons: houseSame says it is the same house,
-       exactHouse says it is already spelled the same way, and only the
-       ones that are the first and not the second need rewriting. */
-    if (L.exactHouse(e.dist, keep)) return;     // already spelled that way
-    S.edits[k] = Object.assign({}, S.edits[k], { dist: keep });
-    mine++;
-  });
-  if (mine) { save_(); rebuildCatalog(); }
-  return mine;
-}
-
-/* THE ROOM. What everybody has, counted rather than intersected — see
-   L.roomBuckets for why a Venn stops working past three people. */
 function buddiesRoomPanel(box, uids, names, mySet) {
   const sets = [mySet].concat(uids.map(u => ({
     id: u, name: names[u],
@@ -47708,16 +47505,10 @@ function accountPanel(box) {
      the least-used control here, so it goes under everything else. */
   box.appendChild(adminModeCard());
 
-  /* AN ACCOUNT THAT TURNS OUT TO BE AN ADMIN redraws the page, so anything that
-     depends on the answer appears without a reload. Asked once per draw, and
-     only while the answer is not already known. */
-  if (!LIB.admin && FB.user) {
-    fbCheckAdmin().then(ok => {
-      if (!ok) return;
-      const scr = document.getElementById('scr-settings');
-      if (scr && scr.classList.contains('on')) renderSettings();
-    });
-  }
+  /* MOVED 2026-10-27: this asked whether the account was an admin so the
+     page could redraw with the admin half showing. There is no admin half
+     here any more - it is admin.html, at its own address - so nothing on
+     this screen depends on the answer and nothing asks. */
 }
 
 
@@ -48032,1043 +47823,6 @@ function diagReport() {
 // merged: one person's typo becoming everybody's is the thing to avoid, and
 // a queue somebody works through is the cheap way to avoid it.
 
-function renderContrib(box) {
-  const card = el('div', 'sheet');
-  card.appendChild(el('h3', null, 'Offers'));
-  box.appendChild(card);
-  if (!FB.user) return;
-
-  /* THE LIBRARY FIRST. Against a library this device has not loaded every
-     offer is new, and Add would write offers over existing entries. */
-  Promise.all([readOffers(), libraryLoad()]).then(([rows]) => {
-    /* EVERY OFFER, named or not - an unreadable one can still be thrown away.
-       Read with only this app's verdicts on them. */
-    const stale = [];
-    /* HELD, NOT ERASED. A dropped offer keeps its place for a fortnight
-       (BZ's choice); after that it goes on the next look. */
-    rows.forEach(row => {
-      const d = row.entry.dropped;
-      if (!d) return;
-      if (L.intakeExpired(d.at, Date.now())) stale.push(row);
-      else row.dropped = d;
-    });
-    stale.forEach(r => {
-      fbContribRef().child(r.uid).child(r.slug).remove().catch(() => {});
-      intakeStoreRef().child(r.uid).child(r.slug).remove().catch(() => {});
-    });
-    const live = rows.filter(r => !r.dropped
-      && stale.indexOf(r) < 0);
-    card.innerHTML = '';
-    card.appendChild(el('h3', null, 'Offers'));
-    const auto = L.autoAddedRecently(LIB.products || {}, Date.now());
-    const spelled = L.autoSpelledRecently(LIB.products || {}, Date.now());
-    if (!Object.keys(LIB.products || {}).length) {
-      card.appendChild(el('div', 'sub warn2', 'The library did not load, so '
-        + 'nothing here can be judged yet. Open this screen again in a '
-        + 'moment.'));
-      return;
-    }
-    /* HELD ONCE, for both branches: it was worked out inside the empty one and
-       again after the plan, and the second copy is what the fold now reads. */
-    const held = rows.filter(r => r.dropped);
-    if (!live.length) {
-      /* Shown only when something is here (BZ, 2026-09-16). */
-      if (!auto.length && !held.length && !spelled.length) {
-        card.remove(); return;
-      }
-      contribSettled(card, auto, spelled, held);
-      return;
-    }
-    const plan = L.intakePlan(live, { library: LIB.products || {},
-      removed: LIB.removed || {}, graves: LIB.graves });
-    contribPlan(card, plan);
-    contribSettled(card, auto, spelled, held, plan);
-  }).catch(e => {
-    card.innerHTML = '';
-    card.appendChild(el('h3', null, 'Offers'));
-    /* "NOT AN ADMIN" ONLY WHEN IT IS. A timeout or a sorting fault is not a
-       missing permission, and saying so sends somebody to check keys they
-       have. */
-    const raw = String((e && (e.code || e.message)) || e);
-    appLog('offered queue failed: ' + raw);
-    card.appendChild(el('div', 'sub', /permission/i.test(raw)
-      ? 'Not an admin.'
-      : 'The offers did not load \u2014 ' + L.plainError(e) + ' Open this '
-        + 'screen again to retry.'));
-  });
-}
-
-/* THE LIBRARY AND ITS REMOVALS, LOADED TOGETHER. Everything that judges an
-   offer asks both; with the library loaded alone, every guard judges
-   against an empty removal list and a removed bottle can come back. */
-function libraryLoad() {
-  if (LIB.products && LIB.removed) return Promise.resolve();
-  return Promise.all([fbLibraryRef().once('value'),
-    firebase.database().ref('bz-apps/whisky/shared/removed').once('value')])
-    .then(got => {
-      LIB.products = L.libraryFromValue(got[0].val());
-      LIB.removed = got[1].val() || {};
-    });
-}
-
-/* THE THREE PILES, AND ONLY ONE OF THEM IS A LIST TO WORK THROUGH (BZ,
-   2026-09-15): the app accepts or rejects most, and a person deals with
-   the rest. Since 2026-09-16 it acts on its own (intakeVetRun): what
-   reaches this screen is what the rules and the search could not settle. */
-function contribPlan(card, plan) {
-  card.appendChild(el('div', 'sub', L.intakeSay(plan)));
-  /* NO BUTTONS FOR WHAT HAPPENS ON ITS OWN (BZ, 2026-09-16). Offers are looked
-     up, added and dropped by the timed check (intakeVetRun).
-
-     AND NO LISTS EITHER (BZ, 2026-10-01). What is going in next is the same kind
-     of thing as what went in last week - a record, not a question - so it sits
-     with them, one fold in. What is left here is the rows that need a person. */
-  const yours = plan.yours || plan.ask;
-  if (yours.length) {
-    card.appendChild(el('div', 'rs', 'These need you (' + yours.length + ')'));
-    contribPicker(card, yours);
-  }
-}
-
-/* PICK THEM OFF IN ONE PRESS, NOT ONE ROW AT A TIME (BZ, 2026-09-15). A
-   contributor who imports a cellar must not turn review into an evening.
-   Everything starts selected, because the common case is agreeing with the
-   sorting, and the row itself is the target: a checkbox beside a chip
-   beside a name is three things competing for a thumb. */
-function contribPicker(card, list) {
-  selectRows(card, list, {
-    picked: true,
-    row: (x, onPick) => contribRow(x.row, x, onPick),
-    actions: [
-      ['\u002b Add selected', (chosen, b) =>
-        contribAddMany(chosen.filter(x => x.product), b)],
-      ['\u00d7 Drop selected', (chosen, b) => contribDropMany(chosen, b)]
-    ]
-  });
-}
-
-/* PICK SEVERAL, ACT ONCE. BZ, 2026-09-15: accept and deny efficiently, not
-   row by row. Every list in the offer queue goes through this one picker:
-   tap rows, then one button acts on what is ticked.
-   opts: picked (start ticked), row(item, onPick) -> element,
-         actions [[label, run(chosenItems, button)]] */
-function selectRows(card, list, opts) {
-  const picked = list.map(() => !!opts.picked);
-  const bar = el('div');
-  bar.style.cssText = 'display:flex;gap:8px;align-items:center;'
-    + 'flex-wrap:wrap;margin:6px 0';
-  const count = el('div', 'sub');
-  const acts = opts.actions.map(([label, run]) => {
-    const b = el('button', 'chip', label);
-    b.onclick = () => run(list.filter((x, i) => picked[i]), b);
-    return b;
-  });
-  const all = el('button', 'chip ghost', 'All');
-  const none = el('button', 'chip ghost', 'None');
-  acts.concat([all, none]).forEach(b => bar.appendChild(b));
-  bar.appendChild(count);
-  card.appendChild(bar);
-
-  const rows = list.map((x, i) => opts.row(x, () => {
-    picked[i] = !picked[i];
-    paint();
-  }));
-  rows.forEach(r => card.appendChild(r));
-
-  function paint() {
-    rows.forEach((r, i) => {
-      r.dataset.on = picked[i] ? '1' : '';
-      r.style.opacity = picked[i] ? '1' : '.45';
-      const box = r.querySelector('.pickbox');
-      if (box) box.textContent = picked[i] ? '\u2611' : '\u2610';
-    });
-    const k = picked.filter(Boolean).length;
-    count.textContent = k + ' of ' + list.length + ' selected';
-    acts.forEach(b => { b.disabled = !k; });
-  }
-  all.onclick = () => { picked.fill(true); paint(); };
-  none.onclick = () => { picked.fill(false); paint(); };
-  paint();
-}
-
-/* A name with its tick in front, on one line (selectRows paints the tick). */
-function pickName(cls, name) {
-  const nm = el('div', cls);
-  const box = el('span', 'pickbox', '\u2610');
-  box.style.cssText = 'margin-right:7px;font-size:16px;line-height:1';
-  nm.appendChild(box);
-  nm.appendChild(document.createTextNode(name));
-  return nm;
-}
-
-/* A plain row for the picker: a tick, a name and one line under it. */
-function pickRow(name, line, onPick) {
-  const item = el('div', 'item');
-  item.style.cursor = 'pointer';
-  item.onclick = onPick;
-  const left = el('div');
-  left.appendChild(pickName('nm oneline', name));
-  if (line) left.appendChild(el('div', 'sub', line));
-  item.appendChild(left);
-  return item;
-}
-
-/* ============ VETTING AS THE OFFERS ARRIVE ==========================
-   BZ, 2026-09-15: look up before presenting. Runs for an admin, quietly, a
-   few at a time, and writes what it finds to the admin-only store - done
-   once for everybody, so a redraw costs nothing.
-
-   It stops at its own budget rather than the day's allowance, so it never
-   eats lookups somebody wanted for themselves. Everything it spends is in
-   the log, named. The verdicts and lookups are the same ones the screen
-   would run; only the moment has changed. */
-let VETTING = false;
-
-let VET_TIMER = null;
-
-async function intakeVetSoon() {
-  /* Not gated on the budget or the service: clearing what adds nothing and
-     adding what is complete cost nothing, and the lookups check the budget
-     one at a time. Answers false when it did not run, so a press can say so. */
-  if (VETTING || !LIB.admin || !FB.user) return false;
-  VETTING = true;
-  try {
-    await intakeVetRun();
-  } catch (e) {
-    appLog('vetting stopped: ' + ((e && e.message) || e));
-  } finally {
-    VETTING = false;
-  }
-  return true;
-}
-
-/* THE OFFERS, AS ROWS, in one place, so "skip the barcode node" is not
-   copied (a copy that missed it made an unclearable row). */
-function offerRows(snap) {
-  const rows = [];
-  snap.forEach(who => {
-    who.forEach(c => {
-      /* `upc` IS NOT AN OFFER: it holds the contributor's barcode pairings.
-         Read as an offer it has no name, sorts into "adds nothing", and can
-         never be cleared, because the rules refuse any non-twelve-digit key
-         under `upc`. */
-      if (c.key === 'upc') return;
-      const v = c.val() || {};
-      rows.push({ uid: who.key, slug: c.key, entry: v, unreadable: !v.name });
-    });
-  });
-  return rows;
-}
-
-/* THE LIBRARY, READ FRESH, OR NOTHING IS JUDGED. LIB.products is null until
-   somebody opens the library, and against an empty library every offer is
-   new - so an automatic add would write over an existing entry. It reads
-   the library and removals itself every time, and stops rather than guess. */
-async function intakeReadLibrary() {
-  const library = L.libraryFromValue((await fbLibraryRef().once('value')).val());
-  if (!Object.keys(library).length) {
-    appLog('vetting: the library read came back empty, so nothing was '
-      + 'judged or added');
-    return null;
-  }
-  const removed = (await firebase.database()
-    .ref('bz-apps/whisky/shared/removed').once('value')).val() || {};
-  return { library: library, removed: removed, ref: await libraryRefLoad() };
-}
-
-/* WHERE THIS APP KEEPS ITS VERDICTS ON OFFERS - under `shared`, which only
-   an admin may write. Never on the offer itself: that is the contributor's
-   node, and a verdict written there by them would be acted on unjudged,
-   writing an entry of their choosing over any library bottle. (Security.) */
-function intakeStoreRef() {
-  return firebase.database().ref('bz-apps/whisky/shared/intake');
-}
-
-/* THE OFFERS, WITH ONLY THE VERDICTS THIS APP WROTE. Whatever sits in an
-   offer's own `vetted` field is the contributor's and is thrown away here;
-   the verdict, if any, comes from the admin-only store, and L.intakeVetted
-   still checks it was made about this offer as it now stands. */
-async function readOffers() {
-  const got = await Promise.all([fbContribRef().once('value'),
-    intakeStoreRef().once('value').catch(() => null)]);
-  const verdicts = (got[1] && got[1].val()) || {};
-  return offerRows(got[0]).map(r => {
-    const entry = Object.assign({}, r.entry);
-    delete entry.vetted;
-    const v = (verdicts[r.uid] || {})[r.slug];
-    if (v) entry.vetted = v;
-    return Object.assign({}, r, { entry: entry });
-  });
-}
-
-async function intakeVetRun() {
-  await intakeAcceptUpcs().catch(e => appLog('barcodes: offers not taken \u2014 '
-    + ((e && e.message) || e)));
-  const rows = (await readOffers()).filter(r => !r.entry.dropped);
-  if (!rows.length) return;
-  const lib = await intakeReadLibrary();
-  if (!lib) return;
-  const opts = L.intakeReady({ library: lib.library, removed: lib.removed,
-    graves: LIB.graves, ref: lib.ref });
-  const work = L.intakeWork(rows, opts);
-  const cleared = await intakeClearNothing(work.nothing);
-  const ran = await intakeVetLookups(work.todo, opts);
-  const added = await intakeAutoAdd(opts, lib.removed);
-  /* COUNTED FROM THE WRITES, not the intentions, so a refused write does not
-     look like progress and trigger another run. */
-  intakeVetReport(ran.spent, cleared + ran.wrote + added);
-}
-
-/* BARCODE OFFERS, ACCEPTED ON THEIR OWN (BZ, 2026-09-16). A code the shared
-   list does not have goes in; one it already has is kept as it is. Either
-   way the offer is cleared, in one write. Only the fields the rules allow. */
-async function intakeAcceptUpcs() {
-  const got = await Promise.all([fbContribRef().once('value'),
-    firebase.database().ref('bz-apps/whisky/upc').once('value')]);
-  const shared = got[1].val() || {};
-  const ups = {};
-  let took = 0, known = 0;
-  got[0].forEach(who => {
-    const codes = who.child('upc').val() || {};
-    Object.keys(codes).forEach(code => {
-      const row = codes[code] || {};
-      if (!shared[code] && row.name) {
-        const take = { name: row.name, at: row.at || Date.now() };
-        if (typeof row.price === 'number') take.price = row.price;
-        if (typeof row.size === 'string') take.size = row.size;
-        ups['upc/' + code] = take;
-        shared[code] = take;
-        took++;
-      } else {
-        known++;
-      }
-      ups['contrib/' + who.key + '/upc/' + code] = null;
-    });
-  });
-  if (!Object.keys(ups).length) return 0;
-  await firebase.database().ref('bz-apps/whisky').update(ups);
-  appLog('barcodes: took ' + took + ' offered, ' + known
-    + ' already known or unnamed');
-  return took;
-}
-
-/* WHAT ADDS NOTHING IS NOT A DECISION (BZ, 2026-09-15). An offer already
-   in the library, removed, or merged away: the verdict IS the reason.
-   Dropped, not deleted: held a fortnight with the reason on it, and a Put
-   back undoes the lot. */
-async function intakeClearNothing(list) {
-  if (!list.length) return 0;
-  appLog('vetting: clearing ' + list.length + ' offer(s) that add nothing');
-  const res = await Promise.all(list.map(x => fbContribRef().child(x.row.uid)
-    .child(x.row.slug).child('dropped')
-    .set({ why: x.verdict.why || x.verdict.rule || 'nothing to add',
-      at: Date.now() })
-    .then(() => true)
-    .catch(e => {
-      appLog('vetting: could not clear ' + (x.row.entry.name || '')
-        + ' \u2014 ' + ((e && e.message) || e));
-      return false;
-    })));
-  return res.filter(Boolean).length;
-}
-
-/* ONE LOOKUP PER OFFER THAT NEEDS ONE, until the budget says stop. */
-async function intakeVetLookups(todo, opts) {
-  const today = L.todayISO();
-  let spent = 0, wrote = 0;
-  for (let i = 0; i < todo.length; i++) {
-    const x = todo[i];
-    let v = x.verdict;
-    const ask = L.intakeAsks(v);
-    const gaps = (v.verdict === 'fill' && (v.needs || []).length)
-      ? v.needs : null;
-    if ((ask || gaps) && S.lookupUrl) {
-      if (L.intakeBudgetLeft(S.intakeTally, today, S.intakeBudget,
-          S.lookupTally) <= 0) {
-        appLog('vetting: stopped at the budget of '
-          + L.intakeBudgetOf(S.intakeBudget) + ' with ' + (todo.length - i)
-          + ' still to look at');
-        break;
-      }
-      const name = (v.product || {}).name || x.row.entry.name || '';
-      /* UNDEFINED MEANS THE LOOKUP FAILED, which is not an answer
-         (L.intakeAfterLookup): nothing is settled, nothing is marked tried,
-         and the offer is asked again next run. Offline, the run stops. */
-      let got;
-      try {
-        const raw = await askLookup(name, L.INTAKE_LOOKUP_MS,
-          gaps || undefined);
-        S.intakeTally = L.countIntake(S.intakeTally, today);
-        spent++;
-        got = raw ? L.parseLookup(raw, { name: name }) : null;
-      } catch (e) {
-        appLog('  vetting ' + name.slice(0, 34) + ' \u2014 '
-          + L.lookupFailSay(e));
-        if (navigator.onLine === false) break;
-      }
-      if (got === undefined && !x.write) continue;
-      v = L.intakeAfterLookup(v, got, opts);
-    }
-    if (await intakeVetWrite(x.row, v)) wrote++;
-  }
-  return { spent: spent, wrote: wrote };
-}
-
-/* AND WHAT IS READY GOES IN, WITHOUT A PRESS (BZ, 2026-09-16). Read back
-   through the plan so two offers of one bottle are one row, written through
-   the Add press's writer, each stamped `autoIn` so it can be listed and
-   taken back for a fortnight. */
-async function intakeAutoAdd(opts, removed) {
-  const rows = (await readOffers()).filter(r => !r.entry.dropped);
-  const plan = L.intakePlan(rows, opts);
-  const ready = plan.in.concat(plan.fill).filter(L.intakeReadyToAdd);
-  if (!ready.length) return 0;
-  const w = L.intakeToWrite(ready, removed, LIB.graves, S.catalog,
-    Date.now(), true, opts.library);
-  /* AN OFFER THAT CAN NEVER GO IN IS CLEARED, not refused again on every
-     run: already in the library, removed, merged away. */
-  await intakeClearNothing(w.refused.filter(r => r.row).map(r => {
-    appLog('vetting: not adding ' + r.name + ' \u2014 ' + r.why);
-    return { row: r.row, verdict: { why: r.why } };
-  }));
-  if (!Object.keys(w.pending).length) return 0;
-  try {
-    const res = await libraryAddWrite(w.pending, ready, removed, LIB.graves,
-      opts.library);
-    if (res.added) {
-      appLog('vetting: ' + res.added + ' went into the library on their own');
-    }
-    return res.added;
-  } catch (e) {
-    appLog('vetting: could not add \u2014 ' + ((e && e.message) || e));
-    return 0;
-  }
-}
-
-function intakeVetReport(spent, wrote) {
-  if (!spent && !wrote) return;
-  appLog('vetting: ' + wrote + ' offer(s) settled, ' + spent
-    + ' lookup(s) spent of a ' + L.intakeBudgetOf(S.intakeBudget) + ' budget');
-  save_();
-  /* REDRAWN ONLY IF IT CHANGED SOMETHING, only if the queue is on screen,
-     and never over a sheet or another run: a background redraw mid-action
-     loses the user's modal. */
-  const scr = $('#scr-library');
-  if (scr && scr.classList.contains('on') && !$('#modal') && !LIB.filling) {
-    renderLibraryScreen();
-  }
-  fbBadgeContrib();
-}
-
-/* WRITTEN DOWN, so nobody pays for this answer twice. */
-function intakeVetWrite(row, v) {
-  /* Into the admin-only store, signed with the offer it is about. `needs`
-     stays a list; saved as text it crashed the second pass. */
-  const rec = JSON.parse(JSON.stringify({ at: Date.now(),
-    sig: L.offerSig(row.entry), verdict: v.verdict, rule: v.rule || '',
-    why: v.why || '', field: v.field || '', tried: !!v.tried,
-    needs: v.needs || [], near: v.near || null, product: v.product || null }));
-  return intakeStoreRef().child(row.uid).child(row.slug)
-    .set(L.fbEncode(rec))
-    .then(() => true)
-    .catch(e => {
-      appLog('vetting write failed: ' + ((e && e.message) || e));
-      return false;
-    });
-}
-
-/* The piles that need no decision stay readable, folded, so "104 go in" is
-   not taken on trust. */
-function contribWhy(card, list, title) {
-  const more = el('details');
-  more.style.marginTop = '4px';
-  const sum = el('summary', 'sub', title + ' (' + list.length + ')');
-  more.appendChild(sum);
-  list.slice(0, 200).forEach(x => {
-    const p = x.product || {};
-    const line = el('div', 'sub');
-    line.textContent = (p.name || (x.row && x.row.entry && x.row.entry.name)
-      || 'no name') + ' \u2014 ' + (x.why || x.rule);
-    more.appendChild(line);
-  });
-  if (list.length > 200) {
-    more.appendChild(el('div', 'sub', 'and ' + (list.length - 200) + ' more'));
-  }
-  card.appendChild(more);
-}
-
-/* WHAT WENT IN ON ITS OWN, AND TAKING IT BACK. Acting without a press means
-   a wrong bar must be cheap to undo: a fortnight of additions, one press
-   for all. Taking one back is a library removal, tombstone and all, so the
-   same offer does not walk straight back in on the next run. */
-function contribAutoAdded(card, auto) {
-  const more = el('details');
-  more.style.marginTop = '9px';
-  more.appendChild(el('summary', 'sub', auto.length + ' went in on their '
-    + 'own in the last ' + L.INTAKE_HOLD_DAYS + ' days'));
-  selectRows(more, auto, {
-    row: (p, onPick) => pickRow(p.name || p._key, [p.dist,
-      p.proof ? p.proof + ' proof' : null].filter(Boolean).join(' · '),
-      onPick),
-    actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
-      + (chosen.length === 1 ? ' entry' : ' entries') + ' added on their own',
-      () => libraryTakeOut(chosen, b, 'taken back after going in on its own'))]]
-  });
-  card.appendChild(more);
-}
-
-/* WHAT THE HOUSE RULE RESPELLED, and putting it back. The same fortnight and
-   the same shape as what went in on its own, because something that acts
-   without being asked has to be reviewable - but the undo RESTORES THE
-   SPELLING rather than deleting the entry: getting a distillery wrong is not
-   a reason to take somebody's bottle out of the library. */
-function contribRespelled(card, rows) {
-  const more = el('details');
-  more.style.marginTop = '9px';
-  more.appendChild(el('summary', 'sub', rows.length
-    + (rows.length === 1 ? ' house was' : ' houses were')
-    + ' spelled like the rest in the last ' + L.INTAKE_HOLD_DAYS + ' days'));
-  selectRows(more, rows, {
-    row: (p, onPick) => pickRow(p.name || p._key,
-      'now ' + p.dist + ', was ' + ((p.autoSpell || {}).was || '?'), onPick),
-    actions: [['Put the old spelling back', (chosen, b) =>
-      libraryRespellBack(chosen, b)]]
-  });
-  card.appendChild(more);
-}
-
-function libraryRespellBack(list, btn) {
-  const done = btn ? buttonWorking(btn, 'Putting back\u2026') : () => {};
-  const changes = {};
-  list.forEach(p => {
-    const back = L.houseTakeBack(p);
-    if (back) changes[p._key || L.libKey(p.name)] = back;
-  });
-  if (!Object.keys(changes).length) { done(); return; }
-  libraryFieldWrite(changes)
-    .then(() => {
-      Object.keys(changes).forEach(k => {
-        appLog('library: ' + k + ' put back to ' + changes[k].dist);
-      });
-      toast(Object.keys(changes).length === 1 ? 'Put back'
-        : Object.keys(changes).length + ' put back');
-      done();
-      renderLibraryScreen();
-    })
-    .catch(e => { appLog('put back failed: ' + ((e && e.message) || e));
-      toast(sayError(e)); done(); });
-}
-
-/* TAKE ENTRIES OUT OF THE LIBRARY. Deleted, and recorded as removed - with
-   the entry itself, so Put back restores it - or the automatic paths would
-   write it straight back. */
-function libraryTakeOut(list, btn, why) {
-  const done = btn ? buttonWorking(btn, 'Taking out\u2026') : () => {};
-  const updates = {};
-  const at = Date.now();
-  list.forEach(p => {
-    const key = p._key || L.libKey(p.name);
-    const entry = Object.assign({}, p);
-    delete entry._key;
-    updates['catalog/products/' + key] = null;
-    updates['removed/' + key] = { at: at, by: (FB.user || {}).uid || '',
-      why: why, entry: entry };
-  });
-  updates.stamp = at;
-  firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(updates))
-    .then(() => {
-      list.forEach(p => {
-        const key = p._key || L.libKey(p.name);
-        if (LIB.products) delete LIB.products[key];
-        LIB.removed = Object.assign({}, LIB.removed || {},
-          { [key]: updates['removed/' + key] });
-      });
-      appLog('library: took out ' + list.length + ' \u2014 ' + why);
-      toast(list.length + (list.length === 1 ? ' entry' : ' entries')
-        + ' taken out');
-      renderLibraryScreen();
-    })
-    .catch(e => { done(); toast(sayError(e)); });
-}
-
-/* PUT BACK WHAT WAS TAKEN OUT: the entry, where it was kept, in the same
-   write that lifts the tombstone. A deliberate act by an admin, so it does
-   not ask libraryAccepts, which exists to stop the automatic paths doing
-   exactly this. A removal recorded before entries were kept only lifts the
-   block, and the bottle comes back when it is next offered. */
-function libraryPutBack(list, btn) {
-  const done = buttonWorking(btn, 'Putting back\u2026');
-  const ups = {};
-  const at = Date.now();
-  list.forEach(x => {
-    if (x.rec.entry && x.rec.entry.name) {
-      ups['catalog/products/' + x.key] = Object.assign({}, x.rec.entry, { at: at });
-    }
-    ups['removed/' + x.key] = null;
-  });
-  ups.stamp = at;
-  firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(ups))
-    .then(() => {
-      list.forEach(x => {
-        if (LIB.removed) delete LIB.removed[x.key];
-        if (x.rec.entry && LIB.products) LIB.products[x.key] = x.rec.entry;
-      });
-      appLog('library: put back ' + list.length);
-      toast(list.length + ' put back');
-      renderLibraryScreen();
-    })
-    .catch(e => { done(); toast(sayError(e)); });
-}
-
-/* MERGE DUPLICATE ENTRIES: the dropped key is deleted and recorded as
-   merged into the one kept, on this device (LIB.graves, through buryKey,
-   which refuses a round trip) and for everybody (renamed). One writer for
-   the per-pair merge and the identical-pairs merge; the per-pair one skipped
-   the device's record. fbEncodePaths encodes each segment itself. */
-function libraryMergeWrite(pairs) {
-  const ups = {};
-  pairs.forEach(d => {
-    ups['catalog/products/' + d.drop] = null;
-    LIB.graves = L.buryKey(LIB.graves, d.drop, d.keep);
-    ups['renamed/' + d.drop] = { to: L.mergedInto(LIB.graves, d.keep),
-      at: Date.now() };
-    appLog('merge: dropping ' + d.drop + ' into ' + d.keep
-      + ' (in library: ' + !!(LIB.products || {})[d.drop] + ')');
-  });
-  ups.stamp = Date.now();
-  return firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(ups))
-    .then(() => {
-      pairs.forEach(d => { if (LIB.products) delete LIB.products[d.drop]; });
-    });
-}
-
-/* WHAT HAS BEEN TAKEN OUT, newest first, to put back. */
-function libraryRemovedList(card) {
-  const removed = LIB.removed || {};
-  const rows = Object.keys(removed).map(k => ({ key: k, rec: removed[k] || {} }))
-    .sort((a, b) => (b.rec.at || 0) - (a.rec.at || 0));
-  if (!rows.length) return;
-  const more = el('details');
-  more.style.marginTop = '9px';
-  more.appendChild(el('summary', 'sub', rows.length + ' removed'));
-  selectRows(more, rows, {
-    row: (x, onPick) => pickRow((x.rec.entry || {}).name
-      || x.key.replace(/_/g, ' '), x.rec.why || '', onPick),
-    actions: [['Put back selected', (chosen, b) => libraryPutBack(chosen, b)]]
-  });
-  card.appendChild(more);
-}
-
-/* PICK ENTRIES TO TAKE OUT, from whatever the list is showing. */
-function libraryTakeOutPicker(out, hits) {
-  selectRows(out, hits, {
-    row: (p, onPick) => pickRow(p.name, [p.dist, p.proof ? p.proof + ' proof'
-      : null].filter(Boolean).join(' · '), onPick),
-    actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
-      + (chosen.length === 1 ? ' entry' : ' entries') + ' from the library',
-      () => libraryTakeOut(chosen, b, 'removed by an admin'))]]
-  });
-}
-
-/* The switch between browsing the library and picking entries out of it. */
-function libraryPickToggle(card, list) {
-  const b = el('button', 'chip', LIB.picking ? 'Done' : 'Select');
-  b.onclick = () => { LIB.picking = !LIB.picking; b.textContent = LIB.picking
-    ? 'Done' : 'Select'; list(); };
-  card.appendChild(b);
-}
-
-/* What was dropped, while it is still here to be looked at. */
-/* ONE LINE FOR EVERYTHING THAT DECIDED ITSELF (BZ, 2026-10-01: "the more we
-   leverage canon, the less we should need to approve"). Three folds stood side
-   by side at the top of this card - went in on their own, respelled, held - each
-   a record of a decision already made, all of them competing with the one list
-   that wants a person.
-
-   NOTHING IS HIDDEN AND NOTHING IS HARDER TO UNDO: they move inside one fold and
-   each keeps its own control. */
-function contribSettled(card, auto, spelled, held, plan) {
-  /* WHAT THE NEXT CHECK WILL DO belongs here too: it is a decision already
-     reached, and reading it is optional in exactly the way the rest is. */
-  const adds = plan ? plan.in.concat(plan.fill) : [];
-  const outs = (plan && plan.out) || [];
-  const n = auto.length + spelled.length + held.length + adds.length
-    + outs.length;
-  if (!n) return;
-  const said = [];
-  if (adds.length) said.push(adds.length + ' going in');
-  if (outs.length) said.push(outs.length + ' dropping');
-  if (auto.length) said.push(auto.length + ' went in');
-  if (spelled.length) said.push(spelled.length + ' respelled');
-  if (held.length) said.push(held.length + ' dropped');
-  const more = el('details');
-  more.style.marginTop = '9px';
-  more.appendChild(el('summary', 'sub', n + ' settled without you \u2014 '
-    + said.join(', ') + '. Each can be taken back.'));
-  if (adds.length) contribWhy(more, adds, 'Going in on the next check, and why');
-  if (outs.length) contribWhy(more, outs, 'Dropping on the next check, and why');
-  if (auto.length) contribAutoAdded(more, auto);
-  if (spelled.length) contribRespelled(more, spelled);
-  if (held.length) contribHeld(more, held);
-  card.appendChild(more);
-}
-
-function contribHeld(card, held) {
-  const more = el('details');
-  more.style.marginTop = '9px';
-  more.appendChild(el('summary', 'sub', held.length + ' dropped, kept '
-    + L.INTAKE_HOLD_DAYS + ' days'));
-  /* Undoing forty drops is as cheap as making them: pick, then put back. */
-  selectRows(more, held, {
-    row: (r, onPick) => pickRow(r.entry.name || 'no name',
-      (r.dropped || {}).why || '', onPick),
-    actions: [['Put back selected', (chosen, b) => contribPutBack(chosen, b)]]
-  });
-  card.appendChild(more);
-}
-
-function contribPutBack(list, btn) {
-  const done = buttonWorking(btn, 'Putting back\u2026');
-  Promise.all(list.map(r => fbContribRef().child(r.uid).child(r.slug)
-      .child('dropped').remove().then(() => true).catch(e => {
-        appLog('library: could not put back ' + (r.entry.name || '')
-          + ' \u2014 ' + ((e && e.message) || e));
-        return false;
-      })))
-      .then(res => {
-        /* SAID, not assumed: refused writes are counted and reported. */
-        const bad = res.filter(ok => !ok).length;
-        if (bad) {
-          done();
-          toast(bad + ' of ' + res.length + ' could not be put back \u2014 '
-            + 'the log says why');
-        }
-        renderLibraryScreen();
-        fbBadgeContrib();
-      });
-}
-
-/* ONE OFFER, with both buttons, always. A single chip whose label flipped
-   on a locally computed verdict offered opposite actions on two devices. */
-function contribRow(r, verdict, onPick) {
-  const item = el('div', 'item');
-  if (onPick) {
-    item.style.cursor = 'pointer';
-    item.onclick = ev => {
-      /* A button inside the row is its own press. */
-      if (ev.target && ev.target.closest && ev.target.closest('button')) return;
-      onPick();
-    };
-  }
-  const left = el('div');
-  const title = r.entry.name
-    || 'An offer with no name \u2014 nothing here to add';
-  left.appendChild(onPick ? pickName('nm', title) : el('div', 'nm', title));
-  left.appendChild(el('div', 'sub',
-    [r.entry.dist, r.entry.proof ? r.entry.proof + ' proof' : null,
-     r.entry.fin].filter(Boolean).join(' · ')));
-  /* ALREADY IN THE LIBRARY? Only where a decision is being asked for - the
-     rows with a tick - because the lists of what went in and what was dropped
-     are a record rather than a queue (BZ: "don't see how to match to an
-     existing bottle"). */
-  if (onPick && LIB.admin) {
-    const same = el('button', 'chip quiet');
-    same.type = 'button';
-    same.textContent = 'Already in the library\u2026';
-    same.style.marginTop = '4px';
-    same.onclick = () => offerAlreadyThere(r, () => renderLibraryScreen());
-    left.appendChild(same);
-  }
-  const mine = FB.user && r.uid === FB.user.uid;
-  left.appendChild(el('div', 'src',
-    'from ' + (mine ? 'you' : (r.entry.by || 'somebody'))
-    + (verdict && verdict.why ? ' · ' + verdict.why : '')));
-  item.appendChild(left);
-
-  return item;
-}
-
-/* LOOK FIRST, THEN WRITE ONCE (BZ, 2026-09-15). The lookups for thin rows
-   run inside the press and are merged before anything is written, then the
-   lot lands in one update: nothing is asked twice, the library never holds
-   the thin version, and nothing reads the whole library back to append.
-
-   The lookups use the fill run's parse and writer (L.parseLookup,
-   L.gapsClosed, L.libraryFillWrite) against the rows about to be written,
-   so this path and that run cannot disagree (rule 30d). */
-async function contribFillFirst(pending, thin) {
-  const today = L.todayISO();
-  let filled = 0, empty = 0, stopped = 0;
-  for (let i = 0; i < thin.length; i++) {
-    const x = thin[i];
-    /* The day's ceiling stops the run rather than failing a bottle: the
-       rest go in as they are and keep their place on the fill list. */
-    if (!L.lookupAllowed(S.lookupTally, today)) { stopped = thin.length - i; break; }
-    let raw = null;
-    try {
-      raw = await askLookup(x.name, L.INTAKE_LOOKUP_MS, x.missing);
-    } catch (e) {
-      appLog('  intake fill ' + x.name.slice(0, 34) + ' \u2014 '
-        + L.lookupFailSay(e));
-      continue;
-    }
-    const got = L.parseLookup(raw, { name: x.name });
-    const closes = L.gapsClosed(got, x.missing);
-    appLog('  intake fill ' + x.name.slice(0, 34) + ' | short of '
-      + x.missing.join(',') + ' | '
-      + (closes.length ? 'FILLED ' + closes.join(',') : 'nothing came back'));
-    if (!closes.length) {
-      empty++;
-      S.libLedger = L.recordLookup(S.libLedger, x.k, 'empty', today);
-      continue;
-    }
-    const built = L.libraryFillWrite([{ k: x.k, name: x.name, got: got,
-      missing: x.missing }], { [x.k]: true }, pending, Date.now());
-    /* Applied to the rows about to be written, exactly as the fill run
-       applies them to its own snapshot. */
-    Object.keys(built.updates || {}).forEach(p2 => {
-      const bits = p2.split('/');
-      if (bits[1] && pending[bits[0]]) {
-        pending[bits[0]][bits[1]] = built.updates[p2];
-      }
-    });
-    filled++;
-    S.libLedger = L.recordLookup(S.libLedger, x.k, 'found', today);
-  }
-  return { filled: filled, empty: empty, stopped: stopped };
-}
-
-/* ONE WRITE FOR A BATCH, and the offers it settles removed. Shared by the
-   Add press and the automatic sorting, so they cannot write different
-   things. */
-function libraryAddWrite(pending, list, removed, graves, library) {
-  const updates = {};
-  Object.keys(pending).forEach(k => {
-    /* ASKED AT THE MOMENT OF WRITING, whatever the caller checked, with the
-       truth about whether the entry exists - or an offer could be written
-       over an existing bottle whole. */
-    const exists = !!(library && (library[k]
-      || L.alreadyNamed(library, pending[k].name)));
-    if (!L.libraryAccepts(k, exists, removed, graves).ok) return;
-    updates['catalog/products/' + k] = pending[k];
-  });
-  const keys = Object.keys(updates);
-  if (!keys.length) return Promise.resolve({ added: 0, uncleared: 0 });
-  updates.stamp = Date.now();
-  /* THE OFFERS THAT WENT IN LEAVE THE QUEUE, and the ones merged into them,
-     or those would go in alone on the next run. */
-  const rows = [];
-  (list || []).forEach(x => {
-    const p = x.product || {};
-    if (keys.indexOf('catalog/products/' + L.libKey(p.name || '')) < 0) return;
-    if (x.row) rows.push(x.row);
-    (x.absorbed || []).forEach(r => rows.push(r));
-  });
-  return firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(updates))
-    .then(() => Promise.all(rows.map(r => Promise.all([
-      fbContribRef().child(r.uid).child(r.slug).remove(),
-      intakeStoreRef().child(r.uid).child(r.slug).remove()
-    ]).then(() => true).catch(e => {
-      appLog('library: added, but could not clear the offer ' + r.uid + '/'
-        + r.slug + ' \u2014 ' + ((e && e.message) || e));
-      return false;
-    }))))
-    .then(res => {
-      LIB.products = null;                   // re-read, it has changed
-      return { added: keys.length, uncleared: res.filter(ok => !ok).length };
-    });
-}
-
-async function contribAddMany(list, btn) {
-  const w = L.intakeToWrite(list, LIB.removed, LIB.graves, S.catalog,
-    Date.now(), false, LIB.products);
-  w.refused.forEach(r => appLog('library: not adding ' + r.name + ' \u2014 '
-    + r.why));
-  const pending = w.pending;
-  const thin = S.lookupUrl ? w.thin : [];
-  if (!Object.keys(pending).length) {
-    toast('Nothing added \u2014 all of them were judged before');
-    return;
-  }
-  const done = btn ? buttonWorking(btn, thin.length
-    ? 'Looking up ' + thin.length + ', then adding '
-      + Object.keys(pending).length + '\u2026'
-    : 'Adding ' + Object.keys(pending).length + '\u2026') : () => {};
-  appLog('library: adding ' + Object.keys(pending).length + ', '
-    + thin.length + ' of them short of something and looked up first');
-  const ran = thin.length ? await contribFillFirst(pending, thin)
-    : { filled: 0, empty: 0, stopped: 0 };
-
-  libraryAddWrite(pending, list, LIB.removed, LIB.graves, LIB.products)
-    .then(res => {
-      save_();
-      toast(L.intakeAddedSay(res.added, ran));
-      renderLibraryScreen();
-      fbBadgeContrib();
-    })
-    .catch(e => { done(); toast(sayError(e)); });
-}
-
-/* DROPPING IS NOT DELETING. The offer keeps its place with the reason
-   written on it, and goes on its own after a fortnight. It is NOT the
-   library deletion - that one leaves a tombstone so the entry cannot come
-   back, and an offer that was never accepted has nothing to come back
-   from.
-   AND IT SAYS WHAT ACTUALLY HAPPENED: each result is counted, each failure
-   logged with its row, and the toast reports what succeeded. A swallowed
-   refusal reporting success sends somebody looking anywhere but the write. */
-function contribDropMany(list, btn) {
-  const done = btn ? buttonWorking(btn, 'Dropping ' + list.length + '\u2026')
-    : () => {};
-  appLog('library: dropping ' + list.length + ' offer(s), held '
-    + L.INTAKE_HOLD_DAYS + ' days');
-  const rows = list.map(x => x.row || x)
-    .filter(r => r && r.uid && r.slug);
-  if (rows.length < list.length) {
-    appLog('library: ' + (list.length - rows.length) + ' of them have no '
-      + 'node to drop \u2014 nothing to write');
-  }
-  Promise.all(list.map(x => {
-    const r = x.row || x;
-    if (!r || !r.uid || !r.slug) return Promise.resolve(false);
-    /* THE KEY, not only the sentence. "already in as <name>" was written for a
-       person to read and left the offerer's own bottle pointed at nothing the
-       library knows - three times for one Weller (BZ, 2026-10-01: "I own weller
-       antique 107 ... Hence it must be in the library"). With the key recorded,
-       the offering device can subscribe itself. */
-    const into = (x.near && (x.near._key || x.near.k)) ? L.libKey(x.near.name
-      || x.near._key || x.near.k) : null;
-    return fbContribRef().child(r.uid).child(r.slug).child('dropped')
-      .set(Object.assign({ why: x.why || x.rule || 'nothing to add',
-        at: Date.now() }, into ? { into: into } : {}))
-      .then(() => true)
-      .catch(e => {
-        appLog('library: could NOT drop ' + (r.entry || {}).name
-          + ' at contrib/' + r.uid + '/' + r.slug + ' \u2014 '
-          + ((e && e.message) || e));
-        return false;
-      });
-  })).then(got => {
-    const ok = got.filter(Boolean).length;
-    done();
-    toast(L.intakeDroppedSay(ok, list.length));
-    renderLibraryScreen();
-    fbBadgeContrib();
-  });
-}
-
-/* --- managing the library ---------------------------------------------
-   Browse it, search it, fix an entry, remove one, so a wrong entry is not
-   permanent in the thing everybody reads. */
-
-/* `fill` holds a run in progress so the modal is only a view of it:
-   closing the modal must not orphan a run that is spending money. */
-const LIB = { products: null, q: '', admin: false, sub: null,
-              thinOnly: false, filling: false, fill: null };
-
-/* Are you an admin? Says WHY when not: the read was denied, or you are not
-   on the list. The admins node is write:false by design - an account cannot
-   promote itself and must be added in the Firebase console - so the uid to
-   add is worth being told. */
-function fbCheckAdmin() {
-  if (!FB.user) { LIB.admin = false; return Promise.resolve(false); }
-  return firebase.database().ref('bz-apps/whisky/admins')
-    .child(FB.user.uid).once('value')
-    .then(s => {
-      LIB.admin = s.val() === true;
-      /* THE VETTING STARTS HERE (BZ, 2026-09-15), not awaited, then on a timer.
-         Nothing else starts it: a run started from the library screen's
-         render replaced the screen under an in-flight publish. Offers keep
-         arriving, so it loops, slow and quiet.
-         ONCE PER SESSION: this runs on every admin check, and each pass would
-         otherwise add another permanent timer. */
-      if (LIB.admin && !VET_TIMER) {
-        setTimeout(() => { intakeVetSoon(); }, 4000);
-        VET_TIMER = setInterval(() => { intakeVetSoon(); }, L.INTAKE_EVERY);
-      }
-      if (!LIB.admin) {
-        appLog('not an admin: ' + FB.user.uid + ' is not under '
-          + 'bz-apps/whisky/admins. That node is write:false on purpose \u2014 '
-          + 'add the uid in the Firebase console.');
-      }
-      return LIB.admin;
-    })
-    .catch(e => {
-      LIB.admin = false;
-      appLog('could not read the admin list: '
-        + ((e && e.message) || e) + '. Admin tools are hidden.');
-      return false;
-    });
-}
-
-/* --- publishing a batch of corrections --------------------------------
-   Writes named products only, so everything else is untouched: additive by
-   construction rather than by remembering to be careful. */
-
-function publishBatch(products, after) {
-  if (!products || !products.length) { toast('Nothing to publish'); return; }
-  if (!LIB.admin) { toast('Only an admin can publish'); return; }
-
-  const built = L.publishWrite(products, Date.now(), LIB.graves, LIB.removed,
-                               refBrands());
-  appLog('library: publishing ' + products.length + ' — keys '
-    + products.slice(0, 6).map(x => L.libKey(x.name)).join(', '));
-  /* NAMED, not counted: a refusal seen only as a smaller number is silent. */
-  (built.refused || []).forEach(r => {
-    appLog('library: refusing ' + r.name + ' (' + r.key + ') — ' + r.why);
-  });
-  const names = built.names;
-  if (!names.length) {
-    toast((built.refused || []).length
-      ? 'Nothing published — ' + built.refused.length + ' already merged away'
-      : 'Nothing usable to publish');
-    return;
-  }
-
-  firebase.database().ref('bz-apps/whisky/shared')
-    .update(L.fbEncodePaths(built.updates))
-    .then(() => {
-      /* SAY WHAT WENT, BY NAME. The library is BZ's and cannot be reproduced
-         here, so the log carries the names and keys written, and the next
-         attempt says whether the write landed and what still differs. */
-      appLog('library: published ' + names.length + ' — '
-        + names.slice(0, 6).join(', ') + (names.length > 6 ? ' …' : ''));
-      LIB.products = null;
-      toast(names.length + ' published to the library');
-      if (after) after();
-    })
-    .catch(e => toast(sayError(e)));
-}
-
-/* THE CATALOG, NARROWED TO WHAT THIS SHELF HOLDS, in one place so every
-   caller uses the same filter. */
-/* WHAT THIS PERSON HAS SAID ABOUT THE BOTTLES THEY OWN, over the library as it
-   stands - never over S.base, which is this device's CACHED copy of it.
-
-   A difference from S.catalog could come from either side: a fact somebody
-   changed here, or a fact somebody else changed that this device has not fetched
-   yet. The second is not something to publish; publishing it writes the old
-   value back, which is how style "single barrel" returned to a library entry
-   fourteen minutes after an admin key cleared it, with no shelf holding a
-   correction to republish (BZ, 2026-10-01: "Still have 7 that won't publish" -
-   two by the database's reckoning the same minute).
-
-   THE BOTTLES AND THE OWNERSHIP ARE UNCHANGED. This decides which COPY of a
-   whisky's facts is compared, not which whiskies are on the shelf. */
-/* WHAT IS OWNED, off the catalogue the app actually runs on.
- *
- * It used to merge a catalogue of its own from LIB.products || S.base, which is a
- * DIFFERENT base: rebuildCatalog merges S.base, and S.base is already the library
- * once it has been read and healed, so LIB.products is the rawer shape underneath
- * and its keys are not the keys the bottles carry. Almost nothing resolved, and a
- * 352-whisky shelf came back as 7 - which Shop reported as "not enough shelf yet"
- * (BZ, 2026-10-03).
- *
- * L.ownedCatalog is the engine's answer to this question and was already there. */
 function ownedCatalog() {
   return L.ownedCatalog(S.catalog, S.bottles);
 }
@@ -49142,7 +47896,7 @@ function reviewBatch(pend, after) {
          as a decision at a glance on a long list. */
       const mark = el('div', 'findtag f-shelf');
       const paint = () => {
-        mark.textContent = chosen[i] ? '\u002b publish' : '\u00d7 skip';
+        mark.textContent = chosen[i] ? '\u002b offer' : '\u00d7 skip';
         mark.className = 'findtag ' + (chosen[i] ? 'f-shelf' : 'f-allocated');
         r.style.opacity = chosen[i] ? '1' : '.55';
       };
@@ -49153,13 +47907,36 @@ function reviewBatch(pend, after) {
     });
     m.appendChild(list);
 
-    // Named after the publish/skip mark on the rows: one name per decision.
-    const go = el('button', 'btn wide btn-gold', 'Publish marked');
+    /* OFFERED, NOT PUBLISHED (BZ, 2026-10-27). This wrote the library
+       directly, which only ever worked for an admin - everybody else got a
+       refusal from the rules. Everybody offers now, through the one door
+       that has always filed an offer, and the admin accepts them on
+       admin.html's Offered tab. An admin's own corrections travel the same
+       road as anybody else's, which is what made the admin split possible.
+       Named after the mark on the rows: one name per decision. */
+    const go = el('button', 'btn wide btn-gold', 'Offer marked');
     go.style.marginTop = '11px';
     go.onclick = () => {
       const picked = pend.filter((x, i) => chosen[i]).map(x => x.p);
       closeModal();
-      publishBatch(picked, after);
+      if (!picked.length) { toast('Nothing marked'); return; }
+      /* EACH THROUGH offerToLibrary, which is the one door that judges an
+         offer - already in, removed, merged away - and files it. It answers
+         false for an offer filed rather than written, so what is counted
+         here is what actually reached the queue. */
+      Promise.all(picked.map(p => offerToLibrary(p, 'a correction from a shelf')
+        .then(() => true).catch(() => false)))
+        .then(got => {
+          const n = got.filter(Boolean).length;
+          appLog('offered ' + n + ' of ' + picked.length
+            + ' shelf correction(s) to the library');
+          toast(n === picked.length
+            ? n + ' offered \u2014 an admin accepts them next'
+            : n + ' of ' + picked.length + ' offered; the rest the library '
+              + 'already has');
+          showPending();
+          if (after) after();
+        });
     };
     m.appendChild(go);
     const close = el('button', 'btn ghost wide', 'Close');
@@ -49212,324 +47989,6 @@ function showLibraryEntry(p) {
    WRITE what closes a slot, WAITLIST what does not. No review step, no
    cache to invalidate, no second writer. The silent contribution path is
    off while this runs. */
-function libraryFillStart(byKey, after) {
-  if (LIB.filling) { libraryFillShow(); return; }
-  if (!S.lookupUrl) { toast(L.NO_SERVICE_SAY); return; }
-
-  const today = L.todayISO();
-  /* THE SNAPSHOT, keyed the way the LIBRARY is keyed. */
-  const snap = byKey || {};
-  const lists = L.libraryLists(L.libraryRows(snap), S.libLedger || {}, today);
-
-  if (!lists.todo.length) {
-    openModal('Nothing needs attention', m => {
-      m.appendChild(el('div', 'sub', lists.waiting.length
-        ? lists.done.length + ' entries are complete. Nothing is due: the rest '
-          + 'are on the Still missing list in Clean up, with when each is next tried.'
-        : 'Every entry has everything it needs.'));
-      const c = el('button', 'btn wide', 'Close');
-      c.onclick = closeModal;
-      m.appendChild(c);
-    });
-    return;
-  }
-
-  /* How many the day's ceiling will allow, said BEFORE the run rather than
-     discovered partway through. */
-  const leftToday = Math.max(0, L.LOOKUP_CAP
-    - L.lookupTally(S.lookupTally, today));
-  openModal('Look up ' + lists.todo.length + '?', m => {
-    if (leftToday < lists.todo.length) {
-      const warn = el('div', 'sub');
-      warn.className = 'sub warn2';
-      warn.textContent = leftToday
-        ? 'Only ' + leftToday + ' more lookups today, so '
-          + 'this stops after ' + leftToday + ' and the rest wait for tomorrow.'
-        : L.LOOKUP_LIMIT_SAY;
-      m.appendChild(warn);
-    }
-    m.appendChild(el('div', 'sub',
-      lists.done.length + ' done · ' + lists.todo.length + ' need '
-      + 'attention · ' + lists.waiting.length + ' resting. The library '
-      + 'is ' + lists.score + '% complete.'));
-    m.appendChild(el('div', 'sub',
-      'Each is looked up once, and only gaps are filled. '
-      + 'A miss waits a week, then six '
-      + 'months, then a year.'));
-    const go = el('button', 'btn wide btn-gold',
-      'Look up ' + lists.todo.length);
-    go.style.marginTop = '11px';
-    go.onclick = () => { closeModal(); libraryFillRun(snap, lists.todo, after); };
-    m.appendChild(go);
-    const c = el('button', 'btn ghost wide', 'Not now');
-    c.onclick = closeModal;
-    m.appendChild(c);
-  });
-}
-
-/* The run. One bottle at a time, against the snapshot, writing as it goes. */
-function libraryFillRun(snap, todo, after) {
-  LIB.filling = true;
-  LIB.fill = { total: todo.length, done: 0, wrote: 0, parked: 0, errors: 0,
-               note: 'Starting\u2026' };
-  libraryFillShow();
-
-  const today = L.todayISO();
-  const step = i => {
-    const f = LIB.fill;
-    if (!f) return;
-    if (!LIB.filling || i >= todo.length) return libraryFillDone(after);
-
-    const x = todo[i];
-    f.done = i + 1;
-    f.note = 'Looking up ' + (i + 1) + ' of ' + todo.length + ': ' + x.name;
-    libraryFillTick();
-
-    /* The day's ceiling stops the RUN rather than failing a bottle. */
-    if (!L.lookupAllowed(S.lookupTally, today)) {
-      f.note = 'Stopped at the daily limit of ' + L.LOOKUP_CAP + '.';
-      appLog('library fill: stopped at the daily lookup limit with '
-        + (todo.length - i) + ' still to do');
-      LIB.filling = false;
-      return libraryFillDone(after);
-    }
-    /* x.missing is what libraryLists decided this entry needs. Sending it
-       points the service's searches at the one open field - after a first
-       fill, usually just the mash bill. */
-    askLookup(x.name, L.INTAKE_LOOKUP_MS, x.missing).then(raw => {
-      const got = L.parseLookup(raw, { name: x.name });
-      const closes = L.gapsClosed(got, x.missing);
-      appLog('  fill ' + x.name.slice(0, 34)
-        + ' | short of ' + x.missing.join(',')
-        + ' | ' + (closes.length ? 'WRITE ' + closes.join(',') : 'WAITLIST'));
-
-      if (!closes.length) {
-        f.parked++;
-        S.libLedger = L.recordLookup(S.libLedger, x.k, 'empty', today);
-        return next(i);
-      }
-      /* Written against the SNAPSHOT the gap was decided from. A live cache here
-         is how the run and the writer came to disagree. */
-      const built = L.libraryFillWrite(
-        [{ k: x.k, name: x.name, got: got, missing: x.missing }],
-        { [x.k]: true }, snap, Date.now());
-      if (!built.names.length) {
-        // Nothing to put in, per the snapshot: a miss, from the run's view.
-        f.parked++;
-        S.libLedger = L.recordLookup(S.libLedger, x.k, 'empty', today);
-        return next(i);
-      }
-      fbLibraryRef().update(L.fbEncodePaths(built.updates)).then(() => {
-        f.wrote++;
-        S.libLedger = L.recordLookup(S.libLedger, x.k, 'found', today);
-        // Keep the snapshot honest, so a later bottle sees what was written.
-        Object.keys(built.updates).forEach(path => {
-          const bits = path.split('/');
-          if (bits[1] && snap[bits[0]]) snap[bits[0]][bits[1]] = built.updates[path];
-        });
-        next(i);
-      }).catch(e => {
-        f.errors++;
-        appLog('  fill write failed: ' + ((e && e.message) || e));
-        next(i);
-      });
-    }).catch(e => {
-      f.errors++;
-      appLog('  fill ' + x.name.slice(0, 34) + ' \u2014 '
-        + ((e && e.message) || e));
-      next(i);
-    });
-  };
-
-  const next = i => {
-    libraryFillTick();
-    if (!LIB.filling) return libraryFillDone(after);
-    step(i + 1);
-  };
-
-  step(0);
-}
-
-function libraryFillTick() {
-  const f = LIB.fill;
-  if (!f) return;
-  const note = document.getElementById('fillNote');
-  if (note) note.textContent = f.note || '';
-  const tally = document.getElementById('fillTally');
-  if (tally) tally.textContent = L.fillSay(libraryFillTally(f));
-}
-
-/* One way out, and it always refreshes the count. */
-function libraryFillDone(after) {
-  const f = LIB.fill;
-  if (!f) return;
-  LIB.filling = false;
-  LIB.fill = null;
-  /* The ledger is saved ONCE, here: save_ pushes to the account, so saving
-     per bottle is hundreds of round trips over a run. Nothing needs it
-     mid-run; the snapshot carries what has been written. */
-  save_();
-  /* ITS OWN WINDOW only: a run finishing in the background must not close a
-     bottle half edited or a purchase being entered. */
-  if (document.getElementById('fillNote')) closeModal();
-  appLog('library fill: asked ' + f.done + ', wrote ' + f.wrote
-    + ', waitlisted ' + f.parked
-    + (f.errors ? ', ' + f.errors + ' failed' : ''));
-  /* A run stopped by the ceiling reads like a run that did nothing, so it
-     says which it was. */
-  toast(L.fillSay(Object.assign(libraryFillTally(f), { finished: true,
-    stopped: f.note && /daily limit/.test(f.note) ? 'limit' : null })));
-  LIB.products = null;
-  /* AND REDRAW THE SCREEN THE RUN WAS STARTED FROM. */
-  const back = () => {
-    const on = document.getElementById('scr-library');
-    if (on && on.classList.contains('on')) renderLibraryScreen();
-  };
-  if (after) after();
-  setTimeout(back, 60);
-}
-
-/* The library run's counters, in the words L.fillSay uses. */
-function libraryFillTally(f) {
-  return { done: f.done, total: f.total, wrote: f.wrote, waiting: f.parked,
-    failed: f.errors };
-}
-
-function libraryFillShow() {
-  const f = LIB.fill;
-  if (!f) return;
-  openModal('Looking things up', m => {
-    const note = el('div', 'sub', f.note || '');
-    note.id = 'fillNote';
-    m.appendChild(note);
-    const tally = el('div', 'src');
-    tally.id = 'fillTally';
-    tally.style.marginTop = '6px';
-    m.appendChild(tally);
-    const stop = el('button', 'btn wide', 'Stop');
-    stop.style.marginTop = '11px';
-    stop.onclick = () => { LIB.filling = false; toast('Stopping\u2026'); };
-    m.appendChild(stop);
-    const hide = el('button', 'btn ghost wide', 'Leave it running');
-    hide.onclick = closeModal;
-    m.appendChild(hide);
-    libraryFillTick();
-  });
-}
-
-/* FILL WHAT IS MISSING, STYLES FIRST (BZ, 2026-09-16). A style the name
-   already states costs nothing and stops a single malt being asked for a
-   mash bill it cannot have, so it is written before any lookup is planned. */
-function libraryFillWithStyles(all, after) {
-  const back = L.styleBackfill(L.libraryRows(all));
-  if (!back.rows.length) { librarySettleHouses(all, after); return; }
-  const changes = {};
-  back.rows.forEach(r => { changes[r.k] = { style: r.style }; });
-  libraryFieldWrite(changes)
-    .then(() => {
-      appLog('library: wrote ' + back.rows.length + ' styles from names '
-        + 'before the fill, ' + back.closes + ' mash gaps closed');
-      librarySettleHouses(LIB.products || all, after);
-    })
-    .catch(e => {
-      appLog('style backfill failed: ' + ((e && e.message) || e));
-      librarySettleHouses(all, after);
-    });
-}
-
-/* A HOUSE IS SPELLED THE WAY MOST OF ITS OWN BOTTLES SPELL IT (BZ,
-   2026-09-30: "I think I accepted all renames and house merged and that tells
-   me we can write a rule"). He had accepted every one, and the logs carry no
-   refusal, undo or revert against them.
-
-   It runs here because this is where the library already writes to itself
-   from a rule - styles worked out from names - and a second way to do the
-   same kind of thing is the fault this file keeps removing.
-
-   WHICH ONES, NOT HOW MANY: every entry is named with the spelling it had,
-   because a count cannot answer "which one did it get wrong", and that is the
-   only question worth asking of something that acts on its own. Each carries
-   `autoSpell` so a fortnight's take-back can put it back. */
-function librarySettleHouses(all, after) {
-  let plan = [];
-  try { plan = L.houseSettlePlan(L.libraryRows(all), Date.now()); }
-  catch (e) { appLog('house settle: ' + ((e && e.message) || e)); }
-  if (!plan.length) { libraryFillStart(all, after); return; }
-  const changes = {};
-  plan.forEach(x => { changes[x.key] = x.set; });
-  libraryFieldWrite(changes)
-    .then(() => {
-      plan.slice(0, 12).forEach(x => {
-        appLog('library: ' + x.name + ' filed under ' + x.keep
-          + ', was ' + x.was);
-      });
-      if (plan.length > 12) {
-        appLog('library: and ' + (plan.length - 12) + ' more respelled');
-      }
-      libraryStampIdents(LIB.products || all, after);
-    })
-    .catch(e => {
-      appLog('house settle failed: ' + ((e && e.message) || e));
-      libraryStampIdents(all, after);
-    });
-}
-
-/* WHAT EVERY ENTRY IS, WRITTEN ONTO IT (BZ, 2026-10-01: "I don't understand not
-   using canonical data as the standard", and before it "performance is important
-   so I'd store it on the bottles").
-
-   Every comparison screen reads the stored value rather than working it out:
-   resolving a brand walks fifteen thousand registry keys and the registry is a
-   few megabytes those screens never load. An entry written from now on carries
-   its identity; the ones already there are stamped here.
-
-   AFTER THE HOUSE SPELLINGS, because the identity reads the entry as it then
-   stands - settling a spelling can move the house, and stamping first would
-   store an identity for a name about to be corrected.
-
-   ONLY WHAT CHANGED, and nothing at all without the registry: a blank costs the
-   work of redoing it, a wrong one is read by everybody as the truth. */
-function libraryStampIdents(all, after) {
-  const brands = refBrands();
-  if (!brands) { libraryFillStart(all, after); return; }
-  let changes = {};
-  try { changes = L.identBackfill(L.libraryRows(all), brands); }
-  catch (e) { appLog('ident stamp: ' + ((e && e.message) || e)); }
-  const n = Object.keys(changes).length;
-  if (!n) { libraryFillStart(all, after); return; }
-  libraryFieldWrite(changes)
-    .then(() => {
-      appLog('library: stamped what ' + n + ' entr'
-        + (n === 1 ? 'y is' : 'ies are') + ', from the canon');
-      libraryFillStart(LIB.products || all, after);
-    })
-    .catch(e => {
-      appLog('ident stamp failed: ' + ((e && e.message) || e));
-      libraryFillStart(all, after);
-    });
-}
-
-/* ONE WAY TO HAND SOMEBODY A FILE. Every export goes through here (2026-09-29,
-   iOS users: no download option). Six buttons built their own anchor, and no
-   check in this project could see what they did on an iPhone, because every
-   harness here drives Chromium.
-
-   A HOME-SCREEN iOS APP PRESENTS NO FILE DOWNLOAD. There is nowhere for the
-   file to go, no Downloads to open afterwards, and nothing said either way -
-   which is exactly "there is no download option". The share sheet is the route
-   iOS gives, and Save to Files IS the download there. L.saveRoute holds the
-   rule so the decision is testable, and ios.js proves the file is handed over.
-
-   The anchor is attached before it is clicked. That is belt and braces rather
-   than the diagnosis, and worth being honest about: a detached anchor is a
-   pattern that has broken on older Safari, but it downloads perfectly well in
-   the WebKit this project can test (26.6), so it does not by itself explain
-   anything.
-
-   Closing the sheet is not a failure and says nothing. A sheet that will not
-   open falls back to the anchor, which now works. The object URL is revoked
-   late: two seconds is not always enough for a phone to have taken the file,
-   and revoking early is a download that stops halfway. */
 function saveFile(name, blob) {
   const file = (typeof File === 'function')
     ? new File([blob], name, { type: blob.type || 'application/octet-stream' })
@@ -49611,23 +48070,18 @@ function fbLibraryRef() {
 /* What is waiting, split by what would clear it: one number cannot be
    acted on when it covers two actions. */
 function libWaitingLine() {
+  /* ONE POPULATION (2026-10-27): what your shelf holds that the library has
+     never held. It used to count a second thing - bottles other people had
+     offered - which only an admin could act on and which is now counted on
+     admin.html's own Offered tab. */
   let mine = 0;
   try {
-    mine = (LIB.admin && LIB.products) ? pendingForLibrary().length : 0;
+    mine = LIB.products ? pendingForLibrary().length : 0;
   } catch (e) {}
-  const offered = LIB.admin ? (LIB.waiting || 0) : 0;
-  if (!mine && !offered) return null;
-  const bits = [];
-  if (mine) {
-    bits.push(mine + (mine === 1 ? ' of your corrections to publish'
-                                 : ' of your corrections to publish'));
-  }
-  if (offered) {
-    bits.push(offered + (offered === 1 ? ' bottle offered by someone else, '
-      + 'to accept or decline' : ' bottles offered by others, to accept or '
-      + 'decline'));
-  }
-  return bits.join(' · ');
+  if (!mine) return null;
+  return mine + (mine === 1
+    ? ' bottle of yours the library has never held, to offer'
+    : ' bottles of yours the library has never held, to offer');
 }
 
 function renderLibraryScreen() {
@@ -49649,44 +48103,17 @@ function renderLibraryScreen() {
       + 'and adds to. Your own shelf is separate.'));
     return;
   }
-  box.appendChild(el('div', 'empty', 'Loading\u2026'));
-  fbCheckAdmin().then(() => {
-    /* AND RECOUNT WHAT IS WAITING. LIB.waiting is this device's, counted at
-       sign-in and after an action taken here - so an offer settled on another
-       device left the badge pointing at an empty queue until the next sign-in,
-       which is what BZ walked into (2026-10-03: "It goes to library. Just
-       nothing to do"; the shared node held no offers at all). This is the
-       screen the badge sends you to, so looking at it is what settles it. */
-    fbBadgeContrib();
-    box.innerHTML = '';
-    /* Admin only, and in this order: what you can DO (export, scan), then what
-       is waiting, then the library itself. Waiting entries sit in front of
-       the person who can act on them, not buried in Diagnostics. */
-    renderLibrary(box);
-    if (LIB.admin) { renderContrib(box); box.appendChild(libraryDataRow()); }
-  });
+  /* BROWSING, AND NOTHING ELSE (2026-10-27). This screen used to wait on an
+     admin check and then draw the offers queue and the export row above the
+     library. All three went to admin.html: the queue is its Offered tab, the
+     export its Library tab, and the admin check is its gate. What is left
+     needs no permission and no round trip, so it draws at once. */
+  renderLibrary(box);
 }
 
 /* MERGE ONE HOUSE'S SPELLINGS. ONE BUTTON, used on the library screen and
    in the inconsistency scan (BZ: merge in place), so one action cannot
    read two ways. `after` is what each place redraws. */
-function houseMergeButton(plan, after) {
-  const say = 'Merge ' + plan.rows[0].from + ' into ' + plan.keep;
-  const mb = el('button', 'btn wide', say);
-  mb.onclick = () => {
-    buttonWorking(mb, 'Merging\u2026');
-    /* AND THE SHELF, or this cannot settle. */
-    runHouseMerge(plan, after)
-      .catch(e => {
-        appLog('house merge failed: ' + ((e && e.message) || e));
-        toast('That did not go through');
-        mb.disabled = false;
-        mb.textContent = say;
-      });
-  };
-  return mb;
-}
-
 function renderLibrary(box) {
   const card = el('div', 'sheet');
   card.appendChild(el('h3', null, 'The library'));
@@ -49709,15 +48136,14 @@ function renderLibrary(box) {
       firebase.database().ref('bz-apps/whisky/shared/removed').once('value')
         .then(rs => { LIB.removed = rs.val() || {}; })
         .catch(() => { LIB.removed = LIB.removed || {}; });
-      /* And what an admin has looked at and left alone, so the scan does not
-         report the same correct entries for ever. */
-      VERDICTS_ASKED = true;
-      loadVerdicts().then(draw, draw);
+      /* MOVED: what an admin has looked at and left alone was read here so
+         the scan would not report the same correct entries for ever. The
+         scan is on admin.html and reads them itself. */
       draw();
       /* The badge needs the loaded library (pendingForLibrary compares against
          it), so it is recomputed here, not only when the contribution count
          arrives. */
-      showPending(LIB.waiting || 0);
+      showPending();
     }).catch(() => {
       card.innerHTML = '';
       card.appendChild(el('h3', null, 'The library'));
@@ -49753,18 +48179,14 @@ function renderLibrary(box) {
     q.style.marginTop = '0';
     q.style.flex = '1';
     qrow.appendChild(q);
-    if (LIB.admin) libraryPickToggle(qrow, () => list());
+    /* MOVED: the picking switch, which turns this list into a way of taking
+       entries OUT, is on admin.html beside the editor it belongs with. */
     card.appendChild(qrow);
 
     const out = el('div', 'scrollbox');
     out.style.cssText = 'max-height:46vh;overflow-y:auto;margin-top:8px';
     card.appendChild(out);
-    if (LIB.admin) {
-      const clean = el('button', 'btn wide', 'Clean up');
-      clean.style.marginTop = '9px';
-      clean.onclick = openLibraryCleanUp;
-      card.appendChild(clean);
-    }
+    /* MOVED: Clean up - the contradiction scan - is admin.html's own tab. */
 
     const list = () => {
       out.innerHTML = '';
@@ -49809,7 +48231,7 @@ function renderLibrary(box) {
         out.appendChild(el('div', 'empty', 'Nothing matches.'));
         return;
       }
-      if (LIB.admin && LIB.picking) { libraryTakeOutPicker(out, hits); return; }
+      /* MOVED: the take-out picker went with the picking switch. */
       hits.forEach(p => {
         const gaps = L.libraryGaps(p);
         /* TWO COLUMNS, not the shelf's seven: the name takes the room. */
@@ -49825,9 +48247,11 @@ function renderLibrary(box) {
         }
         r.appendChild(left);
         r.appendChild(gaps.length ? completeBottle(L.entryScore(p)) : el('div', 'pf', ''));
-        // Everybody can look; only an admin can change.
-        r.onclick = () => LIB.admin ? editLibraryEntry(p, draw)
-                                    : showLibraryEntry(p);
+        /* EVERYBODY LOOKS, AND THAT IS ALL THIS SCREEN DOES NOW. The editor
+           is on admin.html; this row used to branch on whether you were an
+           admin, which meant every reader downloaded the editor and most of
+           them could never open it. */
+        r.onclick = () => showLibraryEntry(p);
         out.appendChild(r);
       });
       if (hits.length === 60) {
@@ -49854,376 +48278,26 @@ function renderLibrary(box) {
    A DOT IS A PATH, so the notes read and write one level down - which is the
    whole of what nesting costs here, and less than a second list of fields that
    saves differently. */
-function libraryEntryFields(p, form) {
-  const fields = LIB_EDIT_FIELDS;
-  /* A FIXED LIST GETS A LIST (BZ): a text box on a closed-set field is how
-     the contradictions the scan reports get made. */
-  const CHOICES = {
-    sub: L.TYPES,
-    style: L.STYLES,
-    region: L.SCOTCH_REGIONS
-  };
-  /* A DOT IS A PATH: the field list is flat and a tasting note is not. */
-  const valueAt = (obj, k) => {
-    const bits = String(k).split('.');
-    return bits.length === 1 ? obj[k]
-      : ((obj[bits[0]] || {})[bits[1]]);
-  };
-  const inputs = {};
-  fields.forEach(([k, label, type]) => {
-    const wrap = el('label', null, label);
-    let inp;
-    if (CHOICES[k]) {
-      inp = document.createElement('select');
-      inp.className = 'field';
-      /* Blank first: region is empty for anything not Scotch, and clearing one
-         has to be possible. */
-      const none = document.createElement('option');
-      none.value = '';
-      none.textContent = '\u2014';
-      inp.appendChild(none);
-      CHOICES[k].forEach(v => {
-        const o = document.createElement('option');
-        o.value = v;
-        o.textContent = L.titleCase ? L.titleCase(v) : v;
-        inp.appendChild(o);
-      });
-      const have = p[k] == null ? '' : String(p[k]);
-      /* A value the list does not hold is still shown, so opening an entry
-         cannot silently change it. */
-      if (have && CHOICES[k].indexOf(have) < 0) {
-        const o = document.createElement('option');
-        o.value = have;
-        o.textContent = have + ' (not on the list)';
-        inp.appendChild(o);
-      }
-      inp.value = have;
-    } else {
-      inp = document.createElement('input');
-      inp.className = 'field';
-      inp.type = type;
-      if (type === 'number') inp.step = '0.1';
-      const at = valueAt(p, k);
-      inp.value = at == null ? '' : at;
-    }
-    inputs[k] = inp;
-    wrap.appendChild(inp);
-    form.appendChild(wrap);
-  });
-  return { fields: fields, inputs: inputs };
-}
+/* ---------------------------------------------------------------------
+   SIX THINGS THE SCREENS HOLD, gathered here on 2026-10-27 when the library
+   admin moved to admin.html. Each used to sit beside one of the functions
+   that went, and each belongs to a screen that stayed.
+   --------------------------------------------------------------------- */
 
-/* WHAT A LIBRARY ENTRY IS EDITED THROUGH: a field, its label, and what kind of
-   box it gets. A declaration, so it sits beside the function rather than inside
-   it - editLibraryEntry is at its size ceiling and the ceiling does not go up
-   (rule 30f). */
-const LIB_EDIT_FIELDS = [
-  ['proof', 'Proof', 'number'], ['dist', 'Distillery', 'text'],
-  ['country', 'Country', 'text'], ['sub', 'Category', 'text'],
-  ['style', 'Style', 'text'],
-  ['age', 'Age', 'number'], ['fin', 'Cask', 'text'],
-  ['region', 'Region', 'text'], ['msrp', 'Price', 'number'],
-  ['mash', 'Mash bill', 'text'],
-  /* THE NOTES, so a sentence pasted into the cask field can be MOVED rather
-     than only deleted (BZ, 2026-10-01, third time of asking). A nose and a
-     palate are what a described whisky has, so they come first. */
-  ['tn.nose', 'Nose', 'text'], ['tn.palate', 'Palate', 'text'],
-  ['tn.finish', 'Finish (the taste, not the cask)', 'text']
-];
+/* THE LIBRARY, AS THIS DEVICE HOLDS IT. Browsing the library is for
+   everybody - it is what this app knows about, and what people contribute
+   to - so the cache stays here. What went with the admin is every way of
+   CHANGING it.
 
-/* SAVING AN ENTRY, which is a rename as well as an edit when the name moves:
-   written at the new key and cleared from the old one in the same update, or
-   the library holds it twice. Its own function because editLibraryEntry is at
-   its size ceiling and the ceiling does not go up (rule 30f). */
-function saveLibraryEntry(p, save, inputs, nameInp, after) {
-    /* One press: a second tap writes the shared entry twice. */
-    if (save.dataset.busy) return;
-    save.dataset.busy = '1';
-    setTimeout(() => { delete save.dataset.busy; }, 2500);
-    const oldKey = p._key || L.libKey(p.name);
-    const rename = L.libraryRename(LIB.products || {}, oldKey,
-      nameInp.value, p.name);
-    if (!rename.ok) { toast(rename.why); return; }
-
-    const next = Object.assign({}, p, { name: rename.name });
-    delete next._key;
-    LIB_EDIT_FIELDS.forEach(([k, , type]) => {
-      const v = inputs[k].value.trim();
-      const bits = String(k).split('.');
-      /* A DOT IS A PATH, so the notes write one level down - and a note with
-         nothing left in it is removed rather than left as an empty shell. */
-      if (bits.length > 1) {
-        const holder = Object.assign({}, next[bits[0]]);
-        if (v) holder[bits[1]] = v; else delete holder[bits[1]];
-        if (Object.keys(holder).length) next[bits[0]] = holder;
-        else delete next[bits[0]];
-        return;
-      }
-      if (!v) { delete next[k]; return; }
-      // Never NaN into the shared library, where everybody would read it.
-      if (type === 'number') {
-        const n = L.toNum(v);
-        if (n === null) { delete next[k]; return; }
-        next[k] = n;
-      } else { next[k] = v; }
-    });
-    /* AND THE NEW NAME MUST NOT BE ONE THAT LOST A MERGE. libraryRename refuses
-       a TAKEN name, but a consolidated key reads as free and is not;
-       renaming into it rebuilds the losing side of a deliberate merge. Same
-       guard as the publish and accept paths. */
-    /* A RESERVED WORD IS REFUSED HERE, not reported days later by a scan with
-       a Fix button beside it (BZ, 2026-10-01: "reserved words in the wrong
-       field should be obvious"). The same door the scan asks, so the editor
-       and the audit cannot come to disagree about which box a word is in. */
-
-    const rv = L.libraryAccepts(rename.key, false, LIB.removed, LIB.graves);
-    if (!rv.ok && rv.why !== 'already in the library') {
-      toast('That name ' + rv.why); return;
-    }
-    const now = Date.now();
-    // A rename is a MOVE: written at the new key and cleared from the old
-    // one in the same update, or the library holds it twice.
-    /* THROUGH THE ROW BUILDER, like every other publisher. This wrote `next`
-       straight to the entry, so the one place that drops a reserved word was the
-       one place the editor went round - and a value somebody never typed went
-       back every time they saved something else. The first attempt at this
-       refused the save instead, which meant an entry carrying one could not be
-       edited at all (BZ, 2026-10-01: "that bottle will not publish to the
-       library"). A redundant field is not a reason to refuse a row. */
-    const write = { ['catalog/products/' + rename.key]:
-                      Object.assign(L.libraryEntry(next, refBrands()),
-                        { at: now }),
-                    stamp: now };
-    if (rename.moved) {
-      write['catalog/products/' + oldKey] = null;
-      /* WHERE IT WENT, so every other device can follow; otherwise they keep the
-         old key and bottles pointing at it, reproducing the duplicate. */
-      write['renamed/' + oldKey] = { to: rename.key, at: Date.now() };
-    }
-    firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(write))
-      .then(() => {
-        if (rename.moved) delete LIB.products[oldKey];
-        LIB.products[rename.key] = next;
-        appLog('library: ' + (rename.moved
-          ? 'renamed ' + p.name + ' to ' + rename.name
-          : 'edited ' + rename.name));
-        closeModal(); after();
-        toast(rename.moved ? 'Renamed for everyone' : 'Changed for everyone');
-      }).catch(e => toast(sayError(e)));
-}
-
-function editLibraryEntry(p, after) {
-  openModal(p.name, m => {
-    m.appendChild(el('div', 'sub',
-      'Changing this changes it for everyone, on their next open.'));
-    const form = el('div', 'form');
-    // The name first: an entry is usually opened to fix its case. Renaming
-    // moves the entry, since the library is keyed by the name.
-    const nameWrap = el('label', null, 'Name');
-    const nameInp = document.createElement('input');
-    nameInp.className = 'field';
-    nameInp.type = 'text';
-    nameInp.value = p.name || '';
-    nameWrap.appendChild(nameInp);
-    form.appendChild(nameWrap);
-    /* EVERY FIELD, because you cannot fix what you cannot see (BZ). The scan
-       reports on style, mash bill and region, so the form must hold them. */
-    const built = libraryEntryFields(p, form);
-    const fields = built.fields;
-    const inputs = built.inputs;
-    m.appendChild(form);
-
-    const proofFix = proofOutOfNameButton(p, nameInp, inputs);
-    if (proofFix) m.appendChild(proofFix);
-
-    /* AND THE SPELLING THE REST OF THE LIBRARY USES, offered the same way:
-       fills the field, leaves Save to the person. */
-    if (inputs.dist && LIB.products) {
-      const cur = String(inputs.dist.value || p.dist || '').trim();
-      const snapped = L.snapHouse(cur, LIB.products);
-      if (cur && snapped && snapped !== cur) {
-        const hb = el('button', 'btn wide',
-          'Spell it ' + snapped + ', like the rest of the library');
-        hb.style.marginTop = '10px';
-        hb.onclick = () => {
-          inputs.dist.value = snapped;
-          hb.disabled = true;
-          hb.textContent = 'Done \u2014 check it, then Save';
-        };
-        m.appendChild(hb);
-      }
-    }
-
-    const save = el('button', 'btn wide btn-gold', 'Save for everyone');
-    save.style.marginTop = '11px';
-    save.onclick = () => {
-    saveLibraryEntry(p, save, inputs, nameInp, after);
-    };
-    m.appendChild(save);
-
-    m.appendChild(pointAtButton(p, after));
-
-    const close = el('button', 'btn ghost wide', 'Close');
-    close.onclick = closeModal;
-    m.appendChild(close);
-  });
-}
-
-/* FIX WHAT YOU CAN (BZ): where the app knows the answer - a proof sitting in
-   the name - it offers to fill the fields and leaves Save to the person,
-   because a shared library is not written on a button's opinion. Nothing to
-   offer returns nothing, rather than a button that does nothing. */
-function proofOutOfNameButton(p, nameInp, inputs) {
-  const auto = L.proofOutOfName((p && p.name) || '');
-  if (!auto) return null;
-  const fix = el('button', 'btn wide', 'Take the proof out of the name');
-  fix.style.marginTop = '10px';
-  fix.onclick = () => {
-    nameInp.value = auto.name;
-    if (inputs.proof && !String(inputs.proof.value).trim()) {
-      inputs.proof.value = auto.proof;
-    }
-    fix.disabled = true;
-    fix.textContent = 'Done \u2014 check it, then Save';
-  };
-  return fix;
-}
-
-/* THIS ENTRY IS ALREADY IN THE LIBRARY UNDER ANOTHER NAME. A merge was only
-   ever offered for a pair the audit had already spotted as duplicates, so a
-   hand-typed bottle that IS a library bottle under another name could not be
-   joined to it at all (BZ, 2026-09-30). */
-function pointAtButton(p, after) {
-  const b = el('button', 'btn ghost wide', 'This is another entry\u2026');
-  b.style.marginTop = '6px';
-  b.onclick = () => pointAtAnotherEntry(p, after);
-  return b;
-}
-
-/* FIND THE ENTRY THIS ONE SHOULD BE, and point at it. The search is
-   L.addCandidates, the same one the add form offers as you type, so the two
-   cannot give different answers; this entry is kept out of its own results.
-
-   IT ASKS BEFORE IT MERGES, with both names in the question. A merge is not an
-   edit: every shelf holding the dropped entry follows the kept one afterwards,
-   which is not something to do on one tap. */
-/* SEARCH THE LIBRARY AND PICK ONE. Two callers want this - an entry saying it
-   is really another entry, and an offer saying it is already in there - and a
-   second copy of a search box is exactly what the duplication check exists to
-   stop. The search is L.addCandidates, the same one the add form offers as you
-   type, so none of the three can give a different answer. */
-function pickLibraryEntry(title, blurb, exceptKey, onPick) {
-  openModal(title, m => {
-    m.appendChild(el('div', 'sub', blurb));
-    const box = el('div', 'form');
-    const q = fieldRow('Search the library', 'q', '',
-      { placeholder: 'Name of the entry to keep' });
-    box.appendChild(q);
-    const out = el('div', 'candidates');
-    box.appendChild(out);
-    m.appendChild(box);
-
-    const input = q.querySelector('input');
-    let timer = null;
-    const draw = () => {
-      const term = (input.value || '').trim();
-      out.innerHTML = '';
-      if (term.length < ADD_SEARCH_MIN) return;
-      const hits = L.addCandidates(LIB.products || {}, term, 8)
-        .filter(h => !exceptKey
-          || (h._key || L.libKey(h.name)) !== exceptKey);
-      if (!hits.length) {
-        out.appendChild(el('div', 'src', 'Nothing else matches that.'));
-        return;
-      }
-      /* WHAT SEPARATES THESE from each other, not what each one is: asked of
-         the whole list, because a field every candidate shares tells nobody
-         anything (BZ, 2026-10-01: "hard to sort this out given names and
-         proofs", on five of six reading "Buffalo Trace - 100 proof"). */
-      const apart = L.tellApart(hits);
-      hits.forEach((hit, i) => {
-        const b = el('button', 'candidate');
-        b.type = 'button';
-        b.appendChild(el('div', 'nm', hit.name));
-        if (apart[i]) b.appendChild(el('div', 'sub', apart[i]));
-        b.onclick = () => onPick(hit);
-        out.appendChild(b);
-      });
-    };
-    input.addEventListener('input', () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(draw, 180);
-    });
-
-    const close = el('button', 'btn ghost wide', 'Cancel');
-    close.style.marginTop = '9px';
-    close.onclick = closeModal;
-    m.appendChild(close);
-  });
-}
-
-function pointAtAnotherEntry(p, after) {
-  pickLibraryEntry('Which entry is this?',
-    '\u201c' + p.name + '\u201d becomes a pointer to whichever you pick. '
-      + 'Bottles on anyone\u2019s shelf follow the entry that stays.',
-    p._key || L.libKey(p.name),
-    hit => confirmPointAt(p, hit, after));
-}
-
-/* AN OFFER THAT IS ALREADY IN THE LIBRARY. Nothing to merge - an offer is not
-   an entry - so it simply is not wanted, and it drops with the reason naming
-   what it already is (BZ, 2026-09-30: "then only use the library bottle"). */
-function offerAlreadyThere(r, after) {
-  const nm = (r.entry && r.entry.name) || 'This offer';
-  pickLibraryEntry('Already in the library as?',
-    '\u201c' + nm + '\u201d is dropped, and the entry you pick is the one '
-      + 'everybody keeps using.',
-    null,
-    hit => {
-      contribDropMany([{ row: r,
-        why: 'already in the library as ' + hit.name }], null);
-      appLog('library: offer ' + nm + ' dropped \u2014 already there as '
-        + hit.name);
-      toast('Dropped \u2014 already there as ' + hit.name);
-      closeModal();
-      if (after) after();
-    });
-}
-
-function confirmPointAt(from, to, after) {
-  const dropK = L.resolveLibKey(LIB.products, from._key, from.name);
-  const keepK = L.resolveLibKey(LIB.products, to._key, to.name);
-  if (!dropK || !keepK) {
-    appLog('point at: could not place ' + (dropK ? to.name : from.name)
-      + ' in the library');
-    toast('Could not find that entry in the library');
-    return;
-  }
-  if (dropK === keepK) { toast('Those are already one entry'); return; }
-  openModal('Point it there?', m => {
-    m.appendChild(el('div', 'sub', '\u201c' + from.name + '\u201d becomes a '
-      + 'pointer to \u201c' + to.name + '\u201d. Every shelf holding the '
-      + 'first follows the second afterwards, and this does not undo.'));
-    const go = el('button', 'btn wide btn-gold', 'Point it there');
-    go.style.marginTop = '10px';
-    go.onclick = () => {
-      go.disabled = true;
-      libraryMergeWrite([{ drop: dropK, keep: keepK }])
-        .then(() => {
-          appLog('library: pointed ' + dropK + ' at ' + keepK);
-          toast('Now one entry: ' + to.name);
-          closeModal();
-          if (after) after();
-        })
-        .catch(e => { go.disabled = false; toast(sayError(e)); });
-    };
-    m.appendChild(go);
-    const no = el('button', 'btn ghost wide', 'Leave them apart');
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
-}
+   THERE IS NO `admin` FIELD ANY MORE (2026-10-27). index.html used to carry
+   LIB.admin and thirty-one branches read it; a non-admin downloaded every
+   one of those screens and got a refusal from the rules if they reached
+   one. Whether an account may write the library is now asked only on
+   admin.html, by the page that can act on the answer. A field here that
+   nothing ever sets would be worse than none: the next reader would branch
+   on it. */
+const LIB = { products: null, q: '', sub: null,
+              thinOnly: false, filling: false, fill: null };
 
 /* Whether the whole log is on screen: long by default, wanted in full when
    something has gone wrong. */
@@ -50236,12 +48310,24 @@ const RECAP = { span: 'month', text: null, stamp: null, busy: false };
 // Which kind of pour the screen is set up for. Home, because most are.
 const POUR = { where: 'home' };
 
-/* COPY THE LOG, WHEREVER IT IS ASKED FOR (Settings and Diagnostics), built
-   once so the two cannot drift. It copies the log AND the build, shelf and
-   account it happened on, which otherwise cost a round trip each time. */
-/* THE LOG WITH ITS HEADER, the one text both the clipboard and a piece of
-   feedback are made of. Two copies of this header would drift, and the
-   header is what makes the log readable by somebody who was not there. */
+/* WHAT EACH VERSION CONTROL DOES, keyed by the button's own text. A table
+   rather than twenty-five lines inside the function that draws them. */
+const VWHAT = {
+  'Check for an update':
+    'Asks whether a newer build has been published and installs it if so. '
+    + 'Nothing on your shelf changes.',
+  'Fetch the whole library':
+    'Reads the whole library again, not just what is new. '
+    + 'For when an update has gone wrong.',
+  'Force a clean reload':
+    'Loads a fresh copy of the app. Your shelf '
+    + 'loses nothing \u2014 '
+    + 'it is for a phone stuck on an old build.'
+  };
+
+/* The categories, off the engine's own list. */
+const SUBS = L.TYPES.slice();
+
 function theLogText() {
   const head = [
     'Bottlefolio ' + appVersion(),
@@ -50254,8 +48340,10 @@ function theLogText() {
       + L.ownedWhiskies(S.catalog || {}, S.bottles || []).length + ' whiskies, '
       + Object.keys(S.catalog || {}).length + ' in the catalog, '
       + ((S.history || []).length) + ' log entries',
+    /* NO LONGER REPORTS WHETHER YOU ARE AN ADMIN: the app does not ask,
+       so it has no answer, and printing a guess in the log is worse than
+       printing nothing. admin.html's gate says it where it matters. */
     'signed in: ' + (FB.user ? 'yes' : 'no')
-      + ' · admin: ' + (LIB.admin ? 'yes' : 'no')
       + ' · lookup service: ' + (S.lookupUrl ? 'set' : 'not set'),
     navigator.userAgent.slice(0, 110),
     ''
@@ -50678,65 +48766,6 @@ function shelfTokensRow(card) {
    within a daily budget (BZ, 2026-09-15). Admin only, because nobody else
    has a queue. Its own function because renderLookupSetup is at its size
    ceiling, and the ceiling does not go up (rule 30f). */
-function intakeBudgetRow(card) {
-  if (!LIB.admin) return;
-  const row = el('div', 'lookrow');
-  row.style.marginTop = '9px';
-  const box2 = document.createElement('input');
-  box2.className = 'field';
-  box2.type = 'number';
-  box2.min = '0';
-  box2.max = String(L.LOOKUP_CAP);
-  box2.value = String(L.intakeBudgetOf(S.intakeBudget));
-  box2.setAttribute('aria-label', 'Daily lookups for offers');
-  const save = el('button', 'chip', 'Save');
-  save.onclick = () => {
-    S.intakeBudget = L.intakeBudgetOf(box2.value);
-    box2.value = String(S.intakeBudget);
-    save_();
-    appLog('the offered queue may spend ' + S.intakeBudget
-      + ' lookups a day');
-    toast(S.intakeBudget
-      ? 'Offers may spend ' + S.intakeBudget + ' lookups a day'
-      : 'Offers are not looked up on their own');
-  };
-  row.appendChild(box2);
-  row.appendChild(save);
-  card.appendChild(el('div', 'lbl',
-    'Daily lookups for offers'));
-  card.appendChild(row);
-  card.appendChild(el('div', 'src',
-    'Offers are looked up as they arrive, up to this many a day, '
-    + 'inside the daily limit of ' + L.LOOKUP_CAP + ' for all lookups. '
-    + 'Spent '
-    + 'today: ' + L.intakeSpent(S.intakeTally, L.todayISO()) + '. Zero '
-    + 'turns it off, and offers are looked up when you add them instead.'));
-}
-
-/* WHAT THE APP IS AND WHICH BUILD OF IT (BZ: checking for a new build is
-   something you DO, on the screen you came to because something looked wrong).
-   It was hoisted out of the Advanced fold to get here; now it is just here. */
-/* THE FIVE THINGS YOU CAN DO ABOUT A BUILD. Two of them only ask a question and
-   change nothing; the two that are heavier stay ghosted so they do not read as
-   the obvious thing to press. Its own function because aboutPanel is a heading
-   and these are ninety lines. */
-/* WHAT EACH BUILD CONTROL DOES, in the second column beside it. A table
-   rather than twenty-five lines inside the function that draws them. */
-/* WHAT EACH VERSION CONTROL DOES, keyed by the button's own text. Copy the log
-   and Check the service came out on 2026-10-02 with their buttons. */
-const VWHAT = {
-  'Check for an update':
-    'Asks whether a newer build has been published and installs it if so. '
-    + 'Nothing on your shelf changes.',
-  'Fetch the whole library':
-    'Reads the whole library again, not just what is new. '
-    + 'For when an update has gone wrong.',
-  'Force a clean reload':
-    'Loads a fresh copy of the app. Your shelf '
-    + 'loses nothing — '
-    + 'it is for a phone stuck on an old build.'
-  };
-
 function versionButtons(upd) {
   const ur = el('div', 'lookrow');
   ur.style.marginTop = '9px';
@@ -50927,13 +48956,22 @@ function adminPanel(box) {
   /* THE LIBRARY LEADS, because it is what an admin opens this tab for, and it
      is here rather than on Shelf: it is the shared list behind every shelf,
      not anything about this person's bottles (BZ, 2026-10-02). */
-  if (LIB.admin) {
+  /* AND IT IS NO LONGER BEHIND BEING AN ADMIN (2026-10-27). This card was
+     the only door to the library screen, and it was hidden from everybody
+     who was not an admin - so the screen BZ's own notes call "browsing is
+     for everybody" could be reached by exactly one account. The screen is
+     browse-only now, and the door is open.
+     WHERE IT LIVES IS WORTH ASKING: this is the Admin-mode tab, which is an
+     organising switch anybody may flip rather than a permission, but a
+     browse-only screen may belong somewhere plainer. That is BZ's call, not
+     a thing to change inside a move. */
+  {
     const lib = settingCard(box, 'The library',
       'The list everyone reads and adds to.');
     const go = el('button', 'btn btn-sm btn-gold', 'Open the library');
     go.onclick = openLibraryScreen;
-    settingRow(lib, go, 'Its offers, its duplicates, and what it says is wrong '
-      + 'with itself.');
+    settingRow(lib, go, 'Every whisky this app knows about, with what it '
+      + 'knows. Yours are separate, on Shelf.');
 
     /* FROM THE VERSION CARD (BZ, 2026-10-02), beside the library it reads. A
        device can hold a marker later than anything in the library - an earlier
@@ -51039,7 +49077,9 @@ function renderLookupSetup(box) {
   wrap.appendChild(card);
 
   shelfTokensRow(card);
-  intakeBudgetRow(card);
+  /* MOVED: what the OFFERED queue may spend on lookups is the intake's
+     budget, and the intake runs on admin.html. What a person's own lookups
+     may spend stays here, above. */
 
 
 
@@ -51131,47 +49171,6 @@ function refBrands() {
 
 /* THE REFERENCE DATA (refdata.js loads it into shared/ref): read once a
    session, and only by the screens that use it - it is a few megabytes. */
-function libraryRefLoad() {
-  if (LIB.ref) return Promise.resolve(LIB.ref);
-  return firebase.database().ref('bz-apps/whisky/shared/ref').once('value')
-    .then(sn => {
-      const v = sn.val() || { houses: {}, brands: {} };
-      /* An empty read is not remembered, or one early miss hides it all session. */
-      if (Object.keys(v.brands || {}).length) LIB.ref = v;
-      return v;
-    });
-}
-
-/* ASK ABOUT THE WHOLE LIST AT ONCE (BZ, 2026-09-17): waits and give-ups are
-   for the run that happens on its own; a press here means ask them all. */
-function askAllRow(all, rows, after) {
-  const wrap = el('div');
-  wrap.style.margin = '4px 0 10px';
-  const b = el('button', 'btn wide', 'Look up all ' + rows.length);
-  b.onclick = () => {
-    if (LIB.filling) { libraryFillShow(); return; }
-    const left = Math.max(0, L.LOOKUP_CAP - L.lookupTally(S.lookupTally, L.todayISO()));
-    openModal('Look up all ' + rows.length + '?', m => {
-      m.appendChild(el('div', 'sub', L.askAllSay(rows, left)));
-      const go = el('button', 'btn wide btn-gold', 'Look them up');
-      go.style.marginTop = '10px';
-      go.onclick = () => { closeModal(); libraryFillRun(all, rows, after); };
-      m.appendChild(go);
-      const no = el('button', 'btn ghost wide', 'Not now');
-      no.onclick = closeModal;
-      m.appendChild(no);
-    });
-  };
-  wrap.appendChild(b);
-  wrap.appendChild(el('div', 'src', 'Every entry on this list, whatever it is '
-    + 'waiting for. What comes back empty goes on waiting.'));
-  return wrap;
-}
-
-/* ARRIVED BY AN INVITE LINK: ask on their behalf, remember the ask like any
-   other so Buddies can show it waiting, and say who it went to. A request
-   that reaches nobody used to leave no trace on either side (BZ's friend,
-   2026-09-19: the link named an account that had been deleted). */
 function askFromLink() {
   const me = (FB.user || {}).uid;
   const inviter = L.inviterFromUrl(location.href);
@@ -51268,118 +49267,60 @@ function waitingCard(box, rows, names) {
 }
 
 /* A ROW THAT OPENS AN ENTRY, with room for a button beside it. */
-function openableRow(name, line, open) {
-  const r = el('div', 'item scanrow');
-  const left = el('div');
-  left.setAttribute('role', 'button');
-  left.tabIndex = 0;
-  left.style.cursor = 'pointer';
-  left.appendChild(el('div', 'nm oneline', name));
-  left.appendChild(el('div', 'sub', line));
-  left.onclick = open;
-  left.onkeydown = e => { if (e.key === 'Enter') open(); };
-  r.appendChild(left);
-  return r;
-}
-
-/* WHERE THE LIBRARY DISAGREES WITH REFERENCE DATA (L.refFill), each row
-   opening its entry. Drawn into a slot, because the data arrives after the
-   page. */
-function libraryRefConflicts(box, after) {
-  const slot = el('div');
-  box.appendChild(slot);
-  const products = LIB.products || {};
-  libraryRefLoad().then(ref => {
-    const list = L.refConflictsOpen(L.refFill(products, ref).conflicts, LIB.reviewed);
-    appLog('reference check: ' + Object.keys((ref || {}).brands || {}).length
-      + ' brands, ' + Object.keys(products).length + ' entries, '
-      + list.length + ' disagree');
-    if (!list.length) return;
-    const d = el('div', 'sheet');
-    d.appendChild(el('h3', null, 'Check the country'));
-    list.slice(0, 100).forEach(c => {
-      const r = openableRow(c.name, c.field + ': ' + c.have + ' \u2014 '
-        + c.source + ' says ' + c.says, () => editLibraryEntry(
-        Object.assign({ _key: c.k }, (LIB.products || {})[c.k]), after));
-      const ok = el('button', 'chip quiet', 'Correct as it stands');
-      ok.onclick = () => {
-        const id = 'refcountry:' + c.k;
-        firebase.database().ref('bz-apps/whisky/shared/reviewed').child(L.fbKey(id))
-          .set({ v: 'ok', at: Date.now(), by: (FB.user || {}).uid || '' })
-          .then(() => {
-            LIB.reviewed = Object.assign({}, LIB.reviewed || {},
-              { [id]: { v: 'ok', at: Date.now() } });
-            appLog('reference check: ' + id + ' correct as it stands');
-            r.remove();
-          })
-          .catch(e => toast('Could not save: ' + sayError(e)));
-      };
-      r.appendChild(ok);
-      d.appendChild(r);
-    });
-    slot.appendChild(d);
-  }).catch(e => appLog('reference data would not read: ' + sayError(e)));
-}
-
-/* LOOK UP WHAT IS DUE, and list everything still missing (BZ, 2026-09-17):
-   a row opens the entry to fill by hand, and Look up now asks that one
-   whatever its wait. Styles a name already states are written first, free
-   (libraryFillWithStyles). */
-function libraryCleanUpFill(box, after) {
-  libraryRefConflicts(box, after);
-  const all = LIB.products || {};
-  const today = L.todayISO();
-  const lists = L.libraryLists(L.libraryRows(all), S.libLedger || {}, today);
-  if (lists.todo.length || LIB.filling) {
-    const b = el('button', 'btn wide btn-gold', LIB.filling
-      ? 'Looking up\u2026 ' + ((LIB.fill && LIB.fill.done) || 0) + ' of '
-        + ((LIB.fill && LIB.fill.total) || 0)
-      : 'Look up ' + lists.todo.length + ' due');
-    b.style.marginBottom = '8px';
-    b.onclick = () => libraryFillWithStyles(all, after);
-    box.appendChild(b);
-  }
-  const rows = lists.todo.concat(lists.waiting);
-  if (!rows.length) return;
-  const d = el('details', 'sheet');
-  d.appendChild(el('summary', null, 'Still missing · ' + rows.length
-    + (lists.stopped ? ' (' + lists.stopped + ' no longer asked)' : '')));
-  d.appendChild(askAllRow(all, rows, after));
-  rows.forEach(row => {
-    const r = openableRow(row.name, L.missingSay(row, today), () => editLibraryEntry(
-      Object.assign({ _key: row.k }, all[row.k]), after));
-    const look = el('button', 'chip quiet', 'Look up now');
-    look.onclick = () => {
-      if (LIB.filling) { libraryFillShow(); return; }
-      libraryFillRun(all, [row], after);
-    };
-    r.appendChild(look);
-    d.appendChild(r);
-  });
-  box.appendChild(d);
-}
-
-    // What differs between this shelf and the library, publishable without
-    // replacing anything else. The Firebase import is a seeding tool that
-    // destroys what it lands on; this is for every day after.
 function libraryShelfSteps(box, all, after) {
   const pend = pendingForLibrary();
   if (pend.length) {
-    const pb = el('button', 'btn wide btn-gold',
-      'Publish ' + pend.length + ' to the library');
-    pb.style.marginTop = '10px';
-    // after, never a redraw: publishBatch clears the cache on the way out.
-    pb.onclick = () => reviewBatch(pend, after);
-    box.appendChild(pb);
-    box.appendChild(el('div', 'src',
-      'Writes only these, leaving everything else in the library alone.'));
-  }
+    /* OFFER, NOT PUBLISH (2026-10-27), and the sentence under it says the
+       same thing. The review sheet this opens offers them - it used to
+       write the library directly, which only ever worked for one account -
+       and a button that says it will write to a shared list and then files
+       an offer has told somebody something untrue. Found by opening the app
+       with the real shelf after every check was green: the button said
+       "Publish 26 to the library" over an action that offers.
 
+       A CARD, NOT TWO BARE BUTTONS. These were the first thing on Tidy your
+       shelf with nothing above them; on the old Clean up page they sat among
+       other cards and read fine. */
+    const card = el('div', 'sheet');
+    card.appendChild(el('h3', null, 'Bottles the library has never held'));
+    card.appendChild(el('div', 'sub',
+      'Yours, and nobody has added them yet. Offering one sends what you '
+      + 'know about it for an admin to accept; nothing on your shelf '
+      + 'changes either way.'));
+    const pb = el('button', 'btn wide btn-gold',
+      'Offer ' + pend.length + ' to the library');
+    pb.style.marginTop = '10px';
+    // after, never a redraw: the offer run clears the cache on the way out.
+    pb.onclick = () => reviewBatch(pend, after);
+    card.appendChild(pb);
+    card.appendChild(el('div', 'src',
+      'Offers only these, and shows you each one first.'));
+    box.appendChild(card);
+  }
+}
+
+/* NOTES WRITTEN FOR A FLIGHT CARD, REVIEWED. Its own function since
+   2026-10-27: giving both cards on Tidy your shelf a heading took
+   libraryShelfSteps thirteen lines over the hundred-line ceiling, and the
+   ceiling does not move (rule 30). They were never one thing - one offers
+   bottles the library has never held, this reviews sentences that reached
+   it pretending to describe a whiskey - they only shared a function
+   because they shared a page. */
+function inventedNotesCard(box, all, after) {
   /* Notes written onto a flight card are prompts for that room, not
      descriptions, and a published entry does not carry tnFrom - so only
      the shelf it came from can find the ones that reached the library. */
   const invented = L.promptNotesInLibrary(S.catalog, all);
   if (invented.length) {
+    /* A CARD, like the one above it. This was a bare button under a card on
+       Tidy your shelf, which is the same fault one step along and the one a
+       reader meets second (found by opening the app, 2026-10-27). */
+    const nc = el('div', 'sheet');
+    nc.appendChild(el('h3', null, 'Notes written for a flight card'));
+    nc.appendChild(el('div', 'sub',
+      'Sentences meant to be read aloud beside other pours, which reached '
+      + 'the library as though they described the whiskey. They came off '
+      + 'your shelf, so only your shelf can find them.'));
     /* A LIST, not a yes-or-no (BZ): whether a sentence reads as a prompt or a
        description cannot be judged unseen, so each shows its words and is
        ticked on its own. */
@@ -51452,7 +49393,8 @@ function libraryShelfSteps(box, all, after) {
         m.appendChild(no);
       });
     };
-    box.appendChild(cb);
+    nc.appendChild(cb);
+    box.appendChild(nc);
   }
 }
 
@@ -51463,57 +49405,6 @@ function libraryShelfSteps(box, all, after) {
 
    Its own function because drawing a list and judging all of it are different
    acts, and the repair beside these is already one. */
-function bulkVerdictChips(f, bulk, draw) {
-  [['Keep these for now', 'later'],
-   ['These are correct', 'ok']].forEach(([label, v]) => {
-    const b3 = el('button', 'chip quiet', label);
-    b3.onclick = () => {
-      const ups = {};
-      f.items.forEach(it2 => {
-        ups[L.fbKey(f.id + ':' + it2.key)] =
-          { v: v, at: Date.now(), by: (FB.user || {}).uid || '' };
-      });
-      firebase.database().ref('bz-apps/whisky/shared/reviewed')
-        .update(ups)
-        .then(() => {
-          f.items.forEach(it2 => {
-            LIB.reviewed = Object.assign({}, LIB.reviewed || {},
-              { [f.id + ':' + it2.key]: { v: v, at: Date.now() } });
-          });
-          appLog('library scan: ' + f.items.length + ' marked ' + v);
-          /* The scan is a page, so redrawing it in place is the whole of it. */
-          draw();
-        })
-        .catch(e2 => toast(sayError(e2)));
-    };
-    bulk.appendChild(b3);
-  });
-}
-
-/* AND ON THIS DEVICE'S OWN COPY, or the next publish writes it straight back:
-   BZ pressed Fix twice and watched the same seven return, because his edits held
-   fin: "limited" for the same bottles and an admin's device publishes directly
-   (2026-10-01). */
-function clearMineToo(keys, field) {
-  const got = L.clearFieldLocally(S.edits, keys, field);
-  if (!got) return;
-  S.edits = got.edits;
-  save_();
-  rebuildCatalog();
-  appLog('shelf: cleared ' + field + ' on ' + got.cleared
-    + ' of your own, so it is not published back');
-}
-
-/* FILE A BOTTLE AT THE ENTRY IT READS AS. One write, and every shelf holding
-   that key follows it, because a forwarding address is what entryFor reads when
-   a key has no entry of its own - so this is not the admin fixing their copy, it
-   is the whisky being fixed for everybody (BZ, 2026-10-01).
-
-   NOTHING IS DELETED. A merge drops the entry it forwards from; this key never
-   was an entry, which is why libraryMergeWrite is not the door even though the
-   write is the same shape. */
-/* ONE POUR, POINTED AT THE BOTTLE HE OWNS. The flight keeps its title, its
-   premise and every other pour; what moves is where ONE of them is filed. */
 function pointPourButton(it, again) {
   const b = el('button', 'chip', 'Point it at mine');
   b.onclick = () => {
@@ -51528,525 +49419,6 @@ function pointPourButton(it, again) {
     again();
   };
   return b;
-}
-
-function fileAtEntryButton(it, again) {
-
-  const b = el('button', 'chip btn-gold');
-  b.textContent = 'File it here';
-  b.title = 'File ' + it.key + ' at ' + it.to;
-  b.onclick = () => {
-    if (!LIB.admin) { toast('Only an admin can file it'); return; }
-    buttonWorking(b, 'Filing\u2026');
-    const ups = {};
-    LIB.graves = L.buryKey(LIB.graves, it.key, it.to);
-    ups['renamed/' + it.key] = { to: L.mergedInto(LIB.graves, it.to),
-      at: Date.now() };
-    ups.stamp = Date.now();
-    firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(ups))
-      .then(() => {
-        appLog('shelf scan: filed ' + it.key + ' at ' + it.to);
-        toast('Filed \u2014 everybody holding it follows now');
-        again();
-      })
-      .catch(e => {
-        b.disabled = false;
-        b.textContent = 'File it here';
-        toast(sayError(e));
-      });
-  };
-  return b;
-}
-
-/* REMOVE AN ADDRESS THAT POINTS AT NOTHING. Safe because nothing is behind it:
-   no entry is lost, and the bottles under that key surface afterwards as joins
-   that can be filed at a real one. */
-function dropForwardButton(it, again) {
-  const b = el('button', 'chip', 'Remove it');
-  b.onclick = () => {
-    if (!LIB.admin) { toast('Only an admin can remove it'); return; }
-    buttonWorking(b, '\u2026');
-    const ups = { stamp: Date.now() };
-    ups['renamed/' + it.key] = null;
-    firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(ups))
-      .then(() => {
-        if (LIB.graves) delete LIB.graves[it.key];
-        appLog('library: dropped the dead address on ' + it.key);
-        toast('Removed');
-        again();
-      })
-      .catch(e => {
-        b.disabled = false;
-        b.textContent = 'Remove it';
-        toast(sayError(e));
-      });
-  };
-  return b;
-}
-
-/* MERGE, AND ONLY BETWEEN TWO ENTRIES. It points one entry at another, so a row
-   whose side is a BOTTLE filed under no entry - which is the whole of the
-   shelf-join finding - offered a merge that could only answer "Could not find
-   that entry in the library" (BZ’s screenshot, 2026-10-01). The guard asked
-   that two keys existed and differed, not that either was an entry. */
-function mergePairButton(sides, kk, draw) {
-  const lib = LIB.products || {};
-  if (!kk[0] || !kk[1] || kk[0] === kk[1] || !lib[kk[0]] || !lib[kk[1]]) {
-    return el('span');
-  }
-  const mg = el('button', 'chip', 'Merge');
-  mg.onclick = () => askWhichNameStays(sides, kk, draw);
-  return mg;
-}
-
-
-/* THE SAME REPAIR, ON ONE ROW. All of them or none of them is not a choice (BZ,
-   2026-10-01: "again, no line by line capability"), and the row's own × only
-   dismisses it. Returns an empty span for a fault with no mechanical repair, so
-   the caller appends without asking. */
-function mendRowButton(f, it, again) {
-  /* A SHELF JOIN IS REPAIRED BY FILING IT, not by clearing a field. Asked here
-     because what repairs a row is one question and the page should not have a
-     second way to ask it - which is what the size ceiling caught. */
-  if (f.id === 'shelfjoin') return fileAtEntryButton(it, again);
-  if (f.id === 'flightjoin') return pointPourButton(it, again);
-  if (f.id === 'deadfwd') return dropForwardButton(it, again);
-  const mend = L.faultFix(f.id);
-  if (!mend || !it.key) return el('span');
-  const b = el('button', 'chip', 'Fix');
-  b.onclick = () => {
-    buttonWorking(b, '…');
-    firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(L.clearFieldPlan([it], mend.clears)))
-      .then(() => {
-        appLog('library: cleared ' + mend.clears + ' on ' + it.key);
-        clearMineToo([it.key], mend.clears);
-        LIB.products = null;
-        toast('Cleared');
-        again();
-      })
-      .catch(e2 => { b.disabled = false; b.textContent = 'Fix'; toast(sayError(e2)); });
-  };
-  return b;
-}
-
-/* THE FIX, WHERE THE REPAIR IS MECHANICAL AND THE SAME ON EVERY ROW. A finish
-   holding a scarcity is simply wrong and the scarcity is already under Release;
-   a style holding a special class is not a style and the name carries it. Forty
-   two rows, one decision, one press (BZ, 2026-10-01: "unclear on what to do and
-   not row by row edit/ask", and "this one is not actionable (cut paste) from the
-   modal").
-
-   WHICH FAULTS HAVE ONE is L.faultFix's answer, read off the table that carries
-   their words - so a fault that needs a judgment has no button, by declaration
-   rather than by omission. */
-function mendButton(f, bulk, again) {
-  const mend = L.faultFix(f.id);
-  if (!mend) return;
-  const fx = el('button', 'chip', mend.fix + ' ' + f.items.length);
-  fx.onclick = () => {
-    const plan = L.clearFieldPlan(f.items, mend.clears);
-    if (!Object.keys(plan).length) { toast('Nothing to clear'); return; }
-    buttonWorking(fx, 'Clearing\u2026');
-    firebase.database().ref('bz-apps/whisky/shared')
-      .update(L.fbEncodePaths(plan))
-      .then(() => {
-        appLog('library: cleared ' + mend.clears + ' on ' + f.items.length
-          + ' entr' + (f.items.length === 1 ? 'y' : 'ies'));
-        clearMineToo(f.items.map(x => x.key), mend.clears);
-        LIB.products = null;
-        toast('Cleared ' + f.items.length);
-        again();
-      })
-      .catch(e2 => {
-        fx.disabled = false;
-        fx.textContent = mend.fix + ' ' + f.items.length;
-        toast(sayError(e2));
-      });
-  };
-  bulk.appendChild(fx);
-}
-
-/* EXPORT AND IMPORT, side by side, at the foot of the library screen. */
-function libraryDataRow() {
-  const row = el('div', 'actionrow');
-  row.style.marginTop = '9px';
-  const lex = el('button', 'btn btn-sm', 'Export');
-  /* NOT DISABLED. It loads what it needs, exactly like Clean up. */
-  lex.onclick = async () => {
-    if (!LIB.products) {
-      buttonWorking(lex, 'Reading the library\u2026');
-      try {
-        LIB.products = L.libraryFromValue((await fbLibraryRef().once('value')).val());
-      } catch (e) {
-        lex.disabled = false;
-        lex.textContent = 'Export';
-        toast(sayError(e, 'Could not read the library'));
-        return;
-      }
-      lex.disabled = false;
-      lex.textContent = 'Export';
-    }
-    const n = downloadCsv('bottlefolio-library', L.LIBRARY_COLS,
-      L.libraryExportRows(LIB.products));
-    appLog('exported the library: ' + n + ' entries, '
-      + L.LIBRARY_COLS.length + ' columns');
-    toast(n + ' entries exported');
-  };
-  row.appendChild(lex);
-  /* Mass edits are easier in a spreadsheet (BZ): rows left out are untouched
-     and a blank cell keeps what is there. */
-  const limp = el('button', 'btn btn-sm', 'Import');
-  limp.onclick = () => libraryImportDialog();
-  row.appendChild(limp);
-  return row;
-}
-
-/* CLEAN UP THE LIBRARY: one page for everything that tidies it (BZ,
-   2026-09-16) - look up what is missing, the resting ones included; what
-   your shelf would add; notes written for flight cards; what was taken
-   out; and every contradiction the scan finds, each with its fix. */
-/* READ, THEN DRAW. Throwing the cache away is wanted after a write - the written
-   version has to be read back - but drawing on top of it audits an EMPTY library
-   and reports nothing, so one merge looked like it had cleared every finding (BZ,
-   2026-10-02: "i did 1 merge on weller 12 and the list disappeared"). withLibrary
-   is the door that waits for the read. The same fault was fixed once already on
-   the edit path, where the comment still stands. */
-function rescanTheLibrary() {
-  LIB.products = null;
-  withLibrary(() => {
-    const pg = document.getElementById('scr-scan');
-    if (pg && pg.classList.contains('on')) openLibraryCleanUp();
-  });
-}
-
-function openLibraryCleanUp() {
-    /* A REPORT YOU CAN ACT ON. Every row opens the entry it is about, and
-       every row can be put to rest - some findings are CORRECT as stored,
-       and a check that reports the same ones for ever gets skimmed. */
-    const draw = () => {
-      // READ BEFORE JUDGING: the library it scans, the taxonomy it judges with.
-      /* AND THE VERDICTS, or he is shown every row he already judged. */
-      if (needsLibraryFirst(draw) || needsRegistryFirst(draw) || needsVerdictsFirst(draw)) return;
-      const count = Object.keys(LIB.products || {}).length;
-      const found = libraryFindings();
-      appLog('library scan: ' + found.length + ' kind(s) in ' + count);
-      /* A PAGE, NOT A MODAL (BZ). A modal is for a question with an answer;
-         this is a list of decisions, each with a name, a recommendation and
-         buttons, and a page has the room, scrolls properly and gets Back. */
-      const asPage = m2 => {
-        const host = document.getElementById('scanBody');
-        if (!host) { openModal('Clean up', m2); return; }
-        host.innerHTML = '';
-        m2(host);
-        goTo('scan');
-      };
-      asPage(m => {
-        libraryCleanUpFill(m, rescanTheLibrary);
-        libraryShelfSteps(m, LIB.products || {}, rescanTheLibrary);
-        /* WHAT THIS DEVICE IS HOLDING THAT BELONGS TO EVERYBODY. On Clean up
-           because it is the same kind of thing as the rest of this page: a
-           list of what is wrong and a way to put it right. */
-        shelfFactsCard(m, rescanTheLibrary);
-        libraryRemovedList(m);
-        /* TAKE IT AWAY WITH YOU: some findings need a catalogue, a bottle in hand
-           or another opinion, so the list can be copied or printed (BZ). */
-        /* THE ONES THAT NEED NO DECISION: identical name, house and proof,
-           so one survives and it does not matter which (BZ). These are the
-           rows with no per-row Merge, because identical names derive
-           identical keys and the guard refuses to merge a key with itself. */
-        identicalPairsButton(found, m, draw);
-
-        const copy = el('button', 'btn ghost wide', 'Copy the whole list');
-        copy.style.marginBottom = '8px';
-        copy.onclick = () => {
-          const txt = L.auditText(found, count, L.showDate(L.todayISO()));
-          navigator.clipboard.writeText(txt)
-            .then(() => toast('Copied ' + txt.split('\n').length + ' lines'))
-            .catch(() => toast('Could not copy'));
-        };
-        m.appendChild(copy);
-        if (!found.length) {
-          m.appendChild(el('div', 'empty',
-            'Nothing contradicts itself. That is worth knowing rather than '
-            + 'assuming.'));
-          return;
-        }
-        found.forEach(f => {
-          const card = el('div', 'sheet');
-          card.appendChild(el('h3', null, f.title));
-          if (f.why) card.appendChild(el('div', 'sub', f.why));
-          /* IN BULK, because a finding with nine rows in it is one
-             decision nine times over when they are all the same call. */
-          const bulk = el('div', 'rowacts');
-          bulk.style.marginBottom = '6px';
-          bulkControls(f, bulk, draw, rescanTheLibrary);
-          if (f.items.length > 1) card.appendChild(bulk);
-
-          /* ALL OF THEM, NOT TWELVE: the heading counts every item and the group
-             buttons act on every item, so every item must be shown. */
-          f.items.forEach(it => {
-            /* THREE COLUMNS FOR A DUPLICATE: this bottle, that bottle, what to do (BZ).
-               On one line with == between, the names ran under the buttons. */
-            // The finding says so, rather than the screen knowing one id.
-            const isPair = !!f.pairs && / {2}== {2}/.test(it.text || '');
-            const row = el('div', isPair ? 'dupgrid' : 'item scanrow');
-            if (!isPair) {
-              /* STACKED, NOT COLUMNED (BZ): the issue, then what it would become, then
-                 the buttons, each full width. A long whisky name and two
-                 buttons never fit one line; a single column has nothing to
-                 overflow and cannot be broken by a cascade. */
-              row.style.display = 'block';
-              row.style.padding = '10px 12px';
-            }
-            if (isPair) {
-              const sides = String(it.text).split('  ==  ');
-              sides.forEach((sideText, si) => {
-                const col = el('div', 'dupside');
-                const nm = el('button', 'nm');
-                nm.style.cssText = 'background:none;border:0;padding:0;'
-                  + 'text-align:left;font:inherit;color:inherit;'
-                  + 'cursor:pointer;white-space:normal';
-                const bits = String(sideText).split(' · ');
-                nm.textContent = bits[0];
-                const k2 = (it.keys || [])[si] || L.libKey(bits[0].trim());
-                nm.onclick = () => {
-                  const e2 = (LIB.products || {})[k2];
-                  if (!e2) { toast('That entry has gone already'); return; }
-                  editLibraryEntry(Object.assign({ _key: k2 }, e2),
-                    () => { LIB.products = null; draw(); });
-                };
-                col.appendChild(nm);
-                if (bits[1]) col.appendChild(el('div', 'sub', bits[1]));
-                /* WHAT ACTUALLY DIFFERS. When both sides print the same name, house and
-                   proof, the only difference is the key each is filed under -
-                   which is also what Merge acts on, and why a row whose two
-                   keys match cannot be merged. Shown for every pair. */
-                const kShown = (it.keys || [])[si]
-                  || L.resolveLibKey(LIB.products, null, bits[0]);
-                const kEl = el('div', 'src', kShown
-                  ? 'filed as ' + kShown : 'not found in the library');
-                kEl.style.cssText = 'font-family:ui-monospace,monospace;'
-                  + 'font-size:12px;opacity:.6;word-break:break-all';
-                col.appendChild(kEl);
-                row.appendChild(col);
-              });
-            }
-            /* IT WRAPS. `oneline` clips (nowrap, overflow hidden); a shelf row can be
-               clipped because you can open it, but a finding is a sentence
-               and has to be read whole. */
-            const go = el('button', 'nm');
-            go.style.cssText = 'white-space:normal;overflow-wrap:anywhere;'
-              + 'text-align:left;display:block;width:100%';
-            go.style.cssText = 'background:none;border:0;padding:0;'
-              + 'text-align:left;font:inherit;color:inherit;cursor:pointer';
-            go.textContent = it.text;
-            go.onclick = () => {
-              const entry = (LIB.products || {})[it.key];
-              if (!entry) { toast('That entry has gone already'); return; }
-              /* BACK TO THE SCAN, not to the library: the list still to judge is
-                 what somebody wants when the editor closes.
-                 DO NOT THROW THE CACHE AWAY: editLibraryEntry has already
-                 written the saved entry into LIB.products, and nulling it
-                 made draw() audit an empty library, so one fix looked like
-                 it had cleared every finding. */
-              editLibraryEntry(Object.assign({ _key: it.key }, entry),
-                () => draw());
-            };
-            const rowL = el('div');
-            /* The text column must be allowed to be narrower than its longest word, or
-               it grows and runs under the buttons whatever the grid says. */
-            rowL.style.minWidth = '0';
-            rowL.style.overflowWrap = 'anywhere';
-            if (!isPair) rowL.appendChild(go);
-            /* AND WHAT TO DO ABOUT IT, under the name (BZ). */
-            const tip = L.auditSuggestion(f.id,
-              (LIB.products || {})[it.key] || {}, it.text);
-            if (tip && !isPair) rowL.appendChild(el('div', 'src', tip));
-            if (!isPair) row.appendChild(rowL);
-            /* THREE ANSWERS: the row itself is the fix (it opens the entry); these
-               two are keep it for now and dismiss (BZ). A verdict is written
-               where every admin reads it, because it is a judgment about a
-               shared row rather than this device's opinion of it. */
-            const acts = el('div', 'rowacts');
-            acts.appendChild(mendRowButton(f, it, rescanTheLibrary));
-            /* On their own line, under the words they act on. */
-            if (!isPair) {
-              acts.style.marginTop = '8px';
-              acts.style.justifyContent = 'flex-start';
-            }
-            /* THE PRESS TAKES EFFECT AT ONCE. Waiting for the shared admin write to
-               succeed left the row sitting there when it was refused or slow,
-               with nothing to say why. */
-            const verdict = (v, said) => {
-              const id = f.id + ':' + it.key;
-              const before = LIB.reviewed || {};
-              LIB.reviewed = Object.assign({}, before,
-                { [id]: { v: v, at: Date.now() } });
-              appLog('library scan: ' + id + ' \u2014 ' + said);
-              draw();
-              firebase.database().ref('bz-apps/whisky/shared/reviewed')
-                .child(L.fbKey(id))
-                .set({ v: v, at: Date.now(),
-                       by: (FB.user || {}).uid || '' })
-                .catch(e => {
-                  LIB.reviewed = before;
-                  appLog('library scan: ' + id + ' would not save \u2014 '
-                    + ((e && e.message) || e));
-                  toast('Could not save: '
-                    + sayError(e));
-                  draw();
-                });
-            };
-            /* LOOK IT UP: the service that returns mash bills for the fill run is
-               asked here, rather than saying a bill is wrong and leaving
-               somebody to find the right one (BZ). */
-            if (f.id === 'mashsum') {
-              const look = el('button', 'chip', 'Look it up');
-              look.onclick = async () => {
-                const entry = (LIB.products || {})[it.key];
-                if (!entry) { toast('That entry has gone already'); return; }
-                buttonWorking(look, 'Looking\u2026');
-                try {
-                  /* AN ARRAY. L.lookupUrl does (need || []).filter, so a bare string threw
-                     "(need || []).filter is not a function" the first time BZ pressed it. */
-                  const raw = await askService(entry.name, 20000, ['mash']);
-                  const res = L.parseLookup(raw, { needIdentity: false });
-                  const bill = (res && (res.mash || res.mashbill)) || null;
-                  if (!bill) {
-                    toast('Nothing came back about the mash bill');
-                    look.disabled = false;
-                    look.textContent = 'Look it up';
-                    return;
-                  }
-                  appLog('mash lookup for ' + entry.name + ': ' + bill);
-                  /* Straight into the editor with the bill filled in,
-                      and back to the scan when it closes. */
-                  editLibraryEntry(
-                    Object.assign({ _key: it.key }, entry, { mash: bill }),
-                    () => { LIB.products = null; draw(); });
-                } catch (e2) {
-                  look.disabled = false;
-                  look.textContent = 'Look it up';
-                  toast(sayError(e2));
-                }
-              };
-              acts.appendChild(look);
-            }
-            /* MERGE ON EVERY PAIR (BZ). Two rows for one whisky are two half-filled
-               entries and an overstated count; the fix is always keep one and
-               point the other at it, through the rename record every device
-               already follows (L.applyLibraryMoves). Keys are used when the
-               check supplied them and derived from the names when not, so the
-               button appears wherever a merge is possible at all. */
-            if (isPair) {
-              /* THE KEYS THE CHECK FOUND, not names read back off the screen: two
-                 entries differing by a stray space print identically. */
-              const sides = String(it.text).split('  ==  ')
-                .map(x => x.split(' · ')[0].trim());
-              /* RESOLVED, not derived. Two rows printed identically derive the same key,
-                 and the guard below refuses to merge a key with itself;
-                 asking the library which entries they are gives two keys. */
-              let kk = [
-                (it.keys || [])[0]
-                  || L.resolveLibKey(LIB.products, null, sides[0]),
-                (it.keys || [])[1]
-                  || L.resolveLibKey(LIB.products, null, sides[1])
-              ];
-              /* Two rows printed identically resolve to the same entry,
-                 because a lookup by name can only find one of them. Ask
-                 for every entry under that name instead. */
-              if (kk[0] && kk[0] === kk[1]) {
-                const both = L.libKeysNamed(LIB.products, sides[0]);
-                if (both.length >= 2) kk = [both[0], both[1]];
-              }
-              acts.appendChild(mergePairButton(sides, kk, draw));
-            }
-            /* UPDATE, AND IT SAYS WHAT IT WILL CHANGE. */
-            /* THE LIBRARY'S OWN ENTRY first: these rows are library entries,
-               and prod() looks only in the shelf catalog, so the fix came back
-               null and the tick silently never appeared. */
-            const entry = (LIB.products || {})[it.key]
-              || prod(it.key) || {};
-            /* The item carries what the finding worked out - the spelling to keep, the
-               key to merge into - so it is handed to the fix rather than re-derived. */
-            const fix = L.auditFix(f.id, entry, it.text, it);
-            if (fix) {
-              /* ICON BUTTONS (BZ): a tick by the new value and a cross by the current
-                 one. The words move to the advice line above; the button
-                 carries them in its title and aria-label for hover and
-                 screen readers. */
-              const up = el('button', 'chip btn-gold');
-              up.textContent = (fix.pick || '\u2713') + ' \u2713';
-              up.title = fix.label;
-              up.setAttribute('aria-label', fix.label);
-              /* Writes to the library entry, and to the shelf too when the same key is
-                 on it, so the correction shows in both places. */
-              up.onclick = () => {
-                if (!applyAuditFix(it.key, fix, 'library scan')) {
-                  toast('That entry is no longer in the library');
-                  verdict('ok', 'gone before it could be fixed');
-                  return;
-                }
-                toast(fix.done);
-                verdict('fixed', fix.said);
-              };
-              acts.appendChild(up);
-            }
-            /* And the current value, with the cross: keeping it is an ANSWER, not a
-               refusal to answer, so it is worded as one and remembered like one. */
-            const keepWord = fix && fix.keep ? fix.keep + ' \u2715'
-              : '\u2715';
-            const later = el('button', 'chip quiet'
-              + (fix && fix.keep ? '' : ' iconchip'));
-            later.textContent = keepWord;
-            later.title = 'Leave it as it is, and stop asking';
-            later.setAttribute('aria-label',
-              'Leave it as it is, and stop asking');
-            later.onclick = () => verdict('ok', 'left as it stands');
-            acts.appendChild(later);
-            /* Ignore already says this; two buttons that both mean "do nothing"
-               confuse. */
-            row.appendChild(acts);
-            card.appendChild(row);
-          });
-          /* No "and N more": the heading's count and the rows are the same number. */
-          /* A house split across two spellings is merged in place, here: the
-             scan opens FROM the library screen, so navigating there only
-             closed it (BZ). `dups` still travels, because which of two entries
-             survives is chosen on the library screen. */
-          if (f.id === 'houses') {
-            const vars2 = L.houseVariants(Object.values(LIB.products || {}));
-            const plan2 = vars2.length
-              /* The keyed MAP, not its values: Object.values drops the keys
-                 and every row came back keyed "0", "1", "2". */
-              ? L.houseMergePlan(L.libraryRows(LIB.products || {}), vars2[0])
-              : null;
-            if (plan2 && plan2.rows.length) {
-              const go2 = houseMergeButton(plan2, () => draw());
-              go2.style.marginTop = '9px';
-              card.appendChild(go2);
-            }
-          }
-          m.appendChild(card);
-        });
-      });
-    };
-    /* Fetch first if this device has not read the library yet, then draw.
-       One round trip, and only when it is actually needed. */
-    if (LIB.products) { draw(); return; }
-    working('Reading the library\u2026');
-    fbLibraryRef().once('value').then(sn => {
-      const v = sn.val();
-      LIB.products = L.libraryFromValue(v);
-      working();
-      draw();
-    }).catch(e => {
-      working();
-      toast(sayError(e, 'Could not read the library'));
-    });
 }
 
 function currencyCard() {
@@ -52292,9 +49664,9 @@ function showPourChoice(p, who) {
        the entry already open (BZ: "im not given a merge opportunity - can I
        merge at the bottle level?"). Admin only, because only an admin writes
        the library. */
-    if (!held && LIB.admin) {
-      m.appendChild(pointAtButton(p, () => { closeModal(); renderBuddiesTab(); }));
-    }
+    /* MOVED: "this is really that bottle" writes a forwarding address in
+       the library, which is an admin's write. It is on admin.html, in the
+       entry editor, where the two entries can be seen side by side. */
     /* ONE PHRASE FOR ONE ACT: every button that records a pour says "Pour it"
        (BZ, 2026-09-16). A pour is a thing you did, so it is offered only for a
        bottle you have. */
@@ -52489,107 +49861,59 @@ function renderRecap(box) {
 /* What is waiting for an admin, in the masthead. Shown only to an admin,
    and only when the count is above zero, so it is never decoration: if it
    is there, there is something to decide. */
-function showPending(n) {
+function showPending() {
   const b = document.getElementById('pendingBtn');
   if (!b) return;
-  /* TWO queues, one badge. Only once the library has actually LOADED: a
-     number that is wrong until you look sends somebody to check nothing. */
+  /* ONLY ONCE THE LIBRARY HAS ACTUALLY LOADED. Against an unread library
+     every bottle on the shelf looks new, so this would say the whole shelf
+     is waiting - the oldest fault in this app's family, and the reason
+     pendingForLibrary refuses to answer at all until the read lands. */
   let mine = 0;
   try {
-    mine = (LIB.admin && LIB.products) ? pendingForLibrary().length : 0;
+    mine = LIB.products ? pendingForLibrary().length : 0;
   } catch (e) {}
-  const count = LIB.admin ? ((n || 0) + mine) : 0;
-  /* The three numbers, named, so badge, button and list can be reconciled. */
-  appLog('library counts: badge ' + count + ' = ' + (n || 0)
-    + ' offered + ' + mine + ' of yours');
-  b.hidden = !count;
-  if (!count) {
+  /* Said with its population, so the badge and the sheet can be reconciled
+     against one number rather than against each other. */
+  appLog('library badge: ' + mine + ' of your bottles the library has not, '
+    + 'out of ' + Object.keys(LIB.products || {}).length + ' entries read');
+  b.hidden = !mine;
+  if (!mine) {
     /* AND THE NUMBER GOES WITH IT. The badge is drawn from data-n, and
        returning here without clearing it left the old count on the element -
        so anything that defeats `hidden` paints a number nothing can act on
        (BZ, 2026-10-03: "the 1 is still there", with every count reading
-       zero). This file records that hazard one rule away: an author
-       `display:flex` beats the browser's own [hidden]. */
+       zero). An author `display:flex` beats the browser's own [hidden]. */
     b.removeAttribute('data-n');
     b.title = 'Waiting for you';
     return;
   }
-  /* THE BADGE SAYS WHICH: one number over two populations cannot be
-     cleared. */
-  b.dataset.n = count;
-  /* Says WHICH, because the two need different things doing: an offer is
-     accepted or refused, and a correction of your own is published. */
-  const bits = [];
-  if (n) bits.push(n + ' offered');
-  if (mine) bits.push(mine + ' of yours to publish');
-  b.title = bits.join(', ') || (count + ' waiting for you');
+  b.dataset.n = mine;
+  b.title = mine + (mine === 1 ? ' bottle of yours to offer the library'
+                               : ' bottles of yours to offer the library');
   b.setAttribute('aria-label', b.title);
-  b.onclick = () => pendingActions(n || 0, mine);
+  b.onclick = () => pendingActions();
 }
 
 /* WHAT IS WAITING, AND THE DOING OF IT (BZ, 2026-09-30: "that badge needs to
    have the needed actions behind it"). It used to open the library screen,
-   which is where the queues live but not what they need done - and on a long
+   which is where the list lives but not what it needs done - and on a long
    screen that is a number sending somebody hunting.
 
-   One queue waiting goes straight to it. Both offer the choice, because they
-   want different things: an offer is accepted or refused, a bottle of your own
-   is published. Publishing is the review flow that already existed. */
-function pendingActions(offered, mine) {
-  /* ASK WHETHER THERE IS ANYTHING THERE, on the same terms the publish path
-     below already uses: a number that sent somebody to an empty screen and
-     stayed up sends them again. The read is the one the badge is built from,
-     so the two cannot disagree - and where it is empty the badge settles
-     itself rather than waiting for the next sign-in (BZ, 2026-10-03: "It goes
-     to library. Just nothing to do"; his account held no offers at all). */
-  const toOffers = () => {
-    readOffers().then(rows => {
-      const live = rows.filter(r => !r.entry.dropped).length;
-      LIB.waiting = live;
-      if (!live) {
-        closeModal();
-        showPending(0);
-        toast('Nothing is waiting for you any more');
-        return;
-      }
-      closeModal(); renderLibraryScreen(); goTo('library');
-    }).catch(() => { closeModal(); renderLibraryScreen(); goTo('library'); });
-  };
-  const toPublish = () => {
-    closeModal();
-    let pend = [];
-    try { pend = pendingForLibrary(); } catch (e) { pend = []; }
-    if (!pend.length) {
-      /* RECOUNT, don't just complain: the number that sent them here is stale,
-         and leaving it up sends them again. */
-      showPending(LIB.waiting || 0);
-      toast('Nothing of yours is waiting any more');
-      return;
-    }
-    reviewBatch(pend, () => renderLibraryScreen());
-  };
-  if (offered && !mine) return toOffers();
-  if (mine && !offered) return toPublish();
-  openModal('Waiting for you', m => {
-    const a = el('button', 'btn wide btn-gold',
-      offered + (offered === 1 ? ' offer to judge' : ' offers to judge'));
-    a.onclick = toOffers;
-    m.appendChild(a);
-    const b2 = el('button', 'btn wide');
-    b2.style.marginTop = '8px';
-    b2.textContent = mine + ' of yours to publish';
-    b2.onclick = toPublish;
-    m.appendChild(b2);
-    const no = el('button', 'btn ghost wide', 'Not now');
-    no.style.marginTop = '8px';
-    no.onclick = closeModal;
-    m.appendChild(no);
-  });
+   ONE ROUTE SINCE 2026-10-27. It offered a choice of two because an admin had
+   two queues; everybody has one, so the press goes straight to the review and
+   the review offers them. */
+function pendingActions() {
+  let pend = [];
+  try { pend = pendingForLibrary(); } catch (e) { pend = []; }
+  if (!pend.length) {
+    /* RECOUNT, don't just complain: the number that sent them here is stale,
+       and leaving it up sends them again. */
+    showPending();
+    toast('Nothing of yours is waiting any more');
+    return;
+  }
+  reviewBatch(pend, () => { showPending(); renderLibraryScreen(); });
 }
-
-/* Where THIS bottle came from, set after the fact. */
-/* THE STORE PICK PART OF WHERE A BOTTLE CAME FROM: four optional boxes,
-   read back through L.bottlePick. */
 function pickFields(m, b) {
   const wrap = el('div');
   wrap.style.marginTop = '10px';
@@ -55985,77 +53309,6 @@ function styleRow(p) {
    openLibraryCleanUp, which marking the fuller side pushed over its
    ceiling - and it reads better named than buried five levels deep in a
    cleanup screen (2026-09-30). */
-function askWhichNameStays(sides, kk, draw) {
-  openModal('Which name stays?', m2 => {
-  m2.appendChild(el('div', 'sub', 'The other becomes a '
-    + 'pointer to it. Bottles on anyone’s shelf follow '
-    + 'the name that stays.'));
-  /* WHICH SIDE SAYS MORE ABOUT THE BOTTLE, marked rather
-     than chosen (BZ, 2026-09-30: he kept the fuller name 28
-     times out of 28, and the fuller name is the one that
-     states the class). The question still gets asked. */
-  const fuller = L.moreDescriptive(sides[0], sides[1]);
-  sides.forEach((keepName, i2) => {
-    const dropName = sides[1 - i2];
-    const b4 = el('button',
-      'btn wide' + (keepName === fuller ? ' btn-gold' : ''));
-    b4.style.marginTop = '6px';
-    b4.textContent = 'Keep \u201c' + keepName + '\u201d'
-      + (keepName === fuller ? ' \u2014 says more' : '');
-    b4.onclick = () => {
-      /* Resolved against the library, because a key worked out from the screen
-         can point nowhere and a delete against nowhere succeeds silently. */
-      const keepK = L.resolveLibKey(LIB.products, kk[i2],
-        sides[i2]);
-      const dropK = L.resolveLibKey(LIB.products,
-        kk[1 - i2], sides[1 - i2]);
-      if (!keepK || !dropK) {
-        appLog('merge: could not place '
-          + (keepK ? dropName : keepName) + ' in the '
-          + 'library (keys ' + kk.join(', ') + ')');
-        toast('Could not find that entry in the library');
-        return;
-      }
-      if (keepK === dropK) {
-        toast('Those are already one entry'); return;
-      }
-      b4.disabled = true;
-      /* NOT fbKey HERE. fbEncodePaths encodes every segment itself, so encoding
-         first did it TWICE - silent corruption for a key with
-         a dot (~td instead of ~d), pointing at nothing. */
-      libraryMergeWrite([{ drop: dropK, keep: keepK }])
-        .then(() => {
-          appLog('library: merged ' + dropK + ' into '
-            + keepK);
-          toast('Merged into ' + keepName);
-          closeModal();
-          draw();
-        })
-        .catch(e2 => {
-          b4.disabled = false;
-          toast(sayError(e2));
-        });
-    };
-    m2.appendChild(b4);
-  });
-  });
-}
-
-/* --- add / edit a product --------------------------------------------- */
-
-// The add/edit form offers exactly the categories the reels can name, so a
-// hand-typed bottle can never land somewhere no spin reaches.
-const SUBS = L.TYPES.slice();
-
-/* `fromScan` is { code, draft }: a code just read, with whatever had been
-   typed before the capture opened. The form is a SHEET and the capture
-   opens over it in the one modal container, so the form is rebuilt WITH
-   the code rather than keeping two sheets alive. */
-/* THE BOTTLE'S OWN FACTS AS ROWS. Its own function because the form is at its
-   line ceiling and because these belong together: they are the LIBRARY'S to
-   fill in, not this person's (BZ, 2026-10-01: "bottle facts clearly"). Of 315
-   typed by hand across five shelves, 60% were already in the library word for
-   word, about 1% were new, and most of the rest landed in the wrong box. */
 function bottleFactRows(p) {
   /* THE BOTTLE'S OWN FACTS, which are the LIBRARY'S to fill in and not this
      person's (BZ, 2026-10-01: "bottle facts clearly"). Of 315 typed by hand
@@ -59143,7 +56396,11 @@ function learnUpc(upc, name, extra) {
   save_();
   appLog('learned barcode ' + key + ' = ' + row.name);
   if (!FB.user) return;
-  const target = L.upcWriteTarget(!!LIB.admin, FB.user.uid, key);
+  /* OFFERED, NEVER PUBLISHED (2026-10-27). The first argument says whether
+     this writer may put a pairing straight into the shared map; nothing in
+     the app may now, so it is false and every pairing is filed under its
+     own contributor. admin.html's intake promotes them. */
+  const target = L.upcWriteTarget(false, FB.user.uid, key);
   firebase.database().ref(target.path).set(row)
     .then(() => appLog('barcode ' + key + (target.reviewed
       ? ' published' : ' offered for review')))
@@ -59219,37 +56476,12 @@ function offerToLibrary(entry, how) {
   const key = L.libKey(entry.name);
   if (!key) return Promise.resolve(false);
 
-  if (LIB.admin) {
-    const ref = firebase.database().ref('bz-apps/whisky/shared');
-    /* The removal is read with the entry, not trusted from memory: this
-       device's removals may not be loaded, and an admin's lookup could put a
-       removed bottle back for everyone. */
-    return Promise.all([ref.child('catalog/products/' + key).once('value'),
-      ref.child('removed/' + key).once('value')]).then(got => {
-      const s = got[0];
-      const removedNow = Object.assign({}, LIB.removed || {},
-        got[1].exists() ? { [key]: got[1].val() } : {});
-      const v = L.libraryAccepts(key, s.exists(), removedNow, LIB.graves);
-      if (!v.ok) {
-        if (v.why === 'it was removed') {
-          appLog('library: not adding ' + entry.name + ' \u2014 ' + v.why);
-        }
-        return false;
-      }
-      const now = Date.now();
-      return ref.update(L.fbEncodePaths({ ['catalog/products/' + key]:
-          Object.assign(L.libraryEntry(entry, refBrands()), { at: now }),
-          stamp: now }))
-        .then(() => {
-          appLog('library: added ' + entry.name + ' ' + (how || ''));
-          return true;
-        });
-    }).catch(e => {
-      appLog('library: could not add ' + entry.name + ' \u2014 '
-        + ((e && e.message) || e));
-      return false;
-    });
-  }
+  /* THE ADMIN BRANCH LEFT ON 2026-10-27. It read the entry and its removal
+     back, judged them, and wrote the bottle straight into the library - for
+     one account. Everybody takes the road below now, which is the road
+     everybody else always took, and the admin accepts the offer on
+     admin.html. BZ's own rule, finally true of the code: only an admin
+     writes the shared library, everybody else offers. */
 
   /* AND THE SAME JUDGMENT for an offer. An entry an admin removed must not
      come back round through the queue - it would be reviewed again and cost
@@ -60361,8 +57593,11 @@ function saveAndRedrawShelf(say) {
      wrong: a bottle of your own waiting to be published stops waiting the
      moment it joins a library entry. The badge said 1 and the press said
      nothing was waiting (BZ, 2026-10-01). */
-  showPending(LIB.waiting || 0);
-  publishMineIfAdmin();
+  showPending();
+  /* MOVED 2026-10-27: an admin's corrections used to publish straight into
+     the library here, on every save, with nothing on screen to say so.
+     Everybody offers now - through the badge this line has just recounted -
+     and an offer is a thing you can look at before it goes. */
 }
 
 /* AN ADMIN'S EDIT IS THE LIBRARY'S EDIT (BZ, 2026-10-01: "Why do I have to
@@ -60379,13 +57614,6 @@ function saveAndRedrawShelf(say) {
 
    AND NOT AGAINST A LIBRARY NOBODY HAS READ, because against an empty one every
    bottle differs and this would write the whole shelf over it. */
-function publishMineIfAdmin() {
-  if (!LIB.admin || !LIB.products || !Object.keys(LIB.products).length) return;
-  const pend = pendingForLibrary();
-  if (!pend.length) return;
-  publishBatch(pend.map(x => x.p), () => {});
-}
-
 function fbSyncCatalog() {
   if (!FB.user) return Promise.resolve(false);
   const since = fbCatalogStamp();
@@ -60767,7 +57995,8 @@ function fbLoadAfterWipeCheck() {
     // After your own shelf, never before it: a catalog read must not
     // delay the thing you opened the app for.
     fbSyncCatalog();
-    fbBadgeContrib();
+    /* MOVED: the offered-queue count. admin.html counts its own. */
+    showPending();
     // Arrived by an invite link: ask on their behalf, then clear the id from
     // the address bar so a reload does not ask twice. FB.user, not `user`:
     // there is no `user` in this scope, and a throw here stops the shelf
@@ -60783,16 +58012,9 @@ function fbLoadAfterWipeCheck() {
        is not pushed at load: a load already merges it in for free. */
     if (!hasRemote || FB.localWon) fbPush();
     fbListen();
-    /* Admin is an umbrella, established once at sign-in. */
-    fbCheckAdmin().then(was => {
-      if (!was) return;
-      const on = id => {
-        const e = document.getElementById(id);
-        return e && e.classList.contains('on');
-      };
-      if (on('scr-settings')) renderSettings();
-      if (on('scr-library')) renderLibraryScreen();
-    }).catch(() => {});
+    /* MOVED: admin was an umbrella established once at sign-in, and two
+       screens redrew when it turned out to be up. Neither depends on it
+       now. */
   }).catch(e => {
     // Signed in but the shelf would not load. Say both, or it reads as a
     // sign-in that did not happen.
@@ -61567,7 +58789,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.13</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.14</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
@@ -61698,24 +58920,6 @@ $('#quizBtn').onclick = () => showQuiz();
 
 
 // A queue nobody knows about is a queue nobody works through.
-function fbBadgeContrib() {
-  if (!FB.user) return;
-  fbCheckAdmin().then(isAdmin => {
-    if (!isAdmin) return;
-    fbContribRef().once('value').then(s => {
-      /* Count the rows the list shows, read the way it reads them (not the
-         barcode node, not what was dropped), so the badge matches the queue. */
-      const n = offerRows(s).filter(r => !r.entry.dropped).length;
-      LIB.waiting = n;
-      // And on Home, where an admin will see it without going to look.
-      showPending(n);
-    }).catch(e => appLog('could not count what is offered to the library: '
-      + ((e && e.message) || e)));
-  });
-}
-$('#libBack').onclick = goBack;
-$('#diagBack').onclick = goBack;
-/* ONE COPY, TWO WAYS TO ASK FOR IT (BZ). */
 function copyDiagnostics() {
   const t = diagText();
   if (!navigator.clipboard) { toast('Copying is not available here'); return; }

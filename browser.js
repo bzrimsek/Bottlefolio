@@ -1329,8 +1329,14 @@ function step(n) {
       rebuildCatalog();
       return { withShelf: withShelf, empty: empty };
     });
+    /* SIX CARDS SINCE 2026-10-27: Tidy your shelf joined when the
+       shelf-crossing half of the admin's old Clean up page became
+       everybody's. It is THIRD - prices keep the second place BZ gave them
+       the same day, and his named sequence is what you have, what its
+       prices are read in, how to get more in, the files, and the one that
+       cannot be taken back. */
     const want = 'The shelf itself | Prices in another currency '
-      + '| Import a shelf | Files | Starting over';
+      + '| Tidy your shelf | Import a shelf | Files | Starting over';
     [['with a shelf', r.withShelf], ['with no shelf', r.empty]].forEach(
       ([when, got]) => {
         if (got !== want) {

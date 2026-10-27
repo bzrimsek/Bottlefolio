@@ -226,7 +226,25 @@ check('no plain function is defined and never called', plainDead);
    They come off this list the day the app reads the new catalogue. If that
    day does not come, they come out with their tests instead; what must not
    happen is this line quietly outliving the decision that put it here. */
-const KEPT_UNWIRED = ['parseUpcListing', 'stateOf', 'catFault'];
+/* AND TWO THAT THE ADMIN SPLIT UNWIRED (2026-10-27). L.publishWrite built
+   the write a publish made FROM A SHELF; L.clearFieldLocally cleared a field
+   on this device's own rows so its copy would not publish the fault back.
+   Both served one account - an admin publishing off their own shelf - and
+   that road is gone: everybody offers, the admin accepts on admin.html, and
+   the accept path builds its own write.
+
+   KEPT RATHER THAN DELETED for the reason the entry above records: their
+   fifteen assertions sit across five blocks of killer-bs-test.js, which is
+   the exact shape that broke that harness four times in one afternoon, and
+   the end of a three-thousand-line move is the worst moment to try it.
+
+   THEY COME OUT one of two ways, and this line must not outlive either:
+   with their tests when that file is next reorganised on purpose, or sooner
+   if libraryAddWrite on admin.html is made to ask L.publishWrite rather
+   than build its own update - which is the one-door answer to why there are
+   two ways to write a batch into the library at all, and is its own job. */
+const KEPT_UNWIRED = ['parseUpcListing', 'stateOf', 'catFault',
+  'publishWrite', 'clearFieldLocally'];
 check('no L function is tested but never wired into the app',
   unwired.filter(fn => KEPT_UNWIRED.indexOf(fn) < 0));
 
@@ -436,6 +454,70 @@ const askBlock = (() => {
   check('no CSS rule styles a class nothing emits', dead);
 }
 
+/* AND THE ADMIN PAGE'S CLASSES, BOTH WAYS.
+
+   admin.html carries 3,000 lines of markup that came from index.html, and
+   the class names came with it - so its stylesheet had to grow its own
+   versions of .dupgrid, .tiles, .scrollbox and two dozen more. Two failures
+   are possible there and both are silent:
+
+     emitted and not styled   the markup renders unstyled. The duplicate
+         grid would collapse to a stack of bare text and photograph as
+         though nothing were wrong.
+     styled and not emitted   dead weight, which is what the check above
+         exists for and what THIS build created in index.html when the scan
+         left and .dupgrid stayed.
+
+   This existed as a sentence in admin.html's stylesheet before it existed
+   as a check, which is the worse of the two: a comment claiming a guard
+   that is not there teaches a reader to trust none of them. */
+{
+  const f = __dirname + '/admin.html';
+  const bad = [];
+  if (fs.existsSync(f)) {
+    const at = fs.readFileSync(f, 'utf8');
+    const css = at.slice(0, at.indexOf('</style>'));
+    /* The MARKUP and the SCRIPT both emit classes - one in the shell's
+       HTML, one through el('div', 'sheet'). Comments blanked, because the
+       moved code's comments name classes it no longer emits. */
+    const body = blankComments(at.slice(at.indexOf('</style>'))
+      .replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' ')));
+    const clean = css.replace(/url\([^)]*\)/g, '')
+      .replace(/@import[^;]*;/g, '')
+      .replace(/https?:\/\/[^\s"')]+/g, '');
+    const styled = [...new Set((clean.match(/\.[a-z][a-z0-9-]{2,}/gi) || [])
+      .map(c => c.slice(1)))];
+    styled.forEach(c => {
+      if (!new RegExp('\\b' + c + '\\b').test(body)) {
+        bad.push('admin.html styles .' + c + ' and emits it nowhere');
+      }
+    });
+    /* THE OTHER WAY: every class the script asks for, out of el()'s second
+       argument and any className assignment, must be styled. A class list
+       like 'item pair' is two classes. */
+    const asked = new Set();
+    const re = /el\(\s*'[a-z0-9]+'\s*,\s*'([a-z0-9 -]+)'/gi;
+    let m2;
+    while ((m2 = re.exec(body))) {
+      m2[1].split(/\s+/).forEach(c => { if (c) asked.add(c); });
+    }
+    const re2 = /className\s*=\s*'([a-z0-9 -]+)'/gi;
+    while ((m2 = re2.exec(body))) {
+      m2[1].split(/\s+/).forEach(c => { if (c) asked.add(c); });
+    }
+    /* Classes the SHELL styles under a parent (.tile .v) or that exist only
+       as a state the script toggles are still styled; the test is whether
+       the stylesheet mentions the name at all. */
+    [...asked].sort().forEach(c => {
+      if (!new RegExp('\\.' + c + '\\b').test(clean)) {
+        bad.push('admin.html emits .' + c + ' and styles it nowhere');
+      }
+    });
+  }
+  check('the admin page styles every class it emits, and emits every class '
+    + 'it styles', bad);
+}
+
 /* NOBODY COUNTS A SHELF BY HAND.
 
    BZ, comparing Home with the admin list: 346 on my devices, 348 here - I
@@ -545,7 +627,14 @@ const askBlock = (() => {
         .readFileSync(__dirname + '/killer-bs-test.js', 'utf8')
         .indexOf('L.' + n) >= 0;
     } catch (e) { /* no suite beside us, nothing to learn */ }
-    if (uses <= 1 && !readHere && !namedAsString && !inTests) {
+    /* AND SOME ARE READ ONLY BY THE ADMIN PAGE, which is a legitimate
+       reader exactly as the harness and the nightly jobs are. Fifth and
+       last false-positive class: L.INTAKE_EVERY is the intake's interval and
+       the intake runs on admin.html since 2026-10-27, so looking for it in
+       index.html finds the declaration and nothing else. ADMIN already
+       normalises A.L. to L. for the check above. */
+    const inAdmin = ADMIN.indexOf('L.' + n) >= 0;
+    if (uses <= 1 && !readHere && !namedAsString && !inTests && !inAdmin) {
       dead.push('L.' + n + ' is declared and never read');
     }
   }
@@ -789,9 +878,9 @@ const SCREEN_COPIES_OK = [
   // Two different engine questions (L.tastingForGuest, L.readShelfQuestion)
   // that both take the shelf and give up on no answer. Shape, not a rule.
   'fbReadTastings + renderShopAsk',
-  // A run stops at the day's limit without spending: the check, not a copy
-  // of spendLookups, which is the only place that counts.
-  'contribFillFirst + libraryFillRun', 'libraryFillRun + spendLookups',
+  /* contribFillFirst + libraryFillRun and libraryFillRun + spendLookups
+     both went to admin.html on 2026-10-27 with the intake and the fill, and
+     are allowed there instead - see ADMIN_COPIES_OK below. */
   // Both sync paths and the push ask L.resetSide which side replaced a list.
   'fbLoadAfterWipeCheck + fbOnRemote + fbPush',
   // Four screens ask the engine of the shelf and draw if it answers anything.
@@ -803,8 +892,11 @@ const SCREEN_COPIES_OK = [
      that was always inside the trio. */
   /* showLessons dropped its unbuilt-shapes list on 2026-10-19 and no
      longer shares a shape with either of these. */
-  // Three presses refuse with the one no-service sentence.
-  'labelCapture + libraryFillStart + pickShelfPhotos',
+  /* TWO PRESSES NOW, not three: libraryFillStart went to admin.html on
+     2026-10-27 and the other two still refuse with the one no-service
+     sentence. The shape is "no address, say the shared sentence, stop" -
+     one door being used, not a rule copied. */
+  'labelCapture + pickShelfPhotos',
   // The service answers, and L.parseLookup reads it.
   'productForm + shopAnswer',
   // What the shelf and the wishlist say about a bottle, asked of the engine.
@@ -907,19 +999,22 @@ function copyGroups(text, fnRe, width, counts) {
     '.querySelector', '.querySelectorAll', '.onclick', '.dataset',
     '.marginTop', '.disabled', '.innerHTML', '.type', '.placeholder',
     '.value'];
+  /* WHAT COUNTS AS A RULE IN A SCREEN, named once because two files of
+     screens are checked with it now (2026-10-27) and a predicate written
+     twice would drift - which is the fault this whole check is for. */
+  const screenCopyRule = w => {
+    const decides = w.some(x =>
+      ['===', '!==', '<', '>', '<=', '>=', 'if'].indexOf(x) >= 0);
+    const dom = w.filter(x => DOM.indexOf(x) >= 0).length;
+    const reads = w.filter(x => x.indexOf('L.') === 0).length
+      + w.filter((x, j) => (x === 'S' || x === 'LIB')
+        && /^\./.test(w[j + 1] || '')).length;
+    return decides && dom <= 1 && reads >= 2;
+  };
   const screenGroups = copyGroups(
     src.slice(cut, src.lastIndexOf('</script>')),
     /^(?:async\s+)?function\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/gm,
-    SCREEN_COPY_WINDOW,
-    w => {
-      const decides = w.some(x =>
-        ['===', '!==', '<', '>', '<=', '>=', 'if'].indexOf(x) >= 0);
-      const dom = w.filter(x => DOM.indexOf(x) >= 0).length;
-      const reads = w.filter(x => x.indexOf('L.') === 0).length
-        + w.filter((x, j) => (x === 'S' || x === 'LIB')
-          && /^\./.test(w[j + 1] || '')).length;
-      return decides && dom <= 1 && reads >= 2;
-    });
+    SCREEN_COPY_WINDOW, screenCopyRule);
   const screenCopies = Object.keys(screenGroups).sort()
     .filter(g => SCREEN_COPIES_OK.indexOf(g) < 0)
     .map(g => g + ' decide one thing the same way twice: '
@@ -928,6 +1023,62 @@ function copyGroups(text, fnRe, width, counts) {
   const staleScreen = SCREEN_COPIES_OK.filter(g => !screenGroups[g])
     .map(g => g + ' is allowed and no longer happens');
   check('the screen copies allowance has no stale entries', staleScreen);
+
+  /* AND THE ADMIN PAGE, which is three thousand lines of screens that
+     nothing checked for copies until 2026-10-27. BZ's original question was
+     "are you confident all duplicate/similar functions have been
+     consolidated?", and the answer was no while half the file went
+     unscanned; the admin split made that true again of a different file.
+
+     ITS OWN BODY, not appended to index.html's. Twenty-two names exist in
+     both files - the small shell (toast, openModal, buttonWorking), the
+     library cache (withLibrary, libNow, refBrands) - and a function is not
+     a copy of itself. Comparing across the two would report those instead
+     of a rule written twice inside one of them, which is what this check is
+     for. Whether those twenty-two should be shared at all is a real
+     question and a separate one: index.html is one file with no build step,
+     on purpose. */
+  /* ONE ENTRY, and it is the one index.html allowed until both halves of it
+     moved here on 2026-10-27: the intake's fill and the library fill each
+     STOP at the day's lookup limit without spending it. That is the limit
+     being asked, not a copy of the one place that counts it - adminService
+     is the only thing on this page that spends.
+
+     Measured, not guessed. Three groups were guessed into this list first
+     and the stale-entry check named all three, which is the allowance
+     mechanism working in the direction nobody expects: it refuses an excuse
+     for something that is not happening. Nothing new may join it without
+     its reason (rule 28a). */
+  const ADMIN_COPIES_OK = ['contribFillFirst + libraryFillRun'];
+  const adminFile = __dirname + '/admin.html';
+  if (fs.existsSync(adminFile)) {
+    const at = fs.readFileSync(adminFile, 'utf8');
+    /* NORMALISED FIRST, or this check cannot see this file. copyGroups keeps
+       an engine call's name by matching /L\.name/, and here the engine is
+       A.L: the tokeniser takes `A` as an id, then `.L`, then `.name`, throws
+       the name away, and every window reads as zero engine calls - so the
+       predicate below is never true and the check passes whatever the file
+       holds. A mutant proved exactly that before this line existed.
+
+       A.L. -> L. and A. -> S. is the same normalisation ADMIN does further
+       up, for the same reason: one counting rule serving every caller. */
+    const body = at.slice(at.indexOf('<script>') + 8, at.lastIndexOf('</script>'))
+      .split('A.L.').join('L.')
+      .split('A.').join('S.');
+    /* AND index.html's OWN PREDICATE, not a second copy of it. A copy check
+       written out twice would be a poor joke, and the two would drift. */
+    const adminGroups = copyGroups(body,
+      /^(?:async\s+)?function\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/gm,
+      SCREEN_COPY_WINDOW, screenCopyRule);
+    const adminCopies = Object.keys(adminGroups).sort()
+      .filter(g => ADMIN_COPIES_OK.indexOf(g) < 0)
+      .map(g => g + ' decide one thing the same way twice: '
+        + adminGroups[g].slice(0, 90));
+    check('no rule is written out twice on the admin page', adminCopies);
+    const staleAdmin = ADMIN_COPIES_OK.filter(g => !adminGroups[g])
+      .map(g => g + ' is allowed and no longer happens');
+    check('the admin copies allowance has no stale entries', staleAdmin);
+  }
 }
 
 /* NO BUTTON IS DISABLED BY DATA THE SCREEN HAS NOT FETCHED.
@@ -1392,7 +1543,14 @@ check('no fixed svg id is emitted by a repeated drawing',
        nothing, because it reads a list of names and nobody had added
        these. Rule 9z is the rule; this is the half of it a machine can
        hold. */
-    'Make a link'];
+    'Make a link',
+    /* Added 2026-10-27 with build 2 of the admin split. "Tidy your shelf"
+       is where the shelf-crossing half of the admin's old Clean up page
+       went, drawn for every user; "Offer marked" is what "Publish marked"
+       became when everybody started offering instead of one account
+       writing. A control named in the app and not in here is one this
+       check cannot see (rule 9z). */
+    'Tidy your shelf', 'Offer marked'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',
@@ -1827,13 +1985,25 @@ check('no fixed svg id is emitted by a repeated drawing',
  * from rotting.
  */
 {
-  const lines = src.split('\n');
+  /* BOTH FILES THAT MAY WRITE THE LIBRARY (2026-10-27). Five of the six
+     creation sites moved to admin.html with the admin screens, and this
+     check read index.html - so the strongest guard in this file would have
+     gone green while looking at the one file that no longer creates
+     anything. Where a fault is reported matters, so each file is scanned
+     under its own name. */
+  const FILES = [{ name: 'index.html', text: src }];
+  if (fs.existsSync(__dirname + '/admin.html')) {
+    FILES.push({ name: 'admin.html',
+      text: fs.readFileSync(__dirname + '/admin.html', 'utf8') });
+  }
   /* An admin's Undo restores the exact entry the admin just removed, in
      the same write that lifts the tombstone. That is a deliberate act by
      the only person who can do it, and guarding it would make undo
      impossible. Named, so it is a decision rather than an oversight. */
   const ALLOWED_UNGUARDED = ['lifts the tombstone'];
   const creations = [], unguarded = [];
+  FILES.forEach(f => {
+  const lines = f.text.split('\n');
   lines.forEach((l, i) => {
     if (!/catalog\/products\/'/.test(l)) return;
     if (/\+ '\/'/.test(l)) return;                         // field update
@@ -1843,20 +2013,27 @@ check('no fixed svg id is emitted by a repeated drawing',
        .once('value')` matched, once the guard it feeds sat five lines below
        it rather than one (2026-09-16). */
     if (/\.(once|on)\(\s*'value'/.test(l)) return;
-    creations.push(i + 1);
+    creations.push(f.name + ':' + (i + 1));
     // The guard is asked within the same block of work, not a file away.
     const near = lines.slice(Math.max(0, i - 30), i + 4).join('\n');
     if (near.indexOf('libraryAccepts') >= 0) return;
     if (ALLOWED_UNGUARDED.some(a => near.indexOf(a) >= 0)) return;
-    unguarded.push('index.html:' + (i + 1) + '  ' + l.trim().slice(0, 58)
+    unguarded.push(f.name + ':' + (i + 1) + '  ' + l.trim().slice(0, 58)
       + '  — creates a library entry without asking L.libraryAccepts');
+  });
   });
   check('every write that creates a library entry asks the guard', unguarded);
 
   /* And the guard is only worth asking if it is TOLD about the merges.
      Passing three arguments leaves `graves` undefined, which reads as "no
      merges have ever happened" and is exactly the bug. */
-  const calls = src.match(/L\.libraryAccepts\([^;]*?\);/g) || [];
+  /* AND IN BOTH FILES, for the same reason: admin.html asks the guard five
+     times and a three-argument call there is the same bug. A.L. is the same
+     door under this page's name for the engine. */
+  const calls = (src.match(/L\.libraryAccepts\([^;]*?\);/g) || [])
+    .concat(FILES.filter(f => f.name !== 'index.html')
+      .map(f => f.text.match(/A?\.?L\.libraryAccepts\([^;]*?\);/g) || [])
+      .reduce((a, b) => a.concat(b), []));
   const blind = calls
     .filter(c => c.split(',').length < 4)
     .map(c => c.replace(/\s+/g, ' ').slice(0, 66) + '  — no graves argument');
@@ -1864,6 +2041,11 @@ check('no fixed svg id is emitted by a repeated drawing',
 
   /* The allowance cannot rot. If the creation sites drop, the exception
      may already be gone with them. */
+  /* Measured 2026-10-27, across both files, after the library admin moved.
+     Five, all of them in admin.html: index.html creates nothing in the
+     library any more, it offers. The allowance above still names something
+     real - the Undo that lifts a tombstone went to admin.html with the rest
+     of the admin, and is the one creation there that may skip the guard. */
   const CREATIONS_TODAY = 5;
   check('the library-write allowance is not stale',
     creations.length < CREATIONS_TODAY
@@ -1924,13 +2106,23 @@ check('no fixed svg id is emitted by a repeated drawing',
   if (!acts.length) bad.push('the inventory is empty');
   acts.forEach(act => {
     if (!act.id) bad.push('an action with no name');
+    /* WHICH FILE THE DOOR IS IN. An action may name `where`; without one it
+       is index.html's, which is what every action was before admin.html
+       existed. A declaration that cannot say which file would have to look
+       for its door in the wrong one and pass by failing to find it. */
+    const WHERE = { 'index.html': codeOnly, 'admin.html': ADMIN };
+    const inFile = act.where || 'index.html';
+    if (!WHERE[inFile]) {
+      bad.push('"' + act.id + '" names the file ' + inFile
+        + ', which this check does not read');
+    }
     (act.through || []).concat(act.pressed || [], act.inner || []).forEach(fn => {
-      /* The function it names has to be real, and has to be DEFINED here
-         rather than merely mentioned. */
+      /* The function it names has to be real, and has to be DEFINED in the
+         file the action says it is in rather than merely mentioned. */
       const def = new RegExp('(?:function |L\\.)' + fn + '\\s*[=(]');
-      if (!def.test(codeOnly)) {
+      if (!def.test(WHERE[inFile] || '')) {
         bad.push('"' + act.id + '" routes through ' + fn
-          + ', which is not defined anywhere');
+          + ', which is not defined in ' + inFile);
       }
     });
     if (!(act.through || []).length) {
@@ -2008,6 +2200,10 @@ check('no fixed svg id is emitted by a repeated drawing',
 
   const bad = [];
   (ENGINE.ACTIONS || []).forEach(act => {
+    /* THIS CHECK READS index.html. An action whose door is in another file
+       has its own check below; running this one over it would look at the
+       wrong lines and pass. */
+    if ((act.where || 'index.html') !== 'index.html') return;
     const through = act.through[0];
     const rx = new RegExp('\\b' + through + '\\(');
     lines.forEach((l, i) => {
@@ -2062,6 +2258,7 @@ check('no fixed svg id is emitted by a repeated drawing',
   };
   const bad = [];
   (ENGINE.ACTIONS || []).forEach(act => {
+    if ((act.where || 'index.html') !== 'index.html') return;
     (act.inner || []).forEach(fn => {
       const rx = new RegExp('\\bL\\.' + fn + '\\(');
       lines.forEach((l, i) => {
@@ -2075,6 +2272,82 @@ check('no fixed svg id is emitted by a repeated drawing',
     });
   });
   check('nothing answers a declared action by going round its door', bad);
+}
+
+/* AND THE ADMIN PAGE'S OWN DOOR, CHECKED IN THE ADMIN PAGE.
+ *
+ * The two checks above read index.html. admin.html asks the same lookup
+ * service and, since 2026-10-27, is declared in L.ACTIONS as doing it
+ * through adminService - because postWithRetry's retry, lane queue and wake
+ * lock are a phone's problems and copying 135 lines of them onto a desktop
+ * page would be a second copy of the app's most-tested path rather than a
+ * second door to a service.
+ *
+ * A declaration nobody validates is decoration, which this file says about
+ * its own inventory two checks up. So: anything in admin.html that names the
+ * lookup address must be inside the declared door. Before this existed,
+ * every call that file made was outside every guard here.
+ *
+ * Proven red before being trusted: a fetch of A.lookupUrl written into
+ * countOffers was reported, and the same fetch inside adminService was not.
+ */
+{
+  /* BY THE FILE IT NAMES, not by words in its id. Picking it with
+     id.indexOf('lookup service') meant renaming the action to "...from
+     somewhere" still satisfied this check, which a mutant found at once:
+     the matcher, not the rule, was what the declaration had to satisfy. */
+  const act = (ENGINE.ACTIONS || []).filter(a => a.where === 'admin.html')[0];
+  const bad = [];
+  if (!ENGINE.ACTIONS || !ENGINE.ACTIONS.length) {
+    bad.push('the inventory is empty, so nothing declares the admin door');
+  } else if (!act) {
+    bad.push('no action declares how admin.html reaches the lookup service');
+  } else if (!fs.existsSync(__dirname + '/admin.html')) {
+    bad.push('admin.html is declared in L.ACTIONS and is not beside this file');
+  } else {
+    const door = act.through[0];
+    /* Comments blanked, lines kept: the door's own comment explains what it
+       is NOT (postWithRetry), and a check that reads that sentence as a call
+       is the green-for-the-wrong-reason fault this file keeps finding. */
+    const lines = blankComments(
+      fs.readFileSync(__dirname + '/admin.html', 'utf8')
+        .replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' '))
+    ).split('\n');
+    /* Which function each line is in, by walking back to its declaration. */
+    const owner = i => {
+      for (let j = i; j >= 0; j--) {
+        const m = lines[j].match(/^(?:async )?function ([A-Za-z0-9_$]+)/);
+        if (m) return m[1];
+      }
+      return '(top level)';
+    };
+    let defined = false;
+    lines.forEach((l, i) => {
+      if (new RegExp('^(?:async )?function ' + door + '\\b').test(l)) {
+        defined = true;
+      }
+      /* REACHING IT IS BUILDING THE REQUEST, not naming the address. The
+         engine door that turns the address into a url for one question is
+         A.L.lookupUrl, and a fetch of the address is the other way to do
+         it. Asking `if (!A.lookupUrl)` - whether a service is configured at
+         all - is neither, and the first version of this check reported four
+         of those as faults. A check that reports correct code gets switched
+         off, which is why it reads a call. */
+      const builds = /A\.L\.lookupUrl\s*\(/.test(l);
+      const fetches = /\bfetch\s*\(/.test(l) && /lookupUrl/.test(l);
+      if (!builds && !fetches) return;
+      const who = owner(i);
+      if (who === door) return;
+      bad.push('admin.html:' + (i + 1) + '  ' + who
+        + ' reaches the lookup service directly - "' + act.id
+        + '" goes through ' + door);
+    });
+    if (!defined) {
+      bad.push('admin.html does not define ' + door
+        + ', which L.ACTIONS says is its door to the lookup service');
+    }
+  }
+  check('the admin page reaches the lookup service one way', bad);
 }
 
 /* EVERY LOOKUP BUTTON BEHAVES THE SAME.
@@ -3494,25 +3767,26 @@ check('no fixed svg id is emitted by a repeated drawing',
     showBottle: 417,
     productForm: 316,
     renderShelf: 297,
-    openLibraryCleanUp: 286,
+    openLibraryCleanUp: 280,
     renderAway: 265,
     shopAnswer: 243,
     renderGaps: 170,
     renderShelfCharts: 163,
     shelfPortrait: 159,
     renderGuest: 157,
+    renderUsers: 152,
     showCandidates: 147,
     showEnhance: 139,
     libraryAudit: 131,
     shelfBuildSheet: 131,
-    fbLoadAfterWipeCheck: 129,
-    renderLibrary: 129,
     awayLookingCard: 128,
     renderOffer: 128,
     shelfFit: 128,
-    renderBuddies: 125,
     flightEditor: 124,
     renderShop: 124,
+    renderLibrary: 123,
+    fbLoadAfterWipeCheck: 122,
+    renderBuddies: 122,
     postWithRetry: 120,
     roomNotes: 120,
     renderBuddiesTab: 112,
@@ -3522,10 +3796,7 @@ check('no fixed svg id is emitted by a repeated drawing',
     renderFromUrl: 103,
     receiptsDialog: 101,
     renderRecap: 101,
-    showImportCheck: 101,
-    /* In admin.html since 2026-10-27, and 152 rather than the 160 it
-       was in index.html - the ratchet went down on the move. */
-    renderUsers: 152
+    showImportCheck: 101
   };
 
   if (process.argv.indexOf('--sizes') >= 0) {

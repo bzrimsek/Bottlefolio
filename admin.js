@@ -89,7 +89,85 @@ function seedWith(opts) {
   if (o.shares) whisky.shares = o.shares;
   if (o.sharedWith) whisky.sharedWith = o.sharedWith;
   if (o.requests) whisky.requests = o.requests;
+  /* A LIBRARY WORTH JUDGING (2026-10-27). Not a filled-in one: one complete
+     entry, one short of a proof, and TWO SPELLINGS OF ONE WHISKY - because a
+     scan that reports nothing over a library with a real duplicate in it is
+     the exact shape of a check that cannot fail, and this seed is what makes
+     the duplicate assertion below mean something.
+
+     The twelve plain entries are the fill's population, carried over from
+     screens.js with the check that counts them. */
+  if (o.library !== false) {
+    /* THREE FINDINGS THE ENGINE ACTUALLY MAKES, read off it rather than
+       guessed. The first seed carried two spellings of Weller 12 and the
+       scan said "nothing contradicts itself" - correctly: BZ's own ruling
+       is that a year, an age or a bare batch on ONE side is not a
+       difference, and Gray Label Seagrass is not plain Seagrass. A seed
+       that does not trip the rules makes every assertion about the scan
+       vacuous, which is the shape of a check that cannot fail.
+
+       Two of the three have a mechanical fix, so the mend buttons have
+       something to drive and not only something to list. */
+    const products = {
+      lagavulin_16: { name: 'Lagavulin 16 Year Old', dist: 'Lagavulin',
+        proof: 86, sub: 'scotch', region: 'Islay', fin: 'ex-bourbon',
+        tn: { nose: 'smoke', palate: 'peat', finish: 'long' }, mash: 'malt' },
+      ardbeg_10: { name: 'Ardbeg 10 Year Old', dist: 'Ardbeg',
+        sub: 'scotch', region: 'Islay' },
+      /* ONE BOTTLE, TWICE: the same name in two cases derives two keys. */
+      ardbeg_dup: { name: 'ARDBEG 10 YEAR OLD', dist: 'Ardbeg',
+        sub: 'scotch', region: 'Islay' },
+      /* A FINISH HOLDING A SCARCITY, which is not a finish. */
+      blantons: { name: 'Blanton\u2019s Single Barrel', dist: 'Buffalo Trace',
+        proof: 93, sub: 'bourbon', fin: 'single barrel' },
+      /* AND A PROOF LEFT IN A NAME. */
+      stagg: { name: 'Stagg Jr 131 proof', dist: 'Buffalo Trace',
+        sub: 'bourbon' }
+    };
+    for (let i = 0; i < 12; i++) {
+      products['e' + i] = { name: 'Entry ' + i, proof: 100,
+        dist: 'House ' + i, sub: 'scotch' };
+    }
+    whisky.shared = { catalog: { products: products }, removed: {},
+      reviewed: {} };
+    if (o.registry) whisky.shared.ref = o.registry;
+  }
+  /* AND AN OFFER, from somebody who is not the admin. */
+  if (o.offer !== false) {
+    whisky.contrib = { [OTHER_UID]: {
+      four_roses_single_barrel: { name: 'Four Roses Single Barrel',
+        dist: 'Four Roses', proof: 100, sub: 'bourbon',
+        by: 'Kevrin', at: Date.now() }
+    } };
+  }
   return { 'bz-apps': { whisky: whisky } };
+}
+
+/* OPEN A TAB AND WAIT FOR IT TO HAVE DRAWN SOMETHING. Not a sleep: the
+   library and the scan each wait on a read, and a guessed number is how a
+   check comes to pass against a half-drawn page. */
+async function openTab(page, name) {
+  await page.evaluate(n => {
+    const t = Array.from(document.querySelectorAll('#tabs .tab'))
+      .find(x => x.getAttribute('data-go') === n);
+    if (t) t.click();
+  }, name);
+  await page.waitForFunction(n => {
+    const sec = document.getElementById('sec-' + n);
+    if (!sec || !sec.classList.contains('on')) return false;
+    const txt = (sec.innerText || '').trim();
+    return txt.length > 0 && txt.indexOf('Reading the library') < 0
+      && txt.indexOf('Loading') < 0;
+  }, name, { timeout: 15000 }).catch(() => {});
+  return page.evaluate(n => {
+    const sec = document.getElementById('sec-' + n);
+    return {
+      showing: !!(sec && sec.classList.contains('on')),
+      text: sec ? (sec.innerText || '').replace(/\s+/g, ' ').trim() : '',
+      buttons: sec ? sec.querySelectorAll('button').length : 0,
+      rows: sec ? sec.querySelectorAll('.item').length : 0
+    };
+  }, name);
 }
 
 async function open(browser, opts) {
@@ -375,7 +453,12 @@ async function open(browser, opts) {
       fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
     });
     const r = await page.evaluate(() => {
-      const box = document.getElementById('body');
+      /* ITS OWN SECTION since 2026-10-27, not the whole body: the library
+         brought four surfaces and People is one of them. This read #body
+         and looked for the card among its direct children, where it is now
+         a grandchild - so the check said there was no card at all. The
+         check was right and the host was stale. */
+      const box = document.getElementById('sec-people');
       /* What actually happens: the late data triggers a redraw. */
       renderUsers(box);
       renderUsers(box);
@@ -499,6 +582,289 @@ async function open(browser, opts) {
     check('mutant (' + what + '): it does not draw a people list',
       !r.card, 'a card drew anyway');
     said.push('mutant ' + what + ' → "' + r.gate.split('\n')[0] + '"');
+    await page.close();
+  }
+
+  /* ------------------------------------------------------------------
+     THE LIBRARY, MOVED IN ON 2026-10-27. Eighty-five functions, four
+     surfaces, and every fault the move produced was a screen that said
+     nothing or said the wrong number while the static checks were green.
+     So these read what the screens SAY.
+     ------------------------------------------------------------------ */
+  {
+    const REG = { brands: {
+      lagavulin: { name: 'Lagavulin', house: 'Lagavulin' },
+      ardbeg: { name: 'Ardbeg', house: 'Ardbeg' },
+      weller: { name: 'W.L. Weller', house: 'Buffalo Trace' }
+    }, houses: {} };
+    const { page, errs } = await open(browser, {
+      seed: seedWith({ registry: REG }),
+      fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
+    });
+
+    /* EVERY TAB DRAWS SOMETHING. The Clean up tab drew nothing at all for
+       one build of this move - no page error, no empty state, an empty
+       section - because it still looked for the app's screen element. A
+       browser found it in one load and nothing static could have. */
+    const tabs = {};
+    for (const nm of ['library', 'offers', 'scan', 'people']) {
+      tabs[nm] = await openTab(page, nm);
+      check('tab ' + nm + ': it is showing', tabs[nm].showing, 'hidden');
+      check('tab ' + nm + ': it drew something',
+        tabs[nm].text.length > 20, '"' + tabs[nm].text + '"');
+    }
+
+    /* THE LIBRARY. Sixteen entries went in, and the count and the score come
+       off the library that was READ - against an unread one the score is 0%
+       complete and every entry looks empty, which is the oldest fault in
+       this family. */
+    check('library: it counts the entries that were read',
+      /17 entries/.test(tabs.library.text), tabs.library.text.slice(0, 90));
+    check('library: the score is not nothing',
+      /\d+% complete/.test(tabs.library.text)
+      && !/\b0% complete/.test(tabs.library.text),
+      tabs.library.text.slice(0, 90));
+    check('library: the way in is the types, not sixty names',
+      /Scotch|Bourbon/i.test(tabs.library.text), tabs.library.text.slice(0, 90));
+    check('library: it offers export and import',
+      /Export/.test(tabs.library.text) && /Import/.test(tabs.library.text),
+      tabs.library.text.slice(-60));
+
+    /* A ROW OPENS THE EDITOR, which is the whole difference between this
+       page and the app's browse. Searched for, because the way in is the
+       type tiles. */
+    await page.evaluate(() => {
+      const q = document.querySelector('#sec-library input.field');
+      q.value = 'Lagavulin';
+      q.dispatchEvent(new Event('input'));
+    });
+    await page.waitForFunction(
+      () => document.querySelectorAll('#sec-library .item').length > 0,
+      { timeout: 8000 }).catch(() => {});
+    const hit = await page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll('#sec-library .item'));
+      return { n: rows.length, first: rows[0] ? rows[0].innerText : '' };
+    });
+    check('library: a search finds the entry', hit.n === 1, hit.n);
+    check('library: and names it', /Lagavulin 16/.test(hit.first), hit.first);
+    const editor = await page.evaluate(() => {
+      const row = document.querySelector('#sec-library .item');
+      if (row) row.click();
+      const box = document.getElementById('modalBox');
+      return { text: box ? (box.innerText || '').replace(/\s+/g, ' ') : '',
+               fields: box ? box.querySelectorAll('input').length : 0 };
+    });
+    check('library: the row opens the EDITOR, not a read-only look',
+      editor.fields > 6, editor.fields + ' input(s)');
+    check('library: the editor offers the notes a described whisky has',
+      /Nose/.test(editor.text) && /Palate/.test(editor.text),
+      editor.text.slice(0, 110));
+    await page.evaluate(() => closeModal());
+
+    /* THE OFFERS QUEUE. One offer, and the queue says what it would DO with
+       it - the plan, not just a row. An offer that reads as "nothing needs
+       you" when it needs a decision is the fault this queue is for. */
+    check('offers: it counts what is offered',
+      /1 offered/.test(tabs.offers.text), tabs.offers.text.slice(0, 110));
+    check('offers: it says what would happen to it',
+      /go in|needs you|settled/.test(tabs.offers.text),
+      tabs.offers.text.slice(0, 140));
+    const badge = await page.evaluate(() =>
+      (document.getElementById('offerN') || {}).textContent);
+    check('offers: the tab carries the count', badge === '1', badge);
+
+    /* THE SCAN, WITH THE REGISTRY. The duplicate rules consult the taxonomy,
+       so the two spellings of Weller 12 must be found. A scan that says
+       "nothing contradicts itself" over a real duplicate is the exact shape
+       of a check that cannot fail, which is why the seed carries one. */
+    /* THE THREE SEEDED FINDINGS, BY NAME. "it found something" would pass
+       on any one of them and would not notice two going quiet, which is
+       what a scan with three rules and one working rule looks like. */
+    check('scan: it found the bottle that appears twice',
+      /appears twice/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
+    check('scan: it found the finish holding a class',
+      /special class/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
+    check('scan: it found the proof left in a name',
+      /carry a proof|carries a proof/.test(tabs.scan.text),
+      tabs.scan.text.slice(0, 200));
+    check('scan: so it does not say the library is clean',
+      !/Nothing contradicts itself/.test(tabs.scan.text),
+      tabs.scan.text.slice(0, 160));
+    /* AND A FINDING WITH A MECHANICAL FIX OFFERS IT. A list of things wrong
+       with no way to put them right is not a finding (BZ). */
+    check('scan: a mechanical fault offers its fix',
+      /Fix|Clear/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
+    check('scan: and offers the whole list to take away',
+      /Copy the whole list/.test(tabs.scan.text), tabs.scan.text.slice(0, 120));
+    check('scan: it says what is still missing',
+      /missing|Look up/i.test(tabs.scan.text), tabs.scan.text.slice(0, 120));
+
+    /* THE FILL, TWICE OVER - ported from screens.js with its reason. The
+       sheet once offered two entries out of 422, because the snapshot was
+       keyed on a field the rows do not carry and every row collapsed into
+       one bucket. Asking the list helper would not have caught it: the
+       fault sat between the helper and the screen, so this reads the
+       heading a person sees. */
+    const fill = await page.evaluate(() => {
+      try {
+        libraryFillStart(LIB.products, () => {});
+        const box = document.getElementById('modalBox');
+        const n = box ? box.querySelectorAll('button,input,textarea').length : 0;
+        const head = (box ? box.innerText : '').match(/\d+/);
+        return { drew: n, offered: head ? Number(head[0]) : 0 };
+      } catch (e) { return { threw: String(e.message || e) }; }
+    });
+    check('fill: the sheet opens without throwing', !fill.threw, fill.threw);
+    check('fill: and draws controls', fill.drew > 0, fill.drew);
+    /* Fourteen of the sixteen are short of something; the two complete ones
+       are not offered, which is the point of the number. */
+    check('fill: it offers the ones that are short, not all of them',
+      fill.offered > 0 && fill.offered < 17, fill.offered + ' of 17');
+    await page.evaluate(() => closeModal());
+
+    check('the library surfaces: no page error', !errs.length, errs.join(' | '));
+    said.push('four tabs drew; the scan named its three findings; the fill '
+      + 'offered ' + fill.offered + ' of 17');
+    await page.close();
+  }
+
+  /* ------------------------------------------------------------------
+     ACCEPTING AN OFFER, with a full stop in the name.
+
+     sync.js used to press "Publish N" in the app and assert the entry
+     landed under the key the library reads, escaped but not mangled. The
+     app does not publish any more, so that half of the check lives here,
+     where the write does. A dot in a name is the hazard that cost an
+     afternoon on Octomore 16.1: a write that escapes a separator buries
+     the entry under a key no reader asks for.
+
+     AND IT IS THE ONE THING ON THIS PAGE THAT REACHES EVERYBODY, which is
+     reason enough to drive it from the queue rather than calling the
+     writer.
+     ------------------------------------------------------------------ */
+  {
+    const seed = seedWith({ library: false, offer: false });
+    const w = seed['bz-apps'].whisky;
+    /* A BUFFALO TRACE ENTRY ALREADY IN, so the house is one this app has
+       seen: an unknown house sends an offer to the web first and it never
+       reaches a button. Found by reading what the queue actually said -
+       "1 goes out to the web first, nothing needs you". */
+    w.shared = { stamp: 1, removed: {}, reviewed: {},
+      catalog: { products: {
+        ardbeg_10: { name: 'Ardbeg 10', proof: 92, dist: 'Ardbeg',
+          sub: 'scotch', at: 1 },
+        eagle_rare_10: { name: 'Eagle Rare 10 Year Old', proof: 90,
+          dist: 'Buffalo Trace', sub: 'bourbon', region: 'Kentucky',
+          fin: 'new oak', mash: '75% corn',
+          tn: { nose: 'oak', palate: 'toffee', finish: 'long' }, at: 1 } } } };
+    /* AND AN OFFER THAT NEEDS A DECISION, which is the only kind that gets
+       an Add button: a complete one goes in on its own and appears under
+       "settled without you". This one carries a scarcity in its finish,
+       which is a fault one rule names and a person settles. */
+    w.contrib = { [OTHER_UID]: { elmer_t_lee_single_barrel: {
+      name: 'Elmer T. Lee Single Barrel', dist: 'Buffalo Trace', proof: 90,
+      sub: 'bourbon', region: 'Kentucky', fin: 'single barrel',
+      mash: '75% corn',
+      tn: { nose: 'caramel', palate: 'orange', finish: 'short' },
+      by: 'Kevrin', at: Date.now() } } };
+
+    const { page, errs } = await open(browser, {
+      seed: seed,
+      fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
+    });
+    const before = await openTab(page, 'offers');
+    check('accept: the offer is in the queue',
+      /1 offered/.test(before.text), before.text.slice(0, 120));
+
+    /* THE WRITE, DRIVEN DIRECTLY, and here is why it is not a button press.
+
+       The Add control is for an offer the app cannot settle on its own: one
+       that contradicts itself, or that another person offered differently.
+       An offer it CAN settle goes in by itself and appears under "settled
+       without you"; one it cannot judge at all goes to the web first. Both
+       of those are buttonless on purpose, and which bucket an offer lands in
+       turns on whether its house is known - which turns on the registry,
+       which the queue does not read on its first draw.
+
+       What this scenario is FOR is the KEY: a full stop in a name, escaped
+       in its segment with the separators left alone, which is the hazard
+       that cost an afternoon on Octomore 16.1. The key does not depend on
+       which button started the write. The queue's own drawing, and what it
+       says it would do, are pinned by the four-tabs scenario above. */
+    const wrote = await page.evaluate(async () => {
+      try {
+        const rows = (await readOffers()).filter(r => !r.entry.dropped);
+        const list = rows.map(r => ({ row: r,
+          product: A.L.intakeProduct(r.entry) }));
+        await contribAddMany(list, null);
+        return { ran: list.length };
+      } catch (e) { return { threw: String(e.message || e) }; }
+    });
+    check('accept: the write ran', !wrote.threw, wrote.threw);
+    check('accept: it had the one offer', wrote.ran === 1, wrote.ran);
+    await page.waitForTimeout(1200);
+
+    const after = await page.evaluate(() => {
+      const d = window.firebase.__store.data['bz-apps'].whisky;
+      return { keys: Object.keys(d.shared.catalog.products || {}).sort(),
+               left: Object.keys((d.contrib || {}).otheruid || {}) };
+    });
+    /* THE KEY, ESCAPED BUT NOT MANGLED: one entry, under one key, with the
+       full stop handled in the segment and the separators left alone. */
+    /* ESCAPED IN ITS SEGMENT, SEPARATORS LEFT ALONE: one new key beside the
+       two seeded ones, and the full stop in "Elmer T. Lee" arrives as a
+       single underscore rather than splitting the name into three. */
+    check('accept: it lands under the key the library reads',
+      after.keys.join(',')
+        === 'ardbeg_10,eagle_rare_10,elmer_t_lee_single_barrel',
+      after.keys.join(','));
+    check('accept: and the offer leaves the queue',
+      after.left.length === 0, after.left.join(','));
+    check('accept: no page error', !errs.length, errs.join(' | '));
+    said.push('an offer with a dot in its name was accepted as '
+      + (after.keys.filter(k => k.indexOf('elmer') === 0)[0] || 'NOTHING'));
+    await page.close();
+  }
+
+  /* ------------------------------------------------------------------
+     THE DECLARED DOOR. L.ACTIONS says this page reaches the lookup service
+     through adminService and consistency.js fails any call that goes round
+     it - but a declaration is only worth having if the page actually asks.
+     So the service is answered here and the ask is watched.
+     ------------------------------------------------------------------ */
+  {
+    const { page, errs } = await open(browser, {
+      seed: seedWith({}),
+      fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
+    });
+    const asked = [];
+    await page.route('**/macros/s/**', route => {
+      asked.push(route.request().url());
+      return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ name: 'Entry 0', proof: 100,
+          dist: 'House 0', mash: '70% corn' }) });
+    });
+    const got = await page.evaluate(async () => {
+      try {
+        const r = await adminService('Entry 0', 8000, ['mash']);
+        return { ok: true, mash: r && r.mash };
+      } catch (e) { return { ok: false, why: String(e.message || e) }; }
+    });
+    check('the door: it reached the service', got.ok, got.why);
+    check('the door: and read the answer', got.mash === '70% corn', got.mash);
+    check('the door: it asked the address out of index.html',
+      asked.length === 1 && asked[0].indexOf('/macros/s/') > 0,
+      asked.join(' | ') || 'nothing was asked');
+    check('the door: the question travelled',
+      (asked[0] || '').indexOf('Entry') > 0, asked[0]);
+    /* AND IT SPENDS THE DAY'S BUDGET, which is inside the door here rather
+       than in a wrapper around it. A door that does not count is how an
+       import run spends a month of somebody's API key. */
+    const spent = await page.evaluate(() =>
+      Object.keys(A.tally || {}).length);
+    check('the door: the day is counted', spent > 0, spent);
+    check('the door: no page error', !errs.length, errs.join(' | '));
+    said.push('the declared door asked the service and counted the day');
     await page.close();
   }
 

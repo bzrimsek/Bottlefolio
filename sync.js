@@ -444,41 +444,56 @@ function check(name, got, want) {
                        status: 'open' }];
         save_(); rebuildCatalog(); renderHome();
       });
-      /* The Library moved from a masthead pill to Settings, and this had
-         been clicking a button that no longer exists — so the whole sync
-         check timed out rather than failing on what it tests. Called
-         directly: the door it goes through is not the thing under test,
-         and a walk that breaks when a control moves is testing the
-         furniture. */
-      await page.evaluate(() => { renderLibraryScreen(); goTo('library'); });
-      await page.waitForTimeout(1200);
-      /* Publish lives on Clean up since 2026-09-16. */
-      await page.evaluate(() => openLibraryCleanUp());
-      await page.waitForTimeout(800);
+      /* OFFERED, NOT PUBLISHED (2026-10-27). This pressed "Publish N" on
+         the admin's Clean up page; that page is admin.html's now and
+         nothing in the app writes the library. Everybody offers, and the
+         offer is made from Tidy your shelf.
+
+         Called directly rather than clicked through: the door it goes
+         through is not the thing under test, and a walk that breaks when a
+         control moves is testing the furniture (the lesson this scenario
+         already carried once, when the Library moved off the masthead). */
+      await page.evaluate(() => openShelfTidy());
+      await page.waitForTimeout(900);
       const before = await page.locator('#scanBody button',
-        { hasText: /^Publish \d+/ }).count();
+        { hasText: /^Offer \d+ to the library$/ }).count();
       if (!before) return { before: 0 };
-      await page.locator('#scanBody button', { hasText: /^Publish \d+/ })
-        .first().click();
+      await page.locator('#scanBody button',
+        { hasText: /^Offer \d+ to the library$/ }).first().click();
       await page.waitForTimeout(400);
       await page.locator('.modal button',
-        { hasText: 'Publish marked' }).first().click();
+        { hasText: 'Offer marked' }).first().click();
       await page.waitForTimeout(1600);
-      return page.evaluate(() => ({
-        before: 1,
-        stillPending: document.querySelectorAll('#scanBody button').length
-          && [...document.querySelectorAll('#scanBody button')]
-            .some(b => /^Publish \d+/.test(b.textContent)),
-        library: Object.keys(firebase.__store.data['bz-apps'].whisky
-          .shared.catalog.products || {}).sort()
-      }));
+      return page.evaluate(() => {
+        const w = firebase.__store.data['bz-apps'].whisky;
+        return {
+          before: 1,
+          /* WHAT REACHED THE QUEUE, under the slug an offer uses. */
+          offered: Object.keys((w.contrib || {}).testuid || {}).sort(),
+          /* AND THE LIBRARY IS UNTOUCHED, which is the whole point: an
+             offer is not a write to the shared list. */
+          library: Object.keys(w.shared.catalog.products || {}).sort()
+        };
+      });
     });
 
-    check('there was something to publish', r.before, 1);
-    check('it lands under the key the library reads, escaped but not mangled',
-      r.library, ['ardbeg_10', 'elmer_t~dlee_single_barrel'.replace('t~dlee', 't_lee')]);
-    check('and the button clears, because the entry is really there',
-      r.stillPending, false);
+    check('there was something to offer', r.before, 1);
+    /* ONE SLUG, NOT THREE. "Elmer T. Lee Single Barrel" is here because a
+       name with a full stop in it is the hazard that cost an afternoon on
+       Octomore 16.1. An offer's slug is L.shopNorm with the punctuation
+       stripped, and shopNorm drops "single" as a word that says nothing
+       about which whisky it is - so the slug is elmer_t_lee_barrel, and
+       what this pins is that the dot arrives as one separator and the name
+       does not split. The LIBRARY key is the other half and is pinned in
+       admin.js, where accepting an offer writes it. */
+    check('the offer reaches the queue under one slug',
+      r.offered, ['elmer_t_lee_barrel']);
+    /* AND NOTHING WAS PUBLISHED. The app may not write the library at all
+       since the admin split, and an offer that quietly wrote one would be
+       the whole build undone. admin.js drives the ACCEPT, where the
+       escaped library key is pinned. */
+    check('and the library is untouched - an offer is not a write',
+      r.library, ['ardbeg_10']);
   }
 
   /* ===================================================================

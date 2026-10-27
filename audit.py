@@ -542,7 +542,35 @@ def run_audit(html_path):
     gone = ['renderUsers', 'openPersonSheet', 'confirmRemovePerson',
             'removePersonData', 'fbShareAudit', 'fbShareParties',
             'fbShareRepair', 'fbSetSuspended', 'PEOPLE_DIAGS',
-            'PEOPLE_SHARES', 'everybodyCard', 'peopleHead']
+            'PEOPLE_SHARES', 'everybodyCard', 'peopleHead',
+            # 2026-10-27, build 2: the library surface followed the people
+            # surface out - eighty-five functions, so these are chosen
+            # rather than exhaustive, one from each part of the move.
+            #
+            # LIB.admin FIRST, because it is not a function and it is the
+            # one that matters. Thirty-one branches in this file read it,
+            # and every one of them could come back behind it; the whole
+            # point of build 2 is that nothing in the app asks whether this
+            # account may write the library. Spelled with the dot so the
+            # app's own `admin` mode switch, which is a different thing
+            # entirely and stays, does not trip this.
+            'LIB.admin',
+            # the offers queue, and the intake that feeds it
+            'renderContrib', 'contribAddMany', 'intakeVetSoon',
+            'libraryAddWrite', 'readOffers',
+            # the entry editor, and the two pickers it opens
+            'editLibraryEntry', 'saveLibraryEntry', 'pickLibraryEntry',
+            'pointAtButton',
+            # taking entries out, and putting them back
+            'libraryTakeOut', 'libraryPutBack', 'libraryMergeWrite',
+            # export, import, and the lookup fill
+            'libraryDataRow', 'libraryImportDialog', 'libraryFillStart',
+            # the contradiction scan, and what it writes
+            'openLibraryCleanUp', 'libraryFindings', 'libraryFieldWrite',
+            'mendRowButton', 'askWhichNameStays',
+            # and the three that only ever served an admin publishing from
+            # their own shelf: everybody offers now
+            'publishBatch', 'publishMineIfAdmin', 'fbCheckAdmin']
     # AGAINST THE CODE, NOT THE PROSE. index.html carries a changelog
     # header, and this file's own lesson - written twice in
     # consistency.js - is that a checker reading comments is checking
@@ -556,7 +584,7 @@ def run_audit(html_path):
         fail('the admin split has come undone - index.html names '
              + ', '.join(back) + ' again (they live in admin.html)')
     else:
-        ok('index.html carries none of the admin people surface')
+        ok('index.html carries none of the admin surface, people or library')
 
     admin_path = os.path.join(base, 'admin.html')
     if not os.path.exists(admin_path):

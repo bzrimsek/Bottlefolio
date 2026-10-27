@@ -110,7 +110,11 @@ const dir = __dirname;
        30e: a panel that consumes a queue, moves finished elements or reads a
        module-level array is right on the first draw and empty or throwing on the
        second, which is exactly how the SETTINGS_ONPAGE hoist used to fail. */
-    LIB.admin = true;
+    /* THE ORGANISING SWITCH ONLY (2026-10-27). S.admin reveals the advanced
+       tabs and is this device's own, so it stays. The field this line used
+       to set beside it - whether the account may write the library - does
+       not exist in index.html any more, and a harness that sets it is a
+       harness asserting it still does. */
     S.admin = true;
     L.settingsView('account', true).tabs.forEach(t => {
       try {
@@ -148,10 +152,14 @@ const dir = __dirname;
       LIB.products['e' + i] = { name: 'Entry ' + i, proof: 100,
         dist: 'House ' + i, sub: 'scotch' };
     }
-    LIB.admin = true;
+    /* NO LIB.admin (2026-10-27). The field is gone from index.html - the
+       library admin is admin.html's - and a harness that sets it is a
+       harness asserting it still exists. */
     S.lookupUrl = 'https://example.invalid/lookup';
-    [['fill', () => libraryFillStart(LIB.products, () => {})],
-     ['import', () => importDialog()],
+    /* THE LIBRARY FILL MOVED TO admin.js with the sheet it opens. Both
+       checks went with it: the one that counts what the sheet draws, and
+       the one that reads the number in its heading. */
+    [['import', () => importDialog()],
      ['receipts', () => receiptsDialog()],
      ['bottle form', () => productForm(null)]].forEach(([nm, open]) => {
       try {
@@ -162,21 +170,11 @@ const dir = __dirname;
         closeModal();
       } catch (e) { r['modal:' + nm] = 'THREW ' + e.message; }
     });
-    /* The fill must offer the RIGHT NUMBER, read off the sheet it draws.
-
-       It offered two when the library held 422, because the snapshot was
-       keyed on a field the rows do not carry and they all collapsed into
-       one bucket. Asking the list helper directly would not have caught
-       it — the fault was in the snapshot, between the helper and the
-       screen — so this reads the heading the person actually sees. */
-    try {
-      libraryFillStart(LIB.products, () => {});
-      const head = document.querySelector('#modal .modalhd h2');
-      const said = head ? (head.textContent.match(/\d+/) || ['0'])[0] : '0';
-      r.fillOffers = (Number(said) === 12)
-        ? 'ok(12)' : 'THREW the sheet offered ' + said + ' of 12';
-      closeModal();
-    } catch (e) { r.fillOffers = 'THREW ' + e.message; }
+    /* The fill-offers check moved to admin.js on 2026-10-27, and its reason
+       went with it: the sheet offered two entries when the library held 422,
+       because the snapshot was keyed on a field the rows do not carry and
+       they all collapsed into one bucket - so the check reads the heading a
+       person actually sees rather than asking the list helper. */
 
     /* THE GRAIN BLOCK: TWICE, AND IN SEQUENCE (rule 30e).
 
@@ -489,6 +487,58 @@ const dir = __dirname;
     try {
       S.shopMode='store'; document.getElementById('shopQ').value='Ardbeg Ten';
       renderShop();
+      /* TIDY YOUR SHELF (2026-10-27), the shelf half of the admin's old
+         Clean up page, drawn for everybody. Each of its three cards is
+         seeded with something to say: a page that draws nothing because the
+         data was empty is the vacuous version of this check.
+
+         THE WORDING IS ASSERTED, not just the presence of a button. This
+         page shipped for twenty minutes of its own build saying "Publish 26
+         to the library" over an action that offers - a screen telling
+         somebody it would write to a shared list when it files an offer -
+         and nothing static could see it. */
+      try {
+        const own = Object.keys(L.ownedCounts(S.bottles))[0];
+        /* A LIBRARY THAT HOLDS ALMOST NOTHING OF HIS, so the offer card has
+           a population, plus one entry carrying a flight-card prompt as
+           though it described the whiskey. */
+        LIB.products = { prompt_entry: {
+          name: 'Prompt Entry', dist: 'House', proof: 90, sub: 'scotch',
+          tn: { nose: 'pour this third' }, tnFrom: 'flight' } };
+        LIB.graves = {}; LIB.removed = {};
+        S.catalog['Prompt Entry'] = { k: 'Prompt Entry',
+          name: 'Prompt Entry', dist: 'House', proof: 90, sub: 'scotch',
+          tn: { nose: 'pour this third' }, tnFrom: 'flight' };
+        /* A FLIGHT ASKING FOR A BOTTLE HE OWNS under a longer name, which
+           is the card whose repair writes HIS flight and nobody else's. */
+        S.customFlights = [{ id: 'zzprobe', title: 'A probe flight',
+          pours: [{ n: own + ' Kentucky Straight Wheated' }] }];
+        openShelfTidy();
+        const host = document.getElementById('scanBody');
+        const heads = Array.from(host.querySelectorAll('h3'))
+          .map(n => n.textContent.trim());
+        const txt = host.innerText || '';
+        const btns = Array.from(host.querySelectorAll('button'))
+          .map(n => n.textContent.trim());
+        r['tidy:drew'] = host.children.length ? 'ok('
+          + host.children.length + ')' : 'EMPTY';
+        r['tidy:cards'] = heads.length >= 2 ? 'ok(' + heads.length + ')'
+          : 'EMPTY no cards, only ' + heads.join(',');
+        /* OFFER, NEVER PUBLISH. */
+        r['tidy:offers'] = btns.some(b2 => /^Offer \d+ to the library$/.test(b2))
+          ? 'ok' : 'EMPTY no offer button: ' + btns.join(' | ');
+        r['tidy:nopublish'] = /Publish/.test(txt)
+          ? 'EMPTY it still promises a publish' : 'ok';
+        /* AND NOTHING THAT CANNOT BE ACTED ON. Every card here must carry a
+           button, which is the entry condition for the page existing (BZ:
+           a finding with no way to act is not a finding). */
+        const cards = Array.from(host.querySelectorAll('.sheet'));
+        const mute = cards.filter(c => !c.querySelector('button'));
+        r['tidy:actionable'] = mute.length
+          ? 'EMPTY ' + mute.length + ' card(s) with nothing to press'
+          : 'ok(' + cards.length + ')';
+      } catch (e) { r['tidy:drew'] = 'THREW ' + e.message; }
+
       r.named=document.querySelectorAll('#scr-shop .sheet').length;
       r.backs=document.querySelectorAll('#shopBack').length;
     } catch(e){ r.named='THREW '+e.message; r.where=(e.stack||'').split('\n')[1]; }

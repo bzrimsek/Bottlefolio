@@ -103,6 +103,63 @@
   .mono{font-family:var(--mono);font-size:12px;word-break:break-all;
     user-select:all;cursor:text}
   .bad{color:var(--rust)}
+
+  /* THE FOUR SURFACES. A nav rather than four pages: this is one tool on a
+     desktop, and a tab that keeps its drawn section is how a judgement made
+     on one surface is still visible when you come back from another. */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);
+    margin-bottom:14px}
+  .tab{font:inherit;padding:8px 13px;border:0;background:transparent;
+    color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px}
+  .tab.on{color:var(--ink);border-bottom-color:var(--rust);font-weight:600}
+  .tab .count{display:inline-block;margin-left:5px;font-size:11px;
+    background:var(--rust);color:var(--paper);border-radius:9px;
+    padding:0 6px;vertical-align:1px}
+  .tab .count:empty{display:none}
+  .sec{display:none}
+  .sec.on{display:block}
+
+  /* THE CLASSES THE MOVED CODE ALREADY NAMES. index.html's own styling is
+     phone-first and is not copied; these are the same names given this
+     page's denser desktop shape, so the moved markup needs no rewriting.
+     A class the moved code asks for and this file does not define is an
+     invisible fault - admin.js lists them and fails on a missing one. */
+  .btn-gold{border-color:var(--rust);background:var(--rust);
+    color:var(--paper)}
+  .btn.ghost.wide{text-align:center}
+  .actionrow{display:flex;gap:6px;flex-wrap:wrap}
+  .form{display:grid;gap:9px}
+  .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--sub);margin-bottom:3px}
+  .oneline{display:flex;gap:8px;align-items:center}
+  .empty{color:var(--sub);padding:14px 0;text-align:center}
+  .warn2{color:var(--rust);font-size:13px;margin-top:4px}
+  .looknote{background:var(--quiet);border:1px solid var(--line);
+    border-radius:5px;padding:9px 11px;margin-bottom:10px;font-size:13px}
+  .scrollbox{border:1px solid var(--line);border-radius:5px;padding:0 10px}
+  .pickbox{display:grid;gap:2px}
+  .candidates{display:grid;gap:6px;margin-top:8px}
+  .candidate{border:1px solid var(--line);border-radius:5px;padding:8px 10px}
+  /* A DUPLICATE READS AS THREE COLUMNS (BZ): this bottle, that bottle, what
+     to do. On a desktop they fit, which is the whole reason this page is
+     desktop only. */
+  .dupgrid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;
+    align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+  .dupside{min-width:0}
+  .scanrow{display:block}
+  .item.scanrow{display:block}
+  .item.pair{display:flex}
+  .pf{color:var(--sub);font-size:12px;flex:none}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+    gap:8px}
+  .tile{font:inherit;text-align:left;padding:10px 12px;cursor:pointer;
+    border:1px solid var(--line);border-radius:5px;background:var(--card);
+    color:var(--ink)}
+  .tile .v{font-size:18px;font-weight:600}
+  .tile .l{font-size:12px;color:var(--sub)}
+  details{border:1px solid var(--line);border-radius:5px;padding:8px 10px}
+  summary{cursor:pointer}
 </style>
 </head>
 <body>
@@ -117,7 +174,18 @@
 
 <main>
   <div id="gate" class="sheet"><div class="sub">Starting&hellip;</div></div>
-  <div id="body" hidden></div>
+  <div id="body" hidden>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-go="people">People</button>
+      <button class="tab" data-go="library">Library</button>
+      <button class="tab" data-go="offers">Offered<span id="offerN" class="count"></span></button>
+      <button class="tab" data-go="scan">Clean up</button>
+    </nav>
+    <section id="sec-people" class="sec on"></section>
+    <section id="sec-library" class="sec"></section>
+    <section id="sec-offers" class="sec"></section>
+    <section id="sec-scan" class="sec"></section>
+  </div>
 </main>
 
 <div id="modalWrap" hidden><div id="modalBox"></div></div>
@@ -134,7 +202,10 @@ const el = (t, c, x) => { const n = document.createElement(t);
 
 /* The admin tool's state. A deliberately different name from the app's FB,
    because this is not the app and a reader should not expect app behaviour. */
-const A = { L: null, user: null, version: '', config: null, admin: false };
+const A = { L: null, user: null, version: '', config: null, admin: false,
+  /* The lookup address, this device's day tally and fill ledger, and the
+     intake's daily allowance. adminLoad fills the last four from storage. */
+  lookupUrl: '', tally: {}, ledger: {}, budget: 100, intakeTally: {} };
 /* ON THE WINDOW ON PURPOSE. A top-level const in a plain script is not a
    window property, so admin.js could not read a thing about the boot and
    its first run passed four checks against `undefined`. It is also what
@@ -240,6 +311,16 @@ function sliceVersion(html) {
   return m ? m[1] : '';
 }
 
+/* THE LOOKUP ADDRESS, out of the app for the same reason as everything else
+   here: index.html's comment on DEFAULT_LOOKUP_URL says never to change it,
+   and a second spelling of it on this page is how it comes to be changed in
+   one place only. The app lets a person override it in Settings; this page
+   has no settings and uses the shipped address. */
+function sliceLookupUrl(html) {
+  const m = html.match(/const DEFAULT_LOOKUP_URL = '([^']+)'/);
+  return m ? m[1] : '';
+}
+
 /* AND THE SDK URLS, so the version is chosen in one place. index.html loads
    these three itself; reading them from there means an SDK bump moves both. */
 function sliceSdk(html) {
@@ -282,12 +363,15 @@ async function boot() {
     A.L = sliceEngine(html);
     A.config = sliceConfig(html);
     A.version = sliceVersion(html);
+    A.lookupUrl = sliceLookupUrl(html);
     var sdk = sliceSdk(html);
   } catch (e) {
     said('The app is not the shape this page expects', (e && e.message) || String(e));
     return;
   }
-  appLog('engine loaded: ' + Object.keys(A.L).length + ' entries, app v' + A.version);
+  adminLoad();
+  appLog('engine loaded: ' + Object.keys(A.L).length + ' entries, app v'
+    + A.version + ', lookup ' + (A.lookupUrl ? 'address read' : 'NOT read'));
   $('#who').textContent = 'app v' + A.version;
 
   try {
@@ -342,7 +426,30 @@ function gate() {
     }
     $('#gate').hidden = true;
     $('#body').hidden = false;
-    renderPeople();
+    /* THE TABS, WIRED ONCE. Each draws the first time it is opened and keeps
+       what it drew, so a verdict given on the scan is still there after a
+       trip to the offers queue. */
+    Array.prototype.forEach.call(document.querySelectorAll('#tabs .tab'),
+      t => { t.onclick = () => showSection(t.getAttribute('data-go')); });
+    showSection('people');
+    /* AND THE COUNT ON THE OFFERED TAB, without drawing that surface: the
+       number is why you would open it. */
+    countOffers();
+    /* THE VETTING STARTS HERE (BZ, 2026-09-15), four seconds in and then on
+       a timer. index.html started it from fbCheckAdmin, which this page does
+       not have - the gate above IS that check - so without this line the
+       intake would have moved and never run.
+
+       ONCE PER SESSION: this gate runs again on every auth change, and each
+       pass would otherwise add another permanent timer.
+
+       NOT FROM A DRAW. index.html's comment records why: a run started from
+       the library screen's render replaced the screen under an in-flight
+       publish. Offers keep arriving, so it loops, slow and quiet. */
+    if (!VET_TIMER) {
+      setTimeout(() => { intakeVetSoon(); }, 4000);
+      VET_TIMER = setInterval(() => { intakeVetSoon(); }, A.L.INTAKE_EVERY);
+    }
   }).catch(e => {
     said('The database would not say', sayError(e, 'That read was refused'));
   });
@@ -351,6 +458,356 @@ function gate() {
 $('#out').onclick = () => firebase.auth().signOut().then(() => {
   A.admin = false; toast('Signed out');
 });
+
+/* ===================================================================
+   THE LIBRARY: THE LAYER UNDER IT.
+
+   The screens below this block came out of index.html whole. What they read
+   did not, because what they read was a shelf-shaped app: a device catalog,
+   a device's saved state, a phone's door to the lookup service. Each one is
+   answered here for a page that has no shelf, and every answer that DIFFERS
+   from index.html's says so in its own comment rather than pretending to be
+   the same function.
+
+   READ BEFORE JUDGING is the one rule this file cannot afford to get wrong,
+   and it is the rule index.html learned the hard way four separate times:
+   against a library that has not loaded every offer looks new, every entry
+   looks incomplete, and "what is missing" answers EVERYTHING. The three
+   needs* doors below are that rule, and nothing judges before they pass.
+   =================================================================== */
+
+/* The library cache, as index.html holds it minus one field: there is no
+   LIB.admin here. Whether this account may write is A.admin, established
+   once by the gate from admins/<uid>, and asking it twice under two names
+   is how the two answers come to disagree. */
+const LIB = { products: null, graves: {}, removed: {}, reviewed: null,
+  ref: null, q: '', sub: null, picking: false, waiting: 0,
+  /* The fill's own three, read by libraryFillStart and what it draws. */
+  thinOnly: false, filling: false, fill: null };
+
+/* Asked once, like index.html: a second caller waits for the read on its
+   way rather than starting another, and must not call back into the draw
+   that sent it. Both flags belong to the moved needs* doors below. */
+let VERDICTS_ASKED = false;
+let REF_ASKED = false;
+let BRANDS_RICH = null, BRANDS_RICH_FOR = null;
+
+/* ------------------------------------------------- the shared nodes */
+const SHARED = 'bz-apps/whisky/shared';
+Object.assign(NODE, {
+  shared:   SHARED,
+  products: SHARED + '/catalog/products',
+  removed:  SHARED + '/removed',
+  renamed:  SHARED + '/renamed',
+  reviewed: SHARED + '/reviewed',
+  registry: SHARED + '/ref',
+  intake:   SHARED + '/intake',
+  contrib:  'bz-apps/whisky/contrib',
+  /* The shared barcode map. A contributor's pairings are filed under their
+     own node and promoted into this one when an admin accepts them, which is
+     what L.upcWriteTarget decides. */
+  upc:      'bz-apps/whisky/upc'
+});
+
+function libRef() { return ref(NODE.products); }
+function contribRef() { return ref(NODE.contrib); }
+
+/* ------------------------------------------------- reading the library */
+
+function libraryIsRead() {
+  return !!LIB.products && !!Object.keys(LIB.products).length;
+}
+
+function libNow() {
+  return { products: LIB.products || {}, graves: LIB.graves || {} };
+}
+
+/* THE LIBRARY, ITS REMOVALS AND ITS MERGE RECORD, in one place.
+
+   MOVED: index.html reads the whole of `shared` for this, which also drags
+   down `shared/ref` - a few megabytes of reference data nothing on that
+   path wants. Four named children instead, because this page reads the
+   registry on purpose and separately.
+
+   A KEY CAN CARRY A DOT, so `renamed` is decoded through L.unFbKey on the
+   way in. Read raw, an escaped key never matches and a merge looks as
+   though it did nothing - which is exactly what cost BZ an afternoon on
+   Octomore 16.1 (index.html's own comment, 2026-10-09). */
+function withLibrary(then) {
+  if (LIB.products) { then(); return; }
+  Promise.all([
+    libRef().once('value'),
+    ref(NODE.removed).once('value').catch(() => null),
+    ref(NODE.renamed).once('value').catch(() => null)
+  ]).then(got => {
+    LIB.products = A.L.libraryFromValue(got[0].val());
+    LIB.removed = (got[1] && got[1].val()) || {};
+    const graves = {};
+    const rn = (got[2] && got[2].val()) || {};
+    Object.keys(rn).forEach(k => {
+      const rec = rn[k];
+      const to = (rec && typeof rec === 'object') ? rec.to : rec;
+      if (to && typeof to === 'string') graves[A.L.unFbKey(k)] = to;
+    });
+    LIB.graves = graves;
+    appLog('library: ' + Object.keys(LIB.products).length + ' entries, '
+      + Object.keys(LIB.removed).length + ' removed, '
+      + Object.keys(LIB.graves).length + ' merged key(s)');
+  }).catch(e => {
+    /* SAID, NOT SWALLOWED. index.html logs this and carries on because the
+       app has a shipped catalogue behind it; this page has nothing behind
+       it, so a failed read must not look like an empty library. */
+    appLog('the library would not load: ' + ((e && e.message) || e));
+  }).then(() => then());
+}
+
+function needsLibraryFirst(redraw) {
+  if (LIB.products || !A.user) return false;
+  withLibrary(redraw);
+  return true;
+}
+
+/* The verdicts, the registry and the three doors that make a read land
+   before anything is judged all came across with the screens that use
+   them - see THE CONTRADICTION SCAN and LOOKING UP WHAT IS MISSING below.
+   They are not restated here: I wrote a second copy of all four during
+   this build and JavaScript kept the later one silently, which is the
+   fault rule 30d exists for happening inside the fix for it. */
+
+/* THE TAXONOMY, WITH THE HOUSES IT DOES NOT STATE FILLED IN.
+
+   MOVED: index.html learns the missing houses from S.catalog - the device's
+   own shelf. There is no shelf here, so they are learned from the LIBRARY,
+   which on this page is the better source anyway: it is the list the scan
+   is judging, and a house spelled two ways in the library is exactly what
+   the duplicate rules need the taxonomy for. */
+function refBrands() {
+  const raw = (LIB.ref && LIB.ref.brands) || null;
+  if (!raw) return null;
+  const from = LIB.products || {};
+  if (BRANDS_RICH && BRANDS_RICH_FOR === from) return BRANDS_RICH;
+  const learned = A.L.brandHouses(from, raw);
+  const out = {};
+  Object.keys(raw).forEach(k => {
+    const row = raw[k];
+    const key = A.L.rawNorm(String((row || {}).name || k.replace(/_/g, ' ')));
+    if (row && !row.house && learned[key]) {
+      out[k] = Object.assign({}, row, { house: learned[key] });
+    } else {
+      out[k] = row;
+    }
+  });
+  BRANDS_RICH = out;
+  BRANDS_RICH_FOR = from;
+  return out;
+}
+
+/* ------------------------------------------------- this page's own bookkeeping
+
+   The day's lookup spend and the fill ledger are a DEVICE's notes about what
+   it has already asked, and this page is a different device from the phone.
+   They live in this browser's storage, wrapped, because storage can be
+   blocked and a refused read must not stop the page. */
+const STORE = 'bottlefolio-admin';
+
+function adminLoad() {
+  try {
+    const v = JSON.parse(localStorage.getItem(STORE) || '{}');
+    A.tally = v.tally || {};
+    A.ledger = v.ledger || {};
+    A.budget = typeof v.budget === 'number' ? v.budget : 100;
+    A.intakeTally = v.intakeTally || {};
+  } catch (e) {
+    A.tally = {}; A.ledger = {}; A.budget = 100; A.intakeTally = {};
+  }
+}
+
+function adminSave() {
+  try {
+    localStorage.setItem(STORE, JSON.stringify({ tally: A.tally,
+      ledger: A.ledger, budget: A.budget, intakeTally: A.intakeTally }));
+  } catch (e) {
+    appLog('could not remember this page\u2019s notes: '
+      + ((e && e.message) || e));
+  }
+}
+
+/* ------------------------------------------------- the lookup service
+
+   ONE DOOR FROM THIS PAGE, and L.ACTIONS says so (id: "reach the lookup
+   service from the admin page", through: adminService, where: admin.html).
+   consistency.js fails any other fetch in this file that names the lookup
+   address, which is the same rule index.html lives under and is checked the
+   same way.
+
+   NOT postWithRetry. That door carries a retry, a lane queue and a wake
+   lock, and every one of those exists for a phone: Apps Script answers a
+   POST with a redirect to a one-time url, Android suspends a backgrounded
+   tab, the key expires and Google serves an HTML 404 instead of the answer.
+   A desktop page somebody is watching has none of those failures, and 135
+   lines of them copied here would be a second copy of the most-tested path
+   in the app rather than a second door to the service. The declaration is
+   what keeps this honest: it is named, it is checked, and it says plainly
+   that it is less patient than the app's. */
+async function adminService(q, ms, need) {
+  if (navigator.onLine === false) throw new Error('you are offline');
+  if (!A.lookupUrl) throw new Error(A.L.NO_SERVICE_SAY);
+  /* The day's ceiling, before the call, exactly as askLookup does it: every
+     lookup spends a real API key and a run over a long list could spend a
+     month's budget. Said as a limit, not a failure. */
+  if (!A.L.lookupAllowed(A.tally, A.L.todayISO())) {
+    throw new Error(A.L.LOOKUP_LIMIT_SAY);
+  }
+  A.tally = A.L.countLookup(A.tally, A.L.todayISO(), 1);
+  adminSave();
+  const t0 = Date.now();
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms || A.L.LOOKUP_MS);
+  try {
+    const r = await fetch(A.L.lookupUrl(A.lookupUrl, q, need),
+      { signal: ctl.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const head = text.slice(0, 200).trim();
+    /* A WEB PAGE IS A STALE DEPLOYMENT, said as that rather than as a parser
+       complaining about a bracket. index.html's readService says the same
+       thing in its own words; there is no engine door holding the sentence,
+       so this is not a copy of one. */
+    if (/^<!DOCTYPE|^<html/i.test(head)) {
+      throw new Error('The lookup address returned a web page rather than '
+        + 'data. Usually the deployment is out of date \u2014 Deploy \u203a '
+        + 'Manage deployments \u203a pencil \u203a New version.');
+    }
+    const got = JSON.parse(text);
+    appLog('service answered in ' + ((Date.now() - t0) / 1000).toFixed(1)
+      + 's about ' + String(q).slice(0, 40) + ': '
+      + (got && typeof got === 'object'
+          ? (Object.keys(got).join(', ') || '(no fields)')
+          : String(got).slice(0, 60)));
+    return got;
+  } catch (e) {
+    if (e && (e.name === 'AbortError' || /abort/i.test(String(e.message)))) {
+      appLog('service gave up after ' + ((Date.now() - t0) / 1000).toFixed(1)
+        + 's on ' + String(q).slice(0, 40));
+      throw new Error('the lookup did not answer in time');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* ONE NAME FOR IT. index.html reaches the service through askLookup, which
+   adds the day's budget and offers back whatever it learned, over askService,
+   which adds the timeout - two names and a door. Here the budget is inside
+   the door and there is nothing to offer back (this page IS the library), so
+   there is one function and the moved code calls it by name. */
+
+/* ------------------------------------------------- small shared sugar
+
+   Sugar, not decisions: a download, a confirmation, a progress line. Each is
+   this page's own because index.html's are wound into its phone shell, and
+   none of them answers a question about whiskey. */
+function saveFile(name, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+
+function downloadCsv(name, cols, rows) {
+  saveFile(name + '-' + A.L.todayISO() + '.csv',
+    new Blob([A.L.toCsv(cols, rows)], { type: 'text/csv' }));
+  return rows.length;
+}
+
+/* NAMES WHAT GOES, not "are you sure": a confirmation that does not say
+   what it is about is a reflex rather than a decision. */
+function confirmDelete(what, onYes) {
+  openModal('Remove ' + what + '?', m => {
+    m.appendChild(el('div', 'sub', 'This cannot be undone.'));
+    const row = el('div', 'actionrow');
+    row.style.marginTop = '12px';
+    const go = el('button', 'btn', 'Remove');
+    go.onclick = () => { closeModal(); onYes(); };
+    const no = el('button', 'btn ghost', 'Keep it');
+    no.onclick = closeModal;
+    row.appendChild(go);
+    row.appendChild(no);
+    m.appendChild(row);
+  });
+}
+
+/* HOW FULL AN ENTRY IS, as a number rather than the app's drawn bottle: the
+   drawing is part of index.html's visual system and this page is not. */
+function completeBottle(pct) {
+  const w = el('div', 'pf', pct + '%');
+  w.title = pct + '% complete';
+  return w;
+}
+
+function libraryStandLine(card, all) {
+  card.appendChild(el('div', 'sub', A.L.libraryLine(
+    A.L.libraryLists(A.L.libraryRows(all), A.ledger || {}, A.L.todayISO()))));
+}
+
+/* ------------------------------------------------- the four surfaces */
+
+/* DRAWN WHEN IT IS FIRST OPENED, and kept afterwards: a judgement made on
+   the scan is still there when you come back from the offers queue, which
+   is the whole reason these are sections and not pages. */
+const DREW = {};
+const SECTIONS = {
+  people: renderPeople,
+  library: () => drawLibrary(),
+  offers: () => drawOffers(),
+  scan: () => openLibraryCleanUp()
+};
+
+function showSection(name) {
+  Object.keys(SECTIONS).forEach(k => {
+    const sec = $('#sec-' + k);
+    if (sec) sec.classList.toggle('on', k === name);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs .tab'),
+    t => t.classList.toggle('on', t.getAttribute('data-go') === name));
+  if (!DREW[name]) { DREW[name] = true; SECTIONS[name](); }
+}
+
+/* REDRAW ONE, whatever is showing. The moved code calls
+   renderLibraryScreen() after a write; here that means "the library
+   surface", and the scan has its own rescan. */
+function renderLibraryScreen() {
+  if (DREW.library) drawLibrary();
+  if (DREW.offers) drawOffers();
+  countOffers();
+}
+
+/* WHAT IS WAITING, on the tab. index.html put this on a tab badge for the
+   admin only; here every reader is an admin, so it is simply the count. */
+function countOffers() {
+  if (!A.user) return Promise.resolve(0);
+  return contribRef().once('value').then(s => {
+    let n = 0;
+    offerRows(s).forEach(r => { if (!r.entry.dropped) n++; });
+    LIB.waiting = n;
+    const el2 = $('#offerN');
+    if (el2) el2.textContent = n ? String(n) : '';
+    return n;
+  }).catch(() => 0);
+}
+
+function drawOffers() {
+  const box = $('#sec-offers');
+  box.innerHTML = '';
+  if (needsLibraryFirst(() => drawOffers())) {
+    box.appendChild(el('div', 'empty', 'Reading the library\u2026'));
+    return;
+  }
+  renderContrib(box);
+}
 
 /* ===================================================================
    PEOPLE. Moved out of index.html's Diagnostics screen on 2026-10-27,
@@ -449,7 +906,7 @@ function setSuspended(uid, off) {
 }
 
 function renderPeople() {
-  const box = $('#body');
+  const box = $('#sec-people');
   box.innerHTML = '';
   const h = el('div', 'rs', 'People');
   h.id = 'peopleHead';
@@ -800,6 +1257,3161 @@ function removePersonData(p) {
     toast(sayError(e, 'That was refused'));
   });
 }
+
+
+/* ===================================================================
+   THE ADMIN'S WAY INTO THE LIBRARY, and the sugar the moved code names.
+   =================================================================== */
+
+/* SAYING IT IS WORKING. index.html's working() is a ticking overlay with
+   rotating phrases, built for somebody holding a phone at a bar; this is the
+   same job for a desktop tool - one line, in place, that says what is
+   happening and goes when it stops. Called with no argument to clear, which
+   is the shape the moved code expects. */
+function working(msg) {
+  let w = $('#adminWorking');
+  if (!msg) { if (w) w.remove(); return; }
+  if (!w) {
+    w = el('div', 'looknote');
+    w.id = 'adminWorking';
+    const body = $('#body');
+    body.insertBefore(w, body.firstChild.nextSibling);
+  }
+  w.textContent = msg;
+}
+
+/* A LABELLED INPUT. index.html marks the required ones with a star off
+   REQUIRED_FIELDS; the only required field is the name, and the editor
+   refuses to save without one anyway, so it is said rather than starred. */
+function fieldRow(label, name, value, attrs) {
+  const l = el('label', null, label + (name === 'name' ? ' (needed)' : ''));
+  const i = document.createElement('input');
+  i.className = 'field';
+  i.name = name;
+  i.value = (value === null || value === undefined) ? '' : value;
+  Object.keys(attrs || {}).forEach(a => i.setAttribute(a, attrs[a]));
+  l.appendChild(i);
+  return l;
+}
+
+/* THE LIBRARY, TO WORK ON.
+
+   READ BEFORE DRAWING, which on this surface means: do not draw a score, a
+   count or a "nothing matches" over a library that has not arrived. Against
+   an unread library every entry is missing everything and the page says the
+   library is 0% complete, which is the oldest fault in this file's family.
+
+   EVERY ROW OPENS THE EDITOR. That is the difference between this and the
+   browse in the app, and it is why both exist: the question "which entries
+   match this?" is asked once, of A.L.searchLibrary, by both pages. */
+function drawLibrary() {
+  const box = $('#sec-library');
+  box.innerHTML = '';
+  if (needsLibraryFirst(() => drawLibrary())) {
+    box.appendChild(el('div', 'empty', 'Reading the library\u2026'));
+    return;
+  }
+  const all = LIB.products || {};
+  const n = Object.keys(all).length;
+  const card = el('div', 'sheet');
+  box.appendChild(card);
+
+  /* A SCORE, NOT JUST A COUNT (BZ): one missing field is not four, and the
+     average says how far along the library is. */
+  const scores = Object.values(all).map(p => A.L.entryScore(p));
+  const avg = scores.length
+    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 100;
+  card.appendChild(el('h3', null, n + ' entries \u00b7 ' + avg + '% complete'));
+  libraryStandLine(card, all);
+
+  const qrow = el('div', 'lookrow');
+  qrow.style.marginTop = '9px';
+  const q = document.createElement('input');
+  q.className = 'field';
+  q.placeholder = 'Search all ' + n + ' by name, distillery, cask or region';
+  q.value = LIB.q;
+  q.oninput = () => { LIB.q = q.value; list(); };
+  qrow.appendChild(q);
+  libraryPickToggle(qrow, () => list());
+  card.appendChild(qrow);
+
+  const out = el('div', 'scrollbox');
+  out.style.cssText = 'max-height:60vh;overflow-y:auto;margin-top:9px';
+  card.appendChild(out);
+
+  /* EXPORT AND IMPORT, at the foot of the library it reads. */
+  card.appendChild(libraryDataRow());
+
+  const list = () => {
+    out.innerHTML = '';
+    /* NOTHING SEARCHED: the way in, not the first sixty alphabetically. */
+    if (!LIB.q && !LIB.sub && !LIB.picking) {
+      const by = {};
+      Object.values(all).forEach(p => {
+        const k = p.sub || 'other';
+        by[k] = (by[k] || 0) + 1;
+      });
+      const tiles = el('div', 'tiles');
+      tiles.style.marginTop = '9px';
+      Object.entries(by).sort((a, b) => b[1] - a[1]).forEach(pair => {
+        const t = el('button', 'tile');
+        t.appendChild(el('div', 'v', String(pair[1])));
+        t.appendChild(el('div', 'l', A.L.titleCase(pair[0])));
+        t.onclick = () => { LIB.sub = pair[0]; list(); };
+        tiles.appendChild(t);
+      });
+      out.appendChild(tiles);
+      return;
+    }
+    if (LIB.sub) {
+      const back = el('button', 'chip', '\u2039 All types');
+      back.style.marginBottom = '9px';
+      back.onclick = () => { LIB.sub = null; list(); };
+      out.appendChild(back);
+    }
+    /* A SEARCH LEAVES THE TYPE BEHIND: typing Lagavulin while on Bourbon
+       means the whole library. */
+    const pool = (LIB.sub && !LIB.q)
+      ? Object.fromEntries(Object.entries(all)
+          .filter(kv => (kv[1].sub || 'other') === LIB.sub))
+      : all;
+    const hits = A.L.searchLibrary(pool, LIB.q, 60);
+    if (!hits.length) {
+      out.appendChild(el('div', 'empty', 'Nothing matches.'));
+      return;
+    }
+    if (LIB.picking) { libraryTakeOutPicker(out, hits); return; }
+    hits.forEach(p => {
+      const gaps = A.L.libraryGaps(p);
+      const r = el('button', 'item pair');
+      r.style.cssText = 'width:100%;text-align:left';
+      const left = el('div');
+      left.appendChild(el('div', 'nm', p.name));
+      left.appendChild(el('div', 'sub',
+        [p.dist, p.proof ? p.proof + ' proof' : null, p.fin]
+          .filter(Boolean).join(' \u00b7 ') || '\u2014'));
+      if (gaps.length) {
+        left.appendChild(el('div', 'src', 'no ' + gaps.join(', no ')));
+      }
+      r.appendChild(left);
+      r.appendChild(gaps.length ? completeBottle(A.L.entryScore(p))
+                                : el('div', 'pf', ''));
+      r.onclick = () => editLibraryEntry(p, () => drawLibrary());
+      out.appendChild(r);
+    });
+    if (hits.length === 60) {
+      out.appendChild(el('div', 'src', LIB.sub
+        ? 'First 60 of ' + Object.keys(pool).length + '. Search to narrow it.'
+        : 'First 60. Search, or pick a type.'));
+    }
+  };
+  list();
+}
+
+/* ===================================================================
+   THE LIBRARY ADMIN, MOVED OUT OF index.html ON 2026-10-27.
+
+   BZ: "we need to separate out admin functions and solve for that", then,
+   once the shape of it was measured: move it whole. It does not split -
+   every cut tried duplicated a decision. pickLibraryEntry is wanted by the
+   entry editor AND the offers queue; libraryMergeWrite by the editor AND the
+   scan; and the scan is the only door to the fill, which is the only thing
+   here that needs the lookup service. Eighty-seven functions, one web.
+
+   WHAT CAME ACROSS UNCHANGED is most of it. These screens were right; they
+   were only in the wrong file. Where one of them has been adapted the change
+   is marked MOVED with the reason, and the reason is always the same shape:
+   this page has no shelf, no phone, and no local state but its own notes.
+
+   WHAT INDEX.HTML KEPT is everything that reads or writes a shelf. An
+   admin's own shelf facts reach the library the way everybody else's do now,
+   by being offered - which is what made the split possible at all.
+   =================================================================== */
+
+/* ====================================================================
+   THE OFFERS QUEUE
+   ==================================================================== */
+
+/* ---- renderContrib   index.html 48035-48103 ---- */
+function renderContrib(box) {
+  const card = el('div', 'sheet');
+  card.appendChild(el('h3', null, 'Offers'));
+  box.appendChild(card);
+  if (!A.user) return;
+
+  /* THE LIBRARY FIRST. Against a library this device has not loaded every
+     offer is new, and Add would write offers over existing entries. */
+  Promise.all([readOffers(), libraryLoad()]).then(([rows]) => {
+    /* EVERY OFFER, named or not - an unreadable one can still be thrown away.
+       Read with only this app's verdicts on them. */
+    const stale = [];
+    /* HELD, NOT ERASED. A dropped offer keeps its place for a fortnight
+       (BZ's choice); after that it goes on the next look. */
+    rows.forEach(row => {
+      const d = row.entry.dropped;
+      if (!d) return;
+      if (A.L.intakeExpired(d.at, Date.now())) stale.push(row);
+      else row.dropped = d;
+    });
+    stale.forEach(r => {
+      contribRef().child(r.uid).child(r.slug).remove().catch(() => {});
+      intakeStoreRef().child(r.uid).child(r.slug).remove().catch(() => {});
+    });
+    const live = rows.filter(r => !r.dropped
+      && stale.indexOf(r) < 0);
+    card.innerHTML = '';
+    card.appendChild(el('h3', null, 'Offers'));
+    const auto = A.L.autoAddedRecently(LIB.products || {}, Date.now());
+    const spelled = A.L.autoSpelledRecently(LIB.products || {}, Date.now());
+    if (!Object.keys(LIB.products || {}).length) {
+      card.appendChild(el('div', 'sub warn2', 'The library did not load, so '
+        + 'nothing here can be judged yet. Open this screen again in a '
+        + 'moment.'));
+      return;
+    }
+    /* HELD ONCE, for both branches: it was worked out inside the empty one and
+       again after the plan, and the second copy is what the fold now reads. */
+    const held = rows.filter(r => r.dropped);
+    if (!live.length) {
+      /* Shown only when something is here (BZ, 2026-09-16). */
+      if (!auto.length && !held.length && !spelled.length) {
+        card.remove(); return;
+      }
+      contribSettled(card, auto, spelled, held);
+      return;
+    }
+    const plan = A.L.intakePlan(live, { library: LIB.products || {},
+      removed: LIB.removed || {}, graves: LIB.graves });
+    contribPlan(card, plan);
+    contribSettled(card, auto, spelled, held, plan);
+  }).catch(e => {
+    card.innerHTML = '';
+    card.appendChild(el('h3', null, 'Offers'));
+    /* "NOT AN ADMIN" ONLY WHEN IT IS. A timeout or a sorting fault is not a
+       missing permission, and saying so sends somebody to check keys they
+       have. */
+    const raw = String((e && (e.code || e.message)) || e);
+    appLog('offered queue failed: ' + raw);
+    card.appendChild(el('div', 'sub', /permission/i.test(raw)
+      ? 'Not an admin.'
+      : 'The offers did not load \u2014 ' + A.L.plainError(e) + ' Open this '
+        + 'screen again to retry.'));
+  });
+}
+
+/* THE LIBRARY AND ITS REMOVALS, LOADED TOGETHER. Everything that judges an
+   offer asks both; with the library loaded alone, every guard judges
+   against an empty removal list and a removed bottle can come back. */
+
+/* ---- libraryLoad   index.html 48104-48117 ---- */
+function libraryLoad() {
+  if (LIB.products && LIB.removed) return Promise.resolve();
+  return Promise.all([libRef().once('value'),
+    ref(NODE.removed).once('value')])
+    .then(got => {
+      LIB.products = A.L.libraryFromValue(got[0].val());
+      LIB.removed = got[1].val() || {};
+    });
+}
+
+/* THE THREE PILES, AND ONLY ONE OF THEM IS A LIST TO WORK THROUGH (BZ,
+   2026-09-15): the app accepts or rejects most, and a person deals with
+   the rest. Since 2026-09-16 it acts on its own (intakeVetRun): what
+   reaches this screen is what the rules and the search could not settle. */
+
+/* ---- contribPlan   index.html 48118-48137 ---- */
+function contribPlan(card, plan) {
+  card.appendChild(el('div', 'sub', A.L.intakeSay(plan)));
+  /* NO BUTTONS FOR WHAT HAPPENS ON ITS OWN (BZ, 2026-09-16). Offers are looked
+     up, added and dropped by the timed check (intakeVetRun).
+
+     AND NO LISTS EITHER (BZ, 2026-10-01). What is going in next is the same kind
+     of thing as what went in last week - a record, not a question - so it sits
+     with them, one fold in. What is left here is the rows that need a person. */
+  const yours = plan.yours || plan.ask;
+  if (yours.length) {
+    card.appendChild(el('div', 'rs', 'These need you (' + yours.length + ')'));
+    contribPicker(card, yours);
+  }
+}
+
+/* PICK THEM OFF IN ONE PRESS, NOT ONE ROW AT A TIME (BZ, 2026-09-15). A
+   contributor who imports a cellar must not turn review into an evening.
+   Everything starts selected, because the common case is agreeing with the
+   sorting, and the row itself is the target: a checkbox beside a chip
+   beside a name is three things competing for a thumb. */
+
+/* ---- contribPicker   index.html 48138-48154 ---- */
+function contribPicker(card, list) {
+  selectRows(card, list, {
+    picked: true,
+    row: (x, onPick) => contribRow(x.row, x, onPick),
+    actions: [
+      ['\u002b Add selected', (chosen, b) =>
+        contribAddMany(chosen.filter(x => x.product), b)],
+      ['\u00d7 Drop selected', (chosen, b) => contribDropMany(chosen, b)]
+    ]
+  });
+}
+
+/* PICK SEVERAL, ACT ONCE. BZ, 2026-09-15: accept and deny efficiently, not
+   row by row. Every list in the offer queue goes through this one picker:
+   tap rows, then one button acts on what is ticked.
+   opts: picked (start ticked), row(item, onPick) -> element,
+         actions [[label, run(chosenItems, button)]] */
+
+/* ---- selectRows   index.html 48155-48194 ---- */
+function selectRows(card, list, opts) {
+  const picked = list.map(() => !!opts.picked);
+  const bar = el('div');
+  bar.style.cssText = 'display:flex;gap:8px;align-items:center;'
+    + 'flex-wrap:wrap;margin:6px 0';
+  const count = el('div', 'sub');
+  const acts = opts.actions.map(([label, run]) => {
+    const b = el('button', 'chip', label);
+    b.onclick = () => run(list.filter((x, i) => picked[i]), b);
+    return b;
+  });
+  const all = el('button', 'chip ghost', 'All');
+  const none = el('button', 'chip ghost', 'None');
+  acts.concat([all, none]).forEach(b => bar.appendChild(b));
+  bar.appendChild(count);
+  card.appendChild(bar);
+
+  const rows = list.map((x, i) => opts.row(x, () => {
+    picked[i] = !picked[i];
+    paint();
+  }));
+  rows.forEach(r => card.appendChild(r));
+
+  function paint() {
+    rows.forEach((r, i) => {
+      r.dataset.on = picked[i] ? '1' : '';
+      r.style.opacity = picked[i] ? '1' : '.45';
+      const box = r.querySelector('.pickbox');
+      if (box) box.textContent = picked[i] ? '\u2611' : '\u2610';
+    });
+    const k = picked.filter(Boolean).length;
+    count.textContent = k + ' of ' + list.length + ' selected';
+    acts.forEach(b => { b.disabled = !k; });
+  }
+  all.onclick = () => { picked.fill(true); paint(); };
+  none.onclick = () => { picked.fill(false); paint(); };
+  paint();
+}
+
+/* A name with its tick in front, on one line (selectRows paints the tick). */
+
+/* ---- pickName   index.html 48195-48204 ---- */
+function pickName(cls, name) {
+  const nm = el('div', cls);
+  const box = el('span', 'pickbox', '\u2610');
+  box.style.cssText = 'margin-right:7px;font-size:16px;line-height:1';
+  nm.appendChild(box);
+  nm.appendChild(document.createTextNode(name));
+  return nm;
+}
+
+/* A plain row for the picker: a tick, a name and one line under it. */
+
+/* ---- pickRow   index.html 48205-48228 ---- */
+function pickRow(name, line, onPick) {
+  const item = el('div', 'item');
+  item.style.cursor = 'pointer';
+  item.onclick = onPick;
+  const left = el('div');
+  left.appendChild(pickName('nm oneline', name));
+  if (line) left.appendChild(el('div', 'sub', line));
+  item.appendChild(left);
+  return item;
+}
+
+/* ============ VETTING AS THE OFFERS ARRIVE ==========================
+   BZ, 2026-09-15: look up before presenting. Runs for an admin, quietly, a
+   few at a time, and writes what it finds to the admin-only store - done
+   once for everybody, so a redraw costs nothing.
+
+   It stops at its own budget rather than the day's allowance, so it never
+   eats lookups somebody wanted for themselves. Everything it spends is in
+   the log, named. The verdicts and lookups are the same ones the screen
+   would run; only the moment has changed. */
+let VETTING = false;
+
+let VET_TIMER = null;
+
+
+/* ---- contribWhy   index.html 48482-48503 ---- */
+function contribWhy(card, list, title) {
+  const more = el('details');
+  more.style.marginTop = '4px';
+  const sum = el('summary', 'sub', title + ' (' + list.length + ')');
+  more.appendChild(sum);
+  list.slice(0, 200).forEach(x => {
+    const p = x.product || {};
+    const line = el('div', 'sub');
+    line.textContent = (p.name || (x.row && x.row.entry && x.row.entry.name)
+      || 'no name') + ' \u2014 ' + (x.why || x.rule);
+    more.appendChild(line);
+  });
+  if (list.length > 200) {
+    more.appendChild(el('div', 'sub', 'and ' + (list.length - 200) + ' more'));
+  }
+  card.appendChild(more);
+}
+
+/* WHAT WENT IN ON ITS OWN, AND TAKING IT BACK. Acting without a press means
+   a wrong bar must be cheap to undo: a fortnight of additions, one press
+   for all. Taking one back is a library removal, tombstone and all, so the
+   same offer does not walk straight back in on the next run. */
+
+/* ---- contribAutoAdded   index.html 48504-48524 ---- */
+function contribAutoAdded(card, auto) {
+  const more = el('details');
+  more.style.marginTop = '9px';
+  more.appendChild(el('summary', 'sub', auto.length + ' went in on their '
+    + 'own in the last ' + A.L.INTAKE_HOLD_DAYS + ' days'));
+  selectRows(more, auto, {
+    row: (p, onPick) => pickRow(p.name || p._key, [p.dist,
+      p.proof ? p.proof + ' proof' : null].filter(Boolean).join(' · '),
+      onPick),
+    actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
+      + (chosen.length === 1 ? ' entry' : ' entries') + ' added on their own',
+      () => libraryTakeOut(chosen, b, 'taken back after going in on its own'))]]
+  });
+  card.appendChild(more);
+}
+
+/* WHAT THE HOUSE RULE RESPELLED, and putting it back. The same fortnight and
+   the same shape as what went in on its own, because something that acts
+   without being asked has to be reviewable - but the undo RESTORES THE
+   SPELLING rather than deleting the entry: getting a distillery wrong is not
+   a reason to take somebody's bottle out of the library. */
+
+/* ---- contribRespelled   index.html 48525-48539 ---- */
+function contribRespelled(card, rows) {
+  const more = el('details');
+  more.style.marginTop = '9px';
+  more.appendChild(el('summary', 'sub', rows.length
+    + (rows.length === 1 ? ' house was' : ' houses were')
+    + ' spelled like the rest in the last ' + A.L.INTAKE_HOLD_DAYS + ' days'));
+  selectRows(more, rows, {
+    row: (p, onPick) => pickRow(p.name || p._key,
+      'now ' + p.dist + ', was ' + ((p.autoSpell || {}).was || '?'), onPick),
+    actions: [['Put the old spelling back', (chosen, b) =>
+      libraryRespellBack(chosen, b)]]
+  });
+  card.appendChild(more);
+}
+
+
+/* ---- contribSettled   index.html 48693-48718 ---- */
+function contribSettled(card, auto, spelled, held, plan) {
+  /* WHAT THE NEXT CHECK WILL DO belongs here too: it is a decision already
+     reached, and reading it is optional in exactly the way the rest is. */
+  const adds = plan ? plan.in.concat(plan.fill) : [];
+  const outs = (plan && plan.out) || [];
+  const n = auto.length + spelled.length + held.length + adds.length
+    + outs.length;
+  if (!n) return;
+  const said = [];
+  if (adds.length) said.push(adds.length + ' going in');
+  if (outs.length) said.push(outs.length + ' dropping');
+  if (auto.length) said.push(auto.length + ' went in');
+  if (spelled.length) said.push(spelled.length + ' respelled');
+  if (held.length) said.push(held.length + ' dropped');
+  const more = el('details');
+  more.style.marginTop = '9px';
+  more.appendChild(el('summary', 'sub', n + ' settled without you \u2014 '
+    + said.join(', ') + '. Each can be taken back.'));
+  if (adds.length) contribWhy(more, adds, 'Going in on the next check, and why');
+  if (outs.length) contribWhy(more, outs, 'Dropping on the next check, and why');
+  if (auto.length) contribAutoAdded(more, auto);
+  if (spelled.length) contribRespelled(more, spelled);
+  if (held.length) contribHeld(more, held);
+  card.appendChild(more);
+}
+
+
+/* ---- contribHeld   index.html 48719-48732 ---- */
+function contribHeld(card, held) {
+  const more = el('details');
+  more.style.marginTop = '9px';
+  more.appendChild(el('summary', 'sub', held.length + ' dropped, kept '
+    + A.L.INTAKE_HOLD_DAYS + ' days'));
+  /* Undoing forty drops is as cheap as making them: pick, then put back. */
+  selectRows(more, held, {
+    row: (r, onPick) => pickRow(r.entry.name || 'no name',
+      (r.dropped || {}).why || '', onPick),
+    actions: [['Put back selected', (chosen, b) => contribPutBack(chosen, b)]]
+  });
+  card.appendChild(more);
+}
+
+
+/* ---- contribPutBack   index.html 48733-48755 ---- */
+function contribPutBack(list, btn) {
+  const done = buttonWorking(btn, 'Putting back\u2026');
+  Promise.all(list.map(r => contribRef().child(r.uid).child(r.slug)
+      .child('dropped').remove().then(() => true).catch(e => {
+        appLog('library: could not put back ' + (r.entry.name || '')
+          + ' \u2014 ' + ((e && e.message) || e));
+        return false;
+      })))
+      .then(res => {
+        /* SAID, not assumed: refused writes are counted and reported. */
+        const bad = res.filter(ok => !ok).length;
+        if (bad) {
+          done();
+          toast(bad + ' of ' + res.length + ' could not be put back \u2014 '
+            + 'the log says why');
+        }
+        renderLibraryScreen();
+        countOffers();
+      });
+}
+
+/* ONE OFFER, with both buttons, always. A single chip whose label flipped
+   on a locally computed verdict offered opposite actions on two devices. */
+
+/* ---- contribRow   index.html 48756-48801 ---- */
+function contribRow(r, verdict, onPick) {
+  const item = el('div', 'item');
+  if (onPick) {
+    item.style.cursor = 'pointer';
+    item.onclick = ev => {
+      /* A button inside the row is its own press. */
+      if (ev.target && ev.target.closest && ev.target.closest('button')) return;
+      onPick();
+    };
+  }
+  const left = el('div');
+  const title = r.entry.name
+    || 'An offer with no name \u2014 nothing here to add';
+  left.appendChild(onPick ? pickName('nm', title) : el('div', 'nm', title));
+  left.appendChild(el('div', 'sub',
+    [r.entry.dist, r.entry.proof ? r.entry.proof + ' proof' : null,
+     r.entry.fin].filter(Boolean).join(' · ')));
+  /* ALREADY IN THE LIBRARY? Only where a decision is being asked for - the
+     rows with a tick - because the lists of what went in and what was dropped
+     are a record rather than a queue (BZ: "don't see how to match to an
+     existing bottle"). */
+  if (onPick && A.admin) {
+    const same = el('button', 'chip quiet');
+    same.type = 'button';
+    same.textContent = 'Already in the library\u2026';
+    same.style.marginTop = '4px';
+    same.onclick = () => offerAlreadyThere(r, () => renderLibraryScreen());
+    left.appendChild(same);
+  }
+  const mine = A.user && r.uid === A.user.uid;
+  left.appendChild(el('div', 'src',
+    'from ' + (mine ? 'you' : (r.entry.by || 'somebody'))
+    + (verdict && verdict.why ? ' · ' + verdict.why : '')));
+  item.appendChild(left);
+
+  return item;
+}
+
+/* LOOK FIRST, THEN WRITE ONCE (BZ, 2026-09-15). The lookups for thin rows
+   run inside the press and are merged before anything is written, then the
+   lot lands in one update: nothing is asked twice, the library never holds
+   the thin version, and nothing reads the whole library back to append.
+
+   The lookups use the fill run's parse and writer (A.L.parseLookup,
+   A.L.gapsClosed, A.L.libraryFillWrite) against the rows about to be written,
+   so this path and that run cannot disagree (rule 30d). */
+
+/* ---- contribAddMany   index.html 48886-48923 ---- */
+async function contribAddMany(list, btn) {
+  /* MOVED: index.html passed S.catalog here, so an offer was enriched from
+     whatever the admin's own shelf knew about the same bottle. There is no
+     shelf on this page, so an offer is written as it was offered. Nothing
+     is lost: an admin's own facts reach the library the way everybody
+     else's do, by being offered from the shelf page. */
+  const w = A.L.intakeToWrite(list, LIB.removed, LIB.graves, null,
+    Date.now(), false, LIB.products);
+  w.refused.forEach(r => appLog('library: not adding ' + r.name + ' \u2014 '
+    + r.why));
+  const pending = w.pending;
+  const thin = A.lookupUrl ? w.thin : [];
+  if (!Object.keys(pending).length) {
+    toast('Nothing added \u2014 all of them were judged before');
+    return;
+  }
+  const done = btn ? buttonWorking(btn, thin.length
+    ? 'Looking up ' + thin.length + ', then adding '
+      + Object.keys(pending).length + '\u2026'
+    : 'Adding ' + Object.keys(pending).length + '\u2026') : () => {};
+  appLog('library: adding ' + Object.keys(pending).length + ', '
+    + thin.length + ' of them short of something and looked up first');
+  const ran = thin.length ? await contribFillFirst(pending, thin)
+    : { filled: 0, empty: 0, stopped: 0 };
+
+  libraryAddWrite(pending, list, LIB.removed, LIB.graves, LIB.products)
+    .then(res => {
+      adminSave();
+      toast(A.L.intakeAddedSay(res.added, ran));
+      renderLibraryScreen();
+      countOffers();
+    })
+    .catch(e => { done(); toast(sayError(e)); });
+}
+
+/* DROPPING IS NOT DELETING. The offer keeps its place with the reason
+   written on it, and goes on its own after a fortnight. It is NOT the
+   library deletion - that one leaves a tombstone so the entry cannot come
+   back, and an offer that was never accepted has nothing to come back
+   from.
+   AND IT SAYS WHAT ACTUALLY HAPPENED: each result is counted, each failure
+   logged with its row, and the toast reports what succeeded. A swallowed
+   refusal reporting success sends somebody looking anywhere but the write. */
+
+/* ---- contribDropMany   index.html 48924-48976 ---- */
+function contribDropMany(list, btn) {
+  const done = btn ? buttonWorking(btn, 'Dropping ' + list.length + '\u2026')
+    : () => {};
+  appLog('library: dropping ' + list.length + ' offer(s), held '
+    + A.L.INTAKE_HOLD_DAYS + ' days');
+  const rows = list.map(x => x.row || x)
+    .filter(r => r && r.uid && r.slug);
+  if (rows.length < list.length) {
+    appLog('library: ' + (list.length - rows.length) + ' of them have no '
+      + 'node to drop \u2014 nothing to write');
+  }
+  Promise.all(list.map(x => {
+    const r = x.row || x;
+    if (!r || !r.uid || !r.slug) return Promise.resolve(false);
+    /* THE KEY, not only the sentence. "already in as <name>" was written for a
+       person to read and left the offerer's own bottle pointed at nothing the
+       library knows - three times for one Weller (BZ, 2026-10-01: "I own weller
+       antique 107 ... Hence it must be in the library"). With the key recorded,
+       the offering device can subscribe itself. */
+    const into = (x.near && (x.near._key || x.near.k)) ? A.L.libKey(x.near.name
+      || x.near._key || x.near.k) : null;
+    return contribRef().child(r.uid).child(r.slug).child('dropped')
+      .set(Object.assign({ why: x.why || x.rule || 'nothing to add',
+        at: Date.now() }, into ? { into: into } : {}))
+      .then(() => true)
+      .catch(e => {
+        appLog('library: could NOT drop ' + (r.entry || {}).name
+          + ' at contrib/' + r.uid + '/' + r.slug + ' \u2014 '
+          + ((e && e.message) || e));
+        return false;
+      });
+  })).then(got => {
+    const ok = got.filter(Boolean).length;
+    done();
+    toast(A.L.intakeDroppedSay(ok, list.length));
+    renderLibraryScreen();
+    countOffers();
+  });
+}
+
+/* --- managing the library ---------------------------------------------
+   Browse it, search it, fix an entry, remove one, so a wrong entry is not
+   permanent in the thing everybody reads. */
+
+/* `fill` holds a run in progress so the modal is only a view of it:
+   closing the modal must not orphan a run that is spending money. */
+/* LIB is declared once, up with the rest of the layer, and without an
+   `admin` field: whether this account may write is A.admin. fbCheckAdmin
+   stayed in no file - the gate already reads admins/<uid>. */
+
+/* ---- offerAlreadyThere   index.html 50177-50193 ---- */
+function offerAlreadyThere(r, after) {
+  const nm = (r.entry && r.entry.name) || 'This offer';
+  pickLibraryEntry('Already in the library as?',
+    '\u201c' + nm + '\u201d is dropped, and the entry you pick is the one '
+      + 'everybody keeps using.',
+    null,
+    hit => {
+      contribDropMany([{ row: r,
+        why: 'already in the library as ' + hit.name }], null);
+      appLog('library: offer ' + nm + ' dropped \u2014 already there as '
+        + hit.name);
+      toast('Dropped \u2014 already there as ' + hit.name);
+      closeModal();
+      if (after) after();
+    });
+}
+
+
+/* ====================================================================
+   THE AUTOMATIC INTAKE
+   ==================================================================== */
+
+/* ---- offerRows   index.html 48247-48266 ---- */
+function offerRows(snap) {
+  const rows = [];
+  snap.forEach(who => {
+    who.forEach(c => {
+      /* `upc` IS NOT AN OFFER: it holds the contributor's barcode pairings.
+         Read as an offer it has no name, sorts into "adds nothing", and can
+         never be cleared, because the rules refuse any non-twelve-digit key
+         under `upc`. */
+      if (c.key === 'upc') return;
+      const v = c.val() || {};
+      rows.push({ uid: who.key, slug: c.key, entry: v, unreadable: !v.name });
+    });
+  });
+  return rows;
+}
+
+/* THE LIBRARY, READ FRESH, OR NOTHING IS JUDGED. LIB.products is null until
+   somebody opens the library, and against an empty library every offer is
+   new - so an automatic add would write over an existing entry. It reads
+   the library and removals itself every time, and stops rather than guess. */
+
+/* ---- intakeVetSoon   index.html 48229-48246 ---- */
+async function intakeVetSoon() {
+  /* Not gated on the budget or the service: clearing what adds nothing and
+     adding what is complete cost nothing, and the lookups check the budget
+     one at a time. Answers false when it did not run, so a press can say so. */
+  if (VETTING || !A.admin || !A.user) return false;
+  VETTING = true;
+  try {
+    await intakeVetRun();
+  } catch (e) {
+    appLog('vetting stopped: ' + ((e && e.message) || e));
+  } finally {
+    VETTING = false;
+  }
+  return true;
+}
+
+/* THE OFFERS, AS ROWS, in one place, so "skip the barcode node" is not
+   copied (a copy that missed it made an unclearable row). */
+
+/* ---- intakeVetRun   index.html 48304-48324 ---- */
+async function intakeVetRun() {
+  await intakeAcceptUpcs().catch(e => appLog('barcodes: offers not taken \u2014 '
+    + ((e && e.message) || e)));
+  const rows = (await readOffers()).filter(r => !r.entry.dropped);
+  if (!rows.length) return;
+  const lib = await intakeReadLibrary();
+  if (!lib) return;
+  const opts = A.L.intakeReady({ library: lib.library, removed: lib.removed,
+    graves: LIB.graves, ref: lib.ref });
+  const work = A.L.intakeWork(rows, opts);
+  const cleared = await intakeClearNothing(work.nothing);
+  const ran = await intakeVetLookups(work.todo, opts);
+  const added = await intakeAutoAdd(opts, lib.removed);
+  /* COUNTED FROM THE WRITES, not the intentions, so a refused write does not
+     look like progress and trigger another run. */
+  intakeVetReport(ran.spent, cleared + ran.wrote + added);
+}
+
+/* BARCODE OFFERS, ACCEPTED ON THEIR OWN (BZ, 2026-09-16). A code the shared
+   list does not have goes in; one it already has is kept as it is. Either
+   way the offer is cleared, in one write. Only the fields the rules allow. */
+
+/* ---- intakeReadLibrary   index.html 48267-48282 ---- */
+async function intakeReadLibrary() {
+  const library = A.L.libraryFromValue((await libRef().once('value')).val());
+  if (!Object.keys(library).length) {
+    appLog('vetting: the library read came back empty, so nothing was '
+      + 'judged or added');
+    return null;
+  }
+  const removed = (await ref(NODE.removed).once('value')).val() || {};
+  return { library: library, removed: removed, ref: await libraryRefLoad() };
+}
+
+/* WHERE THIS APP KEEPS ITS VERDICTS ON OFFERS - under `shared`, which only
+   an admin may write. Never on the offer itself: that is the contributor's
+   node, and a verdict written there by them would be acted on unjudged,
+   writing an entry of their choosing over any library bottle. (Security.) */
+
+/* ---- readOffers   index.html 48291-48303 ---- */
+async function readOffers() {
+  const got = await Promise.all([contribRef().once('value'),
+    intakeStoreRef().once('value').catch(() => null)]);
+  const verdicts = (got[1] && got[1].val()) || {};
+  return offerRows(got[0]).map(r => {
+    const entry = Object.assign({}, r.entry);
+    delete entry.vetted;
+    const v = (verdicts[r.uid] || {})[r.slug];
+    if (v) entry.vetted = v;
+    return Object.assign({}, r, { entry: entry });
+  });
+}
+
+
+/* ---- intakeStoreRef   index.html 48283-48290 ---- */
+function intakeStoreRef() {
+  return ref(NODE.intake);
+}
+
+/* THE OFFERS, WITH ONLY THE VERDICTS THIS APP WROTE. Whatever sits in an
+   offer's own `vetted` field is the contributor's and is thrown away here;
+   the verdict, if any, comes from the admin-only store, and A.L.intakeVetted
+   still checks it was made about this offer as it now stands. */
+
+/* ---- intakeAcceptUpcs   index.html 48325-48358 ---- */
+async function intakeAcceptUpcs() {
+  const got = await Promise.all([contribRef().once('value'),
+    ref(NODE.upc).once('value')]);
+  const shared = got[1].val() || {};
+  const ups = {};
+  let took = 0, known = 0;
+  got[0].forEach(who => {
+    const codes = who.child('upc').val() || {};
+    Object.keys(codes).forEach(code => {
+      const row = codes[code] || {};
+      if (!shared[code] && row.name) {
+        const take = { name: row.name, at: row.at || Date.now() };
+        if (typeof row.price === 'number') take.price = row.price;
+        if (typeof row.size === 'string') take.size = row.size;
+        ups['upc/' + code] = take;
+        shared[code] = take;
+        took++;
+      } else {
+        known++;
+      }
+      ups['contrib/' + who.key + '/upc/' + code] = null;
+    });
+  });
+  if (!Object.keys(ups).length) return 0;
+  await ref(NODE.root).update(ups);
+  appLog('barcodes: took ' + took + ' offered, ' + known
+    + ' already known or unnamed');
+  return took;
+}
+
+/* WHAT ADDS NOTHING IS NOT A DECISION (BZ, 2026-09-15). An offer already
+   in the library, removed, or merged away: the verdict IS the reason.
+   Dropped, not deleted: held a fortnight with the reason on it, and a Put
+   back undoes the lot. */
+
+/* ---- intakeClearNothing   index.html 48359-48375 ---- */
+async function intakeClearNothing(list) {
+  if (!list.length) return 0;
+  appLog('vetting: clearing ' + list.length + ' offer(s) that add nothing');
+  const res = await Promise.all(list.map(x => contribRef().child(x.row.uid)
+    .child(x.row.slug).child('dropped')
+    .set({ why: x.verdict.why || x.verdict.rule || 'nothing to add',
+      at: Date.now() })
+    .then(() => true)
+    .catch(e => {
+      appLog('vetting: could not clear ' + (x.row.entry.name || '')
+        + ' \u2014 ' + ((e && e.message) || e));
+      return false;
+    })));
+  return res.filter(Boolean).length;
+}
+
+/* ONE LOOKUP PER OFFER THAT NEEDS ONE, until the budget says stop. */
+
+/* ---- intakeVetLookups   index.html 48376-48420 ---- */
+async function intakeVetLookups(todo, opts) {
+  const today = A.L.todayISO();
+  let spent = 0, wrote = 0;
+  for (let i = 0; i < todo.length; i++) {
+    const x = todo[i];
+    let v = x.verdict;
+    const ask = A.L.intakeAsks(v);
+    const gaps = (v.verdict === 'fill' && (v.needs || []).length)
+      ? v.needs : null;
+    if ((ask || gaps) && A.lookupUrl) {
+      if (A.L.intakeBudgetLeft(A.intakeTally, today, A.budget,
+          A.tally) <= 0) {
+        appLog('vetting: stopped at the budget of '
+          + A.L.intakeBudgetOf(A.budget) + ' with ' + (todo.length - i)
+          + ' still to look at');
+        break;
+      }
+      const name = (v.product || {}).name || x.row.entry.name || '';
+      /* UNDEFINED MEANS THE LOOKUP FAILED, which is not an answer
+         (A.L.intakeAfterLookup): nothing is settled, nothing is marked tried,
+         and the offer is asked again next run. Offline, the run stops. */
+      let got;
+      try {
+        const raw = await adminService(name, A.L.INTAKE_LOOKUP_MS,
+          gaps || undefined);
+        A.intakeTally = A.L.countIntake(A.intakeTally, today);
+        spent++;
+        got = raw ? A.L.parseLookup(raw, { name: name }) : null;
+      } catch (e) {
+        appLog('  vetting ' + name.slice(0, 34) + ' \u2014 '
+          + A.L.lookupFailSay(e));
+        if (navigator.onLine === false) break;
+      }
+      if (got === undefined && !x.write) continue;
+      v = A.L.intakeAfterLookup(v, got, opts);
+    }
+    if (await intakeVetWrite(x.row, v)) wrote++;
+  }
+  return { spent: spent, wrote: wrote };
+}
+
+/* AND WHAT IS READY GOES IN, WITHOUT A PRESS (BZ, 2026-09-16). Read back
+   through the plan so two offers of one bottle are one row, written through
+   the Add press's writer, each stamped `autoIn` so it can be listed and
+   taken back for a fortnight. */
+
+/* ---- intakeAutoAdd   index.html 48421-48447 ---- */
+async function intakeAutoAdd(opts, removed) {
+  const rows = (await readOffers()).filter(r => !r.entry.dropped);
+  const plan = A.L.intakePlan(rows, opts);
+  const ready = plan.in.concat(plan.fill).filter(A.L.intakeReadyToAdd);
+  if (!ready.length) return 0;
+  /* MOVED, for the reason contribAddMany gives: no shelf here to enrich
+     from, so an offer is added as it stands. */
+  const w = A.L.intakeToWrite(ready, removed, LIB.graves, null,
+    Date.now(), true, opts.library);
+  /* AN OFFER THAT CAN NEVER GO IN IS CLEARED, not refused again on every
+     run: already in the library, removed, merged away. */
+  await intakeClearNothing(w.refused.filter(r => r.row).map(r => {
+    appLog('vetting: not adding ' + r.name + ' \u2014 ' + r.why);
+    return { row: r.row, verdict: { why: r.why } };
+  }));
+  if (!Object.keys(w.pending).length) return 0;
+  try {
+    const res = await libraryAddWrite(w.pending, ready, removed, LIB.graves,
+      opts.library);
+    if (res.added) {
+      appLog('vetting: ' + res.added + ' went into the library on their own');
+    }
+    return res.added;
+  } catch (e) {
+    appLog('vetting: could not add \u2014 ' + ((e && e.message) || e));
+    return 0;
+  }
+}
+
+
+/* ---- intakeVetReport   index.html 48448-48463 ---- */
+function intakeVetReport(spent, wrote) {
+  if (!spent && !wrote) return;
+  appLog('vetting: ' + wrote + ' offer(s) settled, ' + spent
+    + ' lookup(s) spent of a ' + A.L.intakeBudgetOf(A.budget) + ' budget');
+  adminSave();
+  /* REDRAWN ONLY IF IT CHANGED SOMETHING, only if the queue is on screen,
+     and never over a sheet or another run: a background redraw mid-action
+     loses the user's modal. */
+  /* MOVED: the app asked whether its library screen was on top and whether
+     a modal was open. Here the surface the vetting changes is the Offered
+     section, and the modal is #modalWrap. */
+  const scr = $('#sec-offers');
+  const sheet = $('#modalWrap');
+  if (scr && scr.classList.contains('on') && (!sheet || sheet.hidden)
+      && !LIB.filling) {
+    renderLibraryScreen();
+  }
+  countOffers();
+}
+
+/* WRITTEN DOWN, so nobody pays for this answer twice. */
+
+/* ---- intakeVetWrite   index.html 48464-48481 ---- */
+function intakeVetWrite(row, v) {
+  /* Into the admin-only store, signed with the offer it is about. `needs`
+     stays a list; saved as text it crashed the second pass. */
+  const rec = JSON.parse(JSON.stringify({ at: Date.now(),
+    sig: A.L.offerSig(row.entry), verdict: v.verdict, rule: v.rule || '',
+    why: v.why || '', field: v.field || '', tried: !!v.tried,
+    needs: v.needs || [], near: v.near || null, product: v.product || null }));
+  return intakeStoreRef().child(row.uid).child(row.slug)
+    .set(A.L.fbEncode(rec))
+    .then(() => true)
+    .catch(e => {
+      appLog('vetting write failed: ' + ((e && e.message) || e));
+      return false;
+    });
+}
+
+/* The piles that need no decision stay readable, folded, so "104 go in" is
+   not taken on trust. */
+
+/* ---- contribFillFirst   index.html 48802-48846 ---- */
+async function contribFillFirst(pending, thin) {
+  const today = A.L.todayISO();
+  let filled = 0, empty = 0, stopped = 0;
+  for (let i = 0; i < thin.length; i++) {
+    const x = thin[i];
+    /* The day's ceiling stops the run rather than failing a bottle: the
+       rest go in as they are and keep their place on the fill list. */
+    if (!A.L.lookupAllowed(A.tally, today)) { stopped = thin.length - i; break; }
+    let raw = null;
+    try {
+      raw = await adminService(x.name, A.L.INTAKE_LOOKUP_MS, x.missing);
+    } catch (e) {
+      appLog('  intake fill ' + x.name.slice(0, 34) + ' \u2014 '
+        + A.L.lookupFailSay(e));
+      continue;
+    }
+    const got = A.L.parseLookup(raw, { name: x.name });
+    const closes = A.L.gapsClosed(got, x.missing);
+    appLog('  intake fill ' + x.name.slice(0, 34) + ' | short of '
+      + x.missing.join(',') + ' | '
+      + (closes.length ? 'FILLED ' + closes.join(',') : 'nothing came back'));
+    if (!closes.length) {
+      empty++;
+      A.ledger = A.L.recordLookup(A.ledger, x.k, 'empty', today);
+      continue;
+    }
+    const built = A.L.libraryFillWrite([{ k: x.k, name: x.name, got: got,
+      missing: x.missing }], { [x.k]: true }, pending, Date.now());
+    /* Applied to the rows about to be written, exactly as the fill run
+       applies them to its own snapshot. */
+    Object.keys(built.updates || {}).forEach(p2 => {
+      const bits = p2.split('/');
+      if (bits[1] && pending[bits[0]]) {
+        pending[bits[0]][bits[1]] = built.updates[p2];
+      }
+    });
+    filled++;
+    A.ledger = A.L.recordLookup(A.ledger, x.k, 'found', today);
+  }
+  return { filled: filled, empty: empty, stopped: stopped };
+}
+
+/* ONE WRITE FOR A BATCH, and the offers it settles removed. Shared by the
+   Add press and the automatic sorting, so they cannot write different
+   things. */
+
+/* ---- libraryAddWrite   index.html 48847-48885 ---- */
+function libraryAddWrite(pending, list, removed, graves, library) {
+  const updates = {};
+  Object.keys(pending).forEach(k => {
+    /* ASKED AT THE MOMENT OF WRITING, whatever the caller checked, with the
+       truth about whether the entry exists - or an offer could be written
+       over an existing bottle whole. */
+    const exists = !!(library && (library[k]
+      || A.L.alreadyNamed(library, pending[k].name)));
+    if (!A.L.libraryAccepts(k, exists, removed, graves).ok) return;
+    updates['catalog/products/' + k] = pending[k];
+  });
+  const keys = Object.keys(updates);
+  if (!keys.length) return Promise.resolve({ added: 0, uncleared: 0 });
+  updates.stamp = Date.now();
+  /* THE OFFERS THAT WENT IN LEAVE THE QUEUE, and the ones merged into them,
+     or those would go in alone on the next run. */
+  const rows = [];
+  (list || []).forEach(x => {
+    const p = x.product || {};
+    if (keys.indexOf('catalog/products/' + A.L.libKey(p.name || '')) < 0) return;
+    if (x.row) rows.push(x.row);
+    (x.absorbed || []).forEach(r => rows.push(r));
+  });
+  return ref(NODE.shared)
+    .update(A.L.fbEncodePaths(updates))
+    .then(() => Promise.all(rows.map(r => Promise.all([
+      contribRef().child(r.uid).child(r.slug).remove(),
+      intakeStoreRef().child(r.uid).child(r.slug).remove()
+    ]).then(() => true).catch(e => {
+      appLog('library: added, but could not clear the offer ' + r.uid + '/'
+        + r.slug + ' \u2014 ' + ((e && e.message) || e));
+      return false;
+    }))))
+    .then(res => {
+      LIB.products = null;                   // re-read, it has changed
+      return { added: keys.length, uncleared: res.filter(ok => !ok).length };
+    });
+}
+
+
+/* ---- intakeBudgetRow   index.html 50681-50739 ---- */
+function intakeBudgetRow(card) {
+  if (!A.admin) return;
+  const row = el('div', 'lookrow');
+  row.style.marginTop = '9px';
+  const box2 = document.createElement('input');
+  box2.className = 'field';
+  box2.type = 'number';
+  box2.min = '0';
+  box2.max = String(A.L.LOOKUP_CAP);
+  box2.value = String(A.L.intakeBudgetOf(A.budget));
+  box2.setAttribute('aria-label', 'Daily lookups for offers');
+  const save = el('button', 'chip', 'Save');
+  save.onclick = () => {
+    A.budget = A.L.intakeBudgetOf(box2.value);
+    box2.value = String(A.budget);
+    adminSave();
+    appLog('the offered queue may spend ' + A.budget
+      + ' lookups a day');
+    toast(A.budget
+      ? 'Offers may spend ' + A.budget + ' lookups a day'
+      : 'Offers are not looked up on their own');
+  };
+  row.appendChild(box2);
+  row.appendChild(save);
+  card.appendChild(el('div', 'lbl',
+    'Daily lookups for offers'));
+  card.appendChild(row);
+  card.appendChild(el('div', 'src',
+    'Offers are looked up as they arrive, up to this many a day, '
+    + 'inside the daily limit of ' + A.L.LOOKUP_CAP + ' for all lookups. '
+    + 'Spent '
+    + 'today: ' + A.L.intakeSpent(A.intakeTally, A.L.todayISO()) + '. Zero '
+    + 'turns it off, and offers are looked up when you add them instead.'));
+}
+
+/* WHAT THE APP IS AND WHICH BUILD OF IT (BZ: checking for a new build is
+   something you DO, on the screen you came to because something looked wrong).
+   It was hoisted out of the Advanced fold to get here; now it is just here. */
+
+
+/* ====================================================================
+   TAKING ENTRIES OUT AND PUTTING THEM BACK
+   ==================================================================== */
+
+/* ---- libraryRespellBack   index.html 48540-48564 ---- */
+function libraryRespellBack(list, btn) {
+  const done = btn ? buttonWorking(btn, 'Putting back\u2026') : () => {};
+  const changes = {};
+  list.forEach(p => {
+    const back = A.L.houseTakeBack(p);
+    if (back) changes[p._key || A.L.libKey(p.name)] = back;
+  });
+  if (!Object.keys(changes).length) { done(); return; }
+  libraryFieldWrite(changes)
+    .then(() => {
+      Object.keys(changes).forEach(k => {
+        appLog('library: ' + k + ' put back to ' + changes[k].dist);
+      });
+      toast(Object.keys(changes).length === 1 ? 'Put back'
+        : Object.keys(changes).length + ' put back');
+      done();
+      renderLibraryScreen();
+    })
+    .catch(e => { appLog('put back failed: ' + ((e && e.message) || e));
+      toast(sayError(e)); done(); });
+}
+
+/* TAKE ENTRIES OUT OF THE LIBRARY. Deleted, and recorded as removed - with
+   the entry itself, so Put back restores it - or the automatic paths would
+   write it straight back. */
+
+/* ---- libraryTakeOut   index.html 48565-48599 ---- */
+function libraryTakeOut(list, btn, why) {
+  const done = btn ? buttonWorking(btn, 'Taking out\u2026') : () => {};
+  const updates = {};
+  const at = Date.now();
+  list.forEach(p => {
+    const key = p._key || A.L.libKey(p.name);
+    const entry = Object.assign({}, p);
+    delete entry._key;
+    updates['catalog/products/' + key] = null;
+    updates['removed/' + key] = { at: at, by: (A.user || {}).uid || '',
+      why: why, entry: entry };
+  });
+  updates.stamp = at;
+  ref(NODE.shared)
+    .update(A.L.fbEncodePaths(updates))
+    .then(() => {
+      list.forEach(p => {
+        const key = p._key || A.L.libKey(p.name);
+        if (LIB.products) delete LIB.products[key];
+        LIB.removed = Object.assign({}, LIB.removed || {},
+          { [key]: updates['removed/' + key] });
+      });
+      appLog('library: took out ' + list.length + ' \u2014 ' + why);
+      toast(list.length + (list.length === 1 ? ' entry' : ' entries')
+        + ' taken out');
+      renderLibraryScreen();
+    })
+    .catch(e => { done(); toast(sayError(e)); });
+}
+
+/* PUT BACK WHAT WAS TAKEN OUT: the entry, where it was kept, in the same
+   write that lifts the tombstone. A deliberate act by an admin, so it does
+   not ask libraryAccepts, which exists to stop the automatic paths doing
+   exactly this. A removal recorded before entries were kept only lifts the
+   block, and the bottle comes back when it is next offered. */
+
+/* ---- libraryPutBack   index.html 48600-48629 ---- */
+function libraryPutBack(list, btn) {
+  const done = buttonWorking(btn, 'Putting back\u2026');
+  const ups = {};
+  const at = Date.now();
+  list.forEach(x => {
+    if (x.rec.entry && x.rec.entry.name) {
+      ups['catalog/products/' + x.key] = Object.assign({}, x.rec.entry, { at: at });
+    }
+    ups['removed/' + x.key] = null;
+  });
+  ups.stamp = at;
+  ref(NODE.shared)
+    .update(A.L.fbEncodePaths(ups))
+    .then(() => {
+      list.forEach(x => {
+        if (LIB.removed) delete LIB.removed[x.key];
+        if (x.rec.entry && LIB.products) LIB.products[x.key] = x.rec.entry;
+      });
+      appLog('library: put back ' + list.length);
+      toast(list.length + ' put back');
+      renderLibraryScreen();
+    })
+    .catch(e => { done(); toast(sayError(e)); });
+}
+
+/* MERGE DUPLICATE ENTRIES: the dropped key is deleted and recorded as
+   merged into the one kept, on this device (LIB.graves, through buryKey,
+   which refuses a round trip) and for everybody (renamed). One writer for
+   the per-pair merge and the identical-pairs merge; the per-pair one skipped
+   the device's record. fbEncodePaths encodes each segment itself. */
+
+/* ---- libraryMergeWrite   index.html 48630-48648 ---- */
+function libraryMergeWrite(pairs) {
+  const ups = {};
+  pairs.forEach(d => {
+    ups['catalog/products/' + d.drop] = null;
+    LIB.graves = A.L.buryKey(LIB.graves, d.drop, d.keep);
+    ups['renamed/' + d.drop] = { to: A.L.mergedInto(LIB.graves, d.keep),
+      at: Date.now() };
+    appLog('merge: dropping ' + d.drop + ' into ' + d.keep
+      + ' (in library: ' + !!(LIB.products || {})[d.drop] + ')');
+  });
+  ups.stamp = Date.now();
+  return ref(NODE.shared)
+    .update(A.L.fbEncodePaths(ups))
+    .then(() => {
+      pairs.forEach(d => { if (LIB.products) delete LIB.products[d.drop]; });
+    });
+}
+
+/* WHAT HAS BEEN TAKEN OUT, newest first, to put back. */
+
+/* ---- libraryRemovedList   index.html 48649-48665 ---- */
+function libraryRemovedList(card) {
+  const removed = LIB.removed || {};
+  const rows = Object.keys(removed).map(k => ({ key: k, rec: removed[k] || {} }))
+    .sort((a, b) => (b.rec.at || 0) - (a.rec.at || 0));
+  if (!rows.length) return;
+  const more = el('details');
+  more.style.marginTop = '9px';
+  more.appendChild(el('summary', 'sub', rows.length + ' removed'));
+  selectRows(more, rows, {
+    row: (x, onPick) => pickRow((x.rec.entry || {}).name
+      || x.key.replace(/_/g, ' '), x.rec.why || '', onPick),
+    actions: [['Put back selected', (chosen, b) => libraryPutBack(chosen, b)]]
+  });
+  card.appendChild(more);
+}
+
+/* PICK ENTRIES TO TAKE OUT, from whatever the list is showing. */
+
+/* ---- libraryTakeOutPicker   index.html 48666-48676 ---- */
+function libraryTakeOutPicker(out, hits) {
+  selectRows(out, hits, {
+    row: (p, onPick) => pickRow(p.name, [p.dist, p.proof ? p.proof + ' proof'
+      : null].filter(Boolean).join(' · '), onPick),
+    actions: [['Take out selected', (chosen, b) => confirmDelete(chosen.length
+      + (chosen.length === 1 ? ' entry' : ' entries') + ' from the library',
+      () => libraryTakeOut(chosen, b, 'removed by an admin'))]]
+  });
+}
+
+/* The switch between browsing the library and picking entries out of it. */
+
+/* ---- libraryPickToggle   index.html 48677-48692 ---- */
+function libraryPickToggle(card, list) {
+  const b = el('button', 'chip', LIB.picking ? 'Done' : 'Select');
+  b.onclick = () => { LIB.picking = !LIB.picking; b.textContent = LIB.picking
+    ? 'Done' : 'Select'; list(); };
+  card.appendChild(b);
+}
+
+/* What was dropped, while it is still here to be looked at. */
+/* ONE LINE FOR EVERYTHING THAT DECIDED ITSELF (BZ, 2026-10-01: "the more we
+   leverage canon, the less we should need to approve"). Three folds stood side
+   by side at the top of this card - went in on their own, respelled, held - each
+   a record of a decision already made, all of them competing with the one list
+   that wants a person.
+
+   NOTHING IS HIDDEN AND NOTHING IS HARDER TO UNDO: they move inside one fold and
+   each keeps its own control. */
+
+/* ====================================================================
+   THE ENTRY EDITOR
+   ==================================================================== */
+
+/* ---- libraryEntryFields   index.html 49857-49937 ---- */
+function libraryEntryFields(p, form) {
+  const fields = LIB_EDIT_FIELDS;
+  /* A FIXED LIST GETS A LIST (BZ): a text box on a closed-set field is how
+     the contradictions the scan reports get made. */
+  const CHOICES = {
+    sub: A.L.TYPES,
+    style: A.L.STYLES,
+    region: A.L.SCOTCH_REGIONS
+  };
+  /* A DOT IS A PATH: the field list is flat and a tasting note is not. */
+  const valueAt = (obj, k) => {
+    const bits = String(k).split('.');
+    return bits.length === 1 ? obj[k]
+      : ((obj[bits[0]] || {})[bits[1]]);
+  };
+  const inputs = {};
+  fields.forEach(([k, label, type]) => {
+    const wrap = el('label', null, label);
+    let inp;
+    if (CHOICES[k]) {
+      inp = document.createElement('select');
+      inp.className = 'field';
+      /* Blank first: region is empty for anything not Scotch, and clearing one
+         has to be possible. */
+      const none = document.createElement('option');
+      none.value = '';
+      none.textContent = '\u2014';
+      inp.appendChild(none);
+      CHOICES[k].forEach(v => {
+        const o = document.createElement('option');
+        o.value = v;
+        o.textContent = A.L.titleCase ? A.L.titleCase(v) : v;
+        inp.appendChild(o);
+      });
+      const have = p[k] == null ? '' : String(p[k]);
+      /* A value the list does not hold is still shown, so opening an entry
+         cannot silently change it. */
+      if (have && CHOICES[k].indexOf(have) < 0) {
+        const o = document.createElement('option');
+        o.value = have;
+        o.textContent = have + ' (not on the list)';
+        inp.appendChild(o);
+      }
+      inp.value = have;
+    } else {
+      inp = document.createElement('input');
+      inp.className = 'field';
+      inp.type = type;
+      if (type === 'number') inp.step = '0.1';
+      const at = valueAt(p, k);
+      inp.value = at == null ? '' : at;
+    }
+    inputs[k] = inp;
+    wrap.appendChild(inp);
+    form.appendChild(wrap);
+  });
+  return { fields: fields, inputs: inputs };
+}
+
+/* WHAT A LIBRARY ENTRY IS EDITED THROUGH: a field, its label, and what kind of
+   box it gets. A declaration, so it sits beside the function rather than inside
+   it - editLibraryEntry is at its size ceiling and the ceiling does not go up
+   (rule 30f). */
+const LIB_EDIT_FIELDS = [
+  ['proof', 'Proof', 'number'], ['dist', 'Distillery', 'text'],
+  ['country', 'Country', 'text'], ['sub', 'Category', 'text'],
+  ['style', 'Style', 'text'],
+  ['age', 'Age', 'number'], ['fin', 'Cask', 'text'],
+  ['region', 'Region', 'text'], ['msrp', 'Price', 'number'],
+  ['mash', 'Mash bill', 'text'],
+  /* THE NOTES, so a sentence pasted into the cask field can be MOVED rather
+     than only deleted (BZ, 2026-10-01, third time of asking). A nose and a
+     palate are what a described whisky has, so they come first. */
+  ['tn.nose', 'Nose', 'text'], ['tn.palate', 'Palate', 'text'],
+  ['tn.finish', 'Finish (the taste, not the cask)', 'text']
+];
+
+/* SAVING AN ENTRY, which is a rename as well as an edit when the name moves:
+   written at the new key and cleared from the old one in the same update, or
+   the library holds it twice. Its own function because editLibraryEntry is at
+   its size ceiling and the ceiling does not go up (rule 30f). */
+
+/* ---- saveLibraryEntry   index.html 49938-50015 ---- */
+function saveLibraryEntry(p, save, inputs, nameInp, after) {
+    /* One press: a second tap writes the shared entry twice. */
+    if (save.dataset.busy) return;
+    save.dataset.busy = '1';
+    setTimeout(() => { delete save.dataset.busy; }, 2500);
+    const oldKey = p._key || A.L.libKey(p.name);
+    const rename = A.L.libraryRename(LIB.products || {}, oldKey,
+      nameInp.value, p.name);
+    if (!rename.ok) { toast(rename.why); return; }
+
+    const next = Object.assign({}, p, { name: rename.name });
+    delete next._key;
+    LIB_EDIT_FIELDS.forEach(([k, , type]) => {
+      const v = inputs[k].value.trim();
+      const bits = String(k).split('.');
+      /* A DOT IS A PATH, so the notes write one level down - and a note with
+         nothing left in it is removed rather than left as an empty shell. */
+      if (bits.length > 1) {
+        const holder = Object.assign({}, next[bits[0]]);
+        if (v) holder[bits[1]] = v; else delete holder[bits[1]];
+        if (Object.keys(holder).length) next[bits[0]] = holder;
+        else delete next[bits[0]];
+        return;
+      }
+      if (!v) { delete next[k]; return; }
+      // Never NaN into the shared library, where everybody would read it.
+      if (type === 'number') {
+        const n = A.L.toNum(v);
+        if (n === null) { delete next[k]; return; }
+        next[k] = n;
+      } else { next[k] = v; }
+    });
+    /* AND THE NEW NAME MUST NOT BE ONE THAT LOST A MERGE. libraryRename refuses
+       a TAKEN name, but a consolidated key reads as free and is not;
+       renaming into it rebuilds the losing side of a deliberate merge. Same
+       guard as the publish and accept paths. */
+    /* A RESERVED WORD IS REFUSED HERE, not reported days later by a scan with
+       a Fix button beside it (BZ, 2026-10-01: "reserved words in the wrong
+       field should be obvious"). The same door the scan asks, so the editor
+       and the audit cannot come to disagree about which box a word is in. */
+
+    const rv = A.L.libraryAccepts(rename.key, false, LIB.removed, LIB.graves);
+    if (!rv.ok && rv.why !== 'already in the library') {
+      toast('That name ' + rv.why); return;
+    }
+    const now = Date.now();
+    // A rename is a MOVE: written at the new key and cleared from the old
+    // one in the same update, or the library holds it twice.
+    /* THROUGH THE ROW BUILDER, like every other publisher. This wrote `next`
+       straight to the entry, so the one place that drops a reserved word was the
+       one place the editor went round - and a value somebody never typed went
+       back every time they saved something else. The first attempt at this
+       refused the save instead, which meant an entry carrying one could not be
+       edited at all (BZ, 2026-10-01: "that bottle will not publish to the
+       library"). A redundant field is not a reason to refuse a row. */
+    const write = { ['catalog/products/' + rename.key]:
+                      Object.assign(A.L.libraryEntry(next, refBrands()),
+                        { at: now }),
+                    stamp: now };
+    if (rename.moved) {
+      write['catalog/products/' + oldKey] = null;
+      /* WHERE IT WENT, so every other device can follow; otherwise they keep the
+         old key and bottles pointing at it, reproducing the duplicate. */
+      write['renamed/' + oldKey] = { to: rename.key, at: Date.now() };
+    }
+    ref(NODE.shared)
+      .update(A.L.fbEncodePaths(write))
+      .then(() => {
+        if (rename.moved) delete LIB.products[oldKey];
+        LIB.products[rename.key] = next;
+        appLog('library: ' + (rename.moved
+          ? 'renamed ' + p.name + ' to ' + rename.name
+          : 'edited ' + rename.name));
+        closeModal(); after();
+        toast(rename.moved ? 'Renamed for everyone' : 'Changed for everyone');
+      }).catch(e => toast(sayError(e)));
+}
+
+
+/* ---- editLibraryEntry   index.html 50016-50076 ---- */
+function editLibraryEntry(p, after) {
+  openModal(p.name, m => {
+    m.appendChild(el('div', 'sub',
+      'Changing this changes it for everyone, on their next open.'));
+    const form = el('div', 'form');
+    // The name first: an entry is usually opened to fix its case. Renaming
+    // moves the entry, since the library is keyed by the name.
+    const nameWrap = el('label', null, 'Name');
+    const nameInp = document.createElement('input');
+    nameInp.className = 'field';
+    nameInp.type = 'text';
+    nameInp.value = p.name || '';
+    nameWrap.appendChild(nameInp);
+    form.appendChild(nameWrap);
+    /* EVERY FIELD, because you cannot fix what you cannot see (BZ). The scan
+       reports on style, mash bill and region, so the form must hold them. */
+    const built = libraryEntryFields(p, form);
+    const fields = built.fields;
+    const inputs = built.inputs;
+    m.appendChild(form);
+
+    const proofFix = proofOutOfNameButton(p, nameInp, inputs);
+    if (proofFix) m.appendChild(proofFix);
+
+    /* AND THE SPELLING THE REST OF THE LIBRARY USES, offered the same way:
+       fills the field, leaves Save to the person. */
+    if (inputs.dist && LIB.products) {
+      const cur = String(inputs.dist.value || p.dist || '').trim();
+      const snapped = A.L.snapHouse(cur, LIB.products);
+      if (cur && snapped && snapped !== cur) {
+        const hb = el('button', 'btn wide',
+          'Spell it ' + snapped + ', like the rest of the library');
+        hb.style.marginTop = '10px';
+        hb.onclick = () => {
+          inputs.dist.value = snapped;
+          hb.disabled = true;
+          hb.textContent = 'Done \u2014 check it, then Save';
+        };
+        m.appendChild(hb);
+      }
+    }
+
+    const save = el('button', 'btn wide btn-gold', 'Save for everyone');
+    save.style.marginTop = '11px';
+    save.onclick = () => {
+    saveLibraryEntry(p, save, inputs, nameInp, after);
+    };
+    m.appendChild(save);
+
+    m.appendChild(pointAtButton(p, after));
+
+    const close = el('button', 'btn ghost wide', 'Close');
+    close.onclick = closeModal;
+    m.appendChild(close);
+  });
+}
+
+/* FIX WHAT YOU CAN (BZ): where the app knows the answer - a proof sitting in
+   the name - it offers to fill the fields and leaves Save to the person,
+   because a shared library is not written on a button's opinion. Nothing to
+   offer returns nothing, rather than a button that does nothing. */
+
+/* ---- proofOutOfNameButton   index.html 50077-50096 ---- */
+function proofOutOfNameButton(p, nameInp, inputs) {
+  const auto = A.L.proofOutOfName((p && p.name) || '');
+  if (!auto) return null;
+  const fix = el('button', 'btn wide', 'Take the proof out of the name');
+  fix.style.marginTop = '10px';
+  fix.onclick = () => {
+    nameInp.value = auto.name;
+    if (inputs.proof && !String(inputs.proof.value).trim()) {
+      inputs.proof.value = auto.proof;
+    }
+    fix.disabled = true;
+    fix.textContent = 'Done \u2014 check it, then Save';
+  };
+  return fix;
+}
+
+/* THIS ENTRY IS ALREADY IN THE LIBRARY UNDER ANOTHER NAME. A merge was only
+   ever offered for a pair the audit had already spotted as duplicates, so a
+   hand-typed bottle that IS a library bottle under another name could not be
+   joined to it at all (BZ, 2026-09-30). */
+
+/* ---- pickLibraryEntry   index.html 50116-50165 ---- */
+function pickLibraryEntry(title, blurb, exceptKey, onPick) {
+  openModal(title, m => {
+    m.appendChild(el('div', 'sub', blurb));
+    const box = el('div', 'form');
+    const q = fieldRow('Search the library', 'q', '',
+      { placeholder: 'Name of the entry to keep' });
+    box.appendChild(q);
+    const out = el('div', 'candidates');
+    box.appendChild(out);
+    m.appendChild(box);
+
+    const input = q.querySelector('input');
+    let timer = null;
+    const draw = () => {
+      const term = (input.value || '').trim();
+      out.innerHTML = '';
+      if (term.length < ADD_SEARCH_MIN) return;
+      const hits = A.L.addCandidates(LIB.products || {}, term, 8)
+        .filter(h => !exceptKey
+          || (h._key || A.L.libKey(h.name)) !== exceptKey);
+      if (!hits.length) {
+        out.appendChild(el('div', 'src', 'Nothing else matches that.'));
+        return;
+      }
+      /* WHAT SEPARATES THESE from each other, not what each one is: asked of
+         the whole list, because a field every candidate shares tells nobody
+         anything (BZ, 2026-10-01: "hard to sort this out given names and
+         proofs", on five of six reading "Buffalo Trace - 100 proof"). */
+      const apart = A.L.tellApart(hits);
+      hits.forEach((hit, i) => {
+        const b = el('button', 'candidate');
+        b.type = 'button';
+        b.appendChild(el('div', 'nm', hit.name));
+        if (apart[i]) b.appendChild(el('div', 'sub', apart[i]));
+        b.onclick = () => onPick(hit);
+        out.appendChild(b);
+      });
+    };
+    input.addEventListener('input', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(draw, 180);
+    });
+
+    const close = el('button', 'btn ghost wide', 'Cancel');
+    close.style.marginTop = '9px';
+    close.onclick = closeModal;
+    m.appendChild(close);
+  });
+}
+
+
+/* ---- pointAtButton   index.html 50097-50115 ---- */
+function pointAtButton(p, after) {
+  const b = el('button', 'btn ghost wide', 'This is another entry\u2026');
+  b.style.marginTop = '6px';
+  b.onclick = () => pointAtAnotherEntry(p, after);
+  return b;
+}
+
+/* FIND THE ENTRY THIS ONE SHOULD BE, and point at it. The search is
+   A.L.addCandidates, the same one the add form offers as you type, so the two
+   cannot give different answers; this entry is kept out of its own results.
+
+   IT ASKS BEFORE IT MERGES, with both names in the question. A merge is not an
+   edit: every shelf holding the dropped entry follows the kept one afterwards,
+   which is not something to do on one tap. */
+/* SEARCH THE LIBRARY AND PICK ONE. Two callers want this - an entry saying it
+   is really another entry, and an offer saying it is already in there - and a
+   second copy of a search box is exactly what the duplication check exists to
+   stop. The search is A.L.addCandidates, the same one the add form offers as you
+   type, so none of the three can give a different answer. */
+
+/* ---- pointAtAnotherEntry   index.html 50166-50176 ---- */
+function pointAtAnotherEntry(p, after) {
+  pickLibraryEntry('Which entry is this?',
+    '\u201c' + p.name + '\u201d becomes a pointer to whichever you pick. '
+      + 'Bottles on anyone\u2019s shelf follow the entry that stays.',
+    p._key || A.L.libKey(p.name),
+    hit => confirmPointAt(p, hit, after));
+}
+
+/* AN OFFER THAT IS ALREADY IN THE LIBRARY. Nothing to merge - an offer is not
+   an entry - so it simply is not wanted, and it drops with the reason naming
+   what it already is (BZ, 2026-09-30: "then only use the library bottle"). */
+
+/* ---- confirmPointAt   index.html 50194-50244 ---- */
+function confirmPointAt(from, to, after) {
+  const dropK = A.L.resolveLibKey(LIB.products, from._key, from.name);
+  const keepK = A.L.resolveLibKey(LIB.products, to._key, to.name);
+  if (!dropK || !keepK) {
+    appLog('point at: could not place ' + (dropK ? to.name : from.name)
+      + ' in the library');
+    toast('Could not find that entry in the library');
+    return;
+  }
+  if (dropK === keepK) { toast('Those are already one entry'); return; }
+  openModal('Point it there?', m => {
+    m.appendChild(el('div', 'sub', '\u201c' + from.name + '\u201d becomes a '
+      + 'pointer to \u201c' + to.name + '\u201d. Every shelf holding the '
+      + 'first follows the second afterwards, and this does not undo.'));
+    const go = el('button', 'btn wide btn-gold', 'Point it there');
+    go.style.marginTop = '10px';
+    go.onclick = () => {
+      go.disabled = true;
+      libraryMergeWrite([{ drop: dropK, keep: keepK }])
+        .then(() => {
+          appLog('library: pointed ' + dropK + ' at ' + keepK);
+          toast('Now one entry: ' + to.name);
+          closeModal();
+          if (after) after();
+        })
+        .catch(e => { go.disabled = false; toast(sayError(e)); });
+    };
+    m.appendChild(go);
+    const no = el('button', 'btn ghost wide', 'Leave them apart');
+    no.onclick = closeModal;
+    m.appendChild(no);
+  });
+}
+
+
+/* ---- askWhichNameStays   index.html 55988-56058 ---- */
+function askWhichNameStays(sides, kk, draw) {
+  openModal('Which name stays?', m2 => {
+  m2.appendChild(el('div', 'sub', 'The other becomes a '
+    + 'pointer to it. Bottles on anyone’s shelf follow '
+    + 'the name that stays.'));
+  /* WHICH SIDE SAYS MORE ABOUT THE BOTTLE, marked rather
+     than chosen (BZ, 2026-09-30: he kept the fuller name 28
+     times out of 28, and the fuller name is the one that
+     states the class). The question still gets asked. */
+  const fuller = A.L.moreDescriptive(sides[0], sides[1]);
+  sides.forEach((keepName, i2) => {
+    const dropName = sides[1 - i2];
+    const b4 = el('button',
+      'btn wide' + (keepName === fuller ? ' btn-gold' : ''));
+    b4.style.marginTop = '6px';
+    b4.textContent = 'Keep \u201c' + keepName + '\u201d'
+      + (keepName === fuller ? ' \u2014 says more' : '');
+    b4.onclick = () => {
+      /* Resolved against the library, because a key worked out from the screen
+         can point nowhere and a delete against nowhere succeeds silently. */
+      const keepK = A.L.resolveLibKey(LIB.products, kk[i2],
+        sides[i2]);
+      const dropK = A.L.resolveLibKey(LIB.products,
+        kk[1 - i2], sides[1 - i2]);
+      if (!keepK || !dropK) {
+        appLog('merge: could not place '
+          + (keepK ? dropName : keepName) + ' in the '
+          + 'library (keys ' + kk.join(', ') + ')');
+        toast('Could not find that entry in the library');
+        return;
+      }
+      if (keepK === dropK) {
+        toast('Those are already one entry'); return;
+      }
+      b4.disabled = true;
+      /* NOT fbKey HERE. fbEncodePaths encodes every segment itself, so encoding
+         first did it TWICE - silent corruption for a key with
+         a dot (~td instead of ~d), pointing at nothing. */
+      libraryMergeWrite([{ drop: dropK, keep: keepK }])
+        .then(() => {
+          appLog('library: merged ' + dropK + ' into '
+            + keepK);
+          toast('Merged into ' + keepName);
+          closeModal();
+          draw();
+        })
+        .catch(e2 => {
+          b4.disabled = false;
+          toast(sayError(e2));
+        });
+    };
+    m2.appendChild(b4);
+  });
+  });
+}
+
+/* --- add / edit a product --------------------------------------------- */
+
+// The add/edit form offers exactly the categories the reels can name, so a
+// hand-typed bottle can never land somewhere no spin reaches.
+
+
+/* `fromScan` is { code, draft }: a code just read, with whatever had been
+   typed before the capture opened. The form is a SHEET and the capture
+   opens over it in the one modal container, so the form is rebuilt WITH
+   the code rather than keeping two sheets alive. */
+/* THE BOTTLE'S OWN FACTS AS ROWS. Its own function because the form is at its
+   line ceiling and because these belong together: they are the LIBRARY'S to
+   fill in, not this person's (BZ, 2026-10-01: "bottle facts clearly"). Of 315
+   typed by hand across five shelves, 60% were already in the library word for
+   word, about 1% were new, and most of the rest landed in the wrong box. */
+
+/* ====================================================================
+   EXPORT AND IMPORT
+   ==================================================================== */
+
+/* ---- libraryDataRow   index.html 51673-51716 ---- */
+function libraryDataRow() {
+  const row = el('div', 'actionrow');
+  row.style.marginTop = '9px';
+  const lex = el('button', 'btn btn-sm', 'Export');
+  /* NOT DISABLED. It loads what it needs, exactly like Clean up. */
+  lex.onclick = async () => {
+    if (!LIB.products) {
+      buttonWorking(lex, 'Reading the library\u2026');
+      try {
+        LIB.products = A.L.libraryFromValue((await libRef().once('value')).val());
+      } catch (e) {
+        lex.disabled = false;
+        lex.textContent = 'Export';
+        toast(sayError(e, 'Could not read the library'));
+        return;
+      }
+      lex.disabled = false;
+      lex.textContent = 'Export';
+    }
+    const n = downloadCsv('bottlefolio-library', A.L.LIBRARY_COLS,
+      A.L.libraryExportRows(LIB.products));
+    appLog('exported the library: ' + n + ' entries, '
+      + A.L.LIBRARY_COLS.length + ' columns');
+    toast(n + ' entries exported');
+  };
+  row.appendChild(lex);
+  /* Mass edits are easier in a spreadsheet (BZ): rows left out are untouched
+     and a blank cell keeps what is there. */
+  const limp = el('button', 'btn btn-sm', 'Import');
+  limp.onclick = () => libraryImportDialog();
+  row.appendChild(limp);
+  return row;
+}
+
+/* CLEAN UP THE LIBRARY: one page for everything that tidies it (BZ,
+   2026-09-16) - look up what is missing, the resting ones included; what
+   your shelf would add; notes written for flight cards; what was taken
+   out; and every contradiction the scan finds, each with its fix. */
+/* READ, THEN DRAW. Throwing the cache away is wanted after a write - the written
+   version has to be read back - but drawing on top of it audits an EMPTY library
+   and reports nothing, so one merge looked like it had cleared every finding (BZ,
+   2026-10-02: "i did 1 merge on weller 12 and the list disappeared"). withLibrary
+   is the door that waits for the read. The same fault was fixed once already on
+   the edit path, where the comment still stands. */
+
+/* ---- libraryImportDialog   index.html 41789-41823 ---- */
+function libraryImportDialog() {
+  const file = document.createElement('input');
+  file.type = 'file';
+  file.accept = '.csv,text/csv,text/plain';
+  file.onchange = () => {
+    const f = file.files && file.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onerror = () => toast('Could not read that file');
+    rd.onload = () => {
+      let rows;
+      try { rows = A.L.parseCSV(rd.result); }
+      catch (e) { toast('That is not a CSV'); return; }
+      if (!rows || !rows.length) { toast('Nothing in that file'); return; }
+      /* THE LIBRARY FIRST, AND NOT AN EMPTY ONE. Every row of this CSV is
+         either a change to an entry or a new entry, and against an empty
+         library every one of them is NEW - which libraryImportApply would
+         then write, duplicating the whole library (BZ, 2026-10-02: "sweep").
+         The cache is nulled after every merge, so this is one tap away. */
+      withLibrary(() => {
+        if (!libraryIsRead()) {
+          toast('The library has not loaded — try again in a moment');
+          return;
+        }
+        libraryImportReview(A.L.libraryImportPlan(rows, LIB.products),
+          rows.length);
+      });
+    };
+    rd.readAsText(f);
+  };
+  document.body.appendChild(file);
+  file.click();
+  setTimeout(() => file.remove(), 0);
+}
+
+
+/* ---- libraryImportReview   index.html 41824-41876 ---- */
+function libraryImportReview(plan, total) {
+  openModal('What this file would change', m => {
+    m.appendChild(el('div', 'sub', total + ' rows read · '
+      + plan.same + ' already match · ' + plan.changes.length
+      + ' would change · ' + plan.adds.length + ' new'
+      + (plan.unnamed ? ' · ' + plan.unnamed + ' with no name'
+         : '')));
+    if (!plan.changes.length && !plan.adds.length) {
+      /* A clean round trip is a result: export and re-import without edits says
+         nothing happened. */
+      m.appendChild(el('div', 'src', 'Nothing to do \u2014 every row in '
+        + 'the file already matches the library.'));
+      const ok = el('button', 'btn wide', 'Close');
+      ok.onclick = closeModal;
+      m.appendChild(ok);
+      return;
+    }
+    plan.changes.slice(0, 60).forEach(c => {
+      const row = el('div', 'item');
+      const left = el('div');
+      left.appendChild(el('div', 'nm', c.name));
+      left.appendChild(el('div', 'src', c.words.join(' · ')));
+      row.appendChild(left);
+      m.appendChild(row);
+    });
+    plan.adds.slice(0, 40).forEach(c => {
+      const row = el('div', 'item');
+      const left = el('div');
+      left.appendChild(el('div', 'nm', c.name));
+      left.appendChild(el('div', 'src', 'new entry'));
+      row.appendChild(left);
+      m.appendChild(row);
+    });
+    if (plan.changes.length + plan.adds.length > 100) {
+      m.appendChild(el('div', 'src', 'and '
+        + (plan.changes.length + plan.adds.length - 100) + ' more'));
+    }
+    const go = el('button', 'btn wide btn-gold',
+      'Apply ' + (plan.changes.length + plan.adds.length) + ' to the '
+      + 'library');
+    go.style.marginTop = '12px';
+    go.onclick = () => {
+      go.disabled = true;
+      libraryImportApply(plan);
+    };
+    m.appendChild(go);
+    const no = el('button', 'btn ghost wide', 'Leave it');
+    no.style.marginTop = '6px';
+    no.onclick = closeModal;
+    m.appendChild(no);
+  });
+}
+
+
+/* ---- libraryImportApply   index.html 41877-41909 ---- */
+function libraryImportApply(plan) {
+  const ups = {};
+  const all = plan.changes.concat(plan.adds);
+  all.forEach(c => {
+    const p = (LIB.products || {})[c.key];
+    if (p) {
+      Object.assign(p, c.set);
+    } else {
+      LIB.products = LIB.products || {};
+      /* The literal LAST: assigned first it is only a suggestion, and the
+         key and the name are what this entry is filed under. */
+      LIB.products[c.key] = Object.assign({}, c.set,
+        { k: c.key, name: c.name });
+    }
+    Object.keys(c.set).forEach(f => {
+      ups['catalog/products/' + c.key + '/' + f] = c.set[f];
+    });
+    if (!p) ups['catalog/products/' + c.key + '/name'] = c.name;
+  });
+  ups.stamp = Date.now();
+  appLog('library import: ' + plan.changes.length + ' changed, '
+    + plan.adds.length + ' added');
+  closeModal();
+  toast(all.length + ' written to the library');
+  ref(NODE.shared)
+    .update(A.L.fbEncodePaths(ups))
+    .catch(e => {
+      appLog('library import: could not publish \u2014 '
+        + ((e && e.message) || e));
+      toast('Applied here, but not saved for everyone');
+    });
+}
+
+
+/* ====================================================================
+   LOOKING UP WHAT IS MISSING
+   ==================================================================== */
+
+/* ---- libraryFillStart   index.html 49215-49270 ---- */
+function libraryFillStart(byKey, after) {
+  if (LIB.filling) { libraryFillShow(); return; }
+  if (!A.lookupUrl) { toast(A.L.NO_SERVICE_SAY); return; }
+
+  const today = A.L.todayISO();
+  /* THE SNAPSHOT, keyed the way the LIBRARY is keyed. */
+  const snap = byKey || {};
+  const lists = A.L.libraryLists(A.L.libraryRows(snap), A.ledger || {}, today);
+
+  if (!lists.todo.length) {
+    openModal('Nothing needs attention', m => {
+      m.appendChild(el('div', 'sub', lists.waiting.length
+        ? lists.done.length + ' entries are complete. Nothing is due: the rest '
+          + 'are on the Still missing list in Clean up, with when each is next tried.'
+        : 'Every entry has everything it needs.'));
+      const c = el('button', 'btn wide', 'Close');
+      c.onclick = closeModal;
+      m.appendChild(c);
+    });
+    return;
+  }
+
+  /* How many the day's ceiling will allow, said BEFORE the run rather than
+     discovered partway through. */
+  const leftToday = Math.max(0, A.L.LOOKUP_CAP
+    - A.L.lookupTally(A.tally, today));
+  openModal('Look up ' + lists.todo.length + '?', m => {
+    if (leftToday < lists.todo.length) {
+      const warn = el('div', 'sub');
+      warn.className = 'sub warn2';
+      warn.textContent = leftToday
+        ? 'Only ' + leftToday + ' more lookups today, so '
+          + 'this stops after ' + leftToday + ' and the rest wait for tomorrow.'
+        : A.L.LOOKUP_LIMIT_SAY;
+      m.appendChild(warn);
+    }
+    m.appendChild(el('div', 'sub',
+      lists.done.length + ' done · ' + lists.todo.length + ' need '
+      + 'attention · ' + lists.waiting.length + ' resting. The library '
+      + 'is ' + lists.score + '% complete.'));
+    m.appendChild(el('div', 'sub',
+      'Each is looked up once, and only gaps are filled. '
+      + 'A miss waits a week, then six '
+      + 'months, then a year.'));
+    const go = el('button', 'btn wide btn-gold',
+      'Look up ' + lists.todo.length);
+    go.style.marginTop = '11px';
+    go.onclick = () => { closeModal(); libraryFillRun(snap, lists.todo, after); };
+    m.appendChild(go);
+    const c = el('button', 'btn ghost wide', 'Not now');
+    c.onclick = closeModal;
+    m.appendChild(c);
+  });
+}
+
+/* The run. One bottle at a time, against the snapshot, writing as it goes. */
+
+/* ---- libraryFillRun   index.html 49271-49352 ---- */
+function libraryFillRun(snap, todo, after) {
+  LIB.filling = true;
+  LIB.fill = { total: todo.length, done: 0, wrote: 0, parked: 0, errors: 0,
+               note: 'Starting\u2026' };
+  libraryFillShow();
+
+  const today = A.L.todayISO();
+  const step = i => {
+    const f = LIB.fill;
+    if (!f) return;
+    if (!LIB.filling || i >= todo.length) return libraryFillDone(after);
+
+    const x = todo[i];
+    f.done = i + 1;
+    f.note = 'Looking up ' + (i + 1) + ' of ' + todo.length + ': ' + x.name;
+    libraryFillTick();
+
+    /* The day's ceiling stops the RUN rather than failing a bottle. */
+    if (!A.L.lookupAllowed(A.tally, today)) {
+      f.note = 'Stopped at the daily limit of ' + A.L.LOOKUP_CAP + '.';
+      appLog('library fill: stopped at the daily lookup limit with '
+        + (todo.length - i) + ' still to do');
+      LIB.filling = false;
+      return libraryFillDone(after);
+    }
+    /* x.missing is what libraryLists decided this entry needs. Sending it
+       points the service's searches at the one open field - after a first
+       fill, usually just the mash bill. */
+    adminService(x.name, A.L.INTAKE_LOOKUP_MS, x.missing).then(raw => {
+      const got = A.L.parseLookup(raw, { name: x.name });
+      const closes = A.L.gapsClosed(got, x.missing);
+      appLog('  fill ' + x.name.slice(0, 34)
+        + ' | short of ' + x.missing.join(',')
+        + ' | ' + (closes.length ? 'WRITE ' + closes.join(',') : 'WAITLIST'));
+
+      if (!closes.length) {
+        f.parked++;
+        A.ledger = A.L.recordLookup(A.ledger, x.k, 'empty', today);
+        return next(i);
+      }
+      /* Written against the SNAPSHOT the gap was decided from. A live cache here
+         is how the run and the writer came to disagree. */
+      const built = A.L.libraryFillWrite(
+        [{ k: x.k, name: x.name, got: got, missing: x.missing }],
+        { [x.k]: true }, snap, Date.now());
+      if (!built.names.length) {
+        // Nothing to put in, per the snapshot: a miss, from the run's view.
+        f.parked++;
+        A.ledger = A.L.recordLookup(A.ledger, x.k, 'empty', today);
+        return next(i);
+      }
+      libRef().update(A.L.fbEncodePaths(built.updates)).then(() => {
+        f.wrote++;
+        A.ledger = A.L.recordLookup(A.ledger, x.k, 'found', today);
+        // Keep the snapshot honest, so a later bottle sees what was written.
+        Object.keys(built.updates).forEach(path => {
+          const bits = path.split('/');
+          if (bits[1] && snap[bits[0]]) snap[bits[0]][bits[1]] = built.updates[path];
+        });
+        next(i);
+      }).catch(e => {
+        f.errors++;
+        appLog('  fill write failed: ' + ((e && e.message) || e));
+        next(i);
+      });
+    }).catch(e => {
+      f.errors++;
+      appLog('  fill ' + x.name.slice(0, 34) + ' \u2014 '
+        + ((e && e.message) || e));
+      next(i);
+    });
+  };
+
+  const next = i => {
+    libraryFillTick();
+    if (!LIB.filling) return libraryFillDone(after);
+    step(i + 1);
+  };
+
+  step(0);
+}
+
+
+/* ---- libraryFillTick   index.html 49353-49362 ---- */
+function libraryFillTick() {
+  const f = LIB.fill;
+  if (!f) return;
+  const note = document.getElementById('fillNote');
+  if (note) note.textContent = f.note || '';
+  const tally = document.getElementById('fillTally');
+  if (tally) tally.textContent = A.L.fillSay(libraryFillTally(f));
+}
+
+/* One way out, and it always refreshes the count. */
+
+/* ---- libraryFillDone   index.html 49363-49392 ---- */
+function libraryFillDone(after) {
+  const f = LIB.fill;
+  if (!f) return;
+  LIB.filling = false;
+  LIB.fill = null;
+  /* The ledger is saved ONCE, here: save_ pushes to the account, so saving
+     per bottle is hundreds of round trips over a run. Nothing needs it
+     mid-run; the snapshot carries what has been written. */
+  adminSave();
+  /* ITS OWN WINDOW only: a run finishing in the background must not close a
+     bottle half edited or a purchase being entered. */
+  if (document.getElementById('fillNote')) closeModal();
+  appLog('library fill: asked ' + f.done + ', wrote ' + f.wrote
+    + ', waitlisted ' + f.parked
+    + (f.errors ? ', ' + f.errors + ' failed' : ''));
+  /* A run stopped by the ceiling reads like a run that did nothing, so it
+     says which it was. */
+  toast(A.L.fillSay(Object.assign(libraryFillTally(f), { finished: true,
+    stopped: f.note && /daily limit/.test(f.note) ? 'limit' : null })));
+  LIB.products = null;
+  /* AND REDRAW THE SCREEN THE RUN WAS STARTED FROM. */
+  const back = () => {
+    /* MOVED: this page's library section, not the app's screen. */
+    const on = $('#sec-library');
+    if (on && on.classList.contains('on')) renderLibraryScreen();
+  };
+  if (after) after();
+  setTimeout(back, 60);
+}
+
+/* The library run's counters, in the words A.L.fillSay uses. */
+
+/* ---- libraryFillTally   index.html 49393-49397 ---- */
+function libraryFillTally(f) {
+  return { done: f.done, total: f.total, wrote: f.wrote, waiting: f.parked,
+    failed: f.errors };
+}
+
+
+/* ---- libraryFillShow   index.html 49398-49422 ---- */
+function libraryFillShow() {
+  const f = LIB.fill;
+  if (!f) return;
+  openModal('Looking things up', m => {
+    const note = el('div', 'sub', f.note || '');
+    note.id = 'fillNote';
+    m.appendChild(note);
+    const tally = el('div', 'src');
+    tally.id = 'fillTally';
+    tally.style.marginTop = '6px';
+    m.appendChild(tally);
+    const stop = el('button', 'btn wide', 'Stop');
+    stop.style.marginTop = '11px';
+    stop.onclick = () => { LIB.filling = false; toast('Stopping\u2026'); };
+    m.appendChild(stop);
+    const hide = el('button', 'btn ghost wide', 'Leave it running');
+    hide.onclick = closeModal;
+    m.appendChild(hide);
+    libraryFillTick();
+  });
+}
+
+/* FILL WHAT IS MISSING, STYLES FIRST (BZ, 2026-09-16). A style the name
+   already states costs nothing and stops a single malt being asked for a
+   mash bill it cannot have, so it is written before any lookup is planned. */
+
+/* ---- libraryFillWithStyles   index.html 49423-49452 ---- */
+function libraryFillWithStyles(all, after) {
+  const back = A.L.styleBackfill(A.L.libraryRows(all));
+  if (!back.rows.length) { librarySettleHouses(all, after); return; }
+  const changes = {};
+  back.rows.forEach(r => { changes[r.k] = { style: r.style }; });
+  libraryFieldWrite(changes)
+    .then(() => {
+      appLog('library: wrote ' + back.rows.length + ' styles from names '
+        + 'before the fill, ' + back.closes + ' mash gaps closed');
+      librarySettleHouses(LIB.products || all, after);
+    })
+    .catch(e => {
+      appLog('style backfill failed: ' + ((e && e.message) || e));
+      librarySettleHouses(all, after);
+    });
+}
+
+/* A HOUSE IS SPELLED THE WAY MOST OF ITS OWN BOTTLES SPELL IT (BZ,
+   2026-09-30: "I think I accepted all renames and house merged and that tells
+   me we can write a rule"). He had accepted every one, and the logs carry no
+   refusal, undo or revert against them.
+
+   It runs here because this is where the library already writes to itself
+   from a rule - styles worked out from names - and a second way to do the
+   same kind of thing is the fault this file keeps removing.
+
+   WHICH ONES, NOT HOW MANY: every entry is named with the spelling it had,
+   because a count cannot answer "which one did it get wrong", and that is the
+   only question worth asking of something that acts on its own. Each carries
+   `autoSpell` so a fortnight's take-back can put it back. */
+
+/* ---- librarySettleHouses   index.html 49453-49491 ---- */
+function librarySettleHouses(all, after) {
+  let plan = [];
+  try { plan = A.L.houseSettlePlan(A.L.libraryRows(all), Date.now()); }
+  catch (e) { appLog('house settle: ' + ((e && e.message) || e)); }
+  if (!plan.length) { libraryFillStart(all, after); return; }
+  const changes = {};
+  plan.forEach(x => { changes[x.key] = x.set; });
+  libraryFieldWrite(changes)
+    .then(() => {
+      plan.slice(0, 12).forEach(x => {
+        appLog('library: ' + x.name + ' filed under ' + x.keep
+          + ', was ' + x.was);
+      });
+      if (plan.length > 12) {
+        appLog('library: and ' + (plan.length - 12) + ' more respelled');
+      }
+      libraryStampIdents(LIB.products || all, after);
+    })
+    .catch(e => {
+      appLog('house settle failed: ' + ((e && e.message) || e));
+      libraryStampIdents(all, after);
+    });
+}
+
+/* WHAT EVERY ENTRY IS, WRITTEN ONTO IT (BZ, 2026-10-01: "I don't understand not
+   using canonical data as the standard", and before it "performance is important
+   so I'd store it on the bottles").
+
+   Every comparison screen reads the stored value rather than working it out:
+   resolving a brand walks fifteen thousand registry keys and the registry is a
+   few megabytes those screens never load. An entry written from now on carries
+   its identity; the ones already there are stamped here.
+
+   AFTER THE HOUSE SPELLINGS, because the identity reads the entry as it then
+   stands - settling a spelling can move the house, and stamping first would
+   store an identity for a name about to be corrected.
+
+   ONLY WHAT CHANGED, and nothing at all without the registry: a blank costs the
+   work of redoing it, a wrong one is read by everybody as the truth. */
+
+/* ---- libraryStampIdents   index.html 49492-49532 ---- */
+function libraryStampIdents(all, after) {
+  const brands = refBrands();
+  if (!brands) { libraryFillStart(all, after); return; }
+  let changes = {};
+  try { changes = A.L.identBackfill(A.L.libraryRows(all), brands); }
+  catch (e) { appLog('ident stamp: ' + ((e && e.message) || e)); }
+  const n = Object.keys(changes).length;
+  if (!n) { libraryFillStart(all, after); return; }
+  libraryFieldWrite(changes)
+    .then(() => {
+      appLog('library: stamped what ' + n + ' entr'
+        + (n === 1 ? 'y is' : 'ies are') + ', from the canon');
+      libraryFillStart(LIB.products || all, after);
+    })
+    .catch(e => {
+      appLog('ident stamp failed: ' + ((e && e.message) || e));
+      libraryFillStart(all, after);
+    });
+}
+
+/* ONE WAY TO HAND SOMEBODY A FILE. Every export goes through here (2026-09-29,
+   iOS users: no download option). Six buttons built their own anchor, and no
+   check in this project could see what they did on an iPhone, because every
+   harness here drives Chromium.
+
+   A HOME-SCREEN iOS APP PRESENTS NO FILE DOWNLOAD. There is nowhere for the
+   file to go, no Downloads to open afterwards, and nothing said either way -
+   which is exactly "there is no download option". The share sheet is the route
+   iOS gives, and Save to Files IS the download there. A.L.saveRoute holds the
+   rule so the decision is testable, and ios.js proves the file is handed over.
+
+   The anchor is attached before it is clicked. That is belt and braces rather
+   than the diagnosis, and worth being honest about: a detached anchor is a
+   pattern that has broken on older Safari, but it downloads perfectly well in
+   the WebKit this project can test (26.6), so it does not by itself explain
+   anything.
+
+   Closing the sheet is not a failure and says nothing. A sheet that will not
+   open falls back to the anchor, which now works. The object URL is revoked
+   late: two seconds is not always enough for a phone to have taken the file,
+   and revoking early is a download that stops halfway. */
+
+/* ---- askAllRow   index.html 51147-51174 ---- */
+function askAllRow(all, rows, after) {
+  const wrap = el('div');
+  wrap.style.margin = '4px 0 10px';
+  const b = el('button', 'btn wide', 'Look up all ' + rows.length);
+  b.onclick = () => {
+    if (LIB.filling) { libraryFillShow(); return; }
+    const left = Math.max(0, A.L.LOOKUP_CAP - A.L.lookupTally(A.tally, A.L.todayISO()));
+    openModal('Look up all ' + rows.length + '?', m => {
+      m.appendChild(el('div', 'sub', A.L.askAllSay(rows, left)));
+      const go = el('button', 'btn wide btn-gold', 'Look them up');
+      go.style.marginTop = '10px';
+      go.onclick = () => { closeModal(); libraryFillRun(all, rows, after); };
+      m.appendChild(go);
+      const no = el('button', 'btn ghost wide', 'Not now');
+      no.onclick = closeModal;
+      m.appendChild(no);
+    });
+  };
+  wrap.appendChild(b);
+  wrap.appendChild(el('div', 'src', 'Every entry on this list, whatever it is '
+    + 'waiting for. What comes back empty goes on waiting.'));
+  return wrap;
+}
+
+/* ARRIVED BY AN INVITE LINK: ask on their behalf, remember the ask like any
+   other so Buddies can show it waiting, and say who it went to. A request
+   that reaches nobody used to leave no trace on either side (BZ's friend,
+   2026-09-19: the link named an account that had been deleted). */
+
+/* ---- libraryCleanUpFill   index.html 51328-51364 ---- */
+function libraryCleanUpFill(box, after) {
+  libraryRefConflicts(box, after);
+  const all = LIB.products || {};
+  const today = A.L.todayISO();
+  const lists = A.L.libraryLists(A.L.libraryRows(all), A.ledger || {}, today);
+  if (lists.todo.length || LIB.filling) {
+    const b = el('button', 'btn wide btn-gold', LIB.filling
+      ? 'Looking up\u2026 ' + ((LIB.fill && LIB.fill.done) || 0) + ' of '
+        + ((LIB.fill && LIB.fill.total) || 0)
+      : 'Look up ' + lists.todo.length + ' due');
+    b.style.marginBottom = '8px';
+    b.onclick = () => libraryFillWithStyles(all, after);
+    box.appendChild(b);
+  }
+  const rows = lists.todo.concat(lists.waiting);
+  if (!rows.length) return;
+  const d = el('details', 'sheet');
+  d.appendChild(el('summary', null, 'Still missing · ' + rows.length
+    + (lists.stopped ? ' (' + lists.stopped + ' no longer asked)' : '')));
+  d.appendChild(askAllRow(all, rows, after));
+  rows.forEach(row => {
+    const r = openableRow(row.name, A.L.missingSay(row, today), () => editLibraryEntry(
+      Object.assign({ _key: row.k }, all[row.k]), after));
+    const look = el('button', 'chip quiet', 'Look up now');
+    look.onclick = () => {
+      if (LIB.filling) { libraryFillShow(); return; }
+      libraryFillRun(all, [row], after);
+    };
+    r.appendChild(look);
+    d.appendChild(r);
+  });
+  box.appendChild(d);
+}
+
+    // What differs between this shelf and the library, publishable without
+    // replacing anything else. The Firebase import is a seeding tool that
+    // destroys what it lands on; this is for every day after.
+
+/* ---- libraryRefLoad   index.html 51134-51146 ---- */
+function libraryRefLoad() {
+  if (LIB.ref) return Promise.resolve(LIB.ref);
+  return ref(NODE.registry).once('value')
+    .then(sn => {
+      const v = sn.val() || { houses: {}, brands: {} };
+      /* An empty read is not remembered, or one early miss hides it all session. */
+      if (Object.keys(v.brands || {}).length) LIB.ref = v;
+      return v;
+    });
+}
+
+/* ASK ABOUT THE WHOLE LIST AT ONCE (BZ, 2026-09-17): waits and give-ups are
+   for the run that happens on its own; a press here means ask them all. */
+
+/* ====================================================================
+   THE CONTRADICTION SCAN
+   ==================================================================== */
+
+/* ---- needsRegistryFirst   index.html 40806-40816 ---- */
+function needsRegistryFirst(redraw) {
+  if (LIB.ref || REF_ASKED || !A.user) return false;
+  REF_ASKED = true;
+  libraryRefLoad().then(redraw, redraw);
+  return true;
+}
+
+/* HAS THE LIBRARY BEEN READ? Asked before anything that reports what the library
+   does NOT hold, because an empty library does not hold anything and the answer
+   becomes everything - four wrong reports in one day turned on it (2026-10-02).
+   One door because three callers had typed the same test out. */
+
+/* ---- needsVerdictsFirst   index.html 40855-40865 ---- */
+function needsVerdictsFirst(redraw) {
+  if (LIB.reviewed || !A.user) return false;
+  /* ASKED ONCE, like the registry: the read is on its way and a second
+     caller must wait for it rather than start another - and must not call
+     back into the draw that sent it, which is a loop. */
+  if (VERDICTS_ASKED) return true;
+  VERDICTS_ASKED = true;
+  loadVerdicts().then(redraw, redraw);
+  return true;
+}
+
+
+/* ---- loadVerdicts   index.html 40843-40854 ---- */
+function loadVerdicts() {
+  return ref(NODE.reviewed)
+    .once('value')
+    .then(rs => {
+      const raw = rs.val() || {};
+      const out = {};
+      Object.keys(raw).forEach(k => { out[A.L.unFbKey(k)] = raw[k]; });
+      LIB.reviewed = out;
+    })
+    .catch(() => { LIB.reviewed = LIB.reviewed || {}; });
+}
+
+
+/* ---- libraryFindings   index.html 40891-40914 ---- */
+function libraryFindings() {
+  /* THE TAXONOMY DECIDES WHICH TWO ENTRIES ARE ONE, or this scan does not ask
+     (BZ, 2026-10-02). Asked once and handed to both, so the audit and the rule
+     that judges its claims cannot be looking at different registries. */
+  const brands = refBrands();
+  return A.L.dropPairClaims(
+    /* AND THE REFERENCE DATA, for the house check - the same read the
+       duplicate rules already wait for (needsRegistryFirst). */
+    A.L.libraryAudit(LIB.products || {}, LIB.reviewed || {}, null, brands,
+      LIB.ref || null),
+    brands
+  /* MOVED: index.html adds two more findings here - a bottle not filed at
+     the entry it reads as, and a flight asking for a bottle already owned.
+     Both read SHELVES, this device's and the ones shared with it, and this
+     page has none. They are drawn in the app now, for every user rather
+     than for an admin, which is what made this move possible. */
+  ).concat(deadForwardFinding());
+}
+
+/* WHAT THE VENN CANNOT JOIN, as one more finding on the page that already knows
+   how to show a finding (BZ, 2026-10-01: "I need to be able to action the
+   results with ease").
+
+   EVERY SHELF THIS DEVICE CAN SEE: your own, and the ones shared with you -
+   which is exactly what the Venn compares, so it is exactly where its faults
+   are. */
+/* WHAT THIS DEVICE HOLDS THAT BELONGS TO EVERYBODY, as a plan it can show
+   before it does anything (BZ, 2026-10-01: "shelf should hold user specific
+   data ... library holds shared bottle details"). */
+
+/* ---- deadForwardFinding   index.html 41011-41030 ---- */
+function deadForwardFinding() {
+  const now = libNow();
+  const dead = A.L.deadForwards(now.graves, now.products);
+  if (!dead.length) return [];
+  return [{
+    id: 'deadfwd', n: dead.length,
+    title: dead.length + (dead.length === 1
+      ? ' forwarding address points at nothing'
+      : ' forwarding addresses point at nothing'),
+    why: 'A merge leaves an address saying where an entry went. These point at '
+      + 'a key with no entry behind it, so every bottle filed under them '
+      + 'resolves to nothing and cannot even be offered a join. Removing one '
+      + 'loses nothing, because there is nothing behind it.',
+    pairs: true,
+    items: dead
+  }];
+}
+
+/* EVERY SHELF THIS DEVICE CAN SEE: mine, and anybody who has shared theirs.
+   Two findings ask the same question and a third was about to. */
+
+/* ---- bulkControls   index.html 41093-41101 ---- */
+function bulkControls(f, bulk, draw, again) {
+  mendButton(f, bulk, again);
+  bulkVerdictChips(f, bulk, draw);
+}
+
+/* THE PAIRS THAT NEED NO DECISION: identical name, house and proof, so one
+   survives and it does not matter which (BZ). Its own function because the
+   screen is at its ceiling and because a merge that needs no judgment is a
+   different thing from a list of judgments. */
+
+/* ---- bulkVerdictChips   index.html 51466-51496 ---- */
+function bulkVerdictChips(f, bulk, draw) {
+  [['Keep these for now', 'later'],
+   ['These are correct', 'ok']].forEach(([label, v]) => {
+    const b3 = el('button', 'chip quiet', label);
+    b3.onclick = () => {
+      const ups = {};
+      f.items.forEach(it2 => {
+        ups[A.L.fbKey(f.id + ':' + it2.key)] =
+          { v: v, at: Date.now(), by: (A.user || {}).uid || '' };
+      });
+      ref(NODE.reviewed)
+        .update(ups)
+        .then(() => {
+          f.items.forEach(it2 => {
+            LIB.reviewed = Object.assign({}, LIB.reviewed || {},
+              { [f.id + ':' + it2.key]: { v: v, at: Date.now() } });
+          });
+          appLog('library scan: ' + f.items.length + ' marked ' + v);
+          /* The scan is a page, so redrawing it in place is the whole of it. */
+          draw();
+        })
+        .catch(e2 => toast(sayError(e2)));
+    };
+    bulk.appendChild(b3);
+  });
+}
+
+/* AND ON THIS DEVICE'S OWN COPY, or the next publish writes it straight back:
+   BZ pressed Fix twice and watched the same seven return, because his edits held
+   fin: "limited" for the same bottles and an admin's device publishes directly
+   (2026-10-01). */
+
+/* ---- identicalPairsButton   index.html 41102-41133 ---- */
+function identicalPairsButton(found, host, draw) {
+  const auto = A.L.exactDupes(found);
+  if (auto.length) {
+    const go2 = el('button', 'btn wide btn-gold',
+      'Merge the ' + auto.length + ' identical '
+      + (auto.length === 1 ? 'pair' : 'pairs'));
+    go2.style.marginBottom = '8px';
+    go2.onclick = () => {
+      buttonWorking(go2, 'Merging\u2026');
+      libraryMergeWrite(auto)
+        .then(() => {
+          appLog('library: auto-merged ' + auto.length + ' pair(s)');
+          toast('Merged ' + auto.length);
+          draw();
+        })
+        .catch(e2 => {
+          go2.disabled = false;
+          go2.textContent = 'Merge the ' + auto.length + ' identical '
+            + (auto.length === 1 ? 'pair' : 'pairs');
+          toast(sayError(e2));
+        });
+    };
+    host.appendChild(go2);
+    host.appendChild(el('div', 'src', 'Both rows carry the same name, '
+      + 'distillery and proof — there is nothing to choose between '
+      + 'them.'));
+  }
+}
+
+/* HOW MUCH IS LEFT: the switch, what it says, and the way to fill the levels
+   in from a photograph under it. One thing with one job, so the tools screen
+   can be a list of sections rather than the contents of them. */
+
+/* ---- houseMergeButton   index.html 49673-49689 ---- */
+function houseMergeButton(plan, after) {
+  const say = 'Merge ' + plan.rows[0].from + ' into ' + plan.keep;
+  const mb = el('button', 'btn wide', say);
+  mb.onclick = () => {
+    buttonWorking(mb, 'Merging\u2026');
+    /* AND THE SHELF, or this cannot settle. */
+    runHouseMerge(plan, after)
+      .catch(e => {
+        appLog('house merge failed: ' + ((e && e.message) || e));
+        toast('That did not go through');
+        mb.disabled = false;
+        mb.textContent = say;
+      });
+  };
+  return mb;
+}
+
+
+/* ---- runHouseMerge   index.html 44572-44586 ---- */
+function runHouseMerge(plan, after) {
+  const changes = {};
+  plan.rows.forEach(r => { changes[r.k] = { dist: r.to }; });
+  /* MOVED: index.html rewrote the admin's own shelf rows to the surviving
+     spelling in the same breath. A shelf follows the library on its own -
+     the merge record is what entryFor reads when a key has no entry - so
+     the library write IS the merge, and rewriting one person's rows was
+     only ever tidying their copy sooner. */
+  /* The cache learns it through the writer, or the button offers the same
+     merge again. */
+  return libraryFieldWrite(changes)
+    .then(() => {
+      appLog('library: merged ' + plan.rows.length + ' into ' + plan.keep);
+      toast('Merged into ' + plan.keep);
+      if (after) after();
+    });
+}
+
+
+/* ---- mergePairButton   index.html 51594-51608 ---- */
+function mergePairButton(sides, kk, draw) {
+  const lib = LIB.products || {};
+  if (!kk[0] || !kk[1] || kk[0] === kk[1] || !lib[kk[0]] || !lib[kk[1]]) {
+    return el('span');
+  }
+  const mg = el('button', 'chip', 'Merge');
+  mg.onclick = () => askWhichNameStays(sides, kk, draw);
+  return mg;
+}
+
+
+/* THE SAME REPAIR, ON ONE ROW. All of them or none of them is not a choice (BZ,
+   2026-10-01: "again, no line by line capability"), and the row's own × only
+   dismisses it. Returns an empty span for a fault with no mechanical repair, so
+   the caller appends without asking. */
+
+/* ---- mendRowButton   index.html 51609-51644 ---- */
+function mendRowButton(f, it, again) {
+  /* A SHELF JOIN IS REPAIRED BY FILING IT, not by clearing a field. Asked here
+     because what repairs a row is one question and the page should not have a
+     second way to ask it - which is what the size ceiling caught. */
+  /* A SHELF JOIN IS STILL FILED HERE: filing writes a forwarding address
+     in the LIBRARY, which fixes the whisky for everybody holding it, and
+     that is an admin's write. The finding that raises it is drawn in the
+     app; the repair belongs to whoever may write.
+     A FLIGHT POUR IS NOT: pointing a pour at a bottle rewrites one person's
+     flight, so it moved to the app with the finding (2026-10-27). */
+  if (f.id === 'shelfjoin') return fileAtEntryButton(it, again);
+  if (f.id === 'deadfwd') return dropForwardButton(it, again);
+  const mend = A.L.faultFix(f.id);
+  if (!mend || !it.key) return el('span');
+  const b = el('button', 'chip', 'Fix');
+  b.onclick = () => {
+    buttonWorking(b, '…');
+    ref(NODE.shared)
+      .update(A.L.fbEncodePaths(A.L.clearFieldPlan([it], mend.clears)))
+      .then(() => {
+        appLog('library: cleared ' + mend.clears + ' on ' + it.key);
+        /* MOVED: index.html also cleared the same field on the admin's own
+           shelf row, so their copy would not publish the fault straight
+           back. Nothing on this page holds a shelf row, and nothing on this
+           page publishes a shelf - everybody offers now, and an offer for a
+           bottle the library already holds is refused. */
+        LIB.products = null;
+        toast('Cleared');
+        again();
+      })
+      .catch(e2 => { b.disabled = false; b.textContent = 'Fix'; toast(sayError(e2)); });
+  };
+  return b;
+}
+
+/* THE FIX, WHERE THE REPAIR IS MECHANICAL AND THE SAME ON EVERY ROW. A finish
+   holding a scarcity is simply wrong and the scarcity is already under Release;
+   a style holding a special class is not a style and the name carries it. Forty
+   two rows, one decision, one press (BZ, 2026-10-01: "unclear on what to do and
+   not row by row edit/ask", and "this one is not actionable (cut paste) from the
+   modal").
+
+   WHICH FAULTS HAVE ONE is A.L.faultFix's answer, read off the table that carries
+   their words - so a fault that needs a judgment has no button, by declaration
+   rather than by omission. */
+
+/* ---- mendButton   index.html 51645-51672 ---- */
+function mendButton(f, bulk, again) {
+  const mend = A.L.faultFix(f.id);
+  if (!mend) return;
+  const fx = el('button', 'chip', mend.fix + ' ' + f.items.length);
+  fx.onclick = () => {
+    const plan = A.L.clearFieldPlan(f.items, mend.clears);
+    if (!Object.keys(plan).length) { toast('Nothing to clear'); return; }
+    buttonWorking(fx, 'Clearing\u2026');
+    ref(NODE.shared)
+      .update(A.L.fbEncodePaths(plan))
+      .then(() => {
+        appLog('library: cleared ' + mend.clears + ' on ' + f.items.length
+          + ' entr' + (f.items.length === 1 ? 'y' : 'ies'));
+        /* MOVED, for the reason mendRowButton gives: no shelf here, and
+           no path from a shelf that writes the library. */
+        LIB.products = null;
+        toast('Cleared ' + f.items.length);
+        again();
+      })
+      .catch(e2 => {
+        fx.disabled = false;
+        fx.textContent = mend.fix + ' ' + f.items.length;
+        toast(sayError(e2));
+      });
+  };
+  bulk.appendChild(fx);
+}
+
+/* EXPORT AND IMPORT, side by side, at the foot of the library screen. */
+
+/* ---- fileAtEntryButton   index.html 51533-51564 ---- */
+function fileAtEntryButton(it, again) {
+
+  const b = el('button', 'chip btn-gold');
+  b.textContent = 'File it here';
+  b.title = 'File ' + it.key + ' at ' + it.to;
+  b.onclick = () => {
+    if (!A.admin) { toast('Only an admin can file it'); return; }
+    buttonWorking(b, 'Filing\u2026');
+    const ups = {};
+    LIB.graves = A.L.buryKey(LIB.graves, it.key, it.to);
+    ups['renamed/' + it.key] = { to: A.L.mergedInto(LIB.graves, it.to),
+      at: Date.now() };
+    ups.stamp = Date.now();
+    ref(NODE.shared)
+      .update(A.L.fbEncodePaths(ups))
+      .then(() => {
+        appLog('shelf scan: filed ' + it.key + ' at ' + it.to);
+        toast('Filed \u2014 everybody holding it follows now');
+        again();
+      })
+      .catch(e => {
+        b.disabled = false;
+        b.textContent = 'File it here';
+        toast(sayError(e));
+      });
+  };
+  return b;
+}
+
+/* REMOVE AN ADDRESS THAT POINTS AT NOTHING. Safe because nothing is behind it:
+   no entry is lost, and the bottles under that key surface afterwards as joins
+   that can be filed at a real one. */
+
+/* ---- dropForwardButton   index.html 51565-51593 ---- */
+function dropForwardButton(it, again) {
+  const b = el('button', 'chip', 'Remove it');
+  b.onclick = () => {
+    if (!A.admin) { toast('Only an admin can remove it'); return; }
+    buttonWorking(b, '\u2026');
+    const ups = { stamp: Date.now() };
+    ups['renamed/' + it.key] = null;
+    ref(NODE.shared)
+      .update(A.L.fbEncodePaths(ups))
+      .then(() => {
+        if (LIB.graves) delete LIB.graves[it.key];
+        appLog('library: dropped the dead address on ' + it.key);
+        toast('Removed');
+        again();
+      })
+      .catch(e => {
+        b.disabled = false;
+        b.textContent = 'Remove it';
+        toast(sayError(e));
+      });
+  };
+  return b;
+}
+
+/* MERGE, AND ONLY BETWEEN TWO ENTRIES. It points one entry at another, so a row
+   whose side is a BOTTLE filed under no entry - which is the whole of the
+   shelf-join finding - offered a merge that could only answer "Could not find
+   that entry in the library" (BZ’s screenshot, 2026-10-01). The guard asked
+   that two keys existed and differed, not that either was an entry. */
+
+/* ---- openableRow   index.html 51271-51287 ---- */
+function openableRow(name, line, open) {
+  const r = el('div', 'item scanrow');
+  const left = el('div');
+  left.setAttribute('role', 'button');
+  left.tabIndex = 0;
+  left.style.cursor = 'pointer';
+  left.appendChild(el('div', 'nm oneline', name));
+  left.appendChild(el('div', 'sub', line));
+  left.onclick = open;
+  left.onkeydown = e => { if (e.key === 'Enter') open(); };
+  r.appendChild(left);
+  return r;
+}
+
+/* WHERE THE LIBRARY DISAGREES WITH REFERENCE DATA (A.L.refFill), each row
+   opening its entry. Drawn into a slot, because the data arrives after the
+   page. */
+
+/* ---- libraryRefConflicts   index.html 51288-51327 ---- */
+function libraryRefConflicts(box, after) {
+  const slot = el('div');
+  box.appendChild(slot);
+  const products = LIB.products || {};
+  libraryRefLoad().then(ref => {
+    const list = A.L.refConflictsOpen(A.L.refFill(products, ref).conflicts, LIB.reviewed);
+    appLog('reference check: ' + Object.keys((ref || {}).brands || {}).length
+      + ' brands, ' + Object.keys(products).length + ' entries, '
+      + list.length + ' disagree');
+    if (!list.length) return;
+    const d = el('div', 'sheet');
+    d.appendChild(el('h3', null, 'Check the country'));
+    list.slice(0, 100).forEach(c => {
+      const r = openableRow(c.name, c.field + ': ' + c.have + ' \u2014 '
+        + c.source + ' says ' + c.says, () => editLibraryEntry(
+        Object.assign({ _key: c.k }, (LIB.products || {})[c.k]), after));
+      const ok = el('button', 'chip quiet', 'Correct as it stands');
+      ok.onclick = () => {
+        const id = 'refcountry:' + c.k;
+        ref(NODE.reviewed).child(A.L.fbKey(id))
+          .set({ v: 'ok', at: Date.now(), by: (A.user || {}).uid || '' })
+          .then(() => {
+            LIB.reviewed = Object.assign({}, LIB.reviewed || {},
+              { [id]: { v: 'ok', at: Date.now() } });
+            appLog('reference check: ' + id + ' correct as it stands');
+            r.remove();
+          })
+          .catch(e => toast('Could not save: ' + sayError(e)));
+      };
+      r.appendChild(ok);
+      d.appendChild(r);
+    });
+    slot.appendChild(d);
+  }).catch(e => appLog('reference data would not read: ' + sayError(e)));
+}
+
+/* LOOK UP WHAT IS DUE, and list everything still missing (BZ, 2026-09-17):
+   a row opens the entry to fill by hand, and Look up now asks that one
+   whatever its wait. Styles a name already states are written first, free
+   (libraryFillWithStyles). */
+
+/* ---- libraryFieldWrite   index.html 35665-35688 ---- */
+function libraryFieldWrite(changes) {
+  const updates = {};
+  Object.keys(changes || {}).forEach(key => {
+    Object.keys(changes[key] || {}).forEach(field => {
+      updates['catalog/products/' + key + '/' + field] = changes[key][field];
+    });
+  });
+  if (!Object.keys(updates).length) return Promise.resolve();
+  updates.stamp = Date.now();
+  return ref(NODE.shared)
+    .update(A.L.fbEncodePaths(updates))
+    .then(() => {
+      Object.keys(changes).forEach(key => {
+        if (LIB.products && LIB.products[key]) {
+          Object.assign(LIB.products[key], changes[key]);
+        }
+      });
+    });
+}
+
+/* APPLY A SCAN'S FIX TO THE LIBRARY. Patch the copy this page holds, write
+   it for everybody, say what happened. Returns false when the entry has
+   gone, which is how the caller knows to rescan rather than report success.
+
+   RENAMED AND HALVED (2026-10-27). index.html's applyAuditFix did two jobs:
+   it fixed the library AND it wrote the same correction onto this device's
+   own shelf row, because on a phone the scan and the shelf were the same
+   screen's data. There is no shelf here, so this does the library half and
+   says so in its name. index.html keeps applyAuditFix for its shelf check,
+   doing the shelf half - two functions, two jobs, neither a copy of the
+   other. */
+function applyLibraryFix(key, fix, where) {
+  const lib = (LIB.products || {})[key];
+  /* GONE IS GONE. index.html could still fix a shelf row whose library
+     entry had been merged away; with no shelf, no entry means nothing to
+     do, and saying so is what makes the caller rescan. */
+  if (!lib) return false;
+  Object.assign(lib, fix.set);
+  appLog(where + ': ' + key + ' \u2014 ' + fix.said);
+  /* Written for everybody, or the next device to scan reports it again. */
+  if (A.user) {
+    libraryFieldWrite({ [key]: fix.set })
+      .catch(e2 => appLog(where + ': could not publish ' + key + ' \u2014 '
+        + ((e2 && e2.message) || e2)));
+  }
+  return true;
+}
+
+/* --- the back gesture --------------------------------------------------
+   Back closes a modal, then walks back through the screens you came by,
+   and only leaves the app when there is nothing left to go back to. */
+
+
+
+
+/* TAKE IT AWAY WITH YOU: some findings need a catalogue, a bottle in hand
+   or another opinion, so the whole list can be copied (BZ). Its own function
+   because the scan is at its size ceiling and the ceiling does not go up
+   (rule 30f) - it came out when the move pushed the scan five lines over. */
+function copyWholeScanButton(found, count) {
+  const copy = el('button', 'btn ghost wide', 'Copy the whole list');
+  copy.style.marginBottom = '8px';
+  copy.onclick = () => {
+    const txt = A.L.auditText(found, count, A.L.showDate(A.L.todayISO()));
+    navigator.clipboard.writeText(txt)
+      .then(() => toast('Copied ' + txt.split('\n').length + ' lines'))
+      .catch(() => toast('Could not copy'));
+  };
+  return copy;
+}
+
+/* ---- rescanTheLibrary   index.html 51717-51724 ---- */
+function rescanTheLibrary() {
+  LIB.products = null;
+  withLibrary(() => {
+    /* MOVED: the same question - is the scan on screen? - asked of this
+       page's section rather than the app's screen. */
+    const pg = $('#sec-scan');
+    if (pg && pg.classList.contains('on')) openLibraryCleanUp();
+  });
+}
+
+
+/* ---- openLibraryCleanUp   index.html 51725-52051 ---- */
+function openLibraryCleanUp() {
+    /* A REPORT YOU CAN ACT ON. Every row opens the entry it is about, and
+       every row can be put to rest - some findings are CORRECT as stored,
+       and a check that reports the same ones for ever gets skimmed. */
+    const draw = () => {
+      // READ BEFORE JUDGING: the library it scans, the taxonomy it judges with.
+      /* AND THE VERDICTS, or he is shown every row he already judged. */
+      if (needsLibraryFirst(draw) || needsRegistryFirst(draw) || needsVerdictsFirst(draw)) return;
+      const count = Object.keys(LIB.products || {}).length;
+      const found = libraryFindings();
+      appLog('library scan: ' + found.length + ' kind(s) in ' + count);
+      /* A PAGE, NOT A MODAL (BZ). A modal is for a question with an answer;
+         this is a list of decisions, each with a name, a recommendation and
+         buttons, and a page has the room, scrolls properly and gets Back. */
+      /* MOVED: the app drew this into its own screen and pushed that screen
+         onto its navigation; here it is the Clean up section, which the tab
+         has already shown. The app's fallback to a modal went with it - BZ
+         ruled this is a page, and a fallback nobody wants is how a screen
+         comes to draw into nothing, which is what this did for one build of
+         the move. */
+      const asPage = m2 => {
+        const host = $('#sec-scan');
+        host.innerHTML = '';
+        m2(host);
+      };
+      asPage(m => {
+        libraryCleanUpFill(m, rescanTheLibrary);
+        /* THE SHELF HALF OF THIS PAGE LEFT ON 2026-10-27: what your shelf
+           would publish, the notes written for a flight card, and what this
+           device holds that belongs to everybody all read a shelf, and this
+           page has none. They are Tidy your shelf in the app, drawn for
+           every user rather than for one admin (BZ). */
+        libraryRemovedList(m);
+        /* THE ONES THAT NEED NO DECISION: identical name, house and proof,
+           so one survives and it does not matter which (BZ). These are the
+           rows with no per-row Merge, because identical names derive
+           identical keys and the guard refuses to merge a key with itself. */
+        identicalPairsButton(found, m, draw);
+        m.appendChild(copyWholeScanButton(found, count));
+        if (!found.length) {
+          m.appendChild(el('div', 'empty',
+            'Nothing contradicts itself. That is worth knowing rather than '
+            + 'assuming.'));
+          return;
+        }
+        found.forEach(f => {
+          const card = el('div', 'sheet');
+          card.appendChild(el('h3', null, f.title));
+          if (f.why) card.appendChild(el('div', 'sub', f.why));
+          /* IN BULK, because a finding with nine rows in it is one
+             decision nine times over when they are all the same call. */
+          const bulk = el('div', 'rowacts');
+          bulk.style.marginBottom = '6px';
+          bulkControls(f, bulk, draw, rescanTheLibrary);
+          if (f.items.length > 1) card.appendChild(bulk);
+
+          /* ALL OF THEM, NOT TWELVE: the heading counts every item and the group
+             buttons act on every item, so every item must be shown. */
+          f.items.forEach(it => {
+            /* THREE COLUMNS FOR A DUPLICATE: this bottle, that bottle, what to do (BZ).
+               On one line with == between, the names ran under the buttons. */
+            // The finding says so, rather than the screen knowing one id.
+            const isPair = !!f.pairs && / {2}== {2}/.test(it.text || '');
+            const row = el('div', isPair ? 'dupgrid' : 'item scanrow');
+            if (!isPair) {
+              /* STACKED, NOT COLUMNED (BZ): the issue, then what it would become, then
+                 the buttons, each full width. A long whisky name and two
+                 buttons never fit one line; a single column has nothing to
+                 overflow and cannot be broken by a cascade. */
+              row.style.display = 'block';
+              row.style.padding = '10px 12px';
+            }
+            if (isPair) {
+              const sides = String(it.text).split('  ==  ');
+              sides.forEach((sideText, si) => {
+                const col = el('div', 'dupside');
+                const nm = el('button', 'nm');
+                nm.style.cssText = 'background:none;border:0;padding:0;'
+                  + 'text-align:left;font:inherit;color:inherit;'
+                  + 'cursor:pointer;white-space:normal';
+                const bits = String(sideText).split(' · ');
+                nm.textContent = bits[0];
+                const k2 = (it.keys || [])[si] || A.L.libKey(bits[0].trim());
+                nm.onclick = () => {
+                  const e2 = (LIB.products || {})[k2];
+                  if (!e2) { toast('That entry has gone already'); return; }
+                  editLibraryEntry(Object.assign({ _key: k2 }, e2),
+                    () => { LIB.products = null; draw(); });
+                };
+                col.appendChild(nm);
+                if (bits[1]) col.appendChild(el('div', 'sub', bits[1]));
+                /* WHAT ACTUALLY DIFFERS. When both sides print the same name, house and
+                   proof, the only difference is the key each is filed under -
+                   which is also what Merge acts on, and why a row whose two
+                   keys match cannot be merged. Shown for every pair. */
+                const kShown = (it.keys || [])[si]
+                  || A.L.resolveLibKey(LIB.products, null, bits[0]);
+                const kEl = el('div', 'src', kShown
+                  ? 'filed as ' + kShown : 'not found in the library');
+                kEl.style.cssText = 'font-family:ui-monospace,monospace;'
+                  + 'font-size:12px;opacity:.6;word-break:break-all';
+                col.appendChild(kEl);
+                row.appendChild(col);
+              });
+            }
+            /* IT WRAPS. `oneline` clips (nowrap, overflow hidden); a shelf row can be
+               clipped because you can open it, but a finding is a sentence
+               and has to be read whole. */
+            const go = el('button', 'nm');
+            go.style.cssText = 'white-space:normal;overflow-wrap:anywhere;'
+              + 'text-align:left;display:block;width:100%';
+            go.style.cssText = 'background:none;border:0;padding:0;'
+              + 'text-align:left;font:inherit;color:inherit;cursor:pointer';
+            go.textContent = it.text;
+            go.onclick = () => {
+              const entry = (LIB.products || {})[it.key];
+              if (!entry) { toast('That entry has gone already'); return; }
+              /* BACK TO THE SCAN, not to the library: the list still to judge is
+                 what somebody wants when the editor closes.
+                 DO NOT THROW THE CACHE AWAY: editLibraryEntry has already
+                 written the saved entry into LIB.products, and nulling it
+                 made draw() audit an empty library, so one fix looked like
+                 it had cleared every finding. */
+              editLibraryEntry(Object.assign({ _key: it.key }, entry),
+                () => draw());
+            };
+            const rowL = el('div');
+            /* The text column must be allowed to be narrower than its longest word, or
+               it grows and runs under the buttons whatever the grid says. */
+            rowL.style.minWidth = '0';
+            rowL.style.overflowWrap = 'anywhere';
+            if (!isPair) rowL.appendChild(go);
+            /* AND WHAT TO DO ABOUT IT, under the name (BZ). */
+            const tip = A.L.auditSuggestion(f.id,
+              (LIB.products || {})[it.key] || {}, it.text);
+            if (tip && !isPair) rowL.appendChild(el('div', 'src', tip));
+            if (!isPair) row.appendChild(rowL);
+            /* THREE ANSWERS: the row itself is the fix (it opens the entry); these
+               two are keep it for now and dismiss (BZ). A verdict is written
+               where every admin reads it, because it is a judgment about a
+               shared row rather than this device's opinion of it. */
+            const acts = el('div', 'rowacts');
+            acts.appendChild(mendRowButton(f, it, rescanTheLibrary));
+            /* On their own line, under the words they act on. */
+            if (!isPair) {
+              acts.style.marginTop = '8px';
+              acts.style.justifyContent = 'flex-start';
+            }
+            /* THE PRESS TAKES EFFECT AT ONCE. Waiting for the shared admin write to
+               succeed left the row sitting there when it was refused or slow,
+               with nothing to say why. */
+            const verdict = (v, said) => {
+              const id = f.id + ':' + it.key;
+              const before = LIB.reviewed || {};
+              LIB.reviewed = Object.assign({}, before,
+                { [id]: { v: v, at: Date.now() } });
+              appLog('library scan: ' + id + ' \u2014 ' + said);
+              draw();
+              ref(NODE.reviewed)
+                .child(A.L.fbKey(id))
+                .set({ v: v, at: Date.now(),
+                       by: (A.user || {}).uid || '' })
+                .catch(e => {
+                  LIB.reviewed = before;
+                  appLog('library scan: ' + id + ' would not save \u2014 '
+                    + ((e && e.message) || e));
+                  toast('Could not save: '
+                    + sayError(e));
+                  draw();
+                });
+            };
+            /* LOOK IT UP: the service that returns mash bills for the fill run is
+               asked here, rather than saying a bill is wrong and leaving
+               somebody to find the right one (BZ). */
+            if (f.id === 'mashsum') {
+              const look = el('button', 'chip', 'Look it up');
+              look.onclick = async () => {
+                const entry = (LIB.products || {})[it.key];
+                if (!entry) { toast('That entry has gone already'); return; }
+                buttonWorking(look, 'Looking\u2026');
+                try {
+                  /* AN ARRAY. A.L.lookupUrl does (need || []).filter, so a bare string threw
+                     "(need || []).filter is not a function" the first time BZ pressed it. */
+                  const raw = await adminService(entry.name, 20000, ['mash']);
+                  const res = A.L.parseLookup(raw, { needIdentity: false });
+                  const bill = (res && (res.mash || res.mashbill)) || null;
+                  if (!bill) {
+                    toast('Nothing came back about the mash bill');
+                    look.disabled = false;
+                    look.textContent = 'Look it up';
+                    return;
+                  }
+                  appLog('mash lookup for ' + entry.name + ': ' + bill);
+                  /* Straight into the editor with the bill filled in,
+                      and back to the scan when it closes. */
+                  editLibraryEntry(
+                    Object.assign({ _key: it.key }, entry, { mash: bill }),
+                    () => { LIB.products = null; draw(); });
+                } catch (e2) {
+                  look.disabled = false;
+                  look.textContent = 'Look it up';
+                  toast(sayError(e2));
+                }
+              };
+              acts.appendChild(look);
+            }
+            /* MERGE ON EVERY PAIR (BZ). Two rows for one whisky are two half-filled
+               entries and an overstated count; the fix is always keep one and
+               point the other at it, through the rename record every device
+               already follows (A.L.applyLibraryMoves). Keys are used when the
+               check supplied them and derived from the names when not, so the
+               button appears wherever a merge is possible at all. */
+            if (isPair) {
+              /* THE KEYS THE CHECK FOUND, not names read back off the screen: two
+                 entries differing by a stray space print identically. */
+              const sides = String(it.text).split('  ==  ')
+                .map(x => x.split(' · ')[0].trim());
+              /* RESOLVED, not derived. Two rows printed identically derive the same key,
+                 and the guard below refuses to merge a key with itself;
+                 asking the library which entries they are gives two keys. */
+              let kk = [
+                (it.keys || [])[0]
+                  || A.L.resolveLibKey(LIB.products, null, sides[0]),
+                (it.keys || [])[1]
+                  || A.L.resolveLibKey(LIB.products, null, sides[1])
+              ];
+              /* Two rows printed identically resolve to the same entry,
+                 because a lookup by name can only find one of them. Ask
+                 for every entry under that name instead. */
+              if (kk[0] && kk[0] === kk[1]) {
+                const both = A.L.libKeysNamed(LIB.products, sides[0]);
+                if (both.length >= 2) kk = [both[0], both[1]];
+              }
+              acts.appendChild(mergePairButton(sides, kk, draw));
+            }
+            /* UPDATE, AND IT SAYS WHAT IT WILL CHANGE. */
+            /* THE LIBRARY'S OWN ENTRY first: these rows are library entries,
+               and prod() looks only in the shelf catalog, so the fix came back
+               null and the tick silently never appeared. */
+            const entry = (LIB.products || {})[it.key]
+              || {};
+            /* The item carries what the finding worked out - the spelling to keep, the
+               key to merge into - so it is handed to the fix rather than re-derived. */
+            const fix = A.L.auditFix(f.id, entry, it.text, it);
+            if (fix) {
+              /* ICON BUTTONS (BZ): a tick by the new value and a cross by the current
+                 one. The words move to the advice line above; the button
+                 carries them in its title and aria-label for hover and
+                 screen readers. */
+              const up = el('button', 'chip btn-gold');
+              up.textContent = (fix.pick || '\u2713') + ' \u2713';
+              up.title = fix.label;
+              up.setAttribute('aria-label', fix.label);
+              /* Writes to the library entry, and to the shelf too when the same key is
+                 on it, so the correction shows in both places. */
+              up.onclick = () => {
+                if (!applyLibraryFix(it.key, fix, 'library scan')) {
+                  toast('That entry is no longer in the library');
+                  verdict('ok', 'gone before it could be fixed');
+                  return;
+                }
+                toast(fix.done);
+                verdict('fixed', fix.said);
+              };
+              acts.appendChild(up);
+            }
+            /* And the current value, with the cross: keeping it is an ANSWER, not a
+               refusal to answer, so it is worded as one and remembered like one. */
+            const keepWord = fix && fix.keep ? fix.keep + ' \u2715'
+              : '\u2715';
+            const later = el('button', 'chip quiet'
+              + (fix && fix.keep ? '' : ' iconchip'));
+            later.textContent = keepWord;
+            later.title = 'Leave it as it is, and stop asking';
+            later.setAttribute('aria-label',
+              'Leave it as it is, and stop asking');
+            later.onclick = () => verdict('ok', 'left as it stands');
+            acts.appendChild(later);
+            /* Ignore already says this; two buttons that both mean "do nothing"
+               confuse. */
+            row.appendChild(acts);
+            card.appendChild(row);
+          });
+          /* No "and N more": the heading's count and the rows are the same number. */
+          /* A house split across two spellings is merged in place, here: the
+             scan opens FROM the library screen, so navigating there only
+             closed it (BZ). `dups` still travels, because which of two entries
+             survives is chosen on the library screen. */
+          if (f.id === 'houses') {
+            const vars2 = A.L.houseVariants(Object.values(LIB.products || {}));
+            const plan2 = vars2.length
+              /* The keyed MAP, not its values: Object.values drops the keys
+                 and every row came back keyed "0", "1", "2". */
+              ? A.L.houseMergePlan(A.L.libraryRows(LIB.products || {}), vars2[0])
+              : null;
+            if (plan2 && plan2.rows.length) {
+              const go2 = houseMergeButton(plan2, () => draw());
+              go2.style.marginTop = '9px';
+              card.appendChild(go2);
+            }
+          }
+          m.appendChild(card);
+        });
+      });
+    };
+    /* Fetch first if this device has not read the library yet, then draw.
+       One round trip, and only when it is actually needed. */
+    if (LIB.products) { draw(); return; }
+    working('Reading the library\u2026');
+    libRef().once('value').then(sn => {
+      const v = sn.val();
+      LIB.products = A.L.libraryFromValue(v);
+      working();
+      draw();
+    }).catch(e => {
+      working();
+      toast(sayError(e, 'Could not read the library'));
+    });
+}
+
 
 boot();
 </script>
