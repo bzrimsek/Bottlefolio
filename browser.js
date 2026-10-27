@@ -73,6 +73,8 @@ function step(n) {
 
   // A fake origin, so fetch works. Everything under it is served from the
   // folder the file lives in.
+  /* The SDK, answered here and signed out — see fake-sdk.js. */
+  await require('./fake-sdk.js').offline(page);
   await page.route('http://app.local/**', route => {
     const name = route.request().url().split('app.local/')[1].split('?')[0]
       || path.basename(file);

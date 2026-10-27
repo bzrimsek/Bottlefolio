@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.14  Build 2026-10-27 02:56 PM ET
+     Version : v2.9.16  Build 2026-10-27 07:51 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
+// v2.9.15  2026-10-27  The first press of Sign in now works.
 // v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
 // v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.9.9  2026-10-26  The gate runs on a named image.
 // v2.9.8  2026-10-26  A remix comes back with a bench.
 // v2.9.7  2026-10-26  The crash behind all of it: a flight whose bench did not survive the account.
-// v2.9.6  2026-10-26  A built flight ends in the list, and everything a flight can do is on the flight.
-// v2.9.5  2026-10-20  The sheet that refused to print, and the gate hole that hid it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.14';
-const BUILD_TIME  = '2026-10-27 02:56 PM ET';
+const APP_VERSION = '2.9.16';
+const BUILD_TIME  = '2026-10-27 07:51 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -47080,7 +47080,10 @@ function accountCard() {
       + 'else can read it unless you share it with a buddy.');
   } else {
     const inb = el('button', 'btn btn-sm btn-gold', 'Sign in with Google');
-    inb.onclick = fbSignIn;
+    /* GUARDED LIKE THE OTHER THREE. This was the one sign-in button with no
+       guard at all, and fbSignIn now returns the popup so the guard holds the
+       button until it settles rather than for 800ms. */
+    inb.onclick = guardTap(inb, fbSignIn);
     settingRow(grid, inb, 'Your shelf is stored under your own account. Nobody '
       + 'else can read it unless you share it with a buddy.');
   }
@@ -55555,7 +55558,8 @@ const FB = {
     messagingSenderId: '445174923141',
     appId: '1:445174923141:web:2278332f6636972c2fceec'
   },
-  ready: false,      // SDK loaded
+  ready: false,      // app + auth loaded and initialised; a press can go
+  dbReady: false,    // and the database half, which only a signed-in device reads
   user: null,        // signed-in user, or null
   base: null,        // .../bz-apps/whisky/{uid}
   loaded: false,     // the first read has completed
@@ -55867,40 +55871,100 @@ function fbSetStatus(s, detail) {
   }
 }
 
-// The SDK is only fetched when you ask to sign in. Someone who never signs
-// in pays nothing for this and the app keeps working with no network.
-function fbLoad(cb) {
-  if (FB.ready) { fbNote('sdk already loaded'); return cb(); }
-  fbNote('loading sdk');
-  fbSetStatus('connecting');
-  const urls = [
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js',
-    'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
-  ];
+/* THE SDK IN TWO HALVES, BECAUSE A POPUP HAS TO OPEN IN THE TAP ITSELF.
+ *
+ * It was one fetch, made on the press: fbLoad(() => signInWithPopup()). On a
+ * cold start that opens the popup from a NETWORK CALLBACK, and iOS Safari
+ * refuses it — by then the tap is over and nothing is user-initiated. One
+ * iPhone's log, both nights (2026-10-26, 2026-10-27): press one blocked or
+ * cancelled, press two "sdk already loaded" and straight in. Nobody could
+ * sign in on the first press, and the app told them the sign-in window had
+ * been "closed" when it had never opened.
+ *
+ * So the auth half is warmed before the press and the popup opens in the tap:
+ *
+ *   fbWarmAuth   app + auth, initialised, FB.ready — 49,740 bytes gzipped,
+ *                measured, and all signInWithPopup needs
+ *   fbLoad       and the database, FB.dbReady — another 48,014, wanted only
+ *                once somebody is actually signed in
+ *
+ * ONE ORDERING IS LOAD-BEARING ELSEWHERE. syncemu.js points the app at the
+ * emulators by wrapping initializeApp from inside the DATABASE script, so
+ * initializeApp must still run after all three whenever fbLoad is the first
+ * loader. It does — that is the signed-in boot path, which is the one
+ * syncemu takes.
+ */
+/* WRITTEN OUT WHOLE, NOT BUILT FROM A PREFIX, and that is not a style
+   choice. admin.html reads these urls out of this file so an SDK bump moves
+   both pages at once, and its sliceSdk matches a complete gstatic url. A
+   tidier `FB_SDK + 'app-compat.js'` made all three invisible to it, so the
+   admin page could not boot at all — caught by admin.js on 2026-10-27,
+   which is what that check is for. */
+const FB_SDK_AUTH = [
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'
+];
+const FB_SDK_DB = [
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
+];
+
+/* One door for fetching them, in order. */
+function fbScripts(urls, cb, fail) {
   let i = 0;
   const next = () => {
-    if (i >= urls.length) {
-      try {
-        firebase.initializeApp(FB.config);
-        FB.ready = true;
-        fbNote('sdk ready');
-        cb();
-      } catch (e) {
-        fbSetStatus('error', String(e));
-      }
-      return;
-    }
+    if (i >= urls.length) return cb();
     const s = document.createElement('script');
     s.src = urls[i++];
     // Fetched as CORS, or anything the SDK throws reaches window.onerror as a
     // bare "Script error." with no detail. gstatic sends the header.
     s.crossOrigin = 'anonymous';
     s.onload = next;
-    s.onerror = () => fbSetStatus('error', 'could not load the Firebase SDK');
+    s.onerror = fail;
     document.head.appendChild(s);
   };
   next();
+}
+
+/* One door for starting it, because initializeApp must happen exactly once
+   however the halves arrived. */
+function fbStart(cb, fail) {
+  try {
+    firebase.initializeApp(FB.config);
+    FB.ready = true;
+    fbNote('sdk ready');
+    cb();
+  } catch (e) {
+    fail(String(e));
+  }
+}
+
+/* WHAT A PRESS NEEDS, AND NOTHING MORE. Warmed at boot on a device that has
+   never signed in, so it must stay SILENT: nobody asked for this, so it
+   moves no status and shows no error — a press that arrives before it lands
+   says so for itself (see fbSignIn). */
+function fbWarmAuth(cb) {
+  if (FB.ready) { fbNote('sdk already loaded'); return cb(); }
+  const no = why => fbNote('the auth sdk did not load'
+    + (why ? ': ' + why : '') + ' — a press will fetch it');
+  fbNote('warming the auth sdk');
+  fbScripts(FB_SDK_AUTH, () => fbStart(cb, no), () => no(''));
+}
+
+// And the database half, which only a signed-in device ever reads.
+function fbLoad(cb) {
+  if (FB.dbReady) { fbNote('sdk already loaded'); return cb(); }
+  const no = () => fbSetStatus('error', 'could not load the Firebase SDK');
+  if (FB.ready) {
+    fbNote('loading sdk: the database half');
+    return fbScripts(FB_SDK_DB, () => { FB.dbReady = true; cb(); }, no);
+  }
+  fbNote('loading sdk');
+  fbSetStatus('connecting');
+  /* ALL THREE, THEN initializeApp — see the ordering note above. */
+  fbScripts(FB_SDK_AUTH.concat(FB_SDK_DB), () => {
+    FB.dbReady = true;
+    fbStart(cb, e => fbSetStatus('error', e));
+  }, no);
 }
 
 /* --- running the thing -------------------------------------------------
@@ -57464,9 +57528,15 @@ function fbAuthError(e) {
     return 'Your browser blocked the sign-in window. Allow popups for this '
       + 'site and try again.';
   }
-  if (code === 'auth/popup-closed-by-user'
-      || code === 'auth/cancelled-popup-request') {
+  if (code === 'auth/popup-closed-by-user') {
     return 'Sign-in was closed before it finished.';
+  }
+  /* NOT THE SAME THING, though it was said with the same sentence until
+     2026-10-27. Nothing was closed: a second press cancelled the first
+     request, and the second one is still running. fbSignIn shows nothing at
+     all for this; the sentence is here for Diagnostics. */
+  if (code === 'auth/cancelled-popup-request') {
+    return 'That first sign-in was replaced by the second press.';
   }
   if (code === 'auth/operation-not-supported-in-this-environment') {
     return 'This browser will not open the sign-in window. Open the app in '
@@ -57727,14 +57797,34 @@ function fbSyncCatalog() {
 }
 
 function fbSignIn() {
-  fbLoad(() => {
-    fbWatch();
-    fbNote('signing in by popup');
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(e => {
-      fbNote('popup failed: ' + ((e && e.code) || e));
-      fbSetStatus('error', fbAuthError(e));
-    });
+  /* THE POPUP OPENS IN THE TAP, OR IT DOES NOT OPEN. This used to sit inside
+     fbLoad's callback, which is why it could not work on the first press —
+     see the note above fbWarmAuth. Boot warms the auth half, so this is
+     normally straight through; a press that still beats the warm SAYS SO
+     rather than opening a window iOS will refuse. */
+  if (!FB.ready) {
+    fbNote('sign-in pressed before the auth sdk was ready');
+    fbSetStatus('connecting');
+    fbWarmAuth(() => fbSetStatus('signedout'));
+    toast('Still getting ready — press Sign in again in a moment');
+    return undefined;
+  }
+  fbWatch();
+  fbNote('signing in by popup');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  /* RETURNED, so guardTap holds the button until the popup settles. Its own
+     800ms could never cover one: the second press that cancelled the first
+     on 10/27 came four seconds later. */
+  return firebase.auth().signInWithPopup(provider).catch(e => {
+    const code = (e && e.code) || '';
+    fbNote('popup failed: ' + (code || e));
+    /* A SUPERSEDED REQUEST IS NOT A FAILURE. Pressing twice cancels the
+       first request; the second is still live, and on 10/27 it signed him in
+       forty seconds later with "Sign-in was closed before it finished"
+       sitting in red the whole time. Nothing was closed, and the outcome
+       belongs to the press that is still running. */
+    if (code === 'auth/cancelled-popup-request') return;
+    fbSetStatus('error', fbAuthError(e));
   });
 }
 
@@ -57761,10 +57851,22 @@ function fbWatch() {
     fbNote('auth says: ' + (user.email || user.uid));
     FB.user = user;
     try { localStorage.setItem('kb_signedin', '1'); } catch (e) {}
-    FB.base = firebase.database().ref('bz-apps/whisky/' + user.uid);
     // Say so now, not after the first database read, or a slow read shows
     // signed out.
     fbSetStatus('signedin');
+    /* THE DATABASE HALF MAY STILL BE UNFETCHED. Boot warms auth only, so on
+       a device that has never signed in the first thing the rest of this
+       wants — firebase.database() — may not exist yet. Waited for, not
+       raced: every line of the signed-in path reads the database. */
+    fbLoad(() => fbAuthSignedIn(user));
+  });
+}
+
+/* WHAT HAPPENS ONCE AUTH NAMES SOMEBODY. Split out of fbWatch's handler when
+   the SDK went into two halves, so the wait for the database half wraps the
+   whole of it rather than being raced by its first line. */
+function fbAuthSignedIn(user) {
+    FB.base = firebase.database().ref('bz-apps/whisky/' + user.uid);
     /* And redraw anything that gave up because nobody was signed in yet.
        Settings can render before auth lands, and the buddies card then sat
        on the word Loading with nothing coming back to replace it. */
@@ -57791,7 +57893,6 @@ function fbWatch() {
       renderSettings();
       fbReadTastings();
     });
-  });
 }
 
 /* The first read decides which side wins. Remote wins when it has
@@ -58780,6 +58881,12 @@ function boot(data) {
   // every load, so the SDK is fetched at boot in that case only.
   if (localStorage.getItem('kb_signedin') === '1') {
     fbLoad(() => fbWatch());
+  } else {
+    /* AND A DEVICE THAT HAS NEVER SIGNED IN WARMS THE AUTH HALF, because the
+       popup has to open in the tap and cannot wait for a fetch — see the note
+       above fbWarmAuth. After the screens are up, so it costs the first paint
+       nothing, and silent, because nobody asked for it. */
+    setTimeout(() => fbWarmAuth(() => {}), 1200);
   }
   fetch('./map.json').then(r => r.json()).then(md => {
     MAPDATA = md; wireMap(); renderMap(); drawHomeMap();
@@ -58789,7 +58896,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.14</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.16</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

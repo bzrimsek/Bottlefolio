@@ -65,19 +65,40 @@ function daysOld(line, now) {
   return Math.floor((today.getTime() - when.getTime()) / 86400000);
 }
 
-/* Noise: the app narrating a phone being a phone. */
+/* THE STAMP EVERY LINE CARRIES: date, time, device. One copy, because the
+   noise filter below and shapeOf both have to strip it and they disagreed.
+   `/^.{0,20}fb push ok/` was the old filter and it could never match: the
+   stamp is twenty-ONE characters, "10/15 10:12:46 [and] ". So every push line
+   was read as a finding, and on 2026-10-16 `fb push ok: 404 bytes, lately`
+   was reported as a new kind of problem - because a BYTE COUNT contained
+   404. Found 2026-10-27, by reading the report rather than the shapes. */
+const STAMP = /^\d\d\/\d\d \d\d:\d\d:\d\d \[\w+\] /;
+
+/* Noise: the app narrating a phone being a phone. Tested against the line
+   with its stamp removed, so an anchored pattern means what it says. */
 const NOISE = [/keyboard: viewport/, /nav was 0/, /screen held awake/,
-  /^\s*$/, /asked about/, /^.{0,20}fb push ok/];
+  /^\s*$/, /asked about/, /^fb push ok/];
 
 /* THE SHAPE OF A LINE, with everything particular removed: the stamp, the
    device, numbers, quoted names, addresses, and whatever follows "on" or
    "for", which is where a bottle's name lands. */
 function shapeOf(line) {
   return String(line)
-    .replace(/^\d\d\/\d\d \d\d:\d\d:\d\d \[\w+\] /, '')
+    .replace(STAMP, '')
     .replace(/https?:\/\/\S+/g, '<address>')
+    /* A PAYLOAD IS NOT A SHAPE, and the header above promises nothing from a
+       shelf is printed. The fill lines carry the whole entry they are about -
+       `fill one Tottori (all) <- {"name":...,"dist":"Matsui Shuzo",...}` - and
+       its escaped quotes get past the <name> rule below, so 120 characters of
+       somebody's bottle went to a PUBLIC workflow log. Everything from the
+       first brace or bracket goes, which also means two fills of different
+       bottles reduce to one finding, as they should (2026-10-27). */
+    .replace(/[{]|\[\s*[{"']/, '<data>').replace(/<data>[\s\S]*$/, '<data>')
     .replace(/"[^"]*"/g, '<name>')
-    .replace(/\b(on|for|about) .*$/i, '$1 <name>')
+    /* AND A BOTTLE NAMED WITHOUT ONE OF THOSE WORDS. `fill one Tottori (all)`
+       puts it straight after "one", so "one" joins the list rather than a
+       Japanese whisky going to a public log on its own (2026-10-27). */
+    .replace(/\b(on|for|about|one) .*$/i, '$1 <name>')
     .replace(/\d+(\.\d+)?/g, 'N')
     .trim().slice(0, 120);
 }
@@ -86,8 +107,11 @@ function findings(logs) {
   const out = {};
   logs.forEach(line => {
     const s = String(line);
-    if (NOISE.some(r => r.test(s))) return;
-    if (!BAD.some(r => r.test(s))) return;
+    /* The stamp off FIRST, or an anchored pattern can never fire - see
+       STAMP. The raw line is still what daysOld reads. */
+    const said = s.replace(STAMP, '');
+    if (NOISE.some(r => r.test(said))) return;
+    if (!BAD.some(r => r.test(said))) return;
     const age = daysOld(s);
     if (age !== null && age > DAYS_BACK) return;
     const shape = shapeOf(s);

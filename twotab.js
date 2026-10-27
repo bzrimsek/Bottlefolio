@@ -23,6 +23,9 @@ const failures = [];
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 900, height: 800 } });
+  /* The SDK, answered here and signed out — see fake-sdk.js. On the CONTEXT,
+     so both tabs get it from one route. */
+  await require('./fake-sdk.js').offline(ctx);
   const route = page => page.route('http://app.local/**', r => {
     const n = r.request().url().split('app.local/')[1].split('?')[0]
       || path.basename(file);

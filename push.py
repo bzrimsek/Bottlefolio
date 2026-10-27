@@ -118,7 +118,15 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            'says.js', 'update.js', 'mine.js',
            # 2026-09-20: screens in sequence, for what one leaves behind.
            'seq.js',
-           'fake-firebase.js', 'papers.js', 'smoke.js', 'audit.py',
+           'fake-firebase.js',
+           # 2026-10-27: the SDK answered locally and signed out, for the
+           # eleven harnesses that had no Firebase at all until index.html
+           # started warming the auth half at boot. Left off this list it
+           # passed every local check and killed the gate on
+           # MODULE_NOT_FOUND; consistency.js now reads what each harness
+           # requires, so the next one fails here instead.
+           'fake-sdk.js',
+           'papers.js', 'smoke.js', 'audit.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'rules.js',
            # 2026-09-16: one engine loader for every tool, and the nightly

@@ -34,6 +34,8 @@ function check(name, got, want) {
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
   page.on('pageerror', e => failures.push('threw: ' + e.message));
 
+  /* The SDK, answered here and signed out — see fake-sdk.js. */
+  await require('./fake-sdk.js').offline(page);
   await page.route('http://app.local/**', route => {
     const name = route.request().url().split('app.local/')[1].split('?')[0]
       || path.basename(file);

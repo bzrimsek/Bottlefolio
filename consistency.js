@@ -3653,6 +3653,83 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('a service reply is read the same way everywhere', found);
 }
 
+/* THE SIGN-IN POPUP OPENS IN THE TAP, AND NOTHING MAY WRAP IT.
+ *
+ * fbSignIn was `fbLoad(() => { ... signInWithPopup() })` for months, and the
+ * cost of that one wrapper was that NOBODY could sign in on the first press:
+ * a popup opened from a network callback is not user-initiated, and iOS
+ * Safari refuses it. One iPhone's log, 2026-10-26 and 10-27, shows it twice -
+ * press one blocked or cancelled, press two "sdk already loaded" and in.
+ *
+ * ios.js drives the press and is the real check. This one is here because it
+ * is free and it fires on the EDIT: the natural way to add anything to
+ * sign-in is to wrap it in a loader again, and that reads so reasonably that
+ * nobody would look twice. The rule is simple enough to state - between
+ * `function fbSignIn` and its closing brace, signInWithPopup must not sit
+ * inside a call that takes a callback. */
+{
+  const bad = [];
+  const body = (() => {
+    const at = codeOnly.indexOf('function fbSignIn()');
+    if (at < 0) return null;
+    /* To the next top-level function, which is enough: fbSignIn is short and
+       what matters is only what encloses the popup. */
+    const rest = codeOnly.slice(at + 10);
+    const end = rest.search(/\n(function|const|let) /);
+    return end < 0 ? rest : rest.slice(0, end);
+  })();
+  if (body === null) {
+    bad.push('fbSignIn is gone - this check has nothing to guard, and the '
+      + 'first press of Sign in is what it was guarding');
+  } else if (body.indexOf('signInWithPopup') < 0) {
+    bad.push('fbSignIn no longer opens a popup - if sign-in moved, move '
+      + 'this check with it');
+  } else {
+    /* THE DEPTH THE POPUP SITS AT. Counted in brackets from the start of the
+       function: the press itself is depth 1, inside fbSignIn's own body. The
+       early `if (!FB.ready)` return is a block, so a popup in the tap is at
+       1 and anything a loader wrapped is deeper, in a => { } passed to it. */
+    const upto = body.slice(0, body.indexOf('signInWithPopup'));
+    let depth = 0, arrows = 0;
+    for (let i = 0; i < upto.length; i++) {
+      const c = upto[i];
+      if (c === '{') {
+        depth++;
+        /* A brace that opens a callback body rather than a plain block. */
+        if (/=>\s*$/.test(upto.slice(Math.max(0, i - 4), i))) arrows++;
+      } else if (c === '}') {
+        depth--;
+        if (arrows > depth) arrows = depth;
+      }
+    }
+    if (arrows > 0) {
+      bad.push('signInWithPopup sits inside a callback in fbSignIn - it must '
+        + 'be called in the tap itself, or iOS Safari refuses the popup and '
+        + 'the first press of Sign in cannot work. Warm the SDK instead '
+        + '(fbWarmAuth) and leave the press synchronous.');
+    }
+  }
+  /* AND THE WARM ITSELF, which is what makes the synchronous press possible.
+     Without it the press finds FB.ready false every time and falls back to
+     asking for a second press, which is the old fault wearing a message.
+
+     A CALL, NOT THE DEFINITION. This read `/fbWarmAuth\(/` for about ten
+     minutes on 2026-10-27, which `function fbWarmAuth(cb)` satisfies all by
+     itself - the assertion could not fail. Found by removing the warm and
+     watching this stay green (another check caught it, which is luck, not a
+     guard). So the definition and fbSignIn's own fallback call are both cut
+     out first, and what must remain is a call from BOOT. */
+  const elsewhere = codeOnly
+    .replace(/function fbWarmAuth\(cb\) \{[\s\S]*?\n\}/, '')
+    .replace(/function fbSignIn\(\)[\s\S]*?\n\}/, '');
+  if (!/fbWarmAuth\(/.test(elsewhere)) {
+    bad.push('nothing outside fbSignIn warms the auth half of the SDK - '
+      + 'boot has to, or every first press falls back to "press again" and '
+      + 'the fault is back wearing a politer message');
+  }
+  check('the sign-in popup opens in the tap, not in a callback', bad);
+}
+
 /* THE SIZE RATCHET: THE SCREEN HALF STOPS GROWING.
  *
  * Review item 35, 2026-09-15. The architecture pass measured 19 top-level
@@ -3885,13 +3962,40 @@ check('no fixed svg id is emitted by a repeated drawing',
      the live site sat a version behind while two gates went red. */
   const push = fs.readFileSync(__dirname + '/push.py', 'utf8');
   const sends = f => push.indexOf("'" + f + "'") >= 0;
-  ['checks.json', 'check.js'].concat(table.checks.map(c => c.harness))
+  const harnesses = table.checks.map(c => c.harness);
+  ['checks.json', 'check.js'].concat(harnesses)
     .forEach(f => {
       if (!sends(f)) {
         found.push(f + ' is needed by the gate and push.py does not send it, '
           + 'so every build would die on it');
       }
     });
+  /* AND WHAT THE HARNESSES THEMSELVES REQUIRE. The check above covers the
+     files named in the table; it does not cover a file a harness LOADS. On
+     2026-10-27 fake-sdk.js was written to answer the Firebase SDK locally,
+     eleven harnesses were pointed at it, all eighteen checks passed here -
+     and the gate died on MODULE_NOT_FOUND in twotab.js, because a brand new
+     file is not in push.py's hand-kept list until somebody puts it there.
+     Same fault as the one above, one level down, and the same cost: a red
+     gate and a live site left behind. */
+  harnesses.filter(f => /\.js$/.test(f)).forEach(h => {
+    const at = __dirname + '/' + h;
+    if (!fs.existsSync(at)) return;
+    const body = fs.readFileSync(at, 'utf8');
+    const re = /require\(\s*'\.\/([A-Za-z0-9._-]+)'\s*\)/g;
+    let m;
+    const seen = {};
+    while ((m = re.exec(body))) {
+      const want = m[1].indexOf('.') >= 0 ? m[1] : m[1] + '.js';
+      if (seen[want]) continue;
+      seen[want] = 1;
+      if (!sends(want)) {
+        found.push(h + ' requires ' + want + ' and push.py does not send it, '
+          + 'so the gate dies on MODULE_NOT_FOUND where nothing here can '
+          + 'see it');
+      }
+    }
+  });
 
   check('the table that picks the checks covers every check', found);
 }

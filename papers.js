@@ -32,6 +32,8 @@ const failures = [];
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
+  /* The SDK, answered here and signed out — see fake-sdk.js. */
+  await require('./fake-sdk.js').offline(page);
   await page.route('http://app.local/**', r => {
     const n = r.request().url().split('app.local/')[1].split('?')[0]
       || path.basename(file);

@@ -103,6 +103,8 @@ const SHELVES = [
   const p = await b.newPage({ viewport: { width: 390, height: 2600 } });
   const threw = [];
   p.on('pageerror', e => threw.push(e.message));
+  /* The SDK, answered here and signed out — see fake-sdk.js. */
+  await require('./fake-sdk.js').offline(p);
   await p.route('http://app.local/**', r => {
     const n = r.request().url().split('app.local/')[1].split('?')[0] || 'index.html';
     const f = path.join(dir, n);

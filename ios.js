@@ -31,6 +31,11 @@ const bad = (w, d) => {
 const SCREENS = ['home', 'shelf', 'flights', 'pour', 'map', 'ref',
   'settings', 'library', 'buddies', 'shop', 'guide'];
 
+/* The SDK, answered here and signed out — see fake-sdk.js. Without it the
+   boot warm reaches gstatic for real, which would make this check need the
+   network. */
+const sdk = p => require('./fake-sdk.js').offline(p);
+
 const serve = (p, dir) => p.route('http://app.local/**', r => {
   const n = r.request().url().split('app.local/')[1].split('?')[0]
     || 'index.html';
@@ -49,6 +54,7 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
     devices['iPhone 13']));
   const threw = [];
   p.on('pageerror', e => threw.push(e.message));
+  await sdk(p);
   await serve(p, dir);
   await p.goto('http://app.local/index.html');
   await p.waitForTimeout(1500);
@@ -66,6 +72,77 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
     bad('the app loads in WebKit without throwing', threw.join('\n'));
   } else {
     ok('the app loads in WebKit without throwing');
+  }
+
+  /* ---- THE FIRST PRESS OF SIGN IN CAN WORK.
+   *
+   * WebKit is where this one lived. index.html used to fetch the Firebase SDK
+   * on the press — fbLoad(() => signInWithPopup()) — so on a cold start the
+   * popup opened from a network callback, and Safari refuses a popup that is
+   * not user-initiated. One iPhone's log, 2026-10-26 and 10-27: press one
+   * blocked or cancelled, press two "sdk already loaded" and straight in.
+   * Every signed-out person had to press twice, and the app told them the
+   * window had been "closed" when it had never opened.
+   *
+   * WHAT CANNOT BE CHECKED HERE: Playwright's WebKit does not enforce
+   * Safari's popup policy, so a blocked popup cannot be reproduced. What CAN
+   * be checked is the thing the fix turns on — that by the time the button
+   * exists the auth half is already loaded, so signInWithPopup runs inside
+   * the tap. Break the boot warm and this goes red. */
+  {
+    const warm = await p.evaluate(() => ({
+      ready: !!(typeof FB !== 'undefined' && FB.ready),
+      db: !!(typeof FB !== 'undefined' && FB.dbReady),
+      said: (S.log || []).filter(l => /sdk|warming/.test(l))
+    }));
+    if (warm.ready) {
+      ok('signed out, the auth half is warm before anybody presses Sign in');
+    } else {
+      bad('signed out, the auth half is warm before anybody presses Sign in',
+        'FB.ready is false — the press will open its popup from a load '
+        + 'callback, which iOS refuses.\n' + warm.said.join('\n'));
+    }
+    /* AND THE DATABASE HALF IS NOT FETCHED, which is the half of the trade
+       that was kept: 48,014 bytes nobody signed in has any use for. */
+    if (!warm.db) {
+      ok('and the database half is left alone until somebody signs in');
+    } else {
+      bad('and the database half is left alone until somebody signs in',
+        'FB.dbReady is true on a signed-out device');
+    }
+    /* THE PRESS ITSELF, through the button a person actually presses. The
+       fallback line is the tell: it is only written when FB.ready was false,
+       which is the fault. */
+    const pressed = await p.evaluate(async () => {
+      /* Settings is not in TAB_RENDER — show() alone leaves it as it was. */
+      show('settings');
+      renderSettings();
+      await new Promise(r => setTimeout(r, 400));
+      const b = Array.from(document.querySelectorAll('#scr-settings button'))
+        .find(x => /^Sign in with Google$/.test(x.textContent.trim()));
+      if (!b) return { noButton: true };
+      /* THE LOG IS NOT CLEARED. Emptying it was the obvious way to read only
+         what the press wrote, and it broke the bar check further down, which
+         reads the BOOT line out of the same log — green here, red there, and
+         the cause thirty lines away. The new lines are the ones at the front:
+         appLog puts each one on top. */
+      const had = (S.log || []).length;
+      b.click();
+      await new Promise(r => setTimeout(r, 500));
+      const now = S.log || [];
+      return { said: now.slice(0, Math.max(0, now.length - had)).join('\n') };
+    });
+    if (pressed.noButton) {
+      bad('the Sign in button is on Settings when signed out', 'not found');
+    } else if (/pressed before the auth sdk was ready/.test(pressed.said)) {
+      bad('the first press opens the popup in the tap',
+        'it fell back to "press again":\n' + pressed.said);
+    } else if (/signing in by popup/.test(pressed.said)) {
+      ok('the first press opens the popup in the tap');
+    } else {
+      bad('the first press opens the popup in the tap',
+        'nothing in the log says a popup was opened:\n' + pressed.said);
+    }
   }
 
   /* ---- THE SCREENS SCROLL. */

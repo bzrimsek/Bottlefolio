@@ -85,6 +85,10 @@ function body(name) {
 
   const b = await chromium.launch();
   const ctx = await b.newContext();
+  /* The SDK, answered here and signed out — see fake-sdk.js. This one serves
+     the app over a real local port rather than a route, so without this the
+     boot warm would reach gstatic for real. */
+  await require('./fake-sdk.js').offline(ctx);
   const p = await ctx.newPage();
   const threw = [];
   p.on('pageerror', e => threw.push(e.message));
