@@ -6792,6 +6792,76 @@ eq('and its notes', entry.tn.nose, 'n');
 eq('but not whether yours is drained', entry.drained, undefined);
 eq('nor your own scribble', entry.note, undefined);
 
+/* IT KEEPS EVERYTHING ABOUT THE BOTTLING NOW, and refuses by rule (BZ,
+   2026-10-27: "Why would the library refuse any data?").
+   It used to copy a named fourteen fields, and that copy-list had quietly
+   become the definition of what the library may hold - so size, wine, colour,
+   source and canon were refused by nobody's decision. Measured on the live
+   library that day: 735 of 752 entries would have lost a field had anybody
+   edited them, canon on 690 of them, and canon is an issued bottling id that
+   nothing in this app writes any anymore. */
+{
+  const whole = L.libraryEntry({ name: 'B', proof: 90,
+    canon: 'WB37719', size: 750, wine: true, sec: 400, alloc: 'unicorn',
+    colour: 'amber', invented_tomorrow: 'x' }, null);
+  eq('an issued identity survives a save', whole.canon, 'WB37719');
+  eq('and the bottle size', whole.size, 750);
+  eq('and a wine cask', whole.wine, true);
+  eq('and the secondary price, as msrp already did', whole.sec, 400);
+  eq('and how allocated it is', whole.alloc, 'unicorn');
+  /* THE TRADE, STATED. A whitelist was safe by accident; inverted, a field
+     nobody has thought of travels. That is the cost BZ accepted, and it is
+     asserted so it is a decision rather than a surprise - anything personal
+     must be NAMED in MINE_FIELDS, which is where note and notes went. */
+  eq('a field nobody has named yet travels too',
+    whole.invented_tomorrow, 'x');
+
+  /* AND THE THREE REFUSALS STILL BITE. */
+  eq('a class in the cask field is still dropped',
+    L.libraryEntry({ name: 'B', fin: 'Bottled in Bond' }, null).fin, undefined);
+  eq('a flight-card note never leaves the shelf',
+    L.libraryEntry({ name: 'B', tnFrom: 'a flight',
+      tn: { nose: 'n', palate: 'p' } }, null).tn, undefined);
+  eq('nor the marker that says it was one',
+    L.libraryEntry({ name: 'B', tnFrom: 'a flight' }, null).tnFrom, undefined);
+  eq('a note with neither nose nor palate is not a description',
+    L.libraryEntry({ name: 'B', tn: { finish: 'f' } }, null).tn, undefined);
+  eq('and where it came from goes with it',
+    L.libraryEntry({ name: 'B', tn: { finish: 'f' }, tnSrc: 'producer' },
+      null).tnSrc, undefined);
+  eq('whose bottling it is never travels',
+    L.libraryEntry({ name: 'B', mine: true }, null).mine, undefined);
+  eq('nor an imported note column',
+    L.libraryEntry({ name: 'B', notes: 'bought in Islay' }, null).notes,
+    undefined);
+
+  /* WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS SURVIVES. These are in
+     NOT_A_FACT because a SHELF may not offer them; the entry carries them,
+     and before this they were stripped by the one function that is their
+     only writer. */
+  const own = L.libraryEntry({ name: 'B', ident: 'rye|house|x',
+    by: 'Kevrin', autoIn: 1 }, null);
+  eq('the taxonomy fingerprint survives', own.ident, 'rye|house|x');
+  eq('who contributed it survives', own.by, 'Kevrin');
+  eq('and that the intake added it unattended', own.autoIn, 1);
+  /* `at` IS stripped, on purpose: every caller stamps it, and a shelf
+     record's own would date the entry wrongly. */
+  eq('but not a stamp carried in from a shelf',
+    L.libraryEntry({ name: 'B', at: 123 }, null).at, undefined);
+
+  /* THE TWO LISTS ARE NOW ONE ANSWER. shelfFactsPlan offered BZ a `size` the
+     library would have thrown away, because it decided by exclusion and this
+     decided by inclusion (rule 30d). Whatever a shelf may contribute, the
+     library must be willing to hold. */
+  const lib2 = { b: { name: 'B', proof: 90 } };
+  const offered = L.shelfFactsPlan({ b: { size: 750, wine: true, sec: 400 } },
+    {}, lib2, {}, {}).fills.map(f => f.field).sort().join(',');
+  const held = Object.keys(L.libraryEntry(
+    { name: 'B', size: 750, wine: true, sec: 400 }, null));
+  eq('every field a shelf may offer is one the library keeps',
+    offered.split(',').filter(f => held.indexOf(f) < 0).join(','), '');
+}
+
 sec('accepting one');
 const ok = L.mergeContribution(lib, { name: 'Springbank 15', proof: 92,
   dist: 'Springbank', sub: 'scotch' });

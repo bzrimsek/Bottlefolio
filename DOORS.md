@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1088 |
-| tables | 255 |
-| carrying a stated purpose | 877 |
+| tables | 256 |
+| carrying a stated purpose | 878 |
 
 ## Tables
 
@@ -123,6 +123,7 @@ QUESTION, not the name you were going to use.
 - **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT (BZ, 2026-09-19
 - **`L.LIBRARY_COLS`** — THE LIBRARY, AS A SPREADSHEET
 - **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
+- **`L.LIBRARY_OWN`** — AND WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS
 - **`L.LIKELY_SOURCES`** — What each source is, in words, so a row says where it came from.
 - **`L.MAKE_FINER`** — WHICH PAIRS COUNT IS WRITTEN DOWN, not worked out from the strings
 - **`L.MAKE_OF`** — _no comment above it_
@@ -135,7 +136,7 @@ QUESTION, not the name you were going to use.
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
 - **`L.MASH_WORDS`** — _no comment above it_
 - **`L.MATCH_NUM`** — A SIZE is not part of a name
-- **`L.MINE_FIELDS`** — `k` is where the row is filed and `src` is where it came from
+- **`L.MINE_FIELDS`** — THREE NAMES JOINED WHEN libraryEntry INVERTED (2026-10-27), and a whitelist
 - **`L.MISS_REST`** — How long a bottle rests after a lookup came back with nothing.
 - **`L.NAME_SMALL`** — Only ALL CAPS or all lower case are tidied
 - **`L.NAME_TAKEN`** — message in a shared list.
@@ -742,7 +743,7 @@ QUESTION, not the name you were going to use.
 - **`L.libKeysNamed`** — _no comment above it_
 - **`L.libraryAccepts`** — MAY THIS ENTRY BE WRITTEN TO THE SHARED LIBRARY? One answer for every
 - **`L.libraryAudit`** — _no comment above it_
-- **`L.libraryEntry`** — open — those are facts about your shelf, not about the whisky.
+- **`L.libraryEntry`** — THE LIBRARY HOLDS EVERYTHING ABOUT THE BOTTLING, and refuses by RULE.
 - **`L.libraryExportRows`** — _no comment above it_
 - **`L.libraryFillWrite`** — What a fill writes
 - **`L.libraryFromValue`** — _no comment above it_

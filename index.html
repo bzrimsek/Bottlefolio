@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.19  Build 2026-10-27 09:09 PM ET
+     Version : v2.9.20  Build 2026-10-27 09:39 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.20  2026-10-27  The library keeps everything about the bottling and refuses by rule.
 // v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
 // v2.9.18  2026-10-27  The library has a door anybody can find.
 // v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
 // v2.9.11  2026-10-26  The way out does not scroll away.
-// v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.19';
-const BUILD_TIME  = '2026-10-27 09:09 PM ET';
+const APP_VERSION = '2.9.20';
+const BUILD_TIME  = '2026-10-27 09:39 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -17940,8 +17940,15 @@ L.worthContributing = function (p, base) {
 
 // Trimmed to what a library holds. Not what YOU paid, not whether yours is
 // open — those are facts about your shelf, not about the whisky.
+/* THE LIBRARY HOLDS EVERYTHING ABOUT THE BOTTLING, and refuses by RULE.
+   It enumerated fourteen fields to copy, and that copy-list became the
+   definition of what the library may hold - so size, wine, colour, source and
+   canon were refused by nobody's decision. Measured live (2026-10-27): 735 of
+   752 entries would lose a field if somebody edited them, canon on 690, and
+   canon is an issued bottling id that nothing in this app writes any more.
+   BZ: why would the library refuse any data? Three rules, and nothing else:
+   a value in the wrong field, what is yours, and a local invention. */
 L.libraryEntry = function (p, brands) {
-  const out = { name: String(p.name).trim(), proof: p.proof };
   /* A RESERVED WORD NEVER GETS IN, whoever is writing. Six paths publish an
      entry, plus the nightly fill and the intake, and a guard on the editor alone
      is one the other seven walk past - which is why Nashville Barrel Company VIP
@@ -17956,6 +17963,23 @@ L.libraryEntry = function (p, brands) {
   ['fin', 'style'].forEach(f => {
     if (L.reservedIn(f, p[f])) delete p[f];
   });
+  /* EVERYTHING ELSE TRAVELS, minus what belongs to a shelf and the bookkeeping
+     about a row - the SAME two lists shelfFactsPlan reads, so the shelf can no
+     longer offer a fact this function would throw away (rule 30d). */
+  const out = {};
+  const drop = {};
+  L.MINE_FIELDS.concat(L.NOT_A_FACT).forEach(f => { drop[f] = 1; });
+  /* EXCEPT WHAT THE LIBRARY ITSELF OWNS. These are in NOT_A_FACT because a
+     SHELF may not offer them; an entry carries them. */
+  L.LIBRARY_OWN.forEach(f => { delete drop[f]; });
+  Object.keys(p).forEach(k => {
+    if (drop[k]) return;
+    const v = p[k];
+    if (v === undefined || v === null || v === '') return;
+    out[k] = v;
+  });
+  out.name = String(p.name).trim();
+  out.proof = p.proof;
   /* WHAT THIS BOTTLE IS, stored once on the entry everybody reads (BZ,
      2026-10-01: "performance is important so I'd store it on the bottles").
      Resolving it walks fifteen thousand registry keys and the registry is a few
@@ -17969,12 +17993,6 @@ L.libraryEntry = function (p, brands) {
     const id = L.bottleIdentity(p, brands);
     if (id) out.ident = id;
   }
-  /* `mash` is here because this is the row EVERYBODY reads, and no other
-     source in the app has a mash bill: leaving it out sends the next person
-     to pay for the same lookup. */
-  ['dist', 'sub', 'style', 'region', 'age', 'fin', 'msrp', 'obsc', 'scar',
-   'mash', 'ppm', 'country']
-    .forEach(k => { if (p[k] !== undefined && p[k] !== null && p[k] !== '') out[k] = p[k]; });
   /* A flight-card note must never leave this shelf - which is what tnFrom
      answers, and the only part of this condition that ever had a reason written
      beside it.
@@ -17987,10 +18005,13 @@ L.libraryEntry = function (p, brands) {
      2026-09-16) - and "a described whisky has a nose AND a palate" is what
      L.slotOpen asks to decide whether a whisky is DESCRIBED, not a bar on
      storing what somebody wrote. */
-  if (p.tn && (p.tn.nose || p.tn.palate) && !p.tnFrom) {
-    out.tn = p.tn;
-    // Where it came from, so the library can say rather than imply.
-    if (p.tnSrc) out.tnSrc = p.tnSrc;
+  /* A REMOVAL NOW, NOT A GATE. This read `if (ok) out.tn = p.tn`, which was
+     the gate while nothing else copied anything; everything travels now, so
+     the same rule has to take the note back out. `tnSrc` goes with it - where
+     a note came from means nothing without the note. */
+  if (p.tnFrom || !(p.tn && (p.tn.nose || p.tn.palate))) {
+    delete out.tn;
+    delete out.tnSrc;
   }
   return out;
 };
@@ -20973,8 +20994,19 @@ L.deadForwards = function (graves, library) {
    fact about the whisky, and nor is `ref` - the identity of the library entry
    this row points at, which is how it finds that entry again after a merge or
    a rename moves the key. */
+/* THREE NAMES JOINED WHEN libraryEntry INVERTED (2026-10-27), and a whitelist
+   is why they could be left out for so long: it was safe by accident, and the
+   moment the library started keeping everything these had to be said out loud.
+     mine    whose bottling it is. SHARE_MINE means he blended it himself, and
+             it must never reach the list everybody reads.
+     notes   a person's own note. L.IMPORT_ALIASES maps note, comment,
+             comments and "my notes" onto it, so every CSV import carries one,
+             and L.noteSources reads it as theirs.
+     note    the same thing off a pasted page or a pour.
+   Measuring BZ's own shelf did NOT find these - he has none - and two
+   assertions written years earlier did. One shelf is one data point. */
 L.MINE_FIELDS = ['k', 'src', 'ref', 'id', 'userNote', 'paid', 'status', 'got',
-  'fill', 'exit', 'exitDate', 'exitTo', 'from'];
+  'fill', 'exit', 'exitDate', 'exitTo', 'from', 'mine', 'note', 'notes'];
 
 /* AND WHAT IS NEITHER: bookkeeping about the row.
 
@@ -20989,7 +21021,20 @@ L.MINE_FIELDS = ['k', 'src', 'ref', 'id', 'userNote', 'paid', 'status', 'got',
    `tnSrc` is NOT here on purpose: it is a real library field, written by the
    enrichment path and read by L.TN_SOURCES. */
 L.NOT_A_FACT = ['at', 'by', 'autoIn', 'autoSpell', 'ident', 'dropped', 'cards',
-  'core', 'premise', 'tag', 'title', 'drained', 'finc'];
+  'core', 'premise', 'tag', 'title', 'drained', 'finc', 'tnFrom'];
+
+/* AND WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS. These sit in NOT_A_FACT
+   because a SHELF may not offer them - who contributed an entry, the taxonomy
+   fingerprint, whether the intake added it unattended - but the entry itself
+   carries them, and libraryEntry must not strip what it is the only writer
+   of. Named here rather than left out of both lists, because "not a shelf
+   fact" and "not a library field" are different questions, and answering them
+   with one list is what lost canon on 690 entries.
+   `at` is deliberately NOT here: all four callers stamp it, so keeping it buys
+   nothing and a shelf record's own would ride in and date the entry wrongly.
+   `by` IS, because the admin editor is the one caller that does not re-supply
+   it, and who contributed an entry should survive a correction to its proof. */
+L.LIBRARY_OWN = ['ident', 'by', 'autoIn'];
 
 /* WHAT THIS DEVICE IS HOLDING THAT BELONGS TO EVERYBODY, sorted into the three
    piles that matter: a whisky the library has never held, a blank this shelf can
@@ -58947,7 +58992,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.19</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.20</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

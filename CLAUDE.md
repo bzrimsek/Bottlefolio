@@ -120,7 +120,7 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 8,251 assertions
+node killer-bs-test.js    # 8,269 assertions
 node lint.js              # nothing undefined, duplicated, unreachable
 node consistency.js       # 123 wiring checks, incl. rules copied twice
 node screens.js           # 39 screens draw
