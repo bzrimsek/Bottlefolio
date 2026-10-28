@@ -151,8 +151,8 @@ A red gate leaves the live site, service and rules exactly as they were. The
 service goes before the site, because a page that needs a new service must
 never arrive first.
 
-**A delivery is `index.html` + `sw.js` + `admin.html` + both named lock
-files.**
+**A delivery is `index.html` + `sw.js` + `admin.html` + three named lock
+files** — `bottlefolio-vX.Y.Z.html`, `-sw.js` and `-admin.html`.
 
 ---
 

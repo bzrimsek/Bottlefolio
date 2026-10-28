@@ -170,9 +170,16 @@ Picking checks by what changed saves less than it looks: any edit to
 expensive one. Running them at once is what actually shortened it. The cloud
 gate has run its groups in parallel since it was split.
 
-A delivery is `index.html` + `sw.js` + `admin.html` + both named lock
-files. Rule 25 names the first four; `admin.html` joined on 2026-10-27 and
-the wording is the rules session's to change, not this one's.
+A delivery is `index.html` + `sw.js` + `admin.html` + **three** named lock
+files — `bottlefolio-vX.Y.Z.html`, `-sw.js` and `-admin.html`. The admin lock
+joined on 2026-10-27, the day after the page itself did: for one day
+`audit.py` could prove the delivered app was the tested file and nothing
+proved it for the admin page, which is the exact fault a lock exists to
+catch. Rule 25 still says three files in total; the wording is the rules
+session's to change, not this one's, and the proposal is on the table —
+*"every file the app serves + the named lock files its bump script writes,
+listed in the app's CLAUDE.md"*, which stays true for MadGolf and Extras
+Manager, neither of which has an admin page.
 
 `push.py` sends a finished build to the repo and refuses to run unless
 `audit.py` has passed.

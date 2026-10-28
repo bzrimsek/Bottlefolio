@@ -433,8 +433,12 @@ def run_audit(html_path):
     # happened on 2026-09-03: a layout fix landed in index.html after
     # v1.26.38 was cut, and every check still passed.
     if version:
+        # admin.html joined the delivery on 2026-10-27 and went a day with no
+        # lock, so this check proved the app was the tested file and proved
+        # nothing about the admin page.
         pairs = [(f'bottlefolio-v{version}.html', 'index.html'),
-                 (f'bottlefolio-v{version}-sw.js', 'sw.js')]
+                 (f'bottlefolio-v{version}-sw.js', 'sw.js'),
+                 (f'bottlefolio-v{version}-admin.html', 'admin.html')]
         for lock, source in pairs:
             lp = os.path.join(base, lock)
             if not os.path.exists(lp):

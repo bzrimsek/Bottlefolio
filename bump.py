@@ -205,24 +205,35 @@ def main():
     CHANGELOG.write_text(body, encoding='utf-8', newline='\n')
 
     # Lock files, cut from the working copies just written (rule 23).
+    #
+    # THE ADMIN PAGE GETS ONE TOO, since 2026-10-27. It joined the delivery on
+    # 2026-10-27 and had no lock for a day, so audit.py could prove the
+    # delivered index.html was the tested one and nothing proved it for
+    # admin.html - an edit to that page after a bump shipped untested, which
+    # is the exact fault locks exist to catch (a layout fix landed after
+    # v1.26.38 was cut with every check green).
     lock_html = HERE / ('bottlefolio-v%s.html' % ver)
     lock_sw = HERE / ('bottlefolio-v%s-sw.js' % ver)
+    lock_admin = HERE / ('bottlefolio-v%s-admin.html' % ver)
     shutil.copy(INDEX, lock_html)
     shutil.copy(SW, lock_sw)
+    shutil.copy(HERE / 'admin.html', lock_admin)
     # Previous version's locks are superseded; leaving them accumulates
     # near-identical files nobody reads.
     # Both prefixes: the locks were killer-bs-v* before the rename and a
     # superseded one under the old name is still superseded.
     for old in list(HERE.glob('killer-bs-v*')) + list(HERE.glob('bottlefolio-v*')):
-        if old.name not in (lock_html.name, lock_sw.name) \
-                and re.match(r'(killer-bs|bottlefolio)-v[\d.]+(-sw\.js|\.html)$',
-                             old.name):
+        if old.name not in (lock_html.name, lock_sw.name, lock_admin.name) \
+                and re.match(
+                    r'(killer-bs|bottlefolio)-v[\d.]+(-sw\.js|-admin\.html|\.html)$',
+                    old.name):
             old.unlink()
     print('bumped to v%s  Build %s' % (ver, stamp))
     print('header:    // v%s  %s  %s' % (ver, day, head))
     if head.rstrip('\u2026') != entry.strip().rstrip('.'):
         print('full entry (%d chars) written to CHANGELOG.md' % len(entry))
-    print('locks:     bottlefolio-v%s.html + bottlefolio-v%s-sw.js' % (ver, ver))
+    print('locks:     bottlefolio-v%s.html + bottlefolio-v%s-sw.js'
+          ' + bottlefolio-v%s-admin.html' % (ver, ver, ver))
     # ship.py was retired on 2026-09-15; push.py sends and gates the build.
     # On BZ's PC it runs under the Python install's own python.exe, because
     # the WindowsApps alias cannot see the test browser (CLAUDE.md).

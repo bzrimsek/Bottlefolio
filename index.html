@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.20  Build 2026-10-27 09:39 PM ET
+     Version : v2.9.21  Build 2026-10-27 10:04 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.21  2026-10-27  The admin page gets a named lock file.
 // v2.9.20  2026-10-27  The library keeps everything about the bottling and refuses by rule.
 // v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
 // v2.9.18  2026-10-27  The library has a door anybody can find.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
 // v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
-// v2.9.11  2026-10-26  The way out does not scroll away.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.20';
-const BUILD_TIME  = '2026-10-27 09:39 PM ET';
+const APP_VERSION = '2.9.21';
+const BUILD_TIME  = '2026-10-27 10:04 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -58992,7 +58992,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.20</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.21</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

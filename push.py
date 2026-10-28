@@ -404,7 +404,9 @@ def seal_shelf(dry=False):
 
 
 def wanted(v):
-    names = APP + ['bottlefolio-v%s.html' % v, 'bottlefolio-v%s-sw.js' % v]
+    names = APP + ['bottlefolio-v%s.html' % v, 'bottlefolio-v%s-sw.js' % v,
+                   # The admin page's lock, from 2026-10-27.
+                   'bottlefolio-v%s-admin.html' % v]
     names += DOCS + TOOLING + SERVICE + [n + '.gpg' for n in SHELF]
     for n in names:
         for pat in NEVER:
