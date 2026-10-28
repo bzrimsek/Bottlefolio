@@ -27964,9 +27964,20 @@ sec('§441 a lookup asks who is asking');
      however clearly it knew, and L.noteVague sent the bottle back to the fill
      queue for ever (BZ, 2026-10-03: "Still being asked to fill one bottle.
      Same one."). A word the app can read and the service is never offered is
-     a word no answer will ever carry. */
+     a word no answer will ever carry.
+     2.6.10: an unusable answer is asked for a second time whichever way it
+     was unusable. The retry existed and fired only for a reply with no
+     object in it; a reply whose object would not parse threw a different
+     sentence and went straight back to the app as "Could not look it up" -
+     while the same bottle answered completely twice within two minutes
+     either side of it (BZ's log, 2026-10-27). The two throw sites now flag
+     the error instead of being matched by their prose, so rewording one
+     cannot disarm the retry again. And the parse failure finally says where
+     it broke: it printed the first 200 characters, which are a valid-looking
+     opening every time and look exactly like a truncated answer, so the
+     message invited a diagnosis of its own slice. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.9');
+    L.GS_BUILD, '2.6.10');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so

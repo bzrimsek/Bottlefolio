@@ -3341,6 +3341,32 @@ check('no fixed svg id is emitted by a repeated drawing',
   check('every service answer is parsed before it is read', bad);
 }
 
+/* THE CHECKS READ lookup.gs AND THE GATE DEPLOYS Code.gs, SO THEY MUST BE
+ * THE SAME FILE.
+ *
+ * Found 2026-10-27, on the way into a Code.gs fix. Three checks here and
+ * three in gscheck.js read `lookup.gs`; `gate.yml` sends `Code.gs` and never
+ * sends `lookup.gs` at all, because two copies in one Apps Script project
+ * would define every function twice. They are byte-identical today and
+ * nothing held them that way - so editing the file that ships would leave
+ * every check grading the file that does not, including the build-stamp
+ * check directly below. The app would then ask the live service for a build
+ * nobody had deployed, and consistency.js would say the stamps agree.
+ *
+ * Held rather than fixed by repointing: the delivery is called Code.gs (rule
+ * 25f) and lookup.gs is the name it arrives under, so both names stay and
+ * one assertion makes the copy harmless.
+ */
+{
+  const a = fs.readFileSync(__dirname + '/Code.gs', 'utf8');
+  const b = fs.readFileSync(__dirname + '/lookup.gs', 'utf8');
+  check('Code.gs and lookup.gs are the same file',
+    a === b ? [] : ['Code.gs is ' + a.length + ' bytes and lookup.gs is '
+      + b.length + ' — the gate deploys Code.gs and every check here '
+      + 'reads lookup.gs, so whichever you edited, half of this is now '
+      + 'grading the other one. Copy Code.gs over lookup.gs.']);
+}
+
 /* THE TWO BUILD STAMPS AGREE.
  * Code.gs states which build it is and the app states which it needs. They
  * live in different files edited in different sessions, which is exactly

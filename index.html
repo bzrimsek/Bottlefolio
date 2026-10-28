@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.16  Build 2026-10-27 07:51 PM ET
+     Version : v2.9.17  Build 2026-10-27 08:14 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
 // v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
 // v2.9.15  2026-10-27  The first press of Sign in now works.
 // v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
 // v2.9.9  2026-10-26  The gate runs on a named image.
 // v2.9.8  2026-10-26  A remix comes back with a bench.
-// v2.9.7  2026-10-26  The crash behind all of it: a flight whose bench did not survive the account.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.16';
-const BUILD_TIME  = '2026-10-27 07:51 PM ET';
+const APP_VERSION = '2.9.17';
+const BUILD_TIME  = '2026-10-27 08:14 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -34836,7 +34836,7 @@ L.flightPoured = function (entry) {
    Code.gs states its own build and the two are compared rather than
    assumed. Bump BOTH whenever Code.gs changes; consistency.js fails the
    build if they disagree. */
-L.GS_BUILD = '2.6.9';
+L.GS_BUILD = '2.6.10';
 
 /* What the comparison means, in the words somebody can act on. */
 L.serviceBuildVerdict = function (expected, got) {
@@ -58896,7 +58896,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.16</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.17</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

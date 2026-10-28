@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.9';
+var GS_BUILD = '2.6.10';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
@@ -612,12 +612,30 @@ function apiHeaders_() {
    unusable, which no retry anywhere was covering.
    Once only. A model that cannot produce JSON twice running is not having
    a bad moment, and a third ask spends BZ's money to learn nothing. */
+/* AN UNREADABLE ANSWER, SAID ONCE so the retry above and the two throw
+   sites below cannot drift apart. It read /no JSON in the reply/ until
+   2026-10-27, which is ONE of the two ways an answer comes back unusable:
+   an answer with no object in it at all. The other - an object that will
+   not parse - threw a different sentence, so the retry written for exactly
+   this case never fired for it. BZ's log, 10/27 18:46:57: a Tottori asked
+   for by its short name came back unparseable and he got "Could not look
+   it up", while the SAME bottle answered completely twice within two
+   minutes either side of it. One retry would have cost nothing and he
+   would never have seen it.
+   A flag rather than a regular expression, because matching prose means
+   rewording a message silently disarms the retry. */
+function unreadable_(msg) {
+  var e = new Error(msg);
+  e.unreadable = true;
+  return e;
+}
+
 function askAbout(name, notesOnly) {
   try {
     return askAboutOnce_(name, notesOnly);
   } catch (err) {
-    if (!/no JSON in the reply/.test(String(err && err.message))) throw err;
-    Logger.log('unreadable answer for ' + name + ', asking once more');
+    if (!(err && err.unreadable)) throw err;
+    Logger.log('unreadable answer for ' + name + ', asking once more: ' + err);
     return askAboutOnce_(name, notesOnly);
   }
 }
@@ -754,7 +772,7 @@ function askAboutOnce_(name, notesOnly) {
        reached for a tool and the answer never came; those are different
        faults and only the block types tell them apart. */
     var kinds = (data.content || []).map(function (b) { return b.type; });
-    throw new Error('no JSON in the reply. stop_reason='
+    throw unreadable_('no JSON in the reply. stop_reason='
       + (data.stop_reason || '?')
       + ' blocks=' + (kinds.join('+') || 'none')
       + ' text=' + JSON.stringify(text.slice(0, 200)));
@@ -762,7 +780,22 @@ function askAboutOnce_(name, notesOnly) {
   try {
     return JSON.parse(text.slice(start, end + 1));
   } catch (e) {
-    throw new Error('JSON did not parse: ' + text.slice(start, start + 200));
+    /* WHERE IT BROKE, NOT WHERE IT STARTED. This printed the first 200
+       characters of the object, which are a valid-looking opening every
+       time - so the one occurrence in the field (BZ's log, 2026-10-27)
+       reported a parse failure above a perfectly good first eleven fields
+       and said nothing whatever about the cause. Worse, the 200-character
+       slice looks exactly like a truncated answer, so the message invites
+       the wrong diagnosis: the cut you are reading is the message's own.
+       The branch above already prints stop_reason and the block types,
+       which is how "text=The s" was understood; this branch never got the
+       same treatment. So: why the model stopped, how much it wrote, and
+       the TAIL - the end is where a parse failure lives. */
+    throw unreadable_('JSON did not parse. stop_reason='
+      + (data.stop_reason || '?')
+      + ' chars=' + text.length
+      + ' ends=' + JSON.stringify(text.slice(-200))
+      + ' starts=' + JSON.stringify(text.slice(start, start + 120)));
   }
 }
 
