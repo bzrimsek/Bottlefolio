@@ -29393,6 +29393,23 @@ sec('\u00a7449 a house the search could not confirm is usually a typo');
   eq('a class in the cask field is not moved',
     L.shelfFactsPlan({ oban_little_bay: { fin: 'Bottled in Bond' } }, {},
       sfLib, {}, {}).fills.length, 0);
+  /* NOR DOES A VALUE THE APP COMPUTED. `finc` is written as a side effect of
+     stating a finish - `np.finc = np.fin ? 'stated' : null`, at three call
+     sites - and the service never returns it, so nothing in a shared record
+     has a source for it. BZ's own shelf had one waiting to be typed in by
+     hand on a bottle whose finish the library already held (2026-10-27). */
+  eq('a marker the app derives is not offered to everybody',
+    L.shelfFactsPlan({ oban_little_bay: { finc: 'stated' } }, {},
+      sfLib, {}, {}).fills.length, 0);
+  eq('and it is not a disagreement either',
+    L.shelfFactsPlan({ oban_little_bay: { finc: 'stated' } }, {},
+      Object.assign({}, sfLib,
+        { oban_little_bay: Object.assign({}, sfLib.oban_little_bay,
+          { finc: 'read from the label' }) }), {}, {}).clashes.length, 0);
+  /* AND tnSrc STILL DOES, because that one IS a library field. */
+  eq('where the notes came from still travels',
+    L.shelfFactsPlan({ oban_little_bay: { tnSrc: 'producer' } }, {},
+      sfLib, {}, {}).fills.map(f => f.field).join(','), 'tnSrc');
 
   /* AND WHAT IS LEFT OF A RECORD afterwards is the part that is yours. */
   const kept = L.shelfFactsKeep({

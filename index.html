@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.18  Build 2026-10-27 08:51 PM ET
+     Version : v2.9.19  Build 2026-10-27 09:09 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
 // v2.9.18  2026-10-27  The library has a door anybody can find.
 // v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
 // v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
 // v2.9.11  2026-10-26  The way out does not scroll away.
 // v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
-// v2.9.9  2026-10-26  The gate runs on a named image.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.18';
-const BUILD_TIME  = '2026-10-27 08:51 PM ET';
+const APP_VERSION = '2.9.19';
+const BUILD_TIME  = '2026-10-27 09:09 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -20976,9 +20976,20 @@ L.deadForwards = function (graves, library) {
 L.MINE_FIELDS = ['k', 'src', 'ref', 'id', 'userNote', 'paid', 'status', 'got',
   'fill', 'exit', 'exitDate', 'exitTo', 'from'];
 
-/* AND WHAT IS NEITHER: bookkeeping about the row. */
+/* AND WHAT IS NEITHER: bookkeeping about the row.
+
+   `finc` joined on 2026-10-27, measured rather than reasoned: BZ's shelf had
+   six fills waiting to be typed into the library by hand and one of them was
+   `finc: 'stated'` on a bottle whose finish the library already holds. It is
+   DERIVED - three call sites write `np.finc = np.fin ? 'stated' : null` - and
+   the service never returns it, so nothing in the shared record has a source
+   for it. The app already leaves it out when it reports what a label gave,
+   beside `tnSrc`. A value the app computes is not a value a person should be
+   asked to type into a record everybody reads.
+   `tnSrc` is NOT here on purpose: it is a real library field, written by the
+   enrichment path and read by L.TN_SOURCES. */
 L.NOT_A_FACT = ['at', 'by', 'autoIn', 'autoSpell', 'ident', 'dropped', 'cards',
-  'core', 'premise', 'tag', 'title', 'drained'];
+  'core', 'premise', 'tag', 'title', 'drained', 'finc'];
 
 /* WHAT THIS DEVICE IS HOLDING THAT BELONGS TO EVERYBODY, sorted into the three
    piles that matter: a whisky the library has never held, a blank this shelf can
@@ -58936,7 +58947,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.18</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.19</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

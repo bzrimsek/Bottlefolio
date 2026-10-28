@@ -145,7 +145,7 @@ QUESTION, not the name you were going to use.
 - **`L.NO_PLURAL`** — are already mass nouns or end in a sibilant stay as they are.
 - **`L.NOT_A_CASK`** — Words that name a kind of whisky rather than a kind of cask
 - **`L.NOT_A_CHOICE`** — BUCKETS THAT ARE AN ABSENCE OF DATA RATHER THAN A CHOICE
-- **`L.NOT_A_FACT`** — AND WHAT IS NEITHER
+- **`L.NOT_A_FACT`** — `finc` joined on 2026-10-27, measured rather than reasoned
 - **`L.NOT_A_PLACE`** — Not the same as a value this app has not heard of, which stays a place:
 - **`L.NOT_A_TASTE`** — THE SENTENCE A SCREEN SHOWS, so the screen does not decide what a taste
 - **`L.NOT_FILTERS`** — Not filters, named so the check can tell "not a filter" from "somebody
