@@ -1550,7 +1550,12 @@ check('no fixed svg id is emitted by a repeated drawing',
        became when everybody started offering instead of one account
        writing. A control named in the app and not in here is one this
        check cannot see (rule 9z). */
-    'Tidy your shelf', 'Offer marked'];
+    'Tidy your shelf', 'Offer marked',
+    /* Added 2026-10-27 when the door moved to Learn. It was never on this
+       list while it lived on Settings › Admin mode, which is part of how it
+       came to be the one control in the app that nobody could find: a
+       control behind a switch is still a control (rule 9z). */
+    'Open the library'];
   const ref = src.slice(src.indexOf('L.FEATURES = ['),
     src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
   check('every named control is described in App use',

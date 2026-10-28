@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.17  Build 2026-10-27 08:14 PM ET
+     Version : v2.9.18  Build 2026-10-27 08:51 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.18  2026-10-27  The library has a door anybody can find.
 // v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
 // v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
 // v2.9.15  2026-10-27  The first press of Sign in now works.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.11  2026-10-26  The way out does not scroll away.
 // v2.9.10  2026-10-26  The designer is a page, and it keeps what you set.
 // v2.9.9  2026-10-26  The gate runs on a named image.
-// v2.9.8  2026-10-26  A remix comes back with a bench.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.17';
-const BUILD_TIME  = '2026-10-27 08:14 PM ET';
+const APP_VERSION = '2.9.18';
+const BUILD_TIME  = '2026-10-27 08:51 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9058,7 +9058,7 @@ L.FEATURES = [
       + 'pour is logged, whether or not the bottle is yours. The tab is off '
       + 'until you switch it on in Settings.' },
   { term: 'Learn', src: 'this tab',
-    def: 'Four groups: this one, the tasting vocabulary, how whiskey is made, and what every field in your data means. The search crosses all four.' } ] },
+    def: 'Four groups: this one, the tasting vocabulary, how whiskey is made, and what every field in your data means. The search crosses all four. The library sits at the top of the tab, because this is where what the app knows is read rather than changed — Open the library to search every whisky it holds.' } ] },
 
  { section: 'Pouring responsibly',
    note: 'A flight is tasting rather than drinking, and the numbers in '
@@ -9251,8 +9251,8 @@ L.FEATURES = [
     def: 'Sends the ticked bottles to the library as offers. Every one is shown first with what it would add, and a tick can be taken off. An offer the library already holds under any spelling is refused rather than queued, so the same bottle is not reviewed twice.' },
   { term: 'Another one?', src: 'when you retire a bottle',
     def: 'Asked once, when a bottle leaves the shelf for any reason \u2014 the moment you know whether you want it back. Yes puts it on the wishlist. It is not asked if you have another or it is already on the list.' },
-  { term: 'The library', src: 'Settings \u203a Admin mode \u203a The library',
-    def: 'Every whisky this app knows about, with what it knows: search it by name, distillery, cask or region, or pick a type to browse. Your own bottles are separate, on Shelf. Anybody signed in can read it; adding and correcting entries is done on the admin page, and what your own shelf would add is offered from Settings \u203a Shelf \u203a Tidy your shelf.' },
+  { term: 'The library', src: 'Learn \u203a Open the library',
+    def: 'Every whisky this app knows about, with what it knows: search it by name, distillery, cask or region, or pick a type to browse. Your own bottles are separate, on Shelf. Anybody signed in can read it; adding and correcting entries is done on the admin page, and what your own shelf would add is offered from Settings \u203a Shelf \u203a Tidy your shelf. The door was on Settings \u203a Admin mode until 2026-10-27, which meant the one screen here that only browses could be reached only by turning on an advanced tab.' },
   { term: 'The admin page', src: 'admin.html, beside the app',
     def: 'Looking after the shared library \u2014 the offers people have made, the entry editor, the contradiction scan, the export and import, and everybody with an account \u2014 is a separate page at the same address as the app with /admin.html on the end. It is a desktop page and it is not part of the app: nothing in the app can change the library any more, which is why none of these controls appear here. Signing in there with an account that is not an admin says so plainly and does nothing else.' },
   { term: 'Whiskey only', src: 'Shelf › filter row',
@@ -20666,6 +20666,25 @@ L.houseVariants = function (catalog) {
     }));
 };
 
+/* THE BOTTLES UNDER THE SPELLING FEWER OF THEM USE, keyed so a row opens one.
+   The houses finding listed the two SPELLINGS as its rows, which no product
+   key matches - every click said "Could not find that bottle", and the day the
+   sentence started telling people to open those rows it became a second lie
+   (read on the screen, 2026-10-27). The majority spelling is the one to keep,
+   so the rows are the bottles that disagree with it.
+   NOT A CHANGE TO houseVariants, which four other places read, one of them
+   the admin page's own scan. */
+L.houseSplitRows = function (catalog, group) {
+  const sp = (group && group.spellings) || [];
+  if (sp.length < 2) return [];
+  const odd = {};
+  sp.slice(1).forEach(x => { odd[x.name] = 1; });
+  return Object.values(catalog || {})
+    .filter(p => p && p.dist && odd[p.dist])
+    .map(p => ({ key: p.k, text: p.name + '  —  ' + p.dist
+      + ', where ' + sp[0].n + ' say ' + sp[0].name }));
+};
+
 /* Removals and renames must travel; a correction already does, via S.base.
    Neither can be inferred on the device: the incremental fetch asks for
    rows NEWER than a stamp and a deletion has no row, and the library is
@@ -22009,20 +22028,22 @@ L.importAudit = function (catalog, bottles, brands) {
       items: sized.map(p => ({ key: p._key || p.k, text: p.name })) });
   }
 
-  /* ONE HOUSE, TWO SPELLINGS. Already fixable from the library screen, so
-     this points at that rather than repeating it. */
+  /* ONE HOUSE, TWO SPELLINGS. It said "the library screen can merge them",
+     which stopped being true when the merge went to admin.html: a repair
+     nobody in this app may perform, named on a check every user can run.
+     What a reader can do is edit their own bottles, and normalizeProduct
+     snaps a house to a spelling already in use. */
   const houses = L.houseVariants(catalog || {});
   if (houses.length) {
     out.push({ id: 'houses', n: houses.length,
       title: houses.length + (houses.length === 1 ? ' distillery is spelled two ways'
                                                   : ' distilleries are spelled two ways'),
-      why: 'One distillery under two spellings counts as two. The library '
-        + 'screen can '
-        + 'merge them.',
-      /* houseVariants returns [{ spellings: [{name, n}] }], not an array of
-         entries. */
-      items: houses.map(g => (g.spellings || [])
-        .map(x => x.name + (x.n ? ' (' + x.n + ')' : '')).join('  ==  ')) });
+      why: 'One distillery under two spellings counts as two. Open each '
+        + 'bottle below and give its distillery the spelling the rest use.',
+      /* The bottles that disagree, not the spellings — see L.houseSplitRows
+         for why the rows changed shape. */
+      items: houses.reduce((a, g) =>
+        a.concat(L.houseSplitRows(catalog, g)), []) });
   }
 
   /* NOTHING BUT A NAME. An import that carried only a column of names
@@ -40699,14 +40720,13 @@ function showImportCheck() {
         list.appendChild(r);
       });
       card.appendChild(list);
-      /* Straight to where it is fixed, rather than describing the journey. */
-      if (f.id === 'houses') {
-        const go = el('button', 'btn wide');
-        go.style.marginTop = '9px';
-        go.textContent = 'Merge them on the library screen';
-        go.onclick = openLibraryScreen;
-        card.appendChild(go);
-      }
+      /* NO BUTTON FOR THE HOUSES (2026-10-27). "Merge them on the library
+         screen" went here, straight to where it was fixed - and the merge
+         left for admin.html, so the button walked every reader to a screen
+         that browses. The rows above already open each bottle, which is where
+         a reader fixes their own spelling, so there is nothing left for a
+         button to add: one that repeats a row is furniture, and one that
+         promised the merge was a lie. */
       if (f.id === 'bare') {
         const go = el('button', 'btn wide');
         go.style.marginTop = '9px';
@@ -48114,9 +48134,13 @@ function renderLibraryScreen() {
   renderLibrary(box);
 }
 
-/* MERGE ONE HOUSE'S SPELLINGS. ONE BUTTON, used on the library screen and
-   in the inconsistency scan (BZ: merge in place), so one action cannot
-   read two ways. `after` is what each place redraws. */
+/* THE LIBRARY, DRAWN TO BE READ.
+   The comment that was here described a merge button used on this screen and
+   in the inconsistency scan, with an `after` telling each place what to
+   redraw. Both went to admin.html with the rest of the writing, and this
+   function takes no `after` - so the comment had outlived every word of
+   itself and was the last thing in the file still saying this screen can
+   merge a house (2026-10-27). */
 function renderLibrary(box) {
   const card = el('div', 'sheet');
   card.appendChild(el('h3', null, 'The library'));
@@ -48959,22 +48983,16 @@ function adminPanel(box) {
   /* THE LIBRARY LEADS, because it is what an admin opens this tab for, and it
      is here rather than on Shelf: it is the shared list behind every shelf,
      not anything about this person's bottles (BZ, 2026-10-02). */
-  /* AND IT IS NO LONGER BEHIND BEING AN ADMIN (2026-10-27). This card was
-     the only door to the library screen, and it was hidden from everybody
-     who was not an admin - so the screen BZ's own notes call "browsing is
-     for everybody" could be reached by exactly one account. The screen is
-     browse-only now, and the door is open.
-     WHERE IT LIVES IS WORTH ASKING: this is the Admin-mode tab, which is an
-     organising switch anybody may flip rather than a permission, but a
-     browse-only screen may belong somewhere plainer. That is BZ's call, not
-     a thing to change inside a move. */
+  /* THE DOOR TO THE LIBRARY HAS GONE TO LEARN (2026-10-27, the day after it
+     stopped being gated at all). It was the only way to that screen and it
+     sat behind a switch, which was right while the screen carried the offers
+     queue and the export and wrong the moment it became browse-only. Opening
+     it is not an advanced act, so it is not on the advanced tab; see
+     renderReference. What is left here is the one thing on that card that IS
+     a repair. */
   {
     const lib = settingCard(box, 'The library',
-      'The list everyone reads and adds to.');
-    const go = el('button', 'btn btn-sm btn-gold', 'Open the library');
-    go.onclick = openLibraryScreen;
-    settingRow(lib, go, 'Every whisky this app knows about, with what it '
-      + 'knows. Yours are separate, on Shelf.');
+      'The list everyone reads and adds to. Open it from Learn.');
 
     /* FROM THE VERSION CARD (BZ, 2026-10-02), beside the library it reads. A
        device can hold a marker later than anything in the library - an earlier
@@ -49524,6 +49542,25 @@ function ringSvg() {
   return svg;
 }
 
+/* THE WAY INTO THE LIBRARY, on Learn since 2026-10-27.
+   It was behind Settings › Admin mode, a switch anybody may flip and
+   therefore no guard at all, so the only screen here that just browses was
+   the hardest one to find. Learn and not Settings because Settings changes
+   things and this reads one; not Shelf, which BZ ruled out on 2026-10-02 -
+   the library is the shared list behind every shelf, not your bottles. */
+function libraryDoorCard(box) {
+  const lib = el('div', 'sheet');
+  lib.appendChild(el('h3', null, 'The library'));
+  lib.appendChild(el('div', 'sub',
+    'Every whisky this app knows about, with what it knows. Your own '
+    + 'bottles are separate, on Shelf.'));
+  const go = el('button', 'btn wide', 'Open the library');
+  go.style.marginTop = '9px';
+  go.onclick = openLibraryScreen;
+  lib.appendChild(go);
+  box.appendChild(lib);
+}
+
 function renderReference() {
   const box = $('#refBody'); box.innerHTML = '';
   const q = $('#refQ').value;
@@ -49553,6 +49590,9 @@ function renderReference() {
          nothing anybody does next. */
       : 'How this app works, and what the words on a label mean.';
   }
+  /* Not while searching: a card that is not a result pushes the results
+     down, which is why the contents list below does the same. */
+  if (!q.trim()) libraryDoorCard(box);
   if (!secs.length) {
     box.appendChild(el('div', 'empty', 'Nothing matches that.'));
     return;
@@ -58896,7 +58936,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.17</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.18</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

@@ -21282,12 +21282,47 @@ sec('\u00a7328 the import check survives a house spelled two ways');
   const found = L.importAudit(cat, bots).filter(x => x.id === 'houses')[0];
   eq('the finding is made at all', !!found, true);
   eq('and it counts one house, not two spellings', found.n, 1);
-  /* The names must actually appear, or the finding tells you a house is
-     wrong without telling you which. That is what the crash hid. */
+  /* THE ROWS ARE THE BOTTLES NOW (2026-10-27), not the two spellings. They
+     were the spellings, which no product key matches, so every click said
+     "Could not find that bottle" - and the finding's own sentence had just
+     started telling people to open those rows. Read on the screen, which is
+     the only place it could be read: this finding does not fire on BZ's
+     shelf, so it took forcing a split on a real one to see it.
+     WHAT THE OLD PAIR ASSERTED MUST STILL HOLD: both spellings appear, or
+     the finding says a house is wrong without saying which. */
+  eq('the row is the bottle that disagrees, keyed so it opens',
+    found.items[0].key, 'b');
   eq('both spellings are named',
-    /Ardbeg/.test(found.items[0]) && /Ardbeg Distillery/.test(found.items[0]),
-    true);
-  eq('separated so neither is merged blind', /==/.test(found.items[0]), true);
+    /Ardbeg Distillery/.test(found.items[0].text)
+      && /say Ardbeg\b/.test(found.items[0].text), true);
+  eq('and the bottle is named, because that is what you open',
+    /Ardbeg Uigeadail/.test(found.items[0].text), true);
+  /* ONE ROW PER DISAGREEING BOTTLE, and the majority is left alone: a row
+     per spelling told you nothing about which bottles to touch. */
+  eq('the bottle keeping the majority spelling is not listed',
+    found.items.length, 1);
+
+  /* THE HELPER ON ITS OWN. importAudit is 103 code lines and this is the
+     work, so it lives in L where the harness can reach it (rule 30). */
+  {
+    const g = L.houseVariants(cat)[0];
+    const rows = L.houseSplitRows(cat, g);
+    eq('houseSplitRows raises the odd one out', rows.length, 1);
+    eq('and keys it to the product', rows[0].key, 'b');
+    eq('a group with one spelling raises nothing',
+      L.houseSplitRows(cat, { spellings: [{ name: 'Ardbeg', n: 2 }] }).length,
+      0);
+    eq('and neither does a group with none',
+      L.houseSplitRows(cat, null).length, 0);
+    /* THREE SPELLINGS, TWO WRONG: every bottle that disagrees is raised, not
+       just the one in second place. */
+    const three = Object.assign({}, cat,
+      { c: { k: 'c', name: 'Ardbeg Corryvreckan', dist: 'Ardbeg Distillery Co',
+             proof: 114, sub: 'scotch' } });
+    const g3 = L.houseVariants(three)[0];
+    eq('two odd spellings raise two bottles',
+      L.houseSplitRows(three, g3).length, 2);
+  }
 
   /* And the shape it reads is the shape houseVariants returns. Asserted
      against the helper itself rather than a copy of its output, so the two

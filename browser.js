@@ -228,6 +228,33 @@ function step(n) {
       failures.push(name + ': nav is off the bottom');
     }
   }
+
+  step('the library is reached the way a person reaches it');
+  // 2c. The loop above DRAWS the library, which proves it renders and says
+  //     nothing about whether anybody can get to it. For a day its only door
+  //     was a card inside Settings › Admin mode — a switch anybody may flip
+  //     and therefore no guard at all — so the one screen here whose whole
+  //     job is browsing was the hardest in the app to find (2026-10-27).
+  //     Drawing a screen nobody can open is the fault a walk exists to catch,
+  //     so the walk presses the button instead of calling the function.
+  {
+    await page.locator('nav button[data-scr="ref"]').click();
+    await page.waitForTimeout(140);
+    const door = page.locator('#scr-ref button',
+      { hasText: /^Open the library$/ });
+    if (!(await door.count())) {
+      const saw = (await page.locator('#scr-ref button').allInnerTexts())
+        .map(t => t.trim()).filter(Boolean).slice(0, 8);
+      failures.push('no way into the library from Learn — saw ['
+        + saw.join(' | ') + ']');
+    } else {
+      await door.first().click();
+      await page.waitForTimeout(320);
+      if (!(await page.locator('#scr-library').isVisible())) {
+        failures.push('Open the library did not open the library');
+      }
+    }
+  }
   await page.locator('nav button[data-scr="home"]').click();
   await page.waitForTimeout(80);
 

@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1087 |
+| functions | 1088 |
 | tables | 255 |
-| carrying a stated purpose | 876 |
+| carrying a stated purpose | 877 |
 
 ## Tables
 
@@ -649,6 +649,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseSame`** — _no comment above it_
 - **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
 - **`L.houseSplit`** — _no comment above it_
+- **`L.houseSplitRows`** — THE BOTTLES UNDER THE SPELLING FEWER OF THEM USE, keyed so a row opens one.
 - **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
 - **`L.housesThatDoNotPublish`** — _no comment above it_
 - **`L.houseTakeBack`** — PUTTING ONE BACK
