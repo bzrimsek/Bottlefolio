@@ -514,6 +514,30 @@ def run_audit(html_path):
         except Exception as e:
             fail(f'screens.js did not run: {e}')
 
+    # ── The delivered app ──────────────────
+    # The site serves index.html with its comments removed, which is 43% less
+    # to download. thin.py does the removing and refuses unless the stripped
+    # text holds the same code tokens as the source and still carries every
+    # anchor another file slices index.html on. Run here as well as in the
+    # gate so a push cannot start while that proof fails, and with --selftest
+    # because index.html holds no comment welded between two bare tokens: the
+    # whole file cannot prove the scanner's separator matters, five small
+    # cases can.
+    try:
+        r = run_check('thin.py',
+                      [sys.executable, os.path.join(base, 'thin.py'),
+                       '--selftest', '--verify',
+                       os.path.join(base, 'index.html')], 120)
+        said = [ln for ln in ((r.stdout or '') + (r.stderr or '')).split('\n')
+                if 'REFUSED' in ln]
+        for ln in said:
+            fail('thin: ' + ln.split('REFUSED:')[-1].strip())
+        if r.returncode == 0 and not said:
+            ok('the delivered app is this file with only its comments gone'
+               ' (thin.py)')
+    except Exception as e:
+        fail(f'thin.py did not run: {e}')
+
     # ── Line endings ──────────────────────────────────────────
     # bump.py wrote CRLF on BZ's Windows PC (2026-09-15): text-mode writes
     # translate \n there, the test harness splits the engine on a marker

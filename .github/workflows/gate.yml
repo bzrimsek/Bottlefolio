@@ -495,6 +495,43 @@ jobs:
           ls -la site
           du -sh site
 
+      # THE DELIVERED index.html, WITH ITS COMMENTS GONE.
+      #
+      # 42% of index.html is comments the browser downloads and never reads.
+      # This overwrites the copy in site/ with the stripped one - 2.8MB to
+      # 1.6MB, 944KB to 455KB gzipped - and leaves index.html itself alone,
+      # so it stays the file every check above tested and the file the named
+      # lock was cut from. thin.py refuses, and fails the build, unless the
+      # stripped text holds the same code tokens as the source and still
+      # carries every anchor another file slices index.html on.
+      #
+      # The copy step above still copies index.html, so the site's file count
+      # is unchanged and the papers check that reads that list keeps working.
+      #
+      # AND THE DELIVERED FILE IS RUN, not only proved. Token equality is a
+      # strong claim and it is still a claim about text: these three ask the
+      # actual file the site will serve to hold no undefined name, to draw
+      # all 38 screens, and to answer every assertion. ~15s, and it is the
+      # difference between "nothing but comments was removed" and "the thing
+      # we are about to publish works".
+      #
+      # pipefail, because `node ... | tail` otherwise reports tail's exit
+      # code and a failing suite would pass. The trap puts the source back
+      # whichever way the step ends, so a failure here cannot leave the
+      # working tree holding the stripped file.
+      - name: Thin the delivered app, then run it
+        run: |
+          set -eo pipefail
+          python3 thin.py index.html site/index.html --selftest
+          cp index.html index.src.html
+          trap 'cp index.src.html index.html; rm -f index.src.html' EXIT
+          cp site/index.html index.html
+          node lint.js
+          node screens.js
+          node killer-bs-test.js | tail -3
+          echo "the delivered app holds no undefined name, draws 38 screens"
+          echo "and answers every assertion"
+
       - name: Package the site as a Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

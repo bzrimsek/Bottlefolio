@@ -196,6 +196,37 @@ Manager, neither of which has an admin page.
 `push.py` sends a finished build to the repo and refuses to run unless
 `audit.py` has passed.
 
+**The site serves `index.html` with its comments removed.** Since 2026-11-02
+`thin.py` writes the delivered copy: **2,808KB to 1,599KB raw, 944KB to
+455KB gzipped**, which roughly halves a first visit. `index.html` itself is
+never touched — it stays the source, the file every check tests, and the
+file the named lock is cut from.
+
+So "what is in `index.html` is what runs" is now a stronger claim rather
+than a weaker one: **the delivered file is the tested file with nothing but
+comments removed, proved on every push.** `thin.py` refuses, and fails the
+build, unless the stripped text holds the same code tokens as the source and
+still carries every anchor another file slices `index.html` on. `audit.py`
+runs `thin.py --selftest --verify`, so a push cannot start while that proof
+fails; `gate.yml` runs it for real in **Thin the delivered app, then run
+it**, which also drives `lint.js`, `screens.js` and the whole assertion
+suite against the actual file the site will serve — token equality is a
+claim about text, and running it is the claim about the app.
+
+Two comments survive the strip, and both for a reason:
+
+- **The `STATE + RENDER` banner.** `admin.html` and `engine.js` find the end
+  of the engine by searching for it, and it IS a comment. Strip it and the
+  admin page cannot boot, which is the failure `admin.js` tests for.
+- **The author header**, because a file served to strangers should say whose
+  it is.
+
+The scanner is a one-pass state machine, not a regex, because `/*` inside a
+string and `//` inside a URL are not comments. `thin.py --selftest` holds
+the five cases the whole file cannot prove — `index.html` has no comment
+welded between two bare tokens, so only a small case can show that the
+separator `a/**/b` leaves behind actually matters.
+
 ---
 
 ## The admin half
@@ -516,31 +547,39 @@ them asks the other; there is always a door to route through (`sameName`,
 shape was assumed rather than opened — `postWithRetry` answers a fetch
 `Response`, `askForCandidates` answers `{all, capped}`. Both broke a screen.
 
-**A comment says what the section does, and then only what the code
-cannot** (BZ, 2026-11-02: "the comments for each section of code should
-describe what that section does. not much more unless best practice says
-otherwise"). Best practice is the exception he allows for, and it is
-narrow: a rule of his, a constraint on the next edit, why a magic number is
-that number, why the obvious alternative breaks. The story of a fix goes in
-CHANGELOG.md, which is the record. On 2026-09-16 comment text was cut from
-751KB to 434KB with every code token proven unchanged.
+**A comment describes what that section of code does — and no name, no
+date, no story.** BZ, 2026-11-02, twice: first *"the comments for each
+section of code should describe what that section does. not much more unless
+best practice says otherwise"*, then *"BZ says in the comments is not what
+we need — we just need code function descriptions. I'm the only brain
+here."* So:
 
-**And it has been measured, so it is not worth re-arguing.** 2026-11-02, on
-1,174KB of comment text in 5,926 blocks: 3,005 blocks are ONE sentence
-already; 17% of the prose carries somebody's quoted words; 3.3% overlaps
-CHANGELOG.md; 0.1% is said twice; 20 names are mentioned that exist in
-neither file. A tool that proposed cuts by rule got 217 of them and was
-read before being run — it was eating `BZ, 2026-09-15: asking moves to
-Shop` and `UP TO 560px, not 430: a Pixel is 449 CSS pixels wide`, so it was
-not run. **The comments are not build progress; they are the why.** What
-shrinks the download is a build step, not an editing pass: stripping every
-comment from the DELIVERED file takes it from 2,808KB to 1,599KB and from
-944KB gzipped to 455KB, with every code token proven identical and all
-8,351 assertions, lint and 38 screens green against the stripped file
-(measured 2026-11-02, awaiting BZ). **If that step is ever turned on it must
-keep two comments**: the `STATE + RENDER` banner, because `admin.html`
-slices the engine out of `index.html` on it and would not boot without it,
-and the author header.
+- **Lead with what the section does.** That is the whole job of most
+  comments, and 3,005 of the 5,926 blocks already do only that.
+- **No attribution.** No `BZ, 2026-10-26:`, no `(BZ)`, no bare `(2026-09-28)`.
+  He is the only person whose decisions these are, so naming him says
+  nothing. **A quoted phrase keeps its words and loses its label** —
+  `(BZ, 2026-10-15: "THERE SHOULD ONLY BE ONE CORRECT ANSWER")` becomes
+  `("THERE SHOULD ONLY BE ONE CORRECT ANSWER")`, because the words are the
+  rule and the name is not.
+- **Then only what the code cannot carry**, which is the narrow exception
+  best practice asks for: a constraint on the next edit, why a magic number
+  is that number, why the obvious alternative breaks.
+- **The story of a fix goes in CHANGELOG.md**, which is the record.
+
+967 blocks were de-attributed in v2.9.30 — 624 attribution-only
+parentheticals removed whole, 335 quotes kept and unlabelled, 44 sentences
+that opened by naming him — with every code token proven identical. What
+is left is prose-level and is done by reading, not by a tool: a tool that
+proposed cuts by rule got 217 and was caught eating `BZ, 2026-09-15: asking
+moves to Shop` and `UP TO 560px, not 430: a Pixel is 449 CSS pixels wide`.
+**Measured, so it is not re-argued:** 17% of the prose carries quoted words,
+3.3% overlaps CHANGELOG.md, 0.1% is said twice, 20 names are mentioned that
+exist in neither file. The comments are the why; they are not build
+progress. On 2026-09-16 comment text was cut from 751KB to 434KB with every
+code token proven unchanged.
+
+**And the comments no longer cost the user anything — see thin.py below.**
 
 **An edit script that asserts on several patterns writes nothing if a later
 assert fails** (rule 16a). Verify the change is in the file before
@@ -566,6 +605,7 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `engine.js` | loads the `L.` engine out of index.html for every tool — and the one door to BZ's real shelf: `shelf(dir)`, `catalogFor(shelf)` and `loadShelf(page, shelf)`, which refuses a page holding less than the catalogue his app runs |
 | `snapshot.js` | **refetches the four sealed shelf files from the live database**, dry-run by default. Nothing had this before 2026-11-02 and the snapshot was 42 days old |
 | `popular.js` | the nightly what's-popular count (`.github/workflows/popular.yml`) |
+| `thin.py` | **the delivered app** — index.html with its comments removed, 43% smaller, every code token proved identical. Run by `audit.py` and by `gate.yml`; `--selftest` holds the five scanner cases the whole file cannot prove |
 | `shots.js` | every screen at phone size, into `shots/` — and the four things a photograph cannot be asked: a page that scrolls sideways, a card inside a card, a tab parked out of sight, and **a control under 44px**. The tap check lives here rather than in a harness of its own because this file already boots every screen at 390px with the real shelf (2026-11-02, 59 controls were under it). A map pin is measured against `L.tapRadius` instead, because a pin's radius IS its bottle count |
 | `check.js` `checks.json` | **the one way to run the checks** — four at a time, longest first, only the ones a change can break; the table both it and `gate.py` read |
 | `cost.js` | **what the engine costs** — a synthetic load and a budget that ratchets down. Every other check proves the code RUNS; this one proves it runs fast enough |

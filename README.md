@@ -11,8 +11,16 @@ Live at **https://bzrimsek.github.io/Bottlefolio/**.
 ## The shape of it
 
 **One file.** `index.html` is about 2.7 MB and is the whole app — markup,
-CSS, engine and screens. No build step, no framework, no bundler: what is in
-that file is what runs.
+CSS, engine and screens. No framework and no bundler.
+
+There is one build step, and it only deletes comments. `thin.py` writes the
+delivered copy without them — 2,808 KB to 1,599 KB, 944 KB to 455 KB
+gzipped — and refuses unless the stripped text holds the same code tokens
+as the source and still carries every anchor another file slices
+`index.html` on. `index.html` itself is untouched: it stays the source, the
+file every check tests, and the file the named lock is cut from. So what
+runs is the tested file with nothing but its comments removed, proved on
+every push.
 
 The file is two halves, and which half code belongs in is not a matter of
 taste:
@@ -153,9 +161,12 @@ servers, with the clock pinned to UTC. In order:
 4. the Firebase rules, if `firebase-rules.json` changed — `rules.js deploy`
    swaps in this app's branch and nothing else, and reads it back to prove
    it;
-5. `main` moves to this build;
-6. the eleven site files are packaged and published to GitHub Pages;
-7. the live site is polled until it serves the new version.
+5. `thin.py` writes the delivered `index.html` without its comments, and
+   `lint.js`, `screens.js` and the whole assertion suite are run against
+   that file — the one the site will actually serve;
+6. `main` moves to this build;
+7. the site packages the fourteen files and publishes them to GitHub Pages;
+8. the live site is polled until it serves the new version.
 
 A red gate leaves the live site, service and rules exactly as they were. The
 service goes before the site, because a page that needs a new service must

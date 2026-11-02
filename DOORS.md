@@ -51,7 +51,7 @@ QUESTION, not the name you were going to use.
 - **`L.CAT_KINDS`** — THE THREE KINDS, and the one place each is keyed
 - **`L.CHORO`** — a linear ramp would paint everything but Kentucky the same.
 - **`L.CLASS_WORDS`** — TWO STATED CLASSES THAT DISAGREE ARE TWO BOTTLINGS.
-- **`L.COLOUR_SCALE`** — THE COLOUR SCALE, off BZ's printed sheet (2026-09-20)
+- **`L.COLOUR_SCALE`** — THE COLOUR SCALE, off BZ's printed sheet
 - **`L.COLUMN_SCORERS`** — A field with several candidate columns is decided by EVIDENCE, not
 - **`L.CORRECTABLE`** — _no comment above it_
 - **`L.COUNTRY_DEPTH`** — HOW MANY BOTTLES IT TAKES TO HAVE MET A COUNTRY, out of L.CANON rather
@@ -60,7 +60,7 @@ QUESTION, not the name you were going to use.
 - **`L.DESCRIBES_NOT_NAMES`** — WORDS THAT DESCRIBE RATHER THAN NAME, which no other list of this app's
 - **`L.DETAIL`** — States fills the window
 - **`L.DIMENSIONS`** — _no comment above it_
-- **`L.DIMS`** — WHAT A FLIGHT HOLDS AND WHAT IT VARIES (BZ, 2026-10-18).
+- **`L.DIMS`** — WHAT A FLIGHT HOLDS AND WHAT IT VARIES.
 - **`L.EXITS`** — leaves the bottle in existence elsewhere
 - **`L.EXPORT_COLS`** — ===================================================================
 - **`L.FAMILY_LABEL`** — `vegetable` shown as `Green` was the entry here until the two official
@@ -120,7 +120,7 @@ QUESTION, not the name you were going to use.
 - **`L.LABEL_NAMES`** — How a field reads on the confirmation sheet
 - **`L.LESSONS`** — THE SHAPES A SHELF CAN TEACH, said the way the designer says them.
 - **`L.LIB_IMPORT_FIELDS`** — THE EXPORT, READ BACK IN
-- **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT (BZ, 2026-09-19
+- **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT ("is it not as
 - **`L.LIBRARY_COLS`** — BRAND SITS BESIDE DISTILLERY AND IS NOT IT
 - **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
 - **`L.LIBRARY_OWN`** — AND WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS
@@ -136,7 +136,7 @@ QUESTION, not the name you were going to use.
 - **`L.MASH_LABEL`** — What each grain is CALLED on screen
 - **`L.MASH_WORDS`** — _no comment above it_
 - **`L.MATCH_NUM`** — A SIZE is not part of a name
-- **`L.MINE_FIELDS`** — THREE NAMES JOINED WHEN libraryEntry INVERTED (2026-10-27), and a whitelist
+- **`L.MINE_FIELDS`** — THREE NAMES JOINED WHEN libraryEntry INVERTED, and a whitelist
 - **`L.MISS_REST`** — How long a bottle rests after a lookup came back with nothing.
 - **`L.NAME_SMALL`** — Only ALL CAPS or all lower case are tidied
 - **`L.NAME_TAKEN`** — message in a shared list.
@@ -157,13 +157,13 @@ QUESTION, not the name you were going to use.
 - **`L.OAK_BY_LAW`** — DELIBERATELY NARROWER THAN IT LOOKS, and the exclusions are the point.
 - **`L.OFFER_GENERIC`** — WHAT EVERY BOTTLE SHARES, and so identifies none
 - **`L.OLD_AXIS`** — ONE VOCABULARY
-- **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT (BZ, 2026-09-19)
-- **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM (BZ, 2026-09-27), off the three origin discs he
+- **`L.ORDINALS`** — THE SAME MEASURE, AS A PROSPECT
+- **`L.ORIGIN`** — WHERE A FLAVOUR CAME FROM, off the three origin discs he
 - **`L.ORIGIN_GRAIN`** — WHICH SOURCES THIS BOTTLE ACTUALLY HAS.
 - **`L.OSM_KINDS`** — THE OSM TAGS THAT ARE PLACES A POUR HAPPENS, each mapped onto a kind the
 - **`L.OVERPASS_SERVERS`** — WHY A FAILURE READS AS 'Failed to fetch' AND NEVER AS A STATUS
 - **`L.PAIR_CLAIMS`** — WHICH FINDINGS CLAIM THAT TWO ENTRIES ARE ONE BOTTLE
-- **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER (BZ, 2026-09-20)
+- **`L.PAIR_GAP_KEYS`** — WHAT TWO SHELVES ARE TO EACH OTHER
 - **`L.PALATE`** — [term, family, ...the spellings a person actually writes]
 - **`L.PALATE_FAMILIES`** — _lab/cwm.js is the record
 - **`L.PALATE_LAYER`** — THE COARSE LAYER, in the words this app already shows a person.
@@ -173,7 +173,7 @@ QUESTION, not the name you were going to use.
 - **`L.PEAT_LABELS`** — The full span, bourbon to Octomore
 - **`L.PEAT_PPM_BANDS`** — PHENOL PARTS PER MILLION, the only real measure of peat, published by the
 - **`L.PHRASES`** — on whitespace gives two words, neither of which expands.
-- **`L.PICK_FIELDS`** — A STORE OR CLUB PICK (BZ, 2026-09-17)
+- **`L.PICK_FIELDS`** — A STORE OR CLUB PICK
 - **`L.PICK_HOUSES`** — A house earns a place here only if every bottle it sells really is one
 - **`L.PLACE_KINDS`** — WHERE OR HOW A POUR CAME ABOUT, in one list because you pick once:
 - **`L.POND_ORDER`** — WHO YOU MEET FIRST ONCE YOU HAVE CROSSED
@@ -188,7 +188,7 @@ QUESTION, not the name you were going to use.
 - **`L.QUERY_FILLER`** — Words nobody puts on a label, so removing them cannot lose a bottle.
 - **`L.QUERY_WORDS`** — A SENTENCE, TURNED INTO THE PILLS THAT ALREADY EXIST
 - **`L.QUIZ_DECOYS`** — _no comment above it_
-- **`L.QUIZ_GROUPS`** — IT WAITS TO BE ANSWERED (BZ)
+- **`L.QUIZ_GROUPS`** — IT WAITS TO BE ANSWERED
 - **`L.QUIZ_NOT_EXAMPLE`** — Still asked about on its own, and still usable as a wrong answer
 - **`L.QUIZ_NOT_WITH`** — No counting of shared words can see this
 - **`L.QUIZ_NOUNS`** — Only sections with a noun here are used
@@ -210,7 +210,7 @@ QUESTION, not the name you were going to use.
 - **`L.RING_WRITTEN`** — _no comment above it_
 - **`L.ROOM_AXES`** — IT USED TO BE CALLED `scarce`, which was the wrong word
 - **`L.ROW_FAULT_SAYS`** — THE WORDS FOR EVERY ROW FAULT
-- **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES (BZ
+- **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES ("a user does not care about
 - **`L.SAYS_NOT_HERE`** — Said on an ANSWER screen, where the subject is the whisky and never the
 - **`L.SCALE_AXES`** — Which axes are LADDERS (ordered rungs) and which are sets.
 - **`L.SCAR_FIND`** — The release, where there is a product to read it off.
@@ -220,7 +220,7 @@ QUESTION, not the name you were going to use.
 - **`L.SCOTCH_REGIONS`** — _no comment above it_
 - **`L.SEARCH_COVERS`** — include sherry, so this expands one way only.
 - **`L.SEARCH_EQUAL`** — either must return the same set, in both directions.
-- **`L.SETTINGS_TABS`** — THE LABELS ARE SHORT BECAUSE THE STRIP IS 358px WIDE (2026-11-02).
+- **`L.SETTINGS_TABS`** — THE LABELS ARE SHORT BECAUSE THE STRIP IS 358px WIDE.
 - **`L.SHEET_COLUMNS`** — it again, which nobody gets wrong and everybody has an opinion about.
 - **`L.SHEET_PROMPTS`** — _no comment above it_
 - **`L.SHEET_ROW_MM`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
@@ -250,9 +250,9 @@ QUESTION, not the name you were going to use.
 - **`L.SYNC_MERGE`** — _no comment above it_
 - **`L.TASTE_HINTS`** — A NAME, OR SOMETHING THAT IS NOT A NAME AT ALL.
 - **`L.TASTE_TERMS`** — `salt` IS GONE, and the merge removed it rather than a patch
-- **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG (BZ, 2026-09-26
+- **`L.TASTE_VIEW`** — THE VIEW THAT IS NOT A RUNG ("for guest it's a 5th view").
 - **`L.TASTING`** — about his own shelf
-- **`L.TASTING_STEPS`** — THE STEPS OF A GUIDED TASTING (BZ, 2026-09-19)
+- **`L.TASTING_STEPS`** — THE STEPS OF A GUIDED TASTING
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
 - **`L.TITLE_LINES`** — _no comment above it_
 - **`L.TN_ORDER`** — bottle tastes like, not where it came from.
@@ -316,7 +316,7 @@ QUESTION, not the name you were going to use.
 - **`L.auditFix`** — WHAT A FINDING WOULD CHANGE
 - **`L.auditItemKey`** — HOW A FINDING'S ROW IS IDENTIFIED, so the verdict written for it and the
 - **`L.auditSuggestion`** — WHAT TO DO ABOUT A FINDING, said on the row.
-- **`L.auditText`** — THE WHOLE LIST, AS TEXT, to copy or print (BZ)
+- **`L.auditText`** — THE WHOLE LIST, AS TEXT, to copy or print
 - **`L.auditVerdict`** — _no comment above it_
 - **`L.autoAddedRecently`** — WHAT WENT IN ON ITS OWN, and can still be taken back
 - **`L.autoSpelledRecently`** — WHAT THE APP RESPELLED ON ITS OWN, and can still be put back - the same
@@ -414,8 +414,8 @@ QUESTION, not the name you were going to use.
 - **`L.collectorLine`** — _no comment above it_
 - **`L.collidedCustom`** — TWO PRODUCTS, ONE WHISKY
 - **`L.columnOfSort`** — Which column a sort belongs to, so the header can show where it is.
-- **`L.commonPour`** — WHICH OF THE ONES YOU BOTH OWN IS WORTH OPENING (BZ, 2026-09-27
-- **`L.compSay`** — HOW A SHELF COMPARISON IS SAID (BZ, 2026-09-27
+- **`L.commonPour`** — WHICH OF THE ONES YOU BOTH OWN IS WORTH OPENING ("Much
+- **`L.compSay`** — HOW A SHELF COMPARISON IS SAID ("It's the shelf comps that
 - **`L.contextLine`** — The same thing as a line somebody would read
 - **`L.contradictions`** — _no comment above it_
 - **`L.contribDelta`** — _no comment above it_
@@ -574,7 +574,7 @@ QUESTION, not the name you were going to use.
 - **`L.geoFor`** — _no comment above it_
 - **`L.geoIndex`** — TWO KEYS REACH ONE PLACE
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
-- **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
+- **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF ("Rarely goes for
 - **`L.giftFromUrl`** — THE TOKEN OUT OF A LINK.
 - **`L.giftHash`** — _no comment above it_
 - **`L.giftHints`** — _no comment above it_
@@ -623,7 +623,7 @@ QUESTION, not the name you were going to use.
 - **`L.hasFlavour`** — _no comment above it_
 - **`L.haveAlready`** — L.shelfKeyOf is the door that already answers "are these the same whisky" -
 - **`L.healCollisions`** — _no comment above it_
-- **`L.hillNumber`** — q = 1 IS THE ONE THIS APP USES (BZ, 2026-10-05)
+- **`L.hillNumber`** — q = 1 IS THE ONE THIS APP USES
 - **`L.histDropRun`** — Removing a RUN removes the pours it logged
 - **`L.historyRows`** — been deleted dropped rather than shown as a bare key.
 - **`L.histRestore`** — _no comment above it_
@@ -653,11 +653,11 @@ QUESTION, not the name you were going to use.
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases
 - **`L.houseSame`** — _no comment above it_
-- **`L.housesByBrand`** — AND THE BRANDS, WHICH ARE NOT THE SAME THING (BZ, 2026-11-02).
+- **`L.housesByBrand`** — AND THE BRANDS, WHICH ARE NOT THE SAME THING.
 - **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
 - **`L.houseSplit`** — _no comment above it_
 - **`L.houseSplitRows`** — THE BOTTLES UNDER THE SPELLING FEWER OF THEM USE, keyed so a row opens one.
-- **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
+- **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT
 - **`L.housesThatDoNotPublish`** — _no comment above it_
 - **`L.housesToAsk`** — EVERY NAME A QUESTION MAY USE FOR A HOUSE - the distilleries and the
 - **`L.houseTakeBack`** — PUTTING ONE BACK
@@ -689,7 +689,7 @@ QUESTION, not the name you were going to use.
 - **`L.intakePlan`** — THE WHOLE QUEUE, IN FOUR PILES.
 - **`L.intakeProduct`** — _no comment above it_
 - **`L.intakeReady`** — WHAT A VERDICT NEEDS, PREPARED ONCE
-- **`L.intakeReadyToAdd`** — READY TO GO IN WITHOUT ANYBODY (BZ, 2026-09-16)
+- **`L.intakeReadyToAdd`** — READY TO GO IN WITHOUT ANYBODY
 - **`L.intakeSay`** — WHAT THE PILE SAYS ABOUT ITSELF, in one sentence, in units somebody can
 - **`L.intakeSettle`** — THE SAME OFFER, JUDGED AGAIN WITH WHAT CAME BACK
 - **`L.intakeSpent`** — _no comment above it_
@@ -882,7 +882,7 @@ QUESTION, not the name you were going to use.
 - **`L.noteSearchMiss`** — NAMED FOR SEARCHES
 - **`L.notesFor`** — _no comment above it_
 - **`L.noteText`** — a hypothesis
-- **`L.noteVague`** — A NOTE THAT NAMES A FRUIT CATEGORY AND NEVER SAYS WHICH (BZ, 2026-09-27).
+- **`L.noteVague`** — A NOTE THAT NAMES A FRUIT CATEGORY AND NEVER SAYS WHICH.
 - **`L.noteWords`** — _no comment above it_
 - **`L.notInLibrary`** — _no comment above it_
 - **`L.offerAdvice`** — The pair of verdicts as a recommendation
@@ -907,7 +907,7 @@ QUESTION, not the name you were going to use.
 - **`L.ownedCatalog`** — _no comment above it_
 - **`L.ownedCount`** — _no comment above it_
 - **`L.ownedCounts`** — _no comment above it_
-- **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME (BZ, 2026-09-29
+- **`L.ownedMatching`** — WHAT IS ON THE SHELF, BY NAME ("what woodford do I have?").
 - **`L.ownedProducts`** — THE WHISKIES YOU ACTUALLY OWN, and them as a catalog of their own
 - **`L.ownedTwice`** — _no comment above it_
 - **`L.ownedTwiceLine`** — SAID ONLY WHEN THERE IS SOMETHING TO SAY, as with the line above it.
@@ -946,9 +946,9 @@ QUESTION, not the name you were going to use.
 - **`L.pickAxis`** — WHAT MOVES, WHEN HE HAS ONLY SAID WHAT IS HELD.
 - **`L.pickLine`** — _no comment above it_
 - **`L.pickRows`** — AND THOSE PICKS IN WORDS, so the screen words nothing itself (rule 30).
-- **`L.pickShortlist`** — WHO IS WORTH SPENDING A LOOKUP ON (BZ, 2026-10-16
-- **`L.pickSpread`** — `valueOf` IS THE DESIGNER'S WAY IN (2026-10-18)
-- **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time (BZ
+- **`L.pickShortlist`** — WHO IS WORTH SPENDING A LOOKUP ON ("Look up the top three,
+- **`L.pickSpread`** — `valueOf` IS THE DESIGNER'S WAY IN
+- **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time ("Always name the taste fit").
 - **`L.pinRadius`** — _no comment above it_
 - **`L.pinsInView`** — _no comment above it_
 - **`L.placeKind`** — A kind is either one of ours or whatever somebody typed instead.
@@ -985,7 +985,7 @@ QUESTION, not the name you were going to use.
 - **`L.pourOrder`** — THE ORDER A FLIGHT IS POURED IN
 - **`L.pourProof`** — _no comment above it_
 - **`L.pourScore`** — carries a reason so the UI can say WHY - an unexplained pick is a shuffle.
-- **`L.pourSearch`** — WHEN YOU ALREADY KNOW WHAT YOU WANT (BZ, 2026-09-17)
+- **`L.pourSearch`** — WHEN YOU ALREADY KNOW WHAT YOU WANT
 - **`L.pourTypes`** — THE CATEGORIES IN A LIST, biggest first, for the chips that narrow the
 - **`L.pourView`** — The taste list is L.tastesLike's - the door that has answered "what on your
 - **`L.premium`** — _no comment above it_
@@ -1011,7 +1011,7 @@ QUESTION, not the name you were going to use.
 - **`L.proposalAsks`** — the reader actually has.
 - **`L.proseNames`** — _no comment above it_
 - **`L.proseSplit`** — _no comment above it_
-- **`L.prospectAsk`** — THE SAME ASK FOR A WHISKY YOU DO NOT OWN (BZ, 2026-09-19)
+- **`L.prospectAsk`** — THE SAME ASK FOR A WHISKY YOU DO NOT OWN
 - **`L.prospectContext`** — _no comment above it_
 - **`L.prospectLine`** — _no comment above it_
 - **`L.provenance`** — _no comment above it_
@@ -1023,12 +1023,12 @@ QUESTION, not the name you were going to use.
 - **`L.quizAsk`** — _no comment above it_
 - **`L.quizAskable`** — _no comment above it_
 - **`L.quizBank`** — _no comment above it_
-- **`L.quizCheckable`** — A TRUE OR FALSE MUST TURN ON SOMETHING CHECKABLE (BZ, 2026-09-20
+- **`L.quizCheckable`** — A TRUE OR FALSE MUST TURN ON SOMETHING CHECKABLE ("The
 - **`L.quizCites`** — NAMING IS TWO DIFFERENT QUESTIONS, and one rule cannot answer both.
 - **`L.quizClashes`** — _no comment above it_
 - **`L.quizDocFreq`** — HOW MANY ENTRIES USE EACH WORD
 - **`L.quizDue`** — WHETHER TO ASK AT ALL TODAY
-- **`L.quizExplain`** — WHY, IN ONE LINE (BZ, 2026-09-20)
+- **`L.quizExplain`** — WHY, IN ONE LINE
 - **`L.quizNames`** — _no comment above it_
 - **`L.quizNearness`** — _no comment above it_
 - **`L.quizNext`** — _no comment above it_
@@ -1065,12 +1065,12 @@ QUESTION, not the name you were going to use.
 - **`L.recapRefused`** — WHY A WRITE-UP MAY NOT BE SHOWN, in one place, named rather than merely
 - **`L.recapSpan`** — One stretch by its id, for everything that reads the recap's windows.
 - **`L.recapText`** — _no comment above it_
-- **`L.recapWindows`** — WHICH WINDOWS ARE WORTH OFFERING (BZ, 2026-09-27
+- **`L.recapWindows`** — WHICH WINDOWS ARE WORTH OFFERING ("all 4 time horizons say
 - **`L.recapWriting`** — THE RECAP'S WRITING FOR ONE STRETCH
 - **`L.recastFlight`** — toward the back.
 - **`L.receiptColumns`** — _no comment above it_
 - **`L.receiptUpdates`** — What a confirmed set of matches changes
-- **`L.recentAway`** — WHERE YOU WERE, IF YOU STILL ARE (BZ, 2026-09-18)
+- **`L.recentAway`** — WHERE YOU WERE, IF YOU STILL ARE
 - **`L.recentPlaces`** — Places already used, most recent first, so a second visit is one tap.
 - **`L.recordAsk`** — One result, recorded
 - **`L.recordId`** — Lists are merged, never replaced (L.mergeRecords)
@@ -1088,7 +1088,7 @@ QUESTION, not the name you were going to use.
 - **`L.refGroup`** — _no comment above it_
 - **`L.refHouseKey`** — _no comment above it_
 - **`L.refHouses`** — One entry per distillery, keyed by its name and every alias
-- **`L.refItems`** — A SECTION IS A STORY OR A GLOSSARY (BZ, 2026-09-20)
+- **`L.refItems`** — A SECTION IS A STORY OR A GLOSSARY
 - **`L.refKeysFor`** — THE KEYS A NAME COULD BE FILED UNDER, longest first
 - **`L.refMakerName`** — THE NAME A PLANT OPERATES UNDER, without the company around it
 - **`L.refNorm`** — AN APOSTROPHE IS NOT A DIFFERENT WORD
@@ -1131,7 +1131,7 @@ QUESTION, not the name you were going to use.
 - **`L.sameBottling`** — _no comment above it_
 - **`L.sameFactsPairs`** — ALL THREE FACTS, AND ALL THREE STATED
 - **`L.sameGroups`** — AND WHAT THEY BOTH HOLD, ranked by SHARE OF EACH SHELF and not by count:
-- **`L.sameHouse`** — EVERYTHING ELSE FROM THE SAME HOUSE, OWNED OR NOT (BZ, 2026-10-12
+- **`L.sameHouse`** — EVERYTHING ELSE FROM THE SAME HOUSE, OWNED OR NOT ("We
 - **`L.sameName`** — _no comment above it_
 - **`L.sameStrength`** — ARE THESE ONE STRENGTH? Rounding differs between a label, a listing and a
 - **`L.sameSubject`** — SUBJECTS MATCH BY CONTAINMENT
@@ -1256,16 +1256,16 @@ QUESTION, not the name you were going to use.
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — _no comment above it_
 - **`L.tasteAxisFloor`** — DERIVED FROM THE POOL, never typed
-- **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE (BZ, 2026-09-27).
+- **`L.tasteBeats`** — WHAT THE ANSWERS ALREADY SETTLE.
 - **`L.tasteBetween`** — _no comment above it_
 - **`L.tasteBlocks`** — WHAT THE PALATE STRIKES OUT (BZ, 2026-10-16
 - **`L.tasteCandidates`** — _no comment above it_
-- **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION (BZ, 2026-09-27
-- **`L.tasteExpect`** — WHAT TO EXPECT OF A BOTTLE NOTHING HAS NOTES FOR (BZ, 2026-10-16
+- **`L.tasteConfused`** — TWO WORDS THAT ARE ONE QUESTION ("Rye v Pepper seems the
+- **`L.tasteExpect`** — WHAT TO EXPECT OF A BOTTLE NOTHING HAS NOTES FOR ("You
 - **`L.tasteFamilies`** — WHICH GROUPS GET DRAWN, AND IN WHAT ORDER - both out of one list.
 - **`L.tasteFromFacts`** — WHAT THE BOTTLE ITSELF SAYS, beside what its notes say (BZ, 2026-09-28:
 - **`L.tasteHoldout`** — DID THEY SAY THE SAME THING TWICE?
-- **`L.tasteLayer`** — THE LAYER UNDER A SPOKE (BZ, 2026-09-27
+- **`L.tasteLayer`** — THE LAYER UNDER A SPOKE ("in the taste profile, it would be
 - **`L.tasteLead`** — _no comment above it_
 - **`L.tasteLine`** — _no comment above it_
 - **`L.tasteMid`** — _no comment above it_
@@ -1275,7 +1275,7 @@ QUESTION, not the name you were going to use.
 - **`L.tastePairKey`** — _no comment above it_
 - **`L.tastePlaced`** — A word's position is settled by the answers that decide it, whether he gave
 - **`L.tasteProfile`** — _no comment above it_
-- **`L.tasteProgress`** — HOW FAR ALONG, AND WHEN TO STOP (BZ, 2026-09-27
+- **`L.tasteProgress`** — HOW FAR ALONG, AND WHEN TO STOP ("user needs guidance like a
 - **`L.tasteSaid`** — EVERY ANSWER IS KEPT, latest last, because asking the same pair twice is
 - **`L.tasteSays`** — HOW IT SITS WITH THE PALATE, in one sentence (BZ, 2026-10-16, asked
 - **`L.tasteScore`** — _no comment above it_
@@ -1300,7 +1300,7 @@ QUESTION, not the name you were going to use.
 - **`L.tidyName`** — _no comment above it_
 - **`L.tidyNote`** — The same test for prose
 - **`L.titleCase`** — _no comment above it_
-- **`L.tnSource`** — WHOSE NOTES THESE ARE, always answered (BZ, 2026-09-27)
+- **`L.tnSource`** — WHOSE NOTES THESE ARE, always answered
 - **`L.toCsv`** — _no comment above it_
 - **`L.today`** — _no comment above it_
 - **`L.todayISO`** — _no comment above it_
@@ -1354,12 +1354,12 @@ QUESTION, not the name you were going to use.
 - **`L.wishAdd`** — _no comment above it_
 - **`L.wishEntry`** — What goes into the wishlist, with a reason you can act on in a shop:
 - **`L.wishFromFlights`** — flights a bottle would unlock
-- **`L.wishFulfilled`** — A WISH IS OVER WHEN YOU OWN IT (BZ, 2026-10-17
+- **`L.wishFulfilled`** — A WISH IS OVER WHEN YOU OWN IT ("If we add a bottle that is
 - **`L.wishLine`** — THE WISHLIST
 - **`L.wishRemove`** — _no comment above it_
 - **`L.wishRows`** — The wishlist, newest first
 - **`L.wishSays`** — WHY A BOTTLE IS ON THE WISH LIST, whichever way it was written (BZ,
-- **`L.withIdToken`** — EVERY PAID CALL CARRIES PROOF OF SIGN-IN (BZ, 2026-09-15)
+- **`L.withIdToken`** — EVERY PAID CALL CARRIES PROOF OF SIGN-IN
 - **`L.withOrigin`** — _no comment above it_
 - **`L.woodFamily`** — _no comment above it_
 - **`L.woodLead`** — WHICH WOOD A SET OF BOTTLES MOSTLY SAT IN, as {value, n}.

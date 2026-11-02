@@ -127,6 +127,9 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # requires, so the next one fails here instead.
            'fake-sdk.js',
            'papers.js', 'smoke.js', 'audit.py',
+           # 2026-11-02: the stripper. audit.py and gate.yml both run it, and
+           # the gate cannot build the file the site serves without it.
+           'thin.py',
            'bump.py', 'ship.py', 'gate.py', 'gatetime.py', 'push.py',
            'rules.js',
            # 2026-09-16: one engine loader for every tool, and the nightly
