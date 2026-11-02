@@ -117,7 +117,9 @@ const SHELVES = [
   await p.goto('http://app.local/index.html');
   await p.waitForTimeout(1200);
 
-  const { bottles: all, custom, flights } = require('./engine.js').shelf(dir);
+  const eng = require('./engine.js');
+  const whole = eng.shelf(dir);
+  const all = whole.bottles;
 
   /* WHAT EACH SCREEN SAID, for the App use check after the walk. Declared out
      here because it outlives the loop; only the real shelf fills it, since the
@@ -125,11 +127,16 @@ const SHELVES = [
   const screenText = {};
   for (const shelf of SHELVES) {
     const bots = shelf.take(all);
-    await p.evaluate(([bs, cu, fl]) => {
-      S.bottles = bs; S.custom = cu; S.customFlights = fl || [];
+    /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set
+       S.bottles and S.custom by hand and not one joined the shared library,
+       so each graded his real shelf against a catalogue of 322 entries in
+       which 53 of his 356 owned bottlings did not exist. eng.loadShelf is
+       the door, and it refuses a catalogue that short. */
+    await eng.loadShelf(p, whole, bots);
+    await p.evaluate(() => {
       S.shelfSub = null; S.filters = S.filters || {};
       save_(); rebuildCatalog();
-    }, [bots, custom, flights]);
+    });
 
     /* THE TRUTH FOR THIS SHELF, asked of the engine, which is what every
        sentence below is graded against. */

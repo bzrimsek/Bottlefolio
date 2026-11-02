@@ -195,13 +195,30 @@ check('no L function is defined and never used', dead);
    and in its own explanatory comment, so it looked called. Second time
    today a source-reading check has read prose as code; a checker that
    reads comments is checking the wrong file. */
-const code = src
+/* AND IT READS admin.html TOO (2026-11-02). It read index.html alone, so
+   the admin split carried 85 functions out from under it on 2026-10-27 and
+   the guard did not follow - which is the whole shape of rule 30d's cousin:
+   moving code to a new file disarms every check that names the old one.
+   intakeBudgetRow came over with the library, was called from nowhere for
+   six days, and this passed every run; the daily lookup allowance it draws
+   was on no screen at all and A.budget sat at 100 with no way to move it.
+   Found by reading, not by any check, which is the second time that
+   sentence has been written about this file. */
+const stripComments = t => t
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '');
-const plainDead = (code.match(/^function (\w+)\(/gm) || [])
-  .map(m => m.match(/^function (\w+)/)[1])
-  .filter(fn => code.split(new RegExp('\\b' + fn + '\\b')).length - 1 <= 1)
-  .filter(fn => code.indexOf("'" + fn + "'") < 0);   // not called by name
+const code = stripComments(src);
+const deadPlainIn = (text, where) => {
+  const body = stripComments(text);
+  return (body.match(/^function (\w+)\(/gm) || [])
+    .map(m => m.match(/^function (\w+)/)[1])
+    .filter(fn => body.split(new RegExp('\\b' + fn + '\\b')).length - 1 <= 1)
+    .filter(fn => body.indexOf("'" + fn + "'") < 0)   // not called by name
+    .filter(fn => text.indexOf('"' + fn + '"') < 0)   // nor from markup
+    .map(fn => where ? where + ': ' + fn : fn);
+};
+const plainDead = deadPlainIn(src, '')
+  .concat(ADMIN ? deadPlainIn(ADMIN, 'admin.html') : []);
 check('no plain function is defined and never called', plainDead);
 /* RETAINED ON PURPOSE, with the reason written down.
 
@@ -4040,6 +4057,93 @@ check('no fixed svg id is emitted by a repeated drawing',
   });
 
   check('the table that picks the checks covers every check', found);
+}
+
+/* AND THE OTHER NUMBERS THE PAPERS QUOTE (2026-11-02).
+ *
+ * The check above guards one count and says so: "it is the one number this
+ * file knows for certain without running another harness." Three more are
+ * just as certain, and all three had drifted, in both papers, in different
+ * directions - which is worse than one wrong number, because two papers
+ * disagreeing means neither can be trusted:
+ *
+ *   the app's size    README said 1.9 MB, CLAUDE.md said 1.75 MB, it was 2.66
+ *   the gate's checks README said "Ten of them, and all ten must pass" in
+ *                     three places; checks.json holds twenty
+ *   the site's files  README said eleven, CLAUDE.md said twelve; gate.yml
+ *                     copies fourteen, admin.html and Cooper's two pictures
+ *                     having joined without either paper noticing
+ *
+ * EACH IS READ FROM THE THING ITSELF, never from a number typed here: the
+ * size from the file, the checks from checks.json, the files from the cp
+ * list in gate.yml. A guard holding its own copy of the answer is the fault
+ * it is guarding against (rule 30d).
+ *
+ * THE SIZE HAS A TOLERANCE AND THE OTHER TWO DO NOT. index.html grows a
+ * little every build, so an exact figure would fail on the next one and
+ * teach somebody to ignore red; a fifth of a megabyte is loose enough to
+ * last and tight enough that 1.75 against 2.66 is caught at once. The file
+ * counts change only when somebody changes them, so they are exact.
+ */
+{
+  const bad = [];
+  const mb = fs.statSync(__dirname + '/index.html').size / 1048576;
+
+  let gate = '';
+  try { gate = fs.readFileSync(__dirname + '/.github/workflows/gate.yml', 'utf8'); }
+  catch (e) { bad.push('gate.yml is missing, so the site list cannot be read'); }
+  const cp = gate.match(/mkdir -p site\n([\s\S]*?)touch site\/\.nojekyll/);
+  let siteFiles = 0;
+  if (!cp) {
+    if (gate) bad.push('gate.yml no longer lists the site files the way this reads them');
+  } else {
+    siteFiles = (cp[1].match(/[\w.-]+\.(html|js|json|png|webp)\b/g) || []).length;
+  }
+
+  let gateChecks = 0;
+  try {
+    gateChecks = JSON.parse(
+      fs.readFileSync(__dirname + '/checks.json', 'utf8')).checks.length;
+  } catch (e) { bad.push('checks.json could not be read'); }
+
+  const WORDS = { ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+    fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+    nineteen: 19, twenty: 20, 'twenty-one': 21, 'twenty-two': 22 };
+  const asNumber = w => WORDS[String(w).toLowerCase()];
+
+  ['CLAUDE.md', 'README.md'].forEach(name => {
+    let text = '';
+    try { text = fs.readFileSync(__dirname + '/' + name, 'utf8'); }
+    catch (e) { bad.push(name + ' is missing'); return; }
+
+    const sz = text.match(/`index\.html`[^.]*?about ([0-9.]+) MB/);
+    if (!sz) {
+      bad.push(name + ' no longer says how big index.html is');
+    } else if (Math.abs(Number(sz[1]) - mb) > 0.2) {
+      bad.push(name + ' says index.html is ' + sz[1] + ' MB; it is '
+        + mb.toFixed(2));
+    }
+
+    const sf = text.match(/(?:serves|packages) the (\w+) files|serves \*\*(\w+) files\*\*/);
+    const saidFiles = sf && asNumber(sf[1] || sf[2]);
+    if (!saidFiles) {
+      bad.push(name + ' no longer says how many files the site serves');
+    } else if (siteFiles && saidFiles !== siteFiles) {
+      bad.push(name + ' says the site serves ' + saidFiles + ' files; gate.yml '
+        + 'copies ' + siteFiles);
+    }
+
+    const gc = text.match(/all (\w+)(?:,| must pass| of them)/);
+    const saidChecks = gc && asNumber(gc[1]);
+    if (!saidChecks) {
+      bad.push(name + ' no longer says how many checks the gate runs');
+    } else if (gateChecks && saidChecks !== gateChecks) {
+      bad.push(name + ' says the gate runs ' + saidChecks + ' checks; '
+        + 'checks.json holds ' + gateChecks);
+    }
+  });
+
+  check('the papers quote the app, the gate and the site correctly', bad);
 }
 
 /* THE PAPERS COUNT THESE CHECKS CORRECTLY (v2.8.47).

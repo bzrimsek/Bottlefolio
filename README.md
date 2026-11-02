@@ -10,7 +10,7 @@ Live at **https://bzrimsek.github.io/Bottlefolio/**.
 
 ## The shape of it
 
-**One file.** `index.html` is about 1.9 MB and is the whole app — markup,
+**One file.** `index.html` is about 2.7 MB and is the whole app — markup,
 CSS, engine and screens. No build step, no framework, no bundler: what is in
 that file is what runs.
 
@@ -31,34 +31,44 @@ data files network-first), four Apps Script files that run as a deployed web
 app and answer lookups, label photographs and write-ups, and
 `firebase-rules.json` for the database.
 
-The site serves **eleven files** and nothing else — `index.html`, `sw.js`,
-`manifest.json`, `mark.png`, the four icons, `zxing.min.js` (the barcode
-decoder, for browsers with no `BarcodeDetector`, which means every iPhone),
-`data.json` and `map.json`. That list is every same-origin file `index.html`
-and `sw.js` name, and it is what the publish workflow packages.
+The site serves **fourteen files** and nothing else — `index.html`,
+`admin.html`, `sw.js`, `manifest.json`, `mark.png`, the four icons,
+`zxing.min.js` (the barcode decoder, for browsers with no `BarcodeDetector`,
+which means every iPhone), `data.json`, `map.json`, `cooper.webp` and
+`cooper-pour.webp`. That list is every same-origin file `index.html`,
+`admin.html` and `sw.js` name, and it is what the publish workflow packages
+(plus `.nojekyll`, which is a marker rather than a file the site serves).
 
 ---
 
 ## Running the checks
 
-Ten of them, and all ten must pass. `gate.py` runs them in the right groups
-and times each one:
+Twenty of them, and all twenty must pass. `check.js` runs them four at a
+time, which is the one way to run them:
 
 ```
-python gate.py            # all ten
-python gate.py --fast     # the eight quick ones
-python gate.py --slow     # the walk and sync
+node check.js --all       # all twenty, four lanes
+node check.js             # only what this change can break
 python gatetime.py        # what each step takes, median of the last nine
+```
+
+`snapshot.js` is not one of them — it refetches the four sealed shelf
+files from the live database and is run when the snapshot is stale, not on
+every build:
+
+```
+node snapshot.js            # what has changed
+node snapshot.js --write    # write it
 ```
 
 Individually, in gate order:
 
 ```
 python audit.py index.html   # the named lock file matches index.html
-node killer-bs-test.js       # 8,279 assertions against the engine
-node lint.js                 # nothing undefined, duplicated, unreachable
-node consistency.js          # 123 wiring checks
-node screens.js              # 39 screens draw
+node killer-bs-test.js       # 8,342 assertions against the engine
+node lint.js                 # nothing undefined, twice-defined, unreachable
+node consistency.js          # 124 wiring checks
+node screens.js              # 38 screens draw
 node answers.js              # what the answers SAY, on a real shelf
 node shots.js                # every screen at 390px, photographed
 node seq.js                  # screens in pairs, for what one leaves behind
@@ -134,7 +144,7 @@ while an earlier gate run on `build` is still queued or running.
 `.github/workflows/gate.yml` runs on every push to `build`, on GitHub's
 servers, with the clock pinned to UTC. In order:
 
-1. all ten checks;
+1. all twenty checks;
 2. a refusal if `main` has moved since this build was made;
 3. the Apps Script service, if any of `Code.gs`, `label.gs`, `recap.gs`,
    `shelf.gs` or `apps-script/appsscript.json` changed — pushed with clasp
@@ -170,8 +180,9 @@ files** — `bottlefolio-vX.Y.Z.html`, `-sw.js` and `-admin.html`.
 
 ## The data rules
 
-- **BZ's shelf never goes up in the clear.** `bz-bottles.json` and
-  `bz-flights.json` go to the public repo ONLY as `.gpg`. The key is
+- **BZ's shelf never goes up in the clear.** `bz-bottles.json`,
+  `bz-flights.json`, `bz-custom.json` and `bz-library.json` — four files —
+  go to the public repo ONLY as `.gpg`. The key is
   `%USERPROFILE%\.bottlefolio\shelf.key`, outside OneDrive, and the same key
   is the repo secret `SHELF_KEY`. `push.py` refuses to send a plain shelf
   file, a CSV, the database export, a Firebase key file or `_superseded/`.
@@ -179,6 +190,11 @@ files** — `bottlefolio-vX.Y.Z.html`, `-sw.js` and `-admin.html`.
   `sw.js` mentions them.
 - **`data.json` ships an empty shelf on purpose.** 325 catalogue entries,
   0 bottles, 0 flights — a new user starts empty.
+- **The four sealed files are a snapshot. Refresh them.** `node
+  snapshot.js` prints what has changed in the live database;
+  `node snapshot.js --write` writes it. It needs `FIREBASE_SA_FILE`. The
+  harnesses that grade BZ's real shelf read these, so a stale snapshot
+  means a graded answer about a shelf he does not have.
 - **The Firebase web API key in `index.html` is not a secret.** It
   identifies the project and authorises nothing. Every protection rests on
   `firebase-rules.json`. The project is `bottlefolio`;

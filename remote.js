@@ -41,7 +41,7 @@ const path = require('path');
 const { token, DB } = require('./rules.js');
 const { L } = require('./engine.js')();
 
-const UID = process.env.BF_UID || 'cv2EMNKszFehDrNP1yf8O9e1siP2';
+const UID = require('./engine.js').myUid();
 const file = process.argv[2];
 const apply = process.argv.indexOf('--apply') > 0;
 

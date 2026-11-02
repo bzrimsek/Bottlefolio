@@ -86,7 +86,9 @@ function bad(what, detail) {
      read the file itself, which is a second door to one question - and the door it
      skipped is the one that says how old the shelf is, so this check alone never
      said what it was grading (2026-10-03). */
-  const bots = require('./engine.js').shelf(dir).bottles;
+  const eng = require('./engine.js');
+  const shelf = eng.shelf(dir);
+  const bots = shelf.bottles;
 
   /* THE CHECK ITSELF, PROVEN TO FAIL FIRST. A guard that has never gone
      red is a guard nobody has tested, and several in this project were
@@ -121,11 +123,16 @@ function bad(what, detail) {
       + 'sentences');
   }
 
-  /* NOW THE REAL SHELF. */
-  await p.evaluate(bs => {
-    S.bottles = bs; save_(); rebuildCatalog();
+  /* NOW THE REAL SHELF, THROUGH THE ONE LOADER (2026-11-02). It used to set
+     S.bottles and nothing else, so every answer below was graded against
+     data.json alone - 322 entries, with 53 of his 356 owned bottlings absent
+     from the catalogue the screen could see. A harness written to catch a
+     screen saying a false thing was asking it about a library it did not
+     have, which is the one way this check could be wrong and stay green. */
+  await eng.loadShelf(p, shelf);
+  await p.evaluate(() => {
     S.shopMode = 'plan'; S.shopDim = null; S.shop = {};
-  }, bots);
+  });
 
   for (const ask of ASKS) {
     const got = await p.evaluate(q => {

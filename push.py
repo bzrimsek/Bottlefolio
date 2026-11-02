@@ -145,6 +145,16 @@ TOOLING = ['killer-bs-test.js', 'consistency.js', 'browser.js', 'screens.js',
            # fix is mechanical rather than a promise; the promise kept
            # failing, so this is the mechanism.
            'poll.js',
+           # 2026-11-02: the refresher for the four sealed shelf files.
+           # Nothing in this project had one, so the custom catalogue was 42
+           # days old and the shared library was not snapshotted at all, and
+           # eleven harnesses that claim to grade BZ's real shelf were
+           # grading a catalogue of 322 entries where his app runs 769. It
+           # cannot run in the gate - it needs the Firebase admin key, which
+           # lives outside this folder and is never pushed - but CLAUDE.md
+           # and README.md both tell the next reader to run it, and a paper
+           # naming a file that is not in the repo is a paper that is wrong.
+           'snapshot.js',
            # 2026-09-27: the generator behind DOORS.md. consistency.js runs
            # it with --check, so the gate needs the generator as well as the
            # file it generates.
@@ -203,14 +213,19 @@ SERVICE = ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs',
            'firebase-rules.json']
 # bz-custom.json joined on 2026-09-20: the products only BZ's account knows,
 # which the harnesses need to make sense of his shelf. His data, so sealed.
+# bz-library.json joined on 2026-11-02: the shared library, which is most of
+# the catalogue his app actually runs. Without it the harnesses graded his
+# shelf against data.json alone - 322 entries, with 53 of his 356 owned
+# bottlings absent. The CONTENT is shared rather than private, but it travels
+# the same road as the other three so there is one road and not two.
 SHELF = ['bz-bottles.json', 'bz-flights.json',
-         'bz-custom.json']                          # sealed, never plain
+         'bz-custom.json', 'bz-library.json']       # sealed, never plain
 
 # NEVER, whatever the lists above say. The repo is public and main is a
 # website: BZ's shelf, his exports and the database dump are his, and the
 # key would unlock the sealed copies. A name matching any of these stops
 # the push before anything leaves.
-NEVER = [r'^bz-(bottles|flights|custom)\.json$', r'\.csv$', r'\.xlsx$',
+NEVER = [r'^bz-(bottles|flights|custom|library)\.json$', r'\.csv$', r'\.xlsx$',
          r'rtdb-export', r'shelf\.key$', r'^_superseded/', r'\.sealstate',
          # A Firebase admin key can rewrite the whole database. One landed in
          # this folder on 2026-09-15 on its way to ~/.bottlefolio.

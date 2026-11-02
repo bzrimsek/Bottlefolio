@@ -637,9 +637,16 @@ function check(name, got, want) {
            walks rather than calling the panel directly. */
         const there = await reach('no Settings gear on Home to press',
             page.locator('#settingsBtn'))
-          && await reach('Settings has no Help and About tab',
+          /* NAMED 'Help' SINCE 2026-11-02. The five tabs were given short
+             labels so the strip fits a 390px phone without parking the last
+             one out of sight, and this still said 'Help and About' - so the
+             whole diagnostics route went red the moment the label moved.
+             Guards follow the code: a harness that presses a control by its
+             words breaks when the words change, which is the price of
+             walking the route a person walks. */
+          && await reach('Settings has no Help tab',
             page.locator('#scr-settings').getByRole('tab',
-              { name: 'Help and About', exact: true }))
+              { name: 'Help', exact: true }))
           && await reach('Settings has no Show me the log button',
             page.locator('#scr-settings').getByRole('button',
               { name: 'Show me the log' }));

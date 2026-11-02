@@ -1,6 +1,6 @@
 # Bottlefolio
 
-A whiskey collection app. One file, `index.html`, about 1.75 MB, plus a
+A whiskey collection app. One file, `index.html`, about 2.7 MB, plus a
 service worker and four Apps Script files. No build step, no framework, no
 bundler — what is in `index.html` is what runs.
 
@@ -104,11 +104,23 @@ to push while an earlier gate run on `build` is still queued or running,
 and prints that run's link; the gate itself refuses, before deploying
 anything, a build whose `main` has moved since it was pushed.
 
-Credentials: BZ's `gh auth login` (Windows Credential Manager). The shelf
-files `bz-bottles.json` / `bz-flights.json` go to the public repo ONLY as
-`.gpg`; the key is `%USERPROFILE%\.bottlefolio\shelf.key`, outside OneDrive,
-and the same key is the repo secret `SHELF_KEY`. push.py refuses to send a
-plain shelf file, a CSV, the database export or `_superseded/`.
+Credentials: BZ's `gh auth login` (Windows Credential Manager). The **four**
+shelf files — `bz-bottles.json`, `bz-flights.json`, `bz-custom.json` and
+`bz-library.json` — go to the public repo ONLY as `.gpg`; the key is
+`%USERPROFILE%\.bottlefolio\shelf.key`, outside OneDrive, and the same key is
+the repo secret `SHELF_KEY`. push.py refuses to send a plain shelf file, a
+CSV, the database export or `_superseded/`.
+
+**They are a snapshot, and a stale one answers wrongly.**
+`node snapshot.js --write`, with `FIREBASE_SA_FILE` pointing at the admin
+key, refetches all four from the live database; without
+`--write` it prints what would change. Nothing in the project had a
+refresher before 2026-11-02, so the custom catalogue was 42 days old and
+`bz-library.json` did not exist at all: every harness that claims to grade
+"BZ's real shelf" was grading it against a catalogue of 322 entries where
+his app runs 769, with 53 of his owned bottlings invisible. `engine.js`
+warns past 21 days. Read what it says before trusting an answers.js or
+says.js verdict.
 
 The gate, all twenty, in this order — `gate.py` runs them in the cloud
 with the clock pinned to UTC. Nothing depends on that any more: §351 used to
@@ -120,10 +132,10 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 8,279 assertions
-node lint.js              # nothing undefined, duplicated, unreachable
-node consistency.js       # 123 wiring checks, incl. rules copied twice
-node screens.js           # 39 screens draw
+node killer-bs-test.js    # 8,342 assertions
+node lint.js              # nothing undefined, twice-defined, unreachable
+node consistency.js       # 124 wiring checks, incl. rules copied twice
+node screens.js           # 38 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed
 node seq.js               # screens in PAIRS: what the last one left behind
@@ -326,11 +338,13 @@ A hand paste is now only the fallback. Credentials: secrets `CLASPRC`,
 
 ## How the site gets published
 
-Since 2026-09-15 the gate packages the twelve files the site serves - the
-app, the worker, the manifest, the icons, the barcode decoder, data.json,
-map.json and .nojekyll - and deploys THAT, rather than GitHub rebuilding the
-whole repository (805KB changelog, the harnesses, ten superseded lock
-copies) with Jekyll twice per release.
+Since 2026-09-15 the gate packages the fourteen files the site serves - the
+app, the admin page, the worker, the manifest, the four icons, the barcode
+decoder, data.json, map.json and Cooper's two pictures, plus the .nojekyll
+marker - and deploys THAT, rather than GitHub rebuilding the whole
+repository (805KB changelog, the harnesses, ten superseded lock copies) with
+Jekyll twice per release. The list is in `gate.yml`, under "The site, and
+only the site", and `consistency.js` fails a paper that miscounts it.
 
 Two settings make it work, and both are already set:
 
@@ -378,8 +392,24 @@ re-checked against the file that day rather than copied forward.
 
 - **`data.json` ships an empty shelf on purpose.** 325 catalogue entries,
   **0 bottles and 0 flights** — a new user starts empty. BZ's own shelf
-  lives beside the app in `bz-bottles.json` / `bz-flights.json` and is
-  never shipped.
+  lives beside the app in the four sealed `bz-*.json` files and is never
+  shipped.
+- **`data.json` is not the catalogue the app runs, and a harness that
+  pretends it is will grade the wrong thing.** The app joins the shared
+  library on top: 322 entries from `data.json`, 356 with his custom map,
+  **769** in the app. Every harness reads it through one door —
+  `engine.js`'s `catalogFor(shelf)` and `loadShelf(page, shelf)`, the
+  second of which refuses a page holding fewer than 400 entries rather than
+  quietly grading a third of a shelf.
+- **A library entry carries BOTH `dist` and `brand`** (BZ, 2026-11-02:
+  "dist stays the distillery, add a brand field"). `dist` is who made it,
+  `brand` is the name on the label; Redbreast, Spot and Powers are all
+  Midleton. Everything that asks "is this bottling this house's" asks
+  `L.houseHas`, which reads either field, and everything that asks where a
+  house IS asks `L.geoFor`, which tries the house key and then the brand
+  against a table built by `L.geoIndex`. Before those existed nine of his
+  brands could not be asked for at all and 47 of his owned bottlings sat
+  on no pin.
 - **The bar shelf is inventory, and `L.isWhisky` / `L.NOT_WHISKY` are the
   one place that says which is which.** Rum, vodka, gin, mezcal, tequila,
   liqueur and FLAVORED count as bottles and are excluded from every
@@ -513,7 +543,8 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `consistency.js` | the wiring checks |
 | `browser.js` | the walk |
 | `answers.js` | what the answers say, graded against the real shelf |
-| `engine.js` | loads the `L.` engine out of index.html for every tool |
+| `engine.js` | loads the `L.` engine out of index.html for every tool — and the one door to BZ's real shelf: `shelf(dir)`, `catalogFor(shelf)` and `loadShelf(page, shelf)`, which refuses a page holding less than the catalogue his app runs |
+| `snapshot.js` | **refetches the four sealed shelf files from the live database**, dry-run by default. Nothing had this before 2026-11-02 and the snapshot was 42 days old |
 | `popular.js` | the nightly what's-popular count (`.github/workflows/popular.yml`) |
 | `shots.js` | every screen at phone size, into `shots/` |
 | `check.js` `checks.json` | **the one way to run the checks** — four at a time, longest first, only the ones a change can break; the table both it and `gate.py` read |

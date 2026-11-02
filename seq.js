@@ -93,18 +93,21 @@ function faultsOf() {
   await p.waitForTimeout(1300);
 
   /* BZ's shelf and flights, because the faults live on full screens. */
-  const { bottles: bots, flights: flts, custom } = require('./engine.js').shelf(dir);
-  await p.evaluate(([bs, fl, cu]) => {
-    S.bottles = bs;
-    /* AND THE PRODUCTS ONLY HIS ACCOUNT KNOWS, or 34 of his bottles have
-       no product and the screens draw a poorer shelf than he has. */
-    S.custom = cu;
+  const eng = require('./engine.js');
+  const shelf = eng.shelf(dir);
+  /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set S.bottles
+     and S.custom by hand and not one joined the shared library, so each
+     graded his real shelf against a catalogue of 322 entries in which 53 of
+     his 356 owned bottlings did not exist. eng.loadShelf is the door, and it
+     refuses a catalogue that short. */
+  await eng.loadShelf(p, shelf);
+  await p.evaluate(fl => {
     if (fl && fl.length) S.flights = fl;
     /* The fill rail is what turns the detail body into a row, so it is ON:
        a check that cannot reproduce the fault is not a check. */
     S.showFill = true;
     save_(); rebuildCatalog();
-  }, [bots, flts, custom]);
+  }, shelf.flights);
 
   const names = Object.keys(SCREENS);
   const failures = [];

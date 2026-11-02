@@ -97,6 +97,22 @@ const config = {
     'valid-typeof': 'error'
   }
 };
+/* A LINE OF THE JOINED SCRIPT AS A LINE OF index.html. The blocks are
+   joined with one newline each, so a joined line sits in the block whose
+   span contains it, offset by where that block opened in the file. eslint's
+   own findings already go through this arithmetic (b.line + x.line - 1);
+   the two engine reports did not, and with a second script block one day
+   they would be wrong by the length of the first. */
+const blockLines = blocks.map(b => b.code.split('\n').length);
+const fileLine = function (joined) {
+  let n = joined;
+  for (let i = 0; i < blocks.length; i++) {
+    if (n <= blockLines[i]) return blocks[i].line + n - 1;
+    n -= blockLines[i] + 1;
+  }
+  return blocks[0].line;
+};
+
 /* THE ENGINE'S OWN NAMES, which eslint cannot check. L is one object, so a
    call to a function that was never defined is a member access on a declared
    variable and no-undef says nothing - which is how L.syncList shipped past a
@@ -109,12 +125,45 @@ const config = {
    call, and a check satisfied by its own explanatory comment is how two of
    these have gone vacuous before. */
 const bare = all
-  .replace(/\/\*[\s\S]*?\*\//g, ' ')
-  .replace(/^\s*\/\/.*$/gm, ' ')
+  /* KEEPING THE NEWLINES OF WHAT IT BLANKS, because the two reports below
+     count lines in this string and nothing else does. Collapsing a 10-line
+     comment to one space moved every line after it: the engine's own banner
+     comment is 2,000 lines up from the first function, so engine-undefined
+     has been pointing thousands of lines above the call it found since the
+     day it was written - right about there BEING a fault, wrong about where,
+     which is the worst kind of right. */
+  .replace(/\/\*[\s\S]*?\*\//g, c => c.replace(/[^\n]/g, ' '))
+  .replace(/^(\s*)\/\/.*$/gm, '$1')
 const engineDef = new Set();
+/* AND WHERE EACH ONE WAS DEFINED, because a name defined twice is a name
+   whose first definition has been silently thrown away (2026-11-02). A new
+   L.brandIndex replaced the existing one - the index of the brands registry
+   L.brandOf reads - and took twelve identity assertions down with it; this
+   check passed, and so did `no-dupe-keys`, because these are assignments to
+   a plain object and not keys in a literal. Fifty-eight engine names carry
+   `house` or `brand` and more arrive every build, so a collision is a matter
+   of when. Not a style rule: whichever definition loses, something that used
+   to work stops.
+   A FUNCTION OR AN ARROW ONLY. Reassigning a plain field is a normal thing
+   to do - a counter, a memo cache - so only a definition whose right-hand
+   side opens a function counts, which is what a door is. */
+const engineWhere = new Map();
+const engineTwice = new Map();
 let dm;
 const defRe = /\bL\.([A-Za-z0-9_]+)\s*=[^=]/g;
-while ((dm = defRe.exec(bare))) engineDef.add(dm[1]);
+while ((dm = defRe.exec(bare))) {
+  engineDef.add(dm[1]);
+  const rest = bare.slice(dm.index + dm[0].length - 1, dm.index + 200);
+  if (!/^\s*(?:function\b|\([^)]*\)\s*=>|[A-Za-z0-9_$]+\s*=>)/.test(rest)) {
+    continue;
+  }
+  const line = fileLine(bare.slice(0, dm.index).split('\n').length);
+  if (engineWhere.has(dm[1])) {
+    engineTwice.set(dm[1], engineWhere.get(dm[1]) + ' and ' + line);
+  } else {
+    engineWhere.set(dm[1], String(line));
+  }
+}
 /* A CALL, not a read: data is declared and read the same way, so only a
    name followed by ( is something that has to exist as a function. */
 const engineMissing = new Map();
@@ -122,13 +171,20 @@ let cm;
 const callRe = /\bL\.([A-Za-z0-9_]+)\s*\(/g;
 while ((cm = callRe.exec(bare))) {
   if (engineDef.has(cm[1]) || engineMissing.has(cm[1])) continue;
-  engineMissing.set(cm[1], bare.slice(0, cm.index).split('\n').length);
+  engineMissing.set(cm[1],
+    fileLine(bare.slice(0, cm.index).split('\n').length));
 }
 
 let problems = [];
 engineMissing.forEach((line, name) => {
   problems.push({ line: line, rule: 'engine-undefined',
     text: 'L.' + name + ' is called and never defined' });
+});
+engineTwice.forEach((lines, name) => {
+  problems.push({ line: Number(String(lines).split(' and ')[1]) || 1,
+    rule: 'engine-defined-twice',
+    text: 'L.' + name + ' is defined twice, on lines ' + lines
+      + ' - the second one replaces the first' });
 });
 blocks.forEach(b => {
   const msgs = linter.verify(b.code, config, { filename: 'index.html' });
@@ -150,8 +206,8 @@ problems = problems.filter(p =>
   ALLOWED.indexOf(p.rule + ':' + p.text) < 0);
 
 if (!problems.length) {
-  console.log('  \u2713 nothing undefined, duplicated or unreachable in '
-    + blocks.length + ' script block'
+  console.log('  \u2713 nothing undefined, defined twice, duplicated or '
+    + 'unreachable in ' + blocks.length + ' script block'
     + (blocks.length === 1 ? '' : 's'));
   process.exit(0);
 }

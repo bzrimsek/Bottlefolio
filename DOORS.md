@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1087 |
+| functions | 1094 |
 | tables | 256 |
-| carrying a stated purpose | 877 |
+| carrying a stated purpose | 882 |
 
 ## Tables
 
@@ -77,9 +77,9 @@ QUESTION, not the name you were going to use.
 - **`L.FINISH_TIERS`** — How far a bottle was finished, which is a different question from WHICH
 - **`L.FIT_GROUPS`** — _no comment above it_
 - **`L.FLAVOR_ANCHOR`** — THE TWO SECONDARY NODES
-- **`L.FLAVOR_NOT`** — Tested against all 607 product names the app knows
+- **`L.FLAVOR_NOT`** — MARSHMALLOW TOAST JOINED ON 2026-11-02, and it is the clearest case yet
 - **`L.FLAVOR_ORDER`** — This ORDERS, it never gates
-- **`L.FLAVOR_WORDS`** — Tested against all 607 product names the app knows
+- **`L.FLAVOR_WORDS`** — _no comment above it_
 - **`L.FLAVOUR_ENDINGS`** — DOES THIS BOTTLE CARRY THAT FLAVOUR? A word may be a fine term, one of its
 - **`L.FLAVOUR_FORMS_MEMO`** — THE WORDS THAT COUNT AS ONE FLAVOUR WORD, worked out once per word rather
 - **`L.FLAVOUR_WORDS`** — Flights built around a FLAVOR.
@@ -121,7 +121,7 @@ QUESTION, not the name you were going to use.
 - **`L.LESSONS`** — THE SHAPES A SHELF CAN TEACH, said the way the designer says them.
 - **`L.LIB_IMPORT_FIELDS`** — THE EXPORT, READ BACK IN
 - **`L.LIBRARY_BOOKKEEPING`** — A LIBRARY ROW AS THIS SHELF'S COPY OF IT (BZ, 2026-09-19
-- **`L.LIBRARY_COLS`** — THE LIBRARY, AS A SPREADSHEET
+- **`L.LIBRARY_COLS`** — BRAND SITS BESIDE DISTILLERY AND IS NOT IT
 - **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
 - **`L.LIBRARY_OWN`** — AND WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS
 - **`L.LIKELY_SOURCES`** — What each source is, in words, so a row says where it came from.
@@ -220,7 +220,7 @@ QUESTION, not the name you were going to use.
 - **`L.SCOTCH_REGIONS`** — _no comment above it_
 - **`L.SEARCH_COVERS`** — include sherry, so this expands one way only.
 - **`L.SEARCH_EQUAL`** — either must return the same set, in both directions.
-- **`L.SETTINGS_TABS`** — ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01
+- **`L.SETTINGS_TABS`** — THE LABELS ARE SHORT BECAUSE THE STRIP IS 358px WIDE (2026-11-02).
 - **`L.SHEET_COLUMNS`** — it again, which nobody gets wrong and everybody has an opinion about.
 - **`L.SHEET_PROMPTS`** — _no comment above it_
 - **`L.SHEET_ROW_MM`** — HOW TALL A WRITING ROW CAN BE, so the sheet stays on one landscape page.
@@ -342,6 +342,7 @@ QUESTION, not the name you were going to use.
 - **`L.barRows`** — pies: readers compare lengths better than angles.
 - **`L.baselineOf`** — _no comment above it_
 - **`L.benchFor`** — THE BENCH: more of the same flight, brought out if the night has legs.
+- **`L.bestSpelling`** — THE SPELLING MOST OF A HOUSE'S BOTTLES USE, with ties to the longest -
 - **`L.blendProof`** — rather than treating it as unknown.
 - **`L.blindGiven`** — bottles were swapped in is not.
 - **`L.blindTheme`** — so the theme is built from the flight's shape instead.
@@ -570,6 +571,8 @@ QUESTION, not the name you were going to use.
 - **`L.gapsFromThinness`** — THE SHELF, NOT THE CATALOG
 - **`L.gapsFromWish`** — a reason; the reason was recorded.
 - **`L.gapsOneAwayLine`** — THE HEADER SAYS WHAT NOTHING ELSE ON THE SCREEN SAYS
+- **`L.geoFor`** — _no comment above it_
+- **`L.geoIndex`** — TWO KEYS REACH ONE PLACE
 - **`L.giftAnswer`** — WHAT THE SHOPPER IS TOLD
 - **`L.giftAvoidable`** — AN AVOID MUST NOT CONTRADICT THE SHELF (BZ, 2026-10-17
 - **`L.giftFromUrl`** — THE TOKEN OUT OF A LINK.
@@ -637,6 +640,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseCountry`** — WHAT COUNTRY A HOUSE WORKS IN, read off the library rather than declared.
 - **`L.houseFaults`** — _no comment above it_
 - **`L.houseGap`** — _no comment above it_
+- **`L.houseHas`** — IS THIS BOTTLING THIS HOUSE'S? EITHER FIELD ANSWERS IT
 - **`L.houseIndex`** — EVERY HOUSE THE CATALOG KNOWS, as entities rather than strings
 - **`L.houseInterest`** — HOW MUCH A BOTTLING ADDS TO A HOUSE YOU ALREADY HOLD (BZ, 2026-09-27:
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
@@ -649,11 +653,13 @@ QUESTION, not the name you were going to use.
 - **`L.houseRegion`** — WHAT REGION A HOUSE IS IN, read off the catalog
 - **`L.houseResolve`** — The canonical name for a house, following aliases
 - **`L.houseSame`** — _no comment above it_
+- **`L.housesByBrand`** — AND THE BRANDS, WHICH ARE NOT THE SAME THING (BZ, 2026-11-02).
 - **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
 - **`L.houseSplit`** — _no comment above it_
 - **`L.houseSplitRows`** — THE BOTTLES UNDER THE SPELLING FEWER OF THEM USE, keyed so a row opens one.
 - **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT (2026-09-30)
 - **`L.housesThatDoNotPublish`** — _no comment above it_
+- **`L.housesToAsk`** — EVERY NAME A QUESTION MAY USE FOR A HOUSE - the distilleries and the
 - **`L.houseTakeBack`** — PUTTING ONE BACK
 - **`L.houseTitle`** — WHAT THE FINDING IS CALLED AND WHY, beside the rule rather than inside the
 - **`L.houseVariants`** — HOUSES THAT ARE ONE HOUSE SPELLED TWO WAYS.
@@ -872,6 +878,7 @@ QUESTION, not the name you were going to use.
 - **`L.noteMerge`** — A NOTE SOMEBODY WROTE, ADDED TO
 - **`L.noteMiss`** — One more miss against a bottle, with today's date - the same { no, at }
 - **`L.notePartial`** — _no comment above it_
+- **`L.notePrompt`** — A PROMPT IS A PHRASE, NOT A PARAGRAPH (BZ, 2026-11-02
 - **`L.noteSearchMiss`** — NAMED FOR SEARCHES
 - **`L.notesFor`** — _no comment above it_
 - **`L.noteText`** — a hypothesis

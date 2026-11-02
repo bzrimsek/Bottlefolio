@@ -27,10 +27,13 @@ const L = eng().L;
 const dir = __dirname;
 const only = process.argv.indexOf('--faults') >= 0;
 
-const { bottles, custom } = eng.shelf(dir);
-const base = JSON.parse(fs.readFileSync(path.join(dir, 'data.json'), 'utf8'))
-  .catalog || {};
-const cat = L.mergeCatalog(base, {}, custom || {}, {});
+/* THROUGH THE ONE CATALOGUE DOOR (2026-11-02). This built the catalogue
+   itself out of data.json and his custom products, which left the shared
+   library out - 53 of his 356 owned bottlings had no entry at all, and this
+   is the check whose whole job is to say which of his rows are wrong. */
+const shelf = eng.shelf(dir);
+const bottles = shelf.bottles;
+const cat = eng.catalogFor(shelf, dir);
 const owned = L.ownedCounts(bottles);
 const mine = Object.keys(owned).map(k => cat[k]).filter(Boolean);
 
@@ -119,6 +122,139 @@ if (!only) {
         console.log('        ' + String(i.text || '').slice(0, 90)));
       if ((f.items || []).length > 3) console.log('        ...');
     });
+  } else none();
+}
+
+/* 7. ONE DISPLAY NAME, TWO CATALOGUE ENTRIES. Found on 2026-11-02, the day
+   the harnesses first loaded the shared library: data.json ships "Angel's
+   Envy Bourbon Madeira Cask Finish" whose name was later corrected to the
+   library's longer one, so the catalogue carries that display name twice -
+   once under the old key with nothing owned, once under the new key with his
+   bottle. The app then offers him a bottle he already has, and a check that
+   resolves a row by its name reads whichever copy comes first.
+   WHY NOT JUST RENAME THE KEY: one account holds a bottle under one of the
+   two old keys, and renaming the entry out from under it would make an owned
+   bottle invisible, which is the one thing that may never happen. The repair
+   is a forwarding address - a grave from the old key to the new name, which
+   an admin writes - so this names the keys rather than guessing. */
+head('One display name, two catalogue entries');
+{
+  const byName = {};
+  Object.keys(cat).forEach(k => {
+    const n = ((cat[k] || {}).name || '').trim();
+    if (n) (byName[n] = byName[n] || []).push(k);
+  });
+  const twice = Object.keys(byName).filter(n => byName[n].length > 1);
+  if (twice.length) {
+    twice.forEach(n => {
+      console.log('  ' + n);
+      byName[n].forEach(k => console.log('      filed under "' + k + '"'
+        + '   you own ' + (owned[k] || 0)));
+    });
+    console.log('  \u2014 the repair is a forwarding address from the old '
+      + 'key to the new name, written by an admin; renaming the entry '
+      + 'instead would orphan anybody holding a bottle under the old key');
+  } else none();
+}
+
+/* 8. TWO BOTTLES OF ONE WHISKY BOTH OPEN. BZ's stocking rule, and it lived in
+   killer-bs-test as a build-failing assertion until 2026-11-02 - where it went
+   red because he opened a second Woodford, which is a gate anybody would turn
+   off. It is about his data, so it reports here and stops nothing. */
+head('Two bottles of one whisky, both open');
+{
+  const byKey = {};
+  bottles.forEach(b => { if (b && b.k) (byKey[b.k] = byKey[b.k] || []).push(b); });
+  const twoOpen = Object.keys(byKey)
+    .filter(k => byKey[k].filter(b => b.status === 'open').length > 1);
+  if (twoOpen.length) {
+    twoOpen.forEach(k => console.log('  ' + k + '   '
+      + byKey[k].filter(b => b.status === 'open').length + ' open'));
+    console.log('  \u2014 close one, or the pour picker offers you the same '
+      + 'whisky twice');
+  } else none();
+
+  /* AND A FINISHED BOTTLE WHOSE ENTRY HAS GONE. Not inventory nobody can see -
+     he has drunk it - but the row still carries the key, and two of his name a
+     library key rather than a display name, which is the thing to watch: that
+     is how a bottle gets added today and it would be invisible if it were
+     still open. */
+  head('Finished bottles whose entry has gone');
+  const lost = bottles.filter(b => b && b.k && !L.isOwned(b) && !cat[b.k]);
+  if (lost.length) {
+    lost.forEach(b => console.log('  ' + b.id + '  ' + b.status
+      + '   "' + b.k + '"'));
+    console.log('  \u2014 nothing is hidden by these, but a key shaped like '
+      + 'a library slug on an OPEN row would be');
+  } else none();
+}
+
+/* 9. HIS BOTTLES WITH NO PIN ON THE MAP. Found on 2026-11-02 when the
+   harnesses first loaded the shared library and the map counts FELL while his
+   shelf grew: map.json pins a distillery by the name data.json used, and the
+   library names the distillery that actually MADE the whiskey, so Spot,
+   Powers and Redbreast became Midleton and Angel's Envy became Louisville
+   Distilling.
+
+   WHAT IS LEFT AFTER L.geoFor. 47 of the 78 were a code fault and the door
+   fixed them the same day by reading the house key and then the brand; this
+   asks the door, so what it lists now is a house map.json has never held a
+   point for under any name. Asking the raw table instead would keep naming
+   houses the app places perfectly well, which is how a report earns being
+   ignored.
+
+   ONLY WHERE THERE IS A LAYER TO BE ON. The app draws Scotland, the United
+   States and Ireland; a Japanese or Caribbean bottle is absent from those
+   three by design, and listing Bacardi as unplaced is noise. A blend whose
+   "distillery" is a blender with no single place (Johnnie Walker, Dewar's,
+   Diageo) has no pin on purpose and is listed, because the difference
+   between that and a gap is worth seeing. */
+if (!only) {
+  head('Owned bottlings with no pin on the map');
+  const map = JSON.parse(fs.readFileSync(path.join(dir, 'map.json'), 'utf8'));
+  const LAYERS = [['scotch', 'distilleries'], ['irish', 'ieDistilleries']]
+    .concat(L.US_SUBS.map(s => [s, 'usDistilleries']));
+  const layerOf = {};
+  LAYERS.forEach(([sub, table]) => { layerOf[sub] = table; });
+  const geo = {};
+  Object.keys(map).forEach(t => {
+    if (map[t] && typeof map[t] === 'object' && !Array.isArray(map[t])) {
+      geo[t] = L.geoIndex(map[t]);
+    }
+  });
+  /* BY HOUSE, THE WAY THE MAP ASKS IT. L.mapPins places a house and then
+     puts all of its bottlings on that one pin, so a brandless Redbreast PX
+     rides Midleton's point even though the bottling alone answers nothing.
+     Asking per bottling listed three rows the map draws perfectly well. */
+  const mine = {};
+  Object.keys(owned).forEach(k => {
+    const p = cat[k];
+    if (!p || !p.dist) return;
+    const table = layerOf[p.sub];
+    if (!table) return;                 // no layer draws this category
+    const id = table + ' ' + L.houseKey(p.dist);
+    const h = mine[id] = mine[id] || { placed: false, rows: [] };
+    if (L.geoFor(p, geo[table])) h.placed = true;
+    h.rows.push(p);
+  });
+  const byDist = {};
+  Object.values(mine).forEach(h => {
+    if (h.placed) return;
+    h.rows.forEach(p => {
+      const row = byDist[p.dist] = byDist[p.dist] || { n: 0, bottles: 0 };
+      row.n++;
+      row.bottles += owned[p.k];
+    });
+  });
+  const names = Object.keys(byDist)
+    .sort((a, b) => byDist[b].bottles - byDist[a].bottles);
+  if (names.length) {
+    names.forEach(d => console.log('  ' + d.slice(0, 40).padEnd(42)
+      + byDist[d].n + ' bottling(s), ' + byDist[d].bottles + ' bottle(s)'));
+    console.log('  \u2014 ' + names.reduce((n, d) => n + byDist[d].n, 0)
+      + ' bottlings over ' + names.length + ' distilleries, on the three '
+      + 'maps the app draws. The repair is a pin in map.json for each one '
+      + 'that has a place');
   } else none();
 }
 

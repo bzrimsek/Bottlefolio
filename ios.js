@@ -61,12 +61,13 @@ const serve = (p, dir) => p.route('http://app.local/**', r => {
 
   /* BZ's real shelf, so the screens have more on them than a phone can show.
    * An empty shelf scrolls beautifully because there is nothing on it. */
-  const { bottles, custom, flights } = require('./engine.js').shelf(dir);
-  await p.evaluate(([bs, cu, fl]) => {
-    S.bottles = bs; S.custom = cu;
-    if (fl && fl.length) S.customFlights = fl;
-    save_(); rebuildCatalog();
-  }, [bottles, custom, flights]);
+  const eng = require('./engine.js');
+  /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set S.bottles
+     and S.custom by hand and not one joined the shared library, so each
+     graded his real shelf against a catalogue of 322 entries in which 53 of
+     his 356 owned bottlings did not exist. eng.loadShelf is the door, and it
+     refuses a catalogue that short. */
+  await eng.loadShelf(p, eng.shelf(dir));
 
   if (threw.length) {
     bad('the app loads in WebKit without throwing', threw.join('\n'));

@@ -2668,6 +2668,12 @@ function libraryEntryFields(p, form) {
    (rule 30f). */
 const LIB_EDIT_FIELDS = [
   ['proof', 'Proof', 'number'], ['dist', 'Distillery', 'text'],
+  /* THE NAME ON THE LABEL, which is not always the distillery's. Redbreast,
+     Spot and Powers are made at Midleton; filing only the maker left nine
+     of his houses unaskable (2026-11-02). It is beside dist rather than
+     instead of it, and it may be left blank when they are the same word -
+     L.houseHas reads either field. */
+  ['brand', 'Brand', 'text'],
   ['country', 'Country', 'text'], ['sub', 'Category', 'text'],
   ['style', 'Style', 'text'],
   ['age', 'Age', 'number'], ['fin', 'Cask', 'text'],

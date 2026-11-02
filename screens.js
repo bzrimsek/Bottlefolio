@@ -39,10 +39,15 @@ const dir = __dirname;
     r.fulfill({status:200,contentType:t,body:fs.readFileSync(f)});
   });
   await p.goto('http://app.local/index.html'); await p.waitForTimeout(1200);
-  const { bottles: bots, custom } = require('./engine.js').shelf(dir);
+  const eng = require('./engine.js');
+    /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set
+       S.bottles and S.custom by hand and not one joined the shared library,
+       so each graded his real shelf against a catalogue of 322 entries in
+       which 53 of his 356 owned bottlings did not exist. eng.loadShelf is
+       the door, and it refuses a catalogue that short. */
+  await eng.loadShelf(p, eng.shelf(dir));
   // drive the screen directly: no clicking, no waiting on selectors
-  const out = await p.evaluate(([b, cu])=>{
-    S.bottles=b; S.custom=cu; save_(); rebuildCatalog();
+  const out = await p.evaluate(()=>{
     const r={};
     ['store','plan','offer','online'].forEach(m=>{
       S.shopMode=m; S.shop={}; S.shopFound=null;
@@ -545,7 +550,7 @@ const dir = __dirname;
       r.backs=document.querySelectorAll('#shopBack').length;
     } catch(e){ r.named='THREW '+e.message; r.where=(e.stack||'').split('\n')[1]; }
     return r;
-  },[bots, custom]);
+  });
   /* EMPTY FAILS TOO. The verdict asked for THREW alone, so every check here
      that answers EMPTY - the modal sheets, and the settings tabs - printed a
      word nobody acted on and passed. A sheet that opens with no controls in it

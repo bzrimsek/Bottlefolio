@@ -53,14 +53,16 @@ function check(name, got, want) {
 
   // BZ's real shelf and his real flights, because a fixture of three
   // bottles cannot disagree with itself.
-  await page.evaluate(([b, f, cu]) => {
+  /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set S.bottles
+     and S.custom by hand and not one joined the shared library, so each
+     graded his real shelf against a catalogue of 322 entries in which 53 of
+     his 356 owned bottlings did not exist. eng.loadShelf is the door, and it
+     refuses a catalogue that short. */
+  const eng = require('./engine.js');
+  await eng.loadShelf(page, eng.shelf(dir));
+  await page.evaluate(() => {
     /* global S, save_, rebuildCatalog, renderShelf, renderShelfFilters,
               renderHome, renderFlights, renderPayline */
-    S.bottles = b;
-    S.customFlights = f;
-    /* And the products only his account knows, or 34 of his bottles have
-       no product to compare the screen against. */
-    S.custom = cu;
     S.filters.status = 'all';
     // The shelf opens on the type tiles, which are a way IN rather than a
     // list; there is nothing to compare until it is listing.
@@ -68,8 +70,7 @@ function check(name, got, want) {
     save_(); rebuildCatalog();
     renderShelf(); renderShelfFilters(); renderHome();
     renderFlights(); renderPayline();
-  }, (sh => [sh.bottles, sh.flights, sh.custom])(
-       require('./engine.js').shelf(dir)));
+  });
   await page.waitForTimeout(500);
 
   /* 1. THE SHELF ROW against the engine.
@@ -86,8 +87,19 @@ function check(name, got, want) {
         const cells = [...r.querySelectorAll('.pf')].map(x => x.textContent.trim());
         if (!nm) return;
         const name = nm.textContent.trim();
-        const key = Object.keys(S.catalog).filter(k =>
-          (S.catalog[k].name || '') === name)[0];
+        /* THE KEY THE SHELF COUNTS THIS ROW UNDER, not the first entry
+           that happens to share its display name (2026-11-02). Two entries
+           CAN share one: data.json ships "Angel's Envy Bourbon Madeira Cask
+           Finish" whose name was later corrected to the library's longer
+           one, so the catalogue holds the same display name twice - once
+           under the old key with none owned, once under the new key with
+           his bottle. Taking the first match read the empty one and called
+           a correct row a disagreement. The row was drawn FOR a bottle he
+           owns, so the entry it means is the one he owns it under. */
+        const held = L.ownedCounts(S.bottles);
+        const hits = Object.keys(S.catalog).filter(k =>
+          (S.catalog[k].name || '') === name);
+        const key = hits.filter(k => held[k])[0] || hits[0];
         if (!key) { out.push({ name: name, unknown: true }); return; }
         const p = S.catalog[key];
         out.push({

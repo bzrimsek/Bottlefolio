@@ -130,19 +130,21 @@ function step(n) {
   // with an empty shelf — so every check below would be testing an empty
   // app. BZ's own bottles and flights sit beside it and are loaded here,
   // because the faults that reached him were on screens with 325 rows.
-  const bots = path.join(dir, 'bz-bottles.json');
-  const flts = path.join(dir, 'bz-flights.json');
-  if (fs.existsSync(bots)) {
-    await page.evaluate(([b, f]) => {
+  /* THROUGH THE ONE SHELF LOADER (2026-11-02). This read the two files
+     itself and set S.bottles and S.customFlights, which left out his custom
+     products AND the shared library - so the walk went round an app whose
+     catalogue held 322 entries where his holds 769. eng.loadShelf is the
+     door and it refuses a catalogue that short. */
+  if (fs.existsSync(path.join(dir, 'bz-bottles.json'))) {
+    const eng = require('./engine.js');
+    await eng.loadShelf(page, eng.shelf(dir));
+    await page.evaluate(() => {
       /* global S, save_, rebuildCatalog, renderShelf, renderShelfFilters,
                 renderHome, renderFlights */
-      S.bottles = b;
-      if (f) S.customFlights = f;
       save_();
       rebuildCatalog();
       renderShelf(); renderShelfFilters(); renderHome();
-    }, [JSON.parse(fs.readFileSync(bots, 'utf8')),
-        fs.existsSync(flts) ? JSON.parse(fs.readFileSync(flts, 'utf8')) : null]);
+    });
     await page.waitForTimeout(240);
   }
 

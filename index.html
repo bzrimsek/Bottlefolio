@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.24  Build 2026-11-02 09:16 AM ET
+     Version : v2.9.26  Build 2026-11-02 12:03 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.26  2026-11-02  Cut as v2.9.25 and shipped as this, because verifying the brand ruling found the other half of it and a half-fixed ruling is worse than a stated gap.
+// v2.9.25  2026-11-02  Every harness that claims to grade his real shelf was grading a catalogue his app does not have, and fixing the bench found six faults in the app.
 // v2.9.24  2026-11-02  Settings loses the Advanced tab, and the lookup settings move to the admin portal (BZ: "why is any of this needed?
 // v2.9.23  2026-11-01  A private copy under a merged-away key clears itself.
 // v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
@@ -19,8 +21,6 @@ CHANGELOG
 // v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
 // v2.9.18  2026-10-27  The library has a door anybody can find.
 // v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
-// v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
-// v2.9.15  2026-10-27  The first press of Sign in now works.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.24';
-const BUILD_TIME  = '2026-11-02 09:16 AM ET';
+const APP_VERSION = '2.9.26';
+const BUILD_TIME  = '2026-11-02 12:03 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -4991,24 +4991,93 @@ L.mapExtent = function (rings, pad) {
   return { x: x0 - m, y: y0 - m, w: (x1 - x0) + m * 2, h: (y1 - y0) + m * 2 };
 };
 
+/* WHERE A HOUSE IS, not where a STRING is. One door, because the pins, the
+   state map, the country counts and the category guess all read a
+   name-keyed geography table and all four read it by exact match on the
+   spelling the entry happened to carry (rule 30d).
+
+   WHY EXACT MATCH STOPPED WORKING: the library files a bottling under the
+   distillery that MADE it, and these tables were built from the names on
+   the bottles. 23 Midleton bottles arrived under "Midleton" while every
+   Irish pin is a brand - Spot, Redbreast, Powers - so the map placed none
+   of them. The same rename moved Angel's Envy to Louisville Distilling,
+   Jefferson's to Kentucky Artisan, 1792 to Barton 1792 Distillery.
+
+   TWO KEYS REACH ONE PLACE. The house's own key first, so a suffix or a
+   possessive cannot hide it ("Kilchoman" and "Kilchoman Distillery" are one
+   house); then the brand's, because a brand IS a place when the table was
+   written from brands. 47 of his 389 owned bottles, measured 2026-11-02,
+   and 0 of the 36 names in worldDist could be read at all - see
+   subFromHouse. */
+L.geoIndex = function (table) {
+  const out = {};
+  Object.keys(table || {}).forEach(n => {
+    const id = L.houseKey(n);
+    /* THE FIRST SPELLING WINS, so a table carrying both "Kilchoman" and
+       "Kilchoman Distillery" answers the same whichever order it is read
+       in. */
+    if (id && !(id in out)) out[id] = table[n];
+  });
+  return out;
+};
+
+L.geoFor = function (p, index) {
+  if (!p || !index) return undefined;
+  /* THE DISTILLERY FIRST: a brand's pin stands in for the place that made
+     it, so when the place itself is in the table it is the better answer. */
+  const d = L.houseKey(p.dist);
+  if (d && index[d] !== undefined) return index[d];
+  const b = L.houseKey(p.brand);
+  if (b && index[b] !== undefined) return index[b];
+  return undefined;
+};
+
+/* THE SPELLING MOST OF A HOUSE'S BOTTLES USE, with ties to the longest -
+   the one carrying the suffix somebody typed in full. One door: the house
+   registry and the map both label a house and a second copy of this would
+   let them disagree about what to call one place. */
+L.bestSpelling = function (counts) {
+  return Object.keys(counts || {}).sort((a, b) =>
+    counts[b] - counts[a] || b.length - a.length)[0] || null;
+};
+
 // One pin per distillery: how many bottles, which region, where. `subs`
 // limits the categories placed, so one function serves every layer.
 L.mapPins = function (catalog, coords, bottles, subs) {
   /* Owned only: a pin is a claim about this shelf. */
   const own = L.ownedCounts(bottles);
+  const geo = L.geoIndex(coords);
   const by = {};
   Object.values(catalog).forEach(p => {
     if (!own[p.k]) return;
     if (subs ? subs.indexOf(p.sub) < 0 : p.sub !== 'scotch') return;
-    if (!coords[p.dist]) return;
-    const e = by[p.dist] || (by[p.dist] = {
-      dist: p.dist, region: p.region || null, lon: coords[p.dist][0],
-      lat: coords[p.dist][1], total: 0, open: 0, keys: [] });
+    /* BY HOUSE, NOT BY SPELLING, and placed after the group is whole. Two
+       spellings of one distillery used to draw two pins on one point; worse,
+       a bottling whose own spelling is unpinned was dropped even when a
+       sibling from the same house carried the pin, which is how three
+       Louisville Distilling bottles went missing while nine of them were
+       placed through their brand. */
+    const id = L.houseKey(p.dist);
+    if (!id) return;
+    const e = by[id] || (by[id] = { dist: p.dist, region: p.region || null,
+      lon: null, lat: null, total: 0, open: 0, keys: [], spellings: {} });
+    if (e.lon === null) {
+      const at = L.geoFor(p, geo);
+      if (at) { e.lon = at[0]; e.lat = at[1]; }
+    }
+    if (!e.region && p.region) e.region = p.region;
+    e.spellings[p.dist] = (e.spellings[p.dist] || 0) + 1;
     e.total++;
     e.keys.push(p.k);
     if (L.pourable(p.k, bottles)) e.open++;
   });
   const pins = Object.values(by)
+    .filter(e => e.lon !== null)        // a house nothing places is no pin
+    .map(e => {
+      const out = Object.assign({}, e, { dist: L.bestSpelling(e.spellings) });
+      delete out.spellings;
+      return out;
+    })
     .sort((a, b) => b.total - a.total || a.dist.localeCompare(b.dist));
 
   // Brands sharing a site land on one point, and a pin under another can
@@ -5151,7 +5220,8 @@ L.zoomAbout = function (view, full, factor, fx, fy) {
 
 
 L.countryOf = function (p, subCountry, worldDist) {
-  return (worldDist && worldDist[p.dist]) || (subCountry && subCountry[p.sub]) || null;
+  return L.geoFor(p, L.geoIndex(worldDist))
+    || (subCountry && subCountry[p.sub]) || null;
 };
 
 L.countryCounts = function (catalog, subCountry, worldDist, bottles) {
@@ -5174,11 +5244,12 @@ L.US_SUBS = ['bourbon', 'rye', 'tennessee', 'wheat', 'american single malt', 'fl
 L.stateCounts = function (catalog, stateOf, bottles) {
   /* Owned only, as with the countries and the pins. */
   const own = L.ownedCounts(bottles);
+  const geo = L.geoIndex(stateOf);
   const by = {};
   Object.values(catalog).forEach(p => {
     if (!own[p.k]) return;
     if (L.US_SUBS.indexOf(p.sub) < 0) return;
-    const s = stateOf[p.dist];
+    const s = L.geoFor(p, geo);
     if (!s) return;                      // unconfirmed bottler: not placed
     const e = by[s] || (by[s] = { name: s, total: 0, open: 0, keys: [] });
     e.total++; e.keys.push(p.k);
@@ -5371,8 +5442,12 @@ L.houseCountry = function (catalog) {
 L.subFromHouse = function (style, dist, houses) {
   // Only called by L.guessSub, the single answerer for this question; its
   // own function so it can be tested against a real catalog.
-  const k = L.shopNorm(String(dist || '').replace(L.HOUSE_SUFFIX, ' '));
-  const c = k && houses ? houses[k] : null;
+  /* THROUGH THE HOUSE KEY ON BOTH SIDES. It normalised the name it was
+     given and then looked the result up in a table keyed by display
+     spellings, so it answered for 0 of the 36 names in the only table the
+     app ever hands it (measured 2026-11-02) - a path that has never once
+     settled a category. */
+  const c = L.geoFor({ dist: dist }, L.geoIndex(houses));
   if (!c) return null;
   if (c === 'Scotland') return 'scotch';
   if (c === 'Ireland') return 'irish';
@@ -9458,7 +9533,7 @@ L.FEATURES = [
   { term: 'Delete account', src: 'Settings, beside Sign out',
     def: 'Removes your shelf, flights and pours, your directory entry, every share both ways, requests and unreviewed offers, then the sign-in itself. Type DELETE to confirm, and take the backup it offers first. Two things stay: what is already in the library, and shelves others shared with you. An admin account needs its admin line removed in the Firebase console.' },
   { term: 'Settings', src: 'the gear',
-    def: 'Five tabs. Account and Data holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Buddies, Guide, and Help and About follow. There was a sixth tab, Advanced, until 2026-11-02, and an Admin mode switch in front of it until the day before; both are gone. Nothing on it was worth a tab: two of its controls repaired faults that can no longer happen, one was a second way to the log, and the shelf photo ceiling is a fixed number now rather than a field anybody could raise. The log is on Help and About, under Something not working.' },
+    def: 'Five tabs, named short because the strip is one phone wide. Account holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Buddies, Guide and Help follow, and Help is where the app\u2019s own log is, under Something not working. There was a sixth tab, Advanced, until 2026-11-02, and an Admin mode switch in front of it until the day before; both are gone, and nothing on that tab was worth a tab.' },
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
@@ -19003,6 +19078,95 @@ L.houseList = function (catalog, aliases) {
     .sort((a, b) => String(b.name).length - String(a.name).length);
 };
 
+/* AND THE BRANDS, WHICH ARE NOT THE SAME THING (BZ, 2026-11-02).
+ *
+ * `dist` is the distillery that MADE the whiskey. The shared library says
+ * Ross & Squibb, Midleton, Gimli, Louisville Distilling - which is the truth
+ * and is what belongs on a map. A drinker asks for Penelope, Spot, Crown
+ * Royal, Angel's Envy, which is the BRAND, and until 2026-11-02 the app had
+ * only one field for both. data.json put the brand in `dist`, so when the
+ * harnesses first loaded the real library nine brands stopped being askable
+ * outright: "what am I missing from Penelope" fell through to the help text,
+ * and so did Spot, Powers, Crown Royal, 1792 Barton, Bulleit, Tyrconnell,
+ * O.K.I. and True Story, over 37 of his own bottles.
+ *
+ * SO A BOTTLING MAY NAME BOTH AND BOTH ARE ASKABLE. `brand` is set only
+ * where it differs from `dist` - 55 of 754 entries - because a field
+ * repeating its neighbour is a field that comes to disagree with it.
+ *
+ * COUNTING STAYS ON `dist`, which is why this is a second list and not a
+ * flag on the first: L.houseIndex carries each house's size and the facts
+ * its bottles agree on, and a bottling that landed in two houses would be
+ * counted twice by the portrait, the map and "his biggest house".
+ *
+ * NAMED housesByBrand ON THE THIRD ATTEMPT, and the two wrong names are
+ * worth keeping a note of. L.brandIndex already exists and means the index
+ * of a BRANDS REGISTRY that L.brandOf reads; a second definition silently
+ * replaced it and took twelve identity assertions down with it. So does
+ * L.brandHouses, which learns which house a brand sits under. And
+ * L.askableHouse already exists, one letter from the list this feeds, so
+ * that one is L.housesToAsk. Fifty-eight engine names carry `house` or
+ * `brand` - reading them first is cheaper than three rounds of red, and
+ * lint.js now fails on an engine name defined twice, which is what should
+ * have caught the first one.
+ */
+L.housesByBrand = function (catalog, aliases) {
+  const out = {};
+  Object.values(catalog || {}).forEach(p => {
+    if (!p || !p.brand) return;
+    const id = L.houseResolve(p.brand, aliases);
+    if (!id) return;
+    const h = out[id] || (out[id] = { id: id, n: 0, spellings: {},
+                                      region: null, country: null,
+                                      from: 'brand' });
+    h.n++;
+    h.spellings[p.brand] = (h.spellings[p.brand] || 0) + 1;
+    ['region', 'country'].forEach(k => {
+      if (!p[k]) return;
+      if (h[k] === null) h[k] = p[k];
+      else if (h[k] !== p[k]) h[k] = false;
+    });
+  });
+  Object.values(out).forEach(h => {
+    h.name = L.bestSpelling(h.spellings);
+    ['region', 'country'].forEach(k => { if (h[k] === false) h[k] = null; });
+  });
+  return out;
+};
+
+/* EVERY NAME A QUESTION MAY USE FOR A HOUSE - the distilleries and the
+   brands in one list, longest first for the same reason houseList sorts.
+   Where one name is both, the two entries carry one id and are folded into
+   one house whose size is both sets; L.houseHas then reads either field, so
+   it does not matter which half the question landed on. */
+L.housesToAsk = function (catalog, aliases) {
+  const idx = L.houseIndex(catalog, aliases);
+  const brands = L.housesByBrand(catalog, aliases);
+  Object.keys(brands).forEach(id => {
+    if (!idx[id]) { idx[id] = brands[id]; return; }
+    idx[id] = Object.assign({}, idx[id], { n: idx[id].n + brands[id].n });
+  });
+  return Object.keys(idx).map(id => idx[id])
+    .sort((a, b) => String(b.name).length - String(a.name).length);
+};
+
+/* IS THIS BOTTLING THIS HOUSE'S? EITHER FIELD ANSWERS IT. One door, because
+   the shelf question and the library's answer both ask it and two copies of
+   this would drift (rule 30d).
+   EITHER, not the one the question matched: the same name can be a
+   distillery on some bottlings and a brand on others. data.json files eight
+   Angel's Envy under `dist: Angel's Envy` and the library files the same
+   eight under Louisville Distilling with `brand: Angel's Envy`, so asking
+   for Angel's Envy found the distillery house and counted 1 of his 8. Spot,
+   Powers and Penelope were right only because no entry anywhere calls them a
+   distillery. A house is a house; which column its name sits in is
+   bookkeeping, and the bookkeeping must not change the answer. */
+L.houseHas = function (p, house, aliases) {
+  if (!p || !house || !house.id) return false;
+  return [p.dist, p.brand].some(v =>
+    !!v && L.houseResolve(v, aliases) === house.id);
+};
+
 /* A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
    offer reader both (rule 30d). Whole words only, punctuation-blind. */
 L.houseInText = function (text, houses) {
@@ -19016,6 +19180,16 @@ L.houseInText = function (text, houses) {
   for (let i = 0; i < list.length; i++) {
     const n = list[i].name;
     if (has(n)) return list[i];
+    /* AND BY ITS KEY, which is the name with the suffix and the possessive
+       taken off — which is what people actually type. Nobody asks about
+       "Ross & Squibb Distillery"; they ask about Ross & Squibb, and that
+       house holds 18 of his bottlings. 69 of his 242 houses could not be
+       found by their own key: Old Elk, New Riff, High West, Lux Row, Milk
+       & Honey, Jack Daniel's. Measured 2026-11-02 against his real shelf:
+       55 questions newly answered and not one existing answer changed,
+       because the key is only ever MORE specific than the first word below
+       and the list is still read longest name first. */
+    if (has(list[i].id)) return list[i];
     /* "the Woodford family" names the house by its first word, which is
        how people say it — but only when that word is distinctive enough
        to be a name on its own. */
@@ -19039,8 +19213,11 @@ L.readShelfQuestion = function (text, catalog, bottles, aliases) {
   };
 
   /* The house, from the registry rather than from a list kept here, and
-     found the one way the offer reader finds it too. */
-  const house = L.houseInText(text, L.houseList(catalog, aliases));
+     found the one way the offer reader finds it too. BRANDS TOO since
+     2026-11-02: the library files a bottling under the distillery that made
+     it, so "Penelope" and "Spot" are brands rather than distilleries and
+     were not in the registry at all. */
+  const house = L.houseInText(text, L.housesToAsk(catalog, aliases));
 
   /* NOT THE ONES THAT MAY ONLY BE CHOSEN - see L.NOT_GUESSED. */
   const sub = L.TYPES.filter(t => L.NOT_GUESSED.indexOf(t) < 0)
@@ -19067,7 +19244,7 @@ L.readShelfQuestion = function (text, catalog, bottles, aliases) {
     .filter(k => held[k])
     .map(k => Object.assign({ _key: k }, catalog[k]))
     .filter(p => {
-      if (house && L.houseResolve(p.dist, aliases) !== house.id) return false;
+      if (house && !L.houseHas(p, house, aliases)) return false;
       if (!house && sub && p.sub !== sub) return false;
       if (!house && !sub && region && p.region !== region) return false;
       return true;
@@ -19113,7 +19290,7 @@ L.libraryMissing = function (read, catalog, bottles, flights, axes, limit, alias
   return Object.keys(cat).map(k => cat[k])
     .filter(p => p && p.name && !held[p.k])
     .filter(p => {
-      if (read.houseId) return L.houseResolve(p.dist, aliases) === read.houseId;
+      if (read.houseId) return L.houseHas(p, { id: read.houseId }, aliases);
       if (read.sub) return p.sub === read.sub;
       if (read.region) return p.region === read.region;
       return false;
@@ -19225,11 +19402,7 @@ L.houseIndex = function (catalog, aliases) {
     });
   });
   Object.values(out).forEach(h => {
-    /* The spelling most of its bottles use wins, and ties go to the
-       longest, which is the one carrying the suffix somebody typed in
-       full. */
-    h.name = Object.keys(h.spellings).sort((a, b) =>
-      h.spellings[b] - h.spellings[a] || b.length - a.length)[0];
+    h.name = L.bestSpelling(h.spellings);
     ['region', 'country'].forEach(k => { if (h[k] === false) h[k] = null; });
   });
   return out;
@@ -19662,17 +19835,29 @@ L.csvCell = function (v) {
 /* THE LIBRARY, AS A SPREADSHEET. The BOM is not optional: without it Excel
    opens a CSV in the local codepage and every accented name (Fèis Ìle,
    Pedro Ximénez) arrives mangled. */
+/* BRAND SITS BESIDE DISTILLERY AND IS NOT IT. The distillery is who made
+   it; the brand is the name on the label and the name he would ask for.
+   They are usually the same word and sometimes not: Redbreast, Spot and
+   Powers are all made at Midleton, and a library that files only the maker
+   cannot answer "what else do I have from Redbreast". Both fields travel
+   through the export, or a round trip quietly erases the one the editor
+   cannot see. */
 L.LIBRARY_COLS = [
   'Name', 'Distillery', 'Region', 'Type', 'Style', 'Age', 'Proof', 'ABV',
   'Cask', 'Mash bill', 'Peat ppm', 'MSRP', 'Scarcity', 'Obscurity',
-  'Nose', 'Palate', 'Finish', 'Contributed by', 'Added'
+  'Nose', 'Palate', 'Finish', 'Contributed by', 'Added',
+  /* AT THE END, because this export and the shelf's share their first eight
+     headings on purpose - one spreadsheet layout reads both - and a column
+     inserted beside Distillery moves seven of them here and none there. */
+  'Brand'
 ];
 
 /* THE EXPORT, READ BACK IN. IT MERGES, IT NEVER REPLACES. A file is a set
    of changes: rows missing from it are left alone, so somebody who exported
    last week and edits ten lines does not delete everything published since. */
 L.LIB_IMPORT_FIELDS = [
-  ['Distillery', 'dist'], ['Region', 'region'], ['Style', 'style'],
+  ['Distillery', 'dist'], ['Brand', 'brand'], ['Region', 'region'],
+  ['Style', 'style'],
   ['Age', 'age'], ['Proof', 'proof'], ['Cask', 'fin'],
   ['Mash bill', 'mash'], ['Peat ppm', 'ppm'], ['MSRP', 'msrp'],
   ['Scarcity', 'scar'], ['Obscurity', 'obsc']
@@ -19758,7 +19943,8 @@ L.libraryExportRows = function (products) {
       p.fin || '', p.mash || '', p.ppm || '', p.msrp || '',
       p.scar || '', p.obsc || '',
       tn.nose || '', tn.palate || '', tn.finish || '',
-      p.by || '', p.at ? L.todayISO(new Date(p.at)) : ''
+      p.by || '', p.at ? L.todayISO(new Date(p.at)) : '',
+      p.brand || ''
     ];
   });
   /* By name, because somebody reading this is looking a bottle up rather
@@ -21862,14 +22048,22 @@ L.shelfTodo = function (catalog, bottles, ledger, seenAt, today, library) {
    saying sharing lived elsewhere "pointed at, not duplicated, because two copies
    of a sharing control drift", which was the right instinct about duplication and
    the wrong conclusion about where the one copy belongs. */
+/* THE LABELS ARE SHORT BECAUSE THE STRIP IS 358px WIDE (2026-11-02).
+   "Account and Data" and "Help and About" made the five tabs 469px, so the
+   last one sat 11px inside the strip - and the strip hides its scrollbar,
+   so what a phone showed was four tabs and a blank edge, with the only way
+   to the log behind a swipe nothing hinted at. The cards on each tab carry
+   the longer words; a tab only has to name the place. shots.js fails any
+   tablist that parks a tab out of sight, so a label that grows back will
+   say so rather than hiding a destination. */
 L.SETTINGS_TABS = [
-  { id: 'account', label: 'Account and Data' },
+  { id: 'account', label: 'Account' },
   { id: 'shelf', label: 'Shelf' },
   { id: 'buddies', label: 'Buddies' },
   { id: 'guide', label: 'Guide' },
   /* ONE TAB (BZ, 2026-10-02: "Help/About can be one Settings Tab"). Two tabs
      holding one card each is more strip than page. */
-  { id: 'help', label: 'Help and About' }
+  { id: 'help', label: 'Help' }
 ];
 /* THERE WAS AN ADVANCED TAB AND IT HELD NOTHING WORTH A TAB (BZ, 2026-11-02:
    "why is any of this needed?"). Four controls, read one at a time:
@@ -25847,8 +26041,30 @@ L.joinParts = function (parts) {
     ? out + (/[.!?]$/.test(out) ? ' ' : '. ') + x : String(x), '');
 };
 
+/* A PROMPT IS A PHRASE, NOT A PARAGRAPH (BZ, 2026-11-02: trim what the host
+   card prints). The card's own line says colour, nose, palate and finish are
+   prompts to say after the room speaks - and it is a thing you hold while
+   pouring, so each one has to be readable at a glance.
+   WHY IT CAME UP: these notes used to come from data.json, where almost
+   nothing carried a `tn` at all, and the papers' one-page guarantee had only
+   ever been proven against that thin catalogue. The first time a harness
+   loaded the shared library, FAMILY FEUD? - six Midleton pot stills - printed
+   two pages: 2,167 characters of note prose across its four columns, 721 of
+   them on Redbreast 15 alone, where a distillery's own marketing copy had
+   been taken in whole. Cut at a word, so a prompt never ends mid-word. */
+L.notePrompt = function (text, max) {
+  const t = String(text || '').trim();
+  const n = max || 110;
+  if (t.length <= n) return t;
+  const cut = t.slice(0, n);
+  const back = cut.lastIndexOf(' ');
+  return (back > n * 0.6 ? cut.slice(0, back) : cut).replace(/[\s,;:.\u2014-]+$/, '')
+    + '\u2026';
+};
+
 L.hostCard = function (f, catalog) {
   const cards = f.cards || [];
+  const prompt = t => L.notePrompt(t);
   return {
     title: f.title,
     tag: f.tag,
@@ -25864,8 +26080,8 @@ L.hostCard = function (f, catalog) {
         bottle: L.pourLabel(p, catalog) || card.bottle || '',
         proof: L.pourProof(p, catalog) || card.proof || '',
         wood: card.wood || pd.fin || '',
-        colour: tn.colour || '', nose: tn.nose || '',
-        palate: tn.palate || '', finish: tn.finish || '',
+        colour: prompt(tn.colour), nose: prompt(tn.nose),
+        palate: prompt(tn.palate), finish: prompt(tn.finish),
         note: kind === 'blend' ? (p.note || '') : '',
         kind: kind
       };
@@ -26676,13 +26892,28 @@ L.POUR_WIDE = ['road', 'pond'];
    it had no `sub` to refuse. A back bar is full of those; reading the name
    is the only rule that reaches them.
 
-   Tested against all 607 product names the app knows: these catch the three
-   filed as flavoured and the two liqueurs, and nothing else. The two
-   exceptions are real bottles - Milk & Honey is a distillery in Tel Aviv,
-   and cherry wood is a cask Bardstown finishes in - so those phrases are
-   taken out of the name before the words are looked for, rather than
-   excusing the whole bottle. */
-L.FLAVOR_NOT = [/milk\s*(?:&|and)\s*honey/ig, /cherry\s+wood/ig];
+   Tested against all 771 product names the app knows (2026-11-02, re-run
+   when the harnesses first loaded the shared library and the catalogue grew
+   from 607): these catch nine, and seven of the nine are already filed
+   flavored, liqueur or rum, so the name rule is the only thing refusing
+   two. The exceptions are real bottles whose names borrow a flavour word -
+   Milk & Honey is a distillery in Tel Aviv, cherry wood is a cask Bardstown
+   finishes in, and Marshmallow Toast is what Penelope calls a char level -
+   so those phrases are taken out of the name before the words are looked
+   for, rather than excusing the whole bottle.
+
+   MARSHMALLOW TOAST JOINED ON 2026-11-02, and it is the clearest case yet
+   for why this list exists rather than a blanket excuse. "Penelope Toasted
+   Marshmallow Toast Bourbon" is five years old, 110 proof, 75/21/4, with
+   `fin` reading "Char 3 heavy toast" - a toasted-barrel bourbon, and under
+   BZ's own reading of the law (27 CFR 5.151) nothing has been added to it,
+   so it is not a flavored spirit. The rule called it one on the word
+   `marshmallow` and so it was never recommended and never counted as
+   whiskey. A plain "Toasted Marshmallow" whiskey with flavouring in it is
+   still caught, because the phrase excused here is the TOAST LEVEL - the
+   word `toast` after it - and not the flavour word on its own. */
+L.FLAVOR_NOT = [/milk\s*(?:&|and)\s*honey/ig, /cherry\s+wood/ig,
+  /marshmallow\s+toast/ig];
 L.FLAVOR_WORDS = ['apple', 'peach', 'blackberry', 'raspberry', 'strawberry',
   'banana', 'mango', 'pineapple', 'watermelon', 'orange', 'lemon', 'grape',
   'honey', 'cinnamon', 'fireball', 'spiced', 'ginger', 'vanilla',
@@ -58889,7 +59120,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.24</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.26</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

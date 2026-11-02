@@ -47,9 +47,14 @@ const failures = [];
   await page.goto('http://app.local/' + path.basename(file));
   await page.waitForTimeout(1200);
 
-  const papers = await page.evaluate(([b, fl, cu]) => {
-    S.bottles = b; S.customFlights = fl; S.custom = cu;
-    save_(); rebuildCatalog();
+  /* THROUGH THE ONE SHELF LOADER (2026-11-02). Nine harnesses set S.bottles
+     and S.custom by hand and not one joined the shared library, so each
+     graded his real shelf against a catalogue of 322 entries in which 53 of
+     his 356 owned bottlings did not exist. eng.loadShelf is the door, and it
+     refuses a catalogue that short. */
+  const eng = require('./engine.js');
+  await eng.loadShelf(page, eng.shelf(dir));
+  const papers = await page.evaluate(() => {
     const out = {};
     allFlights().forEach(f => {
       out[f.title] = { pours: (f.core || []).length,
@@ -57,8 +62,7 @@ const failures = [];
                        sheet: tastingPapers(f, 'sheet') };
     });
     return out;
-  }, (sh => [sh.bottles, sh.flights, sh.custom])(
-       require('./engine.js').shelf(dir)));
+  });
 
   /* A SAMPLE by default. Printing all 72 took a minute and a half of every
      gate to re-prove something that only moves when the print CSS does:
@@ -115,12 +119,16 @@ const failures = [];
      shelf holds, so the check cannot cry wolf when the data changes. */
   {
     const L = require('./engine.js')().L;
-    const { bottles, custom } = require('./engine.js').shelf(dir);
-    const base = JSON.parse(fs.readFileSync(path.join(dir, 'data.json'), 'utf8'))
-      .catalog || {};
-    const cat = L.mergeCatalog(base, {}, custom || {}, {});
-    const flights = (L.FLIGHTS || []).concat(
-      JSON.parse(fs.readFileSync(path.join(dir, 'bz-flights.json'), 'utf8')) || []);
+    /* THROUGH THE ONE CATALOGUE DOOR (2026-11-02). This built the catalogue
+       from data.json and his custom products and left the shared library
+       out, so the cards were read against 322 entries where his app has
+       769 - and a card whose bottle has no entry is the shape of fault
+       this block was written to find. The flights come off the shelf
+       loader for the same reason: one door, not a second read of the file. */
+    const shelf = require('./engine.js').shelf(dir);
+    const bottles = shelf.bottles;
+    const cat = require('./engine.js').catalogFor(shelf, dir);
+    const flights = (L.FLIGHTS || []).concat(shelf.flights || []);
     let fields = 0;
     const said = [];
     /* GENERATED FLIGHTS TOO, and they are the ones that matter here: a STORED
