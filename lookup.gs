@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.10';
+var GS_BUILD = '2.6.11';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
@@ -280,7 +280,19 @@ function doPost(e) {
        shelf context is NOT sent on this path and must not be: the whole
        point is that they cannot see what he owns. */
     if (body.gift) {
-      if (!giftOk_(body.gift)) {
+      /* AND ONLY THE ONE MODE IT WAS WRITTEN FOR (2026-11-02). A gift token
+         is published where anybody can read it, by design - it is the whole
+         point that a friend with no account can use the link. So it buys
+         exactly what the gift page asks for and nothing else.
+
+         Unscoped, it bought all nine modes, and two of them mattered: every
+         paid mode spent the key the sign-in requirement exists to protect
+         (review, 2026-09-15), and `sheet` reached writeShelfSheet_ with
+         signedIn_ of an absent token - the string "false" - which claimed
+         SHEET_OWNER and would have told every real account the shelf sheet
+         belonged to somebody else, for good. The GET door needs no list: it
+         has one purpose. */
+      if (body.mode !== 'shelf' || !giftOk_(body.gift)) {
         return json({ error: 'that link is spent or closed' });
       }
     } else if (body.mode !== 'version' && !signedIn_(body.idToken)) {

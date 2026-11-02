@@ -437,7 +437,30 @@ def main():
             for name, r, lines in bad:
                 print('')
                 print('%s:' % name)
-                print('\n'.join('    ' + l for l in lines[-16:]))
+                # THE FAILING LINES, WHEREVER THEY ARE, AND THEN THE TAIL.
+                # The tail alone is a trap: a harness that reports per screen
+                # or per section prints its ✖ and the detail under it long
+                # before it finishes, so sixteen lines of the end are sixteen
+                # lines of things that PASSED. shots.js failed its first
+                # screen in the cloud on 2026-11-02 and the log carried
+                # nothing but ticks - the same fault CLAUDE.md warns about
+                # ('read the whole output of each, not the last line'),
+                # except it was the machine doing the truncating.
+                marks = [i for i, l in enumerate(lines)
+                         if '\u2716' in l or '\u2717' in l
+                         or 'FAIL' in l or l.strip().startswith('✖')]
+                shown = set()
+                for i in marks[:12]:
+                    for j in range(i, min(i + 9, len(lines))):
+                        shown.add(j)
+                tail = set(range(max(0, len(lines) - 16), len(lines)))
+                keep = sorted(shown | tail)
+                prev = None
+                for j in keep:
+                    if prev is not None and j > prev + 1:
+                        print('    ...')
+                    print('    ' + lines[j])
+                    prev = j
                 # THE ERROR IS THE USEFUL PART. A crash writes to stderr and
                 # this printed stdout only, so the cloud gate reported "tests
                 # FAIL 0.0s (no output)" for a harness that had thrown at

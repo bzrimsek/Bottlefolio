@@ -132,12 +132,12 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 8,342 assertions
+node killer-bs-test.js    # 8,348 assertions
 node lint.js              # nothing undefined, twice-defined, unreachable
 node consistency.js       # 124 wiring checks, incl. rules copied twice
 node screens.js           # 38 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
-node shots.js             # every screen at 390px, photographed
+node shots.js             # every screen at 390px, photographed AND measured
 node seq.js               # screens in PAIRS: what the last one left behind
 node papers.js            # both papers, one landscape page each
 node render.js            # screens agree with the engine
@@ -546,7 +546,7 @@ reporting it. One edit per script is the cheap way to avoid this.
 | `engine.js` | loads the `L.` engine out of index.html for every tool — and the one door to BZ's real shelf: `shelf(dir)`, `catalogFor(shelf)` and `loadShelf(page, shelf)`, which refuses a page holding less than the catalogue his app runs |
 | `snapshot.js` | **refetches the four sealed shelf files from the live database**, dry-run by default. Nothing had this before 2026-11-02 and the snapshot was 42 days old |
 | `popular.js` | the nightly what's-popular count (`.github/workflows/popular.yml`) |
-| `shots.js` | every screen at phone size, into `shots/` |
+| `shots.js` | every screen at phone size, into `shots/` — and the four things a photograph cannot be asked: a page that scrolls sideways, a card inside a card, a tab parked out of sight, and **a control under 44px**. The tap check lives here rather than in a harness of its own because this file already boots every screen at 390px with the real shelf (2026-11-02, 59 controls were under it). A map pin is measured against `L.tapRadius` instead, because a pin's radius IS its bottle count |
 | `check.js` `checks.json` | **the one way to run the checks** — four at a time, longest first, only the ones a change can break; the table both it and `gate.py` read |
 | `cost.js` | **what the engine costs** — a synthetic load and a budget that ratchets down. Every other check proves the code RUNS; this one proves it runs fast enough |
 | `ios.js` | **the app in WebKit, the engine iOS ships** — every other browser check drives Chromium, so a WebKit-only fault was invisible until 2026-09-29 |

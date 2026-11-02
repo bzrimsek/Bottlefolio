@@ -232,6 +232,15 @@ if (!only) {
     if (!p || !p.dist) return;
     const table = layerOf[p.sub];
     if (!table) return;                 // no layer draws this category
+    /* AND NOT ON A MAP ITS OWN ENTRY PUTS IT OFF. Alberta Premium is filed
+       sub: rye, which is a US category, and country: Canada - so the US
+       layer hunted for a Calgary distillery and this listed it as a missing
+       American pin. The entry's own country wins over the category's. The
+       country names here are the MAP's vocabulary, which says Scotland and
+       Ireland where an entry says United Kingdom (assertion 495), so only
+       a disagreement about the United States can be read this way. */
+    if (table === 'usDistilleries' && p.country
+        && p.country !== 'United States') return;
     const id = table + ' ' + L.houseKey(p.dist);
     const h = mine[id] = mine[id] || { placed: false, rows: [] };
     if (L.geoFor(p, geo[table])) h.placed = true;

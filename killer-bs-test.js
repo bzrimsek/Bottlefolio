@@ -28169,9 +28169,18 @@ sec('§441 a lookup asks who is asking');
      cannot disarm the retry again. And the parse failure finally says where
      it broke: it printed the first 200 characters, which are a valid-looking
      opening every time and look exactly like a truncated answer, so the
-     message invited a diagnosis of its own slice. */
+     message invited a diagnosis of its own slice.
+     2.6.11: a gift token buys the one mode it was sold. The token is
+     published where anybody can read it, by design - that is how a friend
+     with no account uses the link - and doPost let one through to all nine
+     modes. Every paid mode spends the key the sign-in requirement exists to
+     protect (review, 2026-09-15), and `sheet` reached writeShelfSheet_ with
+     signedIn_ of an absent token, the string "false", which would have
+     claimed SHEET_OWNER and told every real account the shelf sheet belonged
+     to somebody else for good. The gift page asks two doors: POST `shelf`,
+     and the GET lookup, which needs no list because it has one purpose. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.10');
+    L.GS_BUILD, '2.6.11');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
@@ -34657,6 +34666,31 @@ sec('\u00a7502 a note on a card is a prompt, not the note');
     ['', '']);
   /* THE LENGTH IS THE CALLER'S, so a card with less room can ask for less. */
   eq('a caller may ask for less', L.notePrompt(long, 30).length <= 31, true);
+}
+
+sec('\u00a7503 the target a thumb aims at, and the pin next to it');
+{
+  /* THE DOT SAYS HOW MANY BOTTLES, THE TARGET SAYS WHERE TO PRESS, and
+     they are not the same circle. 22 is half of 44, the figure Apple's HIG
+     asks for; the units are the map's, so a caller converts first. */
+  eq('a small dot still gets the whole target',
+    L.tapRadius(4, 22, 100), 22);
+  eq('a dot bigger than the target keeps its own size',
+    L.tapRadius(30, 22, 100), 30);
+  /* THE HALF-GAP IS THE CEILING. Scotland is 8 units from Ireland at world
+     zoom with a 12-unit dot, so it may reach 12 and no further - 22 would
+     cover Ireland's centre and hand every tap in that corner to whichever
+     pin was drawn last. */
+  eq('a neighbour 8 away caps the reach at its own dot',
+    L.tapRadius(12, 22, 8), 12);
+  eq('and a smaller dot is capped at the half-gap',
+    L.tapRadius(2, 22, 8), 4);
+  /* NEVER SMALLER THAN WHAT IS DRAWN. A target inside its own dot is a dot
+     with a dead ring around the edge. */
+  eq('the dot is always the floor', L.tapRadius(12, 22, 2), 12);
+  /* ONE PIN ON THE MAP HAS NO NEIGHBOUR, and markPinGaps reports 0 for it. */
+  eq('the only pin on the map gets the full target',
+    [L.tapRadius(5, 22, 0), L.tapRadius(5, 22, undefined)], [22, 22]);
 }
 
 queueSection()

@@ -178,7 +178,102 @@ const SCREENS = [
           + 'px showing)');
       });
     });
+    /* A TARGET A THUMB MISSES. Apple's HIG asks 44x44pt and Android's
+       Material asks 48x48dp, and both stores' reviewers measure it - so a
+       control under 44px is not a style complaint, it is a rejection.
+       Fifty-nine of them were under it on 2026-11-02, the shelf's category
+       bars at 28px tall and a map pin at 14px across, and nothing in
+       nineteen checks asked. It lives HERE rather than in a harness of its
+       own because this file already boots every screen at 390px with the
+       real shelf, which is the whole cost of asking.
+
+       THE NAV IS MEASURED WITH WHATEVER SCREEN IS ON. It is fixed and sits
+       outside .screen, so on.querySelectorAll cannot see it, and it holds
+       the eight controls every other screen is reached through. */
+    const MINTAP = 44;
+    const small = [];
+    const tappable = n => {
+      const t = n.tagName;
+      if (t === 'BUTTON' || t === 'SELECT' || t === 'TEXTAREA') return true;
+      if (t === 'A' && n.getAttribute('href')) return true;
+      if (t === 'INPUT' && n.type !== 'hidden') return true;
+      const role = n.getAttribute('role');
+      if (role === 'button' || role === 'tab') return true;
+      if (n.onclick) return true;
+      return getComputedStyle(n).cursor === 'pointer';
+    };
+    const outer = [];
+    [...on.querySelectorAll('*'),
+      ...document.querySelectorAll('nav *, .nav *')].forEach(n => {
+      if (!tappable(n)) return;
+      const r = n.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return;
+      const s = getComputedStyle(n);
+      if (s.visibility === 'hidden' || s.display === 'none') return;
+      /* A CONTROL INSIDE A CONTROL IS ONE TARGET. The outer box is what a
+         thumb hits, so a 12px icon inside a 48px button is not a finding. */
+      if (outer.some(q => q.contains(n))) return;
+      outer.push(n);
+      /* A MAP PIN CANNOT PROMISE A FLAT 44px AND IT IS CHECKED BELOW.
+         Giving every pin the full 44 made the map worse, not better:
+         Scotland holds 82 bottles and sits 8px from Ireland at world zoom,
+         so two 44px circles hand that whole corner to whichever was drawn
+         last. L.tapRadius is the rule and \u00a7503 tests the arithmetic;
+         `pins` below tests that each pin actually got it. */
+      if (n.classList && n.classList.contains('pin')) return;
+      /* A HAIR'S TOLERANCE, NOT A ROUNDING. A browser lays out in
+         fractions and a box of 43.99px is a 44px control. Rounding to the
+         nearest integer excuses anything from 43.5 up, which is not a
+         rounding error - it is half a pixel of real shortfall, and it hid
+         the map's 43.6px "US" chip here while the cloud, rounding the same
+         boundary the other way, failed the build (2026-11-02). */
+      if (r.width > MINTAP - 0.1 && r.height > MINTAP - 0.1) return;
+      /* AN INLINE LINK IN A SENTENCE IS NOT A BUTTON. It is as tall as its
+         line, which is what a link in prose is; the guideline is about
+         controls you aim at. */
+      if (n.tagName === 'A' && s.display === 'inline') return;
+      /* ONE DECIMAL, BECAUSE THE COMPARISON HAS ONE. Rounded to whole
+         pixels this printed `chip is 44x44px` under a heading that said
+         "under 44px", which reads as a broken check rather than a 43.6px
+         control. A measurement reports what it measured. */
+      const px = v => (Math.round(v * 10) / 10);
+      small.push(String(n.className || n.tagName).slice(0, 30) + ' is '
+        + px(r.width) + 'x' + px(r.height) + 'px: "'
+        + (n.textContent || n.getAttribute('aria-label') || '')
+          .trim().slice(0, 28) + '"');
+    });
+    /* EVERY PIN HAS A TARGET, AND IT IS AS BIG AS THE MAP ALLOWS. Three
+       things can go wrong and each is worth catching: a pin with no hit
+       circle at all (the dot's 10px is then the target), a target smaller
+       than the dot you can see (a dead ring round the edge), and a target
+       that did not take the room it had. */
+    const pins = [];
+    if (on.id === 'scr-map') {
+      const svg = on.querySelector('#map');
+      const perPx = svg
+        ? svg.viewBox.baseVal.width / (svg.clientWidth || 360) : 0;
+      on.querySelectorAll('#map .pin').forEach(g => {
+        const name = (g.querySelector('text') || {}).textContent || '?';
+        const dot = g.querySelector('circle');
+        const hit = g.querySelector('.hit');
+        if (!hit) return pins.push(name + ' has no target circle at all');
+        const hr = hit.r.baseVal.value, dr = dot ? dot.r.baseVal.value : 0;
+        if (hr < dr - 1e-6) {
+          return pins.push(name + ' has a target inside its own dot ('
+            + Math.round(hr / perPx) + 'px round a '
+            + Math.round(dr / perPx) + 'px dot)');
+        }
+        const allowed = Math.max(dr,
+          Math.min(22 * perPx, (+g.dataset.gap || Infinity) / 2));
+        if (hr < allowed - 1e-6) {
+          pins.push(name + ' takes ' + Math.round(hr / perPx)
+            + 'px where ' + Math.round(allowed / perPx) + 'px was free');
+        }
+      });
+    }
     return { page: doc.scrollWidth, view: window.innerWidth,
+      pins: pins.slice(0, 6),
+      small: small.slice(0, 6), smallN: small.length,
       nested: nested.slice(0, 4), edges: edges,
       parked: parked.slice(0, 6),
       wide: wide.slice(0, 6) };
@@ -227,6 +322,24 @@ const SCREENS = [
         m.parked.join(String.fromCharCode(10)));
     } else {
       ok(name + ' leaves no control parked out of sight');
+    }
+
+    /* 44px IS THE LINE, not 48. Every standard control in this app is 44
+       or 46 (measured 2026-11-02), so Material's 48 would be a uniform 4px
+       on every button in the file - a layout decision, not a fix, and BZ's
+       to make. Apple's 44 is the one a reviewer enforces. */
+    if (m.smallN) {
+      bad(name + ' has ' + m.smallN + ' control(s) under 44px',
+        m.small.join(String.fromCharCode(10)));
+    } else {
+      ok(name + ' puts every control within a thumb');
+    }
+
+    if (m.pins && m.pins.length) {
+      bad(name + ' gives every pin the biggest target it can',
+        m.pins.join(String.fromCharCode(10)));
+    } else if (name === 'map') {
+      ok(name + ' gives every pin the biggest target it can');
     }
 
     if (m.nested.length) {

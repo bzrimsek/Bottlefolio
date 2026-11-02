@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1094 |
+| functions | 1095 |
 | tables | 256 |
 | carrying a stated purpose | 882 |
 
@@ -950,7 +950,7 @@ QUESTION, not the name you were going to use.
 - **`L.pickSpread`** — `valueOf` IS THE DESIGNER'S WAY IN (2026-10-18)
 - **`L.pickTaste`** — THE LINE THE CARD PRINTS, every time (BZ
 - **`L.pinRadius`** — _no comment above it_
-- **`L.pinsInView`** — against Speyside, not bottles off screen.
+- **`L.pinsInView`** — _no comment above it_
 - **`L.placeKind`** — A kind is either one of ours or whatever somebody typed instead.
 - **`L.placeLine`** — How it reads back
 - **`L.plainError`** — _no comment above it_
@@ -1252,6 +1252,7 @@ QUESTION, not the name you were going to use.
 - **`L.syncSig`** — One signature for "is this the same data", used by every side of the
 - **`L.syncWriteUp`** — ONE KEY'S WORTH, whichever shape it is
 - **`L.takeFor`** — `which` is 'all' for a bottle somebody is looking at
+- **`L.tapRadius`** — A target is never smaller than its own dot, and never reaches more than
 - **`L.tasteAsk`** — _no comment above it_
 - **`L.tasteAxes`** — _no comment above it_
 - **`L.tasteAxisFloor`** — DERIVED FROM THE POOL, never typed
