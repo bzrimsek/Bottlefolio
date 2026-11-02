@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1089 |
+| functions | 1087 |
 | tables | 256 |
-| carrying a stated purpose | 878 |
+| carrying a stated purpose | 877 |
 
 ## Tables
 
@@ -1145,7 +1145,6 @@ QUESTION, not the name you were going to use.
 - **`L.sentenceCase`** — proper nouns and acronyms that carry their own capitals.
 - **`L.sentEntriesAfterLoad`** — THE SAME, FOR A MAP, which keeps its prints by entry key.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
-- **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
 - **`L.setState`** — _no comment above it_
 - **`L.settingsView`** — There was a switch here, S.admin, and this filtered the list by it
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES
@@ -1189,7 +1188,6 @@ QUESTION, not the name you were going to use.
 - **`L.shelfSummary`** — What the shelf adds up to, as NUMBERS, so the harness can test them
 - **`L.shelfSummaryLine`** — The line the shelf prints, beside the numbers so a screen never formats
 - **`L.shelfTodo`** — IS THERE ANYTHING NEW BEHIND THE GEAR? Not "anything to do"
-- **`L.shelfTokens`** — _no comment above it_
 - **`L.shelfTypeTiles`** — _no comment above it_
 - **`L.shelfUntouched`** — Nothing searched or filtered
 - **`L.shelfValue`** — two sealed spares are two bottles of value.

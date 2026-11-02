@@ -26997,17 +26997,20 @@ sec('\u00a7413 one page per call, put back together');
     L.mergeShelfReads([{ items: [{ proof: 92 }, { name: 'Ardbeg 10' }] }])
       .items.length, 1);
 
-  /* THE TUNABLE CEILING. BZ: make max tokens a parameter we can tune with
-     real data. Clamped, because a number typed into a settings box reaches
-     a paid service. */
-  eq('the default stands when nothing is set',
-    L.shelfTokens(0), L.SHELF_TOKENS_DEFAULT);
-  eq('and when it is nonsense', L.shelfTokens('abc'), L.SHELF_TOKENS_DEFAULT);
-  eq('a sane number is kept', L.shelfTokens(6000), 6000);
-  eq('too small is raised to the floor',
-    L.shelfTokens(1), L.SHELF_TOKENS_MIN);
-  eq('too large is cut to the ceiling',
-    L.shelfTokens(999999), L.SHELF_TOKENS_MAX);
+  /* THE CEILING IS A CONSTANT, NOT A SETTING (BZ, 2026-11-02: "shelf photo
+     limit controls my costs, users would always increase it if allowed").
+     There was a clamp here because a number typed into a settings box
+     reached a paid service; there is no box now, so what is worth asserting
+     is that the number is one number, inside what the service will answer,
+     and that nothing clamps a value nobody can type. */
+  eq('the read ceiling is a plain number',
+    typeof L.SHELF_READ_TOKENS, 'number');
+  eq('it is a real ceiling, not zero or a fraction',
+    L.SHELF_READ_TOKENS > 0 && L.SHELF_READ_TOKENS % 1 === 0, true);
+  eq('and no larger than the service will answer',
+    L.SHELF_READ_TOKENS <= 16000, true);
+  eq('nothing clamps it any more, because nothing can type it',
+    typeof L.shelfTokens, 'undefined');
 }
 
 sec('\u00a7412 a read says how many it read');
@@ -27036,31 +27039,19 @@ sec('\u00a7412 a read says how many it read');
     '3 bottles read \u2014 3 you own, 2 on your list');
 }
 
-sec('\u00a7411 a stale deployment says so instead of being guessed at');
+sec('\u00a7411 the service build is compared, by the gate');
 {
-  /* BZ: i pasted code - any way you can stub call those so you stop asking
-     and can validate instead? Not from here — script.google.com is not on
-     this container's allowlist, and the request comes back
-     host_not_allowed. So the APP asks instead: Code.gs states its own
-     build, the app carries the build it needs, and the two are compared
-     rather than assumed. */
-  eq('the same build is current',
-    L.serviceBuildVerdict('2.3.70', '2.3.70').ok, true);
-  eq('a different build is stale',
-    L.serviceBuildVerdict('2.3.70', '2.3.61').stale, true);
-  eq('and it names both numbers',
-    /2\.3\.61/.test(L.serviceBuildVerdict('2.3.70', '2.3.61').say)
-      && /2\.3\.70/.test(L.serviceBuildVerdict('2.3.70', '2.3.61').say), true);
-  /* THE CASE THAT MATTERS MOST. A deployment older than this feature does
-     not know the version mode at all, so it answers without a build — and
-     that silence is itself the answer. */
-  const none = L.serviceBuildVerdict('2.3.70', null);
-  eq('no build at all is not current', none.ok, false);
-  eq('and is read as older than the one we need',
-    /older than 2\.3\.70/.test(none.say), true);
-  eq('every verdict tells somebody what to do',
-    ['2.3.61', null, ''].every(g =>
-      /deploy/i.test(L.serviceBuildVerdict('2.3.70', g).say)), true);
+  /* THE APP NO LONGER ASKS. Check the service was the only presser and it
+     went with the Advanced tab on 2026-11-02; the cloud gate asks the live
+     deployment the same question before every deploy and fails the build on
+     the wrong answer, so a stale service can never reach the site at all.
+     What is left for the engine to answer is the half it still owns: the app
+     states the build it needs, and consistency.js fails if Code.gs disagrees
+     with it. */
+  eq('the app states the service build it needs',
+    /^[0-9]+[.][0-9]+[.][0-9]+$/.test(String(L.GS_BUILD)), true);
+  eq('and nothing in the engine turns that into a sentence any more',
+    typeof L.serviceBuildVerdict, 'undefined');
 }
 
 sec('\u00a7410 the two house comparisons are not the same question');
@@ -27911,8 +27902,15 @@ sec('§437 a missing proof one way, the setup in one place, a wait that counts')
   eq('a missing one is a dash, never "undefined"', L.proofCell({}), '—');
   eq('and so is a blank one', L.proofCell({ proof: '' }), '—');
   eq('and no bottle at all', L.proofCell(null), '—');
-  eq('the lookup is set up in Settings, Advanced',
-    L.LOOKUP_SETUP, 'Settings › Advanced › Bottle lookup');
+  /* THE ADDRESS IS SET IN ONE PLACE AND IT IS NOT IN THE APP (BZ,
+     2026-11-02: "one place, in the admin portal - no user visibility").
+     The sentence has to name a place a reader can act in, so what is
+     asserted is that it names the admin page and no longer sends anybody
+     to a Settings tab that does not exist. */
+  eq('the lookup is set up on the admin page',
+    L.LOOKUP_SETUP, 'the admin page, under Offered');
+  eq('and no longer names a Settings tab',
+    /Settings/.test(L.NO_SERVICE_SAY), false);
   eq('a short wait says only what it is doing', L.waitSay('Asking…', 3),
     'Asking…');
   eq('from five seconds it counts', L.waitSay('Asking…', 7.4),
@@ -32703,24 +32701,25 @@ sec('§461 a fact in the wrong field');
   /* ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01). The strip and which of it
      is lit are one answer, because drawn from two they can disagree. */
   const plain = L.settingsView('account');
-  /* SIX: help and about are one tab (BZ, 2026-10-02), because two tabs holding
-     one card each is more strip than page. Advanced is the sixth and it is
-     always here - it was called Admin and hidden behind S.admin until
-     2026-11-01, when BZ asked why admin mode was still in the app at all. The
-     real admin had gone to admin.html five days earlier; what the switch had
-     come to hide was a cache refresh, the log, the lookup settings, and
-     "Keep a Google Sheet of my shelf", which he uses daily. */
-  eq('six tabs, and the advanced one is always among them',
+  /* FIVE: help and about are one tab (BZ, 2026-10-02), because two tabs holding
+     one card each is more strip than page. There was a sixth, Advanced, called
+     Admin and hidden behind S.admin until 2026-11-01 and then unhidden; it went
+     on 2026-11-02 because nothing on it earned a tab. Two of its four controls
+     repaired faults that cannot happen (a stamp that now lives in memory, a
+     service build the gate verifies before every deploy), one was a second door
+     to the log, and the shelf photo ceiling is a constant now - BZ's bill is
+     not a user's field to raise. */
+  eq('five tabs, and no advanced one',
     plain.tabs.map(t => t.id).join(' '),
-    'account shelf buddies guide help advanced');
+    'account shelf buddies guide help');
   eq('and the one asked for is open', plain.now, 'account');
   eq('and it does not move the others',
     L.settingsView('shelf').now, 'shelf');
-  eq('Advanced opens when it is asked for',
-    L.settingsView('advanced').now, 'advanced');
-  /* THE OLD ID FALLS BACK. A device that saved 'admin' before the rename
-     names something not on the strip; it lands on the first tab rather than
-     drawing a strip with nothing lit. */
+  /* BOTH RETIRED IDS FALL BACK. A device that saved 'admin' before the rename,
+     or 'advanced' before the tab went, names something not on the strip; it
+     lands on the first tab rather than drawing a strip with nothing lit. */
+  eq('the advanced id falls back',
+    L.settingsView('advanced').now, 'account');
   eq('the old admin id falls back',
     L.settingsView('admin').now, 'account');
   eq('and so does a tab from an older build',

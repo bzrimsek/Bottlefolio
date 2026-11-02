@@ -1499,10 +1499,12 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Print papers', 'Log the flight',
     /* Added with the drinks budget, 2026-09-13. */
     'Running a tasting',
-    /* Added with the service build check, 2026-09-14. */
-    'Check the service',
-    /* Added with the tunable read ceiling, 2026-09-14. */
-    'Shelf photo read limit',
+    /* BOTH LEFT WITH THE ADVANCED TAB, 2026-11-02. Check the service asked the
+       live deployment which build it runs, which the cloud gate asks before
+       every deploy and fails the build on; the shelf photo read ceiling is a
+       constant now, because a field a user can raise is a bill a user can
+       raise. The names stay out of here so the check fails if either comes
+       back undocumented. */
     /* Added with the shelf question, 2026-09-15. */
     'Ask your shelf',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a

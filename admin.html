@@ -205,7 +205,8 @@ const el = (t, c, x) => { const n = document.createElement(t);
 const A = { L: null, user: null, version: '', config: null, admin: false,
   /* The lookup address, this device's day tally and fill ledger, and the
      intake's daily allowance. adminLoad fills the last four from storage. */
-  lookupUrl: '', tally: {}, ledger: {}, budget: 100, intakeTally: {} };
+  lookupUrl: '', shipped: '', tally: {}, ledger: {}, budget: 100,
+  intakeTally: {} };
 /* ON THE WINDOW ON PURPOSE. A top-level const in a plain script is not a
    window property, so admin.js could not read a thing about the boot and
    its first run passed four checks against `undefined`. It is also what
@@ -617,15 +618,24 @@ function adminLoad() {
     A.ledger = v.ledger || {};
     A.budget = typeof v.budget === 'number' ? v.budget : 100;
     A.intakeTally = v.intakeTally || {};
+    A.shipped = A.lookupUrl;
+    if (v.lookupUrl) A.lookupUrl = v.lookupUrl;
   } catch (e) {
     A.tally = {}; A.ledger = {}; A.budget = 100; A.intakeTally = {};
+    A.shipped = A.lookupUrl;
   }
 }
 
 function adminSave() {
   try {
-    localStorage.setItem(STORE, JSON.stringify({ tally: A.tally,
-      ledger: A.ledger, budget: A.budget, intakeTally: A.intakeTally }));
+    const keep = { tally: A.tally, ledger: A.ledger, budget: A.budget,
+      intakeTally: A.intakeTally };
+    /* THE ADDRESS, ONLY WHEN IT IS NOT THE SHIPPED ONE. Storing a typed copy
+       of the shipped address would quietly pin this page to whatever the app
+       shipped the day it was typed, which is the second spelling the slice
+       exists to prevent. */
+    if (A.lookupUrl && A.lookupUrl !== A.shipped) keep.lookupUrl = A.lookupUrl;
+    localStorage.setItem(STORE, JSON.stringify(keep));
   } catch (e) {
     appLog('could not remember this page\u2019s notes: '
       + ((e && e.message) || e));
@@ -806,6 +816,9 @@ function drawOffers() {
     box.appendChild(el('div', 'empty', 'Reading the library\u2026'));
     return;
   }
+  /* THE SERVICE CARD FIRST, because what the queue below is allowed to spend
+     and where it spends it is read before the queue, not after it. */
+  serviceCard(box);
   renderContrib(box);
 }
 
@@ -2310,6 +2323,68 @@ function libraryAddWrite(pending, list, removed, graves, library) {
     });
 }
 
+
+/* WHAT THE INTAKE SPENDS AND WHERE IT SPENDS IT, in one card on the tab that
+   holds the queue (2026-11-02). Two things were wrong before this.
+
+   intakeBudgetRow was DEFINED HERE AND CALLED FROM NOWHERE. It came over with
+   the library on 2026-10-27 and no screen ever drew it, so A.budget sat at 100
+   with no way to move it - the allowance BZ meant when he said these settings
+   belong "in the same place as the currency" was not on any screen.
+
+   AND THE LOOKUP ADDRESS WAS IN THE APP, on Settings > Advanced, where every
+   user could see it and nobody but BZ would ever change it (BZ, 2026-11-02:
+   "one place, in the admin portal - no user visibility"). It is here now,
+   beside the budget it is spent under, and the app uses the shipped address
+   with no field to change it.
+
+   The sliced address stays the default: typing it back clears the stored copy
+   rather than pinning this page to today's spelling of it. */
+function serviceCard(box) {
+  if (!A.admin) return;
+  const card = el('div', 'sheet');
+  card.appendChild(el('h3', null, 'The lookup service'));
+  card.appendChild(el('div', 'sub',
+    'What the offered queue spends on lookups, and the address it spends '
+    + 'them at. The app ships this address and has no field for it.'));
+
+  const row = el('div', 'lookrow');
+  row.style.marginTop = '9px';
+  const inp = document.createElement('input');
+  inp.className = 'field';
+  inp.type = 'url';
+  inp.placeholder = A.shipped || 'https://script.google.com/macros/s/.../exec';
+  inp.value = A.lookupUrl || '';
+  inp.setAttribute('aria-label', 'Lookup address');
+  const save = el('button', 'chip', 'Save');
+  save.onclick = () => {
+    const v = inp.value.trim();
+    if (v && !/^https:\/\//.test(v)) {
+      toast('The address has to start with https://');
+      return;
+    }
+    A.lookupUrl = v || A.shipped;
+    inp.value = A.lookupUrl;
+    adminSave();
+    appLog('lookup address set to '
+      + (A.lookupUrl === A.shipped ? 'the one the app ships' : A.lookupUrl));
+    toast(A.lookupUrl === A.shipped ? 'Back to the shipped address'
+                                    : 'Lookup address saved');
+  };
+  row.appendChild(inp);
+  row.appendChild(save);
+  card.appendChild(el('div', 'lbl', 'Lookup address'));
+  card.appendChild(row);
+  card.appendChild(el('div', 'src',
+    A.lookupUrl === A.shipped
+      ? 'This is the one the app ships. Change it only to try a different '
+        + 'deployment; blank puts it back.'
+      : 'This page is asking a different deployment from the app. Blank it '
+        + 'to go back to the one the app ships.'));
+
+  intakeBudgetRow(card);
+  box.appendChild(card);
+}
 
 /* ---- intakeBudgetRow   index.html 50681-50739 ---- */
 function intakeBudgetRow(card) {

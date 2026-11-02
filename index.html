@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.23  Build 2026-11-01 11:04 PM ET
+     Version : v2.9.24  Build 2026-11-02 09:16 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.24  2026-11-02  Settings loses the Advanced tab, and the lookup settings move to the admin portal (BZ: "why is any of this needed?
 // v2.9.23  2026-11-01  A private copy under a merged-away key clears itself.
 // v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
 // v2.9.21  2026-10-27  The admin page gets a named lock file.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.17  2026-10-27  An unusable lookup answer is asked for a second time whichever way it was unusable — service build 2.6.10.
 // v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
 // v2.9.15  2026-10-27  The first press of Sign in now works.
-// v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.23';
-const BUILD_TIME  = '2026-11-01 11:04 PM ET';
+const APP_VERSION = '2.9.24';
+const BUILD_TIME  = '2026-11-02 09:16 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -5905,8 +5905,14 @@ L.receiptColumns = function (header) {
   return (cols.name !== undefined && cols.price !== undefined) ? cols : null;
 };
 
-/* WHERE THE LOOKUP IS SET UP, said one way everywhere. */
-L.LOOKUP_SETUP = 'Settings › Advanced › Bottle lookup';
+/* WHERE THE LOOKUP IS SET UP, said one way everywhere. IT NAMES THE ADMIN
+   PAGE SINCE 2026-11-02, because that is the only place the address can be
+   set: the field left Settings with the Advanced tab (BZ: "one place, in the
+   admin portal - no user visibility"). In the app this sentence is now
+   unreachable in a shipped build - lookupUrlFor heals a blank address back to
+   the shipped one at every boot - and the reader who CAN act on it is reading
+   it on admin.html, which keeps the same sentence through A.L. */
+L.LOOKUP_SETUP = 'the admin page, under Offered';
 
 /* WHAT THE APP SAYS WHEN THERE IS NO LOOKUP SERVICE. ONE SENTENCE, so one
    missing setting never reads like several faults. Two screens keep their
@@ -9216,10 +9222,6 @@ L.FEATURES = [
     def: 'A shelf or menu read opens with the one bottle worth the pour, then the whole list. It never picks a bottle you own, a non-whiskey, or a name the photo only half showed. Between two equals it picks the one least like your shelf: at a bar, the point is what you cannot pour at home.' },
   { term: 'Your shelf and your taste', src: 'the Shop verdict and the bar',
     def: 'Two separate questions, because the answers often disagree. YOUR SHELF asks whether the bottle adds something you have none of \u2014 a distillery, category, region or wood. YOUR TASTE asks whether it is what you keep buying AND what you keep tasting: the flavors your shelf leans on, weighted by how much of it carries them and how far they set it apart, and by your own answers to Shape your taste recommendations once those have settled. A flavor on most of your shelf counts for little, because oak says nothing about anybody. The sentence at the top puts the two together; the lines under it show the working.' },
-  { term: 'Shelf photo read limit', src: 'Settings › Advanced',
-    def: 'The most a single photo may be turned into. Twenty bottles on a shelf is twenty short lines; a menu page can be sixty entries with ages and prices. Set it too low and a long page is cut off and lost. The log shows what each read used, and a change applies to the next read.' },
-  { term: 'Check the service', src: 'Settings, under the lookup address',
-    def: 'Asks the deployed service which build it is running and compares it with the build this app needs. Apps Script serves the DEPLOYED version, not the saved one, so a pasted Code.gs changes nothing until you deploy a new version. A deployment too old to answer counts as out of date.' },
   { term: 'Merging two library entries', src: 'the admin page',
     def: 'When the library holds one whiskey under two spellings, merging keeps one and drops the other. The dropped name stays gone: it is no longer offered for publishing, cannot be added from someone\u2019s offer, and cannot be reached by renaming another entry. Your own bottle keeps the name you gave it.' },
   { term: 'Diagnostics by user', src: 'the admin page',
@@ -9456,7 +9458,7 @@ L.FEATURES = [
   { term: 'Delete account', src: 'Settings, beside Sign out',
     def: 'Removes your shelf, flights and pours, your directory entry, every share both ways, requests and unreviewed offers, then the sign-in itself. Type DELETE to confirm, and take the backup it offers first. Two things stay: what is already in the library, and shelves others shared with you. An admin account needs its admin line removed in the Firebase console.' },
   { term: 'Settings', src: 'the gear',
-    def: 'Six tabs. Account and Data holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Advanced, last, holds the lookup service address, what the readers may spend, a fetch of the whole library and the app\u2019s own log. There was an Admin mode switch here until 2026-11-01; it hid none of those things for a reason, and the real admin work is on the admin page.' },
+    def: 'Five tabs. Account and Data holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Buddies, Guide, and Help and About follow. There was a sixth tab, Advanced, until 2026-11-02, and an Admin mode switch in front of it until the day before; both are gone. Nothing on it was worth a tab: two of its controls repaired faults that can no longer happen, one was a second way to the log, and the shelf photo ceiling is a fixed number now rather than a field anybody could raise. The log is on Help and About, under Something not working.' },
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
@@ -9486,7 +9488,7 @@ L.FEATURES = [
   { term: 'Read a price in pounds', src: 'Settings \u203a Shelf',
     def: 'A listing in pounds is shown in pounds and is not compared with your shelf until you say what a pound is worth. Set it once and it is used wherever a foreign price appears; it says the day you set it and tells you when that is more than three months old, because a stale rate quietly misprices everything. It is your own figure and is never shared or looked up.' },
   { term: 'Fill in one bottle', src: '',
-    def: 'Open it from the shelf. If anything is missing, Look up sits under the bottle\u2019s own details and names what it would fetch \u2014 tasting notes, proof, age, price, cask, distillery. It never overwrites a note you wrote, and it needs the lookup service in Settings › Advanced › Bottle lookup. Shelf tools does the whole shelf at once.' },
+    def: 'Open it from the shelf. If anything is missing, Look up sits under the bottle\u2019s own details and names what it would fetch \u2014 tasting notes, proof, age, price, cask, distillery. It never overwrites a note you wrote, and it needs the lookup service, which this build ships. Shelf tools does the whole shelf at once.' },
   { term: 'Add a bottle without shopping for it', src: '',
     def: 'Shelf, the add icon in the header. It opens the same form Shop fills in, and nothing is looked up unless you ask \u2014 this is for a bottle in your hand whose details you know.' },
   { term: 'Pour it', src: '',
@@ -19837,15 +19839,17 @@ L.shelfForAsk = function (catalog, bottles) {
    halves the output and duration per call, and a failed page loses only
    itself. Pages merge on the normalized name; the first mention wins its
    fields and later pages fill blanks only. */
-L.SHELF_TOKENS_DEFAULT = 12000;
-L.SHELF_TOKENS_MIN = 500;
-L.SHELF_TOKENS_MAX = 16000;
-
-L.shelfTokens = function (v) {
-  const n = Math.round(Number(v));
-  if (!n || !isFinite(n)) return L.SHELF_TOKENS_DEFAULT;
-  return Math.min(L.SHELF_TOKENS_MAX, Math.max(L.SHELF_TOKENS_MIN, n));
-};
+/* WHAT ONE SHELF PHOTO MAY WRITE BACK. A CONSTANT, NOT A SETTING (BZ,
+   2026-11-02: "shelf photo limit controls my costs, users would always
+   increase it if allowed"). It was a numbered field on Settings, 500 to
+   16000, and every token above this one is money off his card spent by
+   somebody who has no reason to care. It cannot live on admin.html either:
+   the read happens on the phone, and a number in that page's storage never
+   reaches it. So it is one number, shipped, and nobody thinks about it -
+   the same answer OFFER_PER_LOAD got. It still travels in the payload, so
+   changing it takes effect on the next read without redeploying the
+   service, and every read still logs what it used. */
+L.SHELF_READ_TOKENS = 12000;
 
 L.mergeShelfReads = function (raws) {
   const list = (raws || []).filter(r => r && typeof r === 'object');
@@ -20028,7 +20032,9 @@ L.needsToken = function (body) {
 /* EVERY PAID CALL CARRIES PROOF OF SIGN-IN (BZ, 2026-09-15): the service
    address is public in this file, so anyone who found it could spend the
    key. `version` stays free (FREE_MODES, above) because it costs nothing
-   and is how Check the service reads the deployment.
+   and is how the cloud gate reads the deployment's build before it lets a
+   site publish - which is the only thing that asks it now that Check the
+   service has gone (2026-11-02).
    The token goes where the service reads it: the body of a POST, the query
    of a GET. Pure, so the shape is tested rather than trusted. */
 L.withIdToken = function (url, body, token) {
@@ -21863,17 +21869,30 @@ L.SETTINGS_TABS = [
   { id: 'guide', label: 'Guide' },
   /* ONE TAB (BZ, 2026-10-02: "Help/About can be one Settings Tab"). Two tabs
      holding one card each is more strip than page. */
-  { id: 'help', label: 'Help and About' },
-  /* AND THE ADVANCED HALF (BZ: "all of the advanced stuff should be under
-     admin anyway"). It was called Admin and hidden behind S.admin until
-     2026-11-01, five days after the real admin left for admin.html — and by
-     then the switch hid a cache refresh, the log and the lookup settings,
-     none of which is an admin act, plus "Keep a Google Sheet of my shelf",
-     which is an ordinary feature BZ uses daily. He asked why admin mode was
-     still in the app and sent two screenshots. It is not: the tab is
-     Advanced, it is always here, and the switch is gone. */
-  { id: 'advanced', label: 'Advanced' }
+  { id: 'help', label: 'Help and About' }
 ];
+/* THERE WAS AN ADVANCED TAB AND IT HELD NOTHING WORTH A TAB (BZ, 2026-11-02:
+   "why is any of this needed?"). Four controls, read one at a time:
+
+   FETCH THE WHOLE LIBRARY repaired a stamp that outlived the library it
+   described. The stamp moved into memory and is wiped at every app start, and
+   a future `at` is refused by a ceiling of now plus a minute, so the fault it
+   repaired cannot happen any more.
+
+   RUNNING THIS was a second door to the log. Help › Show me the log is the
+   same call, worded for the person who needs it (rule 30d).
+
+   CHECK THE SERVICE asked the live deployment which build it runs. The cloud
+   gate asks that before every deploy and fails the build on the wrong answer,
+   and the gate is what deploys the service, so it cannot go stale between
+   deploys.
+
+   THE SHELF PHOTO READ LIMIT is BZ's bill (2026-11-02: "users would always
+   increase it if allowed"). It is L.SHELF_READ_TOKENS now - a constant nobody
+   can raise, because a number set on admin.html cannot reach a phone's read.
+
+   The lookup address is the one thing that moved: admin.html, beside the
+   intake budget it is spent under. */
 
 /* WHICH TABS THERE ARE AND WHICH IS OPEN.
 
@@ -34967,22 +34986,12 @@ L.flightPoured = function (entry) {
    build if they disagree. */
 L.GS_BUILD = '2.6.10';
 
-/* What the comparison means, in the words somebody can act on. */
-L.serviceBuildVerdict = function (expected, got) {
-  if (!got) {
-    return { ok: false, stale: false,
-      say: 'The service did not say which build it is. That answer comes '
-        + 'from a version older than ' + expected
-        + ' \u2014 paste Code.gs and deploy a new version.' };
-  }
-  if (String(got) === String(expected)) {
-    return { ok: true, stale: false, say: 'Service build ' + got + ', current.' };
-  }
-  return { ok: false, stale: true,
-    say: 'The deployment is serving build ' + got + ' and this app needs '
-      + expected + '. Deploy \u2192 Manage deployments \u2192 pencil '
-      + '\u2192 New version.' };
-};
+/* THE VERDICT WENT WITH CHECK THE SERVICE (2026-11-02). It turned the
+   comparison into words for somebody to act on, and the only presser was a
+   button on Settings > Advanced. The cloud gate asks the same question now,
+   before every deploy, and a wrong answer is a red build rather than a
+   sentence - so there is nobody left to read the words. See gate.yml,
+   "Confirm the live service reports the new build". */
 
 /* HOW LONG A PERSON'S LOOKUP IS GIVEN TO ANSWER. Real lookups have taken
    18 to 87 seconds, rarely under 15, so a lower ceiling discards exactly the
@@ -35428,7 +35437,7 @@ const S = { base: {}, catalog: {}, bottles: [], flights: [], history: [],
             fxRate: null,
             // How many lookups today, so a runaway import or a pocket
             // press cannot spend a month's budget in an afternoon.
-            lookupTally: {}, shelfTokens: 0, reads: [],
+            lookupTally: {}, reads: [],
             /* What the offered-library queue has spent vetting today, and
                the ceiling it stops at. The tally is per device, like the
                lookup allowance it draws from; the budget is a preference
@@ -35644,7 +35653,7 @@ const KEYS = ['tasteAB',
               'lookupMine',
               /* THE ALLOWANCE IS PER DEVICE ON PURPOSE (BZ): two devices get two daily
                  allowances. Not a key somebody forgot to sync. */
-              'lookupTally', 'axisTurn', 'shelfTokens', 'reads',
+              'lookupTally', 'axisTurn', 'reads',
               // Per device, drawn from the per-device lookup allowance.
               'intakeTally',
               // A preference, and synced beside the others.
@@ -40123,7 +40132,7 @@ async function readShelf(images, where) {
       const res = await postWithRetry(S.lookupUrl,
         JSON.stringify({ mode: 'shelf', where: where,
                          images: [images[i]],
-                         maxTokens: L.shelfTokens(S.shelfTokens),
+                         maxTokens: L.SHELF_READ_TOKENS,
                          mine: mine }), 90000);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       one = await readService(res, 'shelf');
@@ -40145,7 +40154,7 @@ async function readShelf(images, where) {
       appLog('shelf read: page ' + (i + 1) + ' of ' + shots + ' gave '
         + got + ' item(s)'
         + (one.outTokens ? ', ' + one.outTokens + ' of '
-            + L.shelfTokens(S.shelfTokens) + ' tokens used' : ''));
+            + L.SHELF_READ_TOKENS + ' tokens used' : ''));
       raws.push(one);
     }
   }
@@ -47310,7 +47319,6 @@ function settingsPanel(tab, host) {
   if (tab === 'buddies') { buddySettingsPanel(host); return; }
   if (tab === 'guide') { host.appendChild(guideCard()); return; }
   if (tab === 'help') { helpPanel(host); aboutPanel(host); return; }
-  if (tab === 'advanced') { advancedPanel(host); return; }
   accountPanel(host);
 }
 
@@ -48490,9 +48498,6 @@ const VWHAT = {
   'Check for an update':
     'Asks whether a newer build has been published and installs it if so. '
     + 'Nothing on your shelf changes.',
-  'Fetch the whole library':
-    'Reads the whole library again, not just what is new. '
-    + 'For when an update has gone wrong.',
   'Force a clean reload':
     'Loads a fresh copy of the app. Your shelf '
     + 'loses nothing \u2014 '
@@ -48874,68 +48879,6 @@ function renderBuddies() {
     });
 }
 
-// Setup that most people touch once and never again: the Admin tab.
-
-/* CHECK THE SERVICE, from wherever it is pressed (beside the address, and
-   in the row of checks) - one question, so one function. `say` is where the
-   answer is written in place. Parsed through readService: postWithRetry
-   resolves to the fetch Response, and reading .build straight off it once
-   reported every deployment as too old to answer. */
-async function checkService(btn, say) {
-  if (!S.lookupUrl) { toast('Set the address first'); return; }
-  const done = buttonWorking(btn, 'Asking…');
-  try {
-    const res = await postWithRetry(S.lookupUrl,
-      JSON.stringify({ mode: 'version' }), 20000, { once: true });
-    const j = await readService(res, 'version');
-    const v = L.serviceBuildVerdict(L.GS_BUILD, j && j.build);
-    appLog('service build: deployment says '
-      + ((j && j.build) || 'nothing') + ', app needs ' + L.GS_BUILD
-      + ' — ' + (v.ok ? 'current' : 'STALE'));
-    toast(v.ok ? 'Service build ' + j.build + ', current'
-               : 'The deployment is out of date');
-    if (say) say.textContent = v.say;
-  } catch (e) {
-    appLog('service build check failed: ' + ((e && e.message) || e));
-    toast(sayError(e, 'Could not reach the service'));
-    if (say) say.textContent = sayError(e, 'Could not reach the service.');
-  }
-  // Put back whatever happened: a successful check once left it grey.
-  done();
-}
-
-/* THE CEILING ON A SHELF READ, TUNABLE HERE (BZ). It travels in the
-   payload, so a change takes effect on the next read without redeploying
-   the service, and every read logs how much was used - the data to tune
-   against. Its own function: renderLookupSetup is at its size ceiling. */
-function shelfTokensRow(card) {
-  const row = el('div', 'lookrow');
-  row.style.marginTop = '9px';
-  const box2 = document.createElement('input');
-  box2.className = 'field';
-  box2.type = 'number';
-  box2.min = String(L.SHELF_TOKENS_MIN);
-  box2.max = String(L.SHELF_TOKENS_MAX);
-  box2.value = String(L.shelfTokens(S.shelfTokens));
-  box2.setAttribute('aria-label', 'Shelf photo read limit');
-  const save = el('button', 'chip', 'Save');
-  save.onclick = () => {
-    S.shelfTokens = L.shelfTokens(box2.value);
-    box2.value = String(S.shelfTokens);
-    save_();
-    appLog('shelf read ceiling set to ' + S.shelfTokens + ' tokens');
-    toast('A read may write up to ' + S.shelfTokens + ' tokens');
-  };
-  row.appendChild(box2);
-  row.appendChild(save);
-  card.appendChild(el('div', 'lbl', 'Shelf photo read limit'));
-  card.appendChild(row);
-  card.appendChild(el('div', 'src',
-    'Raise it if a page is cut short. The log shows how many '
-    + 'tokens each page used. ' + L.SHELF_TOKENS_MIN + ' to '
-    + L.SHELF_TOKENS_MAX + '.'));
-}
-
 /* HOW MUCH THE OFFERED QUEUE MAY SPEND ON ITS OWN: vetted in the background
    within a daily budget (BZ, 2026-09-15). Admin only, because nobody else
    has a queue. Its own function because renderLookupSetup is at its size
@@ -48990,8 +48933,11 @@ function versionButtons(upd) {
   /* THE SAME TWO COLUMNS AS THE DATA CONTROLS (BZ). What is left is what a
      stuck phone needs: the check, and the reload that is ghosted so it does not
      read as the obvious thing to press. Check the service and Fetch the whole
-     library went to Admin on 2026-10-02, beside the address and the library they
-     act on; Copy the log went because it was on this tab twice. */
+     library went to Admin on 2026-10-02 and then went altogether on 2026-11-02,
+     with the tab that held them: the gate asks the service which build it runs
+     before every deploy, and the stamp the library fetch repaired now lives in
+     memory and is wiped at every start. Copy the log went because it was on
+     this tab twice. */
   ur.className = 'datagrid';
   /* Returns its explanation cell, so a button that learns something can
      say it in place rather than redrawing the panel around itself. */
@@ -49091,154 +49037,6 @@ function helpPanel(box) {
     + 'and prices stay where they are.'));
   box.append(help, feedbackCard());
 }
-
-/* The Admin-mode switch stood here. It is gone (2026-11-01) and so is
-   S.admin: see L.SETTINGS_TABS for what it had come to hide. */
-
-/* THE ADVANCED HALF, BEHIND ONE TAB (BZ, 2026-10-01: "all of the advanced stuff
-   should be under admin anyway"). The lookup address, what the shelf reader and
-   the offered queue may spend, and a fetch of the whole library - plus the log
-   in full, which is the only thing here anybody else would want and is on Help
-   too. It was called adminPanel and the tab said Admin until 2026-11-01; see
-   L.SETTINGS_TABS for why neither was true any more.
-
-   THE FOLD INSIDE IT OPENS BY DEFAULT: a fold inside the drawer it is already in
-   is one tap for nothing. It stays a fold because browser.js counts
-   what it builds to prove a redraw does not stack a second copy, which is two
-   Advanced rows BZ once photographed. */
-function advancedPanel(box) {
-  /* THE LIBRARY LEADS, because it is what an admin opens this tab for, and it
-     is here rather than on Shelf: it is the shared list behind every shelf,
-     not anything about this person's bottles (BZ, 2026-10-02). */
-  /* THE DOOR TO THE LIBRARY HAS GONE TO LEARN (2026-10-27, the day after it
-     stopped being gated at all). It was the only way to that screen and it
-     sat behind a switch, which was right while the screen carried the offers
-     queue and the export and wrong the moment it became browse-only. Opening
-     it is not an advanced act, so it is not on the advanced tab; see
-     renderReference. What is left here is the one thing on that card that IS
-     a repair. */
-  {
-    const lib = settingCard(box, 'The library',
-      'The list everyone reads and adds to. Open it from Learn.');
-
-    /* FROM THE VERSION CARD (BZ, 2026-10-02), beside the library it reads. A
-       device can hold a marker later than anything in the library - an earlier
-       build stored the clock - and then nothing ever looks new to it. This
-       forgets the marker and takes the library whole. */
-    const cf = el('button', 'btn btn-sm ghost', 'Fetch the whole library');
-    cf.onclick = () => {
-      if (!FB.user) { toast('Sign in first'); return; }
-      CAT_STAMP = 0;
-      cf.disabled = true;
-      fbSyncCatalog().then(changed => {
-        cf.disabled = false;
-        if (!changed) toast('The library is empty');
-      });
-    };
-    settingRow(lib, cf, VWHAT['Fetch the whole library']);
-  }
-
-  /* A FOLD, NOT A BUTTON (BZ, 2026-10-02). A fold inside a tab is right when
-     the tab holds several subjects and wrong only when it holds one - which is
-     why the single Advanced fold around all of this came off. */
-  const diag = el('details');
-  diag.style.marginTop = '9px';
-  diag.appendChild(el('summary', 'rs', 'Running this'));
-  const dgrid = settingGrid();
-  const open = el('button', 'btn btn-sm', 'Open it');
-  /* THROUGH THE SAME DOOR: this landed at the top of a long screen with
-     the log still folded at the bottom of it. */
-  open.onclick = () => showTheLog(true);
-  /* THE WAY IN, not the screen: Diagnostics is its own page with its own back
-     button, and drawing it here would be a second copy of it. */
-  settingRow(dgrid, open, 'What the app knows and last did, including what a '
-    + 'failed lookup returned. Nothing on it changes your shelf.');
-  diag.appendChild(dgrid);
-  box.appendChild(diag);
-
-  const macro = el('details');
-  macro.style.marginTop = '9px';
-  macro.appendChild(el('summary', 'rs', 'Macro settings'));
-  renderLookupSetup(macro);
-  box.appendChild(macro);
-}
-
-function renderLookupSetup(box) {
-  /* REPLACED RATHER THAN ADDED TO. Called twice, this appended a second
-     Advanced section; making the function idempotent is one moving part,
-     making every caller clear first is one per caller, for ever. */
-  /* NO FOLD (BZ, 2026-10-02: "with Admin on a tab of its own, we likely don't
-     need the advanced fold"). A tab IS a fold - one of a set, exactly one open,
-     the page below belonging to it - so a fold inside one is the same device
-     twice, and this one was already open by default, which is the giveaway that
-     it had stopped hiding anything.
-
-     STILL REPLACED RATHER THAN ADDED TO. Called twice, this used to append a
-     second Advanced section and BZ photographed two of them; the fold has gone
-     and that fault has not, so the marker stays and so does the clearing. */
-  const already = box.querySelector(':scope > .lookupsetup');
-  if (already) box.removeChild(already);
-  const wrap = el('div', 'lookupsetup');
-
-
-  const card = el('div', 'sheet');
-  card.style.marginTop = '9px';
-  card.appendChild(el('h3', null, 'Bottle lookup'));
-  card.appendChild(el('div', 'sub',
-    'The web-app URL of your lookup script. Leave it blank and adding a '
-    + 'bottle stays manual.'));
-
-  const inp = document.createElement('input');
-  inp.className = 'field'; inp.type = 'url'; inp.style.marginTop = '9px';
-  inp.placeholder = 'https://script.google.com/macros/s/…/exec';
-  inp.value = S.lookupUrl || '';
-  /* Say when it is the shipped one rather than something they typed, so
-     changing it is a deliberate act. */
-  if (S.lookupUrl && S.lookupUrl === DEFAULT_LOOKUP_URL) {
-    card.appendChild(el('div', 'src',
-      'This is the one the app ships with. '
-      + 'Change it only if you run your own.'));
-  }
-  card.appendChild(inp);
-  const save = el('button', 'chip', 'Save');
-  save.style.marginTop = '8px';
-  save.onclick = () => {
-    const v = inp.value.trim();
-    if (v && !/^https:\/\//.test(v)) { toast('The address has to start with https://'); return; }
-    S.lookupUrl = v;
-    /* THE POINT AT WHICH IT BECOMES THEIRS. Typing the shipped address is
-       not a choice to run your own - it is agreeing with the default - so
-       that case stays followable by a later build. */
-    S.lookupMine = !!v && v !== DEFAULT_LOOKUP_URL;
-    save_();
-    toast(v ? 'Lookup address saved' : 'Lookup turned off');
-  };
-  card.appendChild(save);
-  /* AND CHECKED WHERE IT IS SET (checkService). */
-  const chk = el('button', 'chip', 'Check the service');
-  chk.style.marginTop = '8px';
-  chk.style.marginLeft = '6px';
-  const chkSay = el('div', 'src');
-  chk.onclick = () => checkService(chk, chkSay);
-  card.appendChild(chk);
-  card.appendChild(chkSay);
-  wrap.appendChild(card);
-
-  shelfTokensRow(card);
-  /* MOVED: what the OFFERED queue may spend on lookups is the intake's
-     budget, and the intake runs on admin.html. What a person's own lookups
-     may spend stays here, above. */
-
-
-
-  /* Diagnosis (the sharing check, by-user reports) lives on the Diagnostics
-     screen and user management on the admin screen; nothing here diagnoses. */
-
-  box.appendChild(wrap);
-}
-
-
-
 
 /* WHAT REFERENCE DATA KNOWS ABOUT ONE BOTTLE, without reading the file:
    the brand keys its name could be filed under, asked for one at a time,
@@ -59091,7 +58889,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.23</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.24</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

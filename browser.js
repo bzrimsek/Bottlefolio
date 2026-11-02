@@ -2035,46 +2035,52 @@ function step(n) {
   }
 
   /* A SCREEN DRAWN TWICE SHOWS ONE OF EVERYTHING.
-     BZ's screenshot of Settings had TWO "Advanced" rows. renderLookupSetup
-     builds a fresh <details> and appends it, and a handler on that page
-     called it again to update one sentence — so the page grew a second
-     copy of its own last section. This is rule 30e in miniature: the walk
-     takes ONE path through each screen, so a screen that is correct on
-     first paint and wrong on second is invisible to it.
-     Drawn twice on purpose, and the elements counted. */
+     BZ's screenshot of Settings had TWO "Advanced" rows: renderLookupSetup
+     built a fresh section and appended it, and a handler called it again to
+     update one sentence, so the page grew a second copy of its own last
+     section. This is rule 30e in miniature - the walk takes ONE path through
+     each screen, so a screen that is correct on first paint and wrong on
+     second is invisible to it.
+
+     IT DRIVES THE REAL SCREEN SINCE 2026-11-02, every tab of it. The Advanced
+     tab went that day and renderLookupSetup with it, so the old subject no
+     longer exists; what has not gone is the fault, and the thing that holds
+     it off is renderSettings clearing #settingsBody before it draws. Calling
+     a panel builder twice into one box WOULD double, correctly - the clearing
+     is renderSettings's job, so renderSettings is what must be driven. Two
+     children after any number of draws: the tab strip and the panel. */
   step('a settings redraw does not stack a second copy of itself');
   {
     const r = await page.evaluate(() => {
-      /* A DETACHED BOX, not a real screen. The first version of this
-         emptied #scr-ref to measure in it and left the Learn screen
-         wiped, so the NEXT step in the walk died on a null element. A
-         check that damages the thing being walked is worse than no
-         check. */
-      const box = document.createElement('div');
-      document.body.appendChild(box);
-      /* WHAT IT BUILDS, not the fold that used to be around it. The Advanced
-         fold went when Admin became a tab of its own (BZ, 2026-10-02: a tab IS
-         a fold), and the fault it was counting has not gone - this appended a
-         second copy of itself and BZ photographed two of them. */
-      const count = () => box.querySelectorAll('.lookupsetup').length;
-      renderLookupSetup(box);
-      const once = count();
-      box.innerHTML = '';
-      renderLookupSetup(box);
-      renderLookupSetup(box);
-      const twice = count();
-      document.body.removeChild(box);
-      return { once: once, twice: twice };
+      const was = S.settingsTab;
+      const out = { tabs: [], bad: [] };
+      L.SETTINGS_TABS.forEach(t => {
+        S.settingsTab = t.id;
+        renderSettings();
+        const once = document.querySelectorAll('#settingsBody > *').length;
+        renderSettings();
+        renderSettings();
+        const thrice = document.querySelectorAll('#settingsBody > *').length;
+        const strips = document.querySelectorAll('#settingsBody > .tabrow').length;
+        out.tabs.push(t.id);
+        if (once !== 2 || thrice !== 2 || strips !== 1) {
+          out.bad.push(t.id + ': ' + once + ' then ' + thrice
+            + ' children, ' + strips + ' tab strip(s)');
+        }
+      });
+      /* PUT THE SCREEN BACK. The walk carries on through this page. */
+      S.settingsTab = was;
+      renderSettings();
+      return out;
     });
-    if (r.once !== 1) {
-      failures.push('settings: one draw produced ' + r.once
-        + ' Advanced sections');
+    if (r.tabs.length < 5) {
+      failures.push('settings: only ' + r.tabs.length
+        + ' tab(s) were drawn, so the redraw was barely tested');
     }
-    if (r.twice !== 1) {
-      failures.push('settings: two draws produced ' + r.twice
-        + ' Advanced sections \u2014 the section stacks instead of being '
-        + 'replaced, which is the two Advanced rows BZ photographed');
-    }
+    r.bad.forEach(b => {
+      failures.push('settings: ' + b + ' — a redraw stacks instead of '
+        + 'replacing, which is the two Advanced rows BZ photographed');
+    });
   }
 
   /* WHOSE SHELF COUNTS IS ONE PICK LIST, THE SAME WIDTH EITHER WAY.
