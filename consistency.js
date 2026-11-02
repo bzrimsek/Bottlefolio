@@ -917,7 +917,16 @@ const COPIES_OK = [
   'pourAvailable + pourLabel + pourProof',
   /* AND THE PAIR THAT IS LEFT at the other width, since pourAvailable's
      wish branch learned to ask the shelf (2026-10-06). Same exception. */
-  'pourLabel + pourProof'
+  'pourLabel + pourProof',
+  /* WRITING A GRAVE AND FOLLOWING ONE (2026-11-01). Both ask L.mergedInto
+     and then compare its answer to the key they started with, which is the
+     same four tokens; what they do with it is opposite. buryKey is recording
+     a merge and uses the answer to refuse a CYCLE — it will not point a
+     survivor at something already buried. carryCustomToGraves is reading an
+     existing merge and uses the answer to decide whether a private copy
+     stays where it is, moves, or goes. Neither decides what a grave means;
+     both quote the door that does. */
+  'buryKey + carryCustomToGraves'
 ];
 /* THE SHAPE OF CODE, for finding the same rule written twice. Comments
    gone, strings and numbers made alike, local names made alike, the "is

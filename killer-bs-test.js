@@ -32768,6 +32768,39 @@ sec('§461 a fact in the wrong field');
       L.rowFaults(cat.b).filter(x => x.id === 'scarsays').length, 1);
   }
 
+  /* A PRIVATE COPY FOLLOWS THE GRAVES (BZ, 2026-11-01: "to see the silver
+     grove bottle AGAIN is wildly disappointing"). Bottles are carried to a
+     grave by stampIdentities and flights by carryFlightsToGraves; a `custom`
+     record was carried by nothing, so one under a merged-away key was
+     reported as "not in the library" on every boot and nothing in the app
+     could clear it. His was a key and a name and no facts, owned by no
+     bottle, named in his log for five days running. */
+  {
+    const graves = { old_key: 'new_key' };
+    /* EMPTY GOES. It says nothing the library does not, so following it
+       would file an empty opinion under a live entry. */
+    const bare = L.carryCustomToGraves(
+      { old_key: { k: 'old_key', name: 'An Old Name' } }, graves);
+    eq('an empty copy under a buried key is dropped', bare.dropped, 1);
+    eq('and nothing is left behind it',
+      Object.keys(bare.custom).length, 0);
+    /* ONE WITH FACTS MOVES, because a correction somebody made still
+       applies to the whisky it was made about. */
+    const rich = L.carryCustomToGraves(
+      { old_key: { k: 'old_key', name: 'An Old Name', proof: 107 } }, graves);
+    eq('a copy carrying a fact is moved, not dropped', rich.moved, 1);
+    eq('to the key the grave points at', Object.keys(rich.custom).join(','),
+      'new_key');
+    eq('and its key field moves with it', rich.custom.new_key.k, 'new_key');
+    eq('and the fact survives', rich.custom.new_key.proof, 107);
+    /* A KEY WITH NO GRAVE IS LEFT ALONE, which is nearly every record. */
+    const calm = L.carryCustomToGraves(
+      { live_key: { k: 'live_key', name: 'Still Here' } }, graves);
+    eq('a key nothing buried is untouched', calm, null);
+    eq('and so is a shelf with no graves to follow',
+      L.carryCustomToGraves({ a: { k: 'a', name: 'A' } }, {}), null);
+  }
+
   /* FOUR REPAIRS TO WHAT MAKES TWO BOTTLES ONE, every one off a screenshot BZ
      sent on 2026-10-01 ("its the damn Venn - and bottles not matching"). */
   const idBrands = {};

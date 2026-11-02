@@ -13,7 +13,7 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1088 |
+| functions | 1089 |
 | tables | 256 |
 | carrying a stated purpose | 878 |
 
@@ -387,8 +387,9 @@ QUESTION, not the name you were going to use.
 - **`L.canonSentence`** — THE SAME THING AS A SENTENCE OF ITS OWN
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
+- **`L.carryCustomToGraves`** — AN EMPTY ONE GOES
 - **`L.carryFlights`** — _no comment above it_
-- **`L.carryFlightsToGraves`** — THE GRAVES ARE A RECORD, NOT A GUESS
+- **`L.carryFlightsToGraves`** — _no comment above it_
 - **`L.carryKeyed`** — ONE MAP, CARRIED ALONG A RE-KEY PLAN
 - **`L.caskBench`** — Two casks means two things moving, so it cannot sit in the six of either
 - **`L.caskBuckets`** — ONE CASK SPOKE'S WHOLE ARITHMETIC

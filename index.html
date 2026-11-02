@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.22  Build 2026-11-01 10:50 PM ET
+     Version : v2.9.23  Build 2026-11-01 11:04 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.23  2026-11-01  A private copy under a merged-away key clears itself.
 // v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
 // v2.9.21  2026-10-27  The admin page gets a named lock file.
 // v2.9.20  2026-10-27  The library keeps everything about the bottling and refuses by rule.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.16  2026-10-27  v2.9.15 was never delivered: the gate caught two faults in it and the fixes are here.
 // v2.9.15  2026-10-27  The first press of Sign in now works.
 // v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
-// v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.22';
-const BUILD_TIME  = '2026-11-01 10:50 PM ET';
+const APP_VERSION = '2.9.23';
+const BUILD_TIME  = '2026-11-01 11:04 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -21336,6 +21336,39 @@ L.pointPourAt = function (flights, from, to) {
    so a pour naming X follows to Y with nothing inferred. That is what
    separates this from the join finder, which proposes and waits because it
    is reading names rather than a ruling. */
+/* AND THE PRIVATE COPIES FOLLOW THEM TOO. Bottles are carried to a grave by
+   stampIdentities and flights by carryFlightsToGraves; a `custom` record was
+   carried by nothing, so one whose key had been merged away sat on the shelf
+   for ever being reported as a bottle the library has not got. BZ had one -
+   `new_riff_silver_grove_bourbon_2025`, a key and a name and no facts, under a
+   key with a grave, owned by no bottle - and his log named it on every boot
+   for five days with nothing in the app able to clear it (2026-11-01: "to see
+   the silver grove bottle AGAIN is wildly disappointing").
+
+   AN EMPTY ONE GOES; ONE WITH FACTS MOVES. A record holding only its key and
+   its name says nothing the library does not, so following it would file an
+   empty opinion under a live entry. One carrying real facts is a correction
+   somebody made and is moved to the key the grave points at, where it still
+   applies. Pure: records in, records out. */
+L.carryCustomToGraves = function (custom, graves) {
+  const gr = graves || {};
+  if (!Object.keys(gr).length || !custom) return null;
+  const out = {};
+  let dropped = 0, moved = 0;
+  Object.keys(custom).forEach(k => {
+    const rec = custom[k] || {};
+    const to = L.mergedInto(gr, k);
+    if (to === k) { out[k] = rec; return; }
+    const facts = Object.keys(rec).filter(f => f !== 'k' && f !== 'name'
+      && rec[f] !== null && rec[f] !== undefined && rec[f] !== '');
+    if (!facts.length) { dropped++; return; }
+    out[to] = Object.assign({}, out[to] || {}, rec, { k: to });
+    moved++;
+  });
+  if (!dropped && !moved) return null;
+  return { custom: out, dropped: dropped, moved: moved };
+};
+
 L.carryFlightsToGraves = function (flights, graves, catalog) {
   const gr = graves || {};
   if (!Object.keys(gr).length || !flights) return null;
@@ -56748,6 +56781,19 @@ function joinDroppedOffers() {
     });
     /* AND THE QUESTION IS ASKED WHETHER OR NOT ANYTHING WAS DROPPED, because a
        bottle that is simply not in the library was never looked at otherwise. */
+    /* THE PRIVATE COPIES FOLLOW THE GRAVES FIRST, so the subscription is
+       asked about a shelf that no longer holds a record under a key the
+       library merged away — see L.carryCustomToGraves. Before this, one such
+       record was reported as missing on every boot and nothing could clear
+       it. */
+    const carried = L.carryCustomToGraves(S.custom, LIB.graves || {});
+    if (carried) {
+      S.custom = carried.custom;
+      save_();
+      appLog('shelf: ' + carried.dropped + ' empty private copy'
+        + (carried.dropped === 1 ? '' : 's') + ' dropped and '
+        + carried.moved + ' moved, following a library merge');
+    }
     const got = L.subscribeToLibrary(S.custom, S.bottles, S.edits,
                                      LIB.products || {}, LIB.graves || {},
                                      dropped);
@@ -59045,7 +59091,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.22</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.23</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
