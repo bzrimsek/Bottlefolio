@@ -132,9 +132,9 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 8,348 assertions
+node killer-bs-test.js    # 8,351 assertions
 node lint.js              # nothing undefined, twice-defined, unreachable
-node consistency.js       # 124 wiring checks, incl. rules copied twice
+node consistency.js       # 125 wiring checks, incl. rules copied twice
 node screens.js           # 38 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed AND measured
@@ -516,11 +516,31 @@ them asks the other; there is always a door to route through (`sameName`,
 shape was assumed rather than opened — `postWithRetry` answers a fetch
 `Response`, `askForCandidates` answers `{all, capped}`. Both broke a screen.
 
-**Comments say why, not the story** (BZ, 2026-09-16). The story of a fix
-goes in CHANGELOG.md; a comment keeps what the code does when that is not
-obvious, why the obvious alternative breaks, and BZ's rules. On 2026-09-16
-comment text was cut from 751KB to 434KB with every code token proven
-unchanged.
+**A comment says what the section does, and then only what the code
+cannot** (BZ, 2026-11-02: "the comments for each section of code should
+describe what that section does. not much more unless best practice says
+otherwise"). Best practice is the exception he allows for, and it is
+narrow: a rule of his, a constraint on the next edit, why a magic number is
+that number, why the obvious alternative breaks. The story of a fix goes in
+CHANGELOG.md, which is the record. On 2026-09-16 comment text was cut from
+751KB to 434KB with every code token proven unchanged.
+
+**And it has been measured, so it is not worth re-arguing.** 2026-11-02, on
+1,174KB of comment text in 5,926 blocks: 3,005 blocks are ONE sentence
+already; 17% of the prose carries somebody's quoted words; 3.3% overlaps
+CHANGELOG.md; 0.1% is said twice; 20 names are mentioned that exist in
+neither file. A tool that proposed cuts by rule got 217 of them and was
+read before being run — it was eating `BZ, 2026-09-15: asking moves to
+Shop` and `UP TO 560px, not 430: a Pixel is 449 CSS pixels wide`, so it was
+not run. **The comments are not build progress; they are the why.** What
+shrinks the download is a build step, not an editing pass: stripping every
+comment from the DELIVERED file takes it from 2,808KB to 1,599KB and from
+944KB gzipped to 455KB, with every code token proven identical and all
+8,351 assertions, lint and 38 screens green against the stripped file
+(measured 2026-11-02, awaiting BZ). **If that step is ever turned on it must
+keep two comments**: the `STATE + RENDER` banner, because `admin.html`
+slices the engine out of `index.html` on it and would not boot without it,
+and the author header.
 
 **An edit script that asserts on several patterns writes nothing if a later
 assert fails** (rule 16a). Verify the change is in the file before

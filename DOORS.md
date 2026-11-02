@@ -15,7 +15,7 @@ QUESTION, not the name you were going to use.
 |---|---|
 | functions | 1095 |
 | tables | 256 |
-| carrying a stated purpose | 882 |
+| carrying a stated purpose | 881 |
 
 ## Tables
 
@@ -903,7 +903,7 @@ QUESTION, not the name you were going to use.
 - **`L.orphanBottles`** — with no product is on no screen at all and the counts do not mention it.
 - **`L.osmKind`** — _no comment above it_
 - **`L.otherAccount`** — A SHELF ON THIS DEVICE THAT BELONGS TO ANOTHER ACCOUNT must not be merged
-- **`L.overpassQuery`** — THE QUESTION, in Overpass QL
+- **`L.overpassQuery`** — _no comment above it_
 - **`L.ownedCatalog`** — _no comment above it_
 - **`L.ownedCount`** — _no comment above it_
 - **`L.ownedCounts`** — _no comment above it_

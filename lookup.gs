@@ -37,7 +37,7 @@
 
 /* The build this file is. Compared against L.GS_BUILD in index.html by
    the app, so a stale deployment is reported rather than guessed. */
-var GS_BUILD = '2.6.11';
+var GS_BUILD = '2.6.12';
 
 /* EVERY MODEL THIS SERVICE USES, IN ONE PLACE, NAMED BY THE JOB (BZ,
    2026-09-29: "how do we keep up with changing models over time?"). Three
@@ -530,6 +530,14 @@ function designFlight(req) {
  */
 var GIFT_DB_ = 'https://bottlefolio-default-rtdb.firebaseio.com';
 
+/* HOW MUCH ONE ACCOUNT MAY SPEND THROUGH GIFT LINKS IN A DAY (BZ,
+   2026-11-02). Written here and nowhere else: the app never reads it,
+   because a cap the page could read is a cap whoever opened the link could
+   edit, and the per-link `cap` on the gift node is the only number the page
+   has any business setting. Five full links' worth at the per-link cap of
+   twenty. */
+var GIFT_OWNER_CAP_ = 100;
+
 /**
  * Is this gift link real, live, and still inside its allowance for today?
  *
@@ -557,11 +565,33 @@ function giftOk_(token) {
   var cap = Number(node.cap);
   if (!(cap > 0)) cap = 20;
   var day = Utilities.formatDate(new Date(), 'Etc/UTC', 'yyyy-MM-dd');
-  var key = 'gift:' + t + ':' + day;
   var props = PropertiesService.getScriptProperties();
+  var key = 'gift:' + t + ':' + day;
   var used = Number(props.getProperty(key) || 0);
   if (used >= cap) return false;
+  /* AND A CEILING ON THE PERSON, NOT ONLY THE LINK (BZ, 2026-11-02: a
+     hundred a day). The cap above is per TOKEN, and nothing stops one
+     account minting a thousand tokens, each with a counter of its own: a
+     thousand links is twenty thousand lookups a day on the key the
+     sign-in requirement exists to protect. One link in a family is the
+     shape this was written for; a store release is strangers.
+
+     WHY THE OWNER AND NOT THE CALLER. Whoever opened the link has no
+     account to count against - that is the point of a gift link - so the
+     only person the spending can be charged to is the one who published
+     it. `owner` is on the node because the rules will not accept a gift
+     node without it, so it can be read rather than inferred.
+
+     BOTH READ BEFORE EITHER IS SPENT. Counting the token first and then
+     refusing on the owner would charge a link for a call it never got to
+     make, and twenty of those would close a link that had served nobody. */
+  var who = String(node.owner || '');
+  if (!who) return false;
+  var mine = 'giftowner:' + who + ':' + day;
+  var spent = Number(props.getProperty(mine) || 0);
+  if (spent >= GIFT_OWNER_CAP_) return false;
   props.setProperty(key, String(used + 1));
+  props.setProperty(mine, String(spent + 1));
   return true;
 }
 

@@ -25,6 +25,50 @@ const check = (what, offenders) => {
   else ok(what);
 };
 
+/* FIRST, BECAUSE EVERY SLICE BELOW RESTS ON IT: the two anchors that mark
+   where the engine starts and stops appear ONCE EACH in index.html.
+
+   engine.js, admin.html and this file all find the engine by searching for
+   a literal string. A second copy of one of them - in a comment, in prose
+   explaining what the anchors are - moves where the slice begins, and
+   nothing says so.
+
+   WHAT ACTUALLY HAPPENED, 2026-11-02. A rewritten file header named the end
+   anchor on line 10 as "the STATE + RENDER banner". Two checks here cut the
+   engine at `indexOf('STATE + RENDER')`, which was now line 10, so the
+   engine was the first ten lines of the file: both allowance checks went red
+   reporting that six function pairs "no longer happen" - a true statement
+   about a ten-line engine, and no help at all in finding the cause.
+
+   THE LOOSE FORMS, NOT THE FULL ANCHORS. The first version of this check
+   tested the whole banner comment, which that header never duplicated, so it
+   passed over the very fault it was written for. What the tools actually
+   search for is `const L = {}` and `STATE + RENDER`, so those are what must
+   be unique - a check tests the string its readers use, not the tidier one.
+
+   AND IT RUNS BEFORE THE ENGINE IS LOADED. A duplicated start anchor makes
+   engine.js slice HTML into a Function constructor and throw, which ends
+   this file before any check speaks. Placed after the load, this said
+   nothing twice. */
+{
+  const trouble = [];
+  [['the engine start', 'const L = {}'],
+    ['the engine end', 'STATE + RENDER']].forEach(([name, a]) => {
+    const n = src.split(a).length - 1;
+    if (n !== 1) {
+      trouble.push(name + ', `' + a + '`, appears ' + n + ' times and must '
+        + 'appear once' + (n > 1 ? ' - writing it in a comment is enough to '
+          + 'move the slice' : ''));
+    }
+  });
+  if (!trouble.length
+      && src.indexOf('const L = {}') > src.indexOf('STATE + RENDER')) {
+    trouble.push('the end anchor comes before the start anchor');
+  }
+  check('the engine anchors appear once each, so no slice can move',
+    trouble);
+}
+
 /* A DEFINITION IS READ IN A LIST AND ASKED ON ITS OWN (BZ, 2026-09-20).
    "At least 51% wheat, new charred oak, the same proof limits" is clear
    under the bourbon entry and means nothing as a question, because the

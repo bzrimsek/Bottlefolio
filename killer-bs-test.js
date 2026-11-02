@@ -28178,9 +28178,17 @@ sec('§441 a lookup asks who is asking');
      signedIn_ of an absent token, the string "false", which would have
      claimed SHEET_OWNER and told every real account the shelf sheet belonged
      to somebody else for good. The gift page asks two doors: POST `shelf`,
-     and the GET lookup, which needs no list because it has one purpose. */
+     and the GET lookup, which needs no list because it has one purpose.
+     2.6.12: a day's spending is capped per PERSON as well as per link (BZ,
+     2026-11-02, asked for the ceiling and said a hundred). The per-link cap
+     is twenty, which only ever bounded one link - an account may mint as
+     many as it likes, each with a counter of its own, so a thousand links
+     was twenty thousand lookups a day on the key. The owner is read off the
+     gift node, which the rules will not accept without one, and both
+     counters are read before either is spent so a refusal on the owner
+     cannot close a link that served nobody. */
   eq('the app and the service move together on this',
-    L.GS_BUILD, '2.6.11');
+    L.GS_BUILD, '2.6.12');
 
 /* A POSITION IN A SEQUENCE IT CANNOT SEE THE END OF (BZ, 2026-09-27: "The 1792
    is the fourth Barton bottle you've brought to Playhouse - brought? 4th? so
@@ -31884,8 +31892,20 @@ sec('§461 where you are, from the device and OpenStreetMap');
   eq('the question asks for json', q.indexOf('[out:json]') === 0, true);
   eq('and for a point even from an outline',
     q.indexOf('out center') > 0, true);
-  eq('it searches around the fix', q.indexOf('around:120,39.961200,-82.998800')
+  eq('it searches around the fix', q.indexOf('around:120,39.9612,-82.9988')
     > 0, true);
+  /* AND THE FIX IS BLUNTED BEFORE IT LEAVES (BZ, 2026-11-02). The servers
+     are public and volunteer-run, so what is sent is the only part of this
+     under the app's control. Driven with a reading as fine as a device
+     gives, because the point is what the ROUNDING does, not what a
+     already-short literal does. */
+  const fine = L.overpassQuery(39.96121234, -82.99887654, 150);
+  eq('nothing finer than a street leaves the device',
+    /\d\.\d{5,}/.test(fine), false);
+  eq('four places, which is about eleven metres', L.GPS_PLACES, 4);
+  eq('and that is well inside the search radius',
+    L.metresBetween(39.96121234, -82.99887654, 39.9612, -82.9989) < 150,
+    true);
   /* NODE, WAY AND RELATION: a bar is a point in one town and a building
      outline in the next, and asking only for nodes misses half of them. */
   eq('as node, way and relation', q.indexOf('nwr(') > 0, true);

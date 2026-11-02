@@ -1,16 +1,31 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.28  Build 2026-11-02 12:57 PM ET
+     Version : v2.9.29  Build 2026-11-02 03:01 PM ET
      Author  : BiZStoryGuru LLC
-     Deploy  : upload index.html + sw.js + manifest.json + data.json
-               + mark.png + icon-192.png + icon-512.png to GitHub repo root
-     SW Cache: CACHE_NAME in sw.js is updated automatically by bump.py
-     Data    : data.json — 325 products, 344 bottles, 36 flights
-     Storage : localStorage (edits, run history). Firebase not yet wired.
+     Deploy  : python bump.py "what changed" then python push.py "subject".
+               The cloud gate runs twenty checks and publishes the site;
+               nothing here is uploaded by hand.
+     Shape   : one file, two halves. The engine is every L. function, and it
+               is pure - no DOM, no state, no network - and the only half the
+               test harness loads, so logic outside it ships untested. The
+               half after it draws screens and does templating only.
+               The two halves are found by LITERAL anchors (engine.js names
+               them), which three tools slice on - so neither anchor is
+               written out in this header, or the slice would start here.
+     Data    : data.json ships the catalogue and an EMPTY shelf - 324 entries,
+               no bottles, no flights - because a new account starts empty.
+               The app runs 769 entries once the shared library joins on top.
+     Storage : Firebase Realtime Database under bz-apps/whisky/<uid>, with
+               localStorage as the offline copy. firebase-rules.json is what
+               protects it; the web API key below authorises nothing.
+     Admin   : admin.html, beside this file. It reads this file's engine
+               rather than keeping a copy, so the two anchors named under
+               Shape are load-bearing in a second file.
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.29  2026-11-02  A gift link is capped per person as well as per link, the location lookup blunts the fix before it leaves the device, and the comments turn out not…
 // v2.9.28  2026-11-02  The chip that was 43.6px wide, and a gate that printed every line but the one that mattered.
 // v2.9.27  2026-11-02  Every control a thumb can hit, and the gift link buys only what it was sold.
 // v2.9.26  2026-11-02  Cut as v2.9.25 and shipped as this, because verifying the brand ruling found the other half of it and a half-fixed ruling is worse than a stated gap.
@@ -20,7 +35,6 @@ CHANGELOG
 // v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
 // v2.9.21  2026-10-27  The admin page gets a named lock file.
 // v2.9.20  2026-10-27  The library keeps everything about the bottling and refuses by rule.
-// v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3175,8 +3189,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.28';
-const BUILD_TIME  = '2026-11-02 12:57 PM ET';
+const APP_VERSION = '2.9.29';
+const BUILD_TIME  = '2026-11-02 03:01 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -10244,9 +10258,25 @@ L.osmKind = function (tags) {
    a bar is a point in one town and a building outline in the next, and
    asking for only nodes misses half of them. `out center` gives a single
    point for an outline. */
+L.GPS_PLACES = 4;
+
 L.overpassQuery = function (lat, lon, radius) {
-  const at = 'around:' + (radius || 120) + ',' + Number(lat).toFixed(6)
-    + ',' + Number(lon).toFixed(6);
+  /* BLUNTED BEFORE IT LEAVES (BZ, 2026-11-02, told what the six decimals
+     were worth). The device answers to about six places, which is eleven
+     centimetres - a room in a house. This question is "what is near here"
+     inside a hundred and fifty metres, so four places, about eleven
+     metres, is inside the search and cannot change the answer: every
+     candidate within eleven metres of the fix is within the radius of the
+     rounded one too.
+
+     IT MATTERS BECAUSE THE RECEIVER IS NOT OURS. The servers are free,
+     public and volunteer-run, and this is the only reading in the app that
+     sends anything about where the phone is to a third party. Nothing is
+     stored either end - the pour keeps the NAME - but what is sent is the
+     only part we control, and a street is all the question needs. */
+  const at = 'around:' + (radius || 120) + ','
+    + Number(lat).toFixed(L.GPS_PLACES)
+    + ',' + Number(lon).toFixed(L.GPS_PLACES);
   const groups = {};
   Object.keys(L.OSM_KINDS).forEach(k => {
     const bits = k.split('=');
@@ -35257,7 +35287,7 @@ L.flightPoured = function (entry) {
    Code.gs states its own build and the two are compared rather than
    assumed. Bump BOTH whenever Code.gs changes; consistency.js fails the
    build if they disagree. */
-L.GS_BUILD = '2.6.11';
+L.GS_BUILD = '2.6.12';
 
 /* THE VERDICT WENT WITH CHECK THE SERVICE (2026-11-02). It turned the
    comparison into words for somebody to act on, and the only presser was a
@@ -59205,7 +59235,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.28</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.29</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
