@@ -478,16 +478,23 @@ function check(name, got, want) {
     });
 
     check('there was something to offer', r.before, 1);
-    /* ONE SLUG, NOT THREE. "Elmer T. Lee Single Barrel" is here because a
-       name with a full stop in it is the hazard that cost an afternoon on
-       Octomore 16.1. An offer's slug is L.shopNorm with the punctuation
-       stripped, and shopNorm drops "single" as a word that says nothing
-       about which whisky it is - so the slug is elmer_t_lee_barrel, and
-       what this pins is that the dot arrives as one separator and the name
-       does not split. The LIBRARY key is the other half and is pinned in
-       admin.js, where accepting an offer writes it. */
-    check('the offer reaches the queue under one slug',
-      r.offered, ['elmer_t_lee_barrel']);
+    /* ONE KEY, AND IT IS THE LIBRARY'S OWN (changed 2026-11-01). "Elmer T.
+       Lee Single Barrel" is here because a name with a full stop in it is
+       the hazard that cost an afternoon on Octomore 16.1, and that half is
+       unchanged: the dot arrives as one separator and the name does not
+       split.
+       WHAT MOVED is which key. An offer was filed under L.shopNorm with the
+       punctuation stripped - elmer_t_lee_barrel, since shopNorm drops the
+       word "single" - while the same function asked LIB.products[L.libKey]
+       whether the library already had it. Two key schemes for one bottle,
+       four lines apart, so a bottle the library held could sit in the queue
+       under a name nothing ever asked for and be dropped as "already in the
+       library" for ever (BZ, 2026-11-01: "I've offered the same new bottle
+       multiple times"). It is L.libKey on both sides now, which is also the
+       key admin.js pins when the offer is accepted - the two halves finally
+       name the same row. */
+    check('the offer reaches the queue under the library’s own key',
+      r.offered, ['elmer_t_lee_single_barrel']);
     /* AND NOTHING WAS PUBLISHED. The app may not write the library at all
        since the admin split, and an offer that quietly wrote one would be
        the whole build undone. admin.js drives the ACCEPT, where the

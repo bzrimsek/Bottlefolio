@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.21  Build 2026-10-27 10:04 PM ET
+     Version : v2.9.22  Build 2026-11-01 10:50 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : upload index.html + sw.js + manifest.json + data.json
                + mark.png + icon-192.png + icon-512.png to GitHub repo root
@@ -11,6 +11,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
 // v2.9.21  2026-10-27  The admin page gets a named lock file.
 // v2.9.20  2026-10-27  The library keeps everything about the bottling and refuses by rule.
 // v2.9.19  2026-10-27  A value the app computes is no longer queued for somebody to type in by hand.
@@ -20,7 +21,6 @@ CHANGELOG
 // v2.9.15  2026-10-27  The first press of Sign in now works.
 // v2.9.14  2026-10-27  @ Build 2 of the admin split: the library admin moves whole to admin.html.
 // v2.9.13  2026-10-27  Prices in another currency moves from the Diagnostics screen to Settings then Shelf, where BZ asked for it.
-// v2.9.12  2026-10-27  Build 1 of the admin split: the admin people surface leaves the app for a separate admin page.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3150,8 +3150,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.21';
-const BUILD_TIME  = '2026-10-27 10:04 PM ET';
+const APP_VERSION = '2.9.22';
+const BUILD_TIME  = '2026-11-01 10:50 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3562,15 +3562,25 @@ L.shelfSummaryLine = function (sum) {
    a bottle called single malt and filed as new make is one or the other, and
    guessing writes the wrong fact into a shelf. Each row carries its own sentence
    and the key to open. */
-L.shelfFaults = function (catalog, bottles) {
+L.shelfFaults = function (catalog, bottles, reviewed, now) {
   const held = L.ownedCounts(bottles || []);
+  const when = now || Date.now();
   const out = [];
   Object.keys(catalog || {}).forEach(k => {
     if (!held[k]) return;
     const p = catalog[k];
-    const f = L.rowFaults(p);
+    /* ONE YOU HAVE SETTLED STAYS SETTLED (BZ, 2026-11-01: "this was resolved
+       at one point - no way to mark it correct now"). The library scan has
+       had verdicts all along and this list never did, so a row you disagreed
+       with came back every time the page opened and there was nothing to
+       press. Same door as the library scan: L.auditVerdict, keyed
+       <faultId>:<bottle>, so one fault can be settled without silencing the
+       others on the same bottle. */
+    const f = L.rowFaults(p).filter(x =>
+      !L.auditVerdict(reviewed, x.id + ':' + k, when));
     if (!f.length) return;
     out.push({ k: k, name: p.name || k, n: f.length,
+      ids: f.map(x => x.id),
       says: f.map(x => x.say).join(' · ') });
   });
   return out.sort((a, b) => b.n - a.n
@@ -3585,7 +3595,7 @@ L.shelfFaultLine = function (rows) {
   return n + (n === 1 ? ' bottle contradicts itself' : ' bottles contradict '
     + 'themselves') + ' \u2014 a fact in the wrong field, a release filed against '
     + 'what its name says, or a strength no whiskey is bottled at. Nothing is '
-    + 'changed for you: each one opens so you can settle it.';
+    + 'changed for you: open one to change it, or mark it correct.';
 };
 
 /* BOTTLES THE SHELF CANNOT SHOW YOU. The Shelf draws one card per CATALOGUE
@@ -9252,7 +9262,7 @@ L.FEATURES = [
   { term: 'Another one?', src: 'when you retire a bottle',
     def: 'Asked once, when a bottle leaves the shelf for any reason \u2014 the moment you know whether you want it back. Yes puts it on the wishlist. It is not asked if you have another or it is already on the list.' },
   { term: 'The library', src: 'Learn \u203a Open the library',
-    def: 'Every whisky this app knows about, with what it knows: search it by name, distillery, cask or region, or pick a type to browse. Your own bottles are separate, on Shelf. Anybody signed in can read it; adding and correcting entries is done on the admin page, and what your own shelf would add is offered from Settings \u203a Shelf \u203a Tidy your shelf. The door was on Settings \u203a Admin mode until 2026-10-27, which meant the one screen here that only browses could be reached only by turning on an advanced tab.' },
+    def: 'Every whisky this app knows about, with what it knows: search it by name, distillery, cask or region, or pick a type to browse. Your own bottles are separate, on Shelf. Anybody signed in can read it; adding and correcting entries is done on the admin page, and what your own shelf would add is offered from Settings \u203a Shelf \u203a Tidy your shelf. The door was on Settings \u203a Admin mode until 2026-10-27, which meant the one screen here that only browses could be reached only by turning that switch on; the switch itself went on 2026-11-01.' },
   { term: 'The admin page', src: 'admin.html, beside the app',
     def: 'Looking after the shared library \u2014 the offers people have made, the entry editor, the contradiction scan, the export and import, and everybody with an account \u2014 is a separate page at the same address as the app with /admin.html on the end. It is a desktop page and it is not part of the app: nothing in the app can change the library any more, which is why none of these controls appear here. Signing in there with an account that is not an admin says so plainly and does nothing else.' },
   { term: 'Whiskey only', src: 'Shelf › filter row',
@@ -9446,7 +9456,7 @@ L.FEATURES = [
   { term: 'Delete account', src: 'Settings, beside Sign out',
     def: 'Removes your shelf, flights and pours, your directory entry, every share both ways, requests and unreviewed offers, then the sign-in itself. Type DELETE to confirm, and take the backup it offers first. Two things stay: what is already in the library, and shelves others shared with you. An admin account needs its admin line removed in the Firebase console.' },
   { term: 'Settings', src: 'the gear',
-    def: 'Sign in, your display name and whether others can find you, your buddies, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Advanced, at the bottom, holds the lookup service address, the version and update checks, and Admin mode, which adds a Diagnostics screen with the app\u2019s own log.' },
+    def: 'Six tabs. Account and Data holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Advanced, last, holds the lookup service address, what the readers may spend, a fetch of the whole library and the app\u2019s own log. There was an Admin mode switch here until 2026-11-01; it hid none of those things for a reason, and the real admin work is on the admin page.' },
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
@@ -21821,34 +21831,35 @@ L.SETTINGS_TABS = [
   /* ONE TAB (BZ, 2026-10-02: "Help/About can be one Settings Tab"). Two tabs
      holding one card each is more strip than page. */
   { id: 'help', label: 'Help and About' },
-  /* AND THE ADVANCED HALF BEHIND ONE TAB (BZ: "all of the advanced stuff should
-     be under admin anyway"). Not greyed out and not explained when it is not
-     there: a tab nobody can use is a question nobody can answer. */
-  { id: 'admin', label: 'Admin', admin: true }
+  /* AND THE ADVANCED HALF (BZ: "all of the advanced stuff should be under
+     admin anyway"). It was called Admin and hidden behind S.admin until
+     2026-11-01, five days after the real admin left for admin.html — and by
+     then the switch hid a cache refresh, the log and the lookup settings,
+     none of which is an admin act, plus "Keep a Google Sheet of my shelf",
+     which is an ordinary feature BZ uses daily. He asked why admin mode was
+     still in the app and sent two screenshots. It is not: the tab is
+     Advanced, it is always here, and the switch is gone. */
+  { id: 'advanced', label: 'Advanced' }
 ];
 
-/* ADMIN MODE IS THE SWITCH THE APP ALREADY HAD (S.admin), and it is asked here
-   on its own. The first draft of this page declared a second flag beside it and
-   asked both - whether the account MAY administer the library and whether this
-   person wants the advanced half showing - which is one question with two
-   answers (rule 30d), each right on the device that set it.
+/* WHICH TABS THERE ARE AND WHICH IS OPEN.
 
-   IT IS ALSO NOT A PERMISSION. Anybody may turn it on, and what is behind it
-   either changes nothing (the log, the build, the lookup address) or is refused
-   by the database whoever asks. That is the same reasoning that took the log out
-   from behind it: hiding something behind a switch anybody can flip protects
-   nothing, so the honest thing is to organise with it, not to guard with it.
-   WHETHER YOU MAY WRITE THE LIBRARY IS NOT ASKED HERE AT ALL any more
-   (2026-10-27): it is asked on admin.html, by the page that can act on the
-   answer. This switch was never that question and now nothing in this file
-   is. */
-L.settingsView = function (want, modeOn) {
-  const tabs = L.SETTINGS_TABS.filter(t => !t.admin || !!modeOn);
-  /* AND WHICH OF THEM IS OPEN, from the same list: a tab that is not on it -
-     saved by an older build, or Admin after the switch goes off - falls back to
-     the first rather than drawing a strip with nothing lit. Answered here and
-     not in a second function, because the strip and the highlight are one
-     question and two answers to it can disagree. */
+   There was a switch here, S.admin, and this filtered the list by it. Both are
+   gone (2026-11-01). It was never a permission - anybody could flip it, and
+   what sat behind it either changed nothing or was refused by the database
+   whoever asked - so it organised rather than guarded, which was the argument
+   for keeping it. What finished it was what it had come to hide: a cache
+   refresh, the log, the lookup settings, and "Keep a Google Sheet of my
+   shelf", an ordinary feature BZ uses every day. Whether an account may write
+   the library is asked on admin.html, by the page that can act on the answer,
+   and has been since 2026-10-27. Nothing in this file asks it. */
+L.settingsView = function (want) {
+  const tabs = L.SETTINGS_TABS.slice();
+  /* WHICH OF THEM IS OPEN, from the same list: a tab that is not on it - the
+     old 'admin' id saved by a build before 2026-11-01, or anything else -
+     falls back to the first rather than drawing a strip with nothing lit.
+     Answered here and not in a second function, because the strip and the
+     highlight are one question and two answers to it can disagree. */
   const now = tabs.some(t => t.id === want) ? want : tabs[0].id;
   return { tabs: tabs, now: now };
 };
@@ -23290,7 +23301,15 @@ L.rowFaults = function (r) {
      judgment this app makes about the collection; "small batch" on a vodka is a
      phrase on a label. Reyka and Tito's were both reported as contradicting
      themselves until this guard. */
-  const scar = L.isWhisky(p) ? L.guessScar(p.name, p.dist) : '';
+  /* AND NOT A BOTTLING HE BLENDED HIMSELF (BZ, 2026-11-01: "this is the
+     bottle I personally blended... so I'm calling it exclusive"). A `mine`
+     bottling is one of one, which IS exclusive, whatever words happen to be
+     on the label it was poured under - Davidson Reserve Bourbon Wheated
+     Bourbon Small Batch read as "batched" because its name carries Small
+     Batch. The name describes the source; `mine` describes the bottle, and
+     the bottle wins. He had no way to mark it correct, so it came back every
+     time he opened the page. */
+  const scar = (L.isWhisky(p) && !p.mine) ? L.guessScar(p.name, p.dist) : '';
   if (scar && p.scar && scar !== p.scar) {
     out.push({ id: 'scarsays',
       say: 'filed as ' + p.scar + ' where the name reads ' + scar,
@@ -35452,7 +35471,7 @@ const S = { base: {}, catalog: {}, bottles: [], flights: [], history: [],
             // The last offer pasted in, so leaving the screen and coming
             // back does not mean pasting the email again.
             offerText: '',
-            displayName: '', findable: false, matchMode: '', admin: false,
+            displayName: '', findable: false, matchMode: '',
             upcs: {},
             favs: {},
             barSort: 'proofd',
@@ -35567,7 +35586,7 @@ const S_FRESH = JSON.stringify(S);
 const KEYS = ['tasteAB',
               'history', 'edits', 'custom', 'deleted', 'customFlights',
               'bottles', 'lookupUrl', 'wish', 'displayName', 'findable',
-              'admin', 'deadGaps', 'proposals', 'log', 'barSort', 'favs',
+              'deadGaps', 'proposals', 'log', 'barSort', 'favs',
               'upcs', 'updated', 'askStats', 'libLedger',
               /* A print per record of what this device last pushed, so the
                  next load knows which records are its own unsent work. Local
@@ -41346,12 +41365,28 @@ function shelfToolsItself(m, q) {
      and reported it missing (2026-10-03). The library scan already says the other
      half out loud: "Nothing contradicts itself. That is worth knowing rather than
      assuming." */
-  const faults = L.shelfFaults(S.catalog, S.bottles);
+  const faults = L.shelfFaults(S.catalog, S.bottles, S.reviewed);
   const see = el('button', 'btn btn-sm', faults.length
     ? 'Show me what contradicts itself' : 'Nothing contradicts itself');
   see.disabled = !faults.length;
+  /* SETTLING ONE, through the ledger the library scan already writes to. It
+     marks every fault raised on that bottle, which is what "mark it correct"
+     means when a row says two things about one whisky. */
+  const settle = r => {
+    const now = Date.now();
+    const add = {};
+    (r.ids || []).forEach(id => { add[id + ':' + r.k] = { v: 'ok', at: now }; });
+    S.reviewed = Object.assign({}, S.reviewed || {}, add);
+    save_();
+    appLog('shelf check: marked correct — ' + (r.ids || []).join(', ')
+      + ' on ' + r.name);
+    closeModal();
+    renderSettings();
+    toast('Marked correct');
+  };
   see.onclick = () => showQuadrant('What contradicts itself',
-    'Each one opens so you can settle it.', faults, r => r.says);
+    'Open one to change it, or mark it correct to stop being asked.',
+    faults, r => r.says, settle);
   settingRow(grid, see, faults.length ? L.shelfFaultLine(faults)
     : 'Every bottle agrees with itself: no fact in the wrong field, no release '
       + 'filed against what its name says, no strength no whiskey is bottled at. '
@@ -41423,7 +41458,11 @@ function shelfToolsFiles(m) {
   settingRow(grid, paid, 'Prices only, matched to bottles you already have. '
     + 'Nothing else on the row is touched.');
 
-  if (S.admin) sheetSwitch(grid);
+  /* NO LONGER BEHIND A SWITCH (2026-11-01). Keeping a Google Sheet of your
+     shelf is an ordinary feature — BZ's log writes one on nearly every boot —
+     and it sat behind a toggle called Admin mode, where nobody who was not
+     looking for it would ever have found it. */
+  sheetSwitch(grid);
 }
 
 /* AND THE ONE THAT CANNOT BE TAKEN BACK, last. */
@@ -42995,7 +43034,10 @@ function renderBuyVsDrink(box) {
    differs between the quadrant's bottles and the shelf's contradictions - and a
    second list would be the same forty lines of drawing with one sentence
    changed (2026-10-03). */
-function showQuadrant(title, sub, rows, say) {
+/* `settle`, when given, puts a mark-it-correct beside each row. Only the
+   contradiction list passes one: the other two quadrants are counts of what
+   IS, not claims you can disagree with. */
+function showQuadrant(title, sub, rows, say, settle) {
   openModal(title, m => {
     m.appendChild(el('div', 'sub', sub));
     if (!rows.length) {
@@ -43005,16 +43047,31 @@ function showQuadrant(title, sub, rows, say) {
     const list = el('div', 'recent');
     list.style.marginTop = '10px';
     rows.slice(0, 40).forEach(r => {
-      const row = el('button', 'item');
-      row.style.cssText = 'width:100%;text-align:left';
+      /* A ROW, NOT A BUTTON, once there are two things to press on it. The
+         whole row was one button, which is why there was nowhere to put a
+         second control at all. */
+      const row = el('div', 'item');
+      const go = el('button', 'nm oneline');
+      go.style.cssText = 'background:none;border:0;padding:0;flex:1;'
+        + 'text-align:left;font:inherit;color:inherit;cursor:pointer';
       const left = el('div');
-      left.appendChild(el('div', 'nm oneline', r.name));
+      left.style.flex = '1';
+      go.textContent = r.name;
+      left.appendChild(go);
       left.appendChild(el('div', 'sub', say ? say(r) :
         r.owned + ' owned · ' + (r.poured
           ? r.poured + ' pour' + (r.poured === 1 ? '' : 's')
           : 'never poured')));
+      go.onclick = () => { closeModal(); showBottle(r.k); };
       row.appendChild(left);
-      row.onclick = () => { closeModal(); showBottle(r.k); };
+      if (settle) {
+        const ok = el('button', 'chip quiet iconchip');
+        ok.textContent = '✕';
+        ok.title = 'Mark it correct, and stop asking';
+        ok.setAttribute('aria-label', 'Mark it correct, and stop asking');
+        ok.onclick = () => settle(r);
+        row.appendChild(ok);
+      }
       list.appendChild(row);
     });
     if (rows.length > 40) {
@@ -47191,7 +47248,7 @@ function accountCard() {
    reached by a stray keystroke. */
 function renderSettings() {
   const box = $('#settingsBody'); box.innerHTML = '';
-  const view = L.settingsView(S.settingsTab, S.admin);
+  const view = L.settingsView(S.settingsTab);
   /* WRITTEN BACK when the chosen tab is not on offer, so Admin does not sit in
      the saved state waiting to reappear with the switch. */
   if (view.now !== S.settingsTab) { S.settingsTab = view.now; save_(); }
@@ -47220,7 +47277,7 @@ function settingsPanel(tab, host) {
   if (tab === 'buddies') { buddySettingsPanel(host); return; }
   if (tab === 'guide') { host.appendChild(guideCard()); return; }
   if (tab === 'help') { helpPanel(host); aboutPanel(host); return; }
-  if (tab === 'admin') { adminPanel(host); return; }
+  if (tab === 'advanced') { advancedPanel(host); return; }
   accountPanel(host);
 }
 
@@ -47582,7 +47639,8 @@ function accountPanel(box) {
      place a switch that REVEALS the advanced half can live, since you would
      otherwise have to find the thing in order to turn on finding it - but it is
      the least-used control here, so it goes under everything else. */
-  box.appendChild(adminModeCard());
+  /* The Admin-mode switch stood here until 2026-11-01. See L.SETTINGS_TABS:
+     there is no mode to switch any more. */
 
   /* MOVED 2026-10-27: this asked whether the account was an admin so the
      page could redraw with the admin half showing. There is no admin half
@@ -48461,9 +48519,7 @@ function renderDiag() {
      which only an admin may do - so this app shipped that screen to everybody
      who installed it and showed a refusal to all of them. A door nobody can
      open is worse than no door, and it matters more now the app is going to
-     the stores. S.admin stays what it was: a local switch that ORGANISES the
-     advanced half, never a permission (see L.settingsView). */
-  if (S.admin) {
+     the stores. AND THE SWITCH LEFT ON 2026-11-01 — see L.SETTINGS_TABS. */
     /* PRICES IN ANOTHER CURRENCY LEFT ON 2026-10-27, for Settings > Shelf
        (BZ). It sets S.fxRate, which is this person's own rate for reading a
        listing in pounds - it was never shared data, and it sat under a
@@ -48473,7 +48529,9 @@ function renderDiag() {
        The library's export, scan and queue live on the library screen, where
        it is loaded (BZ); this screen never loads it. With the currency card
        gone there is nothing shared left here at all, so the heading goes
-       rather than standing empty over the device's own report. */
+       rather than standing empty over the device's own report. The switch
+       itself left on 2026-11-01, so the heading is simply drawn. */
+  {
     const h3 = el('div', 'rs', 'This device');
     h3.style.marginTop = '14px';
     box.appendChild(h3);
@@ -49001,41 +49059,21 @@ function helpPanel(box) {
   box.append(help, feedbackCard());
 }
 
-/* THE ADMIN-MODE SWITCH, drawn for Account. It is S.admin: a local preference,
-   not a permission - see L.settingsTabs. */
-/* ADMIN MODE, LAST AND FOLDED. It is the least-used thing on this page and it
-   reveals a whole tab, so it sits out of the way of what people came for (BZ,
-   2026-10-02: "admin mode should be at the bottom", "under a fold").
-
-   A SWITCH, NOT A CHIP. "Admin mode on" says either what it IS or what it WOULD
-   DO and there is no way to tell which; a switch is read the same way everywhere
-   else in Settings, and the second column says plainly which way it is set. */
-function adminModeCard() {
-  const fold = el('details');
-  fold.style.marginTop = '9px';
-  fold.appendChild(el('summary', 'rs', 'Admin mode'));
-  const grid = settingGrid();
-  settingSwitch(grid, !!S.admin, 'Admin mode',
-    S.admin
-      ? 'On \u2014 the Admin tab is showing, with the library and the lookup '
-        + 'settings. Nothing there changes your shelf.'
-      : 'Off \u2014 the Admin tab is hidden. Turning it on adds the library, '
-        + 'the lookup settings and a Diagnostics screen.',
-    () => { S.admin = !S.admin; save_(); renderSettings(); });
-  fold.appendChild(grid);
-  return fold;
-}
+/* The Admin-mode switch stood here. It is gone (2026-11-01) and so is
+   S.admin: see L.SETTINGS_TABS for what it had come to hide. */
 
 /* THE ADVANCED HALF, BEHIND ONE TAB (BZ, 2026-10-01: "all of the advanced stuff
    should be under admin anyway"). The lookup address, what the shelf reader and
-   the offered queue may spend, and the way into the library - plus the log in
-   full, which is the only thing here anybody else would want and is on Help too.
+   the offered queue may spend, and a fetch of the whole library - plus the log
+   in full, which is the only thing here anybody else would want and is on Help
+   too. It was called adminPanel and the tab said Admin until 2026-11-01; see
+   L.SETTINGS_TABS for why neither was true any more.
 
    THE FOLD INSIDE IT OPENS BY DEFAULT: a fold inside the drawer it is already in
    is one tap for nothing. It stays a fold because browser.js counts
    what it builds to prove a redraw does not stack a second copy, which is two
    Advanced rows BZ once photographed. */
-function adminPanel(box) {
+function advancedPanel(box) {
   /* THE LIBRARY LEADS, because it is what an admin opens this tab for, and it
      is here rather than on Shelf: it is the shared list behind every shelf,
      not anything about this person's bottles (BZ, 2026-10-02). */
@@ -56652,7 +56690,18 @@ function offerToLibrary(entry, how) {
     appLog('library: not offering ' + entry.name + ' \u2014 ' + verdict.why);
     return Promise.resolve(false);
   }
-  const slug = L.shopNorm(entry.name).replace(/[^a-z0-9]/g, '_').slice(0, 60);
+  /* THE KEY THE LIBRARY ITSELF USES, and that is the whole fix (BZ,
+     2026-11-01: "I've offered the same new bottle multiple times").
+     This built its own slug out of shopNorm while the line above asks
+     LIB.products[L.libKey(name)] whether the library already has it — two key
+     schemes for one bottle, four lines apart. Barrell Whiskey Sweet Peat is
+     `barrell_whiskey_sweet_peat` to the library and was `barrell_sweet_peat`
+     here, so the library could already hold it while the offer sat under a
+     name nothing asked for, and it was dropped as "already in the library as
+     Barrell Whiskey Sweet Peat" every time. It is also the key the accept
+     writes the library row under, so this makes that land where readers
+     look. */
+  const slug = key;
   if (!slug) return Promise.resolve(false);
   const row = Object.assign(L.libraryEntry(entry, refBrands()), {
     by: S.displayName || '', at: Date.now(),
@@ -56822,15 +56871,15 @@ function fbContribute() {
     // Anything that came from a lookup is already published, not queued.
     if (L.fromLookup(p)) return;
     /* NOT SOMETHING THAT WAS ALREADY MERGED AWAY. */
-    const offerKey = L.shopNorm(p.name)
-      .replace(/[^a-z0-9]/g, '_').slice(0, 60);
+    /* L.libKey, like offerToLibrary and like the library itself. */
+    const offerKey = L.libKey(p.name);
     const wentTo = L.mergedInto(LIB.graves, offerKey);
     if (wentTo !== offerKey) {
       appLog('library: not offering ' + offerKey + ' \u2014 merged into '
         + wentTo);
       return;
     }
-    send[L.shopNorm(p.name).replace(/[^a-z0-9]/g, '_').slice(0, 60)] =
+    send[offerKey] =
       Object.assign(L.libraryEntry(p, refBrands()),
                     { by: S.displayName || '', at: Date.now() });
   });
@@ -57880,6 +57929,10 @@ function fbSyncCatalog() {
     rebuildCatalog();
     renderShelf(); renderShelfFilters(); renderHome();
     renderFlights(); renderPayline();
+    /* AND THE BADGE, which could not answer until now: showPending says 0
+       against an unread library and nothing called it again, so on the PC
+       that 0 stood all session (BZ, 2026-11-01). */
+    try { showPending(); } catch (e) { /* the masthead is not up yet */ }
     appLog('library: took ' + items.length
       + (since ? ' changed' : ' on first run'));
     if (since) toast(items.length + ' added to the library');
@@ -58992,7 +59045,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.21</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.22</span>'
     + ' · <span id="buildTime"></span>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);

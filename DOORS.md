@@ -1146,7 +1146,7 @@ QUESTION, not the name you were going to use.
 - **`L.serialQueue`** — ONE AT A TIME, AND ONLY ONCE EACH.
 - **`L.serviceBuildVerdict`** — What the comparison means, in the words somebody can act on.
 - **`L.setState`** — _no comment above it_
-- **`L.settingsView`** — IT IS ALSO NOT A PERMISSION
+- **`L.settingsView`** — There was a switch here, S.admin, and this filtered the list by it
 - **`L.shareHealth`** — WHAT A SHARE LOOKS LIKE FROM ALL FOUR SIDES
 - **`L.shareRepairOps`** — WHAT TO DO ABOUT A HALF-LANDED SHARE
 - **`L.sheetCare`** — WHAT GOES ON A SHEET ABOUT DRINKING IT.

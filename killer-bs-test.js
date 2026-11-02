@@ -32702,34 +32702,71 @@ sec('§461 a fact in the wrong field');
 
   /* ONE PLACE FOR SETTINGS, IN TABS (BZ, 2026-10-01). The strip and which of it
      is lit are one answer, because drawn from two they can disagree. */
-  const plain = L.settingsView('account', false);
-  /* FIVE: help and about are one tab (BZ, 2026-10-02), because two tabs holding
-     one card each is more strip than page. */
-  eq('five tabs with admin mode off', plain.tabs.map(t => t.id).join(' '),
-    'account shelf buddies guide help');
+  const plain = L.settingsView('account');
+  /* SIX: help and about are one tab (BZ, 2026-10-02), because two tabs holding
+     one card each is more strip than page. Advanced is the sixth and it is
+     always here - it was called Admin and hidden behind S.admin until
+     2026-11-01, when BZ asked why admin mode was still in the app at all. The
+     real admin had gone to admin.html five days earlier; what the switch had
+     come to hide was a cache refresh, the log, the lookup settings, and
+     "Keep a Google Sheet of my shelf", which he uses daily. */
+  eq('six tabs, and the advanced one is always among them',
+    plain.tabs.map(t => t.id).join(' '),
+    'account shelf buddies guide help advanced');
   eq('and the one asked for is open', plain.now, 'account');
-  const adminOn = L.settingsView('shelf', true);
-  eq('admin mode adds the sixth, last',
-    adminOn.tabs.map(t => t.id).join(' '),
-    'account shelf buddies guide help admin');
-  eq('and it does not move the others', adminOn.now, 'shelf');
-  eq('Admin opens when it is there', L.settingsView('admin', true).now,
-    'admin');
-  /* THE ONE THAT MATTERS: the switch goes off while Admin is the open tab, so
-     the saved tab names something not on the strip. It falls back rather than
+  eq('and it does not move the others',
+    L.settingsView('shelf').now, 'shelf');
+  eq('Advanced opens when it is asked for',
+    L.settingsView('advanced').now, 'advanced');
+  /* THE OLD ID FALLS BACK. A device that saved 'admin' before the rename
+     names something not on the strip; it lands on the first tab rather than
      drawing a strip with nothing lit. */
-  eq('Admin falls back when the switch goes off',
-    L.settingsView('admin', false).now, 'account');
+  eq('the old admin id falls back',
+    L.settingsView('admin').now, 'account');
   eq('and so does a tab from an older build',
-    L.settingsView('notifications', true).now, 'account');
-  eq('and so does nothing at all', L.settingsView(undefined, false).now,
+    L.settingsView('notifications').now, 'account');
+  eq('and so does nothing at all', L.settingsView(undefined).now,
     'account');
   /* EVERY TAB HAS WORDS ON IT, because the strip is the only way between them. */
   eq('every tab is labelled',
-    L.settingsView('account', true).tabs.filter(t => !t.label).length, 0);
-  /* AND ADMIN IS THE ONLY ONE BEHIND THE SWITCH. */
-  eq('one tab is marked admin',
-    L.SETTINGS_TABS.filter(t => t.admin).map(t => t.id).join(' '), 'admin');
+    L.settingsView('account').tabs.filter(t => !t.label).length, 0);
+  /* AND NOTHING IS BEHIND A SWITCH ANY MORE. */
+  eq('no tab is gated',
+    L.SETTINGS_TABS.filter(t => t.admin).length, 0);
+
+  /* WHAT CONTRADICTS ITSELF CAN BE MARKED CORRECT (BZ, 2026-11-01: "this was
+     resolved at one point - no way to mark it correct now"). The library scan
+     has had verdicts all along; this list had none, so a row he disagreed
+     with came back on every open and there was nothing to press. */
+  {
+    const cat = { b: { k: 'b', name: 'Davidson Reserve Small Batch',
+      dist: 'Davidson', sub: 'bourbon', proof: 100, scar: 'exclusive' } };
+    const bots = [{ id: '1', k: 'b', status: 'open' }];
+    const raised = L.shelfFaults(cat, bots, {});
+    eq('the contradiction is raised', raised.length, 1);
+    eq('and it says which fault it is',
+      (raised[0].ids || []).indexOf('scarsays') >= 0, true);
+    /* SETTLED, through the same ledger and the same reader as the library
+       scan: L.auditVerdict, keyed <faultId>:<bottle>. */
+    const settled = L.shelfFaults(cat, bots,
+      { 'scarsays:b': { v: 'ok', at: Date.now() } });
+    eq('marked correct, it stops being raised', settled.length, 0);
+    /* ONE FAULT AT A TIME: settling a different one leaves this one alone. */
+    eq('settling another fault does not silence it',
+      L.shelfFaults(cat, bots,
+        { 'proofname:b': { v: 'ok', at: Date.now() } }).length, 1);
+
+    /* AND A BOTTLE HE BLENDED HIMSELF IS EXCLUSIVE, whatever its label says.
+       BZ: "this is the bottle I personally blended... so I'm calling it
+       exclusive". The name carries Small Batch, which read as `batched`. */
+    const mine = { b: Object.assign({}, cat.b, { mine: true }) };
+    eq('a bottling of your own is never filed against its name',
+      L.shelfFaults(mine, bots, {}).length, 0);
+    eq('and the rule is off at the source, not filtered after',
+      L.rowFaults(mine.b).filter(x => x.id === 'scarsays').length, 0);
+    eq('while the same bottle not yours still raises it',
+      L.rowFaults(cat.b).filter(x => x.id === 'scarsays').length, 1);
+  }
 
   /* FOUR REPAIRS TO WHAT MAKES TWO BOTTLES ONE, every one off a screenshot BZ
      sent on 2026-10-01 ("its the damn Venn - and bottles not matching"). */
