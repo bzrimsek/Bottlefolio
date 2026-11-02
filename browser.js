@@ -1173,6 +1173,19 @@ function step(n) {
           if (!e.offsetParent) return;
           const r = e.getBoundingClientRect();
           if (r.width < 2 || r.height < 2) return;
+          /* AN INLINE LINK IN A SENTENCE IS NOT A BUTTON. It is as tall as
+             its line, which is what a link in prose is; the guideline is
+             about controls you aim at. shots.js is where that rule is
+             stated and where the real 44px floor lives - this one is an
+             older, weaker 36px copy that never learned it, so the Privacy
+             link in the Home footer failed here and passed there. Two
+             checks answering one question is the thing rule 30d is for and
+             one of them should go; until that is decided they must at
+             least agree, because a guard that contradicts another teaches
+             you to ignore whichever went red. */
+          if (e.tagName === 'A' && getComputedStyle(e).display === 'inline') {
+            return;
+          }
           if (r.height < 36 || r.width < 24) {
             const k = where + ' .'
               + (String(e.className || '').split(' ')[0] || e.tagName);

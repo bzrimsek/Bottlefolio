@@ -69,6 +69,66 @@ const check = (what, offenders) => {
     trouble);
 }
 
+/* THE MANIFEST'S ICONS: EACH FILE EXISTS, IS THE SIZE IT CLAIMS, AND IS
+   NAMED IN THE SLOT IT WAS DRAWN FOR.
+
+   Two sets of icons are drawn: a plain one, and a maskable one carrying the
+   safe-zone margin Android crops to. The maskable file was named in the
+   "any" 512 slot as well as its own, so the launcher and the Play splash
+   screen drew the padded art and the mark came out small inside it, while
+   the unpadded icon-512.png sat on the site unused by the manifest. Nothing
+   looked at it: audit.py asks only whether SOME maskable icon exists.
+
+   A maskable file in an "any" slot is the fault, not a style: "any" is
+   drawn as given and "maskable" is drawn cropped, so one file cannot be
+   correct in both. The size is read out of the PNG's own IHDR rather than
+   trusted from the manifest, because a mislabelled size is the same class
+   of fault one step along. */
+{
+  const bad = [];
+  let mf = null;
+  try {
+    mf = JSON.parse(fs.readFileSync(__dirname + '/manifest.json', 'utf8'));
+  } catch (e) { bad.push('manifest.json does not parse: ' + e.message); }
+  const icons = (mf && mf.icons) || [];
+  if (mf && !icons.length) bad.push('the manifest declares no icons');
+  const named = new Set();
+  icons.forEach(i => {
+    const name = String(i.src || '').replace(/^\.\//, '');
+    named.add(name);
+    const p = __dirname + '/' + name;
+    if (!fs.existsSync(p)) {
+      bad.push(name + ' is declared and is not in the repo');
+      return;
+    }
+    const b = fs.readFileSync(p);
+    // A PNG's IHDR carries width then height at bytes 16 and 20.
+    const w = b.readUInt32BE(16), h = b.readUInt32BE(20);
+    if (i.sizes !== w + 'x' + h) {
+      bad.push(name + ' is ' + w + 'x' + h + ' and is declared ' + i.sizes);
+    }
+    const masky = /mask/.test(name);
+    if (masky && i.purpose !== 'maskable') {
+      bad.push(name + ' carries the maskable safe-zone margin and is in the "'
+        + i.purpose + '" slot, where it is drawn uncropped and small');
+    }
+    if (!masky && i.purpose === 'maskable') {
+      bad.push(name + ' has no safe-zone margin and is in the maskable slot,'
+        + ' where Android will crop into the mark');
+    }
+  });
+  // Every icon the site serves is named, or it is downloaded for nothing.
+  // mark.png is the in-page mark rather than an app icon, so it is not here.
+  (fs.readFileSync(__dirname + '/.github/workflows/gate.yml', 'utf8')
+    .match(/icon-[\w-]+\.png/g) || []).forEach(n => {
+    if (!named.has(n)) {
+      bad.push(n + ' is published and the manifest never names it');
+    }
+  });
+  check('the manifest names the right icon in each slot, at its real size',
+    bad);
+}
+
 /* A DEFINITION IS READ IN A LIST AND ASKED ON ITS OWN (BZ, 2026-09-20).
    "At least 51% wheat, new charred oak, the same proof limits" is clear
    under the bourbon entry and means nothing as a question, because the
@@ -2224,21 +2284,69 @@ check('no fixed svg id is emitted by a repeated drawing',
 /* THE RETIRED ADDRESS.
  *
  * The repo was renamed from Bottle-Tracker to Bottlefolio, and GitHub Pages
- * does not follow a rename: https://bzrimsek.github.io/Bottle-Tracker/
- * answers 404. On 2026-09-15 two places still named it - the iPhone
- * sign-in help, which sent people to a dead page, and SHELF_URL in Code.gs,
- * which four enrichment jobs fetch their catalog from. Nothing caught
- * either, because nothing here read a URL. Now the app and every service
- * file are read for it.
+ * does not follow a rename: that address answers 404. On 2026-09-15 two
+ * places still named it - the iPhone sign-in help, which sent people to a
+ * dead page, and SHELF_URL in Code.gs, which four enrichment jobs fetch
+ * their catalog from. Nothing caught either, because nothing here read a
+ * URL.
+ *
+ * IT READ A NAMED LIST OF SIX FILES, AND THE LIST WAS THE FAULT. On
+ * 2026-11-02 lookup.js was found still carrying the dead address in its own
+ * SHELF_URL - an Apps Script ancestor of Code.gs saved under a .js name, in
+ * no push list, named by no harness and reached by no check. It sat outside
+ * this guard for seven weeks because the scope was a list, and a list holds
+ * only the files somebody remembered to type into it. The scope is now
+ * every authored file in the project, and the few that may carry the
+ * address are named WITH THE REASON, the way an action's `allow` is.
+ *
+ * What is not read, and why: node_modules and __pycache__ are not ours;
+ * _superseded IS the record of retired things and holds them on purpose;
+ * refcache is fetched data rather than authored; shots and pics are images;
+ * and the named lock copies are frozen cuts of index.html, which IS read -
+ * audit.py would refuse an edited lock anyway, so a fault found in one
+ * would be a fault nobody could fix.
  */
 {
   const dead = 'github.io/Bottle-Tracker';
+  /* MAY CARRY IT, WITH THE REASON. */
+  const allow = {
+    'CHANGELOG.md':
+      'the record of the rename, which cannot say what moved without naming it',
+    'consistency.js':
+      'this check explains itself, and that means quoting the address it forbids'
+  };
+  const SKIP_DIR = {
+    node_modules: 1, _superseded: 1, __pycache__: 1, '.git': 1,
+    refcache: 1, shots: 1, pics: 1
+  };
+  const TEXT = /\.(js|gs|mjs|cjs|html|htm|py|json|yml|yaml|md|css|txt|csv)$/i;
+  const LOCK = /^bottlefolio-v[\d.]+(\.html|-sw\.js|-admin\.html)$/;
   const where = [];
-  if (src.indexOf(dead) >= 0) where.push('index.html');
-  ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs'].forEach(f => {
-    const p = __dirname + '/' + f;
-    if (fs.existsSync(p) && fs.readFileSync(p, 'utf8').indexOf(dead) >= 0) {
-      where.push(f);
+  const walk = dir => {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+      const full = dir + '/' + e.name;
+      if (e.isDirectory()) { if (!SKIP_DIR[e.name]) walk(full); return; }
+      if (!TEXT.test(e.name) || LOCK.test(e.name)) return;
+      const rel = full.slice(__dirname.length + 1);
+      if (allow[rel]) return;
+      let body;
+      try { body = fs.readFileSync(full, 'utf8'); } catch (err) { return; }
+      if (body.indexOf(dead) >= 0) where.push(rel + ' names the retired address');
+    });
+  };
+  walk(__dirname);
+  /* AN ALLOWANCE NOBODY NEEDS IS ONE NOBODY WILL REMOVE, so a file allowed to
+     name the address and no longer naming it is a fault of its own - that is
+     what kept this check honest when the scope was a list, and the list is
+     what failed. A reason is required for the same cause as an action's. */
+  Object.keys(allow).forEach(rel => {
+    const p = __dirname + '/' + rel;
+    const body = fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+    if (body.indexOf(dead) < 0) {
+      where.push(rel + ' is allowed to name the retired address and does not');
+    }
+    if (allow[rel].length < 12) {
+      where.push(rel + ' is allowed with no reason given');
     }
   });
   check('nothing points at the retired Bottle-Tracker address', where);

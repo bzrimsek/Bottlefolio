@@ -87,7 +87,13 @@ APP = ['index.html', 'sw.js', 'manifest.json', 'data.json', 'map.json',
        # that is how it reads the engine out of it - same origin, one
        # copy. Deliberately NOT in sw.js: desktop only, so a stranger's
        # browser never caches it.
-       'admin.html']
+       'admin.html',
+       # 2026-11-02: the privacy policy. A static page with no sign-in,
+       # because a store reviewer must be able to open it and the same URL
+       # is what the data-safety form gives as the deletion address. Not in
+       # sw.js: a policy must never be served from a cache older than the
+       # policy.
+       'privacy.html']
 # README.md added 2026-09-15 with review item 39, when HANDOVER/HANDOFF/
 # REVIEW/RECAP-SETUP were retired to _superseded (which NEVER blocks). It is
 # the front door of a public repo, so a repo without it is a repo whose only
@@ -223,6 +229,35 @@ SERVICE = ['Code.gs', 'lookup.gs', 'shelf.gs', 'label.gs', 'recap.gs',
 # the same road as the other three so there is one road and not two.
 SHELF = ['bz-bottles.json', 'bz-flights.json',
          'bz-custom.json', 'bz-library.json']       # sealed, never plain
+
+# FILES THAT MUST NOT BE IN THE REPO, each with the reason it went.
+#
+# Until 2026-11-02 there was no way to retire a file. A push ADDS and
+# UPDATES; `_superseded/` is on the NEVER list above and is not sent; so
+# moving a file into it retires the file on this PC and changes nothing in
+# the repo. lookup.js was moved on 2026-11-02 and the gate went red twice
+# over a file the project no longer had: consistency.js reads every
+# authored file for the retired Bottle-Tracker address now, and the gate
+# reads the REPO, where the file was still sitting at the root. A project
+# and a repo that disagree about which files exist is a gate nobody can
+# turn green from here.
+#
+# An entry stays here for good once the file is gone. It is not a record of
+# a deletion - it is a standing claim that this path does not belong in the
+# repo, and the push re-asserts it every time.
+#
+# Two refusals guard it, below in push(): a name that is still in THIS
+# folder (retiring a file the project still uses), and a name that is also
+# in the push lists (one list asking for it, another refusing it).
+RETIRED = [
+    # An Apps Script ancestor of Code.gs saved under a .js name, carrying the
+    # pre-rename Bottle-Tracker address in a SHELF_URL of its own. Nothing
+    # named it but two retired papers: no push list, no gate.yml file list,
+    # no checks.json entry, no require and no script tag. 37 of its 38
+    # functions are in Code.gs. Kept on BZ's PC in _superseded/2026-11-02/
+    # and in this repo's history; what goes is the copy main serves.
+    'lookup.js',
+]
 
 # NEVER, whatever the lists above say. The repo is public and main is a
 # website: BZ's shelf, his exports and the database dump are his, and the
@@ -451,12 +486,34 @@ def push(v, subject, dry):
 
     for name in missing:
         say('  (not in this folder, left as it is on GitHub: %s)' % name)
-    if not changed:
+
+    # RETIRED, checked before anything is sent. A name here that is still in
+    # this folder, or that a push list also asks for, is two parts of the
+    # project disagreeing about whether the file exists - and the push is
+    # the wrong place to find that out, so it refuses rather than guessing.
+    sent = {n for n in wanted(v)}
+    for name in RETIRED:
+        here = os.path.join(HERE, name.replace('/', os.sep))
+        if os.path.exists(here):
+            sys.exit('%s is on the RETIRED list and is still in this '
+                     'folder. Either it is not retired, or the copy here '
+                     'should go to _superseded/ first.' % name)
+        if name in sent:
+            sys.exit('%s is on the RETIRED list AND in a push list. One '
+                     'of the two is wrong; nothing was sent.' % name)
+    gone = [n for n in RETIRED if n in have]
+
+    if not changed and not gone:
         say('Nothing differs from what main already has. Nothing pushed.')
         return None
-    say('%d file(s) differ from the live main:' % len(changed))
-    for name, raw in changed:
-        say('  %-34s %8d bytes' % (name, len(raw)))
+    if changed:
+        say('%d file(s) differ from the live main:' % len(changed))
+        for name, raw in changed:
+            say('  %-34s %8d bytes' % (name, len(raw)))
+    if gone:
+        say('%d file(s) retired - removed from the repo:' % len(gone))
+        for name in gone:
+            say('  %-34s %8s' % (name, 'removed'))
     if dry:
         say('Dry run: nothing pushed.')
         return None
@@ -466,6 +523,14 @@ def push(v, subject, dry):
         b = gh('repos/%s/git/blobs' % REPO, 'POST',
                {'content': base64.b64encode(raw).decode(), 'encoding': 'base64'})
         entries.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': b['sha']})
+    # A null sha in a tree entry REMOVES that path from the base tree. It is
+    # the only way the trees API deletes, and it is why this had to be added
+    # here rather than anywhere else: a push builds one tree and one commit,
+    # so a removal travels in the same commit as the rest of the build and
+    # cannot half-land.
+    for name in gone:
+        entries.append({'path': name, 'mode': '100644', 'type': 'blob',
+                        'sha': None})
     new_tree = gh('repos/%s/git/trees' % REPO, 'POST',
                   {'base_tree': tree['sha'], 'tree': entries})
     message = 'Bottlefolio %s: %s' % (v, subject) if subject else 'Bottlefolio %s' % v

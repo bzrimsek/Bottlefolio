@@ -15212,6 +15212,39 @@ sec('§240 what deleting an account clears');
     L.accountPaths('me', [], []).length, 5);
   eq('and one that has been asked adds a path per ask',
     L.accountPaths('me', [], [], ['bob', 'carol']).length, 7);
+
+  /* EVERY GIFT LINK GOES WITH THE ACCOUNT, and until 2026-11-02 none of
+     them did. A gift node sits at gift/<token>, outside the uid, so
+     clearing the uid walked past it - and the only record of which tokens
+     exist is <uid>/giftLinks, which the same wipe deletes. What was left was
+     a public page carrying a display name, a wishlist by name, a taste
+     profile and the owned bottles as hashes, with nothing anywhere able to
+     name it, let alone switch it off. Permanent, and found by writing the
+     privacy policy rather than by any check. */
+  const giftly = L.accountPaths('me', [], [], [], [], ['tokA', 'tokB']);
+  eq('a published gift link is cleared',
+    giftly.indexOf('gift/tokA') >= 0, true);
+  eq('and every one of them, not the first',
+    giftly.indexOf('gift/tokB') >= 0, true);
+  eq('which is a path each, on top of the five',
+    giftly.length, 7);
+  /* THE NODE, NOT THE LOCAL ROW. gift/<token> is what the rule reads; the
+     giftLinks row goes with the uid and revokes nothing on its own. */
+  eq('the token list is not mistaken for the link',
+    giftly.some(p => p.indexOf('giftLinks') >= 0), false);
+  eq('an account with no links adds nothing',
+    L.accountPaths('me', [], [], [], [], []).length, 5);
+  eq('and a missing list is the same as an empty one',
+    L.accountPaths('me', [], [], [], [], null).length, 5);
+  /* A BLANK TOKEN WOULD NULL THE WHOLE gift/ NODE - every link anybody has
+     ever published - so it is dropped rather than joined. */
+  eq('a blank token is never turned into a path',
+    L.accountPaths('me', [], [], [], [], ['', null, 'tokC']).length, 6);
+  eq('and the one real token still goes',
+    L.accountPaths('me', [], [], [], [], ['', 'tokC']).indexOf('gift/tokC')
+      >= 0, true);
+  eq('the wipe nulls the gift nodes too',
+    L.accountWipe('me', [], [], [], [], ['tokA'])['gift/tokA'], null);
 }
 
 /* §241  a removed account cannot rebuild itself ----------------------

@@ -216,7 +216,7 @@ async function suite(env) {
      have no account and anonymous auth is off on this project, so the
      token IS the credential. That makes these the most important checks
      in this file: a mistake here is public. */
-  await seed('gift/tok1', { owner: 'alice', at: at(), label: 'Christmas',
+  await seed('gift/tok1', { owner: 'erin', at: at(), label: 'Christmas',
     own: { abc123: 1 }, taste: { weights: { oak: 0.1 } } });
   await check('a stranger with the token can read the gift link', 'ok',
     () => get(r(null, 'gift/tok1')));
@@ -249,6 +249,45 @@ async function suite(env) {
     () => set(r(null, 'gift/tok5'), null));
   await check('you can delete your own gift link', 'ok',
     () => set(r('alice', 'gift/tok5'), null));
+
+  /* AND A DELETED ACCOUNT'S LINKS STOP ANSWERING. A gift node lives at
+     gift/<token>, outside the uid, so clearing the uid walked past it and
+     left a public page holding somebody's name, wishlist and taste profile
+     with nothing anywhere able to name it - the token list is under the uid
+     the same wipe deleted, and the rules refuse a listing of gift/. The
+     owner's own delete now removes each node, but an admin can do neither:
+     <uid>/giftLinks is readable by its owner alone and a gift node is
+     writable by its owner alone. The tombstone every wipe already writes is
+     what covers that, and these are the checks that it does. */
+  var carolWiped = at();
+  await seed('gift/tok6', { owner: 'carol', at: carolWiped - 1000 });
+  await check('carol\u2019s link reads while carol has an account', 'ok',
+    () => get(r(null, 'gift/tok6')));
+  await seed('wiped/carol', carolWiped);
+  await check('a wiped owner\u2019s gift link refuses a stranger', 'refused',
+    () => get(r(null, 'gift/tok6')));
+  await check('and refuses a signed-in reader too', 'refused',
+    () => get(r('bob', 'gift/tok6')));
+  /* AND THE TOMBSTONE IS NEVER CLEARED, so it has to refuse by AGE rather
+     than by existing. wiped/<uid> is written by every wipe and removed by
+     nothing - its job is to stop another device pushing the old shelf
+     back, and a first device clearing it would disarm it for the second.
+     Ask only whether it EXISTS and somebody who deletes their account,
+     signs back in with the same Google account and makes a new link finds
+     it silently dead for ever. */
+  await seed('gift/tok8', { owner: 'carol', at: carolWiped + 1000 });
+  await check('a link carol published after coming back reads', 'ok',
+    () => get(r(null, 'gift/tok8')));
+  /* THE TOMBSTONE IS NOT A BLANKET. One wiped account must not switch off
+     everybody else's links, which is the mistake this rule could make. */
+  await check('another owner\u2019s link still reads', 'ok',
+    () => get(r(null, 'gift/tok1')));
+  /* AND AN OWNERLESS NODE IS NOT A WIPED ONE. A gift node must carry an
+     owner to validate, so this cannot arise from the app - it is here
+     because `child(null)` is the shape a rule gets wrong. */
+  await seed('gift/tok7', { owner: 'dave', at: at() });
+  await check('an owner with no tombstone reads', 'ok',
+    () => get(r(null, 'gift/tok7')));
   /* AND NOTHING ELSE LEAKED WITH IT. */
   await check('a stranger still cannot read a shelf', 'refused',
     () => get(r(null, 'alice')));
@@ -293,6 +332,26 @@ function mutants() {
     + " && (!data.exists() || data.child('owner').val() === auth.uid)";
   out.push(['a delete is judged by the data it is removing', d,
     'you can delete your own gift link']);
+  /* AND THE RULE THAT OUTLIVED ITS OWNER. This is the read rule exactly as
+     it stood before 2026-11-02: it asks the kill switch and not the
+     tombstone, so a deleted account's public page went on answering with
+     the person's name, wishlist and taste profile, and nothing was left
+     that could name the token. */
+  d = base();
+  w(d).gift.$token['.read'] = "data.child('off').val() != true";
+  out.push(['a deleted account\u2019s gift link still reads', d,
+    'a wiped owner\u2019s gift link refuses a stranger']);
+  /* AND THE OTHER HALF OF THAT RULE: asking only whether the tombstone
+     EXISTS. It is never cleared, so this reads as "once wiped, no link of
+     yours ever works again" - which is the version that was written first
+     and would have shipped silently, because nothing an existing check
+     does publishes a link after a wipe. */
+  d = base();
+  w(d).gift.$token['.read'] = "data.child('off').val() != true"
+    + " && !root.child('bz-apps/whisky/wiped')"
+    + ".child(data.child('owner').val()).exists()";
+  out.push(['a tombstone kills every later link too', d,
+    'a link carol published after coming back reads']);
   return out;
 }
 

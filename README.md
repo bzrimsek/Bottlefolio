@@ -39,13 +39,19 @@ data files network-first), four Apps Script files that run as a deployed web
 app and answer lookups, label photographs and write-ups, and
 `firebase-rules.json` for the database.
 
-The site serves **fourteen files** and nothing else — `index.html`,
-`admin.html`, `sw.js`, `manifest.json`, `mark.png`, the four icons,
-`zxing.min.js` (the barcode decoder, for browsers with no `BarcodeDetector`,
-which means every iPhone), `data.json`, `map.json`, `cooper.webp` and
-`cooper-pour.webp`. That list is every same-origin file `index.html`,
-`admin.html` and `sw.js` name, and it is what the publish workflow packages
-(plus `.nojekyll`, which is a marker rather than a file the site serves).
+The site serves **fifteen files** and nothing else — `index.html`,
+`admin.html`, `privacy.html`, `sw.js`, `manifest.json`, `mark.png`, the four
+icons, `zxing.min.js` (the barcode decoder, for browsers with no
+`BarcodeDetector`, which means every iPhone), `data.json`, `map.json`,
+`cooper.webp` and `cooper-pour.webp`. That list is every same-origin file
+`index.html`, `admin.html` and `sw.js` name, and it is what the publish
+workflow packages (plus `.nojekyll`, which is a marker rather than a file
+the site serves).
+
+Twelve of them are precached. `sw.js` is the worker that does the
+precaching, and the two pages left out are `admin.html`, which is desktop
+only, and `privacy.html`, which is a document read once and must never be
+served from a cache older than the policy.
 
 ---
 
@@ -75,7 +81,7 @@ Individually, in gate order:
 python audit.py index.html   # the named lock file matches index.html
 node killer-bs-test.js       # 8,342 assertions against the engine
 node lint.js                 # nothing undefined, twice-defined, unreachable
-node consistency.js          # 125 wiring checks
+node consistency.js          # 126 wiring checks
 node screens.js              # 38 screens draw
 node answers.js              # what the answers SAY, on a real shelf
 node shots.js                # every screen at 390px, photographed
@@ -165,7 +171,7 @@ servers, with the clock pinned to UTC. In order:
    `lint.js`, `screens.js` and the whole assertion suite are run against
    that file — the one the site will actually serve;
 6. `main` moves to this build;
-7. the site packages the fourteen files and publishes them to GitHub Pages;
+7. the site packages the fifteen files and publishes them to GitHub Pages;
 8. the live site is polled until it serves the new version.
 
 A red gate leaves the live site, service and rules exactly as they were. The

@@ -1248,7 +1248,15 @@ function removePersonData(p) {
     db.ref(NODE.sharedWith + '/' + uid).once('value')
       .then(s => Object.keys(s.val() || {})).catch(() => [])
   ]).then(([sharedWith, everyone, askedBy, sharedFrom]) => {
-    const wipe = A.L.accountWipe(uid, sharedWith, everyone, askedBy, sharedFrom);
+    /* NO GIFT TOKENS FROM HERE, and that is the rule's doing rather than an
+       omission. The token list lives at <uid>/giftLinks, which only its
+       owner may read, and a gift node may only be written by its owner - so
+       an admin can neither name those links nor delete them. The tombstone
+       below is what ends them: gift/$token refuses every read once
+       wiped/<uid> exists. The owner's own Delete account, which does hold
+       the list, removes the nodes outright. */
+    const wipe = A.L.accountWipe(uid, sharedWith, everyone, askedBy, sharedFrom,
+      []);
     /* The tombstone goes in the SAME update as the wipe. Their device still
        holds the shelf and would push it back on the next sign-in; the
        tombstone tells that device to start empty instead. */

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.30  Build 2026-11-02 03:31 PM ET
+     Version : v2.9.32  Build 2026-11-02 04:22 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
+// v2.9.31  2026-11-02  The app has a privacy policy, and writing it found two things the code was getting wrong.
 // v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
 // v2.9.29  2026-11-02  A gift link is capped per person as well as per link, the location lookup blunts the fix before it leaves the device, and the comments turn out not…
 // v2.9.28  2026-11-02  The chip that was 43.6px wide, and a gate that printed every line but the one that mattered.
@@ -33,8 +35,6 @@ CHANGELOG
 // v2.9.25  2026-11-02  Every harness that claims to grade his real shelf was grading a catalogue his app does not have, and fixing the bench found six faults in the app.
 // v2.9.24  2026-11-02  Settings loses the Advanced tab, and the lookup settings move to the admin portal (BZ: "why is any of this needed?
 // v2.9.23  2026-11-01  A private copy under a merged-away key clears itself.
-// v2.9.22  2026-11-01  Five faults BZ reported in one sitting, and every one of them real.
-// v2.9.21  2026-10-27  The admin page gets a named lock file.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3179,8 +3179,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.30';
-const BUILD_TIME  = '2026-11-02 03:31 PM ET';
+const APP_VERSION = '2.9.32';
+const BUILD_TIME  = '2026-11-02 04:22 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9569,9 +9569,9 @@ L.FEATURES = [
   { term: 'Remove someone', src: 'the admin page',
     def: 'Removes someone else\u2019s account: their shelf, flights and pours, directory entry, shares, requests and unreviewed offers. Type REMOVE to confirm. Their device clears itself rather than pushing the shelf back, and anything they add afterward syncs as normal. Their sign-in stays: delete it in the Firebase console under Authentication, or they can sign in again and start empty.' },
   { term: 'Delete account', src: 'Settings, beside Sign out',
-    def: 'Removes your shelf, flights and pours, your directory entry, every share both ways, requests and unreviewed offers, then the sign-in itself. Type DELETE to confirm, and take the backup it offers first. Two things stay: what is already in the library, and shelves others shared with you. An admin account needs its admin line removed in the Firebase console.' },
+    def: 'Removes your shelf, flights and pours, your directory entry, every share both ways, requests and unreviewed offers, every gift link you published, then the sign-in itself. Type DELETE to confirm, and take the backup it offers first. Two things stay: what is already in the library, and shelves others shared with you. An admin account needs its admin line removed in the Firebase console.' },
   { term: 'Settings', src: 'the gear',
-    def: 'Five tabs, named short because the strip is one phone wide. Account holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept in your Drive. Buddies, Guide and Help follow, and Help is where the app\u2019s own log is, under Something not working. There was a sixth tab, Advanced, until 2026-11-02, and an Admin mode switch in front of it until the day before; both are gone, and nothing on that tab was worth a tab.' },
+    def: 'Five tabs, named short because the strip is one phone wide. Account holds sign-in, your display name and whether others can find you, an export of your shelf, and a reset that clears your own changes without touching the shipped catalog. Shelf holds importing, the prices, Tidy your shelf, what contradicts itself, and whether a Google Sheet of your shelf is kept — in the Drive of the account the lookup service runs as, which one account owns, so if it is already somebody else’s the switch turns itself back off. Buddies, Guide and Help follow, and Help is where the app\u2019s own log is, under Something not working. There was a sixth tab, Advanced, until 2026-11-02, and an Admin mode switch in front of it until the day before; both are gone, and nothing on that tab was worth a tab.' },
   { term: 'Our shelves', src: 'the circle, once someone shares with you',
     def: 'Three circles with the counts written into the overlaps. Tap any region for its bottles. Two regions matter most: what only you have, and what your buddies both have and you do not. Toggle between open bottles and every whiskey.' },
   { term: 'Gift links', src: 'Shelf, under the wish list, and Settings',
@@ -9582,8 +9582,21 @@ L.FEATURES = [
     def: 'Adds the app to your home screen so it opens without a browser and works offline. On iPhone use Share, then Add to Home Screen.' } ] },
 
  { section: 'Taking your data out',
-   note: 'Two exports and a backup, each a different file.',
+   note: 'Two exports, a backup, and what happens to everything else.',
    items: [
+  { term: 'Privacy', src: 'the footer on Home',
+    def: 'What the app stores, where it goes, who else can see it, and how '
+      + 'to delete all of it. A page beside the app rather than a screen in '
+      + 'it, because it has to be readable with no account and no install — '
+      + 'a store reviewer needs that, and so does somebody deciding whether '
+      + 'to sign in at all. Every claim on it is a description of what the '
+      + 'code does: no advertising, no analytics, no tracking, nothing sold. '
+      + 'Your position is read once when you ask it to find where you are, '
+      + 'rounded to about eleven metres before it leaves, and never stored — '
+      + 'what a pour keeps is the place name you tapped. A photograph of a '
+      + 'label is read and the text kept; the picture is not. The complete '
+      + 'list of services the app contacts is on the page, and it is '
+      + 'seven.' },
   { term: 'Export everything', src: 'Settings › Your data',
     def: 'A spreadsheet to read: 26 columns, one row per bottle, so two bottles of one whiskey show what differs \u2014 open or sealed, what each cost. It includes the mash bill and its grains, peat ppm, barcode, tasting notes, region and what you paid. Opens in Excel with the accents intact.' },
   { term: 'Back up everything', src: 'Settings › Your data',
@@ -13221,7 +13234,7 @@ L.adminPersonLine = function (p) {
    child ON PURPOSE and do not cascade, so a parent cannot be nulled; the
    asks are nulled one child at a time, which the rules permit. */
 L.accountPaths = function (uid, sharedWithUids, requestFromUids, askedBy,
-  sharedFromUids) {
+  sharedFromUids, giftTokens) {
   if (!uid) return [];
   const paths = [
     uid,                       // the shelf itself: bottles, flights, pours
@@ -13253,13 +13266,30 @@ L.accountPaths = function (uid, sharedWithUids, requestFromUids, askedBy,
     paths.push('shares/' + from + '/' + uid);
     paths.push('sharedWith/' + uid + '/' + from);
   });
+  /* EVERY GIFT LINK THIS ACCOUNT PUBLISHED, which lives at gift/<token> and
+     not under the uid, so clearing the uid walked straight past it. A gift
+     node is PUBLIC by its rule and holds a display name, a wishlist by
+     name, a taste profile and the owned bottles as hashes - and the only
+     record of which tokens exist is the giftLinks list under the uid, which
+     the same wipe deletes. So a delete left a live public page about
+     somebody, with nothing anywhere able to name it, let alone switch it
+     off. It is a permanent orphan, which is the worst shape this data can
+     take.
+
+     The tokens come from the caller rather than from a listing because the
+     rules refuse a listing of gift/ on purpose - a token is readable only
+     if you already have it. The device holds the list; that is the door. */
+  (giftTokens || []).forEach(token => {
+    if (token) paths.push('gift/' + token);
+  });
   return paths;
 };
 
 L.accountWipe = function (uid, sharedWithUids, requestFromUids, askedBy,
-  sharedFromUids) {
+  sharedFromUids, giftTokens) {
   const updates = {};
-  L.accountPaths(uid, sharedWithUids, requestFromUids, askedBy, sharedFromUids)
+  L.accountPaths(uid, sharedWithUids, requestFromUids, askedBy,
+    sharedFromUids, giftTokens)
     .forEach(p => { updates[p] = null; });
   return updates;
 };
@@ -47205,7 +47235,13 @@ function runDeleteAccount(uid) {
     db.ref('bz-apps/whisky/sharedWith/' + uid).once('value')
       .then(s => Object.keys(s.val() || {})).catch(() => [])
   ]).then(([sharedWith, everyone, askedBy, sharedFrom]) => {
-    const wipe = L.accountWipe(uid, sharedWith, everyone, askedBy, sharedFrom);
+    /* THE GIFT TOKENS COME FROM THIS DEVICE, not from a read. A gift node
+       lives at gift/<token>, outside the uid, and the rules refuse a
+       listing of gift/ - so S.giftLinks is the only place the tokens can
+       be had, and the same wipe deletes it. Read them before the update,
+       not after. */
+    const wipe = L.accountWipe(uid, sharedWith, everyone, askedBy, sharedFrom,
+      Object.keys(S.giftLinks || {}));
     // Same tombstone as an admin removal: another device of theirs, still
     // holding the shelf, must not push it back.
     wipe['wiped/' + uid] = Date.now();
@@ -48099,10 +48135,15 @@ function nameCard(opts) {
 function sheetSwitch(grid) {
   settingSwitch(grid, !!S.sheetOn, 'Keep a Google Sheet of my shelf',
     S.sheetOn
-      ? 'On — every bottle and everything stored about it, rewritten in your '
-        + 'Google Drive when the app opens and soon after the shelf changes. A '
-        + 'chat with the Google Drive connector can read it.'
-      : 'Off — no copy is kept.',
+      ? 'On — every bottle and everything stored about it, rewritten when '
+        + 'the app opens and soon after the shelf changes. The sheet is made '
+        + 'by the lookup service and lives in the Drive of the account that '
+        + 'service runs as, so a chat with the Google Drive connector can '
+        + 'read it. One account owns it: if it is already somebody '
+        + 'else’s, this switches itself back off.'
+      : 'Off — no copy is kept. On, your shelf is written to a sheet in the '
+        + 'Drive of the account the lookup service runs as, which one '
+        + 'account owns.',
     () => {
       S.sheetOn = !S.sheetOn;
       SHEET.sent = null;
@@ -57247,6 +57288,21 @@ function pushShelfSheet(now) {
         header: L.EXPORT_COLS, rows: rows, at: new Date().toISOString() }), 60000,
         { once: true, aside: true });
       const j = await readService(res, 'sheet');
+      /* A REFUSAL THAT WILL NEVER CHANGE ITS MIND MUST NOT BE RETRIED. The
+         service lets ONE account own the sheet, and answers 'not yours' to
+         every other - a permanent answer, where `due` means "ask again when
+         the app comes back". So a second account turning this on sent its
+         whole shelf, was refused, and sent it again on every return to the
+         app, for ever. The switch goes off and says why. */
+      if (j && j.error === 'not yours') {
+        S.sheetOn = false;
+        SHEET.sent = null;
+        save_();
+        appLog('sheet: refused \u2014 the sheet belongs to another account');
+        toast('That sheet belongs to another account');
+        redrawNameHost();
+        return;
+      }
       if (!j || j.error) {
         appLog('sheet: not written \u2014 ' + JSON.stringify(j || {}).slice(0, 300));
         SHEET.due = true;              // ask again when the app comes back
@@ -59105,8 +59161,9 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.30</span>'
-    + ' · <span id="buildTime"></span>';
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.32</span>'
+    + ' · <span id="buildTime"></span>'
+    + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');
   if (home) home.appendChild(f);
   // Header sub-line and build stamp, kept in sync with the constants.

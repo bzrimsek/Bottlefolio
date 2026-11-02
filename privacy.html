@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     Bottlefolio — privacy
+     Author  : BiZStoryGuru LLC
+
+     WHY THIS FILE EXISTS AND WHY IT IS NOT A SCREEN. Google Play will not
+     accept an app without a privacy policy at a URL a reviewer can open
+     without signing in or installing anything, and the same URL answers the
+     Data safety form's deletion question. A screen inside index.html is
+     behind a sign-in and inside a 1.6MB download, so it cannot be either.
+
+     Deliberately NOT in sw.js: the page is read once and must never be
+     served from a stale cache after the policy changes.
+
+     EVERY CLAIM HERE IS READ OFF THE CODE, not written from memory. The
+     destinations are the complete set of hosts index.html contacts; the
+     node paths are the ones the Firebase rules bound; the deletion list is
+     what runDeleteAccount actually clears. When any of those change, this
+     changes in the same build.
+============================================================ -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1A1613">
+<title>Bottlefolio — Privacy</title>
+<link rel="icon" href="./icon-192.png">
+<style>
+/* The app's own palette, so the page reads as part of it. Light only: this
+   is a document, and a reader who lands here from a store listing has no
+   app theme set. */
+:root{
+  --ink:#1A1613; --paper:#F2EDE3; --line:#D9CFBE; --muted:#6B6257;
+  --gold:#8C6A2F; --card:#FBF7EF;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; padding:0 16px 56px; background:var(--paper); color:var(--ink);
+  font:16px/1.6 ui-serif,Georgia,'Times New Roman',serif;
+}
+.wrap{max-width:38rem; margin:0 auto}
+header{padding:40px 0 8px; border-bottom:1px solid var(--line)}
+h1{font-size:1.75rem; line-height:1.2; margin:0 0 .25em; text-wrap:balance}
+.sub{color:var(--muted); font-size:.95rem; margin:0}
+h2{
+  font-size:1.1rem; margin:2.25em 0 .4em; text-wrap:balance;
+  font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  letter-spacing:.01em;
+}
+p,li{margin:.7em 0}
+ul{padding-left:1.15em}
+a{color:var(--gold)}
+code{
+  font:0.88em/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--card); border:1px solid var(--line);
+  border-radius:3px; padding:.08em .3em; overflow-wrap:anywhere;
+}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; margin:1.25em 0;
+}
+.card p:first-child{margin-top:0}
+.card p:last-child{margin-bottom:0}
+.lead{font-size:1.05rem}
+table{border-collapse:collapse; width:100%; font-size:.93rem; margin:1em 0}
+th,td{text-align:left; padding:.45em .6em; border-bottom:1px solid var(--line);
+  vertical-align:top}
+th{font-family:ui-sans-serif,system-ui,sans-serif; font-size:.85rem;
+  color:var(--muted); font-weight:600}
+.scroll{overflow-x:auto}
+footer{
+  margin-top:3em; padding-top:1em; border-top:1px solid var(--line);
+  color:var(--muted); font-size:.9rem;
+}
+strong{font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Privacy</h1>
+  <p class="sub">Bottlefolio &middot; last updated 2 November 2026</p>
+</header>
+
+<p class="lead">Bottlefolio is a whiskey collection app made by one person.
+It has no advertising, no analytics, no tracking and no third-party
+advertising identifiers. Nothing about you is sold, rented or shared for
+marketing, and nothing is used to build a profile of you anywhere but in
+your own copy of the app.</p>
+
+<p>This page says exactly what the app stores, where it goes, who can see
+it, and how to delete all of it. Everything below is a description of what
+the code does.</p>
+
+<h2>What the app stores about you</h2>
+
+<p>You can use most of the app without an account. If you sign in, you sign
+in with Google, and Google tells the app three things: your
+<strong>email address</strong>, your <strong>display name</strong>, and an
+account identifier. The email address is used to recognise you when you come
+back. The display name is what other people see if you share your shelf with
+them.</p>
+
+<p>Everything you enter is kept under your own account identifier in a Google
+Firebase Realtime Database:</p>
+
+<ul>
+  <li>the bottles you own, and what you have recorded about them &mdash;
+    price, proof, where you bought it, how full it is;</li>
+  <li>your wishlist;</li>
+  <li>your tasting notes and your pour log, including the place name you
+    choose when you log a pour;</li>
+  <li>your flights, favourites and taste profile;</li>
+  <li>your settings;</li>
+  <li>the end of the app's own diagnostic log, so that another of your
+    devices can read it when something goes wrong.</li>
+</ul>
+
+<p>A copy is also kept in your browser's own storage on each device, so the
+app works with no signal. That copy is on your device and goes nowhere.</p>
+
+<h2>Who else can see it</h2>
+
+<p>By default, nobody. Your shelf is readable only by you. Three things can
+change that, and each one is something you do on purpose:</p>
+
+<ul>
+  <li><strong>Sharing your shelf with somebody.</strong> You name a person,
+    they accept, and from then on they can read your shelf until you stop
+    sharing. Either of you can end it.</li>
+  <li><strong>The directory.</strong> So that you can find somebody to share
+    with, every signed-in account appears in a list holding a
+    <strong>display name and an account identifier, and nothing else</strong>
+    &mdash; no email address, no shelf, no notes. Any signed-in person can
+    read that list.</li>
+  <li><strong>A gift link.</strong> If you make one, anyone holding the link
+    can open it without an account, which is the point of it. It carries your
+    display name, your wishlist by name, your taste profile, and your owned
+    bottles as one-way hashes rather than names. You can switch a link off at
+    any time, and each link is capped in how much it may do per day.</li>
+</ul>
+
+<h2>Where your data goes</h2>
+
+<p>The complete list of services the app contacts, and what reaches each
+one:</p>
+
+<div class="scroll">
+<table>
+<tr><th>Service</th><th>What it receives</th><th>Why</th></tr>
+
+<tr><td>Google Firebase<br><span class="sub">Authentication and
+  Realtime Database</span></td>
+  <td>Your sign-in, and everything listed above. Its software is served
+    from Google's own CDN, which sees your IP address</td>
+  <td>It is the account and the storage</td></tr>
+
+<tr><td>Google Apps Script<br><span class="sub">a service written for this
+  app</span></td>
+  <td>The name of a bottle you are looking up; a photograph you choose to
+    take; your feedback if you send any</td>
+  <td>Reads labels and answers lookups</td></tr>
+
+<tr><td>Anthropic<br><span class="sub">reached only by that service</span></td>
+  <td>The bottle name or the photograph, to read and describe</td>
+  <td>It is what reads a label</td></tr>
+
+<tr><td>OpenStreetMap Overpass<br><span class="sub">public, volunteer-run
+  mirrors</span></td>
+  <td>Your approximate position, rounded to about 11 metres, when and only
+    when you ask the app to find where you are</td>
+  <td>Answers &ldquo;what bars are near here&rdquo;</td></tr>
+
+<tr><td>Open Food Facts</td>
+  <td>A barcode number you scan &mdash; never the photograph; the barcode is
+    decoded on your device</td>
+  <td>Turns a barcode into a product name</td></tr>
+
+<tr><td>Google Fonts</td>
+  <td>Your IP address, as any web request does</td>
+  <td>Serves the typefaces</td></tr>
+
+<tr><td>GitHub Pages<br><span class="sub">the host</span></td>
+  <td>Your IP address, as any web request does</td>
+  <td>Serves the app</td></tr>
+</table>
+</div>
+
+<p>There are no others. The app contacts no advertising network, no analytics
+service and no data broker.</p>
+
+<p>One link leaves the app rather than calling out from it: a bottle's
+<em>buy</em> link opens a Google search for that bottle's name in your
+browser, the same as typing it yourself. Nothing of yours goes with it but
+the name you were looking at.</p>
+
+<h2>Location</h2>
+
+<div class="card">
+<p><strong>Your position is never stored, and never leaves at full
+precision.</strong> It is read once, at the moment you tap to find where you
+are, and never in the background.</p>
+<p>Your device can report a position accurate to a few centimetres. The app
+rounds it to four decimal places &mdash; about eleven metres, roughly a
+building &mdash; before anything leaves, because the question being asked is
+only &ldquo;what is within a hundred and fifty metres of here&rdquo;.</p>
+<p>The rounded position goes to a public OpenStreetMap mirror, which answers
+with the names of nearby places. <strong>Nothing keeps the position:</strong>
+if you log a pour, what is saved is the place <em>name</em> you tapped, the
+same way a proof is saved &mdash; never a coordinate.</p>
+</div>
+
+<h2>The Google Sheet switch</h2>
+
+<p>Settings &rsaquo; Shelf carries <strong>Keep a Google Sheet of my
+shelf</strong>, and it is worth being exact about where that sheet goes. It
+is created by the lookup service, so it lives in the Google Drive of the
+account that service runs as &mdash; the author's &mdash; and not in yours.
+<strong>One account owns it.</strong> If it is already somebody else's, your
+shelf is sent once, refused, and the switch turns itself back off; nothing
+is written and nothing is kept. Leave it off and no copy is made at all.</p>
+
+<h2>Photographs</h2>
+
+<p>When you photograph a bottle, a label or your shelf, the picture is sent
+to the app's own service to be read, and the <strong>text that comes back is
+what is kept</strong> &mdash; the name, the proof, the age. The photograph
+itself is not stored by the app, not stored by the service, and not added to
+any training data.</p>
+
+<h2>Children</h2>
+
+<p>Bottlefolio is about whiskey and is intended for adults of legal drinking
+age in their country. It is not directed at children and is not designed to
+collect anything from them.</p>
+
+<h2>Deleting everything</h2>
+
+<div class="card">
+<p><strong>In the app:</strong> Settings &rsaquo; Account &rsaquo;
+<strong>Delete account</strong>. It is immediate and it is not recoverable.</p>
+<p>It removes your shelf, wishlist, flights, notes, pour log, taste profile,
+settings and stored log; your entry in the directory; every share you granted
+and every share granted to you; any request you made or received; and your
+Google sign-in for this app. Your device's local copy is wiped last, once the
+rest has gone.</p>
+<p>Gift links you published are deleted with the account. If you want one
+gone sooner, switch it off or delete it from the link's own row.</p>
+<p><strong>If you cannot reach the app,</strong> send the request through
+Help &rsaquo; Show me the log &rsaquo; <em>Tell me what you think</em> from
+any device still signed in, or open an issue at
+<a href="https://github.com/bzrimsek/Bottlefolio/issues">github.com/bzrimsek/Bottlefolio/issues</a>.
+Say which account it is and it will be removed by hand.</p>
+</div>
+
+<p>One thing survives on purpose, and it is not about you: if the shared
+whiskey library has accepted a correction you offered &mdash; that a bottling
+is 100 proof, say &mdash; that fact stays in the library, because it is a fact
+about a whiskey rather than about you, and other people's shelves now rest on
+it. It carries no name, no account and no link back to you.</p>
+
+<h2>How long things are kept</h2>
+
+<p>Your data stays until you delete it. There is no expiry and no archive;
+deleting is the only thing that removes it.</p>
+
+<h2>Security</h2>
+
+<p>Every read and write is checked by rules on the database itself rather
+than by the app, so a modified copy of the app cannot reach another person's
+shelf. Traffic is over HTTPS. <strong>A gift link is the only thing in the
+database readable without a sign-in</strong>, and only by its own
+unguessable token &mdash; everything else, the shared whiskey library
+included, refuses a reader with no account. A link whose owner has deleted
+their account stops answering, and the links themselves are deleted with the
+account.</p>
+
+<h2>Changes</h2>
+
+<p>If this policy changes, the date at the top changes with it and the new
+version replaces this page. The app's changelog records what changed and
+when.</p>
+
+<h2>Contact</h2>
+
+<p>Help &rsaquo; Show me the log &rsaquo; <em>Tell me what you think</em>
+inside the app reaches the person who built it, or open an issue at
+<a href="https://github.com/bzrimsek/Bottlefolio/issues">github.com/bzrimsek/Bottlefolio/issues</a>.</p>
+
+<footer>
+  Bottlefolio &middot; BiZStoryGuru LLC &middot;
+  <a href="./index.html">back to the app</a>
+</footer>
+
+</div>
+</body>
+</html>

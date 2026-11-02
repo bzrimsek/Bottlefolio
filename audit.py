@@ -661,19 +661,34 @@ def run_audit(html_path):
         else:
             ok('index.html still carries the anchors admin.html reads')
 
-        # DESKTOP ONLY (BZ, 2026-10-27): never in the service worker, so a
-        # stranger's browser does not cache a page it can never use.
-        # sw.js is read fresh here: the sw variable above is set inside a
-        # conditional and may not exist at all.
-        sw_here = os.path.join(base, 'sw.js')
-        sw_now = ''
-        if os.path.exists(sw_here):
-            sw_now = io.open(sw_here, encoding='utf-8').read()
-        if 'admin.html' in sw_now:
-            fail('sw.js precaches admin.html - it is desktop only and must '
-                 'not be cached into a browser that can never use it')
+    # TWO PAGES THE SITE SERVES AND THE WORKER MUST NOT PRECACHE, each for
+    # its own reason. admin.html is desktop only, so a stranger's browser
+    # would cache a page it can never use. privacy.html is a document read
+    # once, and a policy served from a cache older than the policy is the
+    # single worst file in the delivery to stale. Everything else the site
+    # serves IS precached, which is the same question from the other side:
+    # a file the worker fetches and the site does not serve 404s on install.
+    #
+    # Unconditional on purpose. This used to live inside the admin.html
+    # existence test, so a missing admin page took the sw.js question down
+    # with it - one fault hiding another.
+    #
+    # sw.js is read fresh here: the sw variable above is set inside a
+    # conditional and may not exist at all.
+    sw_here = os.path.join(base, 'sw.js')
+    sw_now = ''
+    if os.path.exists(sw_here):
+        sw_now = io.open(sw_here, encoding='utf-8').read()
+    for page, why in [('admin.html', 'it is desktop only and must not be '
+                       'cached into a browser that can never use it'),
+                      ('privacy.html', 'a privacy policy must never be '
+                       'served from a cache older than the policy')]:
+        if not os.path.exists(os.path.join(base, page)):
+            fail(page + ' is not here - the site is published without it')
+        elif page in sw_now:
+            fail('sw.js precaches ' + page + ' - ' + why)
         else:
-            ok('admin.html is not in the service worker')
+            ok(page + ' is served and not precached')
     print()
     if failures == 0:
         print('  \u2714 All checks passed — safe to deliver\n')

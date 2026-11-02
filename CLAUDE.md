@@ -132,9 +132,9 @@ check locally is worth removing: it teaches you to ignore red.
 
 ```
 python3 audit.py index.html  # the named lock matches index.html
-node killer-bs-test.js    # 8,351 assertions
+node killer-bs-test.js    # 8,360 assertions
 node lint.js              # nothing undefined, twice-defined, unreachable
-node consistency.js       # 125 wiring checks, incl. rules copied twice
+node consistency.js       # 126 wiring checks, incl. rules copied twice
 node screens.js           # 38 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed AND measured
@@ -195,6 +195,19 @@ Manager, neither of which has an admin page.
 
 `push.py` sends a finished build to the repo and refuses to run unless
 `audit.py` has passed.
+
+**Retiring a file takes TWO moves, and the second one is `push.py`'s
+`RETIRED` list** (2026-11-02). Moving a file into `_superseded/` retires it
+here and changes nothing in the repo: a push adds and updates, and
+`_superseded/` is on the never-send list. `lookup.js` was moved, the widened
+dead-address check read the repo copy still sitting at the root, and the
+gate went red twice over a file this folder no longer had - which no edit
+here could have fixed. So a retired file goes on `RETIRED` in `push.py`,
+with the reason it went, and the push removes that path in the same commit
+as the rest of the build. The entry stays for good: it is a standing claim
+that the path does not belong in the repo, not a record of a deletion.
+`push.py` refuses a name that is still in this folder, or that a push list
+also asks for.
 
 **The site serves `index.html` with its comments removed.** Since 2026-11-02
 `thin.py` writes the delivered copy: **2,808KB to 1,599KB raw, 944KB to
@@ -367,12 +380,71 @@ A hand paste is now only the fallback. Credentials: secrets `CLASPRC`,
 
 ---
 
+## Store work
+
+Headed for Google Play as a **Trusted Web Activity**: the installed app is
+this site in a Chrome tab with no address bar, not a rewrite. Started
+2026-11-02.
+
+**The blocker is the origin.** A TWA proves it owns its site with a Digital
+Asset Links file at `/.well-known/assetlinks.json` **at the origin root**.
+The app lives at `bzrimsek.github.io/Bottlefolio/`, a subpath of an origin
+that is not ours - `bzrimsek.github.io/` 404s, and anything under
+`.well-known/` there would verify every repo on that account, not this one.
+So the TWA needs a domain. BZ chose to buy one; `bottlefolio.app` and
+`bottlefolio.io` were unregistered on 2026-11-02, `.com` and `.net` have
+been somebody else's since 2013.
+
+**Do not add a `CNAME` file before the DNS records exist.** GitHub Pages
+starts serving the new name the moment that file lands, and until DNS points
+at it the live site is down.
+
+Nine places name the address and must move with it: `og:image` and
+`twitter:image` in `index.html`, the iPhone sign-in sentence at ~47521,
+`SHELF_URL` in `Code.gs` and `lookup.gs`, `LIVE` in `push.py`, and the
+dead-address guard in `consistency.js`.
+
+`lookup.js` named the pre-rename address rather than this one, and it is
+gone: retired to `_superseded/2026-11-02/` on 2026-11-02. It was an Apps
+Script ancestor of `Code.gs` saved under a `.js` name, carrying the retired
+repo's `data.json` in a `SHELF_URL` of its own - in no push list, no
+`gate.yml` file list and no `checks.json` entry, so nothing loaded it and
+nothing read it. 37 of its 38 functions are in `Code.gs`, which has 45, and
+it is an ancestor of `_superseded/2026-09-15/lookup.gs`, which was itself
+already retired.
+
+**The dead-address guard read a named list of six files, and the list was
+the fault.** It reads every authored file in the project now, with the two
+that may carry the address - `CHANGELOG.md` and `consistency.js` itself -
+named WITH THE REASON, the way an action's `allow` is; an allowance that
+stops being needed is a fault of its own. Both branches were proved by
+mutation, and the widened check caught a literal address written into this
+very paragraph by accident, which the list could not have seen.
+
+**What is done.** The privacy policy (`privacy.html`, mandatory, and the
+same URL answers the data-safety form's deletion question); in-app account
+deletion, which Play requires and which `runDeleteAccount` has done
+thoroughly since before this; the manifest icons, which named the padded
+maskable art in the plain 512 slot until 2026-11-02.
+
+**What is left.** `assetlinks.json` with the real signing fingerprint, which
+Play App Signing only hands over after the first upload; a workflow that
+builds the AAB with Bubblewrap in the cloud, because that needs JDK 17 and
+the Android SDK and BZ has no Java locally (which is why `rulestest.js`
+prints SKIPPED here); a 1024x500 feature graphic; the Data Safety
+declaration; and `prefer_related_applications` in the manifest once the
+package id is real, so Chrome offers the Play app instead of the PWA. The
+phone screenshots already exist in `shots/` at 390x844.
+
+---
+
 ## How the site gets published
 
-Since 2026-09-15 the gate packages the fourteen files the site serves - the
-app, the admin page, the worker, the manifest, the four icons, the barcode
-decoder, data.json, map.json and Cooper's two pictures, plus the .nojekyll
-marker - and deploys THAT, rather than GitHub rebuilding the whole
+Since 2026-09-15 the gate packages the fifteen files the site serves - the
+app, the admin page, the privacy policy, the worker, the manifest, the four
+icons, the barcode decoder, data.json, map.json and Cooper's two pictures,
+plus the .nojekyll marker - and deploys THAT, rather than GitHub rebuilding
+the whole
 repository (805KB changelog, the harnesses, ten superseded lock copies) with
 Jekyll twice per release. The list is in `gate.yml`, under "The site, and
 only the site", and `consistency.js` fails a paper that miscounts it.
@@ -593,6 +665,7 @@ reporting it. One edit per script is the cheap way to avoid this.
 |---|---|
 | `index.html` | the app |
 | `admin.html` | **the admin page** — a desktop page beside the app that reads the engine out of `index.html` rather than copying it. See The admin half |
+| `privacy.html` | **the privacy policy** — a static page beside the app, no sign-in, no install, added 2026-11-02 for the stores. Every claim on it was read off the code, and writing it found two defects. Deliberately NOT in `sw.js`. See Store work |
 | `admin.js` | the admin page's check, including index.html's anchors broken on purpose |
 | `sw.js` | service worker, cache name bumps with the version |
 | `lookup.gs` `shelf.gs` `label.gs` `recap.gs` | the service |

@@ -469,12 +469,21 @@ jobs:
       #                stranger's browser never caches a page it can
       #                never use. audit.py check 15 fails if it ever
       #                appears in sw.js.
-      # Every one of them EXCEPT admin.html is in sw.js's SHELL/EXTRAS/DATA
-      # lists, which is the same question asked from the other side: a file
-      # the worker precaches and the site does not serve is an install that
-      # 404s. admin.html is served and not precached, which is the only
-      # combination that is fine - it is a page BZ opens on the PC, not
-      # part of the installed app.
+      #   privacy.html the privacy policy, added 2026-11-02. A store will
+      #                not accept an app without one at a URL a reviewer
+      #                can open with no sign-in and no install, and the
+      #                same URL answers the data-safety form's deletion
+      #                question - neither of which a screen inside
+      #                index.html can be. Also NOT precached, for the
+      #                other reason: a policy served from a stale cache
+      #                after it changes is the one copy that must never
+      #                be stale.
+      # Every one of them EXCEPT admin.html and privacy.html is in sw.js's
+      # SHELL/EXTRAS/DATA lists, which is the same question asked from the
+      # other side: a file the worker precaches and the site does not serve
+      # is an install that 404s. Those two are served and not precached,
+      # which is the only combination that is fine - one is a desktop page,
+      # the other a document read once.
       #
       # The sealed shelf files are NOT here and never will be: `grep -c gpg`
       # is 0 in both index.html and sw.js, and the plain ones exist only on
@@ -489,7 +498,7 @@ jobs:
           cp index.html sw.js manifest.json mark.png \
              icon-192.png icon-512.png icon-mask-192.png icon-mask-512.png \
              zxing.min.js data.json map.json \
-             cooper.webp cooper-pour.webp admin.html site/
+             cooper.webp cooper-pour.webp admin.html privacy.html site/
           touch site/.nojekyll
           echo "the artifact:"
           ls -la site
