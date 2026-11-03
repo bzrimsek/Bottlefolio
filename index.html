@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.38  Build 2026-11-02 11:33 PM ET
+     Version : v2.9.39  Build 2026-11-03 12:27 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.39  2026-11-03  The home profile is three paragraphs of prose where it was nine bullets.
 // v2.9.38  2026-11-02  The home summary is commentary now rather than a readout.
 // v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
 // v2.9.31  2026-11-02  The app has a privacy policy, and writing it found two things the code was getting wrong.
 // v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
-// v2.9.29  2026-11-02  A gift link is capped per person as well as per link, the location lookup blunts the fix before it leaves the device, and the comments turn out not…
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3278,8 +3278,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.38';
-const BUILD_TIME  = '2026-11-02 11:33 PM ET';
+const APP_VERSION = '2.9.39';
+const BUILD_TIME  = '2026-11-03 12:27 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9324,7 +9324,7 @@ L.FEATURES = [
   { term: 'Deciding what to buy next', src: 'nothing in your hand',
     def: 'Worth looking for is the strongest opening on each axis of your shelf, with its position beside it — a distillery, 1 of 6. Something else moves you along it. Tap an opening to find real bottles that would fill it, easiest to buy and cheapest first, each tagged widely stocked, a hunt, or allocated. A distillery you own three of names what the library has from it that you do not — a cask, an age band, a strength, in that order, because a cask makes another drink and an age makes the same whisky kept longer. It names the gap and not the bottling, and a house the library can sell nothing from is not offered at all.' },
   { term: 'The story your shelf tells', src: 'the top of Home',
-    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Beside them, the numbers that earned the title; under Also answers to, the other titles the same shelf earned and this one did not use; then the reading of the collection, line by line. Each line leads with what it says about you and carries its figure behind that, or carries none where the sentence is better without one — how far across Scotland the shelf reaches, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. Every figure and every claim is printed once. A shelf that earns no title is called a generalist.' },
+    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Under Also answers to, the other titles the same shelf earned and this one did not use. Then the profile itself, written as three paragraphs rather than a list of facts, because a list leaves the joining to you and the joining is the profile. The first says what the shelf is FOR: how many kinds of whiskey are here in real numbers, whether two places are held in equal measure, how many houses it spans and how far across Scotland it reaches. The second says what runs through it whatever the category — the wood that beat the others, how many houses you followed it across, and what that tastes of. The third says what it took to put there: strength, what was hard to find, age, where it was bought, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. A paragraph with nothing to say is left out rather than padded. Figures sit inside sentences that are doing work and some sentences carry none, and the numbers that earned the title appear beside it only where no paragraph has already made them. A shelf that earns no title is called a generalist.' },
   { term: 'How a bottle helps the chart', src: 'under any candidate',
     def: 'A bottle you are considering says what it would do to the shape. It clears a gap and the axis moves, with the percentage before and after; it counts toward one and says how many more are needed; or it says nothing, because most bottles change nothing on the chart. Covered means three. A line from a pasted email has only its name, so it speaks to region, category and wood and stays quiet about proof and age.' },
   { term: 'Can you find the caramel?', src: 'Flights, under what you could pour tonight',
@@ -25392,8 +25392,7 @@ L.shelfEnd = function (quality, catalog, bottles, favs, also) {
     if (!p) return null;
     return { quality: 'portrait', title: p.title, why: p.why,
       alsoCalled: (p.also || []).map(a => a.title),
-      story: p.story,
-      arguments: (p.lines || []).map(l => l.say || l.text || String(l)) };
+      story: p.story };
   }
   /* AND THEIR TASTE, as the radar draws it: eight axes, nought to a hundred.
      The numbers, not the shelf they were made from. */
@@ -29803,24 +29802,6 @@ L.hardToGet = function (p) {
     || q.scar === 'limited' || q.scar === 'exclusive';
 };
 
-L.labelLine = function (ctx, owned) {
-  const c = ctx || {};
-  if (owned < 20) return null;
-  /* THE COUNTS ALWAYS, THE VERDICT ONLY WHEN IT IS TRUE ("No
-     specific data point on home"). Suppressing the whole line where somebody
-     owns rare bottles threw away two real numbers to avoid one false sentence;
-     the numbers are worth reading either way. */
-  /* THE READING FIRST, THE FIGURES INSIDE IT. This was two counts and a
-     full stop - a readout, where every other line on the card says
-     something. */
-  return L.fitLine(
-    c.rare
-      ? 'You shop well past the famous names \u2014 ' + c.rare
-        + ' of these took real finding.'
-      : 'You are not buying labels \u2014 ' + c.obscure
-        + ' here most drinkers could not place.',
-    'You shop well past the famous names.');
-};
 
 L.leansTo = function (n, of) {
   return of > 0 && (n || 0) / of >= L.CASK_DELIBERATE_SHARE;
@@ -29922,8 +29903,11 @@ L.tasteProfile = function (catalog, bottles, favs, answers) {
     if (b && b.k && L.isOwned(b)) counts[b.k] = (counts[b.k] || 0) + 1;
   });
 
-  const mine = Object.keys(cat).filter(k => counts[k]);
+  /* WHISKEY ONLY: the bar shelf is inventory, and every figure out of here
+   * is printed in a sentence about whisky. L.isWhisky is the one door, and
+   * it is generous, so a bottle filed a minute ago still counts. */
   const prod = k => cat[k] || {};
+  const mine = Object.keys(cat).filter(k => counts[k] && L.isWhisky(cat[k]));
 
   /* COUNTED BY BOTTLE, which the name says so a caller need not ask. */
   const perBottle = fn => {
@@ -31959,54 +31943,7 @@ L.fitLine = function (full, short) {
   return b.length < a.length ? b : a;
 };
 
-/* THE HOUSE FIGURES, SAID ONCE. `saidTop` is true when the portrait's
-   caption already carries the top house - the title was won on it - and the
-   line then starts at the second house instead of repeating the first.
-   Where there is no second house there is nothing left to say, so it
-   answers null and the card draws one fewer bullet rather than a sentence
-   the caption above it already made. */
-/* THE BULLETS IN THE ORDER THE TITLE ARGUES THEM. A title and its evidence
-   are not the same word: PX Lover and Sherry Head are argued by the WOOD
-   line, the house chip by the depth line. Only where a line really argues
-   the title - Islay and Cartographer have none, so they rank nothing and
-   fall to the count tiebreak. */
-L.LINE_EVIDENCE = { px: 'wood', sherry: 'wood', peat: 'peat',
-  proof: 'proof', house: 'depth', obscure: 'obscure', repeat: 'repeat',
-  region: 'scotland', breadth: 'scotland' };
 
-L.orderLines = function (lines, earned) {
-  const rank = {};
-  (earned || []).forEach((e, i) => {
-    const k = L.LINE_EVIDENCE[e.id];
-    if (k && rank[k] === undefined) rank[k] = i;
-  });
-  return (lines || []).slice().sort((a, b) => {
-    const ra = rank[a.k] === undefined ? 99 : rank[a.k];
-    const rb = rank[b.k] === undefined ? 99 : rank[b.k];
-    return ra - rb || (b.n || 0) - (a.n || 0);
-  });
-};
-
-/* WHAT THE HEADLINE HAS ALREADY CLAIMED, so a bullet does not claim it a
-   second time. A bullet is a figure with a reading after it, and the
-   reading is worth nothing where the sentence under the title has just
-   made it: "84 of these are bottled at cask strength. You buy strength on
-   purpose." sat under "You want it undiluted."
-
-   Keyed by claim, with the words that carry it. Both sides are fixed
-   strings, so the overlap is declared rather than guessed at - and a new
-   TITLE_LINES sentence that makes one of these claims in other words goes
-   in the pattern here, which is the constraint this table exists to put on
-   the next edit. */
-L.SAID_WORDS = {
-  deep: /\bdeep\b/i,
-  strength: /\bundiluted\b|\bstrength\b/i
-};
-
-L.saidAlready = function (line, claim) {
-  const re = L.SAID_WORDS[claim];
-  return !!(re && re.test(String(line || '')));
-};
 
 /* HOW MUCH OF SCOTLAND IS ON THE SHELF. Reads L.SCOTCH_REGIONS, which is
    the one place that says which regions Scotland has, so a shelf is never
@@ -32027,18 +31964,9 @@ L.scotlandLine = function (regions) {
       + L.SCOTCH_REGIONS.length + ' regions, ' + lead + ' deepest.' };
 };
 
-/* HOUSES YOU WENT BACK TO. A shelf is a collection rather than a shopping
-   trip when the same door is worth a second visit, and the count of those
-   doors is the fact. It is NOT a claim about how often a house is left at
-   one bottle - on a real shelf most houses are, so a sentence saying
-   otherwise would be flattering and false. */
-L.returnedLine = function (houses) {
-  const again = (houses || []).filter(h => h.n >= 2).length;
-  if (again < 8) return null;
-  return { k: 'returned', n: again,
-    text: 'There are ' + again + ' houses here you thought worth a second '
-      + 'visit.' };
-};
+
+
+
 
 /* IS THE HOUSE THE NAME ON THE LABEL, OR THE PARENT OF THE NAMES ON IT?
    ("For Barrell house is brand and for Buffalo Trace house holds brand.")
@@ -32081,35 +32009,25 @@ L.houseShape = function (house, catalog, bottles) {
    working out how each house is owned needs the catalogue and the bottles,
    and the line itself needs neither - and because the card that calls it
    is at its line ceiling (rule 30f). */
-L.houseLine = function (t, catalog, bottles, head) {
+L.houseLine = function (t, catalog, bottles) {
   const a = (t.houses || [])[0], b = (t.houses || [])[1];
   const shapes = {};
   [a, b].forEach(h => {
     if (h) shapes[h.value] = L.houseShape(h.value, catalog, bottles);
   });
-  return L.depthLine(a, b, head, shapes);
+  return L.depthLine(a, b, shapes);
 };
 
-L.depthLine = function (top, second, head, shapes) {
-  if (!top) return null;
+L.depthLine = function (top, second, shapes) {
+  if (!top || top.n < L.HOUSE_DEEP) return null;
   /* THE SECOND HOUSE ONLY WHERE IT IS ALSO A DEPTH ("Not always but where
      I'm deepest"). Naming whoever came second turns a shelf's one real
      habit into a list, and a house with three bottles on it is not
      somewhere anybody goes back to. */
   const deep = second && second.n >= L.HOUSE_DEEP ? second : null;
-  /* "You go deep before you go wide." is dropped where the headline has
-     already made that claim - "Deep on One House" over a bullet saying it
-     again is the claim twice. Asked of the title AND the line, because the
-     title is the biggest text on the card. */
-  /* The opening clause yields where the headline already said "deep", but
-     the houses themselves never do: they are what the shelf is about. */
-  const said = L.saidAlready(head, 'deep');
-  const one = top.n + ' from ' + top.value;
-  const short = (said ? 'They have practically moved in \u2014 '
-    : 'You go deep before you go wide \u2014 ') + one + '.';
-  if (!deep) {
-    return { k: 'depth', n: top.n, text: L.fitLine(short, short) };
-  }
+  const short = 'You go deep before you go wide \u2014 ' + top.n
+    + ' from ' + top.value + '.';
+  if (!deep) return { k: 'depth', n: top.n, text: short };
   /* WHERE THE TWO HOUSES ARE OWNED DIFFERENTLY, SAY SO. One of them being
      a single name and the other a portfolio is the more interesting
      sentence by some way, and it is the difference between repetition and
@@ -32137,20 +32055,29 @@ L.depthLine = function (top, second, head, shapes) {
    own - every one of these is a count of the shelf and none of them knows
    anything about titles - and because the card that reads them is at its
    line ceiling (rule 30f). */
+/* WHISKEY ONLY, the same rule as L.tasteProfile and for the same reason:
+   every figure out of here is printed in a sentence about whisky. The bar
+   shelf is inventory - a sealed bottle of Bacardi is not a posture about
+   whisky, and a tequila filed obscure is not a whisky most people have
+   never heard of. The physical bottle counts are filtered through the
+   catalogue too, so `sealed` and `bottles` describe the same shelf the
+   rest of the card does rather than a second, wider one. */
 L.portraitCtx = function (catalog, bottles) {
-  const held = L.ownedCounts(bottles || []);
-  const owned = Object.keys(catalog || {})
-    .filter(k => held[k]).map(k => catalog[k]);
-  const sealedN = (bottles || []).filter(b => b && b.status !== 'open').length;
+  const cat = catalog || {};
+  const whisky = (bottles || []).filter(b => b && b.k && cat[b.k]
+    && L.isWhisky(cat[b.k]));
+  const held = L.ownedCounts(whisky);
+  const owned = Object.keys(cat).filter(k => held[k]).map(k => cat[k]);
+  const sealedN = whisky.filter(b => b.status !== 'open').length;
   const unfin = owned.filter(p => !p.fin).length;
   return {
     ownedN: owned.length,
     ctx: {
       obscure: owned.filter(p => p.obsc === 'obscure').length,
       rare: owned.filter(L.hardToGet).length,
-      bottles: (bottles || []).length,
+      bottles: whisky.length,
       sealed: sealedN,
-      sealedShare: (bottles || []).length ? sealedN / bottles.length : 0,
+      sealedShare: whisky.length ? sealedN / whisky.length : 0,
       unfinished: unfin,
       unfinishedShare: owned.length ? unfin / owned.length : 0
     }
@@ -32175,9 +32102,6 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
   earned.sort((a, b) => L.portraitLift(b) - L.portraitLift(a)
     || a.title.localeCompare(b.title));
 
-  /* The story: one line per thing the shelf actually says, each with the
-     figure that makes it true. Ordered so the loudest comes first. */
-  const lines = [];
   /* The combination, not the loudest single chip, and `at` steps through
      the rest of what the shelf has earned. Picked HERE, above the lines,
      because the verdict sentence depends on the title and the lines depend
@@ -32197,87 +32121,6 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
   /* THE TITLE COUNTS AS HAVING SAID IT TOO. It is the largest text on the
      card: "Deep on One House" over a bullet reading "You go deep before
      you go wide." is the claim twice, however the line below it reads. */
-  /* The headline the bullets must not repeat: the title AND the sentence
-     under it, because the title is the largest text on the card. The depth
-     line is pushed AFTER the pick, below, for the same reason. The sort at
-     the end of this function puts the lines in order, so where a line is
-     pushed carries nothing. */
-  const head = (pick ? pick.title + ' ' : '') + line;
-  const wood = t.woodFamilies[0];
-  /* A SHARE, not five bottles: five of 351 is one and a half per cent and
-     would have said the wood travels with you from house to house. */
-  if (wood && L.leansTo(wood.n, ownedN)) {
-    const houses = wood.houses.length;
-    lines.push({ k: 'wood', n: wood.n, text: L.fitLine(
-      (houses === 1
-        ? 'One house does all your ' + wood.value + ' for you \u2014 '
-          + wood.n + ' of them.'
-        : 'You follow the ' + wood.value + ' wherever it goes \u2014 '
-          + wood.n + ' bottles across ' + houses + ' distilleries.'),
-      'You follow the ' + wood.value + ' from house to house.') });
-  }
-  if (t.peat.any) {
-    lines.push({ k: 'peat', n: t.peat.any,
-      text: L.leansTo(t.peat.heavy, ownedN)
-        ? 'Smoke is no passing phase here: ' + t.peat.heavy
-          + ' heavily peated against ' + t.peat.none + ' with none at all.'
-        : 'Smoke is a place you visit rather than live, and ' + t.peat.any
-          + ' bottles keep the door open.' });
-  }
-  /* THE CASK-STRENGTH HALF ONLY. This opened with the middle half of the
-     shelf by proof, and BZ: "given the general market, everyone will skew to
-     the 90-110 range - the second half of that line is best". He is right -
-     a quartile range that nearly every shelf shares describes the market and
-     not the person, and it was the longer half of the sentence. What is left
-     needs at least one bottle at cask strength to be about anything. */
-  if (t.proof && t.proof.n > 10 && t.proof.strong) {
-    /* Measured against the shelf; see L.CASK_DELIBERATE_SHARE. */
-    const deliberate = t.proof.strong / t.proof.n >= L.CASK_DELIBERATE_SHARE;
-    const saidStrong = L.saidAlready(line, 'strength');
-    const verdict = deliberate
-      ? (saidStrong ? '' : 'Proof holds no fear here')
-      : 'You are buying flavor rather than force';
-    /* The short form needs a shorter verdict too, or it is no shorter than
-       the full line and the budget check fails. */
-    const brief = deliberate
-      ? (saidStrong ? '' : 'Proof holds no fear here')
-      : 'Flavor over force';
-    /* Trimmed, because a dropped verdict leaves the space that joined it
-       to the figure. */
-    lines.push({ k: 'proof', n: t.proof.strong,
-      text: L.fitLine(
-        (verdict ? verdict + ' \u2014 ' + t.proof.strong
-          + ' of these come as the cask gave them.'
-          : t.proof.strong + ' of these come as the cask gave them.'),
-        (brief ? brief + ' \u2014 ' + t.proof.strong + ' at cask strength.'
-          : t.proof.strong + ' at cask strength.')) });
-  }
-  /* NO BOUGHT-AGAIN LINE. BZ, 2026-10-04: "11 whiskies bought twice is not
-     an interesting fact". Buying a second bottle says something about one
-     bottle and nothing about a palate, which is what these lines are for.
-     t.repeats stays: the Creature of Habit badge and the buy-against-drink
-     quadrants both read it, and both are about habit, where it belongs. */
-  const labels = L.labelLine(ctx, ownedN);
-  if (labels) lines.push({ k: 'obscure', n: ctx.obscure, text: labels });
-
-  /* WHERE IT ALL CAME FROM (BZ asked for it): provenance describes habit
-     where the other lines describe taste. Only from eight bottles with a
-     shop, since two is not a pattern. */
-  const prov = L.provenance(bottles || []);
-  if (prov.known >= 8) {
-    const top = prov.shops[0] || prov.online[0];
-    if (top && top.n >= 3) {
-      lines.push({ k: 'from', n: top.n,
-        text: top.n + ' of them came from ' + top.name
-          + (prov.shops.length + prov.online.length > 1
-            ? ', more than anywhere else.' : '.') });
-    }
-    if (prov.gifts >= 3) {
-      lines.push({ k: 'gifts', n: prov.gifts,
-        text: prov.gifts + ' were gifts. Someone knows what you like.' });
-    }
-  }
-
   /* A SHELF THAT HAS JUST STARTED IS NOT A GENERALIST. */
   if (t.owned < 12) {
     const need = 12 - t.owned;
@@ -32291,17 +32134,12 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
         : need + ' more and this starts naming what your shelf is for \u2014 '
           + 'the wood you keep buying, the strength you reach for, the house '
           + 'you keep going back to.',
-      story: 'Nothing here is a verdict yet. A title needs evidence, so this '
-        + 'waits for more bottles.',
-      lines: [], t: t
+      story: ['Nothing here is a verdict yet. A title needs evidence, so '
+        + 'this waits for more bottles.'],
+      t: t
     };
   }
 
-  /* The house figures, once the caption is known: a shelf that won its
-     title on one house already carries that house's figure above, so the
-     line moves on to the second rather than printing it twice. */
-  [L.houseLine(t, catalog, bottles, head), L.scotlandLine(t.regions),
-    L.returnedLine(t.houses)].forEach(l => { if (l) lines.push(l); });
   /* THE PILLS ARE WHAT THE TITLE DID NOT USE, and nothing else. They led
      with the chips that earned the title until 2026-11-02, which put each
      of those chips on the card TWICE: `why` above is those same chips'
@@ -32313,9 +32151,12 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
      alternative showed where there were seventeen. */
   const lead = pick ? earned.filter(e => pick.from.indexOf(e.id) >= 0) : [];
   const rest = pick ? earned.filter(e => pick.from.indexOf(e.id) < 0) : earned;
+  const told = L.shelfStory(t, ctx, L.palateShelf(catalog, bottles),
+    L.provenance(bottles || []),
+    (L.houseLine(t, catalog, bottles) || {}).text);
   return {
     title: pick ? pick.title : 'The Generalist',
-    why: pick ? pick.why
+    why: pick ? L.captionOf(lead, told)
       : t.owned + ' whiskies and no single thing the shelf insists on',
     from: pick ? pick.from : [],
     /* HOW MANY TITLES THERE ARE AND WHICH ONE THIS IS, so the card can draw
@@ -32323,13 +32164,16 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
        where you are in the round. */
     portN: pick ? pick.n : 0,
     portAt: pick ? pick.at : 0,
+    led: lead,
     also: rest.slice(0, 4),
     line: line,
-    /* The paragraph carries only what nothing else on the card carries;
-       what the shelf IS is the title and the line above it. */
-    story: L.shelfStory(t, ctx),
-    /* Ordered, not just built. */
-    lines: L.orderLines(lines, earned),
+    /* The three movements, as paragraphs. The palate goes in here rather
+       than being drawn beside the card: what the shelf tastes of is the
+       same claim as what wood it was in, arriving from the glass instead
+       of the label, so it belongs in the signature movement and not in a
+       block of its own. */
+    story: L.storyParagraphs(told),
+    told: told,
     owned: t.owned
   };
 };
@@ -32445,40 +32289,225 @@ L.collectorLine = function (t, ctx, title, ids) {
    the line is what that says about whoever built it, the caption is the
    figures the title was argued from, the pills are the readings it did not
    use, and these sentences are what none of those carry. */
-L.shelfStory = function (t, ctx) {
-  if (!t || !t.owned) return '';
-  const bits = [];
+/* THE STORY, IN THREE MOVEMENTS, and an array because they are paragraphs.
+ *
+ * It was a list of facts until 2026-11-03 - nine bullets, each one fact and
+ * one figure, in the order the title argued them. ("9 is a lot and this
+ * seems like trivia and not a profile. What is the story the shelf tells?")
+ * A list of true things is not a profile: the reader has to do the joining,
+ * and a shelf's story is exactly the joining.
+ *
+ * So: SCOPE, what the shelf is for. SIGNATURE, what runs through it once
+ * range is set aside. HABIT, what it took to put there. Each movement
+ * carries its figures inside sentences that are doing work, rather than
+ * hanging a label on a number, and a movement with nothing to say is
+ * dropped rather than padded.
+ *
+ * NO BOUGHT-AGAIN SENTENCE anywhere in them. ("No real pattern to my rebuys
+ * and not real reason that should matter.") t.repeats stays: the Creature
+ * of Habit title and the buy-against-drink quadrants read it, and both are
+ * about habit, where it belongs. */
+/* WHICH MOVEMENT ARGUES WHICH CHIP, so the caption under the title does not
+ * state a figure the paragraphs below are about to make properly - and,
+ * just as much, so a chip NO movement argued keeps its evidence.
+ *
+ * The caption is the title's evidence, and while the body was a list of
+ * facts it was the only place that evidence appeared. Most chips are argued
+ * in the prose now and "65 sherried whiskies across 37 houses" read as a
+ * stutter two inches above the sentence that says what it means. But a flat
+ * table of covered ids is wrong in the other direction: every movement has
+ * a floor, so a twenty-bottle shelf can earn PX Lover and still be too small
+ * for the signature sentence, and the caption would have been dropped for a
+ * claim nothing went on to make. It is asked per shelf, against the
+ * movements that actually produced text. */
+L.STORY_COVERS = { px: 'signature', sherry: 'signature', peat: 'signature',
+  proof: 'habit', rare: 'habit', obscure: 'habit', house: 'habit',
+  region: 'scope', breadth: 'scope' };
 
-  /* NO OPENING SENTENCE ABOUT WHAT THE SHELF IS. `collectorLine` draws one
-     between the title and this paragraph for every shelf that owns
-     anything - there is no branch of it that answers '' while this
-     function is still running - so an opener here is the same claim twice
-     and the paragraph starts at the first thing nothing else says. The
-     parameter that used to ask whether the line existed went with it: a
-     flag whose answer is always the same hides the fact that it is. */
+L.captionOf = function (lead, told) {
+  const said = told || {};
+  return (lead || [])
+    .filter(e => !said[L.STORY_COVERS[e.id]])
+    .map(e => e.why).join(' \u00b7 ');
+};
 
-  /* NO BOUGHT-AGAIN SENTENCE. The same ruling as the bullet beside this
-     function, which is where the count used to be drawn: a rebuy is not
-     an interesting fact. ("No real pattern to my rebuys and not real
-     reason that should matter.") A second bottle says something about
-     one bottle and nothing about a palate, which is what these
-     sentences are for - and a count with no pattern behind it reads as
-     a conclusion drawn from nothing. t.repeats stays: the Creature of
-     Habit title and the buy-against-drink quadrants both read it, and
-     both are about habit, where it belongs. */
+/* The movements by name, because the caption has to ask which of them
+   spoke. L.storyParagraphs is what a card draws. */
+L.shelfStory = function (t, ctx, pal, prov, depth) {
+  if (!t || !t.owned) return {};
+  return {
+    scope: L.storyScope(t, ctx),
+    signature: L.storySignature(t, pal),
+    habit: L.storyHabit(t, ctx, prov, depth)
+  };
+};
 
-  /* And the range it can still argue across, which is what makes the
-     narrowness a preference rather than a limit. */
-  const styles = t.styles.length, woods = t.woodFamilies.length;
-  if (styles >= 4 && woods >= 3) {
-    bits.push('You could settle almost any whisky argument without '
-      + 'leaving this shelf \u2014 ' + styles + ' categories, ' + woods
-      + ' kinds of cask.');
-  } else if (ctx && ctx.obscure >= 10) {
-    bits.push(ctx.obscure + ' of these are bottles most people have never '
-      + 'heard of.');
+L.STORY_ORDER = ['scope', 'signature', 'habit'];
+
+L.storyParagraphs = function (told) {
+  return L.STORY_ORDER.map(k => (told || {})[k]).filter(Boolean);
+};
+
+/* TWO THINGS HELD IN EQUAL MEASURE. Nobody arrives at Islay and Kentucky
+ * within a bottle of each other by preference - those two places agree on
+ * nothing - so a near-tie between the top two of anything is a decision
+ * rather than a taste, and it is the most telling single fact a wide shelf
+ * carries. Below L.STYLE_REAL on the smaller side it is two bottles being
+ * close, which is arithmetic. */
+/* A CATEGORY REALLY HELD, rather than a bottle somebody was given. Read by
+ * the scope movement, which names the categories, and by the dead-heat test,
+ * which refuses to call two small numbers a tie. */
+L.STYLE_REAL = 10;
+
+L.DEAD_HEAT = 0.9;
+
+L.deadHeat = function (rows) {
+  const a = (rows || [])[0], b = (rows || [])[1];
+  if (!a || !b || b.n < L.STYLE_REAL) return null;
+  if (b.n < a.n * L.DEAD_HEAT) return null;
+  return { a: a.value, b: b.value, na: a.n, nb: b.n };
+};
+
+/* WHAT THIS SHELF IS FOR. The first movement of the story, and the only one
+ * about size: how many whiskies are being kept at once, and whether the
+ * range is wide enough that the shelf can answer a question rather than
+ * only hold a preference. */
+L.storyScope = function (t, ctx) {
+  const owned = (t || {}).owned || 0;
+  if (!owned) return '';
+  const real = (t.styles || []).filter(s => s.n >= L.STYLE_REAL);
+  const houses = (t.houses || []).length;
+  /* How far across Scotland it reaches is scope too, so it rides here
+   * rather than as a line of its own. L.scotlandLine owns the reading and
+   * reads L.SCOTCH_REGIONS for what Scotland has. */
+  const scot = (L.scotlandLine(t.regions) || {}).text || '';
+  if (real.length >= 3) {
+    const named = L.andList(real.slice(0, 4).map(s => L.typeLabel(s.value)));
+    const tie = L.deadHeat(t.regions);
+    return 'This shelf was built to be argued from. ' + named
+      + ' are all here in force'
+      + (tie ? ', and ' + tie.a + ' and ' + tie.b + ' sit at a dead heat '
+        + '\u2014 ' + tie.na + ' bottles to ' + tie.nb + '.' : '.')
+      + (houses >= 20 ? ' Across ' + houses + ' houses there is not much '
+        + 'you could be asked that you could not answer without leaving '
+        + 'the room.' : '')
+      + (scot ? ' ' + scot : '');
   }
+  if (real.length === 2) {
+    return 'You keep two whiskies going side by side \u2014 '
+      + L.typeLabel(real[0].value) + ' and ' + L.typeLabel(real[1].value)
+      + ', ' + real[0].n + ' and ' + real[1].n + ' of them \u2014 and a '
+      + 'shelf that holds two arguments at once can settle either.';
+  }
+  if (real.length === 1) {
+    return 'This shelf knows exactly what it is for. It is '
+      + L.typeLabel(real[0].value).toLowerCase() + ', ' + real[0].n
+      + ' bottles of it, and nothing here is pretending otherwise.';
+  }
+  return 'You are still spreading wide \u2014 ' + owned + ' whiskies and no '
+    + 'category yet deep enough to argue from.';
+};
 
+/* WHAT RUNS THROUGH IT WHATEVER THE CATEGORY. The second movement, and the
+ * one that is actually personal: the scope above is a decision about range,
+ * this is the thing the bottles have in common once range is set aside. A
+ * wood carried by many HOUSES is the strongest form of it - following a
+ * cask across distilleries is the opposite of brand loyalty - so the house
+ * count is the figure, not the bottle count. Ends on the palate sentence,
+ * which is the same claim arriving from the glass instead of the label. */
+L.WOOD_TRAVELS = 8;
+
+/* THE WOOD THAT BEAT THE OTHERS, which is not the same question as a wood
+ * that passed a bar. L.leansTo asks for a fixed share of the whole shelf
+ * and a wide shelf never reaches it - 65 sherried of 335 is 19.4% against
+ * a 20% bar, so the loudest thing about this shelf answered no. A
+ * signature is a lead over the alternatives: enough of it to be a habit,
+ * and half again as much as whatever came second. */
+L.SIGNATURE_LEAD = 1.5;
+L.SIGNATURE_MIN = 12;
+
+L.signatureWood = function (fams) {
+  const a = (fams || [])[0], b = (fams || [])[1];
+  if (!a || a.n < L.SIGNATURE_MIN) return null;
+  if (b && a.n < b.n * L.SIGNATURE_LEAD) return null;
+  return a;
+};
+
+L.storySignature = function (t, pal) {
+  const bits = [];
+  const wood = L.signatureWood(t.woodFamilies);
+  const peat = (t || {}).peat || {};
+  if (wood) {
+    const h = wood.houses.length;
+    bits.push('What crosses all of it is the cask. ' + wood.n
+      + ' of these came out of ' + wood.value + ' wood'
+      + (h >= L.WOOD_TRAVELS
+        ? ', and from ' + h + ' different houses \u2014 so it is the wood '
+          + 'you are following, not the label.'
+        : ', nearly all from the same house.'));
+  } else if (peat.heavy && L.leansTo(peat.heavy, t.owned)) {
+    bits.push('What crosses all of it is the smoke. ' + peat.heavy
+      + ' of these are heavily peated against ' + peat.none
+      + ' with none at all, which is a choice made over and over.');
+  }
+  if (pal && pal.say) bits.push(pal.say);
+  return bits.join(' ');
+};
+
+/* HOW THE BUYING IS DONE. The third movement: not what is on the shelf but
+ * what it took to put it there. Each mark is a thing somebody had to decide
+ * to do - pay for strength, hunt something down, wait out an age statement,
+ * go back to a house a second time - and two of them together are a habit
+ * where one alone is a figure. */
+L.HABIT_MARK = 10;
+L.RETURNED_FLOOR = 8;
+
+L.storyHabit = function (t, ctx, prov, depth) {
+  const c = ctx || {};
+  const marks = [];
+  const proof = (t || {}).proof || {};
+  const age = (t || {}).age || {};
+  if (proof.strong >= L.HABIT_MARK) {
+    marks.push(proof.strong + ' at cask strength');
+  }
+  if (c.rare >= L.HABIT_MARK) {
+    marks.push(c.rare + ' that took real finding');
+  } else if (c.obscure >= L.HABIT_MARK) {
+    marks.push(c.obscure + ' most drinkers could not place');
+  }
+  if (age.old >= L.HABIT_MARK) {
+    marks.push(age.old + ' carrying fifteen years or more');
+  }
+  const bits = [];
+  if (marks.length >= 2) {
+    bits.push('And you buy without hedging: ' + L.andList(marks) + '.');
+  } else if (marks.length) {
+    bits.push('There is nothing timid about the buying \u2014 '
+      + marks[0] + '.');
+  }
+  const houses = t.houses || [];
+  const again = houses.filter(h => h.n >= 2).length;
+  if (again >= L.RETURNED_FLOOR && houses[0]) {
+    bits.push(again + ' of the ' + houses.length + ' houses here were worth '
+      + 'a second visit.');
+  }
+  if (depth) bits.push(depth);
+  /* Where it came from, once there is enough of it to be a habit rather
+   * than two receipts. A shop that sold more than anywhere else is part of
+   * how the buying is done; gifts are somebody else reading the shelf. */
+  const p = prov || {};
+  if (p.known >= 8) {
+    const top = (p.shops || [])[0] || (p.online || [])[0];
+    if (top && top.n >= 3) {
+      bits.push(top.n + ' of them came from ' + top.name
+        + ((p.shops || []).length + (p.online || []).length > 1
+          ? ', more than anywhere else.' : '.'));
+    }
+    if (p.gifts >= 3) {
+      bits.push(p.gifts + ' were gifts \u2014 somebody else has been '
+        + 'reading this shelf too.');
+    }
+  }
   return bits.join(' ');
 };
 
@@ -40113,7 +40142,7 @@ function portraitHead(port) {
     ptitle.appendChild(step);
   }
   if (port.line) left.appendChild(el('div', 'portline1', port.line));
-  left.appendChild(el('div', 'portwhy', port.why));
+  if (port.why) left.appendChild(el('div', 'portwhy', port.why));
   ph.appendChild(left);
   if (port.also.length) {
     /* THE PILLS SAY WHAT THEY ARE. They are the other titles the shelf
@@ -40144,31 +40173,15 @@ function portraitCard(port) {
      collector's name, and the verdict sits right under the title. */
   const ph = portraitHead(port);
   pc.appendChild(ph);
-  /* The argument, above the evidence. The bullets are one fact and one
-     figure each, and a list of facts is not a case — this makes it. */
-  if (port.story) pc.appendChild(el('div', 'portstory', port.story));
-  /* WHAT IT TASTES OF, beside what it collects. The portrait counts casks and
-     says Sherry Cellar; this counts flavour words and says the same KIND of
-     thing about taste - a description of the shelf, never a claim about what
-     you prefer, which the sentence says out loud because three attempts at
-     the second thing were withdrawn in one day. */
-  const shelfPal = L.palateShelf(S.catalog, S.bottles);
-  if (shelfPal.say) pc.appendChild(el('div', 'portstory sub', shelfPal.say));
-  /* THE REASON LINES FOLD ON A PHONE: read once they explain the title;
-     after that they stand between you and the rest of Home. */
-  const ls = el('div', 'portlines');
-  port.lines.forEach(l => ls.appendChild(el('div', 'portline', l.text)));
-  if (window.matchMedia && window.matchMedia('(max-width:560px)').matches
-      && port.lines.length) {
-    const d = el('details', 'advanced');
-    const sum = el('summary');
-    sum.textContent = 'Why it says that';
-    d.appendChild(sum);
-    d.appendChild(ls);
-    pc.appendChild(d);
-  } else {
-    pc.appendChild(ls);
-  }
+  /* THE STORY, IN PARAGRAPHS: scope, signature, habit. It was nine bullets
+     folded behind a summary on a phone, which is how a card came to show
+     two sentences ("Too brief") of what was, unfolded, a list of facts
+     with no case made ("9 is a lot and this seems like trivia and not a
+     profile"). The joining IS the profile, so the engine joins and this
+     lays out. The palate sentence is inside the signature movement now
+     rather than drawn in a block of its own. */
+  (port.story || []).forEach(p =>
+    pc.appendChild(el('div', 'portstory', p)));
 
   return pc;
 }
@@ -59576,7 +59589,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.38</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.39</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');
