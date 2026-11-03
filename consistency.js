@@ -12,6 +12,8 @@
  */
 const fs = require('fs');
 const src = fs.readFileSync(__dirname + '/index.html', 'utf8');
+/* The three story movements, named once. */
+const L_OPENERS_MOVEMENTS = { scope: 1, signature: 1, habit: 1 };
 let bad = 0, checks = 0;
 const fail = (what, detail) => {
   bad++;
@@ -416,6 +418,129 @@ const askBlock = (() => {
   check('every portrait title has its own line',
     titles.length && ids.length ? missing
       : ['no set titles or chip ids found to check']);
+}
+
+/* EVERY CHIP A PARAGRAPH CAN BE KEYED TO HAS AN OPENER.
+
+   The same fault as a title with no line, one level down: each movement of
+   the Home story opens on a sentence about the collector, keyed by the chip
+   the paragraph was drawn for, and a chip with no entry falls through to
+   that movement's fallback - so two different titles open on one sentence
+   and the paragraph stops being about the title above it.
+
+   Read out of the SOURCE of the three movement functions rather than from
+   the running engine, so a chip id introduced by a new sentence fails here
+   on the build that adds it. Both ways a sentence names its chips are
+   scanned: `ids: ['x']` on the sentence itself, and `id: 'x'` inside the
+   marks list the habit movement builds its first sentence from. Dynamic ids
+   - the leading cask family, which is a wood name and only sometimes a chip
+   - are covered by the fallback and by the assertions that drive real
+   shelves. */
+{
+  const body = name => {
+    const at = src.indexOf('L.' + name + ' = function');
+    if (at < 0) return '';
+    const end = src.indexOf(String.fromCharCode(10) + '};', at);
+    return src.slice(at, end < 0 ? at + 4000 : end);
+  };
+  const openBlock = (src.match(/L\.STORY_OPENERS = \{([\s\S]*?)\n\};/)
+    || [])[1] || '';
+  const per = { scope: 'storyScope', signature: 'storySignature',
+    habit: 'storyHabit' };
+  /* One movement's slice of the table, so a scope opener cannot satisfy a
+     habit chip - which is how a flat read of the whole table would pass. */
+  const slice = m => {
+    const at = openBlock.indexOf(String.fromCharCode(10) + '  ' + m + ': {');
+    if (at < 0) return '';
+    const end = openBlock.indexOf(String.fromCharCode(10) + '  }', at);
+    return openBlock.slice(at, end < 0 ? openBlock.length : end);
+  };
+  const gaps = [];
+  let seen = 0;
+  Object.keys(per).forEach(m => {
+    const fn = body(per[m]);
+    const mine = slice(m);
+    if (!mine) { gaps.push(m + ' has no opener table'); return; }
+    if (!/\n\s+'': '/.test(mine)) gaps.push(m + ' has no fallback opener');
+    const ids = {};
+    ((fn.match(/ids: \['([a-z]+)'/g) || [])
+      .concat(fn.match(/id: '([a-z]+)'/g) || []))
+      .forEach(x => { ids[x.replace(/.*'([a-z]+)'.*/, '$1')] = 1; });
+    Object.keys(ids).forEach(id => {
+      seen++;
+      if (!new RegExp('\\n\\s+' + id + ': ').test(mine)) {
+        gaps.push(m + '/' + id);
+      }
+    });
+  });
+  check('every chip a story paragraph is keyed to has an opener',
+    seen >= 6 ? gaps
+      : ['only ' + seen + ' chip ids found in the movements, expected 6+']);
+}
+
+/* AND NO OPENER RESTATES THE VERDICT LINE IT IS DRAWN UNDER.
+
+   The two sit two inches apart on the card: the line says what earning the
+   title says about the collector, the opener says what the figures below are
+   about to show. Five of the first nine openers made the same claim as the
+   line for the same chip - "You want it undiluted" over "You want whisky the
+   way the cask gave it" - which is the fault L.TITLE_LINES exists to prevent,
+   one level down.
+
+   WHAT THIS CATCHES AND WHAT IT DOES NOT, stated because a partial check
+   that looks total is worse than none: it catches an exact repeat, and a
+   repeat that reuses one of the line's own content words, which was three of
+   those five. The other two said the same thing in different words - one of
+   them the OPPOSITE of its line - and were caught by reading the drawn card.
+   Reading is still the check for that; this one holds the floor. */
+{
+  const lineBlock = (src.match(/L\.TITLE_LINES = \{([\s\S]*?)\n\};/) || [])[1]
+    || '';
+  const openBlock = (src.match(/L\.STORY_OPENERS = \{([\s\S]*?)\n\};/)
+    || [])[1] || '';
+  /* Sentences joined over their continuation lines, because both tables wrap
+     a long one across two source lines with a `+`. */
+  const flat = b => b.replace(/'\s*\n\s*\+ '/g, '');
+  const entries = b => {
+    const out = {};
+    (flat(b).match(/\n\s+([a-z']+): '((?:[^'\\]|\\.)*)'/g) || []).forEach(x => {
+      const m = x.match(/\n\s+([a-z']+): '((?:[^'\\]|\\.)*)'/);
+      if (m && m[1] !== "''") out[m[1]] = m[2];
+    });
+    return out;
+  };
+  const lines = entries(lineBlock);
+  const SMALL = ('a an and as at but by do does for from has have in is it its '
+    + 'not of on or rather than that the them there these this to too up was '
+    + 'what when where which while with you your').split(' ');
+  const words = t => String(t).toLowerCase().replace(/[^a-z ]/g, ' ')
+    .split(/\s+/).filter(w => w.length > 2 && SMALL.indexOf(w) < 0);
+  const clashes = [];
+  let pairs = 0;
+  const openers = [];
+  Object.keys(L_OPENERS_MOVEMENTS).forEach(m => {
+    const mine = entries((openBlock.match(
+      new RegExp('\\n  ' + m + ': \\{([\\s\\S]*?)\\n  \\}')) || [])[1] || '');
+    Object.keys(mine).forEach(id => {
+      openers.push(m + '/' + id + '\t' + mine[id]);
+      if (!lines[id]) return;
+      pairs++;
+      if (mine[id] === lines[id]) { clashes.push(m + '/' + id + ' is the line'); return; }
+      const shared = words(mine[id]).filter(w => words(lines[id]).indexOf(w) >= 0);
+      if (shared.length) {
+        clashes.push(m + '/' + id + ' reuses the line\u2019s word "'
+          + shared[0] + '"');
+      }
+    });
+  });
+  /* And no two openers are one sentence, whichever movement they sit in. */
+  const said = openers.map(x => x.split('\t')[1]);
+  said.forEach((x, i) => {
+    if (said.indexOf(x) !== i) clashes.push('two openers share "' + x + '"');
+  });
+  check('no story opener restates the line above it',
+    pairs >= 5 ? clashes
+      : ['only ' + pairs + ' opener/line pairs found, expected 5+']);
 }
 
 /* A LABEL READ SPEAKS BEFORE IT CONTRIBUTES.

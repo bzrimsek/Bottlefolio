@@ -134,7 +134,7 @@ check locally is worth removing: it teaches you to ignore red.
 python3 audit.py index.html  # the named lock matches index.html
 node killer-bs-test.js    # 8,360 assertions
 node lint.js              # nothing undefined, twice-defined, unreachable
-node consistency.js       # 126 wiring checks, incl. rules copied twice
+node consistency.js       # 128 wiring checks, incl. rules copied twice
 node screens.js           # 38 screens draw
 node answers.js           # what the answers SAY, on BZ's real shelf
 node shots.js             # every screen at 390px, photographed AND measured

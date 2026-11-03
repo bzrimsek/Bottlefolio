@@ -13503,7 +13503,7 @@ sec('\u00a7223 what the shelf adds up to');
   /* The signature movement counts WHISKIES, the tally the wood is taken
      from, and never calls them bottles of something else. */
   eq('the signature movement counts whiskies',
-    /25 of these are /.test(popStory()), true);
+    /holds 25 whiskies out of /.test(popStory()), true);
   eq('and never calls them bottles of something else',
     /25 bottles/.test(popStory()), false);
   /* AND THE HOUSE FIGURE IS PRINTED EXACTLY ONCE. The caption drops a chip
@@ -14511,19 +14511,69 @@ sec('§232 the portrait a shelf earns');
     peat: {}, proof: { strong: 84 }, age: { old: 38 } },
   { rare: 72 }, { say: 'A seam of fig.' }, null, null,
   [{ id: 'sherry', why: '65 sherried' }]);
+  /* THE BUDGET IS EVIDENCE SENTENCES, and each paragraph carries one opener
+     in front of them, so a paragraph is its budget plus one. */
   const count = p => (p.match(/[.!?](\s|$)/g) || []).length;
-  eq('every movement is held to its budget',
+  eq('every movement is held to its budget, plus its opener',
     [count(budget.said.signature), count(budget.said.scope),
       count(budget.said.habit)],
-    [L.STORY_LEAD, L.STORY_REST, L.STORY_REST]);
-  eq('and the whole story is at most six sentences',
+    [L.STORY_LEAD + 1, L.STORY_REST + 1, L.STORY_REST + 1]);
+  eq('and the whole story is at most nine sentences',
     L.storyParagraphs(budget).reduce((n, p) => n + count(p), 0),
-    L.STORY_LEAD + L.STORY_REST * 2);
+    L.STORY_LEAD + L.STORY_REST * 2 + 3);
   /* THE CEILING AS A NUMBER, not as the constants themselves - read off
      those alone this check passes however far they are loosened, which is
      the whole thing being guarded ("long and boring"). */
   eq('and the budget itself is two sentences a movement',
     [L.STORY_LEAD, L.STORY_REST], [2, 2]);
+
+  /* EVERY PARAGRAPH OPENS ON THE COLLECTOR, NOT ON A NUMBER, and no
+     sentence anywhere in the story starts with a figure: the opener is the
+     claim and the rest is its evidence, so a figure in front reads as a
+     readout. */
+  const allSaid = L.storyParagraphs(budget)
+    .concat(L.storyParagraphs(pxP.told))
+    .concat(L.storyParagraphs(plain.told));
+  eq('no paragraph opens on a figure',
+    allSaid.filter(p => /^[^A-Za-z]*\d/.test(p)), []);
+  eq('and no sentence inside one does either',
+    allSaid.reduce((a, p) => a.concat(p.split(/(?<=[.!?])\s+/)), [])
+      .filter(x => /^\s*\d/.test(x)), []);
+  /* AND EVERY ONE OF THEM IS AN OPENER, not the first evidence sentence
+     that happened to start with a word: it has to be a line from the
+     table. */
+  const openers = L.STORY_ORDER.reduce((a, k) =>
+    a.concat(Object.keys(L.STORY_OPENERS[k]).map(i => L.STORY_OPENERS[k][i])),
+  []).map(x => x.replace('{wood}', 'sherry'));
+  eq('every paragraph drawn opens with a line from the table',
+    allSaid.filter(p => !openers.some(o => p.indexOf(o) === 0)), []);
+  /* THE LEADING PARAGRAPH'S OPENER IS KEYED TO A CHIP THE TITLE CAME FROM,
+     which is the whole of "it has no backup to the title": the largest text
+     on the card and the claim under it have to be about one thing. */
+  eq('the leading opener is the one keyed to the title chip',
+    budget.said[budget.order[0]].indexOf(L.STORY_OPENERS.signature.sherry),
+    0);
+  eq('and a movement with no evidence draws no opener',
+    L.shelfStory({ owned: 40, styles: [], houses: [], regions: [],
+      woodFamilies: [], peat: {}, proof: {}, age: {} }, {}, null, null,
+    null, []).said.signature, '');
+
+  /* ONE TABLE, AND A FALLBACK IN EVERY MOVEMENT, so no paragraph can be
+     drawn without an opener however the chips fall. */
+  eq('every movement has a fallback opener',
+    L.STORY_ORDER.filter(k => !(L.STORY_OPENERS[k] || {})['']), []);
+  eq('an unknown chip takes the fallback',
+    L.storyOpener('habit', ['nosuchchip'], ''),
+    L.STORY_OPENERS.habit['']);
+  /* {wood} IS THE ONE SUBSTITUTION, and a shelf with no cask signature
+     takes the fallback rather than a sentence with a hole in it. */
+  eq('the wood opener is filled from the signature family',
+    L.storyOpener('scope', ['breadth'], 'fortified'),
+    'The fortified wine is the heart of it, not the whole of it.');
+  eq('and with no signature wood it falls back',
+    [L.storyOpener('scope', ['breadth'], ''),
+      /\{wood\}/.test(L.storyOpener('scope', ['breadth'], ''))],
+    [L.STORY_OPENERS.scope[''], false]);
 
   /* THE CAPTION IS WHAT THE STORY DID NOT SAY, asked against the sentences
      actually DRAWN rather than a table of chip names. Both directions are
@@ -22739,6 +22789,47 @@ sec('\u00a7348 every title says something only it says');
   eq('and no two steps of the rotation draw the same line', shared, []);
   eq('the rotation is longer than one title', (port.portN || 0) > 1, true);
 
+  /* THE LEADING PARAGRAPH DOES NOT SAY THE TITLE BACK, over the whole
+     rotation on the real shelf. The title is the largest text on the card
+     and the paragraph under it opens the case for that title - so it may not
+     be the verdict line again, and it may not simply repeat the title's own
+     word, which is the shelf naming itself three times in four inches.
+     ("Its opener must be about the title's subject without repeating the
+     title word or the verdict line.")
+     JUST THE LEAD. A word shared between the line and a LATER paragraph's
+     opener is usually coincidence - "behind" in "sweetness behind it" and in
+     "what the wood leaves behind" - and six of those fired on this shelf
+     against three real ones. A check that cries wolf gets ignored; the real
+     repetitions are an opener against its OWN chip's line, which
+     consistency.js pairs exactly. */
+  const SMALL = ('a an and as at but by do does for from has have in is it '
+    + 'its not of on or rather than that the them there these this to too up '
+    + 'was what when where which while with you your').split(' ');
+  const bigWords = t => String(t).toLowerCase().replace(/[^a-z ]/g, ' ')
+    .split(/\s+/).filter(w => w.length > 2 && SMALL.indexOf(w) < 0);
+  const echoes = [];
+  let led = 0;
+  for (let i = 0; i < (port.portN || 1); i++) {
+    const q = L.shelfPortrait(data.catalog, data.bottles, {}, i);
+    const first = (q.story || [])[0];
+    if (!first) continue;
+    led++;
+    /* The opener is the paragraph's first sentence, which is the only
+       sentence on the card with no figure in it. */
+    const open = first.split(/(?<=[.!?])\s+/)[0] || '';
+    if (open === q.line) {
+      echoes.push(q.title + ': the opener IS the line');
+    }
+    const said = bigWords(open);
+    const shares = bigWords(q.title).filter(w => said.indexOf(w) >= 0);
+    if (shares.length) {
+      echoes.push(q.title + ': "' + open + '" says the title word "'
+        + shares[0] + '" back');
+    }
+  }
+  eq('the leading paragraph never says the title back',
+    [echoes, led > 1], [[], true]);
+
   /* The movements come out in the order the story chose - the title's own
      first - and a silent one leaves no hole. */
   eq('the paragraphs follow the order the story chose',
@@ -22781,7 +22872,7 @@ sec('\u00a7348 every title says something only it says');
   const backT = h => ({ owned: 40, houses: h, proof: {}, age: {} });
   const backSays = t => L.storyHabit(t, {}).map(r => r.s).join(' ');
   eq('eight houses revisited is worth saying',
-    /8 of the 8 houses here earned a second visit/
+    /Of the 8 houses here, 8 earned a second visit/
       .test(backSays(backT(hs(8)))), true);
   eq('seven is not',
     /second visit/.test(backSays(backT(hs(7)))), false);
@@ -22865,7 +22956,7 @@ sec('\u00a7348 every title says something only it says');
      of anything was told 50 of your 40 are bourbon. */
   const one = scopeOf(styles([['bourbon', 54]]));
   eq('one category is stated without a ratio',
-    [/it is for: bourbon, 54 bottles of it/.test(one), / of your /.test(one)],
+    [/It is bourbon, 54 bottles of it/.test(one), / of your /.test(one)],
     [true, false]);
   eq('and a category under the floor is not one at all',
     /spread wide/.test(scopeOf(styles([['bourbon', 9]]))), true);
@@ -22883,7 +22974,7 @@ sec('\u00a7348 every title says something only it says');
   eq('and one thing alone cannot tie with anything',
     [L.deadHeat(styles([['Islay', 39]])), L.deadHeat([])], [null, null]);
   eq('the scope movement says so when there is one',
-    /Islay and Kentucky are dead even — 39 bottles to 38/.test(
+    /with Islay and Kentucky dead even at 39 bottles to 38/.test(
       scopeOf(styles([['bourbon', 40], ['scotch', 30], ['irish', 20]]),
         [], styles([['Islay', 39], ['Kentucky', 38]]))), true);
 
@@ -22909,17 +23000,35 @@ sec('\u00a7348 every title says something only it says');
   const sig = (n, houses, pal) => L.storySignature(
     { owned: 300, woodFamilies: fam(n, 10, houses), peat: {} }, pal)
     .map(r => r.s).join(' ');
-  eq('a wood from many houses is a cask habit, not a brand one',
-    /from 37 different houses — a cask habit rather than a brand one/
+  eq('a wood from many houses says how many it crossed',
+    /holds 65 whiskies out of sherry casks, from 37 different houses/
       .test(sig(65, 37)), true);
-  eq('and one from a single house is not',
+  eq('and one from a single house says that instead',
     /nearly all from the one house/.test(sig(65, 1)), true);
-  /* A WOOD TALLY COUNTS WHISKIES, one per bottling, so the sentence says
-     "65 of these" - calling them bottles is the same fault as a category
-     count divided by a bottling count. */
-  eq('and it never calls those whiskies bottles',
-    [/65 of these/.test(sig(65, 37)), /65 bottles/.test(sig(65, 37))],
-    [true, false]);
+  /* IT NAMES ITS OWN NOUN, and a wood tally counts WHISKIES, one per
+     bottling. It read "65 of these are sherry", and "these" reads as
+     whatever figure stood above it - the seventeen PX in the caption.
+     Calling them bottles is the same fault as a category count divided by
+     a bottling count. */
+  eq('it names the whiskies rather than saying these',
+    [/65 whiskies out of/.test(sig(65, 37)), /65 of these/.test(sig(65, 37)),
+      /65 bottles/.test(sig(65, 37))],
+    [true, false, false]);
+  /* AND THE FINISH INSIDE THE FAMILY THAT WENT FURTHER, which the family
+     count alone loses: sherry covers oloroso, PX and seven more. */
+  const subSig = L.storySignature({ owned: 300, peat: {},
+    woodFamilies: fam(65, 10, 37),
+    finishes: [{ value: 'Sherry', n: 30 }, { value: 'Pedro Ximenez', n: 17 }]
+  }, null).map(r => r.s).join(' ');
+  eq('a finish taken further is named with its own count',
+    /17 of them taken further into Pedro Ximenez/.test(subSig), true);
+  eq('and the family name itself is never named as one of its own finishes',
+    /further into Sherry/i.test(subSig), false);
+  eq('a finish under the floor is not named',
+    /taken further/.test(L.storySignature({ owned: 300, peat: {},
+      woodFamilies: fam(65, 10, 37),
+      finishes: [{ value: 'Pedro Ximenez', n: L.SUB_FINISH_NAMED - 1 }]
+    }, null).map(r => r.s).join(' ')), false);
   eq('the palate sentence closes the movement where there is one',
     /\bseam of fig\b/.test(sig(65, 37, { say: 'a seam of fig.' })), true);
   eq('and a shelf with no wood and no smoke has no signature',

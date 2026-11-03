@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1106 |
-| tables | 256 |
-| carrying a stated purpose | 885 |
+| functions | 1107 |
+| tables | 257 |
+| carrying a stated purpose | 887 |
 
 ## Tables
 
@@ -239,6 +239,7 @@ QUESTION, not the name you were going to use.
 - **`L.SRC_STATES`** — THREE STATES AND NO FOURTH
 - **`L.STAMP_NOT`** — ONE WORD, THREE MEANINGS, which is the overload this found on the way:
 - **`L.STANDING`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
+- **`L.STORY_OPENERS`** — AN OPENER MAY NOT RESTATE THE VERDICT LINE under the title, which is two
 - **`L.STORY_ORDER`** — _no comment above it_
 - **`L.STYLE_FROM_NAME`** — Reads a style off the name, for library rows published before `style`
 - **`L.STYLES`** — THE STYLES THE SHELF USES, read off the shipped catalog
@@ -1240,6 +1241,7 @@ QUESTION, not the name you were going to use.
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
 - **`L.storyHabit`** — _no comment above it_
 - **`L.storyLeadKey`** — THE MOVEMENTS, AND WHICH OF THEM LEADS.
+- **`L.storyOpener`** — THE OPENER FOR A PARAGRAPH, from the chips its drawn sentences argue
 - **`L.storyParagraphs`** — _no comment above it_
 - **`L.storyScope`** — _no comment above it_
 - **`L.storySignature`** — _no comment above it_
