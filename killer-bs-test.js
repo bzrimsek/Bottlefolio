@@ -14431,6 +14431,42 @@ sec('§232 the portrait a shelf earns');
   eq('an empty shelf has no story to tell',
     L.shelfStory({ owned: 0 }, {}), '');
 
+  /* NO REBUY COUNT, IN THE PARAGRAPH OR THE BULLETS. It is a standing
+     ruling - "no real pattern to my rebuys and not real reason that should
+     matter" - and it has been broken twice: once as a bullet, removed
+     2026-10-04, and once as the paragraph's opening sentence, put back by
+     the same reasoning on 2026-11-02 and removed again. Nothing asserted
+     it either time, so 8,403 assertions were blind to the count arriving
+     and to it leaving. A rebuy says something about one bottle and nothing
+     about a palate, which is what these sentences are for.
+
+     The Creature of Habit title keeps its own line, which is the collector
+     half of a title the shelf earned rather than a figure presented as a
+     conclusion - that distinction is the ruling, so it is asserted here
+     too and not just assumed. */
+  /* ON A SHELF THAT ACTUALLY HAS REBUYS, which is the whole of whether this
+     can fail: the first version of this assertion read the fixtures above,
+     neither of which has a repeat, so putting the sentence back passed it.
+     A second bottle of the same whisky is a repeat, so this shelf has ten
+     of them and the population is asserted before the prose is. */
+  const again = mk(40, i => (i < 10 ? { fin: 'Pedro Ximenez' } : {}));
+  for (let i = 0; i < 10; i++) again.bs.push({ k: 'p' + i, status: 'sealed' });
+  const againT = L.tasteProfile(again.cat, again.bs, {});
+  eq('the fixture has ten whiskies bought twice',
+    (againT.repeats || []).length, 10);
+  const againP = L.shelfPortrait(again.cat, again.bs, {});
+  const rebuy = /bought (more than once|again|twice)|bought it (again|twice)/i;
+  const prose = [againP.story, pxP.story, plain.story]
+    .concat(againP.lines.map(l => l.text))
+    .concat(pxP.lines.map(l => l.text))
+    .concat(plain.lines.map(l => l.text));
+  eq('no sentence of the portrait counts rebuys',
+    prose.filter(s => rebuy.test(String(s || ''))), []);
+  eq('and the paragraph may be empty rather than reach for one',
+    typeof againP.story, 'string');
+  eq('while the title that IS about habit keeps its line',
+    typeof L.TITLE_LINES['Same Order, Every Time'], 'string');
+
   /* Every line of the story carries a figure. A sentence about somebody's
      own shelf with no number in it is an opinion. */
   eq('every line of the story has a number in it',

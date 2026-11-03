@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.36  Build 2026-11-02 10:37 PM ET
+     Version : v2.9.37  Build 2026-11-02 10:59 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
 // v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
 // v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
 // v2.9.29  2026-11-02  A gift link is capped per person as well as per link, the location lookup blunts the fix before it leaves the device, and the comments turn out not…
 // v2.9.28  2026-11-02  The chip that was 43.6px wide, and a gate that printed every line but the one that mattered.
-// v2.9.27  2026-11-02  Every control a thumb can hit, and the gift link buys only what it was sold.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3270,8 +3270,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.36';
-const BUILD_TIME  = '2026-11-02 10:37 PM ET';
+const APP_VERSION = '2.9.37';
+const BUILD_TIME  = '2026-11-02 10:59 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -32315,15 +32315,15 @@ L.shelfStory = function (t, ctx) {
      parameter that used to ask whether the line existed went with it: a
      flag whose answer is always the same hides the fact that it is. */
 
-  /* WHAT A COLLECTION HAS THAT A SHOPPING LIST DOES NOT: a whisky bought
-     again. The house it was bought from is in the caption and in the depth
-     bullet, so this carries the repeat and nothing else; with no repeats
-     there is nothing here the bullet has not already said. */
-  const rep = (t.repeats || []).length;
-  if (rep) {
-    bits.push(rep + (rep === 1 ? ' whisky' : ' whiskies')
-      + ' bought more than once — this was chosen, not accumulated.');
-  }
+  /* NO BOUGHT-AGAIN SENTENCE. The same ruling as the bullet beside this
+     function, which is where the count used to be drawn: a rebuy is not
+     an interesting fact. ("No real pattern to my rebuys and not real
+     reason that should matter.") A second bottle says something about
+     one bottle and nothing about a palate, which is what these
+     sentences are for - and a count with no pattern behind it reads as
+     a conclusion drawn from nothing. t.repeats stays: the Creature of
+     Habit title and the buy-against-drink quadrants both read it, and
+     both are about habit, where it belongs. */
 
   /* And the range it can still argue across, which is what makes the
      narrowness a preference rather than a limit. */
@@ -59434,7 +59434,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.36</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.37</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');
