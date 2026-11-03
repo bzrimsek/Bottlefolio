@@ -46,11 +46,28 @@ function bad(w, d) {
    `prep` is what the screen needs to be the thing it is named after: the
    pour history is the Pour screen with POUR.where set to it, which is why
    its id is scr-pour and not a screen of its own. */
+/* EVERY TAB THE NAV CAN REACH, and then the screens behind them.
+
+   This list held nine screens and the nav holds eight tabs, which sounds
+   like plenty until you line them up: shop, buddies and guide were in
+   neither this file nor any other phone-size measurement. Buddies is where
+   a tab sat cut in half at the edge of the glass, reported over and over,
+   while this harness printed green for the quarter of the app it could
+   see. A measurement that covers some screens is not a smaller version of
+   one that covers all of them - it is a guarantee about a place nobody was
+   looking for faults anyway.
+
+   The check below reads TAB_RENDER out of the running app and fails if a
+   tab is not in here, so the next screen added cannot go unphotographed
+   the way these three did. */
 const SCREENS = [
   ['home', 'renderHome', 'scr-home'],
   ['shelf', 'renderShelf', 'scr-shelf'],
-  ['flights', 'renderFlights', 'scr-flights'],
+  ['shop', 'renderShop', 'scr-shop'],
   ['pour', 'renderReels', 'scr-pour'],
+  ['buddies', 'renderBuddiesTab', 'scr-buddies'],
+  ['flights', 'renderFlights', 'scr-flights'],
+  ['guide', 'renderGuide', 'scr-guide'],
   ['log', 'renderReels', 'scr-pour', 'history'],
   ['map', 'renderMap', 'scr-map'],
   ['info', 'renderReference', 'scr-ref'],
@@ -162,21 +179,44 @@ const SCREENS = [
 
        Half a tab showing is the line: a tab peeking is an invitation, a
        tab entirely gone is a destination nobody can see. */
+    /* A TAB NOBODY CAN SEE, and the two holes that let one through.
+
+       This descended from [role="tablist"] - a role index.html has never
+       used once - so the selector matched nothing on all 38 screens and
+       printed 38 ticks for a measurement it never took. A tab cut in half
+       at the edge of the phone was reported, fixed, and back again,
+       because nothing was ever holding it.
+
+       The second hole is what it clipped against. A tab was compared to
+       its own strip's box, and a strip that is itself wider than the phone
+       contains every one of its tabs perfectly while every one of them
+       sits off the glass. It clips against the SCREEN now, and against any
+       box between the tab and the screen that actually hides overflow.
+
+       And any clipping at all is the finding. Half a tab showing is the
+       exact thing that was reported. */
     const parked = [];
-    on.querySelectorAll('[role="tablist"]').forEach(n => {
-      const box = n.getBoundingClientRect();
-      if (box.width < 2) return;
-      n.querySelectorAll('button, a, [role="tab"]').forEach(c => {
-        const r = c.getBoundingClientRect();
-        if (r.width < 2) return;
-        const shown = Math.max(0,
-          Math.min(r.right, box.right) - Math.max(r.left, box.left));
-        if (shown >= r.width / 2) return;
-        parked.push(String(n.className || n.tagName).slice(0, 24)
-          + ' parks "' + (c.textContent || '').trim().slice(0, 28)
-          + '" (' + Math.round(shown) + ' of ' + Math.round(r.width)
-          + 'px showing)');
-      });
+    let tabsSeen = 0;
+    on.querySelectorAll('[role="tab"], .ftab, .tabrow .tab').forEach(c => {
+      const r = c.getBoundingClientRect();
+      const cs = getComputedStyle(c);
+      if (r.width < 2 || cs.visibility === 'hidden') return;
+      tabsSeen++;
+      let left = 0, right = window.innerWidth;
+      for (let a = c.parentElement; a; a = a.parentElement) {
+        const as = getComputedStyle(a);
+        if (as.overflowX === 'visible' && as.overflowY === 'visible') continue;
+        const ar = a.getBoundingClientRect();
+        if (ar.width < 2) continue;
+        left = Math.max(left, ar.left);
+        right = Math.min(right, ar.right);
+      }
+      const shown = Math.max(0,
+        Math.min(r.right, right) - Math.max(r.left, left));
+      if (shown >= r.width - 0.5) return;
+      parked.push(String(c.className || c.tagName).slice(0, 24)
+        + ' shows ' + Math.round(shown) + ' of ' + Math.round(r.width)
+        + 'px of "' + (c.textContent || '').trim().slice(0, 24) + '"');
     });
     /* A TARGET A THUMB MISSES. Apple's HIG asks 44x44pt and Android's
        Material asks 48x48dp, and both stores' reviewers measure it - so a
@@ -192,6 +232,9 @@ const SCREENS = [
        the eight controls every other screen is reached through. */
     const MINTAP = 44;
     const small = [];
+    /* Controls whose geometry carries the datum, gathered here and measured
+       against their own rule below rather than against the flat 44. */
+    const geom = [], bars = [], spines = [];
     const tappable = n => {
       const t = n.tagName;
       if (t === 'BUTTON' || t === 'SELECT' || t === 'TEXTAREA') return true;
@@ -221,6 +264,24 @@ const SCREENS = [
          last. L.tapRadius is the rule and \u00a7503 tests the arithmetic;
          `pins` below tests that each pin actually got it. */
       if (n.classList && n.classList.contains('pin')) return;
+      /* TWO MORE CONTROLS CARRY THEIR DATUM IN THEIR GEOMETRY, and for both
+         a flat 44 cost the drawing and bought nothing a thumb can feel.
+         Each is measured against its own rule below instead of being waved
+         through - an exemption with no measurement behind it is a hole.
+
+         A BOOK SPINE'S WIDTH IS ITS COUNT, the way a pin's radius is.
+         Padding its slot to 44 turned a shelf of books into a row of books
+         with gaps and wrapped a third row; the spine stands 170px tall, so
+         its target is a thumb's width by four times it.
+
+         A BAR'S ROWS TOUCH, so every pixel from one label to the next is
+         already part of a target - which is the 24x24 WCAG 2.5.8 asks for.
+         Raising them to 44 cost one screen eighteen rows at 16px each. */
+      if (n.classList && n.classList.contains('bar')) { bars.push(n); return; }
+      if (n.parentElement && n.parentElement.classList
+          && n.parentElement.classList.contains('books')) {
+        spines.push(n); return;
+      }
       /* A HAIR'S TOLERANCE, NOT A ROUNDING. A browser lays out in
          fractions and a box of 43.99px is a 44px control. Rounding to the
          nearest integer excuses anything from 43.5 up, which is not a
@@ -247,6 +308,83 @@ const SCREENS = [
        circle at all (the dot's 10px is then the target), a target smaller
        than the dot you can see (a dead ring round the edge), and a target
        that did not take the room it had. */
+    /* AND NOW THE RULE EACH OF THEM OWES. Waving a control through without
+       measuring it is how an exemption becomes a hole.
+
+       A BAR owes 24px and rows that touch. The touching is the half that
+       makes 24 enough, so it is checked and not assumed: a gap between
+       rows turns a 28px row into a 28px target with dead pixels round it.
+
+       A BOOK SLOT owes 44px in its long direction - it is the full shelf
+       row, so this is a floor it clears by four times - and it owes being
+       exactly as wide as the book standing in it. That second one is the
+       guard that was missing: padding the slot wider than its book is what
+       spread the shelf apart and wrapped a row, and nothing could see it. */
+    bars.forEach(b => {
+      const r = b.getBoundingClientRect();
+      if (r.height < 24 - 0.1) {
+        geom.push('a bar row is ' + Math.round(r.height * 10) / 10
+          + 'px where 24 is the floor');
+      }
+      const rows = b.parentElement;
+      if (rows && rows.classList.contains('bars')) {
+        const g = parseFloat(getComputedStyle(rows).rowGap) || 0;
+        if (g > 0.1) {
+          geom.push('bar rows sit ' + g + 'px apart, so they do not touch');
+        }
+      }
+    });
+    spines.forEach(slot => {
+      const r = slot.getBoundingClientRect();
+      if (r.height < MINTAP - 0.1) {
+        geom.push('a book slot is ' + Math.round(r.height * 10) / 10
+          + 'px tall where 44 is the floor');
+      }
+      const bk = slot.querySelector('.bk');
+      if (!bk) return;
+      const br = bk.getBoundingClientRect();
+      if (r.width - br.width > 0.6) {
+        geom.push('a book slot is ' + Math.round(r.width * 10) / 10
+          + 'px round a ' + Math.round(br.width * 10) / 10
+          + 'px book, so the shelf draws a gap');
+      }
+    });
+    /* WHAT THE SCREEN ACTUALLY SETS IN TYPE. Two faces are loaded and the
+       stylesheet holds five sizes, which sounds disciplined until you
+       photograph one screen and count what a reader meets on it: a card
+       sub-line at 16px beside a masthead sub-line at 12px doing the same
+       job, headings at three sizes, a number in the display face inside a
+       card whose every other word is the body face. "Too many fonts" was
+       never about how many are loaded.
+
+       Every element holding its own words, grouped by face+size+weight and
+       by how many of them there are. Reported rather than failed until the
+       budget below is set from real numbers. */
+    const typeSeen = {}, typeWho = {};
+    on.querySelectorAll('*').forEach(n => {
+      let own = '';
+      for (const k of n.childNodes) {
+        if (k.nodeType === 3) own += k.nodeValue;
+      }
+      if (!own.trim()) return;
+      const cs = getComputedStyle(n);
+      if (cs.visibility === 'hidden' || cs.display === 'none') return;
+      const fam = (cs.fontFamily || '').split(',')[0].replace(/["']/g, '');
+      const key = fam + ' ' + Math.round(parseFloat(cs.fontSize) * 10) / 10
+        + 'px/' + cs.fontWeight;
+      typeSeen[key] = (typeSeen[key] || 0) + 1;
+      /* WHO SET IT. A setting used once on a screen is almost always drift
+         rather than a decision, and naming the element is the difference
+         between "nine is too many" and something anybody can go and fix. */
+      if (!typeWho[key]) {
+        typeWho[key] = (String(n.className || n.tagName).slice(0, 22)
+          + ' "' + own.trim().slice(0, 18) + '"');
+      }
+    });
+    const type = Object.keys(typeSeen).sort(
+      (a, b) => typeSeen[b] - typeSeen[a]).map(k => k + ' x' + typeSeen[k]
+        + (typeSeen[k] === 1 ? '  <- once only: ' + typeWho[k] : ''));
+
     const pins = [];
     if (on.id === 'scr-map') {
       const svg = on.querySelector('#map');
@@ -275,9 +413,27 @@ const SCREENS = [
       pins: pins.slice(0, 6),
       small: small.slice(0, 6), smallN: small.length,
       nested: nested.slice(0, 4), edges: edges,
-      parked: parked.slice(0, 6),
+      parked: parked.slice(0, 6), tabs: tabsSeen, type: type,
+      geom: geom.slice(0, 6), geomN: geom.length,
       wide: wide.slice(0, 6) };
   });
+
+  /* THE APP'S OWN LIST IS THE SOURCE. TAB_RENDER is what the nav drives,
+     so a tab in it and not in SCREENS is a screen no phone-size
+     measurement has ever seen - which is how shop, buddies and guide went
+     unphotographed while this file reported all green. */
+  const uncovered = await p.evaluate(covered => {
+    if (typeof TAB_RENDER !== 'object') return 'NO TAB_RENDER';
+    return Object.keys(TAB_RENDER).filter(k => covered.indexOf('scr-' + k) < 0);
+  }, SCREENS.map(s => s[2]));
+  if (uncovered === 'NO TAB_RENDER') {
+    bad('the tab list', 'TAB_RENDER is not in the page - this check is blind');
+  } else if (uncovered.length) {
+    bad(uncovered.length + ' tab(s) are photographed by nothing',
+      uncovered.join(', '));
+  } else {
+    ok('every tab the nav reaches is photographed');
+  }
 
   for (const [name, fn, id, where] of SCREENS) {
     const drew = await p.evaluate(([f, scrId, wh]) => {
@@ -317,11 +473,16 @@ const SCREENS = [
        drawing a second border and a second gutter around the one inside it
        (BZ, 2026-10-03, from a screenshot of the Shelf). */
     /* A CONTROL NOBODY CAN SEE IS A DESTINATION NOBODY CAN REACH. */
+    /* A COUNT, NOT A TICK. The old line said "leaves no control parked out
+       of sight" on every screen including the ones with no tabs at all,
+       which is how a selector that matched nothing looked like 38 passes.
+       It now says how many it measured, and says nothing where there was
+       nothing to measure. */
     if (m.parked.length) {
-      bad(name + ' leaves no control parked out of sight',
-        m.parked.join(String.fromCharCode(10)));
-    } else {
-      ok(name + ' leaves no control parked out of sight');
+      bad(name + ' hides ' + m.parked.length + ' of its ' + m.tabs
+        + ' tabs off the screen', m.parked.join(String.fromCharCode(10)));
+    } else if (m.tabs) {
+      ok(name + ' shows all ' + m.tabs + ' of its tabs');
     }
 
     /* 44px IS THE LINE, not 48. Every standard control in this app is 44
@@ -333,6 +494,32 @@ const SCREENS = [
         m.small.join(String.fromCharCode(10)));
     } else {
       ok(name + ' puts every control within a thumb');
+    }
+
+    if (process.env.TYPE) {
+      console.log('  [type] ' + name + ': ' + m.type.length + ' settings');
+      m.type.forEach(t => console.log('        ' + t));
+    }
+    /* A CEILING THAT ONLY EVER COMES DOWN. "Lots of fonts" and "too many
+       sizes" were reported screen by screen for as long as nothing counted
+       them; two faces are loaded and the stylesheet holds five sizes, so
+       the number a reader actually meets was nobody's number. Measured at
+       390px on the real shelf, the worst screen was ten. It is eight now,
+       and best practice is nearer six,
+       and this holds the line: raise it and the reports come back.
+
+       A setting is one face at one size at one weight. The bookshelf's
+       spine labels count, and should - a drawing made of type is still
+       type a reader meets. */
+    const TYPE_CAP = 8;
+    if (m.type.length > TYPE_CAP) {
+      bad(name + ' sets type ' + m.type.length + ' different ways, over '
+        + TYPE_CAP, m.type.join(String.fromCharCode(10)));
+    }
+
+    if (m.geomN) {
+      bad(name + ' has ' + m.geomN + ' control(s) breaking their own rule',
+        m.geom.join(String.fromCharCode(10)));
     }
 
     if (m.pins && m.pins.length) {

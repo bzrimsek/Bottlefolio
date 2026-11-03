@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.32  Build 2026-11-02 04:22 PM ET
+     Version : v2.9.34  Build 2026-11-02 08:48 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,8 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
+// v2.9.33  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
 // v2.9.31  2026-11-02  The app has a privacy policy, and writing it found two things the code was getting wrong.
 // v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
@@ -33,8 +35,6 @@ CHANGELOG
 // v2.9.27  2026-11-02  Every control a thumb can hit, and the gift link buys only what it was sold.
 // v2.9.26  2026-11-02  Cut as v2.9.25 and shipped as this, because verifying the brand ruling found the other half of it and a half-fixed ruling is worse than a stated gap.
 // v2.9.25  2026-11-02  Every harness that claims to grade his real shelf was grading a catalogue his app does not have, and fixing the bench found six faults in the app.
-// v2.9.24  2026-11-02  Settings loses the Advanced tab, and the lookup settings move to the admin portal (BZ: "why is any of this needed?
-// v2.9.23  2026-11-01  A private copy under a merged-away key clears itself.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -65,7 +65,7 @@ CHANGELOG
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink-deep:#1A1613; --gold:#8A6A28; --rust:#7A3B1E;
@@ -138,7 +138,14 @@ body{
   overflow:hidden;
   padding-top:env(safe-area-inset-top);
 }
-h1,h2,h3{font-family:'Cinzel',Georgia,serif;font-weight:600;margin:0;line-height:1.2;letter-spacing:.01em}
+/* CINZEL HAS NO LOWERCASE. Its lowercase glyphs are small capitals, so a
+   heading typed "Who you share with" draws a full-height W against short
+   HO - which reads as a broken letter rather than a style, and makes a
+   16px heading look like a 20px one. Uppercasing the heading makes every
+   letter the same height, so the face draws what the size says. It changes
+   no textContent, which is what every check reads. */
+h1,h2,h3{font-family:'Cinzel',Georgia,serif;font-weight:600;margin:0;
+  line-height:1.2;letter-spacing:.01em;text-transform:uppercase}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--ink-deep);outline-offset:2px}
 /* A dark ring on a dark ground is no ring: the nav and the dark cards. */
@@ -342,7 +349,10 @@ body.typing nav{display:none}
    specificity - written above them only the right side grew, took all the free
    space, and put every title 83 to 104px LEFT of centre. */
 @media (max-width:620px){
-  .hdr .homemark{flex:1 1 0;justify-content:flex-start}
+  /* It may GROW to balance the title and it may never shrink: flex-basis 0
+     collapsed a 44px mark to 35px on a phone, which is the target the rule
+     above exists to hold. */
+  .hdr .homemark{flex:1 1 0;min-width:44px;justify-content:flex-start}
   .hdr .hdr-right{flex:1 1 0;justify-content:flex-end;margin-left:0}
 }
 /* Back sits before the title on every screen that has one. Five of them
@@ -603,6 +613,8 @@ body.typing nav{display:none}
 .askrow{display:flex;gap:8px;align-items:center;flex:0 0 auto;
   padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:var(--paper)}
 .askrow .in{flex:1;min-width:0}
+/* One glyph does not pad a button out to a thumb's width on its own. */
+.askrow .btn{flex:none;min-width:44px}
 
 /* COOPER, beside what he is saying rather than above it: a portrait with the
    words wrapped round it reads as somebody talking, and one stacked on top
@@ -755,7 +767,10 @@ label.withslots .instbtn.slot2{right:44px}
    and .chiprow's own 5px top margin is not room, it is the gap between two
    rows of chips. */
 #pourWhere{margin:18px 0 14px}
-.brand .wm{font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:16px;
+/* ONE WEIGHT FOR THE DISPLAY FACE. Cinzel appeared at 16px in three
+   weights on one screen - 400, 600 and 700 - which a reader meets as three
+   different fonts rather than one. Headings are 600; so is this. */
+.brand .wm{font-family:'Cinzel',Georgia,serif;font-weight:600;font-size:16px;
   line-height:1.1;color:var(--gold)}
 .brand .wm span{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;
   font-size:12px;color:var(--mute);letter-spacing:.04em;margin-top:3px}
@@ -972,6 +987,15 @@ nav button[aria-current="page"]{
   border-radius:8px;background:var(--card);font:inherit;min-height:44px;
   /* 16px, or an iPhone zooms the page on every tap into a field. */
   font-size:16px}
+/* THE LINE UNDER A HEADING, at one size. 268 elements wear .sub and the
+   class carried no size of its own, so each one inherited the 16px body
+   while nearly all the copy around it is explicitly 14 - a card's
+   explanation line came out larger than the card, and larger than the
+   masthead line doing the same job at 12. Body copy is 14; 12 is for
+   labels and captions; 16 stays on fields, where anything smaller makes an
+   iPhone zoom the page on focus. The scoped .sub rules that want 12 still
+   win on specificity. */
+.sub{font-size:14px;line-height:1.45}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 /* 40 tall, not 38: most chips measured 39px, under the 40 a thumb needs. */
 .chip{
@@ -1292,9 +1316,9 @@ nav button[aria-current="page"]{
    top of this rule and a later `padding:4px 8px` in the SAME rule
    overrode it - last declaration wins, and the chip stayed 16px. An
    explicit min-height cannot be undone by a shorthand further down. */
-.portveto{min-height:44px;display:inline-flex;align-items:center;
+.portveto{min-height:44px;font-weight:400;display:inline-flex;align-items:center;
   vertical-align:middle;margin-left:9px;
-  font-family:'IBM Plex Sans',sans-serif;font-weight:500;
+  font-family:'IBM Plex Sans',sans-serif;font-weight:600;
   font-size:12px;letter-spacing:.07em;text-transform:uppercase;
   line-height:1;padding:4px 8px;border-radius:999px;cursor:pointer;
   /* The portrait's own light ink: muted grey on its dark green read at
@@ -1328,7 +1352,7 @@ nav button[aria-current="page"]{
    padding each way, which changes nothing visually and puts every button
    in the app over the line. */
 .btn{padding:12px 16px;border:1px solid var(--ink-deep);border-radius:8px;
-  background:var(--ink-deep);color:#fff;font-size:14px;font-weight:500;
+  background:var(--ink-deep);color:#fff;font-size:14px;font-weight:600;
   min-height:44px}
 .btn.ghost{background:transparent;color:var(--ink-deep)}
 .btn.wide{width:100%;margin-top:8px}
@@ -1448,7 +1472,7 @@ nav button[aria-current="page"]{
    suggestion is a suggestion at all. */
 .findtag{display:inline-block;margin-left:7px;padding:4px 8px;
   border-radius:8px;font-size:12px;letter-spacing:.04em;
-  text-transform:uppercase;vertical-align:middle;font-weight:500}
+  text-transform:uppercase;vertical-align:middle;font-weight:600}
 .findtag.f-shelf{background:#E4EDE4;color:#2E6B4F}
 .findtag.f-allocated{background:#F1DFD8;color:var(--rust)}
 /* Nobody said. Muted, because it is an absence rather than a finding. */
@@ -1461,7 +1485,7 @@ nav button[aria-current="page"]{
 .item .money.msrp{opacity:.72}
 .item .have{color:var(--mute);font-size:12px}
 .item .have.allsealed{color:var(--rust)}
-.item .nm{font-size:14px;font-weight:500;line-height:1.3}
+.item .nm{font-size:14px;font-weight:600;line-height:1.3}
 .item .sub{font-size:12px;color:var(--mute);line-height:1.3}
 .item .ty{font-size:12px;color:var(--mute);text-align:left}
 .item .pf{font-size:14px;color:var(--ink-deep);font-weight:600;text-align:right}
@@ -1542,7 +1566,7 @@ nav button[aria-current="page"]{
 /* Each label aligns the way its column's values align, or it sits over the
    wrong edge of the number it names. Type is left, the three numbers are
    right, matching .ty and .pf below. */
-.listhead b,.listhead .sorthead{font-weight:500;text-align:right}
+.listhead b,.listhead .sorthead{font-weight:600;text-align:right}
 .listhead b:nth-child(1),.listhead b:nth-child(2),
 .listhead .sorthead:nth-child(1),.listhead .sorthead:nth-child(2){text-align:left}
 .sorthead{background:none;border:0;padding:0;font-size:12px;color:var(--mute);
@@ -1761,19 +1785,27 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .pickrow .num{color:var(--mute);font-size:12px}
 /* A FOLDER, because that is what this is. */
 .folder{margin:6px 0 14px}
-.foldertabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
+/* THE TABS SHARE THE WIDTH; THEY DO NOT SCROLL OUT OF SIGHT. This strip
+   scrolled sideways with its scrollbar hidden, so a fifth buddy's tab sat
+   cut in half at the edge of the phone with nothing to say it was there -
+   reported repeatedly, fixed repeatedly, and back each time because the
+   check that should have held it was looking for a role this file has
+   never used. Tabs now flex down to share whatever width there is and wrap
+   when they cannot, so a tab can be narrow or on a second row but never
+   off the screen. The 64px floor is what stops ten buddies shrinking them
+   into slivers; past that they wrap instead. */
+.foldertabs{display:flex;align-items:flex-end;gap:4px;
   padding:8px 0 0;position:relative;z-index:1}
-.foldertabs::-webkit-scrollbar{display:none}
 /* A TAB BEHIND IS DARKER, NOT PALER. The first pass made the inactive ones
    #DFD8C8, barely off the paper, so the folder read as one flat beige
    shape and the front tab had nothing to stand in front of. A folder's
    depth comes from the ones behind being in shadow. */
-.ftab{flex:none;padding:8px 16px 12px;min-height:40px;
+.ftab{flex:1 1 0;min-width:0;padding:8px 10px 12px;min-height:40px;
   border:1px solid var(--line);border-bottom:none;
   border-radius:8px 10px 0 0;background:#CFC5AF;color:#5A5147;
   font-size:14px;letter-spacing:.01em;cursor:pointer;
-  margin-bottom:-1px;position:relative;top:3px;max-width:46vw;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:-1px;position:relative;top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
   box-shadow:inset 0 -3px 5px -3px rgba(36,27,19,.28)}
 .ftab:hover{background:#D9D0BC;color:var(--ink-deep)}
 /* The front of the folder: same fill as the panel, and the panel's top
@@ -1817,7 +1849,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .t-malt .dot{background:var(--t-malt)}       .t-other .dot{background:var(--t-other)}
 /* Sealed reads as a ring rather than a fill: the bottle exists, it is not open. */
 .sealed .dot{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
-.item .ty{font-weight:500}
+.item .ty{font-weight:600}
 .t-bourbon .ty{color:var(--t-bourbon)} .t-scotch .ty{color:var(--t-scotch)}
 .t-irish .ty{color:var(--t-irish)}     .t-rye .ty{color:var(--t-rye)}
 .t-malt .ty{color:var(--t-malt)}       .t-other .ty{color:var(--t-other)}
@@ -1861,7 +1893,7 @@ button.respline:hover{opacity:1;text-decoration:underline}
 .rung .body{border-left:3px solid var(--line);padding:4px 0 4px 8px}
 .rung.spot .body{border-left-color:var(--gold)}
 .rung.blind .body{border-left-color:var(--rust)}
-.rung .b{font-size:14px;font-weight:500}
+.rung .b{font-size:14px;font-weight:600}
 .rung .w{font-size:12px;color:var(--mute)}
 
 /* ---------- flights ---------- */
@@ -2363,7 +2395,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
   font-weight:600;color:var(--ink-deep);line-height:1.1;margin:3px 0 2px}
 /* The verdict: bigger than the caption under it, smaller than the title
    over it, because it is the sentence somebody reads if they read one. */
-.portrait .portline1{font-family:'Cinzel',Georgia,serif;font-size:16px;
+.portrait .portline1{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:600;
   color:var(--ink-deep);margin:2px 0 3px;line-height:1.25}
 @media (min-width:700px){ .portrait .portline1{font-size:16px} }
 .portrait .portwhy{font-size:12px;color:var(--mute)}
@@ -2479,7 +2511,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    a small huddle of books in the left third of a very empty page. */
 .tiles.books{--scale:1;--row:170;
   display:flex;flex-wrap:wrap;align-items:flex-end;align-content:flex-start;
-  gap:0 5px;padding:0 8px;margin-bottom:14px;
+  gap:0;padding:0 8px;margin-bottom:14px;
   background-image:repeating-linear-gradient(to bottom,
     transparent 0 calc((var(--row) - 5) * 1px * var(--scale)),
     var(--wood,#6b4b2a) calc((var(--row) - 5) * 1px * var(--scale))
@@ -2487,15 +2519,18 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 /* Scaled up to use a wide page, but not so far that a shelf of a dozen
    types spills one book onto a row of its own — a wrapped row is a full
    slot tall and reads as a mistake. */
-@media (min-width:700px){ .tiles.books{--scale:1.3;gap:0 6px} }
-@media (min-width:1000px){ .tiles.books{--scale:1.55;gap:0 7px} }
-/* The slot: full row height, no ink of its own. The book is inside it.
-   AND AT LEAST 44px WIDE, because the slot is what takes the tap while the
-   book inside keeps the width its type earned - a thin category drew a
-   32px-wide target (measured 2026-11-02). The book is centred in the slot,
-   so the drawing does not change; only the reach does. */
+@media (min-width:700px){ .tiles.books{--scale:1.3} }
+@media (min-width:1000px){ .tiles.books{--scale:1.55} }
+/* The slot: full row height, no ink of its own, and exactly as wide as the
+   book inside it.
+   NO MINIMUM WIDTH. Padding the slot to 44px to buy a tap target DID
+   change the drawing, whatever the note here used to claim: a shelf of
+   books became a row of books with gaps between them, and thirteen types
+   wrapped onto a third row. A spine's width IS its count, the way a map
+   pin's radius is, so it is measured against its own rule in shots.js
+   rather than a flat 44 - the spine stands 170px tall, so the target is a
+   thumb's width by four times it. */
 .tiles.books > .tile{background:none;border:0;padding:0;box-shadow:none;
-  min-width:44px;
   height:calc(var(--row) * 1px * var(--scale));
   display:flex;align-items:flex-end;justify-content:center}
 .tiles.books .bk{display:flex;flex-direction:column;justify-content:space-between;
@@ -2526,10 +2561,15 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
   font-size:calc(11px * var(--scale));
   color:rgba(253,246,230,.82);line-height:1;margin-top:5px}
 /* Narrow phones: spines get thinner rather than wrapping to four rows. */
-@media (max-width:380px){ .tiles.books{gap:0 3px} }
+
 .tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
   padding:8px 12px}
-.tile .v{font-family:'Cinzel',Georgia,serif;font-size:20px;font-weight:600;
+/* ONE FACE INSIDE A CARD. A buddy tile read name in Plex, number in
+   Cinzel, label in Plex - two faces alternating three times inside one
+   box, which is what "lots of fonts" on one screen actually was. Cinzel is
+   the masthead and the headings; everything a card holds is Plex. Tabular
+   figures so two tiles side by side line their numbers up. */
+.tile .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;
   color:var(--ink-deep);line-height:1.1}
 .tile .l{font-size:12px;color:var(--mute);margin-top:3px;line-height:1.25}
 
@@ -2579,11 +2619,12 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .bar{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;
   font-size:12px;width:100%;text-align:left;background:none;border:0;
   padding:4px 0;min-height:28px}
-/* A BAR YOU CAN PRESS IS 44px TALL; a bar that is only a reading is not a
-   control and keeps its 28. Thirty-two of these are pressable on the shelf
-   and every one of them was 28px (measured 2026-11-02, at 390px), which is
-   a target a thumb misses and the first thing a store reviewer measures. */
-button.bar.tappable{min-height:44px}
+/* A PRESSABLE BAR KEEPS THE 28px TOUCHING ROW. Raising it to 44 cost 288px
+   on the shelf - eighteen rows at 16px each - and bought nothing a thumb
+   can feel: the rows TOUCH, so every pixel between one label and the next
+   is already part of a target, which is what clears WCAG 2.5.8's 24x24.
+   shots.js measures these against 24 and against the rows still touching,
+   rather than against the flat 44 a free-standing button owes. */
 button.bar.tappable{cursor:pointer;border-radius:4px}
 button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
   box-shadow:0 0 0 1px var(--gold)}
@@ -3179,8 +3220,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.32';
-const BUILD_TIME  = '2026-11-02 04:22 PM ET';
+const APP_VERSION = '2.9.34';
+const BUILD_TIME  = '2026-11-02 08:48 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -43541,6 +43582,12 @@ function renderGuide() {
      the first word to the last. */
   if (!document.getElementById('guideAsk')) {
     box.innerHTML = '';
+    /* The band every other screen carries under its title. Above the
+       thread rather than inside it: the thread scrolls inside itself, and
+       a header that scrolls away is not a header. */
+    const mast = el('div', 'brand flightmast');
+    mast.id = 'guideMast';
+    box.appendChild(mast);
     const th = el('div', 'thread');
     th.id = 'guideThread';
     const ch = el('div', 'chiprow');
@@ -43550,6 +43597,7 @@ function renderGuide() {
     box.appendChild(ch);
     box.appendChild(guideInput());
   }
+  guideMast(g);
   guideTranscript(document.getElementById('guideThread'), g);
   guideReplies(document.getElementById('guideChips'), g);
   guideAsking(g);
@@ -43563,13 +43611,41 @@ function guideToFoot() {
   if (th) th.scrollTop = th.scrollHeight;
 }
 
+/* WHAT THE BAND SAYS, which is where you stand rather than who he is - the
+   header above it already carries his name, the way FLIGHTS does. */
+function guideMast(g) {
+  const mast = document.getElementById('guideMast');
+  if (!mast) return;
+  const tasting = g.stage === 'tasting';
+  mast.innerHTML = '';
+  const wm = el('div', 'wm');
+  wm.textContent = tasting ? 'Tasting together' : 'Ask him anything';
+  const line = el('span');
+  line.textContent = tasting
+    ? 'He is pouring alongside you and writing down what you find.'
+    : 'Whisky questions, and the words for what you taste.';
+  wm.appendChild(line);
+  mast.appendChild(wm);
+}
+
 /* WHAT THE BOX ASKS FOR depends on what he is waiting on, and that is the only
    part of it that changes from turn to turn. */
 function guideAsking(g) {
   /* THE ONE BUTTON DOES BOTH, because a second button that is dead most of
      the time is a second button most of the time. */
+  /* THE GLYPH THE KEY ALREADY CARRIES. "Say" beside a text field asked the
+     reader to work out what it did; the return mark says it, and Enter in
+     the field does the same thing. Icon-only, so the name travels in the
+     aria-label rather than in the face of the button. */
   const go = document.getElementById('guideGo');
-  if (go) go.textContent = cooperThinking ? 'Stop' : 'Say';
+  if (go) {
+    /* THE WORD STAYS FOR STOP. A square on its own does not tell anybody
+       it calls him off, and calling him off is the rare, urgent press -
+       the walk said so before a person had to. The common state is the
+       one that gets the glyph, beside a field where it is self-evident. */
+    go.textContent = cooperThinking ? 'Stop' : '↵';
+    go.setAttribute('aria-label', cooperThinking ? 'Stop' : 'Ask');
+  }
   const inp = document.getElementById('guideSay');
   if (!inp) return;
   inp.placeholder = g.stage === 'tasting' ? 'What do you find?'
@@ -43697,13 +43773,14 @@ function guideInput() {
   const row = el('div', 'askrow');
   row.id = 'guideAsk';
   const inp = document.createElement('input');
-  inp.className = 'in';
+  inp.className = 'field in';
   inp.id = 'guideSay';
   inp.addEventListener('keydown', ev => {
     if (ev.key === 'Enter') { ev.preventDefault(); cooperHears(inp.value); }
   });
-  const go = el('button', 'btn btn-gold', 'Say');
+  const go = el('button', 'btn btn-gold', '↵');
   go.id = 'guideGo';
+  go.setAttribute('aria-label', 'Ask');
   go.onclick = () => (cooperThinking ? cooperStop() : cooperHears(inp.value));
   row.appendChild(inp);
   row.appendChild(go);
@@ -44484,7 +44561,7 @@ function buddyTiles(box, rows, names, mySet) {
   hd.style.marginBottom = '4px';
   hd.appendChild(el('h3', null, 'Who you share with'));
   const inv = el('button', 'chip');
-  inv.textContent = '+ Invite a buddy';
+  inv.textContent = '+ Invite';
   inv.style.marginLeft = 'auto';
   inv.onclick = () => showInvite();
   hd.appendChild(inv);
@@ -49021,7 +49098,7 @@ function renderBuddies() {
     const bhd = el('div', 'hdr');
     bhd.style.marginBottom = '4px';
     const invTop = el('button', 'chip');
-    invTop.textContent = '+ Invite a buddy';
+    invTop.textContent = '+ Invite';
     invTop.style.marginLeft = 'auto';
     invTop.onclick = () => showInvite();
     bhd.appendChild(invTop);
@@ -59161,7 +59238,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.32</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.34</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

@@ -4924,8 +4924,12 @@ function step(n) {
       failures.push('guide: while he is away the button says "'
         + r.stopShows + '", so there is no way to call him off');
     }
-    if (!r.stoppedThinking || r.sayBack !== 'Say') {
-      failures.push('guide: Stop did not end the turn');
+    /* THE IDLE BUTTON IS THE RETURN MARK, not the word "Say" - the same
+       key the field already answers to. Stop keeps its word, which the
+       check above still holds. */
+    if (!r.stoppedThinking || r.sayBack !== '↵') {
+      failures.push('guide: Stop did not end the turn (button reads "'
+        + r.sayBack + '")');
     }
     if (!r.lateDropped) {
       failures.push('guide: an answer arrived after Stop and was spoken '
