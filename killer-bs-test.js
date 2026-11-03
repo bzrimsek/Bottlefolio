@@ -13461,22 +13461,37 @@ sec('\u00a7223 what the shelf adds up to');
     popBottles.push({ k: 'w' + i, status: 'open' });
   }
   for (let i = 0; i < 30; i++) popBottles.push({ k: 'w0', status: 'sealed' });
-  const popWhy = id => ((L.shelfPortrait(popCat, popBottles, {}) || {}).also || [])
-    .filter(c => c.id === id).map(c => c.why)[0] || '(not earned)';
+  /* EVERY CHIP REASON ON THE CARD, from the caption AND the pills. It read
+     `also` alone until 2026-11-02, which worked only because the pills then
+     led with the chips that earned the title; once they stopped, four
+     assertions about WORDING failed as though the counts had changed. A
+     chip reason is a chip reason wherever the card chose to draw it. */
+  const popWhys = () => {
+    const p = L.shelfPortrait(popCat, popBottles, {}) || {};
+    return String(p.why || '').split(' · ')
+      .concat((p.also || []).map(c => c.why || ''));
+  };
+  const popSays = s => popWhys().indexOf(s) >= 0;
   eq('the wood counts whiskies, one per bottling',
-    popWhy('px'), '25 whiskies finished in Pedro Ximenez');
+    popSays('25 whiskies finished in Pedro Ximenez'), true);
   eq('and so does the sherry chip',
-    popWhy('sherry'), '25 sherried whiskies across 1 houses');
+    popSays('25 sherried whiskies across 1 houses'), true);
   eq('the house counts BOTTLES, because its tally is weighted by them',
-    popWhy('house'), '55 bottles from Nonesuch');
-  eq('and so does the region', popWhy('region'), '55 bottles from Islay');
+    popSays('55 bottles from Nonesuch'), true);
+  eq('and so does the region', popSays('55 bottles from Islay'), true);
   /* AND THE STORY UNDER THEM, which reads the same two tallies. */
   const popLine = k => ((L.shelfPortrait(popCat, popBottles, {}) || {}).lines || [])
     .filter(l => l.k === k).map(l => l.text)[0] || '(none)';
   eq('the wood line counts whiskies',
     popLine('wood').indexOf('25 whiskies in sherry wood'), 0);
-  eq('and the depth line counts bottles',
-    popLine('depth').indexOf('55 bottles from Nonesuch'), 0);
+  /* AND THE HOUSE FIGURE IS PRINTED EXACTLY ONCE. This shelf wins its title
+     on its one house, so the caption carries the figure and `L.depthLine`
+     has no second house to move on to - it draws no bullet rather than
+     repeating the sentence above it. Counting, not locating, is what makes
+     this an assertion about the card and not about which half drew it. */
+  eq('the house figure counts bottles, and is said once',
+    popWhys().concat([popLine('depth')])
+      .filter(w => w.indexOf('55 bottles from Nonesuch') === 0).length, 1);
 
   /* AND THE WHOLE FAMILY AT ONCE, which is the rule rather than the wording: on
      this shelf every count printed is 25 whiskies or 55 bottles, so no sentence
@@ -14390,26 +14405,31 @@ sec('§232 the portrait a shelf earns');
   eq('the verdict is not said twice on one card',
     /deep/.test(pxP.line) && /deep/.test(pxP.lines[0].text), false);
 
-  eq('a real shelf gets a story', pxP.story.length > 40, true);
-  eq('and it opens by saying what the shelf IS',
-    /^This is /.test(pxP.story), true);
+  /* THE PARAGRAPH CARRIES ONLY WHAT NOTHING ELSE ON THE CARD CARRIES, so
+     it is allowed to be empty and may not open by saying what the shelf
+     is - the title says that and the line under it says what it means.
+     It opened "This is a shelf the casks built, and sherry is the one it
+     keeps going back to" under a title reading THE SHERRY CELLAR and a
+     line reading "The wood does the talking here", then listed three
+     pills already drawn beside it, then gave the house figure the caption
+     and the depth bullet both had. */
+  eq('the paragraph does not say what the shelf is',
+    /^This is /.test(pxP.story), false);
+  eq('nor does it on a shelf that earned no title',
+    /^This is /.test(plain.story), false);
   eq('it does not repeat the caption printed directly above it',
     pxP.story.indexOf(pxP.why) >= 0, false);
-  eq('a shelf that earned nothing is called broad, not impressive',
-    /broad shelf/.test(plain.story), true);
-  /* The real rule is not brevity, it is evidence: a shelf that earned no
-     title claims none, and every sentence after the opener carries a
-     figure. "6 bottles from House" is earned and belongs. */
   eq('a shelf with no title claims none',
     /answer to/.test(plain.story), false);
-  eq('and every sentence after the first carries a number',
-    plain.story.split('. ').slice(1)
-      .filter(x => x.trim()).every(x => /\d/.test(x)), true);
-  /* Three runners-up are a list, not a chant. */
-  eq('the other titles are read as a list',
-    /, /.test(pxP.story) || pxP.also.length < 2, true);
+  /* Evidence, not brevity: every sentence it does draw carries a figure. */
+  eq('every sentence of the paragraph carries a number',
+    plain.story.split('. ').filter(x => x.trim())
+      .every(x => /\d/.test(x)), true);
+  eq('and so does every sentence of a titled shelf\u2019s',
+    pxP.story.split('. ').filter(x => x.trim())
+      .every(x => /\d/.test(x)), true);
   eq('an empty shelf has no story to tell',
-    L.shelfStory(null, { owned: 0 }, {}), '');
+    L.shelfStory({ owned: 0 }, {}), '');
 
   /* Every line of the story carries a figure. A sentence about somebody's
      own shelf with no number in it is an opinion. */
@@ -14449,17 +14469,28 @@ sec('§232 the portrait a shelf earns');
     'y'.repeat(L.LINE_BUDGET + 1));
   eq('the story is not empty', pxP.lines.length > 0, true);
 
-  /* Runners-up are titles that were also earned, never filler. */
+  /* THE PILLS ARE WHAT THE TITLE DID NOT USE, never filler and never the
+     title's own evidence. They led with the chips that earned the title
+     until 2026-11-02, which drew each of those chips twice on one card:
+     `why` above is those same chips' reasons joined. This shelf earns five
+     chips and wears three of them, so there is something to show and
+     something that must not be shown. */
   const loud = mk(60, i => Object.assign(
     { dist: i < 20 ? 'House' : 'Other' },
     i < 20 ? { fin: 'Pedro Ximenez' } : {},
-    i >= 20 && i < 45 ? { proof: 120 } : {}));
+    i >= 20 && i < 45 ? { proof: 120 } : {},
+    i >= 45 ? { ppm: 50, sub: 'scotch single malt', region: 'Islay' } : {}));
   const loudP = L.shelfPortrait(loud.cat, loud.bs, {});
   eq('a loud shelf earns more than one title', loudP.also.length > 0, true);
   eq('and every runner-up carries its evidence too',
     loudP.also.every(a => /\d/.test(a.why)), true);
   eq('the title is not repeated among the runners-up',
     loudP.also.some(a => a.title === loudP.title), false);
+  /* The rule itself, not a count: no pill is a chip the caption argues. */
+  eq('no pill is a chip the title was argued from',
+    loudP.also.filter(a => loudP.from.indexOf(a.id) >= 0), []);
+  eq('and the caption carries exactly the chips it was argued from',
+    loudP.why.split(' \u00b7 ').length, loudP.from.length);
 
   /* Deterministic: the same shelf tells the same story. */
   eq('the same shelf tells the same story',
@@ -21723,17 +21754,23 @@ sec('\u00a7332 the story argues the same case as the title');
   const r = L.shelfPortrait(data.catalog, data.bottles, {});
   eq('a shelf with a title is not called broad',
     /broad shelf rather than a pointed one/.test(r.story), false);
-  /* The runners-up are what the title did NOT use. */
-  const usedTitles = r.also.filter(c => r.from.indexOf(c.id) >= 0)
-    .map(c => c.title);
+  /* THE PILLS ARE WHAT THE TITLE DID NOT USE - the whole of it, and
+     nothing it did. They led with the chips the title was argued from
+     until 2026-11-02, which drew those chips twice on one card, because
+     the caption above them is those same chips' reasons joined. On this
+     shelf the title uses three, so there is something that must not be
+     there. */
   eq('the title uses three chips', r.from.length >= 2, true);
-  eq('and every one of them is shown beside it',
-    usedTitles.length, r.from.length);
-  usedTitles.forEach(tt => {
-    eq('a chip that earned the title is not also offered as an alternative ('
+  eq('and not one of them is offered as an alternative to itself',
+    r.also.filter(c => r.from.indexOf(c.id) >= 0), []);
+  /* Nor does the paragraph name them, which was the other half of it. */
+  r.from.forEach(id => {
+    const tt = (L.PORTRAIT_TITLES.filter(d => d.id === id)[0] || {}).title;
+    if (!tt) return;
+    eq('a chip that earned the title is not named in the paragraph either ('
       + tt + ')',
-      new RegExp('answer to[^.]*' + tt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-        .test(r.story), false);
+      new RegExp(tt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(r.story),
+      false);
   });
 }
 
@@ -21869,8 +21906,19 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
     pr.strong / pr.n >= L.CASK_DELIBERATE_SHARE, true);
   const port = L.shelfPortrait(shelf.catalog, shelf.bottles, {});
   const line = (port.lines || []).filter(l => l.k === 'proof')[0];
-  eq('so the shelf is told it buys strength on purpose',
-    /Strength is the point|buy strength on purpose/.test(line.text), true);
+  /* THE CLAIM IS MADE ONCE, WHEREVER THE CARD CHOOSES TO MAKE IT. The
+     bullet carried "You buy strength on purpose." under a headline reading
+     "You want it undiluted." - one claim twice - so the bullet keeps its
+     verdict exactly where the headline has not already made it. Asked
+     through L.saidAlready, which is the engine's own door for the
+     question: a copy of the pattern here would pass while the two drifted
+     apart. */
+  const headlineClaims = L.saidAlready(port.line, 'strength');
+  eq('so the shelf is told it buys strength on purpose, once',
+    /buy strength on purpose|Strength is the point/.test(line.text),
+    !headlineClaims);
+  eq('and the figure is there either way',
+    /25 (of these are bottled at|at) cask strength/.test(line.text), true);
   eq('and never the old conclusion',
     /not what you are buying|not the point/.test(line.text), false);
 
@@ -22457,37 +22505,78 @@ sec('\u00a7347 one number for one question, and a claim the count supports');
     set.test({ houses: [{ value: 'X', n: 3 }], owned: 40 }, {}), null);
 }
 
-sec('\u00a7348 a named set opens with its own argument');
+sec('\u00a7348 every title says something only it says');
 {
-  /* STORY_OPENERS was keyed by CHIP, so a shelf called Islay Lifer -
-     earned by smoke, a house and a region together - opened with "This is
-     a smoke drinker's shelf", naming neither Islay nor the house. The
-     headline argued one case and the paragraph started somewhere else. */
+  /* ONE TABLE, AND EVERY TITLE IN IT. There were two - L.TITLE_LINES for
+     the sentence under the title and L.STORY_OPENERS for the paragraph's
+     first sentence - and all fourteen set titles sat in both, so the card
+     drew THE SHERRY CELLAR over "The wood does the talking here" over
+     "This is a shelf the casks built, and sherry is the one it keeps going
+     back to". Read from the other end, the openers had the single chips
+     and this table did not, so ten of the twenty-one titles fell through
+     to a computed branch and shared ONE sentence: stepping the rotation
+     moved the headline and left the sentence under it where it was. */
   L.PORTRAIT_SETS.forEach(g => {
-    eq('"' + g.title + '" has an opener of its own',
-      typeof L.STORY_OPENERS[g.title], 'string');
+    eq('"' + g.title + '" has a line of its own',
+      typeof L.TITLE_LINES[g.title], 'string');
+  });
+  L.PORTRAIT_TITLES.forEach(d => {
+    eq('and so does the ' + d.id + ' chip (' + d.title + ')',
+      typeof L.TITLE_LINES[d.id], 'string');
   });
   eq('and every one of them says something',
-    L.PORTRAIT_SETS.filter(g =>
-      String(L.STORY_OPENERS[g.title] || '').length < 20).length, 0);
+    Object.keys(L.TITLE_LINES).filter(k =>
+      String(L.TITLE_LINES[k] || '').length < 15), []);
+  /* No two titles share a sentence, which is the fault stated as a rule
+     rather than as the ten titles it happened to hit. */
+  const said = Object.keys(L.TITLE_LINES).map(k => L.TITLE_LINES[k]);
+  eq('no two titles are given the same sentence',
+    said.length, Object.keys(said.reduce((a, s) => {
+      a[s] = 1; return a;
+    }, {})).length);
 
-  /* THROUGH THE REAL ENGINE, on BZ's shipped 344-bottle shelf: the story
-     under the title must open with THAT title's line, not a chip's. */
+  /* THE TITLE IS THE SHELF AND THE LINE IS THE COLLECTOR, which is the
+     division of labour that makes two sentences worth drawing. A line that
+     describes the bottles restates the title above it. */
+  eq('every line speaks to whoever built the shelf',
+    said.filter(s => !/\byou\b|\byour\b/i.test(s)), []);
+
+  /* THROUGH THE REAL ENGINE, over the whole rotation on BZ's shelf: every
+     step gets its own sentence, and no step is handed another's. */
+  const seenLine = {}, shared = [];
   const port = L.shelfPortrait(data.catalog, data.bottles, {});
-  const own = L.STORY_OPENERS[port.title];
-  if (own) {
-    eq('the story opens with the title\u2019s own line',
-      String(port.story || '').indexOf(own), 0);
-  } else {
-    eq('a shelf with no named set still gets a story',
-      String(port.story || '').length > 0, true);
+  for (let i = 0; i < (port.portN || 1); i++) {
+    const p = L.shelfPortrait(data.catalog, data.bottles, {}, i);
+    if (!p) continue;
+    if (seenLine[p.line] && seenLine[p.line] !== p.title) {
+      shared.push(seenLine[p.line] + ' and ' + p.title);
+    }
+    seenLine[p.line] = p.title;
   }
+  eq('and no two steps of the rotation draw the same line', shared, []);
+  eq('the rotation is longer than one title', (port.portN || 0) > 1, true);
 
-  /* And the chip openers are untouched, because a shelf that earns no set
-     still needs one. */
-  eq('the chip openers survive', typeof L.STORY_OPENERS.peat, 'string');
-  eq('and the generic line still belongs to nobody but the fallback',
-    /broad/.test(L.STORY_OPENERS.peat || ''), false);
+  /* The bullets are ordered by which title they argue, through the one
+     door that answers it. */
+  const ordered = L.orderLines(
+    [{ k: 'proof', n: 1, text: 'p' }, { k: 'peat', n: 1, text: 'k' }],
+    [{ id: 'peat' }, { id: 'proof' }]);
+  eq('the line arguing the loudest chip comes first', ordered[0].k, 'peat');
+  eq('a line arguing nothing falls to the count tiebreak',
+    L.orderLines([{ k: 'nothing', n: 1 }, { k: 'other', n: 9 }], [])
+      .map(l => l.n), [9, 1]);
+  eq('and ordering does not disturb what it was given',
+    L.orderLines([], []), []);
+
+  /* And a bullet's verdict yields to a headline that already made it. */
+  eq('a headline that says undiluted has made the strength claim',
+    L.saidAlready('You want it undiluted.', 'strength'), true);
+  eq('one that does not, has not',
+    L.saidAlready('You let the cask do the deciding.', 'strength'), false);
+  eq('the same for depth',
+    L.saidAlready('You go deep, and you still go everywhere.', 'deep'), true);
+  eq('a claim nothing declares is never already said',
+    L.saidAlready('anything at all', 'nosuchclaim'), false);
 }
 
 sec('\u00a7349 the helpers nothing was asserting');

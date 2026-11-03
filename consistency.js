@@ -389,24 +389,33 @@ const askBlock = (() => {
   const end = src.indexOf(String.fromCharCode(10) + '};', at);
   return src.slice(at, end < 0 ? at + 1400 : end);
 })();
-/* EVERY NAMED SET OPENS WITH ITS OWN ARGUMENT.
+/* EVERY TITLE THE CARD CAN DRAW HAS ITS OWN SENTENCE UNDER IT.
 
-   STORY_OPENERS was keyed by chip only, so a shelf called Islay Lifer -
-   earned by smoke, a house and a region together - opened with "This is a
-   smoke drinker's shelf", naming neither Islay nor the house. The headline
-   argued one case and the paragraph started somewhere else, and nothing
-   could see it because both halves were correct on their own. A set added
-   without an opener now fails here rather than quietly borrowing its
-   loudest chip's line. */
+   A title missing from L.TITLE_LINES falls through to collectorLine's
+   computed branches, which know nothing about the title - so the card
+   draws a sentence somebody else's shelf gets too. Both halves were
+   correct on their own and nothing could see it: ten of the twenty-one
+   titles once shared "You go deep, and you still go everywhere." between
+   them, and stepping the rotation moved the headline and left the sentence
+   under it where it was.
+
+   BOTH KEY KINDS, because collectorLine tries the set title and then the
+   single chip's id, and the fault was found at the chip end. The table and
+   the two lists are read out of the source rather than the running engine,
+   so a sentence dropped in a refactor fails here. */
 {
   const setsBlock = (src.match(/L\.PORTRAIT_SETS = \[([\s\S]*?)\n\];/) || [])[1] || '';
-  const openBlock = (src.match(/L\.STORY_OPENERS = \{([\s\S]*?)\n\};/) || [])[1] || '';
+  const chipBlock = (src.match(/L\.PORTRAIT_TITLES = \[([\s\S]*?)\n\];/) || [])[1] || '';
+  const lineBlock = (src.match(/L\.TITLE_LINES = \{([\s\S]*?)\n\};/) || [])[1] || '';
   const titles = (setsBlock.match(/title: '((?:[^'\\]|\\.)*)'/g) || [])
     .map(x => x.replace(/title: '|'$/g, ''));
-  const missing = titles.filter(t =>
-    openBlock.indexOf("'" + t + "'") < 0);
-  check('every portrait set opens with its own line',
-    titles.length ? missing : ['no set titles found to check']);
+  const ids = (chipBlock.match(/id: '([a-z]+)'/g) || [])
+    .map(x => x.replace(/id: '|'$/g, ''));
+  const missing = titles.filter(t => lineBlock.indexOf("'" + t + "'") < 0)
+    .concat(ids.filter(id => !new RegExp('\\n\\s*' + id + ':').test(lineBlock)));
+  check('every portrait title has its own line',
+    titles.length && ids.length ? missing
+      : ['no set titles or chip ids found to check']);
 }
 
 /* A LABEL READ SPEAKS BEFORE IT CONTRIBUTES.

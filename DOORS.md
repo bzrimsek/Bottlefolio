@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1096 |
-| tables | 256 |
-| carrying a stated purpose | 882 |
+| functions | 1099 |
+| tables | 257 |
+| carrying a stated purpose | 885 |
 
 ## Tables
 
@@ -125,6 +125,7 @@ QUESTION, not the name you were going to use.
 - **`L.LIBRARY_GAPS`** — It is still FILLED, at no cost
 - **`L.LIBRARY_OWN`** — AND WHAT THE LIBRARY WRITES ABOUT ITS OWN ROWS
 - **`L.LIKELY_SOURCES`** — What each source is, in words, so a row says where it came from.
+- **`L.LINE_EVIDENCE`** — THE BULLETS IN THE ORDER THE TITLE ARGUES THEM
 - **`L.MAKE_FINER`** — WHICH PAIRS COUNT IS WRITTEN DOWN, not worked out from the strings
 - **`L.MAKE_OF`** — _no comment above it_
 - **`L.MAP_KEYS`** — A map key writes only the entries that changed
@@ -210,6 +211,7 @@ QUESTION, not the name you were going to use.
 - **`L.RING_WRITTEN`** — _no comment above it_
 - **`L.ROOM_AXES`** — IT USED TO BE CALLED `scarce`, which was the wrong word
 - **`L.ROW_FAULT_SAYS`** — THE WORDS FOR EVERY ROW FAULT
+- **`L.SAID_WORDS`** — Keyed by claim, with the words that carry it
 - **`L.SAYS_NEVER`** — THE SECOND IS ABOUT THIS APP'S INSIDES ("a user does not care about
 - **`L.SAYS_NOT_HERE`** — Said on an ANSWER screen, where the subject is the whisky and never the
 - **`L.SCALE_AXES`** — Which axes are LADDERS (ordered rungs) and which are sets.
@@ -239,7 +241,6 @@ QUESTION, not the name you were going to use.
 - **`L.SRC_STATES`** — THREE STATES AND NO FOURTH
 - **`L.STAMP_NOT`** — ONE WORD, THREE MEANINGS, which is the overload this found on the way:
 - **`L.STANDING`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
-- **`L.STORY_OPENERS`** — The title, argued in prose.
 - **`L.STYLE_FROM_NAME`** — Reads a style off the name, for library rows published before `style`
 - **`L.STYLES`** — THE STYLES THE SHELF USES, read off the shipped catalog
 - **`L.SUB_ALIASES`** — _no comment above it_
@@ -254,7 +255,7 @@ QUESTION, not the name you were going to use.
 - **`L.TASTING`** — about his own shelf
 - **`L.TASTING_STEPS`** — THE STEPS OF A GUIDED TASTING
 - **`L.TEMPLATE_COLS`** — The template, so a spreadsheet can be built to fit rather than guessed at.
-- **`L.TITLE_LINES`** — _no comment above it_
+- **`L.TITLE_LINES`** — Keyed by set title and by single chip id, because `collectorLine` tries
 - **`L.TN_ORDER`** — bottle tastes like, not where it came from.
 - **`L.TN_SOURCES`** — cards as prompts for a taster
 - **`L.TYPE_LABELS`** — One label for a type, everywhere.
@@ -431,6 +432,7 @@ QUESTION, not the name you were going to use.
 - **`L.csvCell`** — A cell a spreadsheet will read back the way it was written.
 - **`L.deaccent`** — ACCENTS OFF BEFORE ANYTHING IS MATCHED
 - **`L.deadForwards`** — REMOVING IT IS SAFE BECAUSE IT POINTS AT NOTHING
+- **`L.depthLine`** — _no comment above it_
 - **`L.describeCorrection`** — A correction in words
 - **`L.designFlight`** — _no comment above it_
 - **`L.designOptions`** — _no comment above it_
@@ -897,6 +899,7 @@ QUESTION, not the name you were going to use.
 - **`L.onWishlist`** — _no comment above it_
 - **`L.openKeys`** — Which whiskies can be poured tonight, in one pass
 - **`L.openProducts`** — THE WHISKIES THAT ARE ACTUALLY OPEN
+- **`L.orderLines`** — _no comment above it_
 - **`L.originBase`** — WHAT A CATEGORY TASTES LIKE BEFORE ANYTHING IS DONE TO IT.
 - **`L.originSays`** — WHAT THIS BOTTLE TASTES OF, IN LAYERS (BZ's model, 2026-09-27).
 - **`L.originSources`** — _no comment above it_
@@ -1127,6 +1130,7 @@ QUESTION, not the name you were going to use.
 - **`L.rowType`** — THE SHELF'S TYPE COLUMN says the type (BZ, 2026-09-16
 - **`L.rungOf`** — _no comment above it_
 - **`L.runningLow`** — WHAT IS RUNNING LOW, and therefore worth replacing before it is gone.
+- **`L.saidAlready`** — _no comment above it_
 - **`L.saidNames`** — AND THE TAIL OF THE SENTENCE, which is the same shape wherever it is
 - **`L.sameBottle`** — _no comment above it_
 - **`L.sameBottling`** — _no comment above it_
@@ -1191,7 +1195,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfSet`** — what says something about taste.
 - **`L.shelfSort`** — _no comment above it_
 - **`L.shelfStats`** — _no comment above it_
-- **`L.shelfStory`** — _no comment above it_
+- **`L.shelfStory`** — The whole card now says each thing once
 - **`L.shelfSubLine`** — WHAT GOES UNDER A SHELF ROW'S NAME
 - **`L.shelfSummary`** — What the shelf adds up to, as NUMBERS, so the harness can test them
 - **`L.shelfSummaryLine`** — The line the shelf prints, beside the numbers so a screen never formats
