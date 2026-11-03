@@ -3635,13 +3635,19 @@ sec('a shared trait has to be a habit, not an inventory');
       L.hardToGet({ alloc: 'rare', scar: 'exclusive' }),
       L.hardToGet({ alloc: 'common', scar: 'standard' }), L.hardToGet({})],
     [true, true, true, false, false]);
-  /* The counts always, the verdict only when it is true: suppressing the whole
-     line threw away two real numbers to avoid one false sentence. */
-  eq('the numbers are said whether or not the verdict is',
-    [/48 whiskies filed obscure and 105 hard to get/
-      .test(L.labelLine({ obscure: 48, rare: 105 }, 351)),
+  /* A figure always, the verdict only when it is true: suppressing the whole
+     line threw away a real number to avoid one false sentence. The wording
+     moved on 2026-11-02 - the line opens with the reading now rather than
+     with two bare counts - but which figure is spoken and which sentence is
+     withheld is the thing this has always guarded. */
+  eq('a figure is said whether or not the verdict is',
+    [/\b105\b/.test(L.labelLine({ obscure: 48, rare: 105 }, 351)),
       /not buying labels/.test(L.labelLine({ obscure: 48, rare: 105 }, 351))],
     [true, false]);
+  eq('and a shelf with nothing hard to get is told so, with its own figure',
+    [/not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)),
+      /\b48\b/.test(L.labelLine({ obscure: 48, rare: 0 }, 351))],
+    [true, true]);
   eq('and the verdict comes back when nothing is hard to get',
     /not buying labels/.test(L.labelLine({ obscure: 48, rare: 0 }, 351)), true);
   eq('a shelf too small to judge is not judged',
@@ -6125,8 +6131,15 @@ eq('an absent bucket is not counted twice',
     sh.top.filter(x => x.term === 'amber').length, 0);
   eq('nor is a long finish',
     sh.top.filter(x => x.term === 'long').length, 0);
-  eq('the sentence says it is the shelf and not a preference',
-    /not what you prefer/.test(sh.say), true);
+  /* IT IS THE SHELF'S NOTES, NOT A PREFERENCE. Said by naming whose notes
+     they are rather than by a clause disowning the claim - "which is what
+     is on the shelf, not what you prefer" was the dry half of a sentence
+     this rewrite removed, and a disclaimer is not the only way to be
+     accurate. */
+  eq('the sentence says whose notes it is reading',
+    /your own notes/i.test(sh.say), true);
+  eq('and does not present them as a preference',
+    /you prefer|you like/i.test(sh.say), false);
   /* THE CONTRAST, when there is a wood worth contrasting. Counting alone said
      "spice, oak, vanilla" under a title drawn from the casks, which read as an
      argument; this says what the leading wood tastes of that the rest does
@@ -6146,8 +6159,10 @@ eq('an absent bucket is not counted twice',
     con.apart.indexOf('raisin') >= 0 && con.apart.indexOf('fig') >= 0, true);
   eq('and never the wood itself, which is not news',
     con.apart.indexOf('sherry'), -1);
-  eq('the sentence counts the bottles it is about',
-    /^The 10 in sherry wood taste of /.test(con.say), true);
+  eq('the sentence names the wood it is about',
+    /running through your sherry bottles/.test(con.say), true);
+  eq('and reads as a find rather than a count',
+    /^There is a seam of /.test(con.say), true);
   eq('an empty shelf says nothing',
     [L.palateShelf({}, []).say, L.palateShelf({}, []).top], ['', []]);
 })();
@@ -13482,8 +13497,12 @@ sec('\u00a7223 what the shelf adds up to');
   /* AND THE STORY UNDER THEM, which reads the same two tallies. */
   const popLine = k => ((L.shelfPortrait(popCat, popBottles, {}) || {}).lines || [])
     .filter(l => l.k === k).map(l => l.text)[0] || '(none)';
+  /* The wood line counts WHISKIES, wherever in the sentence it now says
+     so: the reading leads and the figure trails since 2026-11-02. */
   eq('the wood line counts whiskies',
-    popLine('wood').indexOf('25 whiskies in sherry wood'), 0);
+    /\b25 bottles across\b|\b25 of them\b/.test(popLine('wood')), true);
+  eq('and never calls them bottles of something else',
+    /25 whiskies/.test(popLine('wood')), false);
   /* AND THE HOUSE FIGURE IS PRINTED EXACTLY ONCE. This shelf wins its title
      on its one house, so the caption carries the figure and `L.depthLine`
      has no second house to move on to - it draws no bullet rather than
@@ -17011,7 +17030,7 @@ sec('§255 evidence first, then biggest');
   eq('the shelf earns a title', p.title.length > 0, true);
   /* The wood line argues a sherry title, so it leads. */
   eq('the line that backs the title comes first',
-    /sherry wood/i.test(p.lines[0].text), true);
+    /sherry/i.test(p.lines[0].text), true);
 
   /* And the tail descends. Every line after the last title-backed one is
      in falling order, which is the half BZ asked for by name. */
@@ -21951,10 +21970,9 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
      apart. */
   const headlineClaims = L.saidAlready(port.line, 'strength');
   eq('so the shelf is told it buys strength on purpose, once',
-    /buy strength on purpose|Strength is the point/.test(line.text),
-    !headlineClaims);
+    /Proof holds no fear/.test(line.text), !headlineClaims);
   eq('and the figure is there either way',
-    /25 (of these are bottled at|at) cask strength/.test(line.text), true);
+    /\b25\b/.test(line.text), true);
   eq('and never the old conclusion',
     /not what you are buying|not the point/.test(line.text), false);
 
@@ -21965,8 +21983,10 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
     fp.strong / fp.n >= L.CASK_DELIBERATE_SHARE, false);
   const fline = (L.shelfPortrait(few.catalog, few.bottles, {}).lines || [])
     .filter(l => l.k === 'proof')[0];
-  eq('and that shelf is told strength is not the point',
-    /not what you are buying|not the point/.test(fline.text), true);
+  eq('and that shelf is told it is buying flavor rather than force',
+    /flavor rather than force|Flavor over force/.test(fline.text), true);
+  eq('and is never told what it is NOT buying',
+    /not what you are buying|not the point/.test(fline.text), false);
 
   /* THE CHIP AND THE VERDICT READ ONE NUMBER (rule 30d). */
   eq('the Full Proof chip uses the same share as the verdict',
@@ -22603,6 +22623,84 @@ sec('\u00a7348 every title says something only it says');
       .map(l => l.n), [9, 1]);
   eq('and ordering does not disturb what it was given',
     L.orderLines([], []), []);
+
+  /* HOW MUCH OF SCOTLAND IS ON THE SHELF, against L.SCOTCH_REGIONS rather
+     than a list this check keeps for itself - the point of the door. */
+  const reg = ns => L.SCOTCH_REGIONS.slice(0, ns)
+    .map((r, i) => ({ value: r, n: 10 - i }));
+  eq('all six regions is every corner of Scotland',
+    /every corner of Scotland/.test(
+      (L.scotlandLine(reg(6)) || {}).text || ''), true);
+  eq('and it names the deepest of them',
+    /Islay deepest/.test((L.scotlandLine(reg(6)) || {}).text || ''), true);
+  eq('four of six is a range, not a tour',
+    /4 of its 6 regions/.test((L.scotlandLine(reg(4)) || {}).text || ''),
+    true);
+  eq('three is neither, and says nothing', L.scotlandLine(reg(3)), null);
+  eq('nor does a shelf with no Scotch at all',
+    L.scotlandLine([{ value: 'Kentucky', n: 40 }]), null);
+  /* The count is of SCOTCH regions, so Kentucky cannot push a shelf over
+     the line. */
+  eq('a state is not a Scotch region',
+    (L.scotlandLine(reg(4).concat([{ value: 'Kentucky', n: 99 }])) || {}).n,
+    4);
+
+  /* HOUSES WORTH A SECOND VISIT, which is a count of doors and NOT a claim
+     about how often a house is left at one bottle - on BZ's real shelf 59
+     of 116 houses hold exactly one, so a sentence saying he rarely stops
+     at one would be flattering and false. */
+  const hs = n => Array.from({ length: n }, (_, i) => ({ value: 'h' + i, n: 2 }));
+  eq('eight houses revisited is worth saying',
+    /8 houses here you thought worth a second visit/.test(
+      (L.returnedLine(hs(8)) || {}).text || ''), true);
+  eq('seven is not', L.returnedLine(hs(7)), null);
+  eq('and a house with one bottle is not a second visit',
+    L.returnedLine(hs(7).concat(
+      Array.from({ length: 20 }, (_, i) => ({ value: 'x' + i, n: 1 })))),
+    null);
+
+  /* THE HOUSE THAT IS A BRAND AND THE HOUSE THAT HOLDS THEM. Read off the
+     bottling names, because `brand` is filled for some entries and empty
+     for the rest. */
+  const shapeCat = (name, n, houseNamed) => {
+    const cat = {}, bs = [];
+    for (let i = 0; i < n; i++) {
+      /* A KEY PREFIX PER HOUSE. Both fixtures used s0..s19, so merging
+         them for the mixed case below silently replaced one house's
+         entries with the other's and the shelf held one house, not two. */
+      const k = name.slice(0, 3).replace(/ /g, '') + i;
+      cat[k] = { k: k, dist: name,
+        name: (houseNamed ? name + ' ' : 'Other Label ') + 'Batch ' + i };
+      bs.push({ k: k, status: 'open' });
+    }
+    return { cat: cat, bs: bs };
+  };
+  const barrell = shapeCat('Barrell Craft Spirits', 20, true);
+  const btrace = shapeCat('Buffalo Trace', 20, false);
+  eq('a house whose bottlings all carry its name is depth',
+    L.houseShape('Barrell Craft Spirits', barrell.cat, barrell.bs), 'deep');
+  eq('a house whose bottlings carry other names is width',
+    L.houseShape('Buffalo Trace', btrace.cat, btrace.bs), 'wide');
+  /* Under the depth floor it answers nothing rather than guessing from a
+     handful. */
+  const few = shapeCat('Small House', L.HOUSE_DEEP - 1, true);
+  eq('and a house under the depth floor is neither',
+    L.houseShape('Small House', few.cat, few.bs), null);
+  eq('nor is a house nobody owns anything from',
+    L.houseShape('Nowhere', btrace.cat, btrace.bs), null);
+
+  /* AND THE TWO READ TOGETHER, which is the sentence BZ asked for: one
+     house owned as a single name beside one owned as a portfolio. */
+  const mixCat = Object.assign({}, barrell.cat, btrace.cat);
+  const mixBs = barrell.bs.concat(btrace.bs);
+  const mixT = { houses: [{ value: 'Buffalo Trace', n: 20 },
+    { value: 'Barrell Craft Spirits', n: 20 }] };
+  const mix = L.houseLine(mixT, mixCat, mixBs, 'a headline');
+  eq('deep with the one, wide across the other',
+    /deep with Barrell Craft Spirits and wide across Buffalo Trace/
+      .test(mix.text), true);
+  eq('and a shelf with no houses at all gets no line',
+    L.houseLine({ houses: [] }, {}, [], ''), null);
 
   /* And a bullet's verdict yields to a headline that already made it. */
   eq('a headline that says undiluted has made the strength claim',

@@ -385,6 +385,38 @@ const SCREENS = [
       (a, b) => typeSeen[b] - typeSeen[a]).map(k => k + ' x' + typeSeen[k]
         + (typeSeen[k] === 1 ? '  <- once only: ' + typeWho[k] : ''));
 
+    /* A BUTTON WHOSE WHOLE LABEL IS ONE MARK, and the size that mark is
+       actually drawn at. The type count above cannot see this: 14px is the
+       body size, so a return glyph shrunk to 14 adds no new setting and
+       every screen it is on still passes. Twice now a one-glyph control has
+       shipped as a speck in a 44px square - the Guide's return mark in
+       v2.9.34 and again in v2.9.36, the second time because `.glyphbtn`
+       set 24px at the same specificity as `.btn`'s 14px and sat ABOVE it in
+       the file, so the later rule won. Both times the only thing that
+       caught it was BZ opening the app.
+
+       A word is not a mark: this measures only labels of one or two
+       characters that are not letters or digits, which is what cannot be
+       read small. The floor is 20px, one step down the scale from the 24
+       these are set at, so a near miss still fails while the scale keeps
+       room to move. */
+    const glyph = [], glyphAt = {};
+    let glyphN = 0;
+    on.querySelectorAll('button, a.btn, [role="button"]').forEach(n => {
+      const cs = getComputedStyle(n);
+      if (cs.visibility === 'hidden' || cs.display === 'none') return;
+      const txt = (n.textContent || '').trim();
+      if (!txt || txt.length > 2) return;
+      if (/[0-9a-z]/i.test(txt)) return;
+      const px = Math.round(parseFloat(cs.fontSize) * 10) / 10;
+      glyphN++;
+      glyphAt[px + 'px'] = (glyphAt[px + 'px'] || 0) + 1;
+      if (px < 20) {
+        glyph.push('"' + txt + '" on ' + String(n.className || n.tagName)
+          .slice(0, 30) + ' draws at ' + px + 'px, floor 20');
+      }
+    });
+
     const pins = [];
     if (on.id === 'scr-map') {
       const svg = on.querySelector('#map');
@@ -414,6 +446,8 @@ const SCREENS = [
       small: small.slice(0, 6), smallN: small.length,
       nested: nested.slice(0, 4), edges: edges,
       parked: parked.slice(0, 6), tabs: tabsSeen, type: type,
+      glyph: glyph, glyphN: glyphN,
+      glyphAt: Object.keys(glyphAt).sort().join(', '),
       geom: geom.slice(0, 6), geomN: geom.length,
       wide: wide.slice(0, 6) };
   });
@@ -527,6 +561,17 @@ const SCREENS = [
     } else if (m.type.length) {
       ok(name + ' sets type ' + m.type.length + ' way'
         + (m.type.length === 1 ? '' : 's') + ' (cap ' + TYPE_CAP + ')');
+    }
+
+    /* AND THE SIZE SAID OUT LOUD WHERE THERE IS ONE TO SAY, for the same
+       reason the type count is: a number nobody prints is a number nobody
+       notices drifting. */
+    if (m.glyph && m.glyph.length) {
+      bad(name + ' draws ' + m.glyph.length + ' one-mark button(s) too small',
+        m.glyph.join(String.fromCharCode(10)));
+    } else if (m.glyphN) {
+      ok(name + ' draws its ' + m.glyphN + ' one-mark button(s) at '
+        + m.glyphAt + ' (floor 20px)');
     }
 
     if (m.geomN) {

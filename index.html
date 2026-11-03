@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.37  Build 2026-11-02 10:59 PM ET
+     Version : v2.9.38  Build 2026-11-02 11:33 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.38  2026-11-02  The home summary is commentary now rather than a readout.
 // v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
 // v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.31  2026-11-02  The app has a privacy policy, and writing it found two things the code was getting wrong.
 // v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
 // v2.9.29  2026-11-02  A gift link is capped per person as well as per link, the location lookup blunts the fix before it leaves the device, and the comments turn out not…
-// v2.9.28  2026-11-02  The chip that was 43.6px wide, and a gate that printed every line but the one that mattered.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -634,8 +634,13 @@ body.typing nav{display:none}
 .askrow .btn{flex:none;min-width:44px}
 /* A BUTTON WHOSE WHOLE FACE IS ONE MARK. 24px is the top of the scale and
    the only size at which a return glyph reads as a control rather than as
-   a speck; line-height:1 keeps it from growing the button it sits in. */
-.glyphbtn{font-size:24px;line-height:1}
+   a speck; line-height:1 keeps it from growing the button it sits in.
+
+   TWO CLASSES, because `.btn` sets font-size:14px and sits LOWER IN THIS
+   FILE: at equal specificity the later rule wins, so `.glyphbtn` alone
+   lost to it and the mark drew at 14px for a whole build. Written
+   `.btn.glyphbtn` it is (0,2,0) and wins wherever either rule moves to. */
+.btn.glyphbtn{font-size:24px;line-height:1}
 
 /* COOPER, beside what he is saying rather than above it: a portrait with the
    words wrapped round it reads as somebody talking, and one stacked on top
@@ -688,7 +693,7 @@ body.typing nav{display:none}
 .instbtn{position:relative;z-index:0;
   width:44px;height:44px;flex:none;border-radius:8px;
   border:0;background:none;color:var(--ink-deep);
-  font-size:16px;line-height:1;padding:0;
+  font-size:24px;line-height:1;padding:0;
   display:flex;align-items:center;justify-content:center}
 /* The question card, in the nav's own stroke family. */
 .instbtn .qi{width:19px;height:19px;fill:none;stroke:currentColor;
@@ -1351,8 +1356,8 @@ nav button[aria-current="page"]{
    as the pill it shares a rule with, with the glyph set large enough to be
    a glyph: at the pill's 12px label size it read as a speck. The tracking
    and the capitals belong to a word and do nothing to a mark. */
-.portveto.portturn{min-width:44px;justify-content:center;font-size:20px;
-  letter-spacing:0;padding:4px;border-radius:999px}
+.portveto.portturn{min-width:44px;justify-content:center;font-size:24px;
+  font-weight:400;letter-spacing:0;padding:4px;border-radius:999px}
 /* ON A LIGHT MAST the portrait's light ink measured 1.19:1 - "Running a
    tasting" on Flights was there and could not be seen (scan, 2026-09-16). */
 .brand .portveto{color:var(--ink);border-color:var(--line)}
@@ -2307,7 +2312,9 @@ button.mapwrap:hover{border-color:var(--gold)}
    under the size at which people start missing, and it is the pair
    somebody presses repeatedly while pinching about a map. */
 .mapctl button{width:44px;height:44px;border:1px solid var(--line);border-radius:8px;
-  background:rgba(255,252,246,.94);font-size:16px;line-height:1}
+  background:rgba(255,252,246,.94);font-size:24px;line-height:1;
+  color:var(--ink-deep);padding:0;
+  display:flex;align-items:center;justify-content:center}
 /* The contents list and the per-section term index. Chips rather than a
    column of links: 60 terms as one link per line is a second scroll
    problem wearing a different hat. */
@@ -2327,6 +2334,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    has room and stacked on one that does not. */
 .twoways{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
 @media (min-width:520px){ .twoways{grid-template-columns:1fr 1fr;gap:12px} }
+.rs{font-size:12px}
 .twoway .rs{font-size:12px;letter-spacing:.08em;margin-bottom:2px}
 .refsec h3{font-size:16px;color:var(--ink-deep)}
 .refsec .snote{font-size:12px;color:var(--mute);font-style:italic;margin:3px 0 4px}
@@ -3270,8 +3278,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.37';
-const BUILD_TIME  = '2026-11-02 10:59 PM ET';
+const APP_VERSION = '2.9.38';
+const BUILD_TIME  = '2026-11-02 11:33 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9316,7 +9324,7 @@ L.FEATURES = [
   { term: 'Deciding what to buy next', src: 'nothing in your hand',
     def: 'Worth looking for is the strongest opening on each axis of your shelf, with its position beside it — a distillery, 1 of 6. Something else moves you along it. Tap an opening to find real bottles that would fill it, easiest to buy and cheapest first, each tagged widely stocked, a hunt, or allocated. A distillery you own three of names what the library has from it that you do not — a cask, an age band, a strength, in that order, because a cask makes another drink and an age makes the same whisky kept longer. It names the gap and not the bottling, and a house the library can sell nothing from is not offered at all.' },
   { term: 'The story your shelf tells', src: 'the top of Home',
-    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Beside them, the numbers that earned the title; under Also answers to, the other titles the same shelf earned and this one did not use; then what none of that has already said, and the lines the collection argues, each with its own figure. Every figure and every claim is printed once: a bullet drops its verdict where the line above has already made it. A shelf that earns no title is called a generalist.' },
+    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Beside them, the numbers that earned the title; under Also answers to, the other titles the same shelf earned and this one did not use; then the reading of the collection, line by line. Each line leads with what it says about you and carries its figure behind that, or carries none where the sentence is better without one — how far across Scotland the shelf reaches, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. Every figure and every claim is printed once. A shelf that earns no title is called a generalist.' },
   { term: 'How a bottle helps the chart', src: 'under any candidate',
     def: 'A bottle you are considering says what it would do to the shape. It clears a gap and the axis moves, with the percentage before and after; it counts toward one and says how many more are needed; or it says nothing, because most bottles change nothing on the chart. Covered means three. A line from a pasted email has only its name, so it speaks to region, category and wood and stays quiet about proof and age.' },
   { term: 'Can you find the caramel?', src: 'Flights, under what you could pour tonight',
@@ -28090,11 +28098,11 @@ L.palateShelf = function (catalog, bottles) {
     lift: lift,
     say: !described.length ? ''
       : apart.length
-        ? 'The ' + inWood.length + ' in ' + lead.value + ' wood taste of '
-          + L.andList(apart) + ' where the rest of the shelf does not.'
-        : 'What the notes say most often: '
-          + L.andList(top.slice(0, 3).map(x => x.term))
-          + ' \u2014 which is what is on the shelf, not what you prefer.'
+        ? 'There is a seam of ' + L.andList(apart)
+          + ' running through your ' + lead.value
+          + ' bottles that nothing else here touches.'
+        : 'Your own notes keep coming back to '
+          + L.andList(top.slice(0, 3).map(x => x.term)) + '.'
   };
 };
 
@@ -29802,8 +29810,16 @@ L.labelLine = function (ctx, owned) {
      specific data point on home"). Suppressing the whole line where somebody
      owns rare bottles threw away two real numbers to avoid one false sentence;
      the numbers are worth reading either way. */
-  return c.obscure + ' whiskies filed obscure and ' + c.rare
-    + ' hard to get.' + (c.rare ? '' : ' You are not buying labels.');
+  /* THE READING FIRST, THE FIGURES INSIDE IT. This was two counts and a
+     full stop - a readout, where every other line on the card says
+     something. */
+  return L.fitLine(
+    c.rare
+      ? 'You shop well past the famous names \u2014 ' + c.rare
+        + ' of these took real finding.'
+      : 'You are not buying labels \u2014 ' + c.obscure
+        + ' here most drinkers could not place.',
+    'You shop well past the famous names.');
 };
 
 L.leansTo = function (n, of) {
@@ -31760,6 +31776,18 @@ L.shelfNextSteps = function (axes, limit) {
 };
 
 /* The story the shelf tells. */
+/* BOTTLES FROM ONE HOUSE BEFORE IT IS A DEPTH RATHER THAN A COINCIDENCE.
+   Two readers: the Deep on One House chip below, which had the number
+   written into it twice, and L.depthLine, which names a second house only
+   where that house is a depth of its own.
+
+   DECLARED ABOVE ITS READERS AND IT HAS TO BE. The chip reads it in a
+   property initialiser, evaluated as the array is built, so a `const`
+   declared further down the file is in its temporal dead zone - `floor:
+   undefined`, no error, and every title silently re-ranked: PX Lover came
+   back as Deep on One House. Three assertions caught it. */
+L.HOUSE_DEEP = 15;
+
 L.PORTRAIT_TITLES = [
   { id: 'peat', title: 'Peat Head', floor: 10,
     test: t => t.peat.heavy < 10 ? null
@@ -31795,10 +31823,10 @@ L.PORTRAIT_TITLES = [
      catalog IS the shelf it describes, so there is no independent base
      rate, and a hand-written rarity table passed off as measured would be
      worse than the fault. */
-  { id: 'house', title: 'Deep on One House', floor: 15,
+  { id: 'house', title: 'Deep on One House', floor: L.HOUSE_DEEP,
     test: t => {
       const h = t.houses[0];
-      if (!h || h.n < 15) return null;
+      if (!h || h.n < L.HOUSE_DEEP) return null;
       /* NO SHARE HERE ("8% here seems random to call out").
          Two things were wrong with it. The other facts on that line - 19 in
          Pedro Ximenez, 67 sherried across 39 houses - carry no share, so one
@@ -31943,7 +31971,8 @@ L.fitLine = function (full, short) {
    the title - Islay and Cartographer have none, so they rank nothing and
    fall to the count tiebreak. */
 L.LINE_EVIDENCE = { px: 'wood', sherry: 'wood', peat: 'peat',
-  proof: 'proof', house: 'depth', obscure: 'obscure', repeat: 'repeat' };
+  proof: 'proof', house: 'depth', obscure: 'obscure', repeat: 'repeat',
+  region: 'scotland', breadth: 'scotland' };
 
 L.orderLines = function (lines, earned) {
   const rank = {};
@@ -31979,24 +32008,126 @@ L.saidAlready = function (line, claim) {
   return !!(re && re.test(String(line || '')));
 };
 
-L.depthLine = function (top, second, head, saidTop) {
+/* HOW MUCH OF SCOTLAND IS ON THE SHELF. Reads L.SCOTCH_REGIONS, which is
+   the one place that says which regions Scotland has, so a shelf is never
+   told it has them all against a list this function keeps for itself.
+   Below four regions it says nothing: two or three is not a tour, and the
+   card already has a region chip for a shelf that leans on one. */
+L.scotlandLine = function (regions) {
+  const have = {};
+  (regions || []).forEach(r => { have[r.value] = r.n; });
+  const on = L.SCOTCH_REGIONS.filter(r => have[r]);
+  if (on.length < 4) return null;
+  const all = on.length === L.SCOTCH_REGIONS.length;
+  const lead = on.slice().sort((a, b) => have[b] - have[a])[0];
+  return { k: 'scotland', n: on.length, text: all
+    ? 'You have been to every corner of Scotland \u2014 all '
+      + L.SCOTCH_REGIONS.length + ' regions here, ' + lead + ' deepest.'
+    : 'You range across Scotland \u2014 ' + on.length + ' of its '
+      + L.SCOTCH_REGIONS.length + ' regions, ' + lead + ' deepest.' };
+};
+
+/* HOUSES YOU WENT BACK TO. A shelf is a collection rather than a shopping
+   trip when the same door is worth a second visit, and the count of those
+   doors is the fact. It is NOT a claim about how often a house is left at
+   one bottle - on a real shelf most houses are, so a sentence saying
+   otherwise would be flattering and false. */
+L.returnedLine = function (houses) {
+  const again = (houses || []).filter(h => h.n >= 2).length;
+  if (again < 8) return null;
+  return { k: 'returned', n: again,
+    text: 'There are ' + again + ' houses here you thought worth a second '
+      + 'visit.' };
+};
+
+/* IS THE HOUSE THE NAME ON THE LABEL, OR THE PARENT OF THE NAMES ON IT?
+   ("For Barrell house is brand and for Buffalo Trace house holds brand.")
+   Two ways of owning a lot from one distillery, and they say opposite
+   things about whoever did it: twenty Barrells is going deep on one maker,
+   twenty-eight Buffalo Traces is working across a portfolio - Blanton's,
+   Weller, Eagle Rare, Stagg - which is range, not repetition.
+
+   Read off the bottling names through L.houseInText, the one door for "is
+   this house named in this text", rather than off `brand`: brand is filled
+   for the entries that have been through the library editor and empty for
+   the rest, so a reading taken from it would answer for a fraction of any
+   shelf and call the remainder narrow. A name is on every bottling there
+   has ever been.
+
+   Measured on BZ's shelf: Barrell 20 of 20 and Laphroaig 12 of 12 carry the
+   house name; Buffalo Trace 1 of 24, Midleton 0 of 21, Jim Beam 1 of 12 do
+   not. The gap is wide enough that the two thresholds leave a band in the
+   middle answering neither, which is the honest answer for a house that is
+   half one thing and half the other. */
+L.HOUSE_IS_BRAND = 0.7;
+L.HOUSE_HOLDS_BRANDS = 0.3;
+
+L.houseShape = function (house, catalog, bottles) {
+  if (!house) return null;
+  const held = L.ownedCounts(bottles || []);
+  const ps = Object.keys(catalog || {})
+    .filter(k => held[k]).map(k => catalog[k])
+    .filter(p => L.houseSame(p.dist, house) || L.houseSame(p.brand, house));
+  if (ps.length < L.HOUSE_DEEP) return null;
+  const named = ps.filter(p =>
+    L.houseInText(p.name, [{ name: house }])).length;
+  const share = named / ps.length;
+  if (share >= L.HOUSE_IS_BRAND) return 'deep';
+  if (share <= L.HOUSE_HOLDS_BRANDS) return 'wide';
+  return null;
+};
+
+/* THE HOUSE BULLET, shapes and all. Separate from `depthLine` because
+   working out how each house is owned needs the catalogue and the bottles,
+   and the line itself needs neither - and because the card that calls it
+   is at its line ceiling (rule 30f). */
+L.houseLine = function (t, catalog, bottles, head) {
+  const a = (t.houses || [])[0], b = (t.houses || [])[1];
+  const shapes = {};
+  [a, b].forEach(h => {
+    if (h) shapes[h.value] = L.houseShape(h.value, catalog, bottles);
+  });
+  return L.depthLine(a, b, head, shapes);
+};
+
+L.depthLine = function (top, second, head, shapes) {
   if (!top) return null;
+  /* THE SECOND HOUSE ONLY WHERE IT IS ALSO A DEPTH ("Not always but where
+     I'm deepest"). Naming whoever came second turns a shelf's one real
+     habit into a list, and a house with three bottles on it is not
+     somewhere anybody goes back to. */
+  const deep = second && second.n >= L.HOUSE_DEEP ? second : null;
   /* "You go deep before you go wide." is dropped where the headline has
      already made that claim - "Deep on One House" over a bullet saying it
      again is the claim twice. Asked of the title AND the line, because the
      title is the biggest text on the card. */
-  const t = L.saidAlready(head, 'deep')
-    ? '' : ' You go deep before you go wide.';
-  if (saidTop) {
-    if (!second) return null;
-    return { k: 'depth', n: second.n,
-      text: second.n + ' from ' + second.value + ' as well.' + t };
+  /* The opening clause yields where the headline already said "deep", but
+     the houses themselves never do: they are what the shelf is about. */
+  const said = L.saidAlready(head, 'deep');
+  const one = top.n + ' from ' + top.value;
+  const short = (said ? 'They have practically moved in \u2014 '
+    : 'You go deep before you go wide \u2014 ') + one + '.';
+  if (!deep) {
+    return { k: 'depth', n: top.n, text: L.fitLine(short, short) };
   }
+  /* WHERE THE TWO HOUSES ARE OWNED DIFFERENTLY, SAY SO. One of them being
+     a single name and the other a portfolio is the more interesting
+     sentence by some way, and it is the difference between repetition and
+     range. Falls back to naming them together where the shapes match or
+     neither is clear. */
+  const sh = shapes || {};
+  const a = sh[top.value], b = sh[deep.value];
+  const dp = a === 'deep' ? top : (b === 'deep' ? deep : null);
+  const wd = a === 'wide' ? top : (b === 'wide' ? deep : null);
+  const both = top.value + ' and ' + deep.value
+    + ' have practically moved in \u2014 ' + top.n + ' and ' + deep.n
+    + ' bottles.';
   return { k: 'depth', n: top.n, text: L.fitLine(
-    top.n + ' bottles from ' + top.value
-      + (second ? ' and ' + second.n + ' from ' + second.value : '')
-      + '.' + t,
-    top.n + ' bottles from ' + top.value + '.' + t) };
+    dp && wd
+      ? 'You go deep with ' + dp.value + ' and wide across ' + wd.value
+        + ' \u2014 ' + dp.n + ' and ' + wd.n + ' bottles.'
+      : both,
+    short) };
 };
 
 /* WHAT THE SHELF IS, IN THE NUMBERS A TITLE IS ARGUED FROM: how much of it
@@ -32078,20 +32209,20 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
   if (wood && L.leansTo(wood.n, ownedN)) {
     const houses = wood.houses.length;
     lines.push({ k: 'wood', n: wood.n, text: L.fitLine(
-      wood.n + ' whiskies in ' + wood.value + ' wood, across ' + houses + ' '
-        + (houses === 1 ? 'distillery' : 'distilleries') + '. '
-        + (houses === 1 ? 'One house does all of it.'
-                        : 'The wood travels with you from house to house.'),
-      wood.n + ' whiskies in ' + wood.value + ' wood, across ' + houses
-        + ' distilleries. The wood travels.') });
+      (houses === 1
+        ? 'One house does all your ' + wood.value + ' for you \u2014 '
+          + wood.n + ' of them.'
+        : 'You follow the ' + wood.value + ' wherever it goes \u2014 '
+          + wood.n + ' bottles across ' + houses + ' distilleries.'),
+      'You follow the ' + wood.value + ' from house to house.') });
   }
   if (t.peat.any) {
     lines.push({ k: 'peat', n: t.peat.any,
       text: L.leansTo(t.peat.heavy, ownedN)
-        ? t.peat.heavy + ' heavily peated bottles against ' + t.peat.none
-          + ' with no smoke at all. Smoke is not a phase here.'
-        : t.peat.any + ' peated bottles. Smoke is somewhere you visit '
-          + 'rather than live.' });
+        ? 'Smoke is no passing phase here: ' + t.peat.heavy
+          + ' heavily peated against ' + t.peat.none + ' with none at all.'
+        : 'Smoke is a place you visit rather than live, and ' + t.peat.any
+          + ' bottles keep the door open.' });
   }
   /* THE CASK-STRENGTH HALF ONLY. This opened with the middle half of the
      shelf by proof, and BZ: "given the general market, everyone will skew to
@@ -32104,20 +32235,22 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
     const deliberate = t.proof.strong / t.proof.n >= L.CASK_DELIBERATE_SHARE;
     const saidStrong = L.saidAlready(line, 'strength');
     const verdict = deliberate
-      ? (saidStrong ? '' : 'You buy strength on purpose.')
-      : 'Strength is not what you are buying.';
+      ? (saidStrong ? '' : 'Proof holds no fear here')
+      : 'You are buying flavor rather than force';
     /* The short form needs a shorter verdict too, or it is no shorter than
        the full line and the budget check fails. */
     const brief = deliberate
-      ? (saidStrong ? '' : 'Strength is the point.')
-      : 'Strength is not the point.';
+      ? (saidStrong ? '' : 'Proof holds no fear here')
+      : 'Flavor over force';
     /* Trimmed, because a dropped verdict leaves the space that joined it
        to the figure. */
     lines.push({ k: 'proof', n: t.proof.strong,
       text: L.fitLine(
-        (t.proof.strong + ' of these are bottled at cask strength. '
-          + verdict).trim(),
-        (t.proof.strong + ' at cask strength. ' + brief).trim()) });
+        (verdict ? verdict + ' \u2014 ' + t.proof.strong
+          + ' of these come as the cask gave them.'
+          : t.proof.strong + ' of these come as the cask gave them.'),
+        (brief ? brief + ' \u2014 ' + t.proof.strong + ' at cask strength.'
+          : t.proof.strong + ' at cask strength.')) });
   }
   /* NO BOUGHT-AGAIN LINE. BZ, 2026-10-04: "11 whiskies bought twice is not
      an interesting fact". Buying a second bottle says something about one
@@ -32167,9 +32300,8 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
   /* The house figures, once the caption is known: a shelf that won its
      title on one house already carries that house's figure above, so the
      line moves on to the second rather than printing it twice. */
-  const depth = L.depthLine(t.houses[0], t.houses[1], head,
-    !!(pick && pick.from.indexOf('house') >= 0));
-  if (depth) lines.push(depth);
+  [L.houseLine(t, catalog, bottles, head), L.scotlandLine(t.regions),
+    L.returnedLine(t.houses)].forEach(l => { if (l) lines.push(l); });
   /* THE PILLS ARE WHAT THE TITLE DID NOT USE, and nothing else. They led
      with the chips that earned the title until 2026-11-02, which put each
      of those chips on the card TWICE: `why` above is those same chips'
@@ -32228,7 +32360,7 @@ L.TITLE_LINES = {
   proof: 'You want it undiluted.',
   house: 'You go back to the doors that worked.',
   obscure: 'You go looking where most people do not.',
-  repeat: 'You know what you like, and you buy it twice.',
+  repeat: 'You know what you like, and you stay with it.',
   region: 'You start at Islay, and not by accident.',
   breadth: 'You buy things to compare them.',
   sealed: 'You buy the second bottle before you open the first.',
@@ -32266,25 +32398,35 @@ L.collectorLine = function (t, ctx, title, ids) {
   const woods = t.woodFamilies.length;
 
   // Depth: three houses carrying a fifth of the shelf is a habit.
-  if (share >= 0.18 && styles <= 6) return 'You collect depth, not breadth.';
+  if (share >= 0.18 && styles <= 6) {
+    return 'You go deep rather than wide, and you do it on purpose.';
+  }
   if (share >= 0.18) return 'You go deep, and you still go everywhere.';
 
   if (styles >= 8 && woods >= 5) {
-    return 'You collect range \u2014 something to compare everything against.';
+    return 'You have built something to compare everything else against.';
   }
   if ((ctx && ctx.obscure) >= t.owned * 0.15) {
-    return 'You collect the bottles nobody else has.';
+    return 'You end up with the bottles nobody else has.';
   }
+  /* NO REBUY COUNT IN THE WORDING. The branch is still reached by repeats
+     and it still says something true about habit; what it may not do is
+     present the count as the finding. */
   if (t.repeats.length >= t.owned * 0.05) {
-    return 'You buy what you know, and you buy it twice.';
+    return 'You know what you like, and you stay with it.';
   }
   /* The same question as the Full Proof chip and the portrait's proof
      verdict, so the same constant (BZ: make same; rule 30d). */
   if (t.proof && t.proof.strong >= t.proof.n * L.CASK_DELIBERATE_SHARE) {
-    return 'You collect at full strength.';
+    return 'You take it as the cask gave it.';
   }
-  if (t.peat.heavy >= t.owned * 0.08) return 'You collect smoke.';
-  return 'You collect broadly, without a single thing you insist on.';
+  if (t.peat.heavy >= t.owned * 0.08) {
+    return 'Smoke is where you are happiest.';
+  }
+  /* THE LAST BRANCH IS THE ONE MOST PEOPLE WILL SEE FIRST, and it told them
+     their shelf had nothing it insisted on. A shelf that has not narrowed
+     yet is open, not empty. */
+  return 'You collect broadly, and you keep every door open.';
 };
 
 /* THE PARAGRAPH UNDER THE CARD, and the rule it is written to: SAY EACH
@@ -32329,9 +32471,9 @@ L.shelfStory = function (t, ctx) {
      narrowness a preference rather than a limit. */
   const styles = t.styles.length, woods = t.woodFamilies.length;
   if (styles >= 4 && woods >= 3) {
-    bits.push('Across ' + styles + ' categories and ' + woods
-      + ' kinds of cask, there is enough here to taste almost any '
-      + 'question against itself.');
+    bits.push('You could settle almost any whisky argument without '
+      + 'leaving this shelf \u2014 ' + styles + ' categories, ' + woods
+      + ' kinds of cask.');
   } else if (ctx && ctx.obscure >= 10) {
     bits.push(ctx.obscure + ' of these are bottles most people have never '
       + 'heard of.');
@@ -59434,7 +59576,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.37</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.38</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

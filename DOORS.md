@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1099 |
+| functions | 1103 |
 | tables | 257 |
-| carrying a stated purpose | 885 |
+| carrying a stated purpose | 887 |
 
 ## Tables
 
@@ -179,7 +179,7 @@ QUESTION, not the name you were going to use.
 - **`L.PLACE_KINDS`** — WHERE OR HOW A POUR CAME ABOUT, in one list because you pick once:
 - **`L.POND_ORDER`** — WHO YOU MEET FIRST ONCE YOU HAVE CROSSED
 - **`L.PORTRAIT_SETS`** — WHAT A SHELF IS, rather than what it has most of.
-- **`L.PORTRAIT_TITLES`** — The story the shelf tells.
+- **`L.PORTRAIT_TITLES`** — _no comment above it_
 - **`L.POUR_RUNGS`** — _no comment above it_
 - **`L.POUR_WIDE`** — AND WHERE THE CHIPS BELONG
 - **`L.PRINTED`** — THE LISTS A PRINT IS KEPT FOR
@@ -648,6 +648,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseInText`** — A HOUSE NAMED IN SOME WORDS - one way, for the shelf question and the
 - **`L.houseItems`** — THE ROWS THE SCREEN SHOWS, with the key so a row can be gone to.
 - **`L.houseKey`** — _no comment above it_
+- **`L.houseLine`** — THE HOUSE BULLET, shapes and all
 - **`L.houseList`** — The houses the catalog knows, longest name first, so a house called
 - **`L.houseMeant`** — _no comment above it_
 - **`L.houseMergePlan`** — _no comment above it_
@@ -657,6 +658,7 @@ QUESTION, not the name you were going to use.
 - **`L.houseSame`** — _no comment above it_
 - **`L.housesByBrand`** — AND THE BRANDS, WHICH ARE NOT THE SAME THING.
 - **`L.houseSettlePlan`** — IT ONLY EVER MAKES A HOUSE AGREE WITH ITSELF
+- **`L.houseShape`** — _no comment above it_
 - **`L.houseSplit`** — _no comment above it_
 - **`L.houseSplitRows`** — THE BOTTLES UNDER THE SPELLING FEWER OF THEM USE, keyed so a row opens one.
 - **`L.houseSplits`** — A DOOR RATHER THAN A PARAGRAPH INSIDE THE AUDIT
@@ -1116,6 +1118,7 @@ QUESTION, not the name you were going to use.
 - **`L.resolveLibKey`** — _no comment above it_
 - **`L.resolveUpc`** — cannot be searched by name, so the barcode store comes first.
 - **`L.restDays`** — _no comment above it_
+- **`L.returnedLine`** — HOUSES YOU WENT BACK TO
 - **`L.ringLayout`** — WHERE THE RING STARTS, in sixths of a turn
 - **`L.roomBuckets`** — The one answerer for "how many of us have this" (rule 30d)
 - **`L.roomFingerprintRows`** — THE SIDES ARRIVE WITH THEIR PROFILES ALREADY BUILT, by the same L.tasteProfile
@@ -1145,6 +1148,7 @@ QUESTION, not the name you were going to use.
 - **`L.saysBanned`** — One sentence against one list
 - **`L.scoreAxis`** — _no comment above it_
 - **`L.scotchRegions`** — _no comment above it_
+- **`L.scotlandLine`** — HOW MUCH OF SCOTLAND IS ON THE SHELF
 - **`L.sealedKeys`** — The whiskies you hold a SEALED bottle of.
 - **`L.sealedNote`** — The bottle figure, said where it cannot be mistaken for what the bar
 - **`L.sealedPrompt`** — Opening a sealed bottle
