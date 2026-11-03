@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.34  Build 2026-11-02 08:48 PM ET
+     Version : v2.9.35  Build 2026-11-02 09:45 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
 // v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // v2.9.33  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.28  2026-11-02  The chip that was 43.6px wide, and a gate that printed every line but the one that mattered.
 // v2.9.27  2026-11-02  Every control a thumb can hit, and the gift link buys only what it was sold.
 // v2.9.26  2026-11-02  Cut as v2.9.25 and shipped as this, because verifying the brand ruling found the other half of it and a half-fixed ruling is worse than a stated gap.
-// v2.9.25  2026-11-02  Every harness that claims to grade his real shelf was grading a catalogue his app does not have, and fixing the bench found six faults in the app.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -65,7 +65,7 @@ CHANGELOG
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink-deep:#1A1613; --gold:#8A6A28; --rust:#7A3B1E;
@@ -263,6 +263,14 @@ body.typing nav{display:none}
      content below wanted room — putting Shop's bar at 70 while the rest sat
      at 76. flex:none pins it as an item as well as a box. */
   flex-wrap:nowrap;height:44px;flex:none;margin-bottom:12px}
+/* A SECTION HEADING IS NOT THE PAGE HEADER. Twelve headings inside cards
+   reuse `.hdr` for "a row with a heading and a button in it", and took the
+   paper ground, the fixed 44px and the sticky layer with them: the heading
+   sat on a strip running the full width of the panel with its text hard
+   against the edge, while everything under it was inset. A page header is
+   never inside a .sheet, so this reaches only the reuses. */
+.sheet .hdr{position:static;z-index:auto;background:none;height:auto;
+  min-height:28px;margin-bottom:8px}
 .hdr .hdrtitle{position:absolute;left:50%;transform:translateX(-50%);
   /* NEVER ON TOP OF ANYTHING. BZ's phone showed the gear sitting across
      THE SHELF. Measured at 390px: the title overlapped the right-hand group
@@ -394,7 +402,7 @@ body.typing nav{display:none}
     var(--t-scotch));z-index:0}
 .brand > *{position:relative;z-index:1}
 .venn{width:100%;height:auto;max-width:340px;display:block;margin:0 auto}
-.venn .vcount{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:700;
+.venn .vcount{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:600;
   fill:var(--ink-deep)}
 .venn .vname{font-size:12px;fill:var(--mute);letter-spacing:.04em;
   text-transform:uppercase}
@@ -480,7 +488,7 @@ body.typing nav{display:none}
    proof — so the thing the button was pressed to find out was the quietest
    thing on the row. */
 .awayverdict{flex:none;align-self:flex-start;margin-right:11px;
-  font-family:'Cinzel',Georgia,serif;font-size:14px;font-weight:700;
+  font-family:'Cinzel',Georgia,serif;font-size:14px;font-weight:600;
   letter-spacing:.02em;color:var(--gold);white-space:nowrap;
   padding-top:1px}
 /* The shop's sentence leading an offer row: the same voice, on its own line
@@ -563,10 +571,19 @@ body.typing nav{display:none}
    portrait with no fine detail softens rather than breaks, and an empty
    screen is the worse fault. Going further properly wants a 640x640 source,
    which is a file and not a rule. */
-.cooperhead .cooper{float:none;width:min(58vw,232px);height:min(58vw,232px);
+/* AND NOT SQUARE, BECAUSE THE FIRST SCREEN HAS TO FIT. The greeting is two
+   bubbles and the second one was cut off mid-word on a real phone - 844 is
+   the logical height, and an installed app loses the status bar and the home
+   indicator on top of that, about 60px the harness never sees. The picture
+   is where that 60px is: `object-position` keeps the BOTTOM, so what goes is
+   the barrel tops above his head and not his face. 0.84 of the width is the
+   limit - his hairline sits about 21% down, so a deeper crop takes the top
+   of his head. */
+.cooperhead .cooper{float:none;width:min(50vw,200px);height:min(42vw,168px);
+  object-fit:cover;object-position:50% 100%;
   margin:0;border-radius:12px;box-shadow:0 6px 18px rgba(26,22,19,.18)}
-@media (max-width:380px){ .cooperhead .cooper{width:min(62vw,206px);
-  height:min(62vw,206px)} }
+@media (max-width:380px){ .cooperhead .cooper{width:min(54vw,180px);
+  height:min(45vw,151px)} }
 /* AND BIGGER WHERE THERE IS ROOM. 160 is exactly native on a 2x screen,
    which is a PHONE; a desktop is usually 1x, where 160 shows half of a
    320x320 picture and wastes the other half. I measured the limit for one
@@ -579,7 +596,7 @@ body.typing nav{display:none}
    softens rather than breaks. Staying small on every desktop so the retina
    ones stay perfect is the worse trade. Past this wants a 640x640 source,
    which is a file and not a rule. */
-@media (min-width:700px){ .cooperhead .cooper{width:240px;height:240px;
+@media (min-width:700px){ .cooperhead .cooper{width:240px;height:202px;
   border-radius:12px} }
 
 /* HE IS THINKING, AND IT LOOKS LIKE IT ("those dots need
@@ -615,6 +632,10 @@ body.typing nav{display:none}
 .askrow .in{flex:1;min-width:0}
 /* One glyph does not pad a button out to a thumb's width on its own. */
 .askrow .btn{flex:none;min-width:44px}
+/* A BUTTON WHOSE WHOLE FACE IS ONE MARK. 24px is the top of the scale and
+   the only size at which a return glyph reads as a control rather than as
+   a speck; line-height:1 keeps it from growing the button it sits in. */
+.glyphbtn{font-size:24px;line-height:1}
 
 /* COOPER, beside what he is saying rather than above it: a portrait with the
    words wrapped round it reads as somebody talking, and one stacked on top
@@ -1316,7 +1337,7 @@ nav button[aria-current="page"]{
    top of this rule and a later `padding:4px 8px` in the SAME rule
    overrode it - last declaration wins, and the chip stayed 16px. An
    explicit min-height cannot be undone by a shorthand further down. */
-.portveto{min-height:44px;font-weight:400;display:inline-flex;align-items:center;
+.portveto{min-height:44px;display:inline-flex;align-items:center;
   vertical-align:middle;margin-left:9px;
   font-family:'IBM Plex Sans',sans-serif;font-weight:600;
   font-size:12px;letter-spacing:.07em;text-transform:uppercase;
@@ -1326,6 +1347,12 @@ nav button[aria-current="page"]{
   color:var(--felt-ink);background:transparent;
   border:1px solid rgba(255,255,255,.28)}
 .portveto:hover{color:var(--paper);border-color:rgba(255,255,255,.55)}
+/* THE ONE THAT IS A MARK RATHER THAN A WORD. A round target the same height
+   as the pill it shares a rule with, with the glyph set large enough to be
+   a glyph: at the pill's 12px label size it read as a speck. The tracking
+   and the capitals belong to a word and do nothing to a mark. */
+.portveto.portturn{min-width:44px;justify-content:center;font-size:20px;
+  letter-spacing:0;padding:4px;border-radius:999px}
 /* ON A LIGHT MAST the portrait's light ink measured 1.19:1 - "Running a
    tasting" on Flights was there and could not be seen (scan, 2026-09-16). */
 .brand .portveto{color:var(--ink);border-color:var(--line)}
@@ -1994,7 +2021,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 4px}
    A long word may break, with a hyphen, on the narrowest phones. */
 .reel .rl{font-size:12px;letter-spacing:0;color:var(--mute);line-height:1.15;
   hyphens:auto;overflow-wrap:break-word}
-.reel .rv{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:700;
+.reel .rv{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:600;
   color:var(--ink-deep);margin-top:4px;min-height:38px;line-height:1.22;
   display:flex;align-items:center;justify-content:center;hyphens:auto}
 .reel .hold{font-size:12px;color:var(--gold);letter-spacing:.06em;
@@ -2020,7 +2047,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 4px}
   margin-top:9px}
 .matchsel{max-width:260px;text-align:center;text-align-last:center}
 .spin{background:var(--gold);border:2px solid var(--gold);border-radius:999px;
-  color:#1A1613;font-family:'Cinzel',Georgia,serif;font-weight:700;
+  color:#1A1613;font-family:'Cinzel',Georgia,serif;font-weight:600;
   font-size:20px;letter-spacing:.06em;padding:12px 46px;
   box-shadow:0 3px 0 #6E5320, 0 5px 14px rgba(26,22,19,.3)}
 .spin:active{transform:translateY(2px);box-shadow:0 1px 0 #6E5320}
@@ -2048,7 +2075,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 4px}
   transition:border-color .12s,transform .12s}
 .modetile:hover{border-color:var(--gold);transform:translateY(-1px)}
 .modetile:active{transform:none}
-.modetile .nm{font-family:'Cinzel',Georgia,serif;font-size:12px;
+/* THE LABEL ON A BUTTON IS NOT A HEADING. These four wore Cinzel at 12,
+   which made a fourth kind of display type on a screen that already carries
+   a title, a masthead and two card headings - and the display face reads as
+   "this names a section" wherever it appears. They are names of things you
+   press, so they take the name setting every other pressable row uses. */
+.modetile .nm{font-size:14px;font-weight:600;
   color:var(--ink-deep);line-height:1.25;margin-top:9px}
 /* The hint is the second thing read, and on a phone it is the difference
    between three tiles and three paragraphs. Gone below 430px: the drawing
@@ -2058,7 +2090,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 4px}
   .modegrid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .modetile .sub{display:none}
   .modetile{padding:8px 4px 8px}
-  .modetile .nm{font-size:12px}
 }
 .artwrap{width:100%;max-width:44px}
 .modeart{width:100%;height:auto;display:block}
@@ -2315,7 +2346,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .ringsvg .redge.pend{stroke-dasharray:3 3}
 .ringsvg .rnode{fill:var(--ink)}
 .ringsvg .rnode.pend{fill:var(--mute)}
-.ringsvg .rlabel{fill:var(--ink);font-size:10px;font-weight:600}
+.ringsvg .rlabel{fill:var(--ink);font-size:12px;font-weight:600}
 .refitem{padding:8px 0;border-top:1px solid var(--line)}
 .refitem:first-of-type{border-top:0}
 .refitem .rt{font-size:14px;font-weight:600;color:var(--ink-deep)}
@@ -2397,14 +2428,14 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    over it, because it is the sentence somebody reads if they read one. */
 .portrait .portline1{font-family:'Cinzel',Georgia,serif;font-size:16px;font-weight:600;
   color:var(--ink-deep);margin:2px 0 3px;line-height:1.25}
-@media (min-width:700px){ .portrait .portline1{font-size:16px} }
 .portrait .portwhy{font-size:12px;color:var(--mute)}
-/* The story reads as prose and the bullets as evidence, so the story gets
-   the larger size and the looser line, and the bullets keep their rule
-   down the left. */
-.portrait .portstory{margin-top:12px;font-size:16px;line-height:1.5;
+/* The story reads as prose and the bullets as evidence, so the story keeps
+   the looser line and the bullets keep their rule down the left. It is body
+   copy and takes the body size: at 16 it was the largest text in a card
+   whose own stat line is 14, so the paragraph read as more important than
+   the figures it is drawn from. 16 is the field size and nothing else. */
+.portrait .portstory{margin-top:12px;font-size:14px;line-height:1.5;
   color:var(--ink-deep)}
-@media (min-width:700px){ .portrait .portstory{font-size:16px} }
 .portrait .portlines{margin-top:11px;display:grid;gap:8px}
 .portrait .radarwrap{margin:14px auto 2px;max-width:330px}
 .portrait .radar{width:100%;height:auto;display:block;overflow:visible}
@@ -2413,8 +2444,11 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .portrait .radar .shape{fill:var(--gold);fill-opacity:.20;
   stroke:var(--gold);stroke-width:2;stroke-linejoin:round}
 .portrait .radar .knot{fill:var(--gold)}
-.portrait .radar .rlabel{font-family:'Cinzel',Georgia,serif;font-size:12px;
-  fill:var(--ink-deep)}
+/* A CHART LABEL IS THE SMALLEST BODY SETTING, not display type. Eight axis
+   names in Cinzel were the only thing keeping the display face on Shop below
+   the headings, and a label whose job is to be read beside a number reads
+   better in the text face than in small capitals. */
+.portrait .radar .rlabel{font-size:12px;fill:var(--ink-deep)}
 .portrait .radar .rpct{font-size:12px;fill:var(--mute)}
 /* The whole axis is the target: dot, label and a transparent disc around
    them. A 3px knot is not something anybody can hit on a phone. */
@@ -2471,8 +2505,8 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    reading had to come entirely from the words. */
 .portrait .quadcell{border-left-width:3px}
 
-.portrait .quadcell .qv{font-family:'Cinzel',Georgia,serif;font-size:20px;
-  color:var(--ink-deep);line-height:1}
+.portrait .quadcell .qv{font-size:20px;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--ink-deep);line-height:1}
 .portrait .quadcell .qt{font-size:14px;color:var(--ink);margin-top:3px}
 .portrait .quadcell .qs{font-size:12px;color:var(--mute);line-height:1.3;
   margin-top:1px}
@@ -2551,14 +2585,21 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    writing mode a wrap makes a second column across the spine's width, which
    is what a real book does with "American Single Malt" — the alternative
    was shrinking type until it vanished and still losing the last word. */
+/* NO font-size HERE. bookTile writes the fitted size inline, from
+   L.shelfTypeTiles, and an inline style wins: the 12px that sat here was
+   dead and read as the decision. */
 .tiles.books .bk .l{writing-mode:vertical-rl;transform:rotate(180deg);
-  font-family:'Cinzel',Georgia,serif;font-size:12px;letter-spacing:.3px;
+  font-family:'Cinzel',Georgia,serif;font-weight:600;
+  letter-spacing:.3px;
   color:#fdf6e6;text-shadow:0 1px 1px rgba(0,0,0,.4);
   margin:0;line-height:1.05;flex:1;display:flex;align-items:center;
   justify-content:center;text-align:center;
   white-space:normal;overflow:hidden;max-height:100%}
-.tiles.books .bk .v{font-family:'Cinzel',Georgia,serif;
-  font-size:calc(11px * var(--scale));
+/* ONE STAMP ON A SPINE. The name and the number were two Cinzel settings
+   at 11px, which is off the scale and was two of the eight ways the shelf
+   set type. On a real spine the title and the number are the same stamp. */
+.tiles.books .bk .v{font-family:'Cinzel',Georgia,serif;font-weight:600;
+  font-size:calc(12px * var(--scale));
   color:rgba(253,246,230,.82);line-height:1;margin-top:5px}
 /* Narrow phones: spines get thinner rather than wrapping to four rows. */
 
@@ -2618,13 +2659,19 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
 .bars{display:grid;gap:0}
 .bar{display:grid;grid-template-columns:96px 1fr 34px;gap:8px;align-items:center;
   font-size:12px;width:100%;text-align:left;background:none;border:0;
-  padding:4px 0;min-height:28px}
-/* A PRESSABLE BAR KEEPS THE 28px TOUCHING ROW. Raising it to 44 cost 288px
-   on the shelf - eighteen rows at 16px each - and bought nothing a thumb
-   can feel: the rows TOUCH, so every pixel between one label and the next
-   is already part of a target, which is what clears WCAG 2.5.8's 24x24.
+  padding:2px 0;min-height:24px}
+/* A PRESSABLE BAR SITS ON THE 24px FLOOR, which is the whole of what WCAG
+   2.5.8 asks of a target in a row of touching targets. 44 was tried and
+   cost 288px on the shelf - eighteen rows at 16px each - and bought nothing
+   a thumb can feel, because the rows TOUCH and every pixel between one
+   label and the next is already part of a target. 28 was the retreat from
+   that and still carried 4px a row of nothing: eighteen rows, 72px, a
+   quarter of a phone. The 14px track and the 12px label both fit inside 24
+   with the 2px padding, so this is the floor and not a squeeze.
    shots.js measures these against 24 and against the rows still touching,
-   rather than against the flat 44 a free-standing button owes. */
+   rather than against the flat 44 a free-standing button owes - so the
+   number here is now the boundary the guard holds, with no slack left to
+   hide a regression in. */
 button.bar.tappable{cursor:pointer;border-radius:4px}
 button.bar.tappable:hover .track,button.bar.tappable:focus-visible .track{
   box-shadow:0 0 0 1px var(--gold)}
@@ -3220,8 +3267,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.34';
-const BUILD_TIME  = '2026-11-02 08:48 PM ET';
+const APP_VERSION = '2.9.35';
+const BUILD_TIME  = '2026-11-02 09:45 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3951,8 +3998,13 @@ L.shelfTypeTiles = function (catalog, counts) {
     const height = 96 + band * 13;
     const room = height - 34;
     /* Two columns of type are allowed, so the run is doubled before sizing;
-       under 8.5px is decoration rather than a word. */
-    const size = Math.max(8.5, Math.min(11, (room * 2) / (0.62 * label.length)));
+       under 8.5px is decoration rather than a word. The CEILING is the
+       scale's smallest size: a name with room to spare was being held at 11
+       for no reason, which put every spine on the shelf half a pixel below
+       the smallest type anywhere else in the app and made the spine label
+       and the spine count two settings instead of one. A name that needs
+       less still gets less - this is the most it may have, not the size. */
+    const size = Math.max(8.5, Math.min(12, (room * 2) / (0.62 * label.length)));
     return { sub: sub, n: n, band: band, label: label,
              height: height, width: 32 + band * 6,
              size: Math.round(size * 10) / 10 };
@@ -9214,7 +9266,7 @@ L.FEATURES = [
   { term: 'Taste', src: 'deciding what to pour',
     def: 'Four reels: proof band, type, how well known, and occasion. Tap a reel to choose a value, or tap Spin and let it pick. It fills up to three glasses from what is open and never lands on a combination nothing satisfies. Tap a glass to see the bottle or log the pour. At home is the reels; Out is a bar, a shop or a friend’s kitchen, where you photograph what is in front of you and log what you drank.' },
   { term: 'Buddies', src: 'other people',
-    def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. Everyone holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
+    def: 'Everything about someone else in one place. One row per person: the switch is whether they can see your shelf, which you set; the light is whether you can see theirs. Green opens their panel; red means they have not shared back, and offers Ask. A shelf shared with you arrives the next time they open the app. Being findable or granting anyone publishes your shelf straight away. A person you can both see gets a tab: two circles, what each of you has and what you share. All holds the room — what all of you could pour. The gear holds your display name and whether anyone can find you by it.' },
   { term: 'Flights', src: 'your flights',
     def: 'Run one lists every flight you have, with a Fully pourable filter, a Most ready sort, a search and a type filter; each card says what the flight IS — Bourbon from Angel’s Envy across four casks — along with its core and bench, the drinking arithmetic, how many of its core are open and when you last ran it. Get suggestions holds Seven to pour, seven flights the app has already built from what is open, one for each of the comparisons a tasting makes — a tour of kinds, one distillery’s range, one kind years apart, one kind climbing in strength, one kind in different woods, one strength across many kinds, and across the regions. Each says what it is, what it is for and what it opens with; tapping one shows the flight in pouring order, and nothing is saved until you keep it. A shape your shelf cannot fill is left out rather than shown failing. Show me seven others builds another seven, holding a different value and reaching past the bottles the last seven used. Each flight is listed by WHAT IT IS rather than what it is called — Bourbon from Angel’s Envy across four casks — a subject and the question asked of it, read off its own pours. Your titles are on the flight itself when you open it; in a list of what to pour they were the thing in the way. Holding a flavor still is a row like any other and says how far it reaches. Then run one you designed, design one from scratch, or see what you have poured. Each opens a list you can search, filter by not run, run or fully pourable, and sort. Open a flight for its proof ladder, its reasoning and its bench pours, which you can edit like the pours. Everything a flight can do is on the flight, in one row under its name: Log the flight, Print papers, Edit, Text it, Remix and, for a flight of your own, Delete this flight. Remix and Delete ask first, because neither should be one stray tap from Edit on a phone; the delete undoes from the message it leaves. There is no More: it was six buttons in the HEADER that scrolled a phone sideways, and the page below wraps.' },
   { term: 'Guide', src: 'deciding what to taste, and learning how',
@@ -9353,11 +9405,9 @@ L.FEATURES = [
   { term: 'Import an edited library', src: 'the admin page, Library',
     def: 'Export the library, edit it in a spreadsheet, bring it back. It merges rather than replaces: rows left out are untouched, and a blank cell keeps what is there. A name it does not know becomes a new entry, not a rename. It shows what would change, field by field, before anything is written.' },
   { term: 'You and them, together', src: 'Buddies, each buddy',
-    def: 'The two shelves read as one collection and get a title the way Home gives yours — usually a different answer from either shelf alone: a sherry-led shelf beside a peated one becomes Smoke and Sherry. A whiskey you both own counts as one whiskey and two bottles. Your Not me vetoes do not apply here.' },
+    def: 'The two shelves read as one collection and get a title the way Home gives yours — usually a different answer from either shelf alone: a sherry-led shelf beside a peated one becomes Smoke and Sherry. A whiskey you both own counts as one whiskey and two bottles. The step you are on for your own shelf does not apply here.' },
   { term: 'What you both have', src: 'Buddies, each buddy',
     def: 'Once shelves are shared, each buddy’s panel describes the two of you — what you both reach for, where you differ, what you both own and could open, and what to pour them next. It says only what the numbers carry, and reads the same taste profile as the Home portrait.' },
-  { term: 'Put aside', src: 'Home, beside the title',
-    def: 'The titles you have said are not you. Not me puts one aside; this shows them and puts any back. A restored title returns as soon as the shelf still earns it.' },
   { term: 'The bar at the top of every tab', src: 'every tab',
     def: 'Under the header, each tab opens with a framed block saying where you stand — what is on the shelf, what is pourable tonight, what is thinnest. It sits in the same place on every tab. Home’s sits higher because it carries the app’s name.' },
   { term: 'Filling in what the label does not say', src: 'reading a label',
@@ -9684,8 +9734,8 @@ L.FEATURES = [
     def: 'Finds what an import leaves behind: one bottle listed twice under two names, a proof or size stuck in a name, a distillery spelled two ways, and entries with little more than a name. It names every bottle and changes nothing on its own; where a screen fixes the problem, it takes you there.' },
   { term: 'Import a collection', src: '',
     def: 'Shelf, Import. Takes a CSV from Only Drams, a spreadsheet of your own, or an export from here. Column names are matched loosely, and an ABV under 60 is read as an ABV and doubled. Nothing is written until you have seen what it found.' },
-  { term: 'Not me', src: 'Home, under the title',
-    def: 'Rejects the title the shelf earned, and the next best title takes its place. It is a veto, not a picker. Undo puts it back, and the rejection follows your account to every device. It is offered only on a title the shelf actually earned.' },
+  { term: 'Another title for this shelf', src: 'Home, beside the title',
+    def: 'Steps to the next of the titles your shelf has earned, ranked strongest first, and keeps stepping until it comes back round to the one you started on. Nothing is hidden and nothing needs undoing. Where you are follows your account to every device. It is offered only where the shelf has earned more than one title.' },
   { term: 'Removing a library entry', src: 'the admin page',
     def: 'Removes it for everyone, including devices that already had it, and it stays removed: nothing adds it back on its own. Your own bottle is not touched \u2014 it is left and counted. Renaming an entry moves the bottles with it. Undo restores the entry in full.' },
   { term: 'Count the shelf', src: 'Shelf tools › Manage',
@@ -19644,6 +19694,18 @@ L.askState = function (asked, uid, shelvesSharedWithMe, now) {
   /* Their shelf arriving is the answer, and it outranks any memory: the
      ask is done and the record no longer means anything. */
   if ((shelvesSharedWithMe || {})[uid]) return { state: 'shared' };
+  /* GIVING UP IS A RECORD, NOT AN ABSENCE, and this is the third attempt at
+     it. `asked` is in SYNC_MERGE and mergeSyncValue ends in
+     Object.assign({}, local, remote), so a merge can only ADD keys: a key
+     the account no longer holds survives from whichever device still has
+     it, and that device pushes it back on its next open. Deleting the
+     entry - locally and on the account both - therefore cleared it on the
+     phone and the laptop handed it straight back. A `dropped` stamp is a
+     value, so it travels the merge like any other, and the withdrawal wins
+     everywhere instead of the memory of the ask.
+     Read here rather than in waitingOn so the person's own row agrees: the
+     ask is off, and Ask is offered again. */
+  if (((asked || {})[uid] || {}).dropped) return { state: 'none' };
   if (!at) return { state: 'none' };
   const days = Math.floor(((now || Date.now()) - at) / 86400000);
   return days >= L.ASK_STALE_DAYS
@@ -31805,14 +31867,24 @@ L.portraitLift = function (hit) {
   return Math.min((hit.n || 0) / f, L.LIFT_CAP);
 };
 
-/* THE HEADLINE, and what earned it. */
-L.portraitPick = function (earned, dismissed) {
-  const no = dismissed || {};
+/* THE HEADLINE, and what earned it.
+
+   EVERY TITLE THE SHELF HAS EARNED, RANKED, and `at` is a step along that
+   list. It used to take a map of titles to refuse, written by a Not me
+   button on the card: a veto is permanent, it syncs, and the only way back
+   was a second list of what you had put aside. A rotation does the same job
+   with one control and no second state - step past a title you do not like,
+   keep stepping, and the list wraps round to it. Nothing is hidden, so
+   nothing needs a way back.
+
+   `at` 0 is the same answer as before: the best set, or the best single
+   chip where no set is earned. */
+L.portraitPick = function (earned, at) {
   const have = {};
   (earned || []).forEach(e => { have[e.id] = e; });
 
   const sets = L.PORTRAIT_SETS
-    .filter(g => !no[g.title] && g.ids.every(id => have[id]))
+    .filter(g => g.ids.every(id => have[id]))
     .map(g => ({
       title: g.title, ids: g.ids, size: g.ids.length,
       strength: g.lift * g.ids.reduce(
@@ -31821,18 +31893,28 @@ L.portraitPick = function (earned, dismissed) {
     .sort((a, b) => b.size - a.size || b.strength - a.strength
       || a.title.localeCompare(b.title));
 
-  if (sets.length) {
-    const g = sets[0];
-    return { title: g.title, from: g.ids,
-      why: g.ids.map(id => have[id].why).join(' · ') };
-  }
-  /* Sorted HERE rather than trusted from the caller: a picker whose answer
-     depends on input order is a bug waiting for a second caller. */
-  const single = (earned || []).filter(e => !no[e.title])
-    .sort((a, b) => L.portraitLift(b) - L.portraitLift(a)
-      || a.title.localeCompare(b.title))[0];
-  return single ? { title: single.title, from: [single.id], why: single.why }
-                : null;
+  /* Sets first, then the single chips. Sorted HERE rather than trusted from
+     the caller: a picker whose answer depends on input order is a bug
+     waiting for a second caller. */
+  const list = [];
+  const seen = {};
+  sets.map(g => ({ title: g.title, from: g.ids,
+      why: g.ids.map(id => have[id].why).join(' · ') }))
+    .concat((earned || []).slice()
+      .sort((a, b) => L.portraitLift(b) - L.portraitLift(a)
+        || a.title.localeCompare(b.title))
+      .map(e => ({ title: e.title, from: [e.id], why: e.why })))
+    /* A title can be earned as a set AND as a chip. The set is the richer
+       reading, and it is first, so the chip copy is dropped rather than
+       appearing twice in one rotation. */
+    .forEach(c => { if (seen[c.title]) return; seen[c.title] = 1; list.push(c); });
+
+  if (!list.length) return null;
+  const n = list.length;
+  /* Wrapped both ways, so a stored index outlives a shelf that has since
+     earned fewer titles, and a negative one is still a position. */
+  const i = ((Math.floor(Number(at) || 0) % n) + n) % n;
+  return Object.assign({}, list[i], { n: n, at: i });
 };/* One line, one line long: a wrapping story sentence reads as two thoughts.
    The budget is characters, roughly the portrait card at desktop width in
    the 13.5px face - a ceiling, not a promise for phones. Each line offers a
@@ -31846,24 +31928,38 @@ L.fitLine = function (full, short) {
   return b.length < a.length ? b : a;
 };
 
-L.shelfPortrait = function (catalog, bottles, favs) {
-  const t = L.tasteProfile(catalog, bottles, favs);
-  if (!t.owned) return null;
-  /* One pass over the bottles, not one per product. */
+/* WHAT THE SHELF IS, IN THE NUMBERS A TITLE IS ARGUED FROM: how much of it
+   is obscure or hard to get, how much is still sealed, how much has never
+   been finished in anything. One pass over the bottles, not one per
+   product. Separate from shelfPortrait because it answers a question of its
+   own - every one of these is a count of the shelf and none of them knows
+   anything about titles - and because the card that reads them is at its
+   line ceiling (rule 30f). */
+L.portraitCtx = function (catalog, bottles) {
   const held = L.ownedCounts(bottles || []);
   const owned = Object.keys(catalog || {})
     .filter(k => held[k]).map(k => catalog[k]);
   const sealedN = (bottles || []).filter(b => b && b.status !== 'open').length;
   const unfin = owned.filter(p => !p.fin).length;
-  const ctx = {
-    obscure: owned.filter(p => p.obsc === 'obscure').length,
-    rare: owned.filter(L.hardToGet).length,
-    bottles: (bottles || []).length,
-    sealed: sealedN,
-    sealedShare: (bottles || []).length ? sealedN / bottles.length : 0,
-    unfinished: unfin,
-    unfinishedShare: owned.length ? unfin / owned.length : 0
+  return {
+    ownedN: owned.length,
+    ctx: {
+      obscure: owned.filter(p => p.obsc === 'obscure').length,
+      rare: owned.filter(L.hardToGet).length,
+      bottles: (bottles || []).length,
+      sealed: sealedN,
+      sealedShare: (bottles || []).length ? sealedN / bottles.length : 0,
+      unfinished: unfin,
+      unfinishedShare: owned.length ? unfin / owned.length : 0
+    }
   };
+};
+
+L.shelfPortrait = function (catalog, bottles, favs, at) {
+  const t = L.tasteProfile(catalog, bottles, favs);
+  if (!t.owned) return null;
+  const made = L.portraitCtx(catalog, bottles);
+  const ctx = made.ctx, ownedN = made.ownedN;
 
   const earned = [];
   L.PORTRAIT_TITLES.forEach(d => {
@@ -31896,7 +31992,7 @@ L.shelfPortrait = function (catalog, bottles, favs) {
   const wood = t.woodFamilies[0];
   /* A SHARE, not five bottles: five of 351 is one and a half per cent and
      would have said the wood travels with you from house to house. */
-  if (wood && L.leansTo(wood.n, owned.length)) {
+  if (wood && L.leansTo(wood.n, ownedN)) {
     const houses = wood.houses.length;
     lines.push({ k: 'wood', n: wood.n, text: L.fitLine(
       wood.n + ' whiskies in ' + wood.value + ' wood, across ' + houses + ' '
@@ -31908,7 +32004,7 @@ L.shelfPortrait = function (catalog, bottles, favs) {
   }
   if (t.peat.any) {
     lines.push({ k: 'peat', n: t.peat.any,
-      text: L.leansTo(t.peat.heavy, owned.length)
+      text: L.leansTo(t.peat.heavy, ownedN)
         ? t.peat.heavy + ' heavily peated bottles against ' + t.peat.none
           + ' with no smoke at all. Smoke is not a phase here.'
         : t.peat.any + ' peated bottles. Smoke is somewhere you visit '
@@ -31941,7 +32037,7 @@ L.shelfPortrait = function (catalog, bottles, favs) {
      bottle and nothing about a palate, which is what these lines are for.
      t.repeats stays: the Creature of Habit badge and the buy-against-drink
      quadrants both read it, and both are about habit, where it belongs. */
-  const labels = L.labelLine(ctx, owned.length);
+  const labels = L.labelLine(ctx, ownedN);
   if (labels) lines.push({ k: 'obscure', n: ctx.obscure, text: labels });
 
   /* WHERE IT ALL CAME FROM (BZ asked for it): provenance describes habit
@@ -31981,8 +32077,9 @@ L.shelfPortrait = function (catalog, bottles, favs) {
     };
   }
 
-  /* The combination, not the loudest single chip. */
-  const pick = L.portraitPick(earned, (favs && favs.__notMe) || null);
+  /* The combination, not the loudest single chip, and `at` steps through
+     the rest of what the shelf has earned. */
+  const pick = L.portraitPick(earned, at);
   /* The chips that EARNED the title lead, then the rest, to the side. */
   const lead = pick ? earned.filter(e => pick.from.indexOf(e.id) >= 0) : [];
   const rest = pick ? earned.filter(e => pick.from.indexOf(e.id) < 0) : earned;
@@ -31991,6 +32088,11 @@ L.shelfPortrait = function (catalog, bottles, favs) {
     why: pick ? pick.why
       : t.owned + ' whiskies and no single thing the shelf insists on',
     from: pick ? pick.from : [],
+    /* HOW MANY TITLES THERE ARE AND WHICH ONE THIS IS, so the card can draw
+       the step control only where there is somewhere to step to, and say
+       where you are in the round. */
+    portN: pick ? pick.n : 0,
+    portAt: pick ? pick.at : 0,
     also: lead.concat(rest).slice(0, 4),
     line: L.collectorLine(t, ctx, pick ? pick.title : null),
     story: (function () {
@@ -39758,8 +39860,7 @@ function askForNote(p) {
    does not go up. Templating only - every judgment and figure comes from
    L.shelfPortrait and L.palateShelf (rule 30). */
 /* THE HEADER OF THE PROFILE CARD: who the shelf belongs to, what it is
-   called, the other names it earned, and Not me - which is most of the
-   lines here, because putting a title aside has to survive an undo. */
+   called, the other names it earned, and the step to the next of them. */
 function portraitHead(port) {
   const ph = el('div', 'porthd');
   const left = el('div', 'porthd-l');
@@ -39768,71 +39869,35 @@ function portraitHead(port) {
     who ? who + '\u2019s Bottlefolio' : 'Your Bottlefolio'));
   const ptitle = el('h2', 'porttitle', port.title);
   left.appendChild(ptitle);
-  /* NOT ME: a veto, not a picker. It writes favs.__notMe, which syncs
-     with removals, so a rejection follows the account and can be taken
-     back. Only on an EARNED title: The Generalist is the fallback, and
-     vetoing it would leave the engine nothing. */
-  if (port.from && port.from.length) {
-    /* A small superscript-like pill inside the h2: a correction to one
-       word, so it stays with the title when it wraps. */
-    const no = el('button', 'portveto', 'Not me');
-    no.title = 'Stop calling the shelf ' + port.title;
-    no.onclick = () => {
-      const favs = Object.assign({}, S.favs || {});
-      const notMe = Object.assign({}, favs.__notMe || {});
-      notMe[port.title] = Date.now();
-      favs.__notMe = notMe;
+  /* STEP TO THE NEXT TITLE, the way every other rewritable block on Home
+     offers one (rule 30d: the same mark, the same place). This replaced a
+     Not me button, which vetoed a title for good, synced the veto, and
+     needed a second control - a "Put aside (n)" list - to undo itself. A
+     veto is also a claim the app cannot check: a shelf that earns a title
+     today earns it again tomorrow, so the refusal had to be stored for
+     ever. Stepping stores one number, hides nothing, and comes back round
+     to where it started, which is the whole of what was asked for.
+
+     Drawn only where there is somewhere to step: one earned title is not a
+     rotation, and a button that returns you to the same word is worse than
+     no button. */
+  if (port.portN > 1) {
+    const step = el('button', 'portveto portturn', '↻');
+    step.type = 'button';
+    const at = (port.portAt || 0) + 1;
+    step.title = 'Another title for this shelf (' + at + ' of '
+      + port.portN + ')';
+    step.setAttribute('aria-label', step.title);
+    step.onclick = () => {
+      const favs = Object.assign({}, S.favs || {},
+        { __portAt: (port.portAt || 0) + 1 });
       S.favs = favs;
       save_();
-      appLog('portrait: ' + port.title + ' rejected');
+      appLog('portrait: stepped to ' + (((port.portAt || 0) + 1)
+        % port.portN + 1) + ' of ' + port.portN);
       renderHome();
-      toast(port.title + ' put aside', { label: 'Undo', action: () => {
-        const f2 = Object.assign({}, S.favs || {});
-        const n2 = Object.assign({}, f2.__notMe || {});
-        delete n2[port.title];
-        f2.__notMe = n2;
-        S.favs = f2;
-        save_(); renderHome();
-      } });
     };
-    ptitle.appendChild(no);
-  }
-  /* PUT ASIDE, AND GETTABLE BACK. A veto you cannot see or lift is a
-     deletion, so vetoed titles are listed with a way back. Drawn only when
-     there is something in it. */
-  const aside = Object.keys((S.favs || {}).__notMe || {});
-  if (aside.length) {
-    const back = el('button', 'portveto',
-      'Put aside (' + aside.length + ')');
-    back.title = 'Titles you have said are not you';
-    back.onclick = () => {
-      openModal('Put aside', m => {
-        m.appendChild(el('div', 'sub',
-          'Titles you said were not you. Put one back and it can return '
-          + 'when the numbers earn it.'));
-        aside.forEach(t => {
-          const row = el('button', 'item');
-          row.appendChild(el('div', 'nm', t));
-          row.appendChild(el('div', 'sub', 'Put it back'));
-          row.onclick = () => {
-            const f2 = Object.assign({}, S.favs || {});
-            const n2 = Object.assign({}, f2.__notMe || {});
-            delete n2[t];
-            f2.__notMe = n2;
-            S.favs = f2;
-            save_();
-            appLog('portrait: ' + t + ' restored');
-            closeModal(); renderHome();
-            toast(t + ' put back');
-          };
-          m.appendChild(row);
-        });
-        const done = el('button', 'btn wide', 'Close');
-        done.onclick = closeModal;
-        m.appendChild(done);
-      });
-    };
-    left.appendChild(back);
+    ptitle.appendChild(step);
   }
   if (port.line) left.appendChild(el('div', 'portline1', port.line));
   left.appendChild(el('div', 'portwhy', port.why));
@@ -39989,7 +40054,8 @@ function renderHome() {
 
   /* The story the shelf tells, above the numbers. Templating only: every
      judgment and figure comes from L.shelfPortrait (rule 30). */
-  const port = L.shelfPortrait(S.catalog, S.bottles, S.favs);
+  const port = L.shelfPortrait(S.catalog, S.bottles, S.favs,
+    (S.favs || {}).__portAt);
   if (port) box.appendChild(portraitCard(port));
 
   const stats = L.shelfStats(S.catalog, S.bottles);
@@ -43645,6 +43711,11 @@ function guideAsking(g) {
        one that gets the glyph, beside a field where it is self-evident. */
     go.textContent = cooperThinking ? 'Stop' : '↵';
     go.setAttribute('aria-label', cooperThinking ? 'Stop' : 'Ask');
+    /* THE GLYPH IS SET AT 24, THE WORD AT 14. A return mark drawn at the
+       button's 14px label size is a speck in a 44px square; a four-letter
+       word at 24 is shouting. The size belongs to which of the two is in
+       there, so it is carried by a class and not by the button. */
+    go.classList.toggle('glyphbtn', !cooperThinking);
   }
   const inp = document.getElementById('guideSay');
   if (!inp) return;
@@ -43778,7 +43849,7 @@ function guideInput() {
   inp.addEventListener('keydown', ev => {
     if (ev.key === 'Enter') { ev.preventDefault(); cooperHears(inp.value); }
   });
-  const go = el('button', 'btn btn-gold', '↵');
+  const go = el('button', 'btn btn-gold glyphbtn', '↵');
   go.id = 'guideGo';
   go.setAttribute('aria-label', 'Ask');
   go.onclick = () => (cooperThinking ? cooperStop() : cooperHears(inp.value));
@@ -44386,9 +44457,12 @@ function renderBuddiesTab() {
   }
 }
 
-/* ONE TAB PER PERSON, plus Everyone in front of them. */
+/* ONE TAB PER PERSON, plus All in front of them. The first tab is one
+   of five across a 390px phone and gets about 70px: "Everyone" drew as
+   "Ever..." on every phone, and a truncated label is the one thing a
+   tab cannot afford. */
 function buddyTabStrip(strip, uids, names) {
-  [['all', 'Everyone']].concat((uids || []).map(u => [u, names[u]]))
+  [['all', 'All']].concat((uids || []).map(u => [u, names[u]]))
     .forEach(([id, label]) => {
       const b = el('button', 'ftab', label);
       b.setAttribute('role', 'tab');
@@ -45012,7 +45086,7 @@ function buddiesOnePanel(box, uid, names, mySet, row) {
       ? 'Their shelf has not reached you yet. It arrives the next time '
       + 'they open the app.'
       : 'They can see your shelf. Until they share theirs, there is nothing '
-      + 'to compare \u2014 the ask is on their tile, under Everyone.'
+      + 'to compare \u2014 the ask is on their tile, under All.'
       + ' Nothing to do '
       + 'here, and nothing has gone wrong.'));
     box.appendChild(w);
@@ -49501,14 +49575,56 @@ function askTombstone(uid) {
     .once('value').then(s => Number(s.val()) || 0).catch(() => 0);
 }
 
+/* WITHDRAWING AN ASK, from the button and from the app both.
+
+   THE SERVER FIRST, AND THE SCREEN AFTER IT. An earlier version removed the
+   row, forgot the ask on the device and THEN asked the account to forget it
+   too - and both of those writes resolved quietly with no signed-in account
+   or no loaded base, so the log said "withdrew the ask" and nothing had
+   been withdrawn. Nothing is forgotten here until the account has forgotten
+   it.
+
+   AND THE ACCOUNT'S COPY IS STAMPED, NOT REMOVED. `asked` is in SYNC_MERGE
+   and mergeSyncValue ends in Object.assign({}, local, remote), so a merge
+   can only ADD keys: a key the account no longer holds survives on whichever
+   device still has it, and that device pushes it back on its next open. A
+   stamp is a value, so it travels and wins.
+
+   ONE FUNCTION BECAUSE THERE ARE TWO CALLERS. The button is one; the other
+   is the tombstone, which withdraws an ask to a deleted account without
+   being asked to (rule 30d). */
+function withdrawAsk(uid) {
+  const stamped = Object.assign({}, (S.asked || {})[uid],
+    { dropped: Date.now() });
+  return Promise.all([fbDropRequest(uid), fbDropAsked(uid, stamped)])
+    .then(() => {
+      /* THE SAME STAMP LOCALLY, so the screen and the account say one
+         thing. Deleting it here instead would leave the local copy missing
+         a key the account has, and the merge would hand the account's
+         version straight back. */
+      S.asked = Object.assign({}, S.asked, { [uid]: stamped });
+      save_();
+    });
+}
+
 function waitingCard(box, rows, names) {
   const known = {};
   (rows || []).forEach(r => { known[r.uid] = 1; });
   const waiting = L.waitingOn(S.asked, known, SHARED.shelves || {}, Date.now());
   if (!waiting.length) return;
   const card = el('div', 'sheet');
-  card.appendChild(el('h3', null, waiting.length === 1
-    ? 'One ask has not been answered' : waiting.length + ' asks have not been answered'));
+  const head = el('h3', null, waiting.length === 1
+    ? 'One ask has not been answered' : waiting.length + ' asks have not been answered');
+  card.appendChild(head);
+  /* THE HEADING COUNTS WHAT IS LEFT. A row can leave on its own below, and a
+     card headed "One ask has not been answered" over nothing is worse than
+     no card. */
+  const retitle = () => {
+    const n = card.querySelectorAll('.scanrow').length;
+    if (!n) return card.remove();
+    head.textContent = n === 1 ? 'One ask has not been answered'
+      : n + ' asks have not been answered';
+  };
   waiting.forEach(w => {
     const line = el('div', 'item scanrow');
     const left = el('div');
@@ -49516,49 +49632,49 @@ function waitingCard(box, rows, names) {
     const say = el('div', 'sub', L.waitingSay(w));
     left.appendChild(who);
     left.appendChild(say);
-    /* AND WHETHER THAT ACCOUNT IS STILL THERE. Drawn first from what is
-       known, then said again if the tombstone comes back - an ask to a
-       deleted account could only print a uid before, and BZ had one that
-       was deleted 36 minutes before he followed its link. */
-    askTombstone(w.uid).then(wipedAt => {
-      if (!wipedAt) return;
-      const gone = Object.assign({}, w, { wipedAt: wipedAt });
-      who.textContent = 'Waiting on ' + L.waitingName(gone, names);
-      say.textContent = L.waitingSay(gone);
-    });
     line.appendChild(left);
     const drop = el('button', 'chip quiet', 'Give up on it');
     drop.onclick = () => {
-      /* THE SERVER FIRST, AND THE SCREEN AFTER IT ("I've
-         given up on that account a few times").
-
-         This removed the row, forgot the ask on the device and THEN asked
-         the account to forget it too - and both of those writes resolved
-         quietly when there was no signed-in account or no loaded base, so
-         the log said "withdrew the ask" and nothing had been withdrawn.
-         `asked` is merged from the account on every load, on purpose, so
-         it came straight back the next time the app started. Giving up
-         looked done and was not, over and over.
-
-         Nothing is forgotten here until the account has forgotten it. */
       drop.disabled = true;
-      Promise.all([fbDropRequest(w.uid), fbForgetAsked(w.uid)])
+      withdrawAsk(w.uid)
         .then(() => {
-          const rest = Object.assign({}, S.asked);
-          delete rest[w.uid];
-          S.asked = rest;
-          save_();
           line.remove();
+          retitle();
           appLog('withdrew the ask to ' + L.shortIds([w.uid]));
         })
         .catch(err => {
           drop.disabled = false;
           appLog('could not withdraw the ask to ' + L.shortIds([w.uid])
-            + ' \u2014 ' + ((err && err.message) || err));
-          toast(L.plainError(err, 'Could not give up on it yet \u2014 it '
+            + ' — ' + ((err && err.message) || err));
+          toast(L.plainError(err, 'Could not give up on it yet — it '
             + 'would come back. Try again when your shelf has loaded.'));
         });
     };
+    /* AND WHETHER THAT ACCOUNT IS STILL THERE.
+
+       A DELETED ACCOUNT NEEDS NO DECISION, so the app takes it. The row used
+       to rewrite itself to say "that account has been deleted, so no answer
+       is coming" and then leave a button asking whether to give up - a
+       question with one answer, which the app already had. The tombstone is
+       proof, not a hint: it is written when an account is wiped and nothing
+       else writes it. So the ask is withdrawn here, by the same door the
+       button uses, and the row goes.
+
+       It stays a SENTENCE and not a silence anywhere it cannot act: no
+       tombstone means the account may simply be private, which is a
+       different thing from gone, and those rows are left alone. */
+    askTombstone(w.uid).then(wipedAt => {
+      if (!wipedAt) return;
+      const gone = Object.assign({}, w, { wipedAt: wipedAt });
+      who.textContent = 'Waiting on ' + L.waitingName(gone, names);
+      say.textContent = L.waitingSay(gone);
+      return withdrawAsk(w.uid).then(() => {
+        line.remove();
+        retitle();
+        appLog('withdrew the ask to ' + L.shortIds([w.uid])
+          + ' — that account has been deleted');
+      });
+    }).catch(() => {});
     line.appendChild(drop);
     card.appendChild(line);
   });
@@ -57527,18 +57643,20 @@ function fbDropRequest(toUid) {
   return fbReqRef().child(toUid).child(FB.user.uid).remove();
 }
 
-/* AND THIS DEVICE'S MEMORY OF HAVING ASKED, cleared where the merge cannot put
-   it back ("and this came back"). `asked` is merged on every
-   load on purpose - a phone and a desktop may each have asked somebody
-   different and neither should lose the other's record - so deleting the entry
-   locally only means the account hands it back on the next open. Nulling it on
-   the account leaves the merge nothing to restore. */
-function fbForgetAsked(uid) {
+/* AND THE ACCOUNT'S MEMORY OF HAVING ASKED, stamped rather than removed
+   ("and this came back", twice). `asked` is merged on every load on purpose
+   - a phone and a desktop may each have asked somebody different and neither
+   should lose the other's record - and mergeSyncValue ends in
+   Object.assign({}, local, remote), which can only ADD keys. Nulling the
+   entry on the account therefore left the OTHER device holding it, and that
+   device pushed it back on its next open. A stamp is a value: it merges, it
+   wins, and L.askState reads it as no ask at all. */
+function fbDropAsked(uid, rec) {
   if (!uid) return Promise.resolve();
   if (!FB.base || !FB.loaded) {
     return Promise.reject(new Error('your shelf has not loaded yet'));
   }
-  return FB.base.child('asked').child(L.fbKey(uid)).remove();
+  return FB.base.child('asked').child(L.fbKey(uid)).set(rec);
 }
 
 function fbMyRequests() {
@@ -59238,7 +59356,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.34</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.35</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

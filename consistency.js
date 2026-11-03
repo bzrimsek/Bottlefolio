@@ -1610,8 +1610,6 @@ check('no fixed svg id is emitted by a repeated drawing',
   const CONTROLS = ['Photograph the label', 'Export everything', 'Export for import',
     'Photograph it', 'Fill what is missing', 'Import a collection',
     'Back up everything', 'Add to the shelf',
-    /* Added with the portrait veto's way back, 2026-09-13. */
-    'Put aside',
     /* Added with the location lookup on Taste, 2026-10-09. */
     'Find where I am',
     /* Added with the seven suggested flights, 2026-10-19. */
@@ -1637,7 +1635,9 @@ check('no fixed svg id is emitted by a repeated drawing',
        in here is one the check cannot see. */
     'Mark bottles open or sealed',
         /* v1.9.32 */
-    'Not me', 'Removing a library entry',
+    /* v2.9.35: 'Not me' and 'Put aside' went when the portrait veto became
+       a rotation. One control replaced two, and it is named here. */
+    'Another title for this shelf', 'Removing a library entry',
     /* v2.0.9 */
     'Scan the library for inconsistencies',
     /* v1.9.40 */
@@ -2654,32 +2654,107 @@ check('no fixed svg id is emitted by a repeated drawing',
  * The third time in two days that something with two ends was cleared at one:
  * the account wipe, the share record, and now this. So it gets a check rather
  * than a resolution to be careful.
+ *
+ * AND THE ACCOUNT'S OWN COPY IS STAMPED, NOT REMOVED (2026-11-02). Removing
+ * it was the second attempt and it failed for a reason nothing here was
+ * looking at: `asked` is in SYNC_MERGE and mergeSyncValue ends in
+ * Object.assign({}, local, remote), so a merge can only ADD keys. A key the
+ * account no longer holds survives on whichever device still has it, and
+ * that device pushes it back. So the check is no longer "is it deleted at
+ * both ends" but "does a value travel" - a `dropped` stamp merges like any
+ * other value and wins, where an absence cannot.
  */
 {
   const bad = [];
   const lines = blankComments(src).split('\n');
+  const all = lines.join('\n');
+  /* READ THE WITHDRAWAL BY NAME, not a window of lines under the button's
+     label. The window was 26 lines forward from 'Give up on it', and the
+     day those writes moved up into withdrawAsk() the window found no
+     S.asked at all, took that to mean it was looking at the wrong button,
+     and returned - so this passed with the whole withdrawal gutted. A
+     mutant proved it: strip the stamp and both writes and it still said
+     yes. A guard that decides it is not looking at the thing is a guard
+     that cannot fail. */
+  const fnBody = (name) => {
+    const a = all.indexOf('function ' + name + '(');
+    if (a < 0) return null;
+    const b = all.indexOf('\nfunction ', a + 1);
+    return all.slice(a, b < 0 ? all.length : b);
+  };
+  const body = fnBody('withdrawAsk');
+  if (!body) {
+    bad.push('withdrawAsk has gone - nothing holds the withdrawal, and '
+      + 'every caller is writing its own');
+  } else {
+    const req = /fbDropRequest\(/.test(body);
+    const mine = /fbDropAsked\(/.test(body);
+    /* AND THE LOCAL COPY IS STAMPED TOO: a local key the account has
+       stamped would simply be handed back by the merge, so a delete here
+       is the old bug wearing the new call. */
+    const kept = /dropped:/.test(body) && /S\.asked = /.test(body)
+      && !/delete /.test(body);
+    const says = [];
+    if (!req) says.push('leaves requests/<them>/<me> behind');
+    if (!mine) says.push('leaves this account’s own asked/<them>, which '
+      + 'is merged on load and hands the ask straight back');
+    if (!kept) says.push('does not stamp the local copy, so the merge '
+      + 'hands the ask back on the next load');
+    if (says.length) bad.push('withdrawAsk ' + says.join(', and '));
+  }
+  /* AND EVERY WAY OUT GOES THROUGH IT. A second place writing those three
+     things is a second withdrawal to keep in step (rule 30d). */
   lines.forEach((l, i) => {
     if (!/Give up on it/.test(l)) return;
-    /* The handler is right below the button it belongs to. */
-    const near = lines.slice(i, i + 26).join('\n');
-    if (!/S\.asked/.test(near)) return;          // not the give-up handler
-    const req = /fbDropRequest\(/.test(near);
-    const mine = /fbForgetAsked\(/.test(near);
-    if (req && mine) return;
-    bad.push('index.html:' + (i + 1) + '  giving up '
-      + (req ? '' : 'leaves requests/<them>/<me> behind')
-      + (req || mine ? '' : ', and ')
-      + (mine ? '' : 'leaves this account’s own asked/<them>, which is '
-        + 'merged on load and hands the ask straight back'));
+    const near = lines.slice(i, i + 20).join('\n');
+    if (!/withdrawAsk\(/.test(near)) {
+      bad.push('index.html:' + (i + 1) + '  the Give up button does not go '
+        + 'through withdrawAsk');
+    }
   });
+  /* AND THE APP WITHDRAWS ONE TO A DELETED ACCOUNT WITHOUT BEING ASKED.
+     The tombstone is proof the account is gone, so 'no answer is coming'
+     beside a button asking whether to give up is a question with one
+     answer that the app already had. */
+  {
+    const a = all.indexOf('askTombstone(w.uid)');
+    const near = a < 0 ? '' : all.slice(a, a + 900);
+    if (a < 0) {
+      bad.push('nothing asks whether the account is still there');
+    } else if (!/withdrawAsk\(/.test(near)) {
+      bad.push('an ask to a deleted account is drawn and left for the '
+        + 'person to withdraw - the tombstone already settles it');
+    }
+  }
   /* And the withdrawal exists at all, since a check for a call is worth
      nothing if the thing it calls has gone. */
   if (!/function fbDropRequest\s*\(/.test(src)) {
     bad.push('fbDropRequest has gone - nothing can withdraw an ask');
   }
-  if (!/function fbForgetAsked\s*\(/.test(src)) {
-    bad.push('fbForgetAsked has gone - the merge will restore every ask '
+  if (!/function fbDropAsked\s*\(/.test(src)) {
+    bad.push('fbDropAsked has gone - the merge will restore every ask '
       + 'anybody gives up on');
+  }
+  /* AND IT WRITES RATHER THAN REMOVES. A withdrawal that calls .remove() on
+     the account's copy is the shape that failed twice. */
+  if (/function fbDropAsked\s*\([^)]*\)\s*\{[\s\S]{0,400}?\.remove\(\)/
+      .test(src)) {
+    bad.push('fbDropAsked removes the entry - an absence does not survive '
+      + 'mergeSyncValue, which can only add keys');
+  }
+  /* AND L.askState READS THE STAMP, or the record travels and nothing
+     looks at it. The function is sliced out by its own two ends rather
+     than searched within a character window: the window was 900, the
+     comment explaining the stamp pushed the code to 1096, and the check
+     went red over how much prose sits in the middle. */
+  {
+    const a = src.indexOf('L.askState = function');
+    const b = a < 0 ? -1 : src.indexOf('\nL.', a + 1);
+    const body = a < 0 ? '' : src.slice(a, b < 0 ? src.length : b);
+    if (!/\.dropped\b/.test(body)) {
+      bad.push('L.askState does not read the dropped stamp - the '
+        + 'withdrawal would sync and still show as a wait');
+    }
   }
   check('giving up on an ask withdraws it, not just forgets it', bad);
 }
@@ -4054,37 +4129,35 @@ check('no fixed svg id is emitted by a repeated drawing',
     likelyToLike: 455,
     showBottle: 417,
     productForm: 316,
-    renderShelf: 297,
+    renderShelf: 296,
     openLibraryCleanUp: 280,
     renderAway: 265,
     shopAnswer: 243,
     renderGaps: 170,
     renderShelfCharts: 163,
-    shelfPortrait: 159,
     renderGuest: 157,
     renderUsers: 152,
-    showCandidates: 147,
+    shelfPortrait: 152,
+    showCandidates: 145,
     showEnhance: 139,
-    libraryAudit: 131,
-    shelfBuildSheet: 131,
+    libraryAudit: 130,
+    shelfBuildSheet: 130,
     awayLookingCard: 128,
     renderOffer: 128,
     shelfFit: 128,
     flightEditor: 124,
     renderShop: 124,
     renderLibrary: 123,
-    fbLoadAfterWipeCheck: 122,
     renderBuddies: 122,
+    fbLoadAfterWipeCheck: 121,
     postWithRetry: 120,
     roomNotes: 120,
     renderBuddiesTab: 112,
-    shelfAxes: 107,
+    shelfAxes: 106,
     showBulkStatus: 106,
-    renderDiag: 105,
+    renderDiag: 104,
     renderFromUrl: 103,
-    receiptsDialog: 101,
-    renderRecap: 101,
-    showImportCheck: 101
+    receiptsDialog: 101
   };
 
   if (process.argv.indexOf('--sizes') >= 0) {

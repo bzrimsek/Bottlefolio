@@ -14109,7 +14109,13 @@ sec('§229 books on a shelf');
     asm.height <= bourbon.height, true);
   eq('it shrinks its type instead', asm.size <= bourbon.size, true);
   eq('but never below the floor', asm.size >= 8.5, true);
-  eq('and never above the ceiling', bourbon.size <= 11, true);
+  /* THE CEILING IS THE TYPE SCALE'S SMALLEST SIZE. It was 11, which put
+     every spine half a pixel under the smallest type anywhere else in the
+     app and made the spine label and the spine count two settings on a
+     screen that was at its limit for them. */
+  eq('and never above the ceiling', bourbon.size <= 12, true);
+  eq('and a name with room to spare takes the whole of it',
+    bourbon.size, 12);
 
   /* One label, used by the books AND the By type chart, which now sit on
      the same screen. They disagreed: the spine said American Single Malt
@@ -20096,6 +20102,34 @@ sec('\u00a7300 an ask you cannot read back');
   eq('and no record at all is none',
     L.askState(null, 't', null, now).state, 'none');
 
+  /* GIVING UP IS A RECORD, NOT AN ABSENCE, and this is the third attempt at
+     it. `asked` is in SYNC_MERGE, and mergeSyncValue ends in
+     Object.assign({}, local, remote): a merge can only ADD keys. Deleting
+     the entry - on this device and on the account both - therefore left the
+     OTHER device holding it, and that device pushed it back on its next
+     open, so the same withdrawn ask kept returning. A stamp is a value, so
+     it travels the merge, and the withdrawal wins everywhere. */
+  eq('a withdrawn ask is over, however recent',
+    L.askState({ d: { at: now - 3600000, dropped: now } }, 'd', {}, now).state,
+    'none');
+  eq('and however old',
+    L.askState({ d: { at: now - 90 * day, dropped: now } }, 'd', {}, now).state,
+    'none');
+  eq('so it is not waited on',
+    L.waitingOn({ d: { at: now - 90 * day, dropped: now } }, {}, {}, now).length,
+    0);
+  /* AND THE MERGE CARRIES IT, which is the half that kept failing. The
+     stamped entry is the remote one, and remote wins per key. */
+  eq('the stamp survives a device that still remembers the ask',
+    L.askState(L.mergeSyncValue('asked',
+      { d: { at: now - 90 * day } },
+      { d: { at: now - 90 * day, dropped: now } }), 'd', {}, now).state,
+    'none');
+  /* AND ASKING AGAIN IS A FRESH ASK, because a new record carries no stamp
+     and the remote copy of it wins over the stamped one. */
+  eq('asking again starts the wait over',
+    L.askState({ d: { at: now - 3600000 } }, 'd', {}, now).state, 'waiting');
+
   /* The wording sits apart from the logic so it can change without moving
      the decision out of reach of this test. */
   eq('nothing to ask of somebody who shared',
@@ -21536,18 +21570,36 @@ sec('\u00a7329 a shelf is a combination, not its loudest chip');
   eq('smoke and sherry beats smoke and Islay',
     L.portraitPick(both, null).title, 'Smoke and Sherry');
 
-  /* THE VETO. BZ: should we let users say "not me". A veto rather than a
-     picker — a title must be EARNED, so choosing your own is flattery, but
-     saying the description is wrong is something only the owner knows. */
-  eq('a dismissed title steps aside',
-    L.portraitPick(smokeSherry, { 'Smoke and Sherry': 1 }).title,
-    'Sweet Smoke');
-  eq('and dismissing that one too falls to a chip',
-    L.portraitPick(smokeSherry,
-      { 'Smoke and Sherry': 1, 'Sweet Smoke': 1, 'Islay First': 1 }).title,
-    'PX Lover');
-  eq('dismissing everything leaves nothing rather than something invented',
-    L.portraitPick([chip('px', 19)], { 'PX Lover': 1 }), null);
+  /* THE ROTATION, which replaced a veto in v2.9.35. A title must be EARNED,
+     so choosing your own is flattery - but stepping past one is something
+     only the owner can judge, and a step that comes back round hides
+     nothing and needs no undo. */
+  eq('stepping once takes the next title',
+    L.portraitPick(smokeSherry, 1).title, 'Sweet Smoke');
+  eq('and stepping on keeps going down the ranking',
+    L.portraitPick(smokeSherry, 2).title !== 'Sweet Smoke', true);
+  eq('the list wraps, so you can always get back',
+    L.portraitPick(smokeSherry, L.portraitPick(smokeSherry, 0).n).title,
+    L.portraitPick(smokeSherry, 0).title);
+  eq('stepping backwards is still a position',
+    L.portraitPick(smokeSherry, -1).title,
+    L.portraitPick(smokeSherry, L.portraitPick(smokeSherry, 0).n - 1).title);
+  eq('one earned chip is a rotation of one',
+    L.portraitPick([chip('px', 19)], 3).title, 'PX Lover');
+  eq('and nothing earned is still nothing',
+    L.portraitPick([], 2), null);
+  /* A TITLE EARNED TWICE APPEARS ONCE. A set and a lone chip can carry the
+     same name; two stops on one rotation reading the same word is a step
+     that looks broken. */
+  eq('no title appears twice in one rotation', (function () {
+    const seen = {}, p0 = L.portraitPick(smokeSherry, 0);
+    for (let i = 0; i < p0.n; i++) {
+      const t = L.portraitPick(smokeSherry, i).title;
+      if (seen[t]) return t;
+      seen[t] = 1;
+    }
+    return '';
+  })(), '');
 
   /* EVERY SET MUST BE REACHABLE, or a name is written and never shown. */
   const ids = {};
@@ -22287,38 +22339,74 @@ sec('\u00a7345 an admin\u2019s deletion is a judgment, not an absence');
 
 sec('\u00a7346 not me');
 {
-  /* BZ asked for a VETO rather than a picker: he does not want to choose
-     his own title, he wants to reject one that is wrong. The engine has
-     taken a dismissed map since the day it was written and nothing ever
-     set it. Measured on BZ's shipped 344-bottle shelf. */
+  /* A ROTATION RATHER THAN A PICKER, since v2.9.35: he does not want to
+     choose his own title, he wants to step past one that reads wrong and
+     still be able to get back to it. The engine took a dismissed map from
+     the day it was written and nothing ever set it; what it takes now is a
+     position, which the card stores and the account carries. Measured on
+     BZ's shipped 344-bottle shelf. */
   const first = L.shelfPortrait(data.catalog, data.bottles, {});
   eq('a shelf earns a title', !!first.title, true);
-  eq('and names what earned it', first.from.length > 0, true);
 
-  const no1 = {}; no1[first.title] = 1;
-  const second = L.shelfPortrait(data.catalog, data.bottles,
-    { __notMe: no1 });
-  eq('a rejected title is not offered again',
+  /* THE NUMBERS A TITLE IS ARGUED FROM, which left shelfPortrait when the
+     rotation pushed it past its line ceiling. Asserted here rather than
+     only through the card, because a count that is wrong is wrong whoever
+     reads it. */
+  {
+    const cat = { a: { k: 'a', obsc: 'obscure', fin: 'sherry' },
+                  b: { k: 'b', fin: '' },
+                  c: { k: 'c', fin: 'port' } };
+    const bs = [{ k: 'a', status: 'open' }, { k: 'b', status: 'sealed' },
+                { k: 'b', status: 'sealed' }];
+    const m = L.portraitCtx(cat, bs);
+    eq('it counts the products held, not the bottles', m.ownedN, 2);
+    eq('and the bottles, not the products', m.ctx.bottles, 3);
+    eq('an obscure one is counted once however many bottles of it there are',
+      m.ctx.obscure, 1);
+    eq('sealed is a bottle count', m.ctx.sealed, 2);
+    eq('and its share is of the bottles', m.ctx.sealedShare, 2 / 3);
+    eq('unfinished is a product count', m.ctx.unfinished, 1);
+    eq('and its share is of the products held', m.ctx.unfinishedShare, 1 / 2);
+    eq('a product in the catalogue nobody owns counts for nothing',
+      L.portraitCtx(cat, []).ownedN, 0);
+    eq('and an empty shelf divides by nothing rather than by zero',
+      [L.portraitCtx(cat, []).ctx.sealedShare,
+       L.portraitCtx(cat, []).ctx.unfinishedShare], [0, 0]);
+    eq('and no catalogue at all is still an answer',
+      L.portraitCtx(null, null).ownedN, 0);
+  }
+  eq('and names what earned it', first.from.length > 0, true);
+  eq('and says how many titles there are to step through',
+    first.portN >= 1, true);
+  eq('and where in them it is', first.portAt, 0);
+
+  const second = L.shelfPortrait(data.catalog, data.bottles, {}, 1);
+  eq('a step lands on a different title',
     second.title === first.title, false);
   eq('and the shelf still gets a title', !!second.title, true);
 
-  const no2 = Object.assign({}, no1); no2[second.title] = 1;
-  const third = L.shelfPortrait(data.catalog, data.bottles,
-    { __notMe: no2 });
-  eq('two rejections still leave one',
+  const third = L.shelfPortrait(data.catalog, data.bottles, {}, 2);
+  eq('two steps still leave one',
     [first.title, second.title].indexOf(third.title) < 0, true);
 
-  /* A veto is not a deletion of the evidence: the chips that earned the
-     rejected title are still there to argue the next one. */
-  eq('the evidence survives the rejection',
-    second.lines.length > 0, true);
+  /* A STEP IS NOT A DELETION OF THE EVIDENCE: the chips that earned the
+     title you stepped past are still there to argue the next one. */
+  eq('the evidence survives the step', second.lines.length > 0, true);
 
-  /* REJECTING EVERYTHING lands on the fallback rather than on nothing. */
-  const all = {};
-  L.PORTRAIT_SETS.forEach(g => { all[g.title] = 1; });
-  const none = L.shelfPortrait(data.catalog, data.bottles, { __notMe: all });
-  eq('rejecting every set still returns a portrait', !!none.title, true);
-  eq('and it is never blank', String(none.title).length > 0, true);
+  /* AND THE ROUND CLOSES. This is the whole of what was asked for - "the
+     same regen as others as long as I can get back to this one" - so it is
+     asserted on his real shelf and not only on fixtures. */
+  const round = L.shelfPortrait(data.catalog, data.bottles, {}, first.portN);
+  eq('stepping the whole way round returns the title you started on',
+    round.title, first.title);
+  eq('and every stop on the way is a title',
+    (function () {
+      for (let i = 0; i < first.portN; i++) {
+        const q = L.shelfPortrait(data.catalog, data.bottles, {}, i);
+        if (!q.title || !String(q.title).length) return i;
+      }
+      return -1;
+    })(), -1);
 }
 
 sec('\u00a7347 one number for one question, and a claim the count supports');

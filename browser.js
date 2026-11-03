@@ -5082,7 +5082,7 @@ function step(n) {
       const strip = document.getElementById('buddyStrip');
       if (!strip) { out.push('buddies: no panel strip'); return out; }
       const chips = [...strip.querySelectorAll('button')].map(b => b.textContent.trim());
-      /* Everyone plus one per PERSON. Every buddy has a tab since
+      /* All plus one per PERSON. Every buddy has a tab since
          2026-09-25, not only the ones who shared back: the switch and the
          ask live on that tab, so a tab only the sharers had would have put
          the ask behind a door with no handle. Five people here. */
@@ -5090,7 +5090,7 @@ function step(n) {
         out.push('buddies: ' + chips.length + ' chips, expected 6 ('
           + chips.join(',') + ')');
       }
-      ['Everyone', 'Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
+      ['All', 'Tyson', 'Dave', 'Eli', 'Nina'].forEach(n => {
         if (chips.indexOf(n) < 0) out.push('buddies: no chip for ' + n);
       });
 

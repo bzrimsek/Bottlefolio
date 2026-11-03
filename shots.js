@@ -504,17 +504,29 @@ const SCREENS = [
        sizes" were reported screen by screen for as long as nothing counted
        them; two faces are loaded and the stylesheet holds five sizes, so
        the number a reader actually meets was nobody's number. Measured at
-       390px on the real shelf, the worst screen was ten. It is eight now,
-       and best practice is nearer six,
-       and this holds the line: raise it and the reports come back.
+       390px on the real shelf, the worst screen was ten, then eight, and is
+       seven; ten of the twelve are at five or under. Best practice is
+       nearer six, and the ceiling comes down to meet each number as it is
+       reached: raise it and the reports come back.
 
        A setting is one face at one size at one weight. The bookshelf's
        spine labels count, and should - a drawing made of type is still
-       type a reader meets. */
-    const TYPE_CAP = 8;
+       type a reader meets.
+
+       AND THE NUMBER IS SAID EVERY TIME, not only when it is over. A check
+       that is silent while it passes hides the whole middle of the range: a
+       screen drifting from four settings to seven reads exactly like one
+       that has always been at four, and the only thing that ever caught
+       that was somebody opening the app and saying "too many fonts". The
+       count is the measurement; the cap is only where it stops being
+       allowed. */
+    const TYPE_CAP = 7;
     if (m.type.length > TYPE_CAP) {
       bad(name + ' sets type ' + m.type.length + ' different ways, over '
         + TYPE_CAP, m.type.join(String.fromCharCode(10)));
+    } else if (m.type.length) {
+      ok(name + ' sets type ' + m.type.length + ' way'
+        + (m.type.length === 1 ? '' : 's') + ' (cap ' + TYPE_CAP + ')');
     }
 
     if (m.geomN) {

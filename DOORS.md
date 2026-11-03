@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1095 |
+| functions | 1096 |
 | tables | 256 |
-| carrying a stated purpose | 881 |
+| carrying a stated purpose | 882 |
 
 ## Tables
 
@@ -966,8 +966,9 @@ QUESTION, not the name you were going to use.
 - **`L.popularList`** — _no comment above it_
 - **`L.popularOf`** — _no comment above it_
 - **`L.popularTotals`** — _no comment above it_
+- **`L.portraitCtx`** — WHAT THE SHELF IS, IN THE NUMBERS A TITLE IS ARGUED FROM
 - **`L.portraitLift`** — _no comment above it_
-- **`L.portraitPick`** — THE HEADLINE, and what earned it.
+- **`L.portraitPick`** — `at` 0 is the same answer as before
 - **`L.pourable`** — _no comment above it_
 - **`L.pourAtRung`** — Everything on the shelf that sits at a given distance, nearest first
 - **`L.pourAvailable`** — _no comment above it_
