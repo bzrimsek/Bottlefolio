@@ -14,8 +14,8 @@ QUESTION, not the name you were going to use.
 | | |
 |---|---|
 | functions | 1106 |
-| tables | 257 |
-| carrying a stated purpose | 886 |
+| tables | 256 |
+| carrying a stated purpose | 885 |
 
 ## Tables
 
@@ -239,7 +239,6 @@ QUESTION, not the name you were going to use.
 - **`L.SRC_STATES`** — THREE STATES AND NO FOURTH
 - **`L.STAMP_NOT`** — ONE WORD, THREE MEANINGS, which is the overload this found on the way:
 - **`L.STANDING`** — HOW FAR FROM THE BACK BAR A BOTTLE STANDS
-- **`L.STORY_COVERS`** — WHICH MOVEMENT ARGUES WHICH CHIP, so the caption under the title does not
 - **`L.STORY_ORDER`** — _no comment above it_
 - **`L.STYLE_FROM_NAME`** — Reads a style off the name, for library rows published before `style`
 - **`L.STYLES`** — THE STYLES THE SHELF USES, read off the shipped catalog
@@ -387,7 +386,7 @@ QUESTION, not the name you were going to use.
 - **`L.canonOf`** — ONE DOOR FOR "WHERE DOES THIS NUMBER COME FROM"
 - **`L.canonSay`** — SAID IN A CLAUSE, for the end of a sentence the screen is already
 - **`L.canonSentence`** — THE SAME THING AS A SENTENCE OF ITS OWN
-- **`L.captionOf`** — _no comment above it_
+- **`L.captionOf`** — THE CAPTION IS WHAT THE STORY DID NOT SAY
 - **`L.cardsFrom`** — _no comment above it_
 - **`L.carriesCase`** — _no comment above it_
 - **`L.carryCustomToGraves`** — AN EMPTY ONE GOES
@@ -747,7 +746,6 @@ QUESTION, not the name you were going to use.
 - **`L.latelySessions`** — `days` is the window
 - **`L.latelyStamp`** — _no comment above it_
 - **`L.leadWith`** — ONE OF THEM FIRST, whatever the sort says - IN PLACE, because the caller
-- **`L.leansTo`** — _no comment above it_
 - **`L.lessonSay`** — ONE LINE THAT IS THE SHAPE
 - **`L.lessonsFor`** — WHAT EACH SHAPE WOULD ACTUALLY POUR, off the bottles that are open.
 - **`L.lessonWays`** — HOW MANY HELD VALUES WOULD EACH BUILD THIS SHAPE.
@@ -1197,7 +1195,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfSet`** — what says something about taste.
 - **`L.shelfSort`** — _no comment above it_
 - **`L.shelfStats`** — _no comment above it_
-- **`L.shelfStory`** — The movements by name, because the caption has to ask which of them
+- **`L.shelfStory`** — _no comment above it_
 - **`L.shelfSubLine`** — WHAT GOES UNDER A SHELF ROW'S NAME
 - **`L.shelfSummary`** — What the shelf adds up to, as NUMBERS, so the harness can test them
 - **`L.shelfSummaryLine`** — The line the shelf prints, beside the numbers so a screen never formats
@@ -1241,8 +1239,9 @@ QUESTION, not the name you were going to use.
 - **`L.stateOf`** — _no comment above it_
 - **`L.statusCounts`** — HOW MANY EACH STATUS WOULD SHOW, asked of the filter that shows them, so
 - **`L.storyHabit`** — _no comment above it_
+- **`L.storyLeadKey`** — THE MOVEMENTS, AND WHICH OF THEM LEADS.
 - **`L.storyParagraphs`** — _no comment above it_
-- **`L.storyScope`** — WHAT THIS SHELF IS FOR
+- **`L.storyScope`** — _no comment above it_
 - **`L.storySignature`** — _no comment above it_
 - **`L.strandedBottles`** — NO ENTRY, AND NOTHING TO JOIN IT TO
 - **`L.stripMarkup`** — Anything a model returns can carry citation markup ([cite index=...]).

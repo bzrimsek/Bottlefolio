@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.39  Build 2026-11-03 12:27 AM ET
+     Version : v2.9.40  Build 2026-11-03 08:02 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.40  2026-11-03  The home profile moves with the title now, and reads like somebody talking.
 // v2.9.39  2026-11-03  The home profile is three paragraphs of prose where it was nine bullets.
 // v2.9.38  2026-11-02  The home summary is commentary now rather than a readout.
 // v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.33  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
 // v2.9.31  2026-11-02  The app has a privacy policy, and writing it found two things the code was getting wrong.
-// v2.9.30  2026-11-02  The site serves the app with its comments removed, which halves a first visit, and the comments stop saying who decided things.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3278,8 +3278,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.39';
-const BUILD_TIME  = '2026-11-03 12:27 AM ET';
+const APP_VERSION = '2.9.40';
+const BUILD_TIME  = '2026-11-03 08:02 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -9324,7 +9324,7 @@ L.FEATURES = [
   { term: 'Deciding what to buy next', src: 'nothing in your hand',
     def: 'Worth looking for is the strongest opening on each axis of your shelf, with its position beside it — a distillery, 1 of 6. Something else moves you along it. Tap an opening to find real bottles that would fill it, easiest to buy and cheapest first, each tagged widely stocked, a hunt, or allocated. A distillery you own three of names what the library has from it that you do not — a cask, an age band, a strength, in that order, because a cask makes another drink and an age makes the same whisky kept longer. It names the gap and not the bottling, and a house the library can sell nothing from is not offered at all.' },
   { term: 'The story your shelf tells', src: 'the top of Home',
-    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Under Also answers to, the other titles the same shelf earned and this one did not use. Then the profile itself, written as three paragraphs rather than a list of facts, because a list leaves the joining to you and the joining is the profile. The first says what the shelf is FOR: how many kinds of whiskey are here in real numbers, whether two places are held in equal measure, how many houses it spans and how far across Scotland it reaches. The second says what runs through it whatever the category — the wood that beat the others, how many houses you followed it across, and what that tastes of. The third says what it took to put there: strength, what was hard to find, age, where it was bought, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. A paragraph with nothing to say is left out rather than padded. Figures sit inside sentences that are doing work and some sentences carry none, and the numbers that earned the title appear beside it only where no paragraph has already made them. A shelf that earns no title is called a generalist.' },
+    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Under Also answers to, the other titles the same shelf earned and this one did not use. Then the profile itself, written as three paragraphs rather than a list of facts, because a list leaves the joining to you and the joining is the profile. One paragraph says what the shelf is FOR: how many kinds of whiskey are here in real numbers, whether two places are held in equal measure, how many houses it spans and how far across Scotland it reaches. One says what runs through it whatever the category — the wood that beat the others, how many houses you followed it across, what that tastes of, and how much of it carries smoke. One says what it took to put there: strength, what was hard to find, age, where it was bought, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. THE ONE THAT ARGUES THE TITLE COMES FIRST, and each of them leads on whichever sentence the title was earned from, so stepping to another title with the arrow moves the profile with it rather than only the words at the top. Two sentences a paragraph, and a paragraph with nothing to say is left out rather than padded. Figures sit inside sentences that are doing work and some sentences carry none, and the numbers that earned the title appear beside it only where no sentence drawn below has already made them. A shelf that earns no title is called a generalist.' },
   { term: 'How a bottle helps the chart', src: 'under any candidate',
     def: 'A bottle you are considering says what it would do to the shape. It clears a gap and the axis moves, with the percentage before and after; it counts toward one and says how many more are needed; or it says nothing, because most bottles change nothing on the chart. Covered means three. A line from a pasted email has only its name, so it speaks to region, category and wood and stays quiet about proof and age.' },
   { term: 'Can you find the caramel?', src: 'Flights, under what you could pour tonight',
@@ -29803,10 +29803,6 @@ L.hardToGet = function (p) {
 };
 
 
-L.leansTo = function (n, of) {
-  return of > 0 && (n || 0) / of >= L.CASK_DELIBERATE_SHARE;
-};
-
 L.proofProfile = function (products) {
   const ps = (products || []).map(p => p.proof)
     .filter(v => typeof v === 'number' && v > 0)
@@ -31772,9 +31768,17 @@ L.shelfNextSteps = function (axes, limit) {
    back as Deep on One House. Three assertions caught it. */
 L.HOUSE_DEEP = 15;
 
+/* WHEN THE SMOKE IS A HABIT, read by the Peat Head chip and by the sentence
+   that argues it. They asked different questions: the chip wanted ten
+   heavily peated bottles, the signature movement wanted a fifth of the whole
+   shelf - so a shelf could carry the title Big Smoke over three paragraphs
+   that never mentioned smoke. Declared above its readers, like L.HOUSE_DEEP
+   and for the same reason. */
+L.PEAT_HABIT = 10;
+
 L.PORTRAIT_TITLES = [
-  { id: 'peat', title: 'Peat Head', floor: 10,
-    test: t => t.peat.heavy < 10 ? null
+  { id: 'peat', title: 'Peat Head', floor: L.PEAT_HABIT,
+    test: t => t.peat.heavy < L.PEAT_HABIT ? null
       : { n: t.peat.heavy, why: t.peat.heavy + ' heavily peated whiskies' } },
   { id: 'px', title: 'PX Lover', floor: 5,
     test: t => {
@@ -32151,9 +32155,12 @@ L.shelfPortrait = function (catalog, bottles, favs, at) {
      alternative showed where there were seventeen. */
   const lead = pick ? earned.filter(e => pick.from.indexOf(e.id) >= 0) : [];
   const rest = pick ? earned.filter(e => pick.from.indexOf(e.id) < 0) : earned;
+  /* THE STORY KNOWS WHICH CHIPS EARNED THE TITLE, so the movement that
+     argues it can lead and the caption can drop only what a drawn sentence
+     actually made. */
   const told = L.shelfStory(t, ctx, L.palateShelf(catalog, bottles),
     L.provenance(bottles || []),
-    (L.houseLine(t, catalog, bottles) || {}).text);
+    (L.houseLine(t, catalog, bottles) || {}).text, lead);
   return {
     title: pick ? pick.title : 'The Generalist',
     why: pick ? L.captionOf(lead, told)
@@ -32307,45 +32314,82 @@ L.collectorLine = function (t, ctx, title, ids) {
  * and not real reason that should matter.") t.repeats stays: the Creature
  * of Habit title and the buy-against-drink quadrants read it, and both are
  * about habit, where it belongs. */
-/* WHICH MOVEMENT ARGUES WHICH CHIP, so the caption under the title does not
- * state a figure the paragraphs below are about to make properly - and,
- * just as much, so a chip NO movement argued keeps its evidence.
+/* THE MOVEMENTS, AND WHICH OF THEM LEADS.
  *
- * The caption is the title's evidence, and while the body was a list of
- * facts it was the only place that evidence appeared. Most chips are argued
- * in the prose now and "65 sherried whiskies across 37 houses" read as a
- * stutter two inches above the sentence that says what it means. But a flat
- * table of covered ids is wrong in the other direction: every movement has
- * a floor, so a twenty-bottle shelf can earn PX Lover and still be too small
- * for the signature sentence, and the caption would have been dropped for a
- * claim nothing went on to make. It is asked per shelf, against the
- * movements that actually produced text. */
-L.STORY_COVERS = { px: 'signature', sherry: 'signature', peat: 'signature',
-  proof: 'habit', rare: 'habit', obscure: 'habit', house: 'habit',
-  region: 'scope', breadth: 'scope' };
-
-L.captionOf = function (lead, told) {
-  const said = told || {};
-  return (lead || [])
-    .filter(e => !said[L.STORY_COVERS[e.id]])
-    .map(e => e.why).join(' \u00b7 ');
-};
-
-/* The movements by name, because the caption has to ask which of them
-   spoke. L.storyParagraphs is what a card draws. */
-L.shelfStory = function (t, ctx, pal, prov, depth) {
-  if (!t || !t.owned) return {};
-  return {
-    scope: L.storyScope(t, ctx),
-    signature: L.storySignature(t, pal),
-    habit: L.storyHabit(t, ctx, prov, depth)
-  };
+ * THE ONE THAT ARGUES THE TITLE GOES FIRST ("It has no backup to the
+ * title"). The title is the largest text on the card and the sentence under
+ * it was about something else: The Sherry Cellar opened on how many
+ * CATEGORIES the shelf holds, and the sherry figures that earned the word
+ * sat a paragraph further down.
+ *
+ * ASKED OF THE SENTENCES, NOT OF A TABLE. Each sentence carries the ids of
+ * the chips it argues, so this cannot drift when one is reworded - which a
+ * chip-to-movement table did, and silently: it dropped a region chip from
+ * the caption for a Scotland sentence the sentence budget then never drew,
+ * leaving the title with no evidence anywhere on the card. */
+L.storyLeadKey = function (said, lead) {
+  const ids = (lead || []).map(e => e.id);
+  return L.STORY_ORDER.filter(k => ((said || {})[k] || [])
+    .some(s => (s.ids || []).some(i => ids.indexOf(i) >= 0)))[0] || null;
 };
 
 L.STORY_ORDER = ['scope', 'signature', 'habit'];
 
-L.storyParagraphs = function (told) {
-  return L.STORY_ORDER.map(k => (told || {})[k]).filter(Boolean);
+/* TWO SENTENCES EACH, AND THE ONE CARRYING THE TITLE GOES FIRST ("long and
+ * boring"). Three movements each saying everything they had came to ten
+ * sentences, and a Home card is read standing up.
+ *
+ * ONE APIECE WAS TOO TIGHT, and the thing it cut says so: the habit movement
+ * holds the strength count AND the deep-against-wide reading of the top two
+ * houses, and at one sentence the second of them went ("the new summary
+ * lacks the Barrell and BT line"). Two apiece is six sentences where saying
+ * everything was ten. Each movement orders its own strongest first and lifts
+ * whichever one the title came from above that. */
+L.STORY_LEAD = 2;
+L.STORY_REST = 2;
+
+L.shelfStory = function (t, ctx, pal, prov, depth, lead) {
+  if (!t || !t.owned) return { said: {}, order: [], drew: {} };
+  const all = { scope: L.storyScope(t, ctx),
+    signature: L.storySignature(t, pal),
+    habit: L.storyHabit(t, ctx, prov, depth) };
+  const first = L.storyLeadKey(all, lead);
+  const ids = (lead || []).map(e => e.id);
+  const mine = r => ((r.ids || []).some(i => ids.indexOf(i) >= 0) ? 1 : 0);
+  const out = { said: {}, drew: {},
+    order: first
+      ? [first].concat(L.STORY_ORDER.filter(k => k !== first))
+      : L.STORY_ORDER.slice() };
+  out.order.forEach(k => {
+    const rows = all[k] || [];
+    /* EVERY MOVEMENT LIFTS THE SENTENCE THE TITLE CAME FROM, not only the
+       leading one ("if I regen, I expect the story to change with the
+       title"). A title is often several chips at once - Smoke and Sherry is
+       two - and only the leading movement reordering left the second chip
+       argued nowhere. Sentences are already strongest first, so this is a
+       stable lift of the relevant one rather than a resort. */
+    const sorted = rows.slice().sort((a, b) => mine(b) - mine(a));
+    const take = sorted.slice(0, k === first ? L.STORY_LEAD : L.STORY_REST);
+    take.forEach(r => (r.ids || []).forEach(i => { out.drew[i] = true; }));
+    out.said[k] = take.map(r => r.s).join(' ');
+  });
+  return out;
+};
+
+L.storyParagraphs = function (st) {
+  const o = st || {};
+  return (o.order || []).map(k => (o.said || {})[k]).filter(Boolean);
+};
+
+/* THE CAPTION IS WHAT THE STORY DID NOT SAY. It is the title's evidence in
+ * figures, and a chip whose figures a drawn sentence has just made properly
+ * reads as a stutter two inches under the title. Asked against the
+ * sentences actually drawn, so a chip no sentence reached keeps its
+ * evidence - which is the whole reason the caption still exists. */
+L.captionOf = function (lead, st) {
+  const drew = (st || {}).drew || {};
+  return (lead || []).filter(e => !drew[e.id]).map(e => e.why)
+    .join(' · ');
 };
 
 /* TWO THINGS HELD IN EQUAL MEASURE. Nobody arrives at Islay and Kentucky
@@ -32368,44 +32412,52 @@ L.deadHeat = function (rows) {
   return { a: a.value, b: b.value, na: a.n, nb: b.n };
 };
 
-/* WHAT THIS SHELF IS FOR. The first movement of the story, and the only one
- * about size: how many whiskies are being kept at once, and whether the
- * range is wide enough that the shelf can answer a question rather than
- * only hold a preference. */
+/* WHAT THIS SHELF IS FOR. The first movement, and the only one about size:
+ * how many whiskies are kept at once, and whether the range is wide enough
+ * that the shelf answers a question rather than holding a preference.
+ *
+ * Returns SENTENCES, strongest first, each carrying the ids of the chips it
+ * argues: L.shelfStory takes the top of the list and the leading movement
+ * lifts whichever sentence earned the title. */
+L.HOUSES_WIDE = 20;
+
 L.storyScope = function (t, ctx) {
   const owned = (t || {}).owned || 0;
-  if (!owned) return '';
+  if (!owned) return [];
   const real = (t.styles || []).filter(s => s.n >= L.STYLE_REAL);
   const houses = (t.houses || []).length;
-  /* How far across Scotland it reaches is scope too, so it rides here
-   * rather than as a line of its own. L.scotlandLine owns the reading and
-   * reads L.SCOTCH_REGIONS for what Scotland has. */
-  const scot = (L.scotlandLine(t.regions) || {}).text || '';
+  const out = [];
   if (real.length >= 3) {
     const named = L.andList(real.slice(0, 4).map(s => L.typeLabel(s.value)));
     const tie = L.deadHeat(t.regions);
-    return 'This shelf was built to be argued from. ' + named
-      + ' are all here in force'
-      + (tie ? ', and ' + tie.a + ' and ' + tie.b + ' sit at a dead heat '
-        + '\u2014 ' + tie.na + ' bottles to ' + tie.nb + '.' : '.')
-      + (houses >= 20 ? ' Across ' + houses + ' houses there is not much '
-        + 'you could be asked that you could not answer without leaving '
-        + 'the room.' : '')
-      + (scot ? ' ' + scot : '');
-  }
-  if (real.length === 2) {
-    return 'You keep two whiskies going side by side \u2014 '
+    out.push({ ids: ['breadth'], s: named + ' all run deep here'
+      + (tie ? ', and ' + tie.a + ' and ' + tie.b + ' are dead even — '
+        + tie.na + ' bottles to ' + tie.nb + '.' : '.') });
+  } else if (real.length === 2) {
+    out.push({ ids: ['breadth'], s: 'Two run side by side here — '
       + L.typeLabel(real[0].value) + ' and ' + L.typeLabel(real[1].value)
-      + ', ' + real[0].n + ' and ' + real[1].n + ' of them \u2014 and a '
-      + 'shelf that holds two arguments at once can settle either.';
-  }
-  if (real.length === 1) {
-    return 'This shelf knows exactly what it is for. It is '
+      + ', ' + real[0].n + ' and ' + real[1].n + '.' });
+  } else if (real.length === 1) {
+    out.push({ ids: ['breadth'], s: 'This shelf knows what it is for: '
       + L.typeLabel(real[0].value).toLowerCase() + ', ' + real[0].n
-      + ' bottles of it, and nothing here is pretending otherwise.';
+      + ' bottles of it, nothing pretending otherwise.' });
+  } else {
+    out.push({ ids: ['breadth'], s: owned + ' whiskies, spread wide, and '
+      + 'nothing deep enough yet to argue from.' });
   }
-  return 'You are still spreading wide \u2014 ' + owned + ' whiskies and no '
-    + 'category yet deep enough to argue from.';
+  if (houses >= L.HOUSES_WIDE) {
+    /* BREADTH, not the house chip: Deep on One House is the opposite claim,
+       and tagging this with it would have let "104 houses on one shelf"
+       silence the caption under that title. */
+    out.push({ ids: ['breadth'], s: houses + ' houses on one shelf — most '
+      + 'questions get poured here, not looked up.' });
+  }
+  /* How far across Scotland it reaches is scope too, so it rides here rather
+   * than as a line of its own. L.scotlandLine owns the reading and reads
+   * L.SCOTCH_REGIONS for what Scotland has. */
+  const scot = (L.scotlandLine(t.regions) || {}).text || '';
+  if (scot) out.push({ ids: ['region'], s: scot });
+  return out;
 };
 
 /* WHAT RUNS THROUGH IT WHATEVER THE CATEGORY. The second movement, and the
@@ -32434,24 +32486,43 @@ L.signatureWood = function (fams) {
 };
 
 L.storySignature = function (t, pal) {
-  const bits = [];
+  const out = [];
   const wood = L.signatureWood(t.woodFamilies);
   const peat = (t || {}).peat || {};
   if (wood) {
     const h = wood.houses.length;
-    bits.push('What crosses all of it is the cask. ' + wood.n
-      + ' of these came out of ' + wood.value + ' wood'
+    /* Tagged with the WOOD FAMILY, not with every sherry title: a sentence
+       about 65 sherried bottles has not argued seventeen PX ones, so a PX
+       caption survives it. */
+    /* A WOOD TALLY COUNTS WHISKIES, one per bottling, so this says "65 of
+       these" and never "65 bottles" - the same fault as a category count
+       divided by a bottling count. L.woodSay is the one place that says how
+       a family is spoken: "fortified wine", not "fortified". */
+    out.push({ ids: [wood.value], s: wood.n + ' of these are '
+      + L.woodSay(wood.value)
       + (h >= L.WOOD_TRAVELS
-        ? ', and from ' + h + ' different houses \u2014 so it is the wood '
-          + 'you are following, not the label.'
-        : ', nearly all from the same house.'));
-  } else if (peat.heavy && L.leansTo(peat.heavy, t.owned)) {
-    bits.push('What crosses all of it is the smoke. ' + peat.heavy
-      + ' of these are heavily peated against ' + peat.none
-      + ' with none at all, which is a choice made over and over.');
+        ? ', from ' + h + ' different houses — a cask habit rather '
+          + 'than a brand one.'
+        : ', nearly all from the one house.') });
   }
-  if (pal && pal.say) bits.push(pal.say);
-  return bits.join(' ');
+  /* THE SMOKE IS NOT AN ALTERNATIVE TO THE WOOD. It was an `else` to it, so
+     a shelf with a wood signature could never be told about its peat - and
+     his wins on sherry, which left Big Smoke and Islay Lifer drawing three
+     paragraphs about casks. A shelf can be both, and which one leads is the
+     title's business, not this function's. */
+  if (peat.heavy >= L.PEAT_HABIT) {
+    out.push({ ids: ['peat'], s: peat.heavy + ' of these are heavily peated '
+      + 'and ' + peat.none + ' carry no smoke at all — you drink at '
+      + 'both ends of the scale.' });
+  }
+  /* THE PALATE SENTENCE ARGUES THE WOOD, from the glass instead of the
+     label - it names the wood's own bottles - so it carries the same chip
+     and lifts with it. Untagged it ranked below the smoke, and a sherry
+     title drew its seam of fig nowhere. */
+  if (pal && pal.say) {
+    out.push({ ids: wood ? [wood.value] : [], s: pal.say });
+  }
+  return out;
 };
 
 /* HOW THE BUYING IS DONE. The third movement: not what is on the shelf but
@@ -32468,30 +32539,32 @@ L.storyHabit = function (t, ctx, prov, depth) {
   const proof = (t || {}).proof || {};
   const age = (t || {}).age || {};
   if (proof.strong >= L.HABIT_MARK) {
-    marks.push(proof.strong + ' at cask strength');
+    marks.push({ id: 'proof', s: proof.strong + ' at cask strength' });
   }
   if (c.rare >= L.HABIT_MARK) {
-    marks.push(c.rare + ' that took real finding');
+    marks.push({ id: 'rare', s: c.rare + ' that took real finding' });
   } else if (c.obscure >= L.HABIT_MARK) {
-    marks.push(c.obscure + ' most drinkers could not place');
+    marks.push({ id: 'obscure',
+      s: c.obscure + ' most drinkers could not place' });
   }
   if (age.old >= L.HABIT_MARK) {
-    marks.push(age.old + ' carrying fifteen years or more');
+    marks.push({ id: '', s: age.old + ' at fifteen years or more' });
   }
-  const bits = [];
-  if (marks.length >= 2) {
-    bits.push('And you buy without hedging: ' + L.andList(marks) + '.');
-  } else if (marks.length) {
-    bits.push('There is nothing timid about the buying \u2014 '
-      + marks[0] + '.');
+  const out = [];
+  if (marks.length) {
+    const ids = marks.map(m => m.id).filter(Boolean);
+    const said = L.andList(marks.map(m => m.s));
+    out.push({ ids: ids, s: marks.length >= 2
+      ? said + ' — nobody gets there by accident.'
+      : 'Nothing timid about the buying — ' + said + '.' });
   }
+  if (depth) out.push({ ids: ['house'], s: depth });
   const houses = t.houses || [];
   const again = houses.filter(h => h.n >= 2).length;
   if (again >= L.RETURNED_FLOOR && houses[0]) {
-    bits.push(again + ' of the ' + houses.length + ' houses here were worth '
-      + 'a second visit.');
+    out.push({ ids: [], s: again + ' of the ' + houses.length
+      + ' houses here earned a second visit.' });
   }
-  if (depth) bits.push(depth);
   /* Where it came from, once there is enough of it to be a habit rather
    * than two receipts. A shop that sold more than anywhere else is part of
    * how the buying is done; gifts are somebody else reading the shelf. */
@@ -32499,16 +32572,16 @@ L.storyHabit = function (t, ctx, prov, depth) {
   if (p.known >= 8) {
     const top = (p.shops || [])[0] || (p.online || [])[0];
     if (top && top.n >= 3) {
-      bits.push(top.n + ' of them came from ' + top.name
+      out.push({ ids: [], s: top.n + ' of them came from ' + top.name
         + ((p.shops || []).length + (p.online || []).length > 1
-          ? ', more than anywhere else.' : '.'));
+          ? ', more than anywhere else.' : '.') });
     }
     if (p.gifts >= 3) {
-      bits.push(p.gifts + ' were gifts \u2014 somebody else has been '
-        + 'reading this shelf too.');
+      out.push({ ids: [], s: p.gifts + ' were gifts — somebody else '
+        + 'has been reading this shelf too.' });
     }
   }
-  return bits.join(' ');
+  return out;
 };
 
 /* WHAT THIS PERSON'S TASTE WEIGHS, one flavour at a time.
@@ -59589,7 +59662,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.39</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.40</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

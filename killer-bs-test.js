@@ -3641,7 +3641,7 @@ sec('a shared trait has to be a habit, not an inventory');
      L.labelLine, which drew a bullet and went when the bullets did, and
      the rule is a mark of the habit movement now. */
   const hardT = { owned: 40, houses: [], proof: {}, age: {} };
-  const hardSays = c => L.storyHabit(hardT, c);
+  const hardSays = c => L.storyHabit(hardT, c).map(r => r.s).join(' ');
   eq('what was hard to get is the figure where there is any',
     [/\b105\b/.test(hardSays({ rare: 105, obscure: 48 })),
       /could not place/.test(hardSays({ rare: 105, obscure: 48 }))],
@@ -3651,10 +3651,8 @@ sec('a shared trait has to be a habit, not an inventory');
       /could not place/.test(hardSays({ rare: 0, obscure: 48 }))],
     [true, true]);
   eq('a shelf with too little of either says neither',
-    hardSays({ rare: 5, obscure: 5 }), '');
-  eq('and one door answers whether a shelf leans that way',
-    [L.leansTo(80, 200), L.leansTo(28, 351), L.leansTo(10, 0),
-      L.leansTo(0, 100)], [true, false, false, false]);
+    [hardSays({ rare: 5, obscure: 5 }),
+      L.storyHabit(hardT, { rare: 5, obscure: 5 })], ['', []]);
   /* IT SAYS IT IS NOT SOURCED. BZ: "I got this data from Gemini so you may
      want to research and source on your own." Directions are acted on, numbers
      are not, and nothing divides by any of them. */
@@ -13505,7 +13503,7 @@ sec('\u00a7223 what the shelf adds up to');
   /* The signature movement counts WHISKIES, the tally the wood is taken
      from, and never calls them bottles of something else. */
   eq('the signature movement counts whiskies',
-    /25 of these came out of/.test(popStory()), true);
+    /25 of these are /.test(popStory()), true);
   eq('and never calls them bottles of something else',
     /25 bottles/.test(popStory()), false);
   /* AND THE HOUSE FIGURE IS PRINTED EXACTLY ONCE. The caption drops a chip
@@ -14444,12 +14442,12 @@ sec('§232 the portrait a shelf earns');
   eq('an empty shelf tells no story',
     L.storyParagraphs(L.shelfStory({ owned: 0 }, {})), []);
   eq('and a shelf with nothing to say in a movement drops it',
-    pxP.story.length, L.STORY_ORDER
-      .filter(k => pxP.told[k]).length);
+    pxP.story.length,
+    pxP.told.order.filter(k => pxP.told.said[k]).length);
   eq('a twenty-bottle shelf of one category has a scope and no signature',
-    [!!pxP.told.scope, !!pxP.told.signature], [true, false]);
+    [!!pxP.told.said.scope, !!pxP.told.said.signature], [true, false]);
 
-  /* The paragraph may not open by saying what the shelf IS — the title
+  /* The paragraph may not open by saying what the shelf IS - the title
      says that and the line under it says what it means. It opened "This is
      a shelf the casks built, and sherry is the one it keeps going back
      to" under a title reading THE SHERRY CELLAR. */
@@ -14464,34 +14462,113 @@ sec('§232 the portrait a shelf earns');
      without." But a MOVEMENT with no figure anywhere in it is an opinion
      about somebody's own shelf, so each one that speaks is held to that. */
   eq('every movement that speaks carries a figure',
-    L.STORY_ORDER.map(k => pxP.told[k]).filter(Boolean)
+    L.STORY_ORDER.map(k => pxP.told.said[k]).filter(Boolean)
       .every(p => /\d/.test(p)), true);
   eq('and so does every movement of a shelf with no title',
-    L.STORY_ORDER.map(k => plain.told[k]).filter(Boolean)
+    L.STORY_ORDER.map(k => plain.told.said[k]).filter(Boolean)
       .every(p => /\d/.test(p)), true);
 
-  /* THE CAPTION IS WHAT THE STORY DID NOT ARGUE, asked per shelf rather
-     than from a flat list of ids. Both directions are the point: a figure
-     the prose is about to make properly read as a stutter two inches above
-     it, and a chip no movement reached would otherwise have lost its
-     evidence altogether. This shelf earns PX Lover and is too small for
-     the signature movement, so it keeps its caption. */
+  /* THE MOVEMENT THAT ARGUES THE TITLE LEADS ("It has no backup to the
+     title"). The title is the largest text on the card and the paragraph
+     under it opened on something else: The Sherry Cellar led with how many
+     CATEGORIES the shelf holds, and the sherry figures that earned the word
+     sat a paragraph down. */
+  /* THE LEAD IS ASKED OF THE SENTENCES, not of a chip-to-movement table:
+     a sentence carries the ids of the chips it argues, so the answer cannot
+     drift when one is reworded. */
+  const sayRows = { scope: [{ ids: ['breadth'], s: 'a' }],
+    signature: [{ ids: ['sherry'], s: 'b' }],
+    habit: [{ ids: [], s: 'c' }] };
+  eq('the movement carrying the title chip is the lead',
+    L.storyLeadKey(sayRows, [{ id: 'sherry' }]), 'signature');
+  eq('and a chip no sentence argues has no lead',
+    [L.storyLeadKey(sayRows, [{ id: 'sealed' }]),
+      L.storyLeadKey(sayRows, []), L.storyLeadKey(null, null)],
+    [null, null, null]);
+  eq('the written order breaks a tie between two movements',
+    L.storyLeadKey({ scope: [{ ids: ['x'], s: 'a' }],
+      signature: [{ ids: ['x'], s: 'b' }] }, [{ id: 'x' }]), 'scope');
+  eq('the movement holding the title goes first',
+    L.shelfStory({ owned: 40, styles: [], houses: [], regions: [],
+      woodFamilies: [{ value: 'sherry', n: 30,
+        houses: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] }], peat: {},
+      proof: { strong: 20 }, age: {} }, { rare: 20 }, null, null, null,
+    [{ id: 'sherry', why: '30 sherried' }]).order[0], 'signature');
+  eq('and with nothing to lead with the written order stands',
+    L.shelfStory({ owned: 40, styles: [], houses: [], regions: [],
+      woodFamilies: [], peat: {}, proof: {}, age: {} }, {}, null, null,
+    null, []).order, L.STORY_ORDER);
+
+  /* ONE SENTENCE EACH, TWO FOR THE ONE CARRYING THE TITLE ("long and
+     boring"). Ten sentences is a page, and Home is read standing up. */
+  const budget = L.shelfStory({ owned: 300,
+    styles: [{ value: 'bourbon', n: 40 }, { value: 'scotch', n: 30 },
+      { value: 'irish', n: 20 }],
+    houses: Array.from({ length: 30 }, (_, i) => ({ value: 'h' + i, n: 2 })),
+    regions: [{ value: 'Islay', n: 39 }, { value: 'Kentucky', n: 38 }],
+    woodFamilies: [{ value: 'sherry', n: 65,
+      houses: Array.from({ length: 37 }, (_, i) => 'h' + i) }],
+    peat: {}, proof: { strong: 84 }, age: { old: 38 } },
+  { rare: 72 }, { say: 'A seam of fig.' }, null, null,
+  [{ id: 'sherry', why: '65 sherried' }]);
+  const count = p => (p.match(/[.!?](\s|$)/g) || []).length;
+  eq('every movement is held to its budget',
+    [count(budget.said.signature), count(budget.said.scope),
+      count(budget.said.habit)],
+    [L.STORY_LEAD, L.STORY_REST, L.STORY_REST]);
+  eq('and the whole story is at most six sentences',
+    L.storyParagraphs(budget).reduce((n, p) => n + count(p), 0),
+    L.STORY_LEAD + L.STORY_REST * 2);
+  /* THE CEILING AS A NUMBER, not as the constants themselves - read off
+     those alone this check passes however far they are loosened, which is
+     the whole thing being guarded ("long and boring"). */
+  eq('and the budget itself is two sentences a movement',
+    [L.STORY_LEAD, L.STORY_REST], [2, 2]);
+
+  /* THE CAPTION IS WHAT THE STORY DID NOT SAY, asked against the sentences
+     actually DRAWN rather than a table of chip names. Both directions are
+     the point: a figure the prose has just made properly read as a stutter
+     two inches above it, and a chip no drawn sentence reached would
+     otherwise have lost its evidence altogether. This shelf earns PX Lover
+     and is too small for the signature movement, so it keeps its caption. */
   eq('a title the story did not argue keeps its caption',
     /8 whiskies finished in Pedro Ximenez/.test(pxP.why), true);
   eq('and the movement that would have argued it stayed silent',
-    pxP.told.signature, '');
-  eq('every covered chip names a real movement',
-    Object.keys(L.STORY_COVERS)
-      .filter(k => L.STORY_ORDER.indexOf(L.STORY_COVERS[k]) < 0), []);
-  eq('a chip no movement covers keeps its caption whatever was said',
+    pxP.told.said.signature, '');
+  eq('a chip no sentence argued keeps its caption whatever was said',
     L.captionOf([{ id: 'sealed', why: '20 of 30 still sealed' }],
-      { scope: 'x', signature: 'y', habit: 'z' }),
+      { drew: { sherry: true, proof: true } }),
     '20 of 30 still sealed');
-  eq('and a covered one is dropped once that movement speaks',
-    L.captionOf([{ id: 'px', why: '8 in PX' }], { signature: 'said' }), '');
-  eq('but kept while it has not',
-    L.captionOf([{ id: 'px', why: '8 in PX' }], { signature: '' }),
-    '8 in PX');
+  eq('and one a drawn sentence made is dropped',
+    L.captionOf([{ id: 'sherry', why: '65 sherried' }],
+      { drew: { sherry: true } }), '');
+  eq('but kept while no drawn sentence has made it',
+    [L.captionOf([{ id: 'sherry', why: '65 sherried' }], { drew: {} }),
+      L.captionOf([{ id: 'sherry', why: '65 sherried' }], null)],
+    ['65 sherried', '65 sherried']);
+
+  /* A SENTENCE THE BUDGET NEVER DREW MUST NOT SILENCE THE CAPTION, which is
+     the exact fault a chip-to-movement table had: Islay Regular is a scope
+     chip, scope's Scotland sentence is its third, and a movement that is
+     not leading draws one - so the table dropped the caption for a sentence
+     nobody ever read, and the title was left with no evidence anywhere. */
+  const scotT = wood => ({ owned: 300,
+    styles: [{ value: 'bourbon', n: 40 }, { value: 'scotch', n: 30 },
+      { value: 'irish', n: 20 }],
+    houses: Array.from({ length: L.HOUSES_WIDE },
+      (_, i) => ({ value: 'h' + i, n: 2 })),
+    regions: L.SCOTCH_REGIONS.map(r => ({ value: r, n: 20 })),
+    woodFamilies: wood, peat: {}, proof: {}, age: {} });
+  const scotLed = L.shelfStory(scotT([]), {}, null, null, null,
+    [{ id: 'region', why: '20 bottles from Islay' }]);
+  eq('the Scotland sentence leads where the region earned the title',
+    [/Scotland/.test(scotLed.said.scope), !!scotLed.drew.region],
+    [true, true]);
+  eq('and where another movement led, the caption keeps that figure',
+    L.captionOf([{ id: 'region', why: '20 bottles from Islay' }],
+      L.shelfStory(scotT([{ value: 'sherry', n: 65, houses: ['a'] }]), {},
+        null, null, null, [{ id: 'sherry', why: '65 sherried' }])),
+    '20 bottles from Islay');
 
   /* NO REBUY COUNT, IN THE PARAGRAPH OR THE BULLETS. It is a standing
      ruling - "no real pattern to my rebuys and not real reason that should
@@ -14568,9 +14645,17 @@ sec('§232 the portrait a shelf earns');
   /* The rule itself, not a count: no pill is a chip the caption argues. */
   eq('no pill is a chip the title was argued from',
     loudP.also.filter(a => loudP.from.indexOf(a.id) >= 0), []);
-  eq('a shelf whose story argues every chip needs no caption',
-    [loudP.why, loudP.from.every(id => loudP.told[L.STORY_COVERS[id]])],
-    ['', true]);
+  /* THE CAPTION AND THE STORY SPLIT THE TITLE'S CHIPS, both ways, on a real
+     drawn card: nothing in the caption was made by a sentence, and nothing
+     a sentence made is also in the caption. */
+  const loudCap = String(loudP.why || '').split(' · ').filter(Boolean);
+  const loudDrew = (loudP.told || {}).drew || {};
+  eq('no chip in the caption was made by a drawn sentence',
+    loudCap.filter(w => (loudP.led || [])
+      .some(e => e.why === w && loudDrew[e.id])), []);
+  eq('and no chip a drawn sentence made is in the caption',
+    (loudP.led || []).filter(e => loudDrew[e.id]
+      && loudCap.indexOf(e.why) >= 0), []);
 
   /* Deterministic: the same shelf tells the same story. */
   eq('the same shelf tells the same story',
@@ -17041,7 +17126,7 @@ sec('§254 what a bottle would unlock');
  * because the fault this section was written for - an order that depended
  * on the shelf - can only come back by that table being bypassed.
  */
-sec('§255 the movements come in one order');
+sec('§255 the movement that argues the title leads');
 {
   const cat = {}, bs = [];
   const add = (k, n, extra) => {
@@ -17058,12 +17143,15 @@ sec('§255 the movements come in one order');
   const p = L.shelfPortrait(cat, bs, { obscure: 0 });
 
   eq('the shelf earns a title', p.title.length > 0, true);
-  eq('and its story comes out in the one order',
-    p.story, L.STORY_ORDER.map(k => p.told[k]).filter(Boolean));
+  eq('and its story comes out in the order the card drew',
+    p.story, p.told.order.map(k => p.told.said[k]).filter(Boolean));
 
-  /* THE SAME ORDER WHATEVER THE TITLE. A shelf that wins on its houses and
-     one that wins on its wood both read scope, signature, habit - the two
-     shelves below earn different titles and the movements do not move. */
+  /* THE ORDER MOVES WITH THE TITLE, and that IS the rule: a shelf that wins
+     on its wood opens on the wood. Every shelf read scope, signature, habit
+     until 2026-11-03, which left The Sherry Cellar opening on how many
+     CATEGORIES it holds - "it has no backup to the title" - with the sherry
+     figures a paragraph down. The two shelves below earn different titles
+     and each one's evidence is in its prose, not only in its caption. */
   const islay = {}, ibs = [];
   for (let i = 0; i < 25; i++) {
     const k = 'i' + i;
@@ -17072,10 +17160,23 @@ sec('§255 the movements come in one order');
     ibs.push({ k: k, status: 'open' });
   }
   const ip = L.shelfPortrait(islay, ibs, { obscure: 0 });
-  eq('two shelves with different titles tell them in the same order',
-    [p.title !== ip.title,
-      ip.story, L.STORY_ORDER.map(k => ip.told[k]).filter(Boolean)],
-    [true, ip.story, ip.story]);
+  eq('two shelves earn different titles',
+    p.title !== ip.title, true);
+  eq('and each draws its story in its own order',
+    ip.story, ip.told.order.map(k => ip.told.said[k]).filter(Boolean));
+  /* EVERY CHIP THE TITLE WAS ARGUED FROM IS SOMEWHERE ON THE CARD - made
+     by a drawn sentence, or printed in the caption. Nowhere is the fault:
+     the caption was dropped for a movement that spoke, and on a shelf whose
+     chip no drawn sentence reached the figure went with it. */
+  const backed = port => (port.from || []).every(id =>
+    (port.told.drew || {})[id]
+    || (port.led || []).some(e => e.id === id
+      && String(port.why || '').indexOf(e.why) >= 0));
+  eq('every chip the title came from is backed, in prose or in caption',
+    [backed(p), backed(ip)], [true, true]);
+  eq('and every order is the three movements, no more and no fewer',
+    [p.told.order.slice().sort(), ip.told.order.slice().sort()],
+    [L.STORY_ORDER.slice().sort(), L.STORY_ORDER.slice().sort()]);
   eq('and a dropped movement leaves no hole',
     p.story.filter(x => !x), []);
 }
@@ -21984,7 +22085,7 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
   eq('the deliberate share clears the floor',
     pr.strong / pr.n >= L.CASK_DELIBERATE_SHARE, true);
   const port = L.shelfPortrait(shelf.catalog, shelf.bottles, {});
-  const habit = (port.told || {}).habit || '';
+  const habit = (port.story || []).join(' ');
   /* THE FIGURE IS SAID, AND THE WITHDRAWN CONCLUSION NEVER IS. The bullet
      this replaced carried "You buy strength on purpose." under a headline
      reading "You want it undiluted." - one claim twice - and chose between
@@ -22003,8 +22104,8 @@ sec('\u00a7335 cask strength is a choice, low proof mostly is not');
   const fp = L.proofProfile(Object.values(few.catalog));
   eq('5 of 100 does not clear it',
     fp.strong / fp.n >= L.CASK_DELIBERATE_SHARE, false);
-  const fhabit = (L.shelfPortrait(few.catalog, few.bottles, {}).told
-    || {}).habit || '';
+  const fhabit = (L.shelfPortrait(few.catalog, few.bottles, {}).story
+    || []).join(' ');
   eq('and that shelf is told nothing about strength at all',
     /cask strength/.test(fhabit), false);
   eq('and is never told what it is NOT buying',
@@ -22546,8 +22647,11 @@ sec('\u00a7347 one number for one question, and a claim the count supports');
   eq('nothing asks about cask strength with its own number',
     /proof\.n \* 0\.2[05]/.test(src2), false);
   eq('and the one constant is still 0.2', L.CASK_DELIBERATE_SHARE, 0.2);
+  /* Both remaining callers read it: the Full Proof chip and the proof
+     verdict. L.leansTo was the third and is retired - it asked for a fixed
+     share of the WHOLE shelf, which a wide shelf can never reach. */
   const uses = (src2.match(/L\.CASK_DELIBERATE_SHARE/g) || []).length;
-  eq('read by all three callers, not two', uses >= 4, true);
+  eq('read by both callers, not just one', uses >= 3, true);
 
   /* THE HOUSE CHIP CLAIMS A COUNT, NOT A MOTIVE. It ranked houses by raw
      count and was called The Loyalist, so it fired on a big common house
@@ -22635,15 +22739,15 @@ sec('\u00a7348 every title says something only it says');
   eq('and no two steps of the rotation draw the same line', shared, []);
   eq('the rotation is longer than one title', (port.portN || 0) > 1, true);
 
-  /* The movements come out in L.STORY_ORDER and a silent one leaves no
-     hole, which is the whole of the ordering now that the bullets it used
-     to sort are gone. */
-  eq('the paragraphs follow the named order',
-    L.storyParagraphs({ habit: 'c', scope: 'a', signature: 'b' }),
+  /* The movements come out in the order the story chose - the title's own
+     first - and a silent one leaves no hole. */
+  eq('the paragraphs follow the order the story chose',
+    L.storyParagraphs({ order: ['signature', 'scope', 'habit'],
+      said: { habit: 'c', scope: 'b', signature: 'a' } }),
     ['a', 'b', 'c']);
   eq('a silent movement is dropped rather than drawn empty',
-    L.storyParagraphs({ scope: 'a', signature: '', habit: 'c' }),
-    ['a', 'c']);
+    L.storyParagraphs({ order: L.STORY_ORDER,
+      said: { scope: 'a', signature: '', habit: 'c' } }), ['a', 'c']);
   eq('and nothing told is nothing drawn',
     [L.storyParagraphs({}), L.storyParagraphs(null)], [[], []]);
 
@@ -22675,14 +22779,15 @@ sec('\u00a7348 every title says something only it says');
      movement now rather than a bullet of its own. */
   const hs = n => Array.from({ length: n }, (_, i) => ({ value: 'h' + i, n: 2 }));
   const backT = h => ({ owned: 40, houses: h, proof: {}, age: {} });
+  const backSays = t => L.storyHabit(t, {}).map(r => r.s).join(' ');
   eq('eight houses revisited is worth saying',
-    /8 of the 8 houses here were worth a second visit/
-      .test(L.storyHabit(backT(hs(8)), {})), true);
+    /8 of the 8 houses here earned a second visit/
+      .test(backSays(backT(hs(8)))), true);
   eq('seven is not',
-    /second visit/.test(L.storyHabit(backT(hs(7)), {})), false);
+    /second visit/.test(backSays(backT(hs(7)))), false);
   eq('and a house with one bottle is not a second visit',
-    /second visit/.test(L.storyHabit(backT(hs(7).concat(
-      Array.from({ length: 20 }, (_, i) => ({ value: 'x' + i, n: 1 })))), {})),
+    /second visit/.test(backSays(backT(hs(7).concat(
+      Array.from({ length: 20 }, (_, i) => ({ value: 'x' + i, n: 1 })))))),
     false);
 
   /* THE HOUSE THAT IS A BRAND AND THE HOUSE THAT HOLDS THEM. Read off the
@@ -22737,27 +22842,33 @@ sec('\u00a7348 every title says something only it says');
      or one, and each is a different thing to say about whoever built it. */
   const styles = pairs => pairs.map(p => ({ value: p[0], n: p[1] }));
   const scopeOf = (st, hs, rg) => L.storyScope(
-    { owned: 100, styles: st, houses: hs || [], regions: rg || [] }, {});
+    { owned: 100, styles: st, houses: hs || [], regions: rg || [] }, {})
+    .map(r => r.s).join(' ');
   const wide = scopeOf(styles([['bourbon', 40], ['scotch', 30],
     ['irish', 20], ['rye', 12]]),
     Array.from({ length: 25 }, (_, i) => ({ value: 'h' + i, n: 4 })));
-  eq('three categories or more is a shelf to be argued from',
-    [/built to be argued from/.test(wide),
+  eq('three categories or more all run deep',
+    [/all run deep here/.test(wide),
       /Bourbon, Scotch, Irish and Rye/.test(wide)], [true, true]);
-  eq('and it says across how many houses',
-    /Across 25 houses/.test(wide), true);
-  eq('two is two arguments kept side by side',
-    /two whiskies going side by side/.test(
+  eq('and it says how many houses they came from',
+    /25 houses on one shelf/.test(wide), true);
+  /* NOT ACADEMIC ("reads more academic than fun"). The sentence that said
+     "there is not much you could be asked that you could not answer
+     without leaving the room" is a triple negative on a Home card. */
+  eq('and it does not answer by not being unable to',
+    /could not answer|built to be argued from/.test(wide), false);
+  eq('two run side by side',
+    /Two run side by side here/.test(
       scopeOf(styles([['bourbon', 40], ['scotch', 30]]))), true);
   /* ONE CATEGORY NAMES NO RATIO. It read "N of your M are bourbon" with N
      counted by BOTTLE and M by BOTTLING, so a shelf holding a second bottle
      of anything was told 50 of your 40 are bourbon. */
   const one = scopeOf(styles([['bourbon', 54]]));
   eq('one category is stated without a ratio',
-    [/It is bourbon, 54 bottles of it/.test(one), / of your /.test(one)],
+    [/it is for: bourbon, 54 bottles of it/.test(one), / of your /.test(one)],
     [true, false]);
   eq('and a category under the floor is not one at all',
-    /still spreading wide/.test(scopeOf(styles([['bourbon', 9]]))), true);
+    /spread wide/.test(scopeOf(styles([['bourbon', 9]]))), true);
 
   /* A DEAD HEAT is two things held in equal measure, which nobody arrives
      at by preference. Below L.STYLE_REAL on the smaller side it is two
@@ -22772,7 +22883,7 @@ sec('\u00a7348 every title says something only it says');
   eq('and one thing alone cannot tie with anything',
     [L.deadHeat(styles([['Islay', 39]])), L.deadHeat([])], [null, null]);
   eq('the scope movement says so when there is one',
-    /Islay and Kentucky sit at a dead heat/.test(
+    /Islay and Kentucky are dead even — 39 bottles to 38/.test(
       scopeOf(styles([['bourbon', 40], ['scotch', 30], ['irish', 20]]),
         [], styles([['Islay', 39], ['Kentucky', 38]]))), true);
 
@@ -22796,16 +22907,23 @@ sec('\u00a7348 every title says something only it says');
      opposite of brand loyalty, so the HOUSE count is the figure that makes
      the point, and a wood that never left one house says the other thing. */
   const sig = (n, houses, pal) => L.storySignature(
-    { owned: 300, woodFamilies: fam(n, 10, houses), peat: {} }, pal);
-  eq('a wood from many houses is one you follow',
-    /from 37 different houses — so it is the wood you are following/
+    { owned: 300, woodFamilies: fam(n, 10, houses), peat: {} }, pal)
+    .map(r => r.s).join(' ');
+  eq('a wood from many houses is a cask habit, not a brand one',
+    /from 37 different houses — a cask habit rather than a brand one/
       .test(sig(65, 37)), true);
   eq('and one from a single house is not',
-    /nearly all from the same house/.test(sig(65, 1)), true);
+    /nearly all from the one house/.test(sig(65, 1)), true);
+  /* A WOOD TALLY COUNTS WHISKIES, one per bottling, so the sentence says
+     "65 of these" - calling them bottles is the same fault as a category
+     count divided by a bottling count. */
+  eq('and it never calls those whiskies bottles',
+    [/65 of these/.test(sig(65, 37)), /65 bottles/.test(sig(65, 37))],
+    [true, false]);
   eq('the palate sentence closes the movement where there is one',
     /\bseam of fig\b/.test(sig(65, 37, { say: 'a seam of fig.' })), true);
   eq('and a shelf with no wood and no smoke has no signature',
-    L.storySignature({ owned: 300, woodFamilies: [], peat: {} }, null), '');
+    L.storySignature({ owned: 300, woodFamilies: [], peat: {} }, null), []);
 
   /* ONE LINE, ONE LINE LONG, still: L.fitLine outlived the bullets it was
      written for and is read by the away card. */
