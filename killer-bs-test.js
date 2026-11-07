@@ -19269,6 +19269,29 @@ sec('§281 a bottle in context');
   eq('and its page offers to add it rather than another',
     [L.addBottleSay(0), L.addBottleSay(2)], ['+ Add to your shelf', '+ Another bottle']);
 
+  /* ADDING A BOTTLE YOU ALREADY OWN IS ADDING A BOTTLE. The add form used
+     to refuse it and name the Shelf as the place to do it instead, which
+     is the same act somewhere else and arrived after the photographs.
+     Both sentences the form draws for a second bottle are asserted here:
+     the one before the save, which has to carry the count and say what
+     Status it has set, and the one after, which has to differ from the
+     word a first bottle lands with or it says nothing happened. */
+  eq('the form counts the bottles you already hold, and says what it set',
+    [/already have 2 bottles/.test(L.secondSay(2)),
+      /already have 1 bottle of this/.test(L.secondSay(1)),
+      /sealed/.test(L.secondSay(2)),
+      /Status/.test(L.secondSay(2))],
+    [true, true, true, true]);
+  eq('and a second bottle does not land with a first bottle’s word',
+    [L.addedSay(0), L.addedSay(1), L.addedSay(3)],
+    ['Added to the shelf', 'Added to the shelf',
+      'Added — you now have 3 bottles of it']);
+  /* AND NEITHER SENTENCE REFUSES ANYTHING. The fault was a refusal, so a
+     rewrite that reads as one is the fault coming back in words. */
+  eq('neither sentence turns the person away',
+    [L.secondSay(2), L.addedSay(3)].filter(t =>
+      /cannot|can’t|already on your shelf|open it there/i.test(t)), []);
+
   /* A HOUSE NAME IS A PROPER NOUN wherever it lands in the sentence.
      sentenceCase lowercases the whole string, which turned "1792 Barton"
      into "1792 barton" and "New Riff Distilling" into "new riff". */

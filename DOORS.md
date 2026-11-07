@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1107 |
+| functions | 1109 |
 | tables | 257 |
-| carrying a stated purpose | 887 |
+| carrying a stated purpose | 888 |
 
 ## Tables
 
@@ -283,7 +283,8 @@ QUESTION, not the name you were going to use.
 - **`L.accountWipe`** — _no comment above it_
 - **`L.activeFacets`** — HOW MANY WAYS THIS LIST IS NARROWED, which is also whether the shelf
 - **`L.addBottleSay`** — And the button under it
-- **`L.addCandidates`** — THE BOTTLES SOMEBODY MIGHT MEAN WHEN ADDING ONE
+- **`L.addCandidates`** — _no comment above it_
+- **`L.addedSay`** — And what the toast says once it is on, which is where the count goes:
 - **`L.addPour`** — _no comment above it_
 - **`L.adminPeople`** — _no comment above it_
 - **`L.adminPersonLine`** — An account in one line
@@ -1153,6 +1154,7 @@ QUESTION, not the name you were going to use.
 - **`L.searchLibrary`** — lot into a list first.
 - **`L.searchReference`** — _no comment above it_
 - **`L.searchText`** — WHAT IDENTIFIES A BOTTLE, as against what it tastes of
+- **`L.secondSay`** — Sealed, because the rule is one open and the rest sealed - the rule
 - **`L.seedFromText`** — A TYPED NAME IS ENOUGH (BZ, 2026-09-20
 - **`L.sentAfterLoad`** — WHAT THE ACCOUNT IS NOW KNOWN TO HOLD.
 - **`L.sentenceCase`** — proper nouns and acronyms that carry their own capitals.

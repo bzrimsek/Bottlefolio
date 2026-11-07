@@ -81,7 +81,7 @@ Individually, in gate order:
 python audit.py index.html   # the named lock file matches index.html
 node killer-bs-test.js       # 8,342 assertions against the engine
 node lint.js                 # nothing undefined, twice-defined, unreachable
-node consistency.js          # 128 wiring checks
+node consistency.js          # 131 wiring checks
 node screens.js              # 38 screens draw
 node answers.js              # what the answers SAY, on a real shelf
 node shots.js                # every screen at 390px, photographed

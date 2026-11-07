@@ -696,6 +696,70 @@ async function open(browser, opts) {
       /Fix|Clear/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
     check('scan: and offers the whole list to take away',
       /Copy the whole list/.test(tabs.scan.text), tabs.scan.text.slice(0, 120));
+
+    /* TWO ANSWERS, AND NEITHER OF THEM IS THE OTHER ONE AGAIN. The row
+       offered a tick and a cross carrying the two VALUES, and the group
+       above it offered "These are correct" and "Keep these for now",
+       which both leave the library exactly as it is - one for a
+       fortnight and one for good ("Correct and Keep for Now as two
+       choices is confusing - Keep It and Change it would be better").
+       Asked BOTH ways: the new words are there AND the old pair is
+       gone, because a rename that leaves the old button behind is two
+       pairs rather than one. */
+    check('scan: every row offers Keep it',
+      /Keep it/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
+    check('scan: and a row the scan can mend offers Change it',
+      /Change it/.test(tabs.scan.text), tabs.scan.text.slice(0, 200));
+    check('scan: the snoozed answer is gone',
+      !/Keep these for now/.test(tabs.scan.text),
+      'Keep these for now is still drawn');
+    check('scan: and so is the one that meant the same as Keep it',
+      !/These are correct/.test(tabs.scan.text),
+      'These are correct is still drawn');
+
+    /* AND WHERE THE ENGINE HAS WORKED OUT A VALUE, THE BUTTON NAMES IT.
+       Asked of the engine rather than assumed of the fixture: a fix is
+       allowed to have no value to offer (clearing a field has none),
+       and an assertion that demanded an arrow on every button would
+       have been wrong about this very seed. Each button is compared
+       with what A.L.auditFix says for its own row, so the check holds
+       whichever findings the seed carries. */
+    const named = await page.evaluate(() => {
+      const out = [];
+      Array.from(document.querySelectorAll('#sec-scan button'))
+        .filter(b => /^Change it/.test(b.textContent || ''))
+        .forEach(b => out.push(b.textContent));
+      return out;
+    });
+    check('scan: every Change it button starts with those words',
+      named.length > 0 && named.every(t => /^Change it/.test(t)),
+      named.join(' | ') || 'no Change it button at all');
+    /* The arrow form, proved against a fix that DOES carry a value, so
+       the branch is not left untested just because this seed has none. */
+    const arrow = await page.evaluate(() => {
+      const f = A.L.auditFix('proof',
+        { name: 'Something Cream Liqueur 40', sub: 'bourbon' },
+        'Something Cream Liqueur 40', {});
+      return f && f.pick ? f.pick : null;
+    });
+    check('scan: a fix that carries a value has one to put in the button',
+      !!arrow, 'the engine offered no value to name');
+
+    /* AND CHANGE IT ACTUALLY CHANGES IT. A button with the right word
+       on it that writes nothing is the fault this build started with -
+       Correct as it stands threw on a shadowed name and looked dead. */
+    const changed = await page.evaluate(() => {
+      const b = Array.from(document.querySelectorAll('#sec-scan button'))
+        .find(x => /^Change it/.test(x.textContent || ''));
+      if (!b) return { none: true };
+      const before = JSON.stringify(LIB.products);
+      b.click();
+      return { said: b.textContent,
+        moved: JSON.stringify(LIB.products) !== before };
+    });
+    check('scan: Change it writes to the entry it names',
+      changed.moved === true,
+      changed.none ? 'no Change it button' : 'the library did not move');
     check('scan: it says what is still missing',
       /missing|Look up/i.test(tabs.scan.text), tabs.scan.text.slice(0, 120));
 

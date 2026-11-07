@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.41  Build 2026-11-03 08:58 AM ET
+     Version : v2.9.42  Build 2026-11-06 07:48 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.42  2026-11-06  Seven things.
 // v2.9.41  2026-11-03  Every paragraph of the home profile opens on the collector rather than on a number.
 // v2.9.40  2026-11-03  The home profile moves with the title now, and reads like somebody talking.
 // v2.9.39  2026-11-03  The home profile is three paragraphs of prose where it was nine bullets.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
 // v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // v2.9.33  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
-// v2.9.32  2026-11-02  A dead file sat outside every guard for seven weeks, and the guard's scope was the fault.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2405,34 +2405,38 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    green; gold at low weight keeps them as marks rather than borders. */
 .portrait.felted .portlines > *{border-left-color:rgba(217,169,62,.55);
   color:#DDD6C7}
-.portrait.felted .porthd-r .pill{border-color:#4A6B60;color:#CFE0D8;
-  background:transparent}
+.portrait.felted .alsoname{color:#CFE0D8}
 .portrait.felted .radar .web,
 .portrait.felted .radar .spoke{stroke:#4A6B60}
-/* Title on the left, the other titles it has earned on the right. */
-.portrait .porthd{display:flex;align-items:flex-start;gap:12px;
-  flex-wrap:wrap}
-.portrait .porthd-l{flex:1 1 240px;min-width:0}
-.portrait .porthd-r{display:flex;flex-wrap:wrap;gap:8px;
-  justify-content:flex-end;align-items:center;padding-top:14px}
-@media (max-width:560px){
-  .portrait .porthd-r{justify-content:flex-start;padding-top:2px;gap:4px}
-  /* ONE ROW, AND THE WORDS WRAP INSIDE THE PILL (BZ, 2026-09-20, and he
-     was right when I said otherwise). Measured, all four titles, at 390 and
-     360: one line each over two rows is 57px; the same pills allowed to
-     wrap but left free to flow is also 57px, because a wrapping flex row
-     wraps the ROW before it ever squeezes an item; forced onto one row so
-     each pill must shrink, it is 42px, every pill the same height at both
-     widths. Safe because `also` is capped at four (L.shelfPortrait). */
-  .portrait .porthd-r{flex-wrap:nowrap}
-  .portrait .porthd-r .pill{white-space:normal;min-width:0;flex:0 1 auto;
-    text-align:center}
-}
+/* The head is one column: who it belongs to, the title, the verdict, then
+   the other titles it earned. */
+.portrait .porthd{display:block}
+.portrait .porthd-l{min-width:0}
 .portrait .portlabel{font-size:12px;letter-spacing:.9px;
   text-transform:uppercase;color:var(--mute)}
-/* The pills sit in their own column beside the title on a wide screen and
-   under it on a phone, so their label needs the air above it either way. */
-.portrait .alsolab{margin-top:9px}
+/* THE LABEL, THE NAMES IT INTRODUCES AND THE STEP, ON ONE LINE. A name
+   does not break across the dot that separates it from the next, so the
+   row wraps between names rather than inside one. The line is 44px tall
+   because the step is a tap target; the glyph inside it is drawn at the
+   line's size, not the target's. */
+.portrait .portalso{display:flex;flex-wrap:wrap;align-items:center;
+  gap:6px;margin-top:9px;position:relative;padding-right:46px;
+  min-height:44px}
+.portrait .alsoname{font-size:12px;color:var(--ink);white-space:nowrap}
+.portrait .alsoname + .alsoname::before{content:'·';margin-right:6px;
+  color:var(--mute)}
+/* Beside a 12px line the bordered 24px circle read as a second title. The
+   border shows on hover, where it says the mark is pressable; 20px is the
+   floor shots.js holds every one-glyph control to, and the 44px target
+   under it does not move. */
+/* OUT OF THE WRAP, in the corner the pills used to hold. Four names wrap
+   at phone width and a 44px target wraps with them: in the flow it landed
+   between two names, and moved to a different place at every width.
+   Measured at 360, 390, 430 and 760. The row reserves its width and a
+   height to hold it, so the label and the names it introduces read as one
+   unbroken list whatever the width. */
+.portrait .portalso .portturn{font-size:20px;margin-left:0;
+  border-color:transparent;position:absolute;right:0;top:0}
 .portrait .porttitle{font-family:'Cinzel',Georgia,serif;font-size:24px;
   font-weight:600;color:var(--ink-deep);line-height:1.1;margin:3px 0 2px}
 /* The verdict: bigger than the caption under it, smaller than the title
@@ -3278,8 +3282,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.41';
-const BUILD_TIME  = '2026-11-03 08:58 AM ET';
+const APP_VERSION = '2.9.42';
+const BUILD_TIME  = '2026-11-06 07:48 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -3332,6 +3336,30 @@ L.bottlesHeading = function (n) {
 /* And the button under it: another of what you have, or the first. */
 L.addBottleSay = function (n) {
   return n ? '+ Another bottle' : '+ Add to your shelf';
+};
+
+/* ALREADY YOURS IS A SECOND BOTTLE, NOT A REFUSAL. What the add form says
+   once it recognises a name the shelf already holds: how many are there
+   and what saving will do. It used to refuse the save outright and send
+   the person to the Shelf to find the bottle and press Another bottle on
+   it, which is the same act somewhere else - and the refusal arrived
+   after the photographs ("adding a bottle is adding a bottle - you need
+   to deal with second bottles and not make the user do more work").
+
+   Sealed, because the rule is one open and the rest sealed - the rule
+   askStatus states in words on the other two doors into this act. */
+L.secondSay = function (n) {
+  return 'You already have ' + n + (n === 1 ? ' bottle' : ' bottles')
+    + ' of this. Saving adds another, sealed — change Status if you '
+    + 'are opening this one.';
+};
+
+/* And what the toast says once it is on, which is where the count goes:
+   a second bottle that lands with the same word as a first says nothing
+   about what just happened. */
+L.addedSay = function (n) {
+  return n > 1 ? 'Added — you now have ' + n + ' bottles of it'
+    : 'Added to the shelf';
 };
 
 L.ownedCount = function (key, bottles) {
@@ -9324,7 +9352,7 @@ L.FEATURES = [
   { term: 'Deciding what to buy next', src: 'nothing in your hand',
     def: 'Worth looking for is the strongest opening on each axis of your shelf, with its position beside it — a distillery, 1 of 6. Something else moves you along it. Tap an opening to find real bottles that would fill it, easiest to buy and cheapest first, each tagged widely stocked, a hunt, or allocated. A distillery you own three of names what the library has from it that you do not — a cask, an age band, a strength, in that order, because a cask makes another drink and an age makes the same whisky kept longer. It names the gap and not the bottling, and a house the library can sell nothing from is not offered at all.' },
   { term: 'The story your shelf tells', src: 'the top of Home',
-    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. Under Also answers to, the other titles the same shelf earned and this one did not use. Then the profile itself, written as three paragraphs rather than a list of facts, because a list leaves the joining to you and the joining is the profile. EACH PARAGRAPH OPENS ON YOU — one sentence naming a choice, with no figure in it — and then gives the figures that show it. One paragraph says what the shelf is FOR: how many kinds of whiskey are here in real numbers, whether two places are held in equal measure, how many houses it spans and how far across Scotland it reaches. One says what runs through it whatever the category — the wood that beat the others, how many houses you followed it across, what that tastes of, and how much of it carries smoke. One says what it took to put there: strength, what was hard to find, age, where it was bought, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. THE ONE THAT ARGUES THE TITLE COMES FIRST, and each of them leads on whichever sentence the title was earned from — including its opener, which is keyed to the same chip — so stepping to another title with the arrow moves the profile with it rather than only the words at the top. An opener and two sentences a paragraph, and a paragraph with nothing to show is left out rather than padded. Figures sit inside sentences that are doing work and some sentences carry none, and the numbers that earned the title appear beside it only where no sentence drawn below has already made them. A shelf that earns no title is called a generalist.' },
+    def: 'A title the shelf has earned, and under it one sentence saying what earning it says about you — The Sherry Cellar, then You let the cask do the deciding. The title is the shelf and the line is you, so neither repeats the other. On the Also answers to line, the other titles the same shelf earned and this one did not use, and on the end of that same line the arrow that steps to the next of them. Then the profile itself, written as three paragraphs rather than a list of facts, because a list leaves the joining to you and the joining is the profile. EACH PARAGRAPH OPENS ON YOU — one sentence naming a choice, with no figure in it — and then gives the figures that show it. One paragraph says what the shelf is FOR: how many kinds of whiskey are here in real numbers, whether two places are held in equal measure, how many houses it spans and how far across Scotland it reaches. One says what runs through it whatever the category — the wood that beat the others, how many houses you followed it across, what that tastes of, and how much of it carries smoke. One says what it took to put there: strength, what was hard to find, age, where it was bought, how many houses were worth going back to, and whether a house you own a lot from is one name or a whole portfolio, which is the difference between going deep and going wide. THE ONE THAT ARGUES THE TITLE COMES FIRST, and each of them leads on whichever sentence the title was earned from — including its opener, which is keyed to the same chip — so stepping to another title with the arrow moves the profile with it rather than only the words at the top. An opener and two sentences a paragraph, and a paragraph with nothing to show is left out rather than padded. Figures sit inside sentences that are doing work and some sentences carry none, and the numbers that earned the title appear beside it only where no sentence drawn below has already made them. A shelf that earns no title is called a generalist.' },
   { term: 'How a bottle helps the chart', src: 'under any candidate',
     def: 'A bottle you are considering says what it would do to the shape. It clears a gap and the axis moves, with the percentage before and after; it counts toward one and says how many more are needed; or it says nothing, because most bottles change nothing on the chart. Covered means three. A line from a pasted email has only its name, so it speaks to region, category and wood and stays quiet about proof and age.' },
   { term: 'Can you find the caramel?', src: 'Flights, under what you could pour tonight',
@@ -9404,7 +9432,7 @@ L.FEATURES = [
   { term: 'Custom', src: 'the add form and the edit form, under Library',
     def: 'Two chips saying whether a whisky belongs in the shared library or only to you. Shared is the default, because almost every bottle is one anybody can buy. Custom is for a bottle nobody else can have \u2014 one you blended yourself, a single cask filled in front of you, a bottle with your name on it. It is never offered to the library, it is never collected by the subscription that files your bottles at the library\u2019s entries, and the bottle carries a CUSTOM mark under its name so you can see which it is. It can be changed afterwards, because it is a fact about the whisky rather than about the bottle. Everything else about it works the same way.' },
   { term: 'Add to the shelf', src: 'the bottom of the add form',
-    def: 'Saves the bottle. A proof is wanted, not required: a missing one is marked, the bottle still saves, and the library fill looks for it later. A barcode scanned or photographed on the way in is taught here and offered to everyone.' },
+    def: 'Saves the bottle. A proof is wanted, not required: a missing one is marked, the bottle still saves, and the library fill looks for it later. A barcode scanned or photographed on the way in is taught here and offered to everyone. A NAME YOU ALREADY OWN IS A SECOND BOTTLE, not a refusal: the form says how many you have as soon as it recognises the name — from the library, from a photographed label or from a lookup — sets Status to sealed, since the rule is one open and the rest sealed, and saves it where you are. The spelling snaps to the one already on your shelf so the two are one bottling. It used to refuse the save and send you to the Shelf to add it there.' },
   /* THE LOOP, EXPLAINED ONCE. No ranking of label, barcode and typing (BZ:
      do it subtly): a barcode is only cheap once a label read has TAUGHT it
      the pairing, so they are not competitors. Each way in says what it is
@@ -9589,7 +9617,7 @@ L.FEATURES = [
   { term: 'Their shelf', src: 'Buddies, press a section or a group',
     def: 'A buddy\u2019s bottles on their own screen, with a title naming what you are looking at, a search box and a way back to Buddies. Sorted by proof. Open or sealed is shown where the bottles are all theirs. Tap one to propose it as a pour or log it.' },
   { term: 'Text the list, or text a link', src: 'Shelf, the wishlist',
-    def: 'Two different messages. The list arrives readable, with no prices, so it works in a shop and does not say what to spend. The link is one line that opens a fuller page, needs no account, and never reaches a server. It is a snapshot of the day you sent it \u2014 change your mind and send another.' },
+    def: 'Two different messages. The list arrives readable, with no prices, so it works in a shop and does not say what to spend. The link is one line that opens a fuller page, needs no account, and never reaches a server. It is a snapshot of the day you sent it \u2014 change your mind and send another. Copy it instead puts either message on the clipboard, for anywhere that is not a text message.' },
   { term: 'A calendar, a sample', src: 'Pour, Away',
     def: 'A whiskey you drank but never owned \u2014 an advent calendar or a sample. Both are logged as pours with nothing added to your shelf. Pick them where you would pick a bar; no name is needed, though you can add one. They still count toward what you have tasted.' },
   { term: 'Which way to add a bottle', src: 'anywhere you add one',
@@ -9628,7 +9656,7 @@ L.FEATURES = [
   { term: 'The recap', src: 'the top of Taste',
     def: 'What your log holds over a stretch you pick: a month, three months, a year or all of it. Pours, different whiskies, the most poured, the top house, where you went out, away against at home, and how many you would pour again. With a lookup service set, a written summary sits above the counts.' },
   { term: 'Where it came from', src: 'adding a bottle, or tapping one you own',
-    def: 'In a shop, online, a gift, a trade, a lottery or an auction. A shop takes a place; a gift or a trade takes a person. It belongs to the bottle, not the whiskey, since two of one whiskey can come from two places. It is never shared with a buddy: a gift carries someone\u2019s name.' },
+    def: 'In a shop, online, a gift, a trade, a lottery or an auction. A shop takes a place; a gift or a trade takes a person. In a shop puts a map pin in the field, Find where I am, the same one the away pour has: it asks the phone where it is and offers the shops, bars and restaurants within a hundred and fifty metres, nearest first, from OpenStreetMap. Tapping one fills the shop and the town. Only the name is kept, never a coordinate, and the fix is thrown away once the question has been asked. It belongs to the bottle, not the whiskey, since two of one whiskey can come from two places. It is never shared with a buddy: a gift carries someone\u2019s name.' },
   { term: 'Why this one', src: 'beside where it came from',
     def: 'On sale, allocated release, cannot get it near home, been meaning to, somebody recommended it. Several can be true. Not asked for a bottle that came off your wishlist, because the app already knows why.' },
   { term: 'Design a flight', src: 'Flights, design one from scratch',
@@ -18800,6 +18828,14 @@ L.moreDescriptive = function (a, b) {
    and library together, because the whole point of searching before typing is
    to find the entry you would otherwise create a second copy of. Named apart from searchLibrary so the guard that holds shelf
    claims to the shelf can allow this one purpose and nothing else. */
+/* HOW MANY LETTERS BEFORE A SEARCH ANSWERS. In the engine rather than beside
+   the screen that reads it, because the admin page's library picker reads
+   it too and that page gets the engine and nothing else: as a page-level
+   const in index.html it simply did not exist over there, and every
+   keystroke in Search the library threw. One declaration both pages can
+   reach is the fix; a second copy is the fault. */
+L.ADD_SEARCH_MIN = 3;
+
 L.addCandidates = function (catalog, q, cap) {
   const t = String(q || '').trim().toLowerCase();
   /* A WIDER NET THAN THE LIST SHOWS, then ranked and cut: searchLibrary sorts
@@ -21291,6 +21327,12 @@ L.allVerdicts = function (shared, mine) {
 L.auditVerdict = function (reviewed, id, now) {
   const r = (reviewed || {})[id];
   if (!r) return null;
+  /* NOTHING WRITES THIS ANY MORE. The scan offered Keep these for now
+     beside These are correct, which are two ways of leaving the library
+     exactly as it is, and the pair is Keep it and Change it now. The
+     reader stays because the verdicts already written are in the
+     database and expire on their own; dropping it would make every one
+     of them permanent, which is the opposite of what it meant. */
   if (r.v === 'later') {
     const days = (now - (r.at || 0)) / 86400000;
     return days < L.AUDIT_LATER_DAYS ? 'later' : null;   // it is back
@@ -40291,8 +40333,9 @@ function portraitHead(port) {
      Drawn only where there is somewhere to step: one earned title is not a
      rotation, and a button that returns you to the same word is worse than
      no button. */
+  let step = null;
   if (port.portN > 1) {
-    const step = el('button', 'portveto portturn', '↻');
+    step = el('button', 'portveto portturn', '↻');
     step.type = 'button';
     const at = (port.portAt || 0) + 1;
     step.title = 'Another title for this shelf (' + at + ' of '
@@ -40307,27 +40350,38 @@ function portraitHead(port) {
         % port.portN + 1) + ' of ' + port.portN);
       renderHome();
     };
-    ptitle.appendChild(step);
   }
   if (port.line) left.appendChild(el('div', 'portline1', port.line));
   if (port.why) left.appendChild(el('div', 'portwhy', port.why));
   ph.appendChild(left);
-  if (port.also.length) {
-    /* THE PILLS SAY WHAT THEY ARE. They are the other titles the shelf
-       earned, and they were four bare names beside the title: the only
-       thing that said so was a sentence in the paragraph below, which
-       named a DIFFERENT three of them (the ones the title did not use) and
-       was the paragraph's longest. The label is four words and does the
-       job for all four pills. */
-    left.appendChild(el('div', 'portlabel alsolab', 'Also answers to'));
-    const row = el('div', 'porthd-r');
+  /* THE OTHER TITLES SIT ON THE LABEL THAT NAMES THEM, and the step to the
+     next of them ends the same line. They were pills in a column of their
+     own at the top right, which left four words an inch above and across
+     from the label introducing them ("there is a disconnect between the
+     pills and the Also Answers to statement"): a label and its values read
+     as one thing only on one line. The pill chrome went with the move -
+     a bordered capsule reads as a control and these are labels - and the
+     step came down to the line's own size.
+
+     Drawn when either half has something to show, so a shelf whose other
+     titles were all spent on the paragraphs still keeps its step. */
+  if (port.also.length || step) {
+    const also = el('div', 'portalso');
+    if (port.also.length) {
+      also.appendChild(el('span', 'portlabel', 'Also answers to'));
+    }
+    /* THE STEP SITS BETWEEN THE LABEL AND THE NAMES, not after them. Four
+       names wrap at phone width and a 44px target wraps with them: put it
+       last and it landed on the second row BETWEEN two names - names, then
+       the arrow, then more names - so a control somebody presses had no
+       fixed place to be. Measured at 360, 390, 430 and 760. */
+    if (step) also.appendChild(step);
     port.also.forEach(a => {
-      const c = el('div', 'pill');   // a label, not a control
-      c.textContent = a.title;
-      c.title = a.why;
-      row.appendChild(c);
+      const n = el('span', 'alsoname', a.title);
+      n.title = a.why;   // a label, not a control
+      also.appendChild(n);
     });
-    ph.appendChild(row);
+    left.appendChild(also);
   }
   return ph;
 }
@@ -50790,6 +50844,16 @@ function askProvenance(b, after) {
         : kind === 'an auction' ? 'Which auction? (optional)'
         : 'Which shop? e.g. Total Wine, Cleveland OH';
     };
+    /* THE SAME PIN THE ADD FORM HAS, for the same question: correcting
+       where a bottle came from happens in the shop as often as adding it
+       does. Only for a shop - a gift takes a person, not a place. */
+    const slot = el('label', 'withslots');
+    slot.style.display = 'block';
+    slot.style.marginTop = '8px';
+    detail.style.marginTop = '0';
+    slot.appendChild(detail);
+    const pin = shopPin(detail);
+    slot.appendChild(pin.find);
     L.FROM_KINDS.forEach(k => {
       const c = el('button', 'chip', L.sentenceCase(k));
       c.type = 'button';
@@ -50798,16 +50862,20 @@ function askProvenance(b, after) {
         kind = (kind === k) ? null : k;
         row.querySelectorAll('.chip').forEach(x => { x.dataset.on = 'false'; });
         if (kind) c.dataset.on = 'true';
-        detail.hidden = !kind;
+        slot.hidden = !kind;
         setPlaceholder();
+        pin.shown(kind === 'in a shop');
         if (kind) detail.focus();
       };
       row.appendChild(c);
     });
-    detail.hidden = !kind;
+    slot.hidden = !kind;
     setPlaceholder();
+    pin.shown(kind === 'in a shop');
     m.appendChild(row);
-    m.appendChild(detail);
+    m.appendChild(slot);
+    m.appendChild(pin.row);
+    m.appendChild(pin.msg);
 
     // And why, the same five, several allowed.
     const whyWrap = el('div');
@@ -51650,20 +51718,58 @@ function askTheMap(onRows, onStart, done) {
   }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
 }
 
-function placePicker(card, kindSel) {
-  /* THE FIELD CARRIES THE PIN, inside it, the way the name field carries
-     the label scanner ("A field with a map pin button?",
-     "Same as some camera useages"). One fewer thing in the chip row, and
-     the right shape: the field is where you are, the pin fills it from the
-     map, the chips are the places you might mean. `withslots` pads the
-     field to clear the button and `scanfield` draws it at 34px inside a
-     44px target, because it is pressed standing in a bar. */
-  const wrap = el('label', 'withslots');
-  wrap.style.display = 'block';
-  wrap.style.marginTop = '6px';
-  const where = el('input', 'field');
-  where.placeholder = 'Where? e.g. The Aviary, Chicago IL';
-  wrap.appendChild(where);
+/* THE MAP PIN ON A FIELD, AND WHAT IT FINDS, IN ONE PLACE. The pour's
+   Where and the shop a bottle was bought in are the same act - standing
+   somewhere and naming it - and until now only the pour had a pin, so the
+   shop was typed out while standing in it.
+
+   The caller owns the field, the chip row and the sentence under them;
+   this owns the press, the wait, the failure sentences and the chips it
+   adds, and clears its own chips before each new press. `fill` is handed
+   the place, so the pour can set its kind along with the name and the
+   shop field can take the line and nothing else. `others` hides whatever
+   else is in the row while the map is being asked, because a row of
+   where you were last is noise in front of where you are. */
+function mapPinTo(find, row, msg, fill, others) {
+  const hide = others || function () {};
+  let found = [];
+  /* `working` is the app's own waiting indicator and counts its depth, so
+     `waiting` makes sure this only ever puts back what it took - a stray
+     close would hide somebody else's. */
+  let waiting = false;
+  const stop = () => { if (waiting) { waiting = false; working(); } };
+  const done = (t, back) => {
+    stop();
+    find.disabled = false;
+    msg.textContent = t;
+    if (back) hide(true);
+  };
+  find.onclick = () => {
+    found.forEach(c => { if (c.parentNode) c.parentNode.removeChild(c); });
+    found = [];
+    askTheMap(rows => {
+      found = rows.map(p => {
+        const c = el('button', 'chip', p.name + ' · ' + p.away + 'm');
+        c.type = 'button';
+        c.onclick = () => fill(c, p);
+        row.appendChild(c);
+        return c;
+      });
+    }, before => {
+      if (!before) return;
+      hide(false);
+      find.disabled = true;
+      msg.textContent = '';
+      waiting = true;
+      working('Searching');
+    }, done);
+  };
+}
+
+/* THE PIN ITSELF, drawn inside the field it fills. `withslots` pads the
+   field to clear the button and `scanfield` draws it at 34px inside a
+   44px target, because it is pressed standing in a bar or a shop. */
+function mapPinButton() {
   const find = el('button', 'instbtn scanfield');
   find.type = 'button';
   find.title = 'Find where I am';
@@ -51672,6 +51778,59 @@ function placePicker(card, kindSel) {
     + ' aria-hidden="true" fill="none" stroke="currentColor"'
     + ' stroke-width="1.8"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8'
     + ' 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+  return find;
+}
+
+/* THE SHOP FIELD TAKES THE PIN TOO. Where a bottle was bought is asked
+   in two places - the add form and the bottle's own provenance - and both
+   asked you to type a shop you were standing in, while the pour three
+   screens away filled itself from the map. The OSM question already
+   carries shop=alcohol and shop=wine, so the places it finds are the
+   right ones; nothing new is asked of the service.
+
+   ONLY FOR A SHOP. A gift and a trade take a person, online takes a
+   retailer, and a lottery or an auction takes neither - a pin on any of
+   those offers the bar next door as an answer to who gave it to you.
+   The caller says when the kind is right by calling `shown`.
+
+   Returns the two things the caller has to place: the pin, which belongs
+   inside the field, and the row the found places land in. */
+function shopPin(field) {
+  const find = mapPinButton();
+  const row = el('div', 'chiprow');
+  row.style.marginTop = '6px';
+  const msg = el('div', 'sub');
+  msg.style.marginTop = '4px';
+  mapPinTo(find, row, msg, (c, p) => {
+    /* The same line the pour writes, which is the shape this field asks
+       for in its own placeholder: Total Wine, Cleveland OH. */
+    field.value = L.nearbyLine(p);
+    row.querySelectorAll('.chip').forEach(x => { x.dataset.on = 'false'; });
+    c.dataset.on = 'true';
+  });
+  const shown = on => {
+    find.hidden = !on;
+    row.hidden = !on;
+    msg.hidden = !on;
+    if (!on) msg.textContent = '';
+  };
+  shown(false);
+  return { find: find, row: row, msg: msg, shown: shown };
+}
+
+function placePicker(card, kindSel) {
+  /* THE FIELD CARRIES THE PIN, inside it, the way the name field carries
+     the label scanner ("A field with a map pin button?",
+     "Same as some camera useages"). One fewer thing in the chip row, and
+     the right shape: the field is where you are, the pin fills it from the
+     map, the chips are the places you might mean. */
+  const wrap = el('label', 'withslots');
+  wrap.style.display = 'block';
+  wrap.style.marginTop = '6px';
+  const where = el('input', 'field');
+  where.placeholder = 'Where? e.g. The Aviary, Chicago IL';
+  wrap.appendChild(where);
+  const find = mapPinButton();
   wrap.appendChild(find);
   card.appendChild(wrap);
 
@@ -51679,7 +51838,6 @@ function placePicker(card, kindSel) {
   const msg = el('div', 'sub');
   msg.style.marginTop = '4px';
   let buddy = null;
-  let found = [];
 
   /* THE ONE PLACE A TAP FILLS THE FIELD, so a buddy, a place you have been
      and a place the map found cannot come to behave differently. Pressing
@@ -51732,33 +51890,12 @@ function placePicker(card, kindSel) {
   /* THE FILLING BOTTLE, NOT A LINE OF TEXT. A sentence under the field was
      too quiet for a wait that reaches a phone's location service and then
      a server ("looking for you is too subtle. The filling
-     bottle with Searching would be best"). `working` is the app's own
-     waiting indicator and counts its depth, so `waiting` makes sure this
-     only ever puts back what it took - a stray close would hide somebody
-     else's. */
-  let waiting = false;
-  const stop = () => { if (waiting) { waiting = false; working(); } };
-  const done = (t, back) => {
-    stop();
-    find.disabled = false;
-    msg.textContent = t;
-    if (back) show(true);
-  };
-  find.onclick = () => {
-    found.forEach(c => { if (c.parentNode) c.parentNode.removeChild(c); });
-    found = [];
-    askTheMap(rows => {
-      found = rows.map(p => chip(p.name + ' · ' + p.away + 'm',
-        L.nearbyLine(p), p.kind, null));
-    }, before => {
-      if (!before) return;
-      show(false);
-      find.disabled = true;
-      msg.textContent = '';
-      waiting = true;
-      working('Searching');
-    }, done);
-  };
+     bottle with Searching would be best"). mapPinTo holds that wait and
+     every failure sentence; what is left here is what a tap on a found
+     place does, which is the one thing the pour does differently - it
+     carries the kind as well as the name. */
+  mapPinTo(find, row, msg,
+    (c, p) => pick(c, L.nearbyLine(p), p.kind, null), show);
   card.appendChild(row);
   card.appendChild(msg);
   return { where: where, buddy: () => buddy };
@@ -53658,13 +53795,21 @@ const REQUIRED_FIELDS = { name: true };
 
 /* WHERE IT IS FROM, correctable in the form rather than only in the library. A Scotch takes one of the six regions; everything else
    takes the place it was made, like a state. */
-/* A WHISKY ONTO THE SHELF. Known to the LIBRARY is not the same as on your
-   shelf: a label read files it in the library, after which the form refused
-   to add it and the bottle was nowhere ("said it exists, but
-   I can't find it"). A name you already OWN is the only refusal; a whisky the
-   library knows keeps its record and takes from the form only what that
-   record does not say. */
-function putOnShelf(np, vals, f, errBox) {
+/* A WHISKY ONTO THE SHELF, AND IT REFUSES NOTHING. Known to the LIBRARY is
+   not the same as on your shelf: a label read files it in the library, after
+   which the form refused to add it and the bottle was nowhere ("said it
+   exists, but I can't find it"). A whisky the library knows keeps its record
+   and takes from the form only what that record does not say.
+
+   A NAME YOU ALREADY OWN WAS THE LAST REFUSAL AND IS NOW A SECOND BOTTLE.
+   It was the only door of three that said no: the Shop adds another through
+   askStatus, the bottle page adds another through its spare button, and this
+   one - the one you reach from + bottle on the Shelf, after photographing
+   the label - sent you to the Shelf to do there what you were already
+   doing here. Several rows may share one key; that is what a backup IS.
+   Returns how many of it you hold once this one is on, so the toast can
+   say which bottle it was. */
+function putOnShelf(np, vals, f) {
   /* THE KEY IT ALREADY HAS, if this is not a new whisky. An exact key lookup
      missed a bottle the app knew whenever the catalogue's key was not built
      from the name, and filed a private duplicate instead. */
@@ -53672,12 +53817,6 @@ function putOnShelf(np, vals, f, errBox) {
     np.k = L.keyForName(np.name, S.catalog) || np.k;
   }
   const known = S.catalog[np.k];
-  if (known && L.ownedCount(np.k, S.bottles)) {
-    errBox.style.display = 'block';
-    errBox.textContent = 'That is already on your shelf. Open it there to '
-      + 'add another bottle of it.';
-    return false;
-  }
   np.finc = np.fin ? 'stated' : null;
   if (known) {
     const add = L.newFacts(known, np);
@@ -53707,7 +53846,7 @@ function putOnShelf(np, vals, f, errBox) {
   /* And how you came across it, carried over from the wishlist entry about
      to be deleted: why it was wanted is why it was bought. */
   S.bottles.push(L.withOrigin(nb, L.bottleOrigin(np.name, S.wish, null)));
-  return true;
+  return L.ownedCount(np.k, S.bottles);
 }
 
 /* TELL THE PERSON WHO BUILT IT. It goes through the
@@ -53932,6 +54071,9 @@ function chipRow(label, name, value, options) {
   options.forEach(o => {
     const c = el('button', 'chip', L.titleCase(o));
     c.type = 'button';
+    /* The value this chip stands for, so code can set the row the way a
+       press does without matching the label text back to it. */
+    c.dataset.val = o;
     c.dataset.on = (o === value);
     c.onclick = () => {
       hidden.value = o;
@@ -53942,6 +54084,20 @@ function chipRow(label, name, value, options) {
   });
   l.appendChild(row);
   return l;
+}
+
+/* SET A CHIP ROW FROM CODE, the way a press would: the hidden input is
+   what gets saved and the marks are what gets read, so both move or the
+   form shows one answer and saves another. */
+function setChipValue(f, name, value) {
+  const hidden = f.querySelector('input[type="hidden"][name="' + name + '"]');
+  if (!hidden) return;
+  hidden.value = value;
+  const row = hidden.parentNode.querySelector('.chiprow');
+  if (!row) return;
+  row.querySelectorAll('.chip').forEach(c => {
+    c.dataset.on = (c.dataset.val === value) ? 'true' : 'false';
+  });
 }
 
 /* A SELECT THAT CAN SAY IT DOES NOT KNOW. */
@@ -54064,7 +54220,6 @@ function pickerRow(label, name, value, options, opts) {
    explicitly declined, there is nothing to type into: that is what makes
    typing the last resort rather than the default, and it is the whole of the
    request. */
-const ADD_SEARCH_MIN = 3;
 const ADD_SEARCH_SHOW = 6;
 
 function searchFirst(f, nameRow, onPick, onNone) {
@@ -54081,7 +54236,7 @@ function searchFirst(f, nameRow, onPick, onNone) {
   const draw = () => {
     const q = (input.value || '').trim();
     box.innerHTML = '';
-    if (q.length < ADD_SEARCH_MIN) { box.hidden = true; return; }
+    if (q.length < L.ADD_SEARCH_MIN) { box.hidden = true; return; }
     const hits = L.addCandidates(S.catalog, q, ADD_SEARCH_SHOW);
     hits.forEach(hit => {
       const b = el('button', 'candidate');
@@ -54238,6 +54393,83 @@ function settleKnownFacts(facts) {
  * itself, offered there whether or not anything is missing - because a label
  * CORRECTS, and an entry that needs correcting often scores as complete.
  */
+/* WHERE A NEW BOTTLE CAME FROM, AND WHY, as its own rows. Out of
+   productForm, which a new line may not push past its allowance (rule
+   30f): a screen lays things out and calls something named for the rest.
+   It hangs its three readers on the form - the kind, the whys, and the
+   door the kind chips use to reveal the whys - because the save reads
+   them from there and nothing else does. */
+function provenanceRows(f) {
+  /* WHERE IT CAME FROM: the place if bought, or who from if a gift. */
+  const fromWrap = el('div');
+  fromWrap.style.marginTop = '9px';
+  fromWrap.appendChild(el('label', null, 'Where it came from'));
+  const fromRow = el('div', 'chiprow');
+  /* THE FIELD CARRIES THE PIN, the way the pour's Where does: you are
+     standing in the shop while you add the bottle. `withslots` pads
+     the field to clear the button. */
+  const fromSlot = el('label', 'withslots');
+  fromSlot.style.display = 'block';
+  fromSlot.style.marginTop = '6px';
+  const fromDetail = el('input', 'field');
+  fromDetail.name = 'fromDetail';
+  fromSlot.appendChild(fromDetail);
+  const pin = shopPin(fromDetail);
+  fromSlot.appendChild(pin.find);
+  fromSlot.hidden = true;
+  let fromKind = null;
+  L.FROM_KINDS.forEach(k => {
+    const c = el('button', 'chip', L.sentenceCase(k));
+    c.type = 'button';
+    c.onclick = () => {
+      fromKind = (fromKind === k) ? null : k;
+      fromRow.querySelectorAll('.chip').forEach(x => {
+        x.dataset.on = 'false';
+      });
+      if (fromKind) c.dataset.on = 'true';
+      fromSlot.hidden = !fromKind;
+      // A lottery or an auction needs no name to be a complete answer.
+      if (fromKind) f._showWhy();
+      fromDetail.placeholder = fromKind === 'a gift' ? 'From who?'
+        : fromKind === 'online' ? 'Which retailer?'
+        : 'Which shop? e.g. Total Wine, Cleveland OH';
+      pin.shown(fromKind === 'in a shop');
+      if (fromKind) fromDetail.focus(); else fromDetail.value = '';
+    };
+    fromRow.appendChild(c);
+  });
+  fromWrap.appendChild(fromRow);
+  fromWrap.appendChild(fromSlot);
+  fromWrap.appendChild(pin.row);
+  fromWrap.appendChild(pin.msg);
+
+  /* AND WHY, the part the app cannot work out itself: it already knows a
+     wishlist bottle or a filled gap; what is left is circumstance. */
+  const whyWrap = el('div');
+  whyWrap.style.marginTop = '9px';
+  whyWrap.hidden = true;
+  whyWrap.appendChild(el('label', null, 'Why this one (optional)'));
+  const whyRow = el('div', 'chiprow');
+  const whyPicked = [];
+  L.BUY_WHYS.forEach(w => {
+    const c = el('button', 'chip', L.sentenceCase(w));
+    c.type = 'button';
+    c.onclick = () => {
+      const at = whyPicked.indexOf(w);
+      if (at >= 0) whyPicked.splice(at, 1); else whyPicked.push(w);
+      c.dataset.on = at < 0;
+    };
+    whyRow.appendChild(c);
+  });
+  whyWrap.appendChild(whyRow);
+  fromWrap.appendChild(whyWrap);
+
+  f.appendChild(fromWrap);
+  f._fromKind = () => fromKind;
+  f._whys = () => whyPicked.slice();
+  f._showWhy = () => { whyWrap.hidden = false; };
+}
+
 function productForm(existing, fromScan) {
   const p = existing || {};
   openModal(existing ? 'Edit ' + p.name : 'Add a bottle', m => {
@@ -54332,6 +54564,13 @@ function productForm(existing, fromScan) {
         pf.addEventListener('input', () => pf.classList.remove('needed'),
           { once: true });
       }
+      /* AND IF IT IS ALREADY YOURS, SAY SO HERE. Every fill path ends in
+         this function - the library, a photographed label, a lookup - so
+         it is the one place that can tell somebody a second bottle is
+         what they are about to add, whichever way the form was filled.
+         The refusal this replaces arrived at the press of Save, after the
+         photographs, and only on one of those paths. */
+      noteIfOwned(res.k);
     };
 
     /* ONE PLACE that says what the form knows about the name. */
@@ -54348,6 +54587,35 @@ function productForm(existing, fromScan) {
         lookMsg.appendChild(b);
       }
       lookMsg.hidden = !text;
+    };
+
+    /* A NAME THE SHELF ALREADY HOLDS, said before the save rather than
+       instead of it. Sets Status to sealed, because the rule is one open
+       and the rest sealed, and says how many there are so the sentence is
+       about this shelf and not a generic warning. Nothing is refused: the
+       chip is right there to flip if this one is being opened tonight.
+       Silent on an edit, where the bottle IS the one being edited. */
+    const noteIfOwned = from => {
+      if (existing) return;
+      const nameNow = f.querySelector('[name="name"]');
+      const nm = ((nameNow && nameNow.value) || '').trim();
+      /* THE KEY THE FILL RESOLVED TO, where there was one. A library fill
+         matches on a score, so "lagavulin 16" can fill from an entry
+         called Lagavulin 16 Year; keyForName matches exactly and would
+         miss it. A label or a lookup carries no key and falls back to the
+         name, which is all there is to go on. */
+      const key = from || (nm ? L.keyForName(nm, S.catalog) : null);
+      const have = key ? L.ownedCount(key, S.bottles) : 0;
+      if (!have) return;
+      /* AND THE NAME SNAPS TO THE ONE YOU ALREADY OWN. The save files by
+         name, so a near miss left here would say "another bottle of this"
+         and then file a second product beside the first - one bottling
+         under two spellings, which is the fault the key schemes already
+         cost this app once. */
+      const own = (S.catalog[key] || {}).name;
+      if (own && nameNow) nameNow.value = own;
+      setChipValue(f, 'status', 'sealed');
+      say(L.secondSay(have), 'ok');
     };
 
     /* The paid half, and the only half a person decides to run. */
@@ -54462,63 +54730,9 @@ function productForm(existing, fromScan) {
     if (!existing) {
       newBottleRows(f);
 
-      /* WHERE IT CAME FROM: the place if bought, or who from if a gift. */
-      const fromWrap = el('div');
-      fromWrap.style.marginTop = '9px';
-      fromWrap.appendChild(el('label', null, 'Where it came from'));
-      const fromRow = el('div', 'chiprow');
-      const fromDetail = el('input', 'field');
-      fromDetail.name = 'fromDetail';
-      fromDetail.style.marginTop = '6px';
-      fromDetail.hidden = true;
-      let fromKind = null;
-      L.FROM_KINDS.forEach(k => {
-        const c = el('button', 'chip', L.sentenceCase(k));
-        c.type = 'button';
-        c.onclick = () => {
-          fromKind = (fromKind === k) ? null : k;
-          fromRow.querySelectorAll('.chip').forEach(x => {
-            x.dataset.on = 'false';
-          });
-          if (fromKind) c.dataset.on = 'true';
-          fromDetail.hidden = !fromKind;
-          // A lottery or an auction needs no name to be a complete answer.
-          if (fromKind) f._showWhy();
-          fromDetail.placeholder = fromKind === 'a gift' ? 'From who?'
-            : fromKind === 'online' ? 'Which retailer?'
-            : 'Which shop? e.g. Total Wine, Cleveland OH';
-          if (fromKind) fromDetail.focus(); else fromDetail.value = '';
-        };
-        fromRow.appendChild(c);
-      });
-      fromWrap.appendChild(fromRow);
-      fromWrap.appendChild(fromDetail);
-
-      /* AND WHY, the part the app cannot work out itself: it already knows a
-         wishlist bottle or a filled gap; what is left is circumstance. */
-      const whyWrap = el('div');
-      whyWrap.style.marginTop = '9px';
-      whyWrap.hidden = true;
-      whyWrap.appendChild(el('label', null, 'Why this one (optional)'));
-      const whyRow = el('div', 'chiprow');
-      const whyPicked = [];
-      L.BUY_WHYS.forEach(w => {
-        const c = el('button', 'chip', L.sentenceCase(w));
-        c.type = 'button';
-        c.onclick = () => {
-          const at = whyPicked.indexOf(w);
-          if (at >= 0) whyPicked.splice(at, 1); else whyPicked.push(w);
-          c.dataset.on = at < 0;
-        };
-        whyRow.appendChild(c);
-      });
-      whyWrap.appendChild(whyRow);
-      fromWrap.appendChild(whyWrap);
-
-      f.appendChild(fromWrap);
-      f._fromKind = () => fromKind;
-      f._whys = () => whyPicked.slice();
-      f._showWhy = () => { whyWrap.hidden = false; };
+      /* Where it came from, and why: provenanceRows hangs _fromKind,
+         _whys and _showWhy on the form, which is what the save reads. */
+      provenanceRows(f);
     }
     m.appendChild(f);
 
@@ -54597,14 +54811,17 @@ function productForm(existing, fromScan) {
         errBox.style.display = 'block'; errBox.textContent = errs.join(' ');
         return;
       }
+      /* How many of it you hold once it is on, so a second bottle lands
+         with a different word than a first (L.addedSay). */
+      let held = 0;
       if (existing) {
         saveProductEdit(p, vals);
-      } else if (!putOnShelf(L.normalizeProduct(vals), vals, f, errBox)) {
-        return;
+      } else {
+        held = putOnShelf(L.normalizeProduct(vals), vals, f);
       }
       save_(); rebuildCatalog();
       closeModal(); renderShelf(); renderPayline(); renderHome(); if (existing) redrawBottlePage(p.k);
-      toast(existing ? 'Saved' : 'Added to the shelf');
+      toast(existing ? 'Saved' : L.addedSay(held));
     };
     m.appendChild(save);
 
@@ -59757,7 +59974,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.41</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.42</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

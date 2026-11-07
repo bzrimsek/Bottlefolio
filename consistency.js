@@ -1728,7 +1728,8 @@ check('no fixed svg id is emitted by a repeated drawing',
     KNOWN_UNTESTED.filter(fn => tests.indexOf('L.' + fn) >= 0));
 }
 
-/* 21. A control the help does not know about.
+/* 21. A control the help does not know about, and a control the help
+      describes that nobody can press.
 
       App use is 69 entries describing what each screen does, and it drifted
       twice in one day: it still told people to press "Fill in the rest"
@@ -1739,8 +1740,17 @@ check('no fixed svg id is emitted by a repeated drawing',
       This is the reverse of the label check (30c): not whether a control
       matches its documented name, but whether a control somebody added has
       any documentation at all. Named buttons only, because a chip or an
-      icon is not something anybody looks up. */
+      icon is not something anybody looks up.
+
+      AND BOTH WAYS ROUND SINCE 2026-11-06, which is the half the tab check
+      below has had since BZ counted the tabs himself and found Map still in
+      the help. Drift goes in both directions and only one of them was
+      watched here. */
 {
+  /* WHAT A NAME ON THIS LIST CLAIMS, AND BOTH HALVES ARE CHECKED NOW: that
+     the app DRAWS this control, and that App use DESCRIBES it. It only ever
+     claimed the second half, and read the wrong text to claim it - see the
+     two checks under the list. */
   const CONTROLS = ['Photograph the label', 'Export everything', 'Export for import',
     'Photograph it', 'Fill what is missing', 'Import a collection',
     'Back up everything', 'Add to the shelf',
@@ -1758,8 +1768,12 @@ check('no fixed svg id is emitted by a repeated drawing',
        constant now, because a field a user can raise is a bill a user can
        raise. The names stay out of here so the check fails if either comes
        back undocumented. */
-    /* Added with the shelf question, 2026-09-15. */
-    'Ask your shelf',
+    /* THE PAID HALF OF THE SHELF QUESTION, which is the one NAMED control on
+       that screen: the ask itself is an input with a placeholder, and a
+       placeholder is not something anybody looks up. It stands where 'Ask
+       your shelf' stood - an App use heading that the app never drew, and
+       one of the eight named in the removal note below. */
+    'Look further',
     /* Added with the Buddies tab, 2026-09-07. App use said "Settings, set a
        display name, turn on findable" for a whole version after both moved
        to a tab — a help page naming a place that no longer holds the thing
@@ -1770,25 +1784,29 @@ check('no fixed svg id is emitted by a repeated drawing',
     'Mark bottles open or sealed',
         /* v1.9.32 */
     /* v2.9.35: 'Not me' and 'Put aside' went when the portrait veto became
-       a rotation. One control replaced two, and it is named here. */
-    'Another title for this shelf', 'Removing a library entry',
-    /* v2.0.9 */
-    'Scan the library for inconsistencies',
+       a rotation. One control replaced two, and it is named here - and the
+       two that went are NOT on the list, which is how it should be.
+
+       ITS NAME IS BUILT, NOT WRITTEN: `'Another title for this shelf (' +
+       at + ...`, because the control counts the titles it steps through. No
+       whole literal of it exists in the app at all, so the check that asked
+       for one found the App use entry instead and passed either way. That
+       is why the name is matched from its opening quote now. */
+    'Another title for this shelf',
     /* v1.9.40 */
-    'Text the list, or text a link', 'Diagnostics by user',
+    /* THE WISHLIST'S OWN BUTTON. 'Text the list, or text a link' was the App
+       use heading over two messages; the buttons are this one and 'Make a
+       link', further down. 'Copy it instead' is the third button on that
+       card and was drawn for a dozen builds with nothing naming it: the
+       check that reads this list cannot see a control nobody added, which
+       is the half of rule 9z a machine can hold and the reason the App use
+       entry now says either message can be copied. */
+    'Text the list', 'Copy it instead',
     'With a guest', 'Whiskey only', 'The library', 'Add to wishlist',
-  'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
-  'Add to wishlist',
-  'With a guest',
-    /* v2.0.9 */
-    'Scan the library for inconsistencies', 'Whose shelf counts',
+    'How much is left', 'Another one?', 'Gone', 'Photograph fill levels',
     'Their shelf',
-    /* v2.5.43: the attribution CC BY-SA asks for. The check only guards the
-       controls it is told about (9z), so a credit nobody listed here is a
-       credit that can be deleted without anything noticing. */
-    'Where the reference data comes from',
-    /* v2.5.46: the palate vocabulary's credit and its one visible line. */
-    'Where the flavor words come from', 'Tastes of',
+    /* v2.5.46: the palate vocabulary's one visible line. */
+    'Tastes of',
     /* v2.5.51: the sixth view on the guest ladder. */
     'Tastes like it',
     /* v2.5.56 */
@@ -1822,11 +1840,88 @@ check('no fixed svg id is emitted by a repeated drawing',
        came to be the one control in the app that nobody could find: a
        control behind a switch is still a control (rule 9z). */
     'Open the library'];
-  const ref = src.slice(src.indexOf('L.FEATURES = ['),
-    src.indexOf('L.REFERENCE') > 0 ? src.indexOf('L.REFERENCE') : undefined);
+  /* EIGHT NAMES CAME OFF ON 2026-11-06, and every one of them was an App use
+     heading that the app has never drawn as a control. They were on the list
+     claiming to guard something and guarding nothing: the check below reads
+     the app without the help now, so a name only the help knows fails.
+
+     'Ask your shelf', 'Whose shelf counts' and 'Text the list, or text a
+     link' are headings over screens whose own controls are an input with a
+     placeholder, a pick list ("A pick list, not chips") and two buttons
+     respectively; 'Look further' and 'Text the list' are those buttons and
+     are on the list in their place. 'Removing a library entry', 'Scan the
+     library for inconsistencies' and 'Diagnostics by user' all say
+     `src: 'the admin page'`, and the admin page's own labels are Remove it,
+     Scan and Diagnostics - this list guards index.html, and admin.js guards
+     admin.html. 'Where the reference data comes from' and 'Where the flavor
+     words come from' are the Credits section's own entries rather than
+     controls, and the credit they were put here to protect is guarded
+     directly below instead.
+
+     Three names were also on the list TWICE ('Add to wishlist', 'With a
+     guest', 'Scan the library for inconsistencies'), which cost nothing and
+     said nothing. */
+  const refAt = src.indexOf('L.FEATURES = [');
+  const refEnd = src.indexOf('L.REFERENCE') > 0
+    ? src.indexOf('L.REFERENCE') : src.length;
+  const ref = src.slice(refAt, refEnd);
+  /* AND THE SLICE MUST BE FINDABLE, the way the tab section below must be.
+     With no App use to read, the first check would pass on an empty list of
+     offenders while the second one shouts; a check that goes quiet when its
+     anchor moves is worse than no check. */
+  check('the App use entries can be found',
+    refAt > 0 && refEnd > refAt ? []
+      : ['App use is not where this check reads it']);
+  /* THE APP WITHOUT THE HELP, AND WITHOUT THE COMMENTS.
+
+     THE FAULT THIS FIXES, 2026-11-06: the haystack was the whole file, App
+     use included, so an App use entry naming its own control satisfied the
+     test for that control existing. 'Another title for this shelf' is the
+     case that showed it - the only whole literal of that name in the file is
+     the App use entry, because the control builds its name by concatenation
+     - and the check passed whether the control was on screen or not. Every
+     one of the eight names above passed the same way.
+
+     Comments go too, for the reason every check here strips them: a guard
+     satisfied by the sentence describing it is not a guard. */
+  const drawn = refAt > 0
+    ? blankComments(src.slice(0, refAt)) + blankComments(src.slice(refEnd))
+    : '';
+  /* A STRING OR A TAG THAT STARTS WITH THE NAME, closing quote not required,
+     because a name a control builds up has no closing quote after it. Every
+     control on the list is found by the opening single quote today; the
+     other three forms are there for a label written in a double-quoted
+     string, a template string, or straight into markup as `>Name<`.
+
+     NOT A BARE NAME ANYWHERE, which would be simpler and would also match
+     every passing mention in prose. */
+  const draws = c => ["'", '"', '`', '>'].some(q => drawn.indexOf(q + c) >= 0);
   check('every named control is described in App use',
-    CONTROLS.filter(c => src.indexOf("'" + c + "'") >= 0
-      && ref.indexOf(c) < 0));
+    CONTROLS.filter(c => draws(c) && ref.indexOf(c) < 0));
+  /* AND THE OTHER WAY ROUND, as the tab check below has had since BZ counted
+     the tabs himself. A control on this list that the app no longer draws is
+     a sentence in the help describing something nobody can press, which is
+     rule 9z in his own words: a help page describing a screen that has been
+     rebuilt is worse than one saying nothing. The fix is to take it out of
+     BOTH places - this list and App use. */
+  check('no control is described that the app does not draw',
+    CONTROLS.filter(c => !draws(c))
+      .map(c => c + ' - on the list, and nothing in the app draws it'));
+  /* THE CREDIT THE LICENCE ASKS FOR, guarded where it actually lives.
+     Wikipedia's list of Scottish distilleries is CC BY-SA 4.0 and the palate
+     vocabulary is a 1994 paper whose authors ask to be told what was done
+     with their data; both are repaid in App use's Credits section and
+     nowhere else. Two of the eight names above were standing in for this and
+     could not do it, being neither controls nor readable as code. */
+  {
+    const at = ref.indexOf("section: 'Credits'");
+    const cred = at < 0 ? '' : ref.slice(at);
+    check('App use still carries the credits it owes',
+      at < 0 ? ['no Credits section in App use']
+        : ['Where the reference data comes from',
+          'Where the flavor words come from']
+          .filter(t => cred.indexOf("term: '" + t + "'") < 0));
+  }
 
   /* And every TAB, since a tab is the coarsest control there is and one of
      them went undocumented for a version. Read off the nav rather than a
@@ -4262,10 +4357,10 @@ check('no fixed svg id is emitted by a repeated drawing',
   const BIG_TODAY = {
     likelyToLike: 455,
     showBottle: 417,
-    productForm: 316,
+    productForm: 299,
     renderShelf: 296,
-    openLibraryCleanUp: 280,
     renderAway: 265,
+    openLibraryCleanUp: 250,
     shopAnswer: 243,
     renderGaps: 170,
     renderShelfCharts: 163,

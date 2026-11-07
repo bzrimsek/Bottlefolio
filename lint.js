@@ -197,6 +197,76 @@ blocks.forEach(b => {
   });
 });
 
+/* AND THE ADMIN PAGE, WHICH NOTHING LINTED AT ALL. 4,500 lines of its own
+   screens, and the only thing that ever read them was admin.js driving
+   the page - which reports a broken file as whatever goes wrong first.
+   A string literal left open by an edit took the whole page out and
+   came back as "Cannot set properties of null" four hundred lines away,
+   in a test about removing a person.
+
+   ITS OWN SCOPE, NOT THE APP'S. admin.html cannot see index.html's
+   names - it fetches the engine and hangs it on A - so its globals are
+   the platform's and its own top-level declarations, and nothing else.
+
+   AND THE ENGINE DOORS IT CALLS ARE CHECKED AGAINST THE ENGINE. The
+   page reaches the app's engine as `A.L.`, so a door that does not
+   exist is the fault engine-undefined catches in the app, one file
+   over. This is what rule 30d asks for when code moves to a new file:
+   the guard follows it. */
+{
+  const aHtml = fs.readFileSync(path.join(__dirname, 'admin.html'),
+    'utf8');
+  const aBlocks = [];
+  const aRe = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;
+  let am;
+  while ((am = aRe.exec(aHtml))) {
+    aBlocks.push({ code: am[1],
+      line: aHtml.slice(0, am.index).split('\n').length });
+  }
+  if (!aBlocks.length) {
+    problems.push({ file: 'admin.html', line: 1, rule: 'parse',
+      text: 'no inline script found in admin.html' });
+  }
+  const aAll = aBlocks.map(b => b.code).join('\n');
+  const aGlobals = {};
+  Object.keys(globals).forEach(n => {
+    if (globals[n] === 'readonly') aGlobals[n] = 'readonly';
+  });
+  for (const r of [/^function\s+([A-Za-z_$][\w$]*)/gm,
+                   /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)/gm,
+                   /^class\s+([A-Za-z_$][\w$]*)/gm]) {
+    let x;
+    while ((x = r.exec(aAll))) aGlobals[x[1]] = 'writable';
+  }
+  const aConfig = Object.assign({}, config, { globals: aGlobals });
+  aBlocks.forEach(b => {
+    linter.verify(b.code, aConfig, { filename: 'admin.html' })
+      .forEach(x => {
+        problems.push({ file: 'admin.html',
+          line: b.line + (x.line || 1) - 1,
+          rule: x.ruleId || 'parse', text: x.message });
+      });
+  });
+  /* Comments and strings blanked first, for the reason the app's own
+     scan gives: a name written in a sentence is not a call. */
+  const aBare = aAll
+    .replace(/\/\*[\s\S]*?\*\//g, c => c.replace(/[^\n]/g, ' '))
+    .replace(/^(\s*)\/\/.*$/gm, '$1');
+  const aSeen = new Set();
+  let ac;
+  const aCall = /\bA\.L\.([A-Za-z0-9_]+)\s*\(/g;
+  while ((ac = aCall.exec(aBare))) {
+    if (engineDef.has(ac[1]) || aSeen.has(ac[1])) continue;
+    aSeen.add(ac[1]);
+    problems.push({ file: 'admin.html',
+      line: (aBlocks.length ? aBlocks[0].line : 1)
+        + aBare.slice(0, ac.index).split('\n').length - 1,
+      rule: 'engine-undefined',
+      text: 'A.L.' + ac[1] + ' is called and the engine does not '
+        + 'define it' });
+  }
+}
+
 /* Anything already in the file on the day this was added stays allowed by
    name, and nothing new may join it (rule 28a): a check that stands
    between BZ and shipping gets switched off rather than satisfied. The
@@ -207,12 +277,11 @@ problems = problems.filter(p =>
 
 if (!problems.length) {
   console.log('  \u2713 nothing undefined, defined twice, duplicated or '
-    + 'unreachable in ' + blocks.length + ' script block'
-    + (blocks.length === 1 ? '' : 's'));
+    + 'unreachable in the app or the admin page');
   process.exit(0);
 }
 problems.slice(0, 40).forEach(p => {
-  console.log('  \u2717 index.html:' + p.line + '  ' + p.text
+  console.log('  \u2717 ' + (p.file || 'index.html') + ':' + p.line + '  ' + p.text
     + '  [' + p.rule + ']');
 });
 if (problems.length > 40) {

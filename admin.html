@@ -2881,7 +2881,7 @@ function pickLibraryEntry(title, blurb, exceptKey, onPick) {
     const draw = () => {
       const term = (input.value || '').trim();
       out.innerHTML = '';
-      if (term.length < ADD_SEARCH_MIN) return;
+      if (term.length < A.L.ADD_SEARCH_MIN) return;
       const hits = A.L.addCandidates(LIB.products || {}, term, 8)
         .filter(h => !exceptKey
           || (h._key || A.L.libKey(h.name)) !== exceptKey);
@@ -3770,31 +3770,92 @@ function bulkControls(f, bulk, draw, again) {
    different thing from a list of judgments. */
 
 /* ---- bulkVerdictChips   index.html 51466-51496 ---- */
+/* ONE PAIR OF ANSWERS, AND THE GROUP SAYS THE SAME TWO WORDS AS EVERY ROW
+   UNDER IT. It offered "Keep these for now" and "These are correct",
+   which both leave the library exactly as it is - one for a few days
+   and one for good - so the choice read as a choice and was not one
+   ("Correct and Keep for Now as two choices is confusing"). The snooze
+   is gone with its button: a finding nobody has judged stays in the
+   list, and the list IS the queue. L.auditVerdict still expires the
+   'later' verdicts already written, because they are in the database
+   and nothing here can reach back and rewrite them.
+
+   CHANGE THEM GOES THROUGH THE ROW'S OWN DOOR. A.L.auditFix works out
+   the correction and applyLibraryFix writes it, which is exactly what
+   one row's Change it does - a second way to mend an entry is the
+   fault that put five shapes on looking a bottle up. It is drawn only
+   where the scan has worked a fix out for at least one row, and it
+   says how many it will change and asks first, because it writes that
+   many entries into the shared library at one press. */
 function bulkVerdictChips(f, bulk, draw) {
-  [['Keep these for now', 'later'],
-   ['These are correct', 'ok']].forEach(([label, v]) => {
-    const b3 = el('button', 'chip quiet', label);
-    b3.onclick = () => {
-      const ups = {};
-      f.items.forEach(it2 => {
-        ups[A.L.fbKey(f.id + ':' + it2.key)] =
-          { v: v, at: Date.now(), by: (A.user || {}).uid || '' };
-      });
-      ref(NODE.reviewed)
-        .update(ups)
-        .then(() => {
-          f.items.forEach(it2 => {
-            LIB.reviewed = Object.assign({}, LIB.reviewed || {},
-              { [f.id + ':' + it2.key]: { v: v, at: Date.now() } });
-          });
-          appLog('library scan: ' + f.items.length + ' marked ' + v);
-          /* The scan is a page, so redrawing it in place is the whole of it. */
-          draw();
-        })
-        .catch(e2 => toast(sayError(e2)));
-    };
-    bulk.appendChild(b3);
-  });
+  const keep = el('button', 'chip quiet', 'Keep them');
+  keep.title = 'Leave all of these as they are, and stop asking';
+  keep.onclick = () => {
+    const ups = {};
+    f.items.forEach(it2 => {
+      ups[A.L.fbKey(f.id + ':' + it2.key)] =
+        { v: 'ok', at: Date.now(), by: (A.user || {}).uid || '' };
+    });
+    ref(NODE.reviewed)
+      .update(ups)
+      .then(() => {
+        f.items.forEach(it2 => {
+          LIB.reviewed = Object.assign({}, LIB.reviewed || {},
+            { [f.id + ':' + it2.key]: { v: 'ok', at: Date.now() } });
+        });
+        appLog('library scan: ' + f.items.length + ' marked ok');
+        /* The scan is a page, so redrawing it in place is the whole
+           of it. */
+        draw();
+      })
+      .catch(e2 => toast(sayError(e2)));
+  };
+  bulk.appendChild(keep);
+  bulkChangeChip(f, bulk, draw);
+}
+
+/* THE SAME CORRECTION EVERY ROW OFFERS, APPLIED TO ALL OF THEM. Its own
+   function because bulkVerdictChips answers one question and this
+   writes to the shared library, which is a different thing and asks
+   first. A row with no worked-out fix is left alone and still has its
+   Keep it, so the count on the button is what will actually change
+   rather than how many rows there are. */
+function bulkChangeChip(f, bulk, draw) {
+  const fixes = f.items.map(it2 => ({ it: it2,
+    fix: A.L.auditFix(f.id, (LIB.products || {})[it2.key] || {},
+      it2.text, it2) })).filter(x => x.fix);
+  if (!fixes.length) return;
+  const say = 'Change them (' + fixes.length + ')';
+  const go = el('button', 'chip btn-gold', say);
+  go.title = 'Apply the correction this scan worked out, to '
+    + fixes.length + ' entr' + (fixes.length === 1 ? 'y' : 'ies');
+  go.onclick = () => {
+    if (!window.confirm('Change ' + fixes.length + ' librar'
+        + (fixes.length === 1 ? 'y entry' : 'y entries')
+        + ' for everybody? Each one is corrected the way its own '
+        + 'Change it button would correct it.')) return;
+    let done = 0, gone = 0;
+    fixes.forEach(x => {
+      if (applyLibraryFix(x.it.key, x.fix, 'library scan')) done++;
+      else gone++;
+      /* The verdict is written the same way a row writes it, so a
+         mended entry does not come back as an unjudged finding. */
+      const id = f.id + ':' + x.it.key;
+      LIB.reviewed = Object.assign({}, LIB.reviewed || {},
+        { [id]: { v: 'fixed', at: Date.now() } });
+      ref(NODE.reviewed).child(A.L.fbKey(id))
+        .set({ v: 'fixed', at: Date.now(),
+               by: (A.user || {}).uid || '' })
+        .catch(e2 => appLog('library scan: ' + id
+          + ' verdict would not save \u2014 ' + ((e2 && e2.message) || e2)));
+    });
+    appLog('library scan: changed ' + done + ' of ' + fixes.length
+      + (gone ? ', ' + gone + ' had gone already' : ''));
+    toast('Changed ' + done
+      + (gone ? ' \u2014 ' + gone + ' had gone already' : ''));
+    draw();
+  };
+  bulk.appendChild(go);
 }
 
 /* AND ON THIS DEVICE'S OWN COPY, or the next publish writes it straight back:
@@ -4059,9 +4120,15 @@ function libraryRefConflicts(box, after) {
   const slot = el('div');
   box.appendChild(slot);
   const products = LIB.products || {};
-  libraryRefLoad().then(ref => {
-    const list = A.L.refConflictsOpen(A.L.refFill(products, ref).conflicts, LIB.reviewed);
-    appLog('reference check: ' + Object.keys((ref || {}).brands || {}).length
+  /* NOT `ref`. The reference data arrived under that name and `ref` is the
+     page's own door to the database - `const ref = p => firebase.database()
+     .ref(p)` - so inside this callback every `ref(NODE.x)` was a call to an
+     object. Correct as it stands threw before it did anything and the button
+     looked dead. */
+  libraryRefLoad().then(refData => {
+    const list = A.L.refConflictsOpen(
+      A.L.refFill(products, refData).conflicts, LIB.reviewed);
+    appLog('reference check: ' + Object.keys((refData || {}).brands || {}).length
       + ' brands, ' + Object.keys(products).length + ' entries, '
       + list.length + ' disagree');
     if (!list.length) return;
@@ -4181,6 +4248,46 @@ function rescanTheLibrary() {
 
 
 /* ---- openLibraryCleanUp   index.html 51725-52051 ---- */
+/* THE TWO ANSWERS A SCAN ROW OFFERS. They were a tick and a cross carrying
+   the two values - "canadian X" beside "United States Y" - which reads as
+   a pair of VALUES to choose between rather than a pair of answers, while
+   the group buttons above said "These are correct" and "Keep these for
+   now", which are two ways of doing nothing ("Correct and Keep for Now as
+   two choices is confusing - Keep It and Change it would be better").
+
+   KEEP IT accepts what is stored and stops the scan asking, and is drawn
+   on every row: a finding the scan cannot mend is still one somebody can
+   say is right. CHANGE IT applies the correction the scan worked out and
+   names it, so the value rides in the button rather than being it, and is
+   drawn only where there is a correction to apply. */
+function rowAnswerChips(f, it, entry, acts, verdict) {
+  const fix = A.L.auditFix(f.id, entry, it.text, it);
+  if (fix) {
+    const up = el('button', 'chip btn-gold');
+    up.textContent = fix.pick ? 'Change it → ' + fix.pick
+      : 'Change it';
+    up.title = fix.label;
+    up.setAttribute('aria-label', fix.label);
+    /* Writes to the library entry, and to the shelf too when the same
+       key is on it, so the correction shows in both places. */
+    up.onclick = () => {
+      if (!applyLibraryFix(it.key, fix, 'library scan')) {
+        toast('That entry is no longer in the library');
+        verdict('ok', 'gone before it could be fixed');
+        return;
+      }
+      toast(fix.done);
+      verdict('fixed', fix.said);
+    };
+    acts.appendChild(up);
+  }
+  const keep = el('button', 'chip quiet', 'Keep it');
+  keep.title = 'Leave it as it is, and stop asking';
+  keep.setAttribute('aria-label', 'Leave it as it is, and stop asking');
+  keep.onclick = () => verdict('ok', 'left as it stands');
+  acts.appendChild(keep);
+}
+
 function openLibraryCleanUp() {
     /* A REPORT YOU CAN ACT ON. Every row opens the entry it is about, and
        every row can be put to rest - some findings are CORRECT as stored,
@@ -4424,43 +4531,10 @@ function openLibraryCleanUp() {
               || {};
             /* The item carries what the finding worked out - the spelling to keep, the
                key to merge into - so it is handed to the fix rather than re-derived. */
-            const fix = A.L.auditFix(f.id, entry, it.text, it);
-            if (fix) {
-              /* ICON BUTTONS (BZ): a tick by the new value and a cross by the current
-                 one. The words move to the advice line above; the button
-                 carries them in its title and aria-label for hover and
-                 screen readers. */
-              const up = el('button', 'chip btn-gold');
-              up.textContent = (fix.pick || '\u2713') + ' \u2713';
-              up.title = fix.label;
-              up.setAttribute('aria-label', fix.label);
-              /* Writes to the library entry, and to the shelf too when the same key is
-                 on it, so the correction shows in both places. */
-              up.onclick = () => {
-                if (!applyLibraryFix(it.key, fix, 'library scan')) {
-                  toast('That entry is no longer in the library');
-                  verdict('ok', 'gone before it could be fixed');
-                  return;
-                }
-                toast(fix.done);
-                verdict('fixed', fix.said);
-              };
-              acts.appendChild(up);
-            }
-            /* And the current value, with the cross: keeping it is an ANSWER, not a
-               refusal to answer, so it is worded as one and remembered like one. */
-            const keepWord = fix && fix.keep ? fix.keep + ' \u2715'
-              : '\u2715';
-            const later = el('button', 'chip quiet'
-              + (fix && fix.keep ? '' : ' iconchip'));
-            later.textContent = keepWord;
-            later.title = 'Leave it as it is, and stop asking';
-            later.setAttribute('aria-label',
-              'Leave it as it is, and stop asking');
-            later.onclick = () => verdict('ok', 'left as it stands');
-            acts.appendChild(later);
-            /* Ignore already says this; two buttons that both mean "do nothing"
-               confuse. */
+            /* The two answers this row offers, as one named thing:
+               the screen is at its allowance and a new line may not
+               push it past (rule 30f). */
+            rowAnswerChips(f, it, entry, acts, verdict);
             row.appendChild(acts);
             card.appendChild(row);
           });
