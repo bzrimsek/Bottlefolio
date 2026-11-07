@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.42  Build 2026-11-06 07:48 PM ET
+     Version : v2.9.43  Build 2026-11-06 08:16 PM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.43  2026-11-06  Three things.
 // v2.9.42  2026-11-06  Seven things.
 // v2.9.41  2026-11-03  Every paragraph of the home profile opens on the collector rather than on a number.
 // v2.9.40  2026-11-03  The home profile moves with the title now, and reads like somebody talking.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
 // v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
 // v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
-// v2.9.33  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -2420,8 +2420,7 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    because the step is a tap target; the glyph inside it is drawn at the
    line's size, not the target's. */
 .portrait .portalso{display:flex;flex-wrap:wrap;align-items:center;
-  gap:6px;margin-top:9px;position:relative;padding-right:46px;
-  min-height:44px}
+  gap:6px;margin-top:9px;min-height:44px}
 .portrait .alsoname{font-size:12px;color:var(--ink);white-space:nowrap}
 .portrait .alsoname + .alsoname::before{content:'·';margin-right:6px;
   color:var(--mute)}
@@ -2429,14 +2428,14 @@ a.tocchip{border:1px solid rgba(0,0,0,.14);border-radius:999px;
    border shows on hover, where it says the mark is pressable; 20px is the
    floor shots.js holds every one-glyph control to, and the 44px target
    under it does not move. */
-/* OUT OF THE WRAP, in the corner the pills used to hold. Four names wrap
-   at phone width and a 44px target wraps with them: in the flow it landed
-   between two names, and moved to a different place at every width.
-   Measured at 360, 390, 430 and 760. The row reserves its width and a
-   height to hold it, so the label and the names it introduces read as one
-   unbroken list whatever the width. */
+/* AT THE END OF THE NAMES, in the flow. It was pinned to the right edge
+   of the card, which put a whole line of empty space between the titles
+   and the control that steps through them. Being last in the row it can
+   only ever follow the last name; the row still stands 44px tall because
+   the target does, and wraps between names rather than inside one.
+   Measured at 360, 390, 430 and 760. */
 .portrait .portalso .portturn{font-size:20px;margin-left:0;
-  border-color:transparent;position:absolute;right:0;top:0}
+  border-color:transparent}
 .portrait .porttitle{font-family:'Cinzel',Georgia,serif;font-size:24px;
   font-weight:600;color:var(--ink-deep);line-height:1.1;margin:3px 0 2px}
 /* The verdict: bigger than the caption under it, smaller than the title
@@ -3282,8 +3281,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.42';
-const BUILD_TIME  = '2026-11-06 07:48 PM ET';
+const APP_VERSION = '2.9.43';
+const BUILD_TIME  = '2026-11-06 08:16 PM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -40370,17 +40369,17 @@ function portraitHead(port) {
     if (port.also.length) {
       also.appendChild(el('span', 'portlabel', 'Also answers to'));
     }
-    /* THE STEP SITS BETWEEN THE LABEL AND THE NAMES, not after them. Four
-       names wrap at phone width and a 44px target wraps with them: put it
-       last and it landed on the second row BETWEEN two names - names, then
-       the arrow, then more names - so a control somebody presses had no
-       fixed place to be. Measured at 360, 390, 430 and 760. */
-    if (step) also.appendChild(step);
     port.also.forEach(a => {
       const n = el('span', 'alsoname', a.title);
       n.title = a.why;   // a label, not a control
       also.appendChild(n);
     });
+    /* THE STEP FOLLOWS THE LAST NAME. It is what you press to see another
+       title, so it belongs at the end of the titles rather than held in
+       the corner away from them. Last in the row, so it can never land
+       between two names however they wrap; it rides with the last name
+       because that name cannot break and the pair is held together. */
+    if (step) also.appendChild(step);
     left.appendChild(also);
   }
   return ph;
@@ -59974,7 +59973,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.42</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.43</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

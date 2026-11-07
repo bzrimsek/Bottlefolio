@@ -186,10 +186,28 @@ const nameFits = (cardName, prodName) => {
 const cardBottle = t => String(t || '').replace(/\s*\([^)]*\)/g, '')
   .replace(/\s*[\u2014\u2013]\s.*$/, '').replace(/[*\u2020]/g, '').trim();
 
+/* THE FIRST NUMBER IN THE CELL, and only the first. A proof cell often
+   names two - "140 to 100" is a cask-strength bottle and the strength it
+   is watered to - and stripping everything that is not a digit welded
+   them into 140100, or turned 131.54 into 131.541. Every proof test in
+   this file then failed silently on exactly the flights that print both,
+   which is how a flight whose six pours all matched to the decimal was
+   refused over five of them. */
 const numProof = p => {
-  const n = parseFloat(String(p == null ? '' : p).replace(/[^\d.]/g, ''));
+  const m = String(p == null ? '' : p).match(/[0-9]+([.][0-9]+)?/);
+  const n = m ? parseFloat(m[0]) : NaN;
   return isFinite(n) && n > 0 ? n : null;
 };
+
+/* THE CARD ROUNDS. Barrell Vantage is 114.44 in the library and 114.4 on
+   the card, which is the same whiskey. */
+const sameProof = (a, b) => a != null && b != null && Math.abs(a - b) < 0.1;
+
+/* THE FIRST WORD OF A NAME IS THE HOUSE SAYING ITS OWN NAME. Read once,
+   here, because both matchers below want it: the one that builds a new
+   flight and the one that checks a flight both files hold. */
+const brandWord = t => (String(t).toLowerCase().match(/[a-z0-9]+/g)
+  || [''])[0];
 
 /* TWO NAMES THAT ARE THE SAME WORDS, which beats anything fuzzy and so is
    asked first by every caller. */
@@ -225,8 +243,30 @@ const renamedFrom = function (cardKeys, appFlights) {
   }).filter(x => x.shared * 2 > x.of);
 };
 
-module.exports = { unzipOne, paragraphs, parseCards,
-  short, inOrder, nameFits, cardBottle, numProof, sameName, renamedFrom };
+/* TWO SPELLINGS OF ONE BOTTLE ARE ONE CANDIDATE. The catalogue every
+   matcher reads is keyed both ways - the shelf files by display name, the
+   shared library by slug - so a merged list holds each product twice and
+   any rule demanding "only one winner" is answered by one bottle wearing
+   two names. Takes its catalogue and its normaliser so it can be tested
+   without one. Returns the DISPLAY-NAME key, which is what a pour carries:
+   237 of the 237 pours in his flights are keyed that way. */
+const oneProduct = (list, cat, norm) => {
+  const prodName = n => ((cat || {})[n] && cat[n].name) || n;
+  const entry = n => (cat || {})[n] || null;
+  const sameEntry = (a, b) => (entry(a) && entry(a) === entry(b))
+    || norm(prodName(a)) === norm(prodName(b));
+  const kept = [];
+  list.forEach(n => {
+    if (!kept.some(m => sameEntry(m, n))) kept.push(n);
+  });
+  if (kept.length !== 1) return null;
+  const all = list.filter(n => sameEntry(n, kept[0]));
+  return all.filter(n => n === prodName(n))[0] || kept[0];
+};
+
+module.exports = { unzipOne, paragraphs, parseCards, short, inOrder,
+  nameFits, cardBottle, numProof, sameName, renamedFrom, oneProduct,
+  sameProof, brandWord };
 
 /* ---- run it ---------------------------------------------------------- */
 
@@ -236,8 +276,56 @@ if (require.main === module) {
   /* Claiming customFlights is a bigger thing than adding a flight - it
      replaces the list on every device - so it is never implied. */
   const RESET = process.argv.indexOf('--reset') >= 0;
+  /* THE THREE FAULTS THAT REFUSED A FLIGHT WHOSE EVERY POUR WAS ON THE
+     SHELF, each held here so none of them can come back quietly. This file
+     had no test of any kind, and all three were silent: the report simply
+     said a bottle was unmatched, which is what it says when a bottle really
+     is. What it does NOT cover is the document reader or the write - those
+     need a .docx and an account. Stated rather than implied. */
+  if (process.argv.indexOf('--selftest') >= 0) {
+    const norm = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const cat = { 'Barrell Whiskey Sweet Peat': { name: 'Barrell Whiskey Sweet Peat', proof: 142.34 },
+      barrell_whiskey_sweet_peat: { name: 'Barrell Whiskey Sweet Peat', proof: 142.34 },
+      'Eagle Rare 10 Year': { name: 'Eagle Rare 10 Year', proof: 90 } };
+    const cases = [
+      ['a proof cell naming two proofs reads the first',
+        numProof('140 ' + String.fromCharCode(8594) + ' 100'), 140],
+      ['and keeps its decimals',
+        numProof('131.54 ' + String.fromCharCode(8594) + ' 100'), 131.54],
+      ['one proof still reads', numProof('114.4'), 114.4],
+      ['a proof with words round it reads', numProof('100 proof'), 100],
+      ['no proof is no proof', numProof('n/a'), null],
+      ['two spellings of one bottle are one candidate',
+        oneProduct(['Barrell Whiskey Sweet Peat', 'barrell_whiskey_sweet_peat'],
+          cat, norm), 'Barrell Whiskey Sweet Peat'],
+      ['and the display name is the one returned',
+        oneProduct(['barrell_whiskey_sweet_peat', 'Barrell Whiskey Sweet Peat'],
+          cat, norm), 'Barrell Whiskey Sweet Peat'],
+      ['two different bottles are still two',
+        oneProduct(['Barrell Whiskey Sweet Peat', 'Eagle Rare 10 Year'],
+          cat, norm), null],
+      ['the card rounds and the library does not',
+        sameProof(114.4, 114.44), true],
+      ['but a different bottle is a different proof',
+        sameProof(114.4, 115.0), false],
+      ['the house is the first word it says',
+        brandWord('Barrell Gray Label Dovetail 16 Year'), 'barrell']];
+    let bad = 0;
+    cases.forEach(c => {
+      const ok = JSON.stringify(c[1]) === JSON.stringify(c[2]);
+      if (!ok) bad++;
+      console.log('  ' + (ok ? 'ok  ' : 'FAILED  ') + c[0]
+        + (ok ? '' : '   got ' + JSON.stringify(c[1])
+          + ', want ' + JSON.stringify(c[2])));
+    });
+    console.log('  ' + (bad ? bad + ' of ' : 'all ') + cases.length
+      + ' selftest case(s) ' + (bad ? 'FAILED' : 'pass'));
+    process.exit(bad ? 1 : 0);
+  }
   if (!file) {
     console.log('usage: node cards.js <tasting-flight-cards.docx> [--write]');
+    console.log('       node cards.js --selftest');
     process.exit(1);
   }
   const dir = __dirname;
@@ -280,7 +368,19 @@ if (require.main === module) {
     const names = Object.keys(cat);
     /* A bottle is matched by name, exactly or as the one product whose name
        contains it. Anything else is reported, never guessed. */
-    const keyOf = nm => {
+    /* ONE BOTTLE, TWO SPELLINGS, AND THAT IS WHY NOTHING MATCHED. The
+       catalogue this tool matches against is keyed BOTH ways - the shelf
+       files key a product by its display name and the shared library keys
+       it by a slug - so merging them put every bottle in the list twice:
+       "Barrell Whiskey Sweet Peat" and "barrell_whiskey_sweet_peat". Every
+       rung below demands a single winner, and a single bottle answered as
+       two. What Drops with Drops was refused over five pours that were all
+       on his shelf. Two spellings of one product are one candidate here.
+       THE DISPLAY NAME IS THE KEY A POUR CARRIES - 237 of the 237 pours in
+       his forty flights are keyed that way - so that is the one returned
+       when both spellings fit. */
+    const onlyOne = list => oneProduct(list, cat, norm);
+    const keyOf = (nm, proof) => {
       const w = norm(nm);
       if (!w) return null;
       /* THE NAME AS WRITTEN, first. L.shopNorm strips the category words,
@@ -289,15 +389,41 @@ if (require.main === module) {
          that writes a product's name exactly means that product. */
       const literal = names.filter(n =>
         n.toLowerCase().trim() === String(nm).toLowerCase().trim());
-      if (literal.length === 1) return literal[0];
+      const oneLiteral = onlyOne(literal);
+      if (oneLiteral) return oneLiteral;
       const exact = names.filter(n => norm(n) === w);
-      if (exact.length === 1) return exact[0];
+      const oneExact = onlyOne(exact);
+      if (oneExact) return oneExact;
       const part = names.filter(n => norm(n).indexOf(w) === 0);
-      if (part.length === 1) return part[0];
+      const onePart = onlyOne(part);
+      if (onePart) return onePart;
       /* AND ONLY EVER A SINGLE WINNER: this tool does not pick a bottle
          for him. */
       const fits = names.filter(n => nameFits(nm, n));
-      return fits.length === 1 ? fits[0] : null;
+      const oneFit = onlyOne(fits);
+      if (oneFit) return oneFit;
+      /* THE SAME HOUSE AT THE SAME STRENGTH, last, and only once every
+         name test has failed to produce one winner. The card prints the
+         proof of every pour and the library prints it too, so a house
+         name and a proof to the decimal name one bottle where the words
+         cannot: the card says "Barrell Gray Label Dovetail 16 Year" and
+         the library says "Barrell Craft Spirits Gray Label Dovetail 16
+         Year", which no name rule can join without also joining the four
+         other Gray Labels. THIS RUNG ALREADY EXISTED for the flights both
+         files hold, three hundred lines down, and not here - so a cast
+         this tool could check it could not build, and What Drops with
+         Drops was refused over four bottles whose proofs matched to the
+         decimal. One question, one door. It still demands a single
+         candidate. */
+      const pr = numProof(proof);
+      if (pr != null) {
+        const b = brandWord(nm);
+        const byProof = names.filter(n => b && brandWord(n) === b
+          && sameProof(pr, numProof((cat[n] || {}).proof)));
+        const oneProof = onlyOne(byProof);
+        if (oneProof) return oneProof;
+      }
+      return null;
     };
 
     const add = [];
@@ -305,7 +431,7 @@ if (require.main === module) {
       if (have[norm(f.title)]) return;
       const missing = [];
       const core = f.cards.map((c, i) => {
-        const k = keyOf(c.bottle);
+        const k = keyOf(c.bottle, c.proof);
         if (!k) missing.push(c.bottle);
         return { card: c.bottle, k: k, letter: c.letter, ord: i + 1,
                  role: 'core' };
@@ -314,7 +440,8 @@ if (require.main === module) {
          night has legs; the core is the flight itself. */
       const dropped = [];
       const ext = f.ext.map(n => {
-        const k = keyOf(n);
+        const k = keyOf(n);   // a bench row carries no proof of its own
+
         if (!k) { dropped.push(n); return null; }
         return { card: n, k: k, ord: 0, role: 'extension' };
       }).filter(Boolean);
@@ -328,6 +455,15 @@ if (require.main === module) {
       console.log('     ' + a.core.length + ' core, ' + a.ext.length + ' bench, '
         + a.f.why.length + ' reasons'
         + (a.f.prereq ? ', a prereq' : '') + (a.f.room ? ', a room note' : ''));
+      /* WHICH BOTTLE EACH POUR LANDED ON, before anything is written.
+         A count of pours says a flight is buildable and not what it will
+         pour, and the card writes a bottle the way it is said out loud
+         while the library writes it the way the label does - so the two
+         names differ on most rows and the matching is the thing worth
+         reading. */
+      a.core.filter(c => c.k).forEach(c =>
+        console.log('     ' + c.letter + '  ' + c.card
+          + (norm(c.card) === norm(c.k) ? '' : '   ->   ' + c.k)));
       a.missing.forEach(m =>
         console.log('     CORE BOTTLE UNMATCHED: ' + m));
       a.dropped.forEach(m =>

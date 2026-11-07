@@ -10303,7 +10303,7 @@ eq('every subcategory in the data has a reel face',
 // Thirty-nine since 2026-09-20: Where's Scotty?, Well Well Well What Do
 // We Have Here? and Can You Close The Ring? came in from his cards
 // document through cards.js.
-eq('40 flights', data.flights.length, 40);
+eq('41 flights', data.flights.length, 41);
 // Every duplicated product has exactly one open bottle -- BZ's stocking rule.
 const byKey = {};
 data.bottles.forEach(b => { (byKey[b.k] = byKey[b.k] || []).push(b); });
@@ -10379,7 +10379,7 @@ eq('nothing to buy comes from a flight, however many have been run',
   runGaps.filter(g => g.kind === 'flight' && !g.owned).length, 0);
 eq('nor before any have', realGaps.filter(g => g.kind === 'flight'
   && !g.owned).length, 0);
-/* THE REAL SHELF IS THE POINT: 40 flights, every shelf pour a bottle he
+/* THE REAL SHELF IS THE POINT: 41 flights, every shelf pour a bottle he
    owns, and not one of them a thing to go and buy. */
 eq('his forty flights raise nothing to buy',
   L.shelfGaps(shelfCat, data.bottles, data.flights, [], [])
@@ -35427,6 +35427,38 @@ queueSection()
     fail++;
   })
   .then(() => {
+    /* AND THE PAPERS QUOTE THIS NUMBER CORRECTLY. consistency.js guards
+       the CHECK count in CLAUDE.md and README.md and stopped there on
+       purpose, because it cannot know an assertion count without running
+       this file. This file knows it, so the guard belongs here - the one
+       number it knows for certain, which is the same reason the other
+       guard gave for its own. Both papers had drifted to 8,360 and 8,342
+       against a real 8,477, build after build, with every check green.
+       NOT AN ASSERTION. It runs after the last one, so the number it
+       compares is the one printed below; an eq() here would have to count
+       itself. */
+    ['CLAUDE.md', 'README.md'].forEach(name => {
+      let text = '';
+      try { text = fs.readFileSync(path.join(__dirname, name), 'utf8'); }
+      catch (e) {
+        console.log('  FAILED: ' + name + ' cannot be read');
+        fail++;
+        return;
+      }
+      const m = text.match(/killer-bs-test[.]js +# *([0-9,]+) assertions/);
+      if (!m) {
+        console.log('  FAILED: ' + name
+          + ' no longer says how many assertions there are');
+        fail++;
+        return;
+      }
+      const said = Number(m[1].replace(/,/g, ''));
+      if (said !== pass) {
+        console.log('  FAILED: ' + name + ' says ' + said
+          + ' assertions; there are ' + pass);
+        fail++;
+      }
+    });
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail ? 1 : 0);
   });
