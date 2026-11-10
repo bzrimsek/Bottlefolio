@@ -1554,6 +1554,15 @@ function contribPlan(card, plan) {
     card.appendChild(el('div', 'rs', 'These need you (' + yours.length + ')'));
     contribPicker(card, yours);
   }
+  /* A NEAR MATCH STILL WAITING ON THE WEB, with its answer: the lookup may
+     yet tell the two apart, but until it runs - up to ten minutes, or never
+     while the service is failing - the row had no button at all. */
+  const waiting = (plan.pending || []).filter(x => x.near && x.row);
+  if (waiting.length) {
+    card.appendChild(el('div', 'rs', 'Waiting on the web — answer now if '
+      + 'you know (' + waiting.length + ')'));
+    waiting.forEach(x => card.appendChild(contribRow(x.row, x, null)));
+  }
 }
 
 /* PICK THEM OFF IN ONE PRESS, NOT ONE ROW AT A TIME (BZ, 2026-09-15). A
@@ -1788,6 +1797,9 @@ function contribPutBack(list, btn) {
         }
         renderLibraryScreen();
         countOffers();
+        /* JUDGED AGAIN NOW, not on the next ten-minute check: an offer put
+           back is one somebody is waiting to answer. */
+        intakeVetSoon();
       });
 }
 
@@ -1816,27 +1828,29 @@ function contribRow(r, verdict, onPick) {
      rows with a tick - because the lists of what went in and what was dropped
      are a record rather than a queue (BZ: "don't see how to match to an
      existing bottle"). */
+  /* THE NEAR MATCH THE INTAKE FOUND, one press: a name that says more than
+     the entry is asked rather than dropped, and this is the answer. Drawn
+     while the web is still to try as well, because a person who knows does
+     not have to wait on a lookup to say so. */
+  const near = A.admin && verdict && verdict.verdict === 'ask' && verdict.near;
+  if (near && near.name) {
+    const is = el('button', 'chip');
+    is.type = 'button';
+    is.textContent = 'Same bottle as ' + near.name;
+    is.style.cssText = 'margin:4px 6px 0 0';
+    is.onclick = () => {
+      buttonWorking(is, 'Forwarding…');
+      contribSameAs(r, dropInto(near, LIB.products), near.name,
+        () => renderLibraryScreen());
+    };
+    left.appendChild(is);
+  }
   if (onPick && A.admin) {
     const same = el('button', 'chip quiet');
     same.type = 'button';
     same.textContent = 'Already in the library\u2026';
     same.style.marginTop = '4px';
     same.onclick = () => offerAlreadyThere(r, () => renderLibraryScreen());
-    /* THE NEAR MATCH THE INTAKE FOUND, one press: a name that says more than
-       the entry is asked rather than dropped, and this is the answer. */
-    const near = verdict && verdict.verdict === 'ask' && verdict.near;
-    if (near && near.name) {
-      const is = el('button', 'chip');
-      is.type = 'button';
-      is.textContent = 'Same bottle as ' + near.name;
-      is.style.cssText = 'margin:4px 6px 0 0';
-      is.onclick = () => {
-        buttonWorking(is, 'Forwarding…');
-        contribSameAs(r, dropInto(near, LIB.products), near.name,
-          () => renderLibraryScreen());
-      };
-      left.appendChild(is);
-    }
     left.appendChild(same);
   }
   const mine = A.user && r.uid === A.user.uid;

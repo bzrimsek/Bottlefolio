@@ -912,6 +912,23 @@ async function open(browser, opts) {
       seed: seed,
       fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
     });
+    /* BEFORE THE SEARCH HAS TRIED, the answer is already there: the lookup
+       can take ten minutes to come round, or never succeed while the service
+       is failing, and the row used to have no button until it did. */
+    await openTab(page, 'offers');
+    await page.waitForFunction(() => /Waiting on the web/i.test(
+      (document.getElementById('sec-offers') || {}).innerText || ''),
+      null, { timeout: 8000 }).catch(() => {});
+    const early = await page.evaluate(() => ({ text: (document
+      .getElementById('sec-offers').innerText || '').replace(/\s+/g, ' ')
+      .replace(/^.*?(\d+ offered)/, '$1') }));
+    const earlyBtn = await page.evaluate(() => Array.from(
+      document.querySelectorAll('#sec-offers button'))
+      .some(b => b.textContent === "Same bottle as Maker's Mark 101 Bourbon"));
+    check('same bottle: a near match waiting on the web says so',
+      /Waiting on the web/i.test(early.text), early.text.slice(0, 160));
+    check('same bottle: and carries its answer before the search has tried',
+      earlyBtn, 'no button while pending');
     /* THE SEARCH HAS HAD ITS TRY, written through the page's own writer, so
        the question is a person's and the row carries its buttons. */
     const judged = await page.evaluate(async () => {
@@ -958,6 +975,19 @@ async function open(browser, opts) {
       after.to === 'maker_s_mark_101_bourbon', after.to);
     check('same bottle: the drop carries the entry key',
       after.into === 'maker_s_mark_101_bourbon', after.into);
+    /* PUT BACK JUDGES IT AGAIN AT ONCE, not on the next ten-minute check. */
+    const rerun = await page.evaluate(async () => {
+      let ran = 0;
+      const real = window.intakeVetSoon;
+      window.intakeVetSoon = () => { ran++; return Promise.resolve(true); };
+      const row = (await readOffers())[0];
+      contribPutBack([row], document.createElement('button'));
+      await new Promise(r => setTimeout(r, 1500));
+      window.intakeVetSoon = real;
+      return ran;
+    });
+    check('same bottle: put back starts the intake straight away',
+      rerun >= 1, rerun + ' run(s)');
     check('same bottle: no page error', !errs.length, errs.join(' | '));
     said.push('a near name was asked, answered "same bottle", and forwarded to '
       + (after.to || 'NOTHING'));

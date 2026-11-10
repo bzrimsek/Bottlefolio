@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.44  Build 2026-11-10 10:39 AM ET
+     Version : v2.9.45  Build 2026-11-10 11:07 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.45  2026-11-10  A near match can be answered the moment it is in the queue.
 // v2.9.44  2026-11-10  A dropped offer no longer strands the shelf it came from.
 // v2.9.43  2026-11-06  Three things.
 // v2.9.42  2026-11-06  Seven things.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.38  2026-11-02  The home summary is commentary now rather than a readout.
 // v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
-// v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3281,8 +3281,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.44';
-const BUILD_TIME  = '2026-11-10 10:39 AM ET';
+const APP_VERSION = '2.9.45';
+const BUILD_TIME  = '2026-11-10 11:07 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -59996,7 +59996,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.44</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.45</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');
