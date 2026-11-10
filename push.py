@@ -70,7 +70,14 @@ WATCH_LIMIT = 20 * 60
 # is an answer, and asking again would only get the same one.
 TRANSIENT = re.compile(r'HTTP 5\d\d|timed out|timeout|connection (reset|refused)'
                        r'|error connecting|dial tcp|no such host|TLS handshake'
-                       r'|unexpected EOF|temporar', re.I)
+                       r'|unexpected EOF|temporar|forcibly closed', re.I)
+
+# What GitHub answers a run of large uploads with, a minute and a half in:
+# "Bad credentials (HTTP 401)" or a connection closed mid-send, on a sign-in
+# that every earlier call of the same run used, and that the same file gets
+# through on its own. Passing only where the run has already proved its
+# sign-in - the uploads - so a real bad sign-in still stops at the first call.
+BURST = re.compile(r'HTTP 401|Bad credentials', re.I)
 
 # What a delivery is. The app and its lock files (rule 25), the docs that
 # teach the next session (CLAUDE.md is read at the start of every one), the
@@ -293,7 +300,7 @@ def gh_path():
 GH = None
 
 
-def gh(path, method='GET', body=None, quiet404=False, retry=False):
+def gh(path, method='GET', body=None, quiet404=False, retry=False, burst=False):
     """One GitHub API call through gh's own sign-in. Returns parsed JSON,
     or None for a 404 when asked to treat that as an answer.
 
@@ -317,7 +324,7 @@ def gh(path, method='GET', body=None, quiet404=False, retry=False):
         err = (r.stderr or r.stdout).decode(errors='replace').strip()
         if quiet404 and 'HTTP 404' in err:
             return None
-        if retry and TRANSIENT.search(err):
+        if retry and (TRANSIENT.search(err) or (burst and BURST.search(err))):
             if waits:
                 wait = waits.pop(0)
                 say('  (GitHub did not answer %s %s: %s - asking again in %ds)'
@@ -518,11 +525,18 @@ def push(v, subject, dry):
         say('Dry run: nothing pushed.')
         return None
 
+    # ONE UPLOAD PER CONTENT: the named lock file is the app byte for byte, so
+    # a tree entry can name the sha the first upload already made. That is
+    # 2.8MB fewer in the run GitHub cuts off when it runs long.
     entries = []
+    sent = {}
     for name, raw in changed:
-        b = gh('repos/%s/git/blobs' % REPO, 'POST',
-               {'content': base64.b64encode(raw).decode(), 'encoding': 'base64'})
-        entries.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': b['sha']})
+        sha = blob_sha(raw)
+        if sha not in sent:
+            sent[sha] = gh('repos/%s/git/blobs' % REPO, 'POST',
+                           {'content': base64.b64encode(raw).decode(),
+                            'encoding': 'base64'}, retry=True, burst=True)['sha']
+        entries.append({'path': name, 'mode': '100644', 'type': 'blob', 'sha': sent[sha]})
     # A null sha in a tree entry REMOVES that path from the base tree. It is
     # the only way the trees API deletes, and it is why this had to be added
     # here rather than anywhere else: a push builds one tree and one commit,

@@ -4279,8 +4279,13 @@ sec('the intake after the 2026-09-16 scan');
     o2);
   eq('a near match hands back the key the library files it under', nr.near.k,
     'heaven_hill_grain_to_glass_straight_bourbon_whiskey_1st_edition');
-  eq('so a lookup can settle it against the real entry',
-    L.intakeSettle(nr, { proof: 100 }, o2).verdict, 'out');
+  /* "Wheated" is a word the entry does not carry, so a shelf would not follow
+     a drop into it: the lookup is tried and then it is a person's. */
+  eq('a near name the entry does not contain is asked, not dropped',
+    nr.verdict, 'ask');
+  const nrSettled = L.intakeSettle(nr, { proof: 100 }, o2);
+  eq('and matching facts leave it a question the search has tried',
+    [nrSettled.verdict, nrSettled.tried].join(','), 'ask,true');
   eq('a shortened name is near, not new',
     L.intakeVerdict({ name: 'Penelope Architect Bourbon', dist: 'Penelope',
       proof: 100, sub: 'bourbon' }, o2).rule, 'nearly one already in');
@@ -29288,12 +29293,28 @@ const near = L.intakeVerdict({
     name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
     dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
     tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' }, opts);
-  /* BZ, 2026-09-16: a near name whose stated facts all agree is the entry
-     already in - dropped, not asked. */
-  eq('a name that is nearly one already in, facts agreeing, is dropped',
-    near.verdict, 'out');
+  /* A near name whose stated facts all agree is the entry already in -
+     dropped, not asked - ONLY where a shelf would follow the drop
+     (L.shelfFollows). "Wheated" says what the entry does not. */
+  eq('a near name that says more than the entry is asked, not dropped',
+    near.verdict, 'ask');
   eq('and it names the one it reads like',
     /1st Edition/.test(near.why), true);
+  const nearIn = L.intakeVerdict({
+    name: 'Heaven Hill Grain Glass Straight 1st Edition',
+    dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
+    tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' }, opts);
+  eq('a near name the entry contains, facts agreeing, is dropped',
+    [nearIn.verdict, nearIn.rule].join(','), 'out,nearly one already in');
+  eq('a shelf follows a name the entry says in full',
+    L.shelfFollows('Heaven Hill Grain Glass Straight 1st Edition',
+      LIBR.c.name), true);
+  eq('and not one that adds a word the entry lacks',
+    L.shelfFollows('Heaven Hill Grain To Glass Straight Wheated Bourbon',
+      LIBR.c.name), false);
+  eq('nor one the entry marks as another bottling',
+    L.shelfFollows('Barrell Craft Spirits Seagrass',
+      'Barrell Craft Spirits Seagrass 16 Year Old'), false);
   /* A NAME THE SAME BOTTLE ALREADY ANSWERS TO is not a near-duplicate,
      it is the entry: shopNorm drops bourbon, straight and whiskey, so
      "Penelope Four Grain" IS "Penelope Four Grain Bourbon" and adding it
@@ -29374,7 +29395,7 @@ const near = L.intakeVerdict({
   const plan = L.intakePlan([
     { name: 'Penelope Four Grain Bourbon' },                    // out
     { name: '' },                                               // out
-    { name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+    { name: 'Heaven Hill Grain Glass Straight 1st Edition',
       dist: 'Heaven Hill', proof: 100, sub: 'bourbon',
       tn: { nose: 'wheat' }, mash: '70 corn, 20 wheat, 10 barley' },  // out: already in
     { name: 'Ardbeg Ten', dist: 'Lagavulin', proof: 92, sub: 'scotch',
@@ -29511,11 +29532,18 @@ const near = L.intakeVerdict({
 
   /* THE FACTS TELL TWO BOTTLES APART. */
   const nearOut = L.intakeVerdict({
-    name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+    name: 'Heaven Hill Grain Glass Straight 1st Edition',
     dist: 'Heaven Hill', sub: 'bourbon', tn: { nose: 'wheat' },
     mash: '70 corn, 20 wheat, 10 barley' }, opts);
   eq('with nothing contradicting it, it is dropped without a search',
     nearOut.verdict, 'out');
+  /* THE SAME FACTS DO NOT SETTLE A NAME THE SHELF WOULD NOT FOLLOW. */
+  const nearWheat = L.intakeVerdict({
+    name: 'Heaven Hill Grain To Glass Straight Wheated Bourbon',
+    dist: 'Heaven Hill', sub: 'bourbon', tn: { nose: 'wheat' },
+    mash: '70 corn, 20 wheat, 10 barley' }, opts);
+  eq('matching facts leave a name the entry lacks with a person',
+    L.intakeSettle(nearWheat, { proof: 100 }, opts).verdict, 'ask');
   /* The settling itself still answers a question put to it. */
   const nearAgain = Object.assign({}, nearOut, { verdict: 'ask',
     why: 'reads like ' + nearOut.near.name });
@@ -33220,6 +33248,29 @@ sec('§459 which library entry a bottle belongs to');
   eq('and the bottle is reported as owing an addition',
     (weak || { left: [] }).left.indexOf('Barrell Craft Spirits Seagrass') >= 0,
     true);
+
+  /* A FORWARDING ADDRESS IS AN ADMIN'S RULING, and the shelf follows it where
+     it would not follow the name. Maker's Mark 101 Special Proof was dropped
+     as already in as Maker's Mark 101 Bourbon; "Special Proof" is not in the
+     entry, so the name test refused it and the bottle reached nothing. */
+  const mm = { maker_s_mark_101_bourbon: { name: "Maker's Mark 101 Bourbon",
+    sub: 'bourbon', proof: 101 } };
+  const MM = "Maker's Mark 101 Special Proof";
+  const mmLeft = L.subscribeToLibrary({ [MM]: { k: MM, name: MM } },
+    [{ id: 'B1', k: MM, status: 'open' }], {}, mm, {},
+    { maker_s_mark_101_special_proof: { at: 1,
+        why: "already in as Maker's Mark 101 Bourbon",
+        into: 'maker_s_mark_101_bourbon' } });
+  eq('a drop alone does not move a name the entry does not contain',
+    (mmLeft || { left: [] }).left.indexOf(MM) >= 0, true);
+  const mmFwd = L.subscribeToLibrary({ [MM]: { k: MM, name: MM } },
+    [{ id: 'B1', k: MM, status: 'open' }], {}, mm,
+    { maker_s_mark_101_special_proof: 'maker_s_mark_101_bourbon' }, {});
+  eq('a forwarding address moves it',
+    (mmFwd || { moves: {} }).moves[MM], "Maker's Mark 101 Bourbon");
+  eq('and its bottle lands on the entry',
+    ((mmFwd || { bottles: [] }).bottles[0] || {}).k,
+    "Maker's Mark 101 Bourbon");
 
   /* ALREADY SUBSCRIBED: a product filed under the library's own name needs no
      MOVE - the bottles already carry the right key - but the private copy is

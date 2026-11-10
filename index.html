@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- ============================================================
      Bottlefolio — know what you own, know what you love
-     Version : v2.9.43  Build 2026-11-06 08:16 PM ET
+     Version : v2.9.44  Build 2026-11-10 10:39 AM ET
      Author  : BiZStoryGuru LLC
      Deploy  : python bump.py "what changed" then python push.py "subject".
                The cloud gate runs twenty checks and publishes the site;
@@ -25,6 +25,7 @@
 ============================================================ -->
 <!--
 CHANGELOG
+// v2.9.44  2026-11-10  A dropped offer no longer strands the shelf it came from.
 // v2.9.43  2026-11-06  Three things.
 // v2.9.42  2026-11-06  Seven things.
 // v2.9.41  2026-11-03  Every paragraph of the home profile opens on the collector rather than on a number.
@@ -34,7 +35,6 @@ CHANGELOG
 // v2.9.37  2026-11-02  The rebuy count is out of the portrait paragraph, and this is the second time it has gone.
 // v2.9.36  2026-11-02  The shelf portrait card now says each thing once, and the title and the line under it divide the work: the title is what the shelf IS, the line is…
 // v2.9.35  2026-11-02  Seven faults found by opening the app, and the two guards that should have caught three of them.
-// v2.9.34  2026-11-02  Four screens, four faults, and the harness that should have caught three of them was looking at a quarter of the app.
 // Older entries are in CHANGELOG.md.
 -->
 <html lang="en">
@@ -3281,8 +3281,8 @@ const DEFAULT_LOOKUP_URL = 'https://script.google.com/macros/s/AKfycbzVuQM6ehs2Y
    Not a list of every address ever shipped: that list held identifiers
    rather than values, so its check stayed green with the URL broken. */
 
-const APP_VERSION = '2.9.43';
-const BUILD_TIME  = '2026-11-06 08:16 PM ET';
+const APP_VERSION = '2.9.44';
+const BUILD_TIME  = '2026-11-10 10:39 AM ET';
 
 /* =====================================================================
    PURE LOGIC — every function below is called by the test harness.
@@ -12600,6 +12600,15 @@ L.nameContains = function (shortName, longName) {
   };
 };
 
+/* WOULD A SHELF FOLLOW THIS NAME INTO THAT ENTRY ON ITS OWN: the entry says
+   everything the name says and adds no mark. The subscription moves a bottle
+   only on this, so the intake drops an offer as an entry only on this too -
+   a drop the shelf cannot follow strands every bottle carrying the name. */
+L.shelfFollows = function (name, entryName) {
+  const fit = L.nameContains(name, entryName);
+  return !!fit && !fit.marked;
+};
+
 /* A BARE YEAR, WITH NOTHING TO CONTRADICT IT. Four digits standing alone. */
 L.LONE_YEAR = /^(?:19|20)\d{2}$/;
 /* HOW A WHISKEY IS MADE, not which run of it. A numbered batch is an edition
@@ -12987,8 +12996,11 @@ L.subscribeToLibrary = function (custom, bottles, edits, library, graves, drops)
        not missing from the library, it is deliberately absent from it, and
        listing it would ask him the same question every load. */
     if (p.mine) return;
-    /* ALREADY SUBSCRIBED. */
-    const at = L.resolveLibKey(lib, k, name);
+    /* ALREADY SUBSCRIBED, or forwarded: a grave is an admin's ruling that
+       this name is that entry, so it is asked first, through the door every
+       bottle is filed by. */
+    const via = L.keyForBottle({ k: k }, lib, gr, null);
+    const at = lib[via] ? via : L.resolveLibKey(lib, k, name);
     if (at) {
       const to = L.mergedInto(gr, at);
       const entry = lib[to];
@@ -13005,10 +13017,7 @@ L.subscribeToLibrary = function (custom, bottles, edits, library, graves, drops)
        places, and the second copy can only drift (rule 30d). */
     const guess = L.adoptCandidates([{ k: k, status: 'open' }], lib, gr)[0];
     if (guess) tried.push(guess.name);
-    const fits = tried.filter(n => {
-      const fit = L.nameContains(k, n);
-      return !!fit && !fit.marked;
-    });
+    const fits = tried.filter(n => L.shelfFollows(k, n));
     if (!fits.length) { left.push(k); return; }
     if (fits[0] !== k) moves[k] = fits[0];
   });
@@ -23875,11 +23884,21 @@ L.intakeVerdict = function (entry, opts) {
   }
   /* NEARLY A NAME ALREADY IN, with every stated fact agreeing (intakeNear
      requires L.sameBottle), is that entry: the library keeps its name and the
-     offer is dropped, held a fortnight with Put back. */
+     offer is dropped, held a fortnight with Put back.
+     ONLY WHERE A SHELF WOULD FOLLOW THE DROP. A name that says something the
+     entry does not ("Special Proof", "Wheated") is not moved by the
+     subscription, so dropping it strands every bottle carrying it. That one
+     is a question: the search first, then a person, whose "same bottle"
+     writes the forwarding address the shelf does follow. */
   const near = L.intakeNear(p, o.index);
-  if (near) {
+  if (near && L.shelfFollows(p.name, near.name)) {
     return { verdict: 'out', product: p, fixes: fixes, near: near,
       rule: 'nearly one already in', why: 'already in as ' + near.name };
+  }
+  if (near) {
+    return { verdict: 'ask', product: p, fixes: fixes, near: near,
+      rule: 'nearly one already in',
+      why: 'reads like ' + near.name + ', but says what that name does not' };
   }
   if (!h.known) {
     /* A HOUSE NOBODY HAS SEEN is a new distillery or a typo, and the shelf
@@ -23984,8 +24003,12 @@ L.intakeSettle = function (v, found, opts) {
     if (other && !L.sameBottle(p, other, o.library)) {
       return L.intakeVerdict(p, o);
     }
+    /* THE SAME FACTS SETTLE IT ONLY WHERE A SHELF WOULD FOLLOW (L.shelfFollows,
+       as intakeVerdict asks): otherwise the facts agreeing is the question a
+       person answers, with the forwarding address their answer writes. */
     if (other && L.sameBottle(p, other, o.library)
-        && (p.proof || p.age || p.fin)) {
+        && (p.proof || p.age || p.fin)
+        && L.shelfFollows(p.name, other.name)) {
       return { verdict: 'out', settled: true, product: p,
         rule: 'the same bottle under another name',
         why: 'every fact it states matches ' + other.name
@@ -59973,7 +59996,7 @@ function boot(data) {
   // Inside the scrolling screen, not on body: body is a flex column ending
   // with the nav, so anything appended after it lands below the bar.
   const f = el('footer');
-  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.43</span>'
+  f.innerHTML = 'Bottlefolio <span id="verString">v2.9.44</span>'
     + ' · <span id="buildTime"></span>'
     + ' · <a href="./privacy.html">Privacy</a>';
   const home = document.getElementById('scr-home');

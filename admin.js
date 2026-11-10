@@ -891,6 +891,80 @@ async function open(browser, opts) {
   }
 
   /* ------------------------------------------------------------------
+     SAME BOTTLE, FORWARDED. A near name that says more than the entry
+     ("Special Proof") is asked rather than dropped, because a shelf will
+     not follow a drop into a name that lacks its words - Maker's Mark 101
+     Special Proof sat on a shelf reaching nothing for that reason. The
+     answer must write the forwarding address everybody's shelf follows,
+     AND drop the offer with the entry's key. Pressed, then read back.
+     ------------------------------------------------------------------ */
+  {
+    const seed = seedWith({ library: false, offer: false });
+    const w = seed['bz-apps'].whisky;
+    w.shared = { stamp: 1, removed: {}, reviewed: {},
+      catalog: { products: {
+        maker_s_mark_101_bourbon: { name: "Maker's Mark 101 Bourbon",
+          proof: 101, dist: "Maker's Mark", sub: 'bourbon', at: 1 } } } };
+    w.contrib = { [OTHER_UID]: { maker_s_mark_101_special_proof: {
+      name: "Maker's Mark 101 Special Proof", dist: "Maker's Mark",
+      sub: 'bourbon', by: 'Kevrin', at: Date.now() } } };
+    const { page, errs } = await open(browser, {
+      seed: seed,
+      fbOpts: { user: { uid: ADMIN_UID, email: 'bz@example.com' } }
+    });
+    /* THE SEARCH HAS HAD ITS TRY, written through the page's own writer, so
+       the question is a person's and the row carries its buttons. */
+    const judged = await page.evaluate(async () => {
+      await libraryLoad();
+      const row = (await readOffers())[0];
+      const v = A.L.intakeVerdict(row.entry, { library: LIB.products,
+        removed: {}, graves: {} });
+      await intakeVetWrite(row, Object.assign({}, v, { tried: true }));
+      return { verdict: v.verdict, near: (v.near || {}).name };
+    });
+    check('same bottle: the intake asks rather than drops',
+      judged.verdict === 'ask', judged.verdict);
+    check('same bottle: and names the entry it reads like',
+      judged.near === "Maker's Mark 101 Bourbon", judged.near);
+    await openTab(page, 'offers');
+    const label = "Same bottle as Maker's Mark 101 Bourbon";
+    await page.waitForFunction(t => Array.from(
+      document.querySelectorAll('#sec-offers button'))
+      .some(b => b.textContent === t), label, { timeout: 10000 })
+      .catch(() => {});
+    const pressed = await page.evaluate(t => {
+      const b = Array.from(document.querySelectorAll('#sec-offers button'))
+        .find(x => x.textContent === t);
+      if (b) b.click();
+      return !!b;
+    }, label);
+    check('same bottle: the row offers the answer', pressed,
+      'no "' + label + '" button');
+    await page.waitForFunction(() => {
+      const d = window.firebase.__store.data['bz-apps'].whisky;
+      return !!(((d.contrib || {}).otheruid || {})
+        .maker_s_mark_101_special_proof || {}).dropped;
+    }, { timeout: 8000 }).catch(() => {});
+    const after = await page.evaluate(() => {
+      const d = window.firebase.__store.data['bz-apps'].whisky;
+      const fwd = ((d.shared || {}).renamed || {})
+        .maker_s_mark_101_special_proof || {};
+      const off = ((d.contrib || {}).otheruid || {})
+        .maker_s_mark_101_special_proof || {};
+      return { to: fwd.to, into: (off.dropped || {}).into,
+        why: (off.dropped || {}).why };
+    });
+    check('same bottle: the name is forwarded to the entry',
+      after.to === 'maker_s_mark_101_bourbon', after.to);
+    check('same bottle: the drop carries the entry key',
+      after.into === 'maker_s_mark_101_bourbon', after.into);
+    check('same bottle: no page error', !errs.length, errs.join(' | '));
+    said.push('a near name was asked, answered "same bottle", and forwarded to '
+      + (after.to || 'NOTHING'));
+    await page.close();
+  }
+
+  /* ------------------------------------------------------------------
      THE DECLARED DOOR. L.ACTIONS says this page reaches the lookup service
      through adminService and consistency.js fails any call that goes round
      it - but a declaration is only worth having if the page actually asks.

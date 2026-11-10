@@ -13,9 +13,9 @@ QUESTION, not the name you were going to use.
 
 | | |
 |---|---|
-| functions | 1109 |
+| functions | 1110 |
 | tables | 257 |
-| carrying a stated purpose | 888 |
+| carrying a stated purpose | 889 |
 
 ## Tables
 
@@ -1181,6 +1181,7 @@ QUESTION, not the name you were going to use.
 - **`L.shelfFilter`** — _no comment above it_
 - **`L.shelfFingerprint`** — A SHARE IS OF THE SHELF for an axis a whisky can carry several of, and of the
 - **`L.shelfFit`** — _no comment above it_
+- **`L.shelfFollows`** — WOULD A SHELF FOLLOW THIS NAME INTO THAT ENTRY ON ITS OWN
 - **`L.shelfForAsk`** — YOUR SHELF, COMPACT ENOUGH TO SEND WITH A PHOTOGRAPH, so the service can
 - **`L.shelfGaps`** — _no comment above it_
 - **`L.shelfIndex`** — Both, together, because every caller that wants one wants the other.

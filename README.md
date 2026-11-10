@@ -79,7 +79,7 @@ Individually, in gate order:
 
 ```
 python audit.py index.html   # the named lock file matches index.html
-node killer-bs-test.js       # 8,477 assertions against the engine
+node killer-bs-test.js       # 8,486 assertions against the engine
 node lint.js                 # nothing undefined, twice-defined, unreachable
 node consistency.js          # 131 wiring checks
 node screens.js              # 38 screens draw

@@ -1822,6 +1822,21 @@ function contribRow(r, verdict, onPick) {
     same.textContent = 'Already in the library\u2026';
     same.style.marginTop = '4px';
     same.onclick = () => offerAlreadyThere(r, () => renderLibraryScreen());
+    /* THE NEAR MATCH THE INTAKE FOUND, one press: a name that says more than
+       the entry is asked rather than dropped, and this is the answer. */
+    const near = verdict && verdict.verdict === 'ask' && verdict.near;
+    if (near && near.name) {
+      const is = el('button', 'chip');
+      is.type = 'button';
+      is.textContent = 'Same bottle as ' + near.name;
+      is.style.cssText = 'margin:4px 6px 0 0';
+      is.onclick = () => {
+        buttonWorking(is, 'Forwarding…');
+        contribSameAs(r, dropInto(near, LIB.products), near.name,
+          () => renderLibraryScreen());
+      };
+      left.appendChild(is);
+    }
     left.appendChild(same);
   }
   const mine = A.user && r.uid === A.user.uid;
@@ -1887,6 +1902,59 @@ async function contribAddMany(list, btn) {
    logged with its row, and the toast reports what succeeded. A swallowed
    refusal reporting success sends somebody looking anywhere but the write. */
 
+/* THE ONE WRITER OF A DROP, for the hand drop and the automatic intake alike.
+   THE KEY, not only the sentence. "already in as <name>" was written for a
+   person to read and left the offerer's own bottle pointed at nothing the
+   library knows - three times for one Weller ("I own weller antique 107 ...
+   Hence it must be in the library"). With the key recorded, the offering
+   device can subscribe itself. The automatic intake had its own writer that
+   kept only the sentence, which is how a second copy drifts. */
+function contribDropWrite(r, why, into) {
+  return contribRef().child(r.uid).child(r.slug).child('dropped')
+    .set(Object.assign({ why: why || 'nothing to add', at: Date.now() },
+      into ? { into: into } : {}))
+    .then(() => true)
+    .catch(e => {
+      appLog('library: could NOT drop ' + (r.entry || {}).name
+        + ' at contrib/' + r.uid + '/' + r.slug + ' — '
+        + ((e && e.message) || e));
+      return false;
+    });
+}
+
+/* THE LIBRARY KEY A NEAR MATCH NAMES, as the library files it. */
+function dropInto(near, library) {
+  if (!near || !(near._key || near.k || near.name)) return null;
+  return A.L.resolveLibKey(library || {}, near._key || near.k, near.name)
+    || A.L.libKey(near.name || near._key || near.k);
+}
+
+/* "THE SAME BOTTLE AS THAT ENTRY", from a person: the offer is dropped AND
+   its name is forwarded to the entry, because a shelf follows a forwarding
+   address where it will not follow a name that says more than the entry
+   (A.L.shelfFollows). The address goes first: a drop without it is the
+   stranded bottle this exists to prevent. */
+function contribSameAs(r, key, name, after) {
+  const nm = (r.entry && r.entry.name) || '';
+  const from = A.L.libKey(nm);
+  const forward = (from && from !== key && !(LIB.products || {})[from])
+    ? buryWrite(from, key) : Promise.resolve();
+  return forward
+    .then(() => contribDropWrite(r, 'already in as ' + name, key))
+    .then(ok => {
+      appLog('library: offer ' + nm + ' is ' + name + ' — forwarded '
+        + from + ' to ' + key + (ok ? '' : ', but the drop did not land'));
+      toast(ok ? 'Same bottle — everybody holding it follows ' + name
+        : 'Forwarded, but the offer could not be dropped');
+      if (after) after();
+    })
+    .catch(e => {
+      appLog('library: could not forward ' + nm + ' to ' + key + ' — '
+        + ((e && e.message) || e));
+      toast(sayError(e));
+    });
+}
+
 /* ---- contribDropMany   index.html 48924-48976 ---- */
 function contribDropMany(list, btn) {
   const done = btn ? buttonWorking(btn, 'Dropping ' + list.length + '\u2026')
@@ -1902,23 +1970,7 @@ function contribDropMany(list, btn) {
   Promise.all(list.map(x => {
     const r = x.row || x;
     if (!r || !r.uid || !r.slug) return Promise.resolve(false);
-    /* THE KEY, not only the sentence. "already in as <name>" was written for a
-       person to read and left the offerer's own bottle pointed at nothing the
-       library knows - three times for one Weller (BZ, 2026-10-01: "I own weller
-       antique 107 ... Hence it must be in the library"). With the key recorded,
-       the offering device can subscribe itself. */
-    const into = (x.near && (x.near._key || x.near.k)) ? A.L.libKey(x.near.name
-      || x.near._key || x.near.k) : null;
-    return contribRef().child(r.uid).child(r.slug).child('dropped')
-      .set(Object.assign({ why: x.why || x.rule || 'nothing to add',
-        at: Date.now() }, into ? { into: into } : {}))
-      .then(() => true)
-      .catch(e => {
-        appLog('library: could NOT drop ' + (r.entry || {}).name
-          + ' at contrib/' + r.uid + '/' + r.slug + ' \u2014 '
-          + ((e && e.message) || e));
-        return false;
-      });
+    return contribDropWrite(r, x.why || x.rule, dropInto(x.near, LIB.products));
   })).then(got => {
     const ok = got.filter(Boolean).length;
     done();
@@ -1946,13 +1998,8 @@ function offerAlreadyThere(r, after) {
       + 'everybody keeps using.',
     null,
     hit => {
-      contribDropMany([{ row: r,
-        why: 'already in the library as ' + hit.name }], null);
-      appLog('library: offer ' + nm + ' dropped \u2014 already there as '
-        + hit.name);
-      toast('Dropped \u2014 already there as ' + hit.name);
       closeModal();
-      if (after) after();
+      contribSameAs(r, hit._key || A.L.libKey(hit.name), hit.name, after);
     });
 }
 
@@ -2108,16 +2155,8 @@ async function intakeAcceptUpcs() {
 async function intakeClearNothing(list) {
   if (!list.length) return 0;
   appLog('vetting: clearing ' + list.length + ' offer(s) that add nothing');
-  const res = await Promise.all(list.map(x => contribRef().child(x.row.uid)
-    .child(x.row.slug).child('dropped')
-    .set({ why: x.verdict.why || x.verdict.rule || 'nothing to add',
-      at: Date.now() })
-    .then(() => true)
-    .catch(e => {
-      appLog('vetting: could not clear ' + (x.row.entry.name || '')
-        + ' \u2014 ' + ((e && e.message) || e));
-      return false;
-    })));
+  const res = await Promise.all(list.map(x => contribDropWrite(x.row,
+    x.verdict.why || x.verdict.rule, dropInto(x.verdict.near, LIB.products))));
   return res.filter(Boolean).length;
 }
 
@@ -4040,13 +4079,7 @@ function fileAtEntryButton(it, again) {
   b.onclick = () => {
     if (!A.admin) { toast('Only an admin can file it'); return; }
     buttonWorking(b, 'Filing\u2026');
-    const ups = {};
-    LIB.graves = A.L.buryKey(LIB.graves, it.key, it.to);
-    ups['renamed/' + it.key] = { to: A.L.mergedInto(LIB.graves, it.to),
-      at: Date.now() };
-    ups.stamp = Date.now();
-    ref(NODE.shared)
-      .update(A.L.fbEncodePaths(ups))
+    buryWrite(it.key, it.to)
       .then(() => {
         appLog('shelf scan: filed ' + it.key + ' at ' + it.to);
         toast('Filed \u2014 everybody holding it follows now');
@@ -4059,6 +4092,19 @@ function fileAtEntryButton(it, again) {
       });
   };
   return b;
+}
+
+/* ONE FORWARDING ADDRESS, FOR EVERYBODY: `key` now reads as the entry `to`.
+   Refused rather than written when it would close a loop (A.L.buryKey), and
+   this device's record moves only once the write has landed. */
+function buryWrite(key, to) {
+  const g = A.L.buryKey(LIB.graves, key, to);
+  if (!g[key]) return Promise.reject(new Error(key + ' cannot point at ' + to
+    + ' — that would make a loop'));
+  const ups = { stamp: Date.now() };
+  ups['renamed/' + key] = { to: A.L.mergedInto(g, to), at: Date.now() };
+  return ref(NODE.shared).update(A.L.fbEncodePaths(ups))
+    .then(() => { LIB.graves = g; });
 }
 
 /* REMOVE AN ADDRESS THAT POINTS AT NOTHING. Safe because nothing is behind it:
